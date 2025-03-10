@@ -724,12 +724,11 @@ class AMLService
     /**
      * Clears the AML status for non-AXA insurance providers.
      */
-    public function clearAmlStatusForNonGIG($quoteType, $code, $insuranceProviderId)
+    public function clearAmlStatusForNonGIG($quoteType, $code, $providerCode)
     {
-        info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$insuranceProviderId}");
+        info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$providerCode}");
 
-        $insuranceProvider = InsuranceProvider::find($insuranceProviderId);
-        if ($insuranceProvider && $insuranceProvider->code === InsuranceProvidersEnum::AXA) {
+        if ($providerCode == InsuranceProvidersEnum::AXA) {
             info("Insurance Provider is GIG(AXA). Skipping AML status clearing for Quote Code: {$code}");
 
             return false;

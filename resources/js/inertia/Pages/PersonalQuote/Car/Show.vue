@@ -3489,27 +3489,6 @@ const isCommercialVehicle = computed(() => {
                     Copy
                   </x-button>
                 </div>
-                <!-- <template
-                  v-if="item.actualPremium > 0 && item.id != record.plan_id"
-                >
-                  <x-button
-                    v-if="
-                      access.carAdvisorCanEditPaymentCancelledRefund ||
-                      access.carAdvisorCanEditInsurer ||
-                      access.carManagerCanEditInsurer
-                    "
-                    size="xs"
-                    color="error"
-                    outlined
-                    @click="confirmChangeInsurer(item)"
-                    :disabled="
-                      page.props.linkedQuoteDetails.childLeadsCount > 0
-                    "
-                  >
-                    Change Insurer
-                  </x-button>
-                </template> -->
-
                 <span>
                   <SelectPlan
                     v-if="selectedProviderPlan.id != item.id"

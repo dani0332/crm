@@ -318,7 +318,7 @@ class CentralController extends Controller
     {
         $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
-        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $code, $request->insurance_provider_id);
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $code, $request->provider_code);
 
         return redirect()->back();
     }
@@ -327,7 +327,7 @@ class CentralController extends Controller
     {
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
-        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->insurance_provider_id);
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
 
         return response()->json(['plan' => $response]);
     }
