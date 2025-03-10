@@ -60,209 +60,6 @@ class CarQuoteService extends BaseService
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->activityService = $activityService;
-        $this->query = DB::table('car_quote_request as cqr')
-            ->select(
-                'cqr.uuid',
-                'cqr.id',
-                'cqr.first_name',
-                'cqr.last_name',
-                DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
-                'cqr.company_name AS car_company_name',
-                'cqr.company_address AS car_company_address',
-                DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
-                'cqr.car_value',
-                'cqr.additional_notes',
-                'cqr.nationality_id',
-                'cqr.year_of_manufacture',
-                'cqr.code',
-                'cqr.is_ecommerce',
-                'cqr.sic_advisor_requested',
-                'cqr.premium',
-                DB::raw('DATE_FORMAT(cqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
-                'cqr.payment_gateway',
-                'cqr.source',
-                DB::raw('DATE_FORMAT(cqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-                DB::raw('DATE_FORMAT(cqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
-                'cqr.seat_capacity',
-                'cqr.cylinder',
-                'cqr.vehicle_type_id',
-                'n.TEXT AS nationality_id_text',
-                'cqr.promo_code',
-                'cqr.device',
-                'cqr.policy_number',
-                'cqr.previous_quote_id',
-                'cqr.renewal_batch',
-                'cqr.policy_expiry_date',
-                'cqr.order_reference',
-                'cqr.payment_reference',
-                'cqr.calculated_value',
-                'cqr.created_by',
-                'cqr.updated_by',
-                'cqr.uae_license_held_for_id',
-                'ulhf.TEXT AS uae_license_held_for_id_text',
-                'cqr.car_make_id',
-                'cmake.TEXT AS car_make_id_text',
-                'cqr.car_model_id',
-                'cmodel.TEXT AS car_model_id_text',
-                'cqr.emirate_of_registration_id',
-                'e.TEXT AS emirate_of_registration_id_text',
-                'cqr.car_type_insurance_id',
-                'cti.TEXT AS car_type_insurance_id_text',
-                'cqr.claim_history_id',
-                'ch.TEXT AS claim_history_id_text',
-                'cqr.advisor_id',
-                'cqr.previous_advisor_id',
-                'u.name AS advisor_id_text',
-                'pra.name AS previous_advisor_id_text',
-                'cqr.payment_status_id',
-                'ps.text AS payment_status_id_text',
-                'cqr.price_vat_not_applicable',
-                'cqr.price_vat_applicable',
-                'cqr.price_with_vat',
-                'cqr.vat',
-                'cqr.insurer_quote_number',
-                'cqr.policy_issuance_status_id',
-                'cqr.policy_issuance_status_other',
-                'cqr.plan_id',
-                'cqr.payment_paid_at',
-                'cp.text AS plan_id_text',
-                'cp.provider_id AS car_plan_provider_id',
-                'cpip.text AS car_plan_provider_id_text',
-                'cqr.quote_status_id',
-                'qs.text AS quote_status_id_text',
-                'cqr.year_of_manufacture AS year_of_manufacture_text',
-                DB::raw('DATE_FORMAT(cqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
-                'cqrd.transapp_code',
-                'cqrd.notes',
-                'cqrd.lost_approval_status',
-                'cqrd.lost_approval_reason',
-                'cqrd.insly_id',
-                'vt.text as vehicle_type_id_text',
-                'cqr.currently_insured_with',
-                'cqr.currently_insured_with as currently_insured_with_text',
-                'ls.text as lost_reason',
-                'cqr.previous_quote_policy_number',
-                DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
-                'cqr.previous_quote_policy_premium',
-                'cqr.car_model_detail_id',
-                'cmd.text as car_model_detail_id_text',
-                'cqr.is_modified',
-                'cqr.is_bank_financed',
-                'cqr.is_gcc_standard',
-                'cqr.current_insurance_status',
-                'cqr.year_of_first_registration',
-                'cqr.has_ncd_supporting_documents',
-                'cqr.back_home_license_held_for_id',
-                'cqr.kyc_decision',
-                'ulhfs.TEXT as back_home_license_held_for_id_text',
-                'cqr.policy_start_date',
-                'cqr.policy_issuance_date',
-                'cqr.customer_id',
-                'cqr.parent_duplicate_quote_id',
-                'cqr.renewal_import_code',
-                'cqr.quote_link',
-                DB::raw('DATE_FORMAT(cqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
-                DB::raw("DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(), cqr.dob)), '%Y') + 0 AS customer_age"),
-                'cqr.tier_id',
-                't.name as tier_id_text',
-                'qvc.visit_count as visit_count',
-                't.cost_per_lead as cost_per_lead',
-                'cqr.quote_batch_id',
-                'lu.text as transaction_type_text',
-                'qb.name as quote_batch_id_text',
-                'cqr.car_value_tier',
-                'cqr.risk_score',
-                DB::raw('IF(qrem.entity_id,
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
-                'cpip.code as plan_provider_code',
-                DB::raw('(CASE
-                WHEN cqr.assignment_type = 1 THEN "System Assigned"
-                WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
-                WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
-                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned"
-                WHEN cqr.assignment_type = 5 THEN "Bought Lead"
-                WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
-                'cpip.code as plan_provider_code',
-                'insured.first_name as insured_first_name',
-                'insured.last_name as insured_last_name',
-                DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
-                'c.emirates_id_expiry_date',
-                'c.receive_marketing_updates',
-                'qrem.entity_id',
-                'ent.code as entity_code',
-                'ent.trade_license_no',
-                'ent.company_name',
-                'ent.company_address',
-                'qrem.entity_type_code',
-                'ent.industry_type_code',
-                'cqr.enquiry_count',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                'cqr.policy_booking_date',
-                DB::raw('GROUP_CONCAT(team.name) as team_name'),
-                'cqr.insurance_provider_id',
-                'cpdip.text as insurer_name',
-                DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
-                'cqr.insly_migrated',
-                'cqr.aml_status',
-                'cqr.insurer_aml_status',
-                'cqrd.chassis_number',
-                'c.gender',
-                DB::raw('
-                    CASE
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
-                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
-                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
-                        ELSE insurer_aml_status
-                    END AS insurer_aml_status_display
-                ')
-            )
-            ->leftJoin('payments as py', function ($join) {
-                $join->on('py.paymentable_id', '=', 'cqr.id')
-                    ->where('py.paymentable_type', '=', CarQuote::class);
-            })
-            ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
-            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
-            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
-            ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
-            ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
-            ->leftJoin('uae_license_held_for as ulhfs', 'ulhfs.id', '=', 'cqr.back_home_license_held_for_id')
-            ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
-            ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
-            ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
-            ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
-            ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
-            ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
-            ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
-            ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
-            ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-            ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
-            ->leftJoin('car_model_detail as cmd', 'cmd.id', '=', 'cqr.car_model_detail_id')
-            ->leftJoin('tiers as t', 't.id', '=', 'cqr.tier_id')
-            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
-            ->leftJoin('customer as c', 'cqr.customer_id', 'c.id')
-            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
-                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
-                $entityMappingJoin->on('qrem.quote_request_id', '=', 'cqr.id');
-            })
-            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
-            ->leftJoin('quote_view_count as qvc', function ($join) {
-                $join->on('qvc.quote_id', 'cqr.id');
-                $join->where('qvc.quote_type_id', QuoteTypeId::Car);
-                $join->on('qvc.user_id', 'cqr.advisor_id');
-            })
-            ->leftJoin('user_team as ut', 'u.id', '=', 'ut.user_id')
-            ->leftJoin('teams as team', 'team.id', '=', 'ut.team_id')
-            ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
-                $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
-                $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
-            })
-            ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
-            ->groupBy('cqr.id');
     }
 
     public function saveCarQuote(Request $request)
@@ -454,7 +251,213 @@ class CarQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->addSelect(['cqr.email', 'cqr.mobile_no'])->where('cqr.uuid', $id)->first();
+        return DB::table('car_quote_request as cqr')
+            ->select(
+                'cqr.uuid',
+                'cqr.id',
+                'cqr.first_name',
+                'cqr.last_name',
+                DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
+                'cqr.company_name AS car_company_name',
+                'cqr.company_address AS car_company_address',
+                DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
+                'cqr.car_value',
+                'cqr.additional_notes',
+                'cqr.nationality_id',
+                'cqr.year_of_manufacture',
+                'cqr.code',
+                'cqr.is_ecommerce',
+                'cqr.sic_advisor_requested',
+                'cqr.premium',
+                DB::raw('DATE_FORMAT(cqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
+                'cqr.payment_gateway',
+                'cqr.source',
+                DB::raw('DATE_FORMAT(cqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
+                DB::raw('DATE_FORMAT(cqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+                'cqr.seat_capacity',
+                'cqr.cylinder',
+                'cqr.vehicle_type_id',
+                'n.TEXT AS nationality_id_text',
+                'cqr.promo_code',
+                'cqr.device',
+                'cqr.policy_number',
+                'cqr.previous_quote_id',
+                'cqr.renewal_batch',
+                'cqr.policy_expiry_date',
+                'cqr.order_reference',
+                'cqr.payment_reference',
+                'cqr.calculated_value',
+                'cqr.created_by',
+                'cqr.updated_by',
+                'cqr.uae_license_held_for_id',
+                'ulhf.TEXT AS uae_license_held_for_id_text',
+                'cqr.car_make_id',
+                'cmake.TEXT AS car_make_id_text',
+                'cqr.car_model_id',
+                'cmodel.TEXT AS car_model_id_text',
+                'cqr.emirate_of_registration_id',
+                'e.TEXT AS emirate_of_registration_id_text',
+                'cqr.car_type_insurance_id',
+                'cti.TEXT AS car_type_insurance_id_text',
+                'cqr.claim_history_id',
+                'ch.TEXT AS claim_history_id_text',
+                'cqr.advisor_id',
+                'cqr.previous_advisor_id',
+                'u.name AS advisor_id_text',
+                'pra.name AS previous_advisor_id_text',
+                'cqr.payment_status_id',
+                'ps.text AS payment_status_id_text',
+                'cqr.price_vat_not_applicable',
+                'cqr.price_vat_applicable',
+                'cqr.price_with_vat',
+                'cqr.vat',
+                'cqr.insurer_quote_number',
+                'cqr.policy_issuance_status_id',
+                'cqr.policy_issuance_status_other',
+                'cqr.plan_id',
+                'cqr.payment_paid_at',
+                'cp.text AS plan_id_text',
+                'cp.provider_id AS car_plan_provider_id',
+                'cpip.text AS car_plan_provider_id_text',
+                'cqr.quote_status_id',
+                'qs.text AS quote_status_id_text',
+                'cqr.year_of_manufacture AS year_of_manufacture_text',
+                DB::raw('DATE_FORMAT(cqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
+                'cqrd.transapp_code',
+                'cqrd.notes',
+                'cqrd.lost_approval_status',
+                'cqrd.lost_approval_reason',
+                'cqrd.insly_id',
+                'vt.text as vehicle_type_id_text',
+                'cqr.currently_insured_with',
+                'cqr.currently_insured_with as currently_insured_with_text',
+                'ls.text as lost_reason',
+                'cqr.previous_quote_policy_number',
+                DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+                'cqr.previous_quote_policy_premium',
+                'cqr.car_model_detail_id',
+                'cmd.text as car_model_detail_id_text',
+                'cqr.is_modified',
+                'cqr.is_bank_financed',
+                'cqr.is_gcc_standard',
+                'cqr.current_insurance_status',
+                'cqr.year_of_first_registration',
+                'cqr.has_ncd_supporting_documents',
+                'cqr.back_home_license_held_for_id',
+                'cqr.kyc_decision',
+                'ulhfs.TEXT as back_home_license_held_for_id_text',
+                'cqr.policy_start_date',
+                'cqr.policy_issuance_date',
+                'cqr.customer_id',
+                'cqr.parent_duplicate_quote_id',
+                'cqr.renewal_import_code',
+                'cqr.quote_link',
+                DB::raw('DATE_FORMAT(cqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
+                DB::raw("DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(), cqr.dob)), '%Y') + 0 AS customer_age"),
+                'cqr.tier_id',
+                't.name as tier_id_text',
+                'qvc.visit_count as visit_count',
+                't.cost_per_lead as cost_per_lead',
+                'cqr.quote_batch_id',
+                'lu.text as transaction_type_text',
+                'qb.name as quote_batch_id_text',
+                'cqr.car_value_tier',
+                'cqr.risk_score',
+                DB::raw('IF(qrem.entity_id,
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
+                'cpip.code as plan_provider_code',
+                DB::raw('(CASE
+                WHEN cqr.assignment_type = 1 THEN "System Assigned"
+                WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
+                WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
+                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned"
+                WHEN cqr.assignment_type = 5 THEN "Bought Lead"
+                WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
+                'cpip.code as plan_provider_code',
+                'insured.first_name as insured_first_name',
+                'insured.last_name as insured_last_name',
+                DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
+                'c.emirates_id_expiry_date',
+                'c.receive_marketing_updates',
+                'qrem.entity_id',
+                'ent.code as entity_code',
+                'ent.trade_license_no',
+                'ent.company_name',
+                'ent.company_address',
+                'qrem.entity_type_code',
+                'ent.industry_type_code',
+                'cqr.enquiry_count',
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                'cqr.policy_booking_date',
+                DB::raw('GROUP_CONCAT(team.name) as team_name'),
+                'cqr.insurance_provider_id',
+                'cpdip.text as insurer_name',
+                DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
+                'cqr.insly_migrated',
+                'cqr.aml_status',
+                'cqr.insurer_aml_status',
+                'cqrd.chassis_number',
+                'c.gender',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                '),
+                'cqr.email',
+                'cqr.mobile_no'
+            )
+            ->leftJoin('payments as py', function ($join) {
+                $join->on('py.paymentable_id', '=', 'cqr.id')
+                    ->where('py.paymentable_type', '=', CarQuote::class);
+            })
+            ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
+            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
+            ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
+            ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
+            ->leftJoin('uae_license_held_for as ulhfs', 'ulhfs.id', '=', 'cqr.back_home_license_held_for_id')
+            ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
+            ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
+            ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
+            ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
+            ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+            ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
+            ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
+            ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+            ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
+            ->leftJoin('car_model_detail as cmd', 'cmd.id', '=', 'cqr.car_model_detail_id')
+            ->leftJoin('tiers as t', 't.id', '=', 'cqr.tier_id')
+            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
+            ->leftJoin('customer as c', 'cqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'cqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
+            ->leftJoin('quote_view_count as qvc', function ($join) {
+                $join->on('qvc.quote_id', 'cqr.id');
+                $join->where('qvc.quote_type_id', QuoteTypeId::Car);
+                $join->on('qvc.user_id', 'cqr.advisor_id');
+            })
+            ->leftJoin('user_team as ut', 'u.id', '=', 'ut.user_id')
+            ->leftJoin('teams as team', 'team.id', '=', 'ut.team_id')
+            ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
+                $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
+                $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
+            })
+            ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
+            ->groupBy('cqr.id')
+            ->where('cqr.uuid', $id)
+            ->first();
     }
 
     public function updateChildRecord($id)
