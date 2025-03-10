@@ -70,19 +70,6 @@ class Dtt extends Command
             LeadSourceEnum::TM_ORGANIC, LeadSourceEnum::TM_RENEWALS, LeadSourceEnum::TM_SP_RENEWAL, LeadSourceEnum::TM_WHATSAPP, LeadSourceEnum::TPL_COMP, LeadSourceEnum::TPL_Renewal, LeadSourceEnum::TPL_RENEWALS, LeadSourceEnum::TRAVEL_INSURANCEMARKET_AE, LeadSourceEnum::WALK_IN_CLIENT, LeadSourceEnum::WEB,
         ];
 
-        $excludePaymentStatuses = [
-            PaymentStatusEnum::CAPTURED,
-            PaymentStatusEnum::PAID,
-            PaymentStatusEnum::PARTIAL_CAPTURED,
-            PaymentStatusEnum::PARTIALLY_PAID,
-        ];
-
-        $includeAmlStatuses = [
-            AMLStatusCode::AMLPending,
-            AMLStatusCode::AMLScreeningCleared,
-            AMLStatusCode::AMLScreeningFailed,
-        ];
-
         $jobs = [];
         $logPrefix = 'CarRevivalLeadsCreationJob -';
         $leads = CarQuote::select(
@@ -127,10 +114,7 @@ class Dtt extends Command
 
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
 
-            ->where(function ($query) use ($excludePaymentStatuses, $includeAmlStatuses) {
-                $query->whereIn('aml_status', $includeAmlStatuses)
-                    ->whereNotIn('payment_status_id', $excludePaymentStatuses);
-            })
+            ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
 
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
             ->get();
