@@ -1208,16 +1208,16 @@ class HomeQuoteService extends BaseService
         // Ensure the advisor relationship is loaded
         if ($quote->relationLoaded('advisor') && $quote->advisor) {
             $advisor = optional($quote->advisor);
-            
+
             $data['advisor_name'] = $advisor->name ?? '';
             $data['advisor_email'] = $advisor->email ?? '';
             $data['advisor_mobile_no'] = $advisor->mobile_no ?? '';
             $data['advisor_landline_no'] = $advisor->landline_no ?? '';
             $data['profile_photo_path'] = $advisor->profile_photo_path ?? '';
-            $data['mobile_no_without_spaces'] = !empty($advisor->mobile_no) 
-                ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) 
+            $data['mobile_no_without_spaces'] = ! empty($advisor->mobile_no)
+                ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no))
                 : '';
-            
+
             $data['quote_declaration_link'] = '';
             $data['quote_sal_link'] = '';
         } else {
@@ -1267,7 +1267,7 @@ class HomeQuoteService extends BaseService
 
         // Fetch quote plans using UUID
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
-        if (!$quotePlans || !isset($quotePlans->quotes) || !isset($quotePlans->quotes->plans)) {
+        if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
         }
 
@@ -1292,14 +1292,16 @@ class HomeQuoteService extends BaseService
         $pdfName = $this->generatePdfFilename($quote);
 
         // Log PDF generation
-        info('Home Quote Plans PDF generated for quote: ' . $data['quote_uuid']);
+        info('Home Quote Plans PDF generated for quote: '.$data['quote_uuid']);
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
 
     private function getHomeQuoteFlags($homeQuote): array
     {
-        if (!$homeQuote) return [];
+        if (! $homeQuote) {
+            return [];
+        }
 
         return [
             'contents_value_flag' => (bool) $homeQuote->contents_value_id,
@@ -1335,7 +1337,7 @@ class HomeQuoteService extends BaseService
 
     private function formatCurrency(float $value): string
     {
-        return 'AED ' . number_format($value, 2, '.', '');
+        return 'AED '.number_format($value, 2, '.', '');
     }
 
     private function getValueById(array $values, int $id): ?array
@@ -1348,14 +1350,14 @@ class HomeQuoteService extends BaseService
         return PDF::setOption([
             'isHtml5ParserEnabled' => true,
             'dpi' => 150,
-            'isRemoteEnabled' => true
+            'isRemoteEnabled' => true,
         ])
-        ->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'homeQuoteFlags', 'flagValues'));
+            ->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'homeQuoteFlags', 'flagValues'));
     }
 
     private function generatePdfFilename($quote): string
     {
-        return 'InsuranceMarket.ae™ Home Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
+        return 'InsuranceMarket.ae™ Home Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
     }
 
 }
