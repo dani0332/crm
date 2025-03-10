@@ -1220,13 +1220,55 @@ class RenewalsUploadService
      */
     private function updateBasePricePlan($quote, $data) 
     {
-        // dd($quote);
-        $customersMember = CustomerMembers::where('quote_id', $quote->id)
+        $memberDobs = array_map('trim', explode('|', $data['member_dob']));
+        $memberNames = array_map('trim', explode('|', $data['member_names']));
+        $memberPremiums = array_map('trim', explode('|', $data['member_premium']));
+
+        $healthPlan = HealthPlan::where('text', $quote->renewal_upload_plan_code)->first();
+        $healthCoPlan = HealthPlanCoPayment::where('code', $quote->renewal_upload_copay_code)->first();
+        $existingCustomersMember = CustomerMembers::where('quote_id', $quote->id)
             ->where('quote_type', HealthQuote::class)
             ->whereNull('deleted_at')
             ->get()
             ->keyBy(fn($member) => strtolower(trim($member->first_name . ' ' . $member->last_name)));
-        
+
+        $memberPremiumBreakdown = [];
+        foreach ($memberDobs as $index => $dob) {
+            $memberNameArray = explode(' ', $memberNames[$index]);
+            $firstName = array_shift($memberNameArray);
+            $lastName = implode(' ', $memberNameArray);
+            $fullNameKey = strtolower(trim($firstName . ' ' . $lastName));
+            $premium = $memberPremiums[$index];
+
+            if($existingCustomersMember[$fullNameKey]) {
+                $memberPremiumBreakdown[] = [
+                    'memberId' => $existingCustomersMember[$fullNameKey]->id,
+                    'ratesPerCopay' => [
+                        "healthPlanCoPaymentId" => $healthCoPlan->id,
+                        "basePrice" => $premium
+                    ]
+                ];
+            }
+        }
+
+
+        $planPayload = [
+            'planId' => $healthPlan->id,
+            'selectedCopayId' => $healthCoPlan->id,
+            'isManualUpdate' => true,
+            'memberPremiumBreakdown' => $memberPremiumBreakdown
+        ];
+        $dataArray = [
+            'quoteUID' => $quote->uuid,
+            'update' => true,
+            'plans' => [$planPayload],
+            'callSource' => strtolower(LeadSourceEnum::IMCRM),
+        ];
+
+        info('Renewal: Health Plan Modify V2 Request Data: ' . json_encode($dataArray));
+        $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
+
+        return $response;
     }
 
     /**
