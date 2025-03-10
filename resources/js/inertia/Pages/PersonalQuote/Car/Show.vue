@@ -3720,6 +3720,7 @@ const isCommercialVehicle = computed(() => {
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
       :isCapBtnEnabled="isCommercialVehicle"
+      :isPlanDetailSectionEnabled="isPlanDetailEnabled"
     />
 
     <PaymentTable

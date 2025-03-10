@@ -146,6 +146,7 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                     'reversalInvoice' => $sendUpdateLog->reversal_invoice ?? '',
                     'isEmailSent' => $sendUpdateLog->is_email_sent,
                     'throughCCPayment' => true,
+                    'quoteCode' => $quote->code,
                 ];
 
                 info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode((array) $sendUpdateRequest));
