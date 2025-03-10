@@ -1231,7 +1231,7 @@ class SplitPaymentService
         $payment = Payment::where('code', $code)->with('paymentSplits')->first();
         
         // Get insurance provider details
-        if ($payment && $payment->isInsurerPayment()) {
+        if ($payment) {
             $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
             if ($hasAnyAuthorizedPayment) {
                 $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
