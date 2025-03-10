@@ -2,8 +2,8 @@
 
 namespace App\Traits\QuoteTraits;
 
-use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use Carbon\Carbon;
@@ -148,8 +148,8 @@ trait QuoteAllocatable
         return in_array($this->source, [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID]);
     }
 
-    public function isInsurerAMJ()
+    public function isInsurerPlanB()
     {
-        return $this->insuranceProvider->code == InsuranceProvidersEnum::AMJ;
+        return $this->insuranceProvider->payment_gateway_id == PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK;
     }
 }

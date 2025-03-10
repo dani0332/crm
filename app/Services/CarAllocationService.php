@@ -398,14 +398,18 @@ class CarAllocationService extends AllocationService
 
         $advisors = [];
 
-        if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::CAR)) && ($tier->isValue() || $tier->isVolume())) {
-            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
+        // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
+        if ($lead->isInsurerPlanB() && $lead->isSIC(QuoteTypes::CAR) && !$lead->sic_advisor_requested && $lead->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer) {
+            $teamId = getTeamId(TeamNameEnum::ORGANIC);
+            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
+
+            // If no advisors are found, return an empty array to leave the lead unassigned 
+            // if found then return the advisors
+            return empty($advisors) ? [] : $advisors;
         }
 
-        // Check if the lead qualifies for Organic team assignment (AMJ, SIC, and no requested advisor)
-        if ($lead->isInsurerAMJ() && $lead->isSIC(QuoteTypes::CAR) && !$lead->sic_advisor_requested && $lead->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer) {
-            $teamId = getTeamId(TeamNameEnum::ORGANIC);
-            $advisors=  $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
+        if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::CAR)) && ($tier->isValue() || $tier->isVolume())) {
+            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
 
         if (empty($advisors)) {
