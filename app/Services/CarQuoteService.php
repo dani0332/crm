@@ -982,19 +982,24 @@ class CarQuoteService extends BaseService
             'created_at',
             'updated_at',
             'updated_by',
+            'policy_booking_date',
+            'transaction_approved_at',
+            'policy_expiry_date',
+            'insurer_aml_status',
+            'aml_status',
         ])->with([
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
             'nationality:id,text',
-            'uae_license_held_for_id:id,text',
-            'claim_history_id:id,text',
+            'uaeLicenseHeldFor:id,text',
+            'claimHistory:id,text',
             'carMake:id,text',
             'carModel:id,text',
             'vehicleType:id,text',
             'carQuoteRequestDetail',
             'carQuoteRequestDetail.lostReason',
             'tier:id,name,cost_per_lead',
-            'quote_status_id:id,text',
+            'quoteStatus:id,text',
             'paymentStatus:id,text',
             'quoteViewCount:quote_id,quote_type_id,user_id,visit_count',
             'advisor:id,name',
@@ -1019,16 +1024,7 @@ class CarQuoteService extends BaseService
             ->when(! request()->filled('code') && ! request()->filled('email') && ! request()->filled('mobile_no') && ! request()->filled('created_at') && ! request()->filled('payment_due_date') && ! request()->filled('booking_date') && ! request()->filled('previous_quote_policy_number') && ! request()->filled('renewal_batch') && ! request()->filled('insurer_tax_invoice_number') && ! request()->filled('insurer_commission_tax_invoice_number') && ! request()->filled('created_at_start'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(now(), true), $this->parseDate(now(), false)]);
             })
-            ->when(isset(request()->created_at) && request()->created_at != ''
-            && empty(request()->email)
-            && empty(request()->code)
-            && empty(request()->renewal_batch)
-            && empty(request()->quote_batch_id)
-            && empty(request()->payment_due_date)
-            && empty(request()->booking_date)
-            && ! isset(request()->previous_quote_policy_number)
-            && ! isset(request()->insurer_tax_invoice_number)
-            && ! isset(request()->insurer_commission_tax_invoice_number) && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
+            ->when(empty(request()->email) && empty(request()->code) && empty(request()->renewal_batch) && empty(request()->quote_batch_id) && empty(request()->payment_due_date) && empty(request()->booking_date) && ! isset(request()->previous_quote_policy_number) && ! isset(request()->insurer_tax_invoice_number) && ! isset(request()->insurer_commission_tax_invoice_number) && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
             })
             ->when(request('email'), function ($query) {
@@ -1135,6 +1131,16 @@ class CarQuoteService extends BaseService
                         ->from('payments')
                         ->where('paymentable_type', CarQuote::class)
                         ->whereBetween('payment_due_date', [$start, $end]);
+                });
+            })
+            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
+                $query->whereHas('payments', function ($q) {
+                    $q->where('insurer_tax_number', request('insurer_tax_invoice_number'));
+                });
+            })
+            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
+                $query->whereHas('payments', function ($q) {
+                    $q->where('insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
                 });
             })
             ->when(request('booking_date'), function ($query) {

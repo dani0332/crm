@@ -33,6 +33,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::get('/imcrm/quote/{quoteUuid}/{quoteType}/auto-capture-failed', [ApiController::class, 'markAutoCaptureFailed']);
     Route::post('/imcrm/home-sync-sal', [ApiController::class, 'homeSyncSAL'])->name('home-sync-sal');
     Route::post('/cache/forget', [ApiController::class, 'forgetCache']);
+    Route::post('duplicate-entires', [ApiController::class, 'duplicateEntries']);
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
