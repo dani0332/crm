@@ -222,7 +222,7 @@ class SageApiService
 
         // Execute Prepayment Post in Progress Call
         if (! empty($preparedData['payment']?->send_update_log_id)) {
-            $prePaymentPostInProgress = $this->executeARPrepaymentReceiptPost([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'] , $preparedData['splitPayments']]);
+            $prePaymentPostInProgress = $this->executeARPrepaymentReceiptPost([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
             if (! $prePaymentPostInProgress['status']) {
                 return $prePaymentPostInProgress;
             }
@@ -782,7 +782,7 @@ class SageApiService
 
             $sageLogArray = $paymentSplit->sageApiLogs->keyBy('step')->toArray();
 
-            if(isset($sageLogArray[2])){
+            if (isset($sageLogArray[2])) {
                 $sageResponse = json_decode($sageLogArray[2]['response'], true);
 
                 if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == SageEnum::STATUS_SUCCESS) {
@@ -827,7 +827,7 @@ class SageApiService
                     info('SAGE API - Error found: Prepayment receipt is not ready to be post - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' - code: '.$quote->code);
                     $postedReceiptStatus[] = ['status' => false, 'message' => 'Error found: Prepayment receipt is not ready to be post - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no];
                 }
-            }else{
+            } else {
                 info('SAGE API -  Posting of Prepayment skipped as Creation of prepayment is not found - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' - code: '.$quote->code);
                 $postedReceiptStatus[] = ['status' => true, 'message' => ' Posting of Prepayment skipped as Creation of prepayment is not found : '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no];
             }
