@@ -1320,7 +1320,7 @@ class CentralService extends BaseService
             $emailData->companyName = $quote->company_name;
             $emailData->details = $quote->brief_details;
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
-                $emailData->tpa = 'test TPA'; // need to confirm.
+                $emailData->tpa = 'NA'; // need to confirm.
             }
 
             if (! empty($sendUpdateLog)) {
