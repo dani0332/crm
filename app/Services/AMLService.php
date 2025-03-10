@@ -23,6 +23,7 @@ use App\Models\CustomerInsured;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\InsuranceProvider;
 use App\Models\JetskiQuote;
 use App\Models\KycLog;
 use App\Models\LifeQuote;
@@ -723,12 +724,13 @@ class AMLService
     /**
      * Clears the AML status for non-AXA insurance providers.
      */
-    public function clearAmlStatusForNonGIG($quoteType, $code, $insuranceProvider)
+    public function clearAmlStatusForNonGIG($quoteType, $code, $insuranceProviderId)
     {
-        info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$insuranceProvider}");
+        info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$insuranceProviderId}");
 
-        if ($insuranceProvider === InsuranceProvidersEnum::AXA) {
-            info("Insurance Provider is AXA. Skipping AML status clearing for Quote Code: {$code}");
+        $insuranceProvider = InsuranceProvider::find($insuranceProviderId);
+        if ($insuranceProvider && $insuranceProvider->code === InsuranceProvidersEnum::AXA) {
+            info("Insurance Provider is GIG(AXA). Skipping AML status clearing for Quote Code: {$code}");
 
             return false;
         }
