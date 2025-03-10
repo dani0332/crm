@@ -62,4 +62,34 @@ trait Filterable
             });
         });
     }
+
+    public function scopeFilterBy($query, $filterName, $column = null, bool $ignoreAll = false)
+    {
+        $column = $column ?: $filterName;
+
+        $filterValue = request($filterName, '');
+
+        $hasFilter = ! empty($filterValue) && ! is_null($filterValue);
+
+        if ($ignoreAll && $hasFilter && is_string($filterValue)) {
+            $hasFilter = $hasFilter && strtolower($filterValue) !== 'all';
+        }
+
+        $query->when($hasFilter, function ($subQuery) use ($filterValue, $column) {
+            $subQuery->where($column, $filterValue);
+        });
+    }
+
+    public function scopeMatchBy($query, $filterName, $column = null)
+    {
+        $column = $column ?: $filterName;
+
+        $filterValue = request($filterName, '');
+
+        $hasFilter = ! empty($filterValue) && ! is_null($filterValue);
+
+        $query->when($hasFilter, function ($subQuery) use ($filterValue, $column) {
+            $subQuery->where($column, 'like', "%{$filterValue}%");
+        });
+    }
 }
