@@ -93,148 +93,47 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
             fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]),
         )
-            ->when(request('code'), function ($query) {
-                $query->where('code', request('code'));
-            })
-            ->when(request('quote_batch_id'), function ($query) {
-                $query->where('quote_batch_id', request('quote_batch_id'));
-            })
-            ->when(request('first_name'), function ($query) {
-                $query->where('first_name', 'like', '%'.request('first_name').'%');
-            })
-            ->when(request('last_name'), function ($query) {
-                $query->where('last_name', 'like', '%'.request('last_name').'%');
-            })
+            ->filterBy('code')
+            ->filterBy('quote_batch_id')
+            ->matchBy('first_name')
+            ->matchBy('last_name')
             ->when(! request()->filled('code') && ! request()->filled('email') && ! request()->filled('mobile_no') && ! request()->filled('created_at') && ! request()->filled('payment_due_date') && ! request()->filled('booking_date') && ! request()->filled('previous_quote_policy_number') && ! request()->filled('renewal_batch') && ! request()->filled('insurer_tax_invoice_number') && ! request()->filled('insurer_commission_tax_invoice_number') && ! request()->filled('created_at_start'), function ($query) {
-                $query->whereBetween('created_at', [$this->parseDate(now(), true), $this->parseDate(now(), false)]);
+                $query->filterByToday();
             })
             ->when(empty(request()->email) && empty(request()->code) && empty(request()->renewal_batch) && empty(request()->quote_batch_id) && empty(request()->payment_due_date) && empty(request()->booking_date) && ! isset(request()->previous_quote_policy_number) && ! isset(request()->insurer_tax_invoice_number) && ! isset(request()->insurer_commission_tax_invoice_number) && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
             })
-            ->when(request('email'), function ($query) {
-                $query->where('email', request('email'));
+            ->filterBy('email')
+            ->filterBy('mobile_no')
+            ->filterByAdvisorAssignedDates('carQuoteRequestDetail', ['advisor_assigned_date', 'advisor_assigned_date_end'])
+            ->filterBy('payment_status_id')
+            ->filterBy('is_ecommerce')
+            ->filterIn('quote_status_id')
+            ->filterIn('insurer_aml_status')
+            ->filterIn('tier_id')
+            ->filterBy('vehicle_type_id')
+            ->filterBy('car_type_insurance_id')
+            ->filterBy('renewal_batch')
+            ->filterBy('currently_insured_with')
+            ->when(request()->filled('previous_quote_policy_number'), function ($query) {
+                $query->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number');
             })
-            ->when(request('mobile_no'), function ($query) {
-                $query->where('mobile_no', request('mobile_no'));
-            })
-            ->when(request()->filled('advisor_assigned_date') && ! request()->filled('advisor_assigned_date_end'), function ($query) {
-                $query->whereIn('id', function ($query) {
-                    $query->select('car_quote_request_id')
-                        ->from('car_quote_request_detail')
-                        ->where('advisor_assigned_date', '>=', $this->parseDate(request('advisor_assigned_date'), true));
-                });
-            })
-            ->when(! request()->filled('advisor_assigned_date') && request()->filled('advisor_assigned_date_end'), function ($query) {
-                $query->whereIn('id', function ($query) {
-                    $query->select('car_quote_request_id')
-                        ->from('car_quote_request_detail')
-                        ->where('advisor_assigned_date', '<=', $this->parseDate(request('advisor_assigned_date_end'), false));
-                });
-            })
-            ->when(request()->filled('advisor_assigned_date') && request()->filled('advisor_assigned_date_end'), function ($query) {
-                $query->whereIn('id', function ($query) {
-                    $query->select('car_quote_request_id')
-                        ->from('car_quote_request_detail')
-                        ->whereBetween('advisor_assigned_date', [$this->parseDate(request('advisor_assigned_date'), true), $this->parseDate(request('advisor_assigned_date_end'), false)]);
-                });
-            })
-            ->when(request('payment_status_id'), function ($query) {
-                $query->where('payment_status_id', request('payment_status_id'));
-            })
-            ->when(request('is_ecommerce'), function ($query) {
-                $query->where('is_ecommerce', request('is_ecommerce'));
-            })
-            ->when(request('quote_status_id') && is_array(request('quote_status_id')), function ($query) {
-                $query->whereIn('quote_status_id', request('quote_status_id'));
-            })
-            ->when(request('insurer_aml_status') && is_array(request('insurer_aml_status')), function ($query) {
-                $query->whereIn('insurer_aml_status', request('insurer_aml_status'));
-            })
-            ->when(request('tier_id') && is_array(request('tier_id')), function ($query) {
-                $query->whereIn('tier_id', request('tier_id'));
-            })
-            ->when(request('vehicle_type_id'), function ($query) {
-                $query->where('vehicle_type_id', request('vehicle_type_id'));
-            })
-            ->when(request('car_type_insurance_id'), function ($query) {
-                $query->where('car_type_insurance_id', request('car_type_insurance_id'));
-            })
-            ->when(request('renewal_batch'), function ($query) {
-                $query->where('renewal_batch', request('renewal_batch'));
-            })
-            ->when(request('currently_insured_with'), function ($query) {
-                $query->where('currently_insured_with', request('currently_insured_with'));
-            })
-            ->when(request('previous_quote_policy_number'), function ($query) {
-                $query->where('previous_quote_policy_number', request('previous_quote_policy_number'));
-                $query->orWhere('policy_number', request('previous_quote_policy_number'));
-            })
-            ->when(request()->filled('policy_expiry_date'), function ($query) {
-                $query->where('previous_policy_expiry_date', '>=', $this->parseDate(request('policy_expiry_date'), true));
-            })
-            ->when(request()->filled('policy_expiry_date_end'), function ($query) {
-                $query->where('previous_policy_expiry_date', '<=', $this->parseDate(request('policy_expiry_date_end'), false));
-            })
-            ->when(request('assignment_type') && strtolower(request('assignment_type')) != 'all', function ($query) {
-                $query->where('assignment_type', request('assignment_type'));
-            })
-            ->when(request('teams') && is_array(request('teams')), function ($query) {
-                $query->whereIn('advisor_id', function ($query) {
-                    $query->select('user_id')
-                        ->from('user_team')
-                        ->whereIn('team_id', request('teams'));
-                });
-            })
-            ->when(request('advisor_id') && is_array(request('advisor_id')), function ($query) {
-                if (in_array('-1', request('advisor_id')) || in_array(-1, request('advisor_id'))) {
-                    $query->whereNull('advisor_id');
-                } else {
-                    $query->whereIn('advisor_id', request('advisor_id'));
-                }
-            })
-            ->when(request('transaction_approved_dates'), function ($query) {
-                [$start, $end] = request('transaction_approved_dates');
-
-                $start = $this->parseDate($start, true);
-                $end = $this->parseDate($end, false);
-
-                $query->whereBetween('transaction_approved_at', [$start, $end]);
-            })
+            ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
+            ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
+            ->filterBy('assignment_type', ignoreAll: true)
+            ->filterByTeams(request('teams'))
+            ->filterByAdvisors(request('advisor_id'))
+            ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->filterBySegment(request('segment_filter'), QuoteTypeId::Car)
-            ->when(request('sic_advisor_requested') && strtolower(request('sic_advisor_requested')) != 'all', function ($query) {
-                $query->where('sic_advisor_requested', request('sic_advisor_requested'));
-            })
-            ->when(request('payment_due_date'), function ($query) {
-                [$start, $end] = request('payment_due_date');
-
-                $start = $this->parseDate($start, true);
-                $end = $this->parseDate($end, false);
-
-                $query->whereIn('id', function ($q) use ($start, $end) {
-                    $q->select('paymentable_id')
-                        ->from('payments')
-                        ->where('paymentable_type', CarQuote::class)
-                        ->whereBetween('payment_due_date', [$start, $end]);
-                });
-            })
+            ->filterBy('sic_advisor_requested', ignoreAll: true)
+            ->filterByPaymentDueDates('payment_due_date')
             ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
-                $query->whereHas('payments', function ($q) {
-                    $q->where('insurer_tax_number', request('insurer_tax_invoice_number'));
-                });
+                $query->whereRelation('payments', 'insurer_tax_number', request('insurer_tax_invoice_number'));
             })
             ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
-                $query->whereHas('payments', function ($q) {
-                    $q->where('insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
-                });
+                $query->whereRelation('payments', 'insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
             })
-            ->when(request('booking_date'), function ($query) {
-                [$start, $end] = request('booking_date');
-
-                $start = $this->parseDate($start, true);
-                $end = $this->parseDate($end, false);
-
-                $query->whereBetween('policy_booking_date', [$start, $end]);
-            })
+            ->filterByDateRange('booking_date', 'policy_booking_date')
             ->when(
                 request()->filled('sortBy'),
                 fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
