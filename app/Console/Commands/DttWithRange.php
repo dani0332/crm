@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -52,6 +51,7 @@ class DttWithRange extends Command
         $isDttEnabled = $storageService->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if ($isDttEnabled == false || $isDttEnabled == 0) {
             info('DTT is not enabled from CMS');
+
             return false;
         }
 
@@ -59,6 +59,7 @@ class DttWithRange extends Command
         $range = $storageService->getValueByKey('dtt_from_to');
         if (is_null($range)) {
             info('DttWithRange: No date range provided in dtt_from_to, skipping execution');
+
             return false;
         }
 
@@ -66,6 +67,7 @@ class DttWithRange extends Command
         $dateRangeArray = explode(',', $range);
         if (count($dateRangeArray) !== 2) {
             info('DttWithRange: Invalid date range format in dtt_from_to, expecting "from,to"');
+
             return false;
         }
 
@@ -77,6 +79,7 @@ class DttWithRange extends Command
 
         if ($fromDate->gt($toDate)) {
             info('DttWithRange: From date is after to date, invalid range');
+
             return false;
         }
 
@@ -146,7 +149,7 @@ class DttWithRange extends Command
             $dateTwo = $currentDate->copy()->subMonths(11)->addDay(1)->toDateString();
             $datethirtyDaysBefore = $currentDate->copy()->subDays(30)->toDateString();
 
-            info($logPrefix . "Processing for current date: " . $currentDate->toDateString() . " (dateOne: $dateOne, dateTwo: $dateTwo)");
+            info($logPrefix.'Processing for current date: '.$currentDate->toDateString()." (dateOne: $dateOne, dateTwo: $dateTwo)");
 
             $leads = CarQuote::select(
                 'id',
@@ -190,18 +193,18 @@ class DttWithRange extends Command
                     QuoteStatusEnum::PolicyIssued,
                     QuoteStatusEnum::TransactionApproved,
                     QuoteStatusEnum::Fake,
-                    QuoteStatusEnum::Duplicate
+                    QuoteStatusEnum::Duplicate,
                 ])
                 ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
                 ->get();
 
-            info($logPrefix . "Count for $dateOne - " . count($leads) . ' - ' . json_encode($leads->pluck('uuid')->toArray()));
-            
+            info($logPrefix."Count for $dateOne - ".count($leads).' - '.json_encode($leads->pluck('uuid')->toArray()));
+
             $jobs = [];
             foreach ($leads as $carLead) {
                 $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
-                if (!$isTierR) {
+                if (! $isTierR) {
                     $jobs[] = new CarRevivalLeadsCreationJob($carLead);
                 }
             }
@@ -210,19 +213,19 @@ class DttWithRange extends Command
                 Haystack::build()
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $dateOne) {
-                        info($logPrefix . "All jobs for $dateOne completed successfully");
+                        info($logPrefix."All jobs for $dateOne completed successfully");
                     })
                     ->catch(function () use ($logPrefix, $dateOne) {
-                        info($logPrefix . "One of batch for $dateOne failed");
+                        info($logPrefix."One of batch for $dateOne failed");
                     })
                     ->finally(function () use ($logPrefix, $dateOne) {
-                        info($logPrefix . "Everything done for $dateOne");
+                        info($logPrefix."Everything done for $dateOne");
                     })
                     ->allowFailures()
                     ->withDelay(30)
                     ->dispatch();
             } else {
-                info($logPrefix . "------No leads found for $dateOne------");
+                info($logPrefix."------No leads found for $dateOne------");
             }
 
             $currentDate->addDay();
