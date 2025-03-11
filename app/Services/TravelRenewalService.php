@@ -83,11 +83,11 @@ class TravelRenewalService extends BaseService
     }
     public function storeTravelRenewalQuote($quote)
     {
-        info(self::class." - TravelStart Date: {$quote->start_date} | quote Ref-ID: {$quote->uuid} Time: ".now());
-        $policyExpiryDate = Carbon::parse($quote->start_date);
-        info(self::class." - Policy Expiry Date: {$policyExpiryDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
+        info(self::class." - start Date: {$quote->start_date} | quote Ref-ID: {$quote->uuid} Time: ".now());
+        $travelStartDate = Carbon::parse($quote->start_date);
+        info(self::class." - Travel Start Date: {$travelStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         // Calculate the policy expiry date based on the start date + 365 days
-        $newPolicyExpiryDate = $policyExpiryDate->copy()->addDays(365);
+        $newPolicyExpiryDate = $travelStartDate->copy()->addDays(365);
         $policyStartDate = $newPolicyExpiryDate->copy()->addDays(1);
         info(self::class." - New Policy Start Date: {$policyStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         info(self::class." - New Policy Expiry Date: {$newPolicyExpiryDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
@@ -221,7 +221,7 @@ class TravelRenewalService extends BaseService
 
     public function getRenewalBatch($newPolicyExpiryDate)
     {
-        
+
         return RenewalBatch::where('start_date', '<=', $newPolicyExpiryDate)
             ->where('end_date', '>=', $newPolicyExpiryDate)
             ->whereNull('quote_type_id')
