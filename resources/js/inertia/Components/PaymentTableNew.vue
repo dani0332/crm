@@ -2906,7 +2906,7 @@ const validateUpfrontCapture = paymentRecord => {
     return getValidStatuses(paymentSplitRec);
   const isIPPending =
     paymentSplitRec.payment_method.code === 'IP' &&
-    paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING || paymentSplitRec.payment_status_id === paymentStatusEnum.NEW;
+    paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
   const isCAPayment =
     paymentSplitRec.payment_method.code === 'CA' &&
     paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
@@ -2984,7 +2984,6 @@ const getCaptureValidation = computed(() => {
       if (payment.is_approved === 1) return false;
       let paymentRecord = payment;
       if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
-        console.log("validateUpfrontCapture(paymentRecord)", validateUpfrontCapture(paymentRecord))
         return validateUpfrontCapture(paymentRecord);
       } else if (
         paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
