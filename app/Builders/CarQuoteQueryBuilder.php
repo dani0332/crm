@@ -97,17 +97,10 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterIn('quote_batch_id')
             ->matchBy('first_name')
             ->matchBy('last_name')
-            ->when($this->shouldApplyDatesFilter() && ! request()->filled('created_at_start'), function ($query) {
-                $query->filterByToday();
-            })
-            ->when($this->shouldApplyDatesFilter() && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
-                $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
-            })
             ->filterBy('email')
             ->filterBy('mobile_no')
-            ->filterByAdvisorAssignedDates('carQuoteRequestDetail', ['advisor_assigned_date', 'advisor_assigned_date_end'])
             ->filterBy('payment_status_id')
-            ->filterBy('is_ecommerce')
+            ->filterBy('is_ecommerce', isBool: true)
             ->filterIn('quote_status_id')
             ->filterIn('insurer_aml_status')
             ->filterIn('tier_id')
@@ -115,9 +108,6 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('car_type_insurance_id')
             ->filterBy('renewal_batch')
             ->filterBy('currently_insured_with')
-            ->when(request()->filled('previous_quote_policy_number'), function ($query) {
-                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
-            })
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterBy('assignment_type', ignoreAll: true)
@@ -127,6 +117,10 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBySegment(request('segment_filter'), QuoteTypeId::Car)
             ->filterBy('sic_advisor_requested', ignoreAll: true)
             ->filterByPaymentDueDates('payment_due_date')
+            ->filterByAdvisorAssignedDates('carQuoteRequestDetail', ['advisor_assigned_date', 'advisor_assigned_date_end'])
+            ->when(request()->filled('previous_quote_policy_number'), function ($query) {
+                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
+            })
             ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
                 $query->whereRelation('payments', 'insurer_tax_number', request('insurer_tax_invoice_number'));
             })
@@ -134,6 +128,12 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 $query->whereRelation('payments', 'insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
             })
             ->filterByDateRange('booking_date', 'policy_booking_date')
+            ->when($this->shouldApplyDatesFilter() && ! request()->filled('created_at_start'), function ($query) {
+                $query->filterByToday();
+            })
+            ->when($this->shouldApplyDatesFilter() && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
+                $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
+            })
             ->when(
                 request()->filled('sortBy'),
                 fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
