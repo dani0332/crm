@@ -84,7 +84,7 @@ class TravelRenewalService extends BaseService
     {
         $travelStartDate = Carbon::parse($quote->start_date);
         info(self::class." - Travel Start Date: {$travelStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
-         // Calculate the policy expiry date based on the start date + 365 days
+        // Calculate the policy expiry date based on the start date + 365 days
         $policyExpiryDate = $travelStartDate->copy()->addDays(365);
         $policyStartDate = $policyExpiryDate->copy()->addDays(1);
         $newPolicyExpiryDate = $policyStartDate->copy()->addDays(365);
@@ -131,8 +131,9 @@ class TravelRenewalService extends BaseService
 
     }
 
-    public function createTravelRenewalPayload($quote, $batch, $policyStartDate, $newPolicyExpiryDate, $destinationIds, $members, $customer){
-        return  [
+    public function createTravelRenewalPayload($quote, $batch, $policyStartDate, $newPolicyExpiryDate, $destinationIds, $members, $customer)
+    {
+        return [
             'firstName' => trim($quote->first_name),
             'lastName' => trim($quote->last_name),
             'source' => LeadSourceEnum::RENEWAL_UPLOAD,
@@ -151,7 +152,7 @@ class TravelRenewalService extends BaseService
             'destinationIds' => $destinationIds,
             'emiratesIdNumber' => $customer->emirates_id_number ?? null,
             'emiratesIdExpiryDate' => $customer->emirates_id_expiry_date ?? null,
-            'insuredFirstName' =>isset($customer->insured->first_name) ? $customer->insured->first_name : (isset($customer->insured_first_name) ? $customer->insured_first_name : '') ,
+            'insuredFirstName' => isset($customer->insured->first_name) ? $customer->insured->first_name : (isset($customer->insured_first_name) ? $customer->insured_first_name : ''),
             'insuredLastName' => isset($customer->insured->last_name) ? $customer->insured->last_name : (isset($customer->insured_last_name) ? $customer->insured_last_name : ''),
             'isEcommerce' => $quote->is_ecommerce ?? null,
             'startDate' => $policyStartDate,
