@@ -71,7 +71,6 @@ class TravelRenewalService extends BaseService
             } catch (\Exception $e) {
                 // Log the exception or handle it as needed
                 info(self::class." - Error processing quote Ref-ID: {$quote->uuid} : Error: {$e->getMessage()}  Line: {$e->getLine()} | Time: ".now());
-                throw $e;
             }
         }
     }
@@ -83,6 +82,7 @@ class TravelRenewalService extends BaseService
     }
     public function storeTravelRenewalQuote($quote)
     {
+        try {
         $travelStartDate = Carbon::parse($quote->start_date);
         info(self::class." - Travel Start Date: {$travelStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         // Calculate the policy expiry date based on the start date + 365 days
@@ -110,9 +110,9 @@ class TravelRenewalService extends BaseService
         }
 
         $members = $this->mapCustomerMembers($quote->customerMembers, $quote->primary_member_id) ?? [];
-
+        $customer->insured= null;
+        $customer->insured_first_name = null;
         if (! empty($quote->region_cover_for_id) && count($members) > 0) {
-
             $travelQuotePayload = (object) [
                 'firstName' => trim($quote->first_name),
                 'lastName' => trim($quote->last_name),
@@ -132,8 +132,8 @@ class TravelRenewalService extends BaseService
                 'destinationIds' => $destinationIds,
                 'emiratesIdNumber' => $customer->emirates_id_number ?? null,
                 'emiratesIdExpiryDate' => $customer->emirates_id_expiry_date ?? null,
-                'insuredFirstName' => ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? null,
-                'insuredLastName' => ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? null,
+                'insuredFirstName' =>isset($customer->insured->first_name) ? $customer->insured->first_name : (isset($customer->insured_first_name) ? $customer->insured_first_name : '') ,
+                'insuredLastName' => isset($customer->insured->last_name) ? $customer->insured->last_name : (isset($customer->insured_last_name) ? $customer->insured_last_name : ''),
                 'isEcommerce' => $quote->is_ecommerce ?? null,
                 'startDate' => $policyStartDate,
                 'policyExpiryDate' => Carbon::parse($newPolicyExpiryDate)->format('Y-m-d'),
@@ -142,6 +142,7 @@ class TravelRenewalService extends BaseService
                 'previousPolicyExpiryDate' => $quote->policy_expiry_date,
                 'tripStarted' => false,
             ];
+            info(self::class." - payload=".json_encode( $travelQuotePayload));
 
             TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
             info(self::class." - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid} | Time:".now());
@@ -156,7 +157,13 @@ class TravelRenewalService extends BaseService
             ];
             info(self::class.' - '.json_encode($logData).' | Time: '.now());
         }
+        } catch (\Exception $e) {
+            // Log the exception or handle it as needed
+            info(self::class." - Error processing quote Ref-ID: {$quote->uuid} : Error: {$e->getMessage()}  Line: {$e->getLine()} | Time: ".now());
+
+        }
     }
+
     public function getDestinationId($regionCoverFor, $quoteUID)
     {
         $regionMapping = [
@@ -217,7 +224,7 @@ class TravelRenewalService extends BaseService
             info(self::class." -  Lead allocation completed for Ref-ID: {$response->quoteUID} - | Time: ".now());
         } catch (\Exception $e) {
             info(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->previousQuoteId} | Time:".now());
-            throw $e;
+
         }
     }
 
