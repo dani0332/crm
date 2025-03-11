@@ -83,15 +83,17 @@ class TravelRenewalService extends BaseService
     }
     public function storeTravelRenewalQuote($quote)
     {
-        info(self::class." - start Date: {$quote->start_date} | quote Ref-ID: {$quote->uuid} Time: ".now());
         $travelStartDate = Carbon::parse($quote->start_date);
         info(self::class." - Travel Start Date: {$travelStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         // Calculate the policy expiry date based on the start date + 365 days
-        $newPolicyExpiryDate = $travelStartDate->copy()->addDays(365);
-        $policyStartDate = $newPolicyExpiryDate->copy()->addDays(1);
+        $policyExpiryDate = $travelStartDate->copy()->addDays(365);
+        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
+        $newPolicyExpiryDate = $policyStartDate->copy()->addDays(365);
+        info(self::class." - Policy Expiry Date: {$policyExpiryDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         info(self::class." - New Policy Start Date: {$policyStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         info(self::class." - New Policy Expiry Date: {$newPolicyExpiryDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
-        $batch = $this->getRenewalBatch($newPolicyExpiryDate);
+
+        $batch = $this->getRenewalBatch($policyExpiryDate);
         if (empty($batch)) {
             info(self::class." - TravelRenewalService No renewal batch found for Ref-ID: {$quote->uuid} | Time:".now());
             return;
