@@ -110,10 +110,9 @@ trait Filterable
         });
     }
 
-    public function scopeFilterBy($query, $filterName, $column = null, bool $ignoreAll = false, bool $isBool = false)
+    public function applyByFilters($query, string $filterName, string $operator, ?string $column = null, bool $ignoreAll = false, bool $isBool = false)
     {
-
-        $filterValue = request($filterName, '');
+        $filterValue = request($filterName, ($operator === 'in' ? [] : ''));
 
         $hasFilter = request()->filled($filterName);
 
@@ -121,50 +120,44 @@ trait Filterable
             $filterValue = filter_var($filterValue, FILTER_VALIDATE_BOOLEAN);
         }
 
-        if ($ignoreAll && $hasFilter && is_string($filterValue)) {
-            $hasFilter = $hasFilter && strtolower($filterValue) !== 'all';
-        }
-
-        $column = $this->resolveColumn($filterName, $column);
-        $query->when($hasFilter, function ($subQuery) use ($filterValue, $column) {
-            $subQuery->where($column, $filterValue);
-        });
-    }
-
-    public function scopeFilterIn($query, $filterName, $column = null, bool $ignoreAll = false)
-    {
-        $filterValue = request($filterName, []);
-
-        if (! is_array($filterValue) && ! empty($filterValue)) {
+        if ($operator === 'in' && ! is_array($filterValue) && ! empty($filterValue)) {
             $filterValue = explode(',', $filterValue);
         }
 
-        $hasFilter = request()->filled($filterName);
-
-        if ($ignoreAll && $hasFilter && is_array($filterValue)) {
-            $hasFilter = $hasFilter && ! in_array('all', $filterValue);
+        if ($ignoreAll && $hasFilter) {
+            if (is_array($filterValue)) {
+                $hasFilter = ! in_array('all', $filterValue);
+            } elseif (is_string($filterValue)) {
+                $hasFilter = strtolower($filterValue) !== 'all';
+            }
         }
 
         $column = $this->resolveColumn($filterName, $column);
-        $query->when($hasFilter, function ($subQuery) use ($filterValue, $column) {
-            $subQuery->whereIn($column, $filterValue);
+
+        $query->when($hasFilter, function ($subQuery) use ($filterValue, $column, $operator) {
+            if ($operator === '=') {
+                $subQuery->where($column, $filterValue);
+            } elseif ($operator === 'in') {
+                $subQuery->whereIn($column, $filterValue);
+            } elseif ($operator === 'like') {
+                $subQuery->where($column, 'like', "%{$filterValue}%");
+            }
         });
     }
 
-    public function scopeMatchBy($query, $filterName, $column = null, bool $ignoreAll = false)
+    public function scopeFilterBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false, bool $isBool = false)
     {
-        $filterValue = request($filterName, '');
+        $this->applyByFilters($query, $filterName, '=', $column, $ignoreAll, $isBool);
+    }
 
-        $hasFilter = request()->filled($filterName);
+    public function scopeFilterIn($query, string $filterName, ?string $column = null, bool $ignoreAll = false)
+    {
+        $this->applyByFilters($query, $filterName, 'in', $column, $ignoreAll);
+    }
 
-        if ($ignoreAll && $hasFilter && is_string($filterValue)) {
-            $hasFilter = $hasFilter && strtolower($filterValue) !== 'all';
-        }
-
-        $column = $this->resolveColumn($filterName, $column);
-        $query->when($hasFilter, function ($subQuery) use ($filterValue, $column) {
-            $subQuery->where($column, 'like', "%{$filterValue}%");
-        });
+    public function scopeMatchBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false)
+    {
+        $this->applyByFilters($query, $filterName, 'like', $column, $ignoreAll);
     }
 
     public function scopeFilterByToday($query, $column = 'created_at')
