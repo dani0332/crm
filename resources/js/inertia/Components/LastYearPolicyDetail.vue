@@ -155,7 +155,9 @@ onMounted(() => {
 
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Policy Start Date</div>
-                  <div>{{ dateFormat(props?.quote?.previous_policy_start_date) }}</div>
+                  <div>
+                    {{ dateFormat(props?.quote?.previous_policy_start_date) }}
+                  </div>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Advisor</div>
