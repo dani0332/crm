@@ -4,10 +4,18 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Plans Comparison PDF</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        * {
+        /* * {
             font-family: "DejaVu Sans", sans-serif !important;
+        } */
+        * {
+            font-family: 'Prompt', sans-serif !important;
+        }
+
+        .raleway-font {
+            font-family: 'Raleway', sans-serif !important;
         }
 
         @page {
@@ -695,7 +703,7 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue" style="background-color: #DBEEFF !important">
-                        <p class="quote-info" style="font-size: 16px">Home insurance comparison for:
+                        <p class="quote-info raleway-font" style="font-size: 16px; font-weight:700;">Home insurance comparison for:
                             <b>{{ $quote->first_name }}
                                 {{ $quote->last_name }}</b>
                         </p>
@@ -715,7 +723,7 @@
                     @if($homeQuoteFlags['contents_value_flag'])
                         <tr>
                             <th class="bg-light-blue">
-                                <p class="quote-info"><b>Contents value</b></p>
+                                <p class="quote-info raleway-font" style="font-weight:700;"><b>Contents value</b></p>
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
@@ -731,7 +739,7 @@
                     @if($homeQuoteFlags['personal_belongings_flag'])
                         <tr>
                             <th class="bg-light-blue">
-                                <p class="quote-info"><b>Personal belongings value</b></p>
+                                <p class="quote-info raleway-font" style="font-weight:700;"><b>Personal belongings value</b></p>
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
@@ -747,7 +755,7 @@
                     @if($homeQuoteFlags['building_value_flag'])
                         <tr>
                             <th class="bg-light-blue">
-                                <p class="quote-info"><b>Building value</b></p>
+                                <p class="quote-info raleway-font" style="font-weight:700;"><b>Building value</b></p>
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
@@ -762,7 +770,7 @@
                 {{-- rows for building, content and personal belonging value --}}
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info"><b>Gross Price</b></p>
+                        <p class="quote-info raleway-font" style="font-weight:700;"><b>Gross Price</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
@@ -774,7 +782,7 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info"><b>Vat</b></p>
+                        <p class="quote-info raleway-font" style="font-weight:700;"><b>Vat</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
@@ -786,7 +794,7 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info" style="font-size: 16px"><b>Total Price (with VAT)</b></p>
+                        <p class="quote-info raleway-font" style="font-size: 16px; font-weight:700;"><b>Total Price (with VAT)</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
@@ -874,7 +882,7 @@
                         {{-- Benefit Title Row (appears only once for each benefit) --}}
                         <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
                             <td colspan="{{ count($planIds) + 1 }}">
-                                <p class="text-left font-bold" style="color: #ffffff; padding-left: 12px;">
+                                <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 12px; font-weight: 700;">
                                     {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover))) }}
                                 </p>
                             </td>
@@ -885,7 +893,7 @@
                             <tr style="page-break-inside: avoid;">
                                 {{-- First column: Benefit Code --}}
                                 <td style="background-color: #DBEEFF">
-                                    <p class="text-left font-bold">
+                                    <p class="text-left font-bold raleway-font" style="font-weight: 700;">
                                         {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code))) }}
                                     </p>
                                 </td>
