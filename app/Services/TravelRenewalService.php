@@ -83,6 +83,7 @@ class TravelRenewalService extends BaseService
     public function storeTravelRenewalQuote($quote)
     {
         try {
+            
         $travelStartDate = Carbon::parse($quote->start_date);
         info(self::class." - Travel Start Date: {$travelStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         // Calculate the policy expiry date based on the start date + 365 days
@@ -110,8 +111,7 @@ class TravelRenewalService extends BaseService
         }
 
         $members = $this->mapCustomerMembers($quote->customerMembers, $quote->primary_member_id) ?? [];
-        $customer->insured= null;
-        $customer->insured_first_name = null;
+
         if (! empty($quote->region_cover_for_id) && count($members) > 0) {
             $travelQuotePayload = (object) [
                 'firstName' => trim($quote->first_name),
