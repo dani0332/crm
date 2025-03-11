@@ -83,20 +83,19 @@ class TravelRenewalService extends BaseService
     }
     public function storeTravelRenewalQuote($quote)
     {
-        $policyExpiryDate = Carbon::parse($quote->policy_expiry_date);
-        $currentDate = Carbon::now();
-        // Calculate the policy start date based on conditions
-        $policyStartDate = $policyExpiryDate->addDay();
-        if ($policyStartDate->lt($currentDate)) {
-            $policyStartDate = $currentDate;
-        }
+        $travelStartDate = Carbon::parse($quote->start_date);
+        info(self::class." - Travel Start Date: {$travelStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         // Calculate the policy expiry date based on the start date + 365 days
+        $policyExpiryDate = $travelStartDate->copy()->addDays(365);
+        $policyStartDate = $policyExpiryDate->copy()->addDays(1);
         $newPolicyExpiryDate = $policyStartDate->copy()->addDays(365);
+        info(self::class." - Policy Expiry Date: {$policyExpiryDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
+        info(self::class." - New Policy Start Date: {$policyStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
+        info(self::class." - New Policy Expiry Date: {$newPolicyExpiryDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
 
-        $batch = $this->getRenewalBatch($newPolicyExpiryDate);
-        if (! $batch) {
+        $batch = $this->getRenewalBatch($policyExpiryDate);
+        if (empty($batch)) {
             info(self::class." - TravelRenewalService No renewal batch found for Ref-ID: {$quote->uuid} | Time:".now());
-
             return;
         }
 
@@ -224,10 +223,9 @@ class TravelRenewalService extends BaseService
 
     public function getRenewalBatch($newPolicyExpiryDate)
     {
-        $expiryDate = Carbon::parse($newPolicyExpiryDate);
 
-        return RenewalBatch::where('start_date', '<=', $expiryDate)
-            ->where('end_date', '>=', $expiryDate)
+        return RenewalBatch::where('start_date', '<=', $newPolicyExpiryDate)
+            ->where('end_date', '>=', $newPolicyExpiryDate)
             ->whereNull('quote_type_id')
             ->first();
     }
