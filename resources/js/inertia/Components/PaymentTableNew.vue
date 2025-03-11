@@ -171,6 +171,7 @@ const isCollectedByEnabled = ref(false);
 const isTransactionCaptureButtonEnabled = ref(true);
 const premiumToCapture = ref(0);
 const capturePaymentValidationInProcess = ref(false);
+const capturePaymentValidationErrorMessage = ref('');
 const modal2Ref = ref(null);
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
@@ -1884,6 +1885,7 @@ const doCapturePaymentValidation = (totalAmount) => {
         premiumToCapture.value = res?.data?.response?.premiumAmount;
       } else {
         isTransactionCaptureButtonEnabled.value = false;
+        capturePaymentValidationErrorMessage.value = res?.data?.response?.message;
       }
     })
     .catch(err => {
@@ -5798,6 +5800,7 @@ onBeforeMount(() => {
                           class="text-sm text-red-500 dark:text-red-400"
                           >{{ isCreditPaymentInvalidError[count] }}</sup
                         >
+                        <small class="text-red-600 text-sm" v-if="capturePaymentValidationErrorMessage">{{capturePaymentValidationErrorMessage}}</small>
                       </template>
                     </div>
                     <div class="w-1/5 px-2" v-else>
@@ -6239,8 +6242,9 @@ onBeforeMount(() => {
                     </x-button>
                     <x-button
                       v-if="
-                        isApproveClicked ||
-                        (isCreditApprovalView && !isDeclineClicked)
+                        (isApproveClicked ||
+                        (isCreditApprovalView && !isDeclineClicked))
+                        && isTransactionCaptureButtonEnabled
                       "
                       class="mr-2 focus:outline-black"
                       size="sm"
