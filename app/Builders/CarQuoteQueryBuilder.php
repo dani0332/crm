@@ -116,7 +116,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('renewal_batch')
             ->filterBy('currently_insured_with')
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
-                $query->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number');
+                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
