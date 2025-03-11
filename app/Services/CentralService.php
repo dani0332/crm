@@ -1189,14 +1189,14 @@ class CentralService extends BaseService
 
         return in_array($insuranceProviderCode, $enabledProviders);
     }
-    
+
     public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
     {
         try {
             $data = [
                 'quoteUID' => $uuid,
                 'quoteTypeId' => $quoteTypeId,
-                'captureAmount' => $captureAmount
+                'captureAmount' => $captureAmount,
             ];
 
             return Marshall::request('/capture-payment-validation', 'put', $data);
@@ -1204,5 +1204,5 @@ class CentralService extends BaseService
         } catch (\Throwable $th) {
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
-    }    
+    }
 }

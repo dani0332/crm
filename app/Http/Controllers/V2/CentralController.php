@@ -682,6 +682,7 @@ class CentralController extends Controller
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
         $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
-        return response()->json(['response' => $response]);        
+
+        return response()->json(['response' => $response]);
     }
 }
