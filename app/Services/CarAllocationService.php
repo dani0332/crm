@@ -154,7 +154,7 @@ class CarAllocationService extends AllocationService
         $excludedTeams = [TeamNameEnum::AFFINITY];
 
         // If team is not available, it should not be assigned.
-        if (empty($teamId) || $teamId == 0) {
+        if (empty($teamId) || $teamId == 0 || $teamId == getTeamId(TeamNameEnum::ORGANIC)) {
             $excludedTeams[] = TeamNameEnum::SIC_UNASSISTED;
         }
 
@@ -457,7 +457,20 @@ class CarAllocationService extends AllocationService
         $excludedUserIds = $this->getExcludedUserIds($teamId);
 
         $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
+        
+        // If teamId is Organic, filter userIds to keep only the common ones
+        if ($teamId == getTeamId(TeamNameEnum::ORGANIC)) {
+            $organicUserIds = UserTeams::where('team_id', $teamId)->pluck('user_id')->toArray();
 
+            // Keep only the common userIds to avoid assigning to non-organic users
+            $userIds = array_values(array_intersect($userIds, $organicUserIds));
+
+            // If no common userIds exist, set it to an empty array for lead to remain unassigned
+            if (empty($userIds)) {
+                $userIds = [];
+            }
+        }
+        
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
             // Filter by advisor status.
