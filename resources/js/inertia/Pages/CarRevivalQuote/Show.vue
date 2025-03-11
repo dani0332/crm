@@ -973,7 +973,7 @@ const sendPolicyToClient = () => {
       "
       :storageUrl="storageUrl"
       :paymentGatewayEnum="paymentGatewayEnum"
-      isPlanDetailSectionEnabled="false"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

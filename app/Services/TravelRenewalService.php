@@ -96,6 +96,7 @@ class TravelRenewalService extends BaseService
         $batch = $this->getRenewalBatch($policyExpiryDate);
         if (empty($batch)) {
             info(self::class." - TravelRenewalService No renewal batch found for Ref-ID: {$quote->uuid} | Time:".now());
+
             return;
         }
 
