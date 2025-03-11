@@ -94,7 +94,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]),
         )
             ->filterBy('code')
-            ->filterBy('quote_batch_id')
+            ->filterIn('quote_batch_id')
             ->matchBy('first_name')
             ->matchBy('last_name')
             ->when(! request()->filled('code') && ! request()->filled('email') && ! request()->filled('mobile_no') && ! request()->filled('created_at') && ! request()->filled('payment_due_date') && ! request()->filled('booking_date') && ! request()->filled('previous_quote_policy_number') && ! request()->filled('renewal_batch') && ! request()->filled('insurer_tax_invoice_number') && ! request()->filled('insurer_commission_tax_invoice_number') && ! request()->filled('created_at_start'), function ($query) {
