@@ -134,8 +134,8 @@ class InslyDetailRepository extends BaseRepository
         }
 
         /* Temp Code - assign email for particular Policy id/number */
-        $tempSalesPerson = 'Shristi Chowdhury';
-        $tempPolicyId = 59306651;
+        $tempSalesPerson = 'Khevana Wathare';
+        $tempPolicyId = 69386544;
         if ($tempPolicyId == $policyID) {
             $advisorName = $tempSalesPerson;
         }
