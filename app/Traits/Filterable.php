@@ -115,11 +115,10 @@ trait Filterable
 
         $filterValue = request($filterName, '');
 
-        $hasFilter = ! empty($filterValue) && ! is_null($filterValue);
+        $hasFilter = request()->filled($filterName);
 
         if ($isBool) {
             $filterValue = filter_var($filterValue, FILTER_VALIDATE_BOOLEAN);
-            $hasFilter = true;
         }
 
         if ($ignoreAll && $hasFilter && is_string($filterValue)) {
@@ -140,7 +139,7 @@ trait Filterable
             $filterValue = explode(',', $filterValue);
         }
 
-        $hasFilter = ! empty($filterValue) && ! is_null($filterValue);
+        $hasFilter = request()->filled($filterName);
 
         if ($ignoreAll && $hasFilter && is_array($filterValue)) {
             $hasFilter = $hasFilter && ! in_array('all', $filterValue);
@@ -156,7 +155,7 @@ trait Filterable
     {
         $filterValue = request($filterName, '');
 
-        $hasFilter = ! empty($filterValue) && ! is_null($filterValue);
+        $hasFilter = request()->filled($filterName);
 
         if ($ignoreAll && $hasFilter && is_string($filterValue)) {
             $hasFilter = $hasFilter && strtolower($filterValue) !== 'all';
