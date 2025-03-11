@@ -1199,7 +1199,7 @@ class CentralService extends BaseService
                 'captureAmount' => $captureAmount,
             ];
 
-            return Marshall::request('/capture-payment-validation', 'put', $data);
+            return Ken::request('/capture-payment-validation', 'put', $data);
 
         } catch (\Throwable $th) {
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
