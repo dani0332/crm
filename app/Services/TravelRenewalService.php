@@ -71,7 +71,6 @@ class TravelRenewalService extends BaseService
             } catch (\Exception $e) {
                 // Log the exception or handle it as needed
                 info(self::class." - Error processing quote Ref-ID: {$quote->uuid} : Error: {$e->getMessage()}  Line: {$e->getLine()} | Time: ".now());
-                throw $e;
             }
         }
     }
@@ -89,6 +88,7 @@ class TravelRenewalService extends BaseService
         $policyExpiryDate = $travelStartDate->copy()->addDays(365);
         $policyStartDate = $policyExpiryDate->copy()->addDays(1);
         $newPolicyExpiryDate = $policyStartDate->copy()->addDays(365);
+
         info(self::class." - Policy Expiry Date: {$policyExpiryDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         info(self::class." - New Policy Start Date: {$policyStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         info(self::class." - New Policy Expiry Date: {$newPolicyExpiryDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
@@ -114,36 +114,7 @@ class TravelRenewalService extends BaseService
 
         if (! empty($quote->region_cover_for_id) && count($members) > 0) {
 
-            $travelQuotePayload = (object) [
-                'firstName' => trim($quote->first_name),
-                'lastName' => trim($quote->last_name),
-                'source' => LeadSourceEnum::RENEWAL_UPLOAD,
-                'previousQuoteId' => $quote->id,
-                'customerId' => $quote->customer_id,
-                'directionCode' => $quote->direction_code,
-                'destination' => $quote->destination ?? null,
-                'renewalBatch' => trim($batch->name),
-                'renewalBatchId' => $batch->id,
-                'email' => $quote->email,
-                'mobileNo' => $quote->mobile_no,
-                'uaeResident' => $quote->uae_resident,
-                'nationalityId' => $quote->nationality_id,
-                'dob' => $quote->dob,
-                'members' => $members,
-                'destinationIds' => $destinationIds,
-                'emiratesIdNumber' => $customer->emirates_id_number ?? null,
-                'emiratesIdExpiryDate' => $customer->emirates_id_expiry_date ?? null,
-                'insuredFirstName' => ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? null,
-                'insuredLastName' => ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? null,
-                'isEcommerce' => $quote->is_ecommerce ?? null,
-                'startDate' => $policyStartDate,
-                'policyExpiryDate' => Carbon::parse($newPolicyExpiryDate)->format('Y-m-d'),
-                'coverageCode' => $quote->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP : $quote->coverage_code,
-                'regionCoverForId' => $quote->region_cover_for_id,
-                'previousPolicyExpiryDate' => $quote->policy_expiry_date,
-                'tripStarted' => false,
-            ];
-
+            $travelQuotePayload = (object) $this->createTravelRenewalPayload($quote, $batch, $policyStartDate, $newPolicyExpiryDate, $destinationIds, $members, $customer);
             TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
             info(self::class." - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid} | Time:".now());
         } else {
@@ -157,6 +128,40 @@ class TravelRenewalService extends BaseService
             ];
             info(self::class.' - '.json_encode($logData).' | Time: '.now());
         }
+
+    }
+
+    public function createTravelRenewalPayload($quote, $batch, $policyStartDate, $newPolicyExpiryDate, $destinationIds, $members, $customer)
+    {
+        return [
+            'firstName' => trim($quote->first_name),
+            'lastName' => trim($quote->last_name),
+            'source' => LeadSourceEnum::RENEWAL_UPLOAD,
+            'previousQuoteId' => $quote->id,
+            'customerId' => $quote->customer_id,
+            'directionCode' => $quote->direction_code,
+            'destination' => $quote->destination ?? null,
+            'renewalBatch' => trim($batch->name),
+            'renewalBatchId' => $batch->id,
+            'email' => $quote->email,
+            'mobileNo' => $quote->mobile_no,
+            'uaeResident' => $quote->uae_resident,
+            'nationalityId' => $quote->nationality_id,
+            'dob' => $quote->dob,
+            'members' => $members,
+            'destinationIds' => $destinationIds,
+            'emiratesIdNumber' => $customer->emirates_id_number ?? null,
+            'emiratesIdExpiryDate' => $customer->emirates_id_expiry_date ?? null,
+            'insuredFirstName' => isset($customer->insured->first_name) ? $customer->insured->first_name : (isset($customer->insured_first_name) ? $customer->insured_first_name : ''),
+            'insuredLastName' => isset($customer->insured->last_name) ? $customer->insured->last_name : (isset($customer->insured_last_name) ? $customer->insured_last_name : ''),
+            'isEcommerce' => $quote->is_ecommerce ?? null,
+            'startDate' => $policyStartDate,
+            'policyExpiryDate' => Carbon::parse($newPolicyExpiryDate)->format('Y-m-d'),
+            'coverageCode' => $quote->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP : $quote->coverage_code,
+            'regionCoverForId' => $quote->region_cover_for_id,
+            'previousPolicyExpiryDate' => $quote->policy_expiry_date,
+            'tripStarted' => false,
+        ];
     }
     public function getDestinationId($regionCoverFor, $quoteUID)
     {
@@ -218,7 +223,7 @@ class TravelRenewalService extends BaseService
             info(self::class." -  Lead allocation completed for Ref-ID: {$response->quoteUID} - | Time: ".now());
         } catch (\Exception $e) {
             info(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->previousQuoteId} | Time:".now());
-            throw $e;
+
         }
     }
 
