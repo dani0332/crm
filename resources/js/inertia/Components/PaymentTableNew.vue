@@ -168,6 +168,9 @@ const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
 const isCollectedByEnabled = ref(false);
+const isTransactionCaptureButtonEnabled = ref(true);
+const premiumToCapture = ref(0);
+const capturePaymentValidationInProcess = ref(false);
 const modal2Ref = ref(null);
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
@@ -1810,12 +1813,15 @@ const handleDeletePayment = async () => {
     });
 };
 
-const editPaymentModal = (
+const editPaymentModal = async (
   payment,
   split_payment_id,
   sr_no,
   capture_approval,
 ) => {
+
+  isTransactionCaptureButtonEnabled.value = true;
+
   if (
     sr_no === 0 &&
     payment.payment_status.id === paymentStatusEnum.PAID &&
@@ -1844,6 +1850,11 @@ const editPaymentModal = (
     return false;
   }
 
+  // Payment Capture Validation for GIG
+  if(capture_approval == 1 && payment?.insurance_provider?.code == 'AXA' && (props.quoteType === 'Bike' || props.quoteType === 'Car')) {
+   await doCapturePaymentValidation(payment.total_amount); 
+  }
+
   resetPaymentForm();
   initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
   handleCollectionTypeChange();
@@ -1857,6 +1868,31 @@ const editPaymentModal = (
   finalizePaymentForm(payment, capture_approval);
   setFrequencyTypes();
 };
+
+const doCapturePaymentValidation = (totalAmount) => {
+  const data = {
+    modelType: props.quoteType,
+    uuid: props.quoteRequest.uuid,
+    captureAmount: totalAmount,
+  };
+
+  capturePaymentValidationInProcess.value = true;
+  return axios
+    .post(`/payments/${props.quoteType}/payments-capture-validation`, data)
+    .then(res => {
+      if(res?.data?.response?.status == 'CAPTURE_VALIDATION_CLEARED') {
+        premiumToCapture.value = res?.data?.response?.premiumAmount;
+      } else {
+        isTransactionCaptureButtonEnabled.value = false;
+      }
+    })
+    .catch(err => {
+      console.log(err);
+      isTransactionCaptureButtonEnabled.value = false;
+    }).finally(() => {
+      capturePaymentValidationInProcess.value = false;
+    });
+}
 
 const resetPaymentForm = () => {
   paymentMethodsForm.reset();
@@ -1997,7 +2033,7 @@ const processPaymentSplits = payment => {
     dueDateModels.value[i] = split.due_date
       ? moment(split.due_date).format('YYYY-MM-DD')
       : '';
-    collectionAmountModels.value[i] = split.collection_amount;
+    collectionAmountModels.value[i] = premiumToCapture.value ? premiumToCapture.value : split.collection_amount;
 
     if (['CHQ', 'PDC'].includes(split.payment_method.code)) {
       isCheckDetailsEnabled.value[i] = true;
@@ -4116,6 +4152,7 @@ onBeforeMount(() => {
                                   : alertCapture(item)
                               "
                               :disabled="isApproveConfirmed"
+                              :loading="capturePaymentValidationInProcess"
                             >
                               Capture
                             </x-button>
@@ -6211,7 +6248,7 @@ onBeforeMount(() => {
                       type="submit"
                       tabindex="0"
                       :loading="paymentMethodsForm.processing"
-                      :disabled="isApproveConfirmed"
+                      :disabled="isApproveConfirmed || !isTransactionCaptureButtonEnabled"
                     >
                       <template v-if="isCreditApprovalView && isCreditCardView">
                         Capture
