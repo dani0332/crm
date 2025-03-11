@@ -658,17 +658,18 @@ class SplitPaymentService
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
             // Check capture payment validation
             $isGIGProvider = $paymentSplit->payment->insuranceProvider->code == InsurerProviderEnum::GIG_INSURANCE;
-            if($isGIGProvider && in_array($modelType, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
+            if ($isGIGProvider && in_array($modelType, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
                 info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Capture Payment Validation');
 
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
                 $capturePaymentValidationResponse = $this->capturePaymentValidation($mainLeadObject->uuid, $quoteTypeId, $amountCollected);
                 if ($capturePaymentValidationResponse['status'] == 'CAPTURE_VALIDATION_FAILED') {
                     $errorMessage = $capturePaymentValidationResponse['message'];
-                    info('Capture Payment Validation Failed for UUID: '. $mainLeadObject->uuid. ' quoteTypeId: '. $quoteTypeId. ' captureAmount: '. $amountCollected. ' With Error:' .$errorMessage);
+                    info('Capture Payment Validation Failed for UUID: '.$mainLeadObject->uuid.' quoteTypeId: '.$quoteTypeId.' captureAmount: '.$amountCollected.' With Error:'.$errorMessage);
                     $this->handleCapturePaymentError($errorMessage, $isFromJob, $paymentSplit->id, $paymentSplit->code);
                     if ($isFromJob) {
                         $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
+
                         return false;
                     }
                     vAbort($errorMessage);
@@ -1275,7 +1276,7 @@ class SplitPaymentService
             $data = [
                 'quoteUID' => $uuid,
                 'quoteTypeId' => $quoteTypeId,
-                'captureAmount' => $captureAmount
+                'captureAmount' => $captureAmount,
             ];
 
             return Marshall::request('/capture-payment-validation', 'put', $data);
