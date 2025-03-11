@@ -8,6 +8,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
@@ -23,6 +24,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Facades\Marshall;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
@@ -654,6 +656,25 @@ class SplitPaymentService
         }
 
         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
+            // Check capture payment validation
+            $isGIGProvider = $paymentSplit->payment->insuranceProvider->code == InsurerProviderEnum::GIG_INSURANCE;
+            if($isGIGProvider && in_array($modelType, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
+                info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Capture Payment Validation');
+
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+                $capturePaymentValidationResponse = $this->capturePaymentValidation($mainLeadObject->uuid, $quoteTypeId, $amountCollected);
+                if ($capturePaymentValidationResponse['status'] == 'CAPTURE_VALIDATION_FAILED') {
+                    $errorMessage = $capturePaymentValidationResponse['message'];
+                    info('Capture Payment Validation Failed for UUID: '. $mainLeadObject->uuid. ' quoteTypeId: '. $quoteTypeId. ' captureAmount: '. $amountCollected. ' With Error:' .$errorMessage);
+                    $this->handleCapturePaymentError($errorMessage, $isFromJob, $paymentSplit->id, $paymentSplit->code);
+                    if ($isFromJob) {
+                        $this->handleAutomationError($quoteModel, $modelType, $paymentSplit->payment);
+                        return false;
+                    }
+                    vAbort($errorMessage);
+                }
+            }
+
             // Log message for creating Sage receipt
             info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage receipt id: '.$paymentSplit->sage_reciept_id);
 
@@ -1245,6 +1266,22 @@ class SplitPaymentService
                     $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
                 }
             }
+        }
+    }
+
+    private function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    {
+        try {
+            $data = [
+                'quoteUID' => $uuid,
+                'quoteTypeId' => $quoteTypeId,
+                'captureAmount' => $captureAmount
+            ];
+
+            return Marshall::request('/capture-payment-validation', 'put', $data);
+
+        } catch (\Throwable $th) {
+            return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
     }
 }
