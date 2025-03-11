@@ -83,7 +83,7 @@ class TravelRenewalService extends BaseService
     public function storeTravelRenewalQuote($quote)
     {
         try {
-            
+
         $travelStartDate = Carbon::parse($quote->start_date);
         info(self::class." - Travel Start Date: {$travelStartDate} | quote Ref-ID: {$quote->uuid} Time: ".now());
         // Calculate the policy expiry date based on the start date + 365 days
@@ -142,7 +142,6 @@ class TravelRenewalService extends BaseService
                 'previousPolicyExpiryDate' => $quote->policy_expiry_date,
                 'tripStarted' => false,
             ];
-            info(self::class." - payload=".json_encode( $travelQuotePayload));
 
             TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
             info(self::class." - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid} | Time:".now());
