@@ -110,12 +110,17 @@ trait Filterable
         });
     }
 
-    public function scopeFilterBy($query, $filterName, $column = null, bool $ignoreAll = false)
+    public function scopeFilterBy($query, $filterName, $column = null, bool $ignoreAll = false, bool $isBool = false)
     {
 
         $filterValue = request($filterName, '');
 
         $hasFilter = ! empty($filterValue) && ! is_null($filterValue);
+
+        if ($isBool) {
+            $filterValue = filter_var($filterValue, FILTER_VALIDATE_BOOLEAN);
+            $hasFilter = true;
+        }
 
         if ($ignoreAll && $hasFilter && is_string($filterValue)) {
             $hasFilter = $hasFilter && strtolower($filterValue) !== 'all';
