@@ -147,12 +147,10 @@ class RenewalsUploadService
     public function uploadRenewalsFile($isTravel = false)
     {
         $path = 'renewals';
-        // Getting original file name
-        // Debugger : remove timestamp from file name
-        // $timeStamp = Carbon::now()->timestamp;
-        // $fileName = $timeStamp . '-' . request()->file('file_name')->getClientOriginalName();
 
+        // Getting original file name
         $fileName = request()->file('file_name')->getClientOriginalName();
+        
         // Generating name for file for azure usage
         $azureFileName = get_guid().'_'.$fileName;
 
@@ -1224,14 +1222,14 @@ class RenewalsUploadService
         $memberNames = array_map('trim', explode('|', $data['member_names']));
         $memberPremiums = array_map('trim', explode('|', $data['member_premium']));
 
-        $healthPlan = HealthPlan::where('text', $quote->renewal_upload_plan_code)->first();
+        $healthPlan = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first();
         $healthCoPlan = HealthPlanCoPayment::where('code', $quote->renewal_upload_copay_code)->first();
         $existingCustomersMember = CustomerMembers::where('quote_id', $quote->id)
             ->where('quote_type', HealthQuote::class)
             ->whereNull('deleted_at')
             ->get()
             ->keyBy(fn($member) => strtolower(trim($member->first_name . ' ' . $member->last_name)));
-
+            
         $memberPremiumBreakdown = [];
         foreach ($memberDobs as $index => $dob) {
             $memberNameArray = explode(' ', $memberNames[$index]);
@@ -1240,18 +1238,18 @@ class RenewalsUploadService
             $fullNameKey = strtolower(trim($firstName . ' ' . $lastName));
             $premium = $memberPremiums[$index];
 
-            if($existingCustomersMember[$fullNameKey]) {
+            if($existingCustomersMember[$fullNameKey] && isset($premium)) {
                 $memberPremiumBreakdown[] = [
                     'memberId' => $existingCustomersMember[$fullNameKey]->id,
                     'ratesPerCopay' => [
-                        "healthPlanCoPaymentId" => $healthCoPlan->id,
-                        "basePrice" => $premium
+                        [
+                            "healthPlanCoPaymentId" => $healthCoPlan->id,
+                            "basePrice" => $premium
+                        ]
                     ]
                 ];
             }
         }
-
-
         $planPayload = [
             'planId' => $healthPlan->id,
             'selectedCopayId' => $healthCoPlan->id,
