@@ -438,8 +438,8 @@
             text-align: center;
             padding: 8px 10px;
             width: 100%;
-            height: 60px; /* Use the latest height value */
-            max-height: 60px;
+            height: 150px; /* Use the latest height value */
+            max-height: 150px;
         }
 
         .header .logo {
@@ -461,7 +461,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 60px;
+            height: 150px;
         }
 
 
@@ -587,7 +587,7 @@
     <main>
         <table class="main-table" style="width: 100%; table-layout: auto;">
             <thead>
-                <p style="margin-top:95px"></p>
+                <p style="margin-top:180px"></p>
                 <tr>
                     <th class="bg-light-blue" rowspan="2">
                         <p class="quote-info raleway-font" style="font-size: 16px; font-weight:700;">Insurance company
