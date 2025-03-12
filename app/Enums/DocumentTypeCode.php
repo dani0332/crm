@@ -77,9 +77,4 @@ class DocumentTypeCode extends Enum
     const E_TICKETS = 'E_TICKETS';
     const AUDIT = 'AUDIT';
     const TRVLPAS = 'TRVLPAS';
-    const CPS = 'CPS'; // Policy Schedule
-    const YDPDR = 'YDPDR'; // Discount Proof
-    const ECARD_YTCH = 'ECARD_YTCH'; // E-Card
-    const TAEA = 'TAEA'; // Additional Email Attachments
-    const PHB = 'PHB'; // Policy Handbook
 }
