@@ -722,7 +722,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
     });
 
-
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
 });
 
