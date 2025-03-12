@@ -432,7 +432,6 @@
         }
 
         .header {
-            background: #1d83bc;
             color: #ffffff;
             font-size: 18px;
             font-weight: 600;
@@ -441,10 +440,6 @@
             width: 100%;
             height: 60px; /* Use the latest height value */
             max-height: 60px;
-            background-image: url('{{ public_path('images/new-header-bg-image.png') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
         }
 
         .header .logo {
@@ -468,6 +463,7 @@
             right: 0;
             height: 60px;
         }
+
 
     </style>
 </head>
@@ -580,20 +576,13 @@
 
     {{-- PDF Page Header --}}
     <header>
-        <div class="header"
-            style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000; color: #ffffff; padding: 8px 10px; height: 60px; background-image: url('{{ public_path('images/new-header-bg-image.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
-            <div class="logo"
-                style="float: left; background-color: white; border-radius: 5px; padding: 5px 10px 5px 0px; height: 50px;">
-                <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo"
-                    style="max-height: 50px; height: 50px;" />
+        <div class="header">
+            <div class="logo">
+                <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo">
             </div>
-            <h3
-                style="margin: 0; padding-top: 5px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
-                Your tailor made home insurance <br />comparison table
-            </h3>
         </div>
     </header>
-
+    
     {{-- PDF Page Inner Content --}}
     <main>
         <table class="main-table" style="width: 100%; table-layout: auto;">
