@@ -1281,12 +1281,23 @@ class HomeQuoteService extends BaseService
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer', 'homeQuote']);
 
+        // Get accommodation_type_id and coverage_type_id with null safety
+        $accommodationTypeId = $quote->homeQuote->accommodation_type_id ?? null;
+        $coverageTypeId = $quote->homeQuote->coverage_type_id ?? null;
+
+        // Use Laravel Collection's `firstWhere` to find the matching text efficiently
+        $accommodationText = collect($lookUpData->accommodationType)
+            ->firstWhere('id', $accommodationTypeId)['text'] ?? 'N/A';
+
+        $coverageText = collect($lookUpData->coverages)
+            ->firstWhere('id', $coverageTypeId)['text'] ?? 'N/A';
+
         // Retrieve home quote flags and values
         $homeQuoteFlags = $this->getHomeQuoteFlags($quote->homeQuote);
         $flagValues = $this->getFlagValues($homeQuoteFlags, $quote->homeQuote, $lookUpData->contentValues, $lookUpData->personalBelongingValues);
 
         // Generate the PDF with relevant data
-        $pdf = $this->generatePdf($quote, $quotePlans, $planIds, $addons, $providers, $homeQuoteFlags, $flagValues);
+        $pdf = $this->generatePdf($quote, $quotePlans, $planIds, $addons, $providers, $homeQuoteFlags, $flagValues, $accommodationText, $coverageText);
 
         // Generate the PDF filename
         $pdfName = $this->generatePdfFilename($quote);
@@ -1345,15 +1356,19 @@ class HomeQuoteService extends BaseService
         return collect($values)->firstWhere('id', $id);
     }
 
-    private function generatePdf($quote, $quotePlans, array $planIds, $addons, array $providers, array $homeQuoteFlags, array $flagValues)
+    private function generatePdf($quote, $quotePlans, array $planIds, $addons, array $providers, array $homeQuoteFlags, array $flagValues, $accommodationText, $coverageText)
     {
         return PDF::setOption([
             'isHtml5ParserEnabled' => true,
             'dpi' => 150,
             'isRemoteEnabled' => true,
         ])
-            ->loadView('pdf.home_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'homeQuoteFlags', 'flagValues'));
+        ->loadView('pdf.home_quote_plans', compact(
+            'quotePlans', 'planIds', 'quote', 'addons', 'providers', 
+            'homeQuoteFlags', 'flagValues', 'accommodationText', 'coverageText'
+        ));
     }
+
 
     private function generatePdfFilename($quote): string
     {

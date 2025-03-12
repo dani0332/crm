@@ -616,16 +616,16 @@
                 <div class="header-text">
                     <strong>Home insurance comparison table</strong>
                     &nbsp; | &nbsp;
-                    Name: <span class="header-text-highlight">John Wick</span>
+                    Name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span>
                     &nbsp; | &nbsp;
-                    Property type: <span class="header-text-highlight">Villa</span>
+                    Property type: <span class="header-text-highlight">{{ $accommodationText }}</span>
                     &nbsp; | &nbsp;
-                    Coverage type: <span class="header-text-highlight">Building and Contents</span>
+                    Coverage type: <span class="header-text-highlight">{{ $coverageText }}</span>
                 </div>
             
                 <!-- Right Side Quote Number -->
                 <div class="quote-number">
-                    Quote reference number: <strong>HOM-12HOME456</strong>
+                    Quote reference number: <strong>{{ $quote->code }}</strong>
                 </div>
             </div>
         </div>
