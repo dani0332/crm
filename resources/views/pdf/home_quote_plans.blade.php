@@ -614,7 +614,7 @@
             <div class="header-bottom">
                 <!-- Left Side Text -->
                 <div class="header-text">
-                    <strong>Home insurance comparison table</strong>
+                    <strong class="raleway-font">Home insurance comparison table</strong>
                     &nbsp; | &nbsp;
                     Name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span>
                     &nbsp; | &nbsp;
