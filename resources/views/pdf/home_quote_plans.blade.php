@@ -160,12 +160,12 @@
     .provider {
         border: 1px solid #bfbfbf;
         font-size: 15px;
-        line-height: 20px;
+        line-height: 1;
         font-weight: 400;
         color: #4ea4a8;
         vertical-align: middle;
-        max-height: 40px;
-        height: 40px;
+        max-height: 35px;
+        height: 35px;
     }
 
     .spacer {
@@ -252,7 +252,7 @@
     }
 
     .provider-logo {
-        width: 80px;
+        width: 45px;
     }
 
     .no-border {
