@@ -159,7 +159,7 @@
 
     .provider {
         border: 1px solid #bfbfbf;
-        font-size: 15px;
+        font-size: 14px;
         line-height: 1;
         font-weight: 400;
         color: #4ea4a8;
@@ -184,7 +184,7 @@
         text-align: right;
         vertical-align: bottom;
         margin-top: -1px;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 400;
         text-align: left;
         padding: 0;
@@ -200,7 +200,7 @@
     }
 
     .info p {
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 400;
     }
 
@@ -230,25 +230,6 @@
 
     .btn-buy:hover {
         background-color: #d7fbd0;
-    }
-
-    .text-heading {
-        color: #ffffff;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        font-size: 20px;
-        font-weight: 700;
-    }
-
-    .text-heading p {
-        margin: 0;
-        padding-left: 12px;
-    }
-
-    .heading-desc {
-        font-size: 12px;
-        font-weight: 400;
     }
 
     .provider-logo {
@@ -288,7 +269,7 @@
     table.tbl-footer tr td a {
         color: #ffffff;
         border: none;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 400;
     }
 
@@ -392,7 +373,7 @@
         padding: 10px;
         text-align: left;
         vertical-align: top;
-        font-size: 16px;
+        font-size: 14px;
         line-height: 1;
         border: none;
     }
@@ -401,7 +382,7 @@
         page-break-inside: avoid;
         page-break-before: auto;
         margin: 0;
-        font-size: 16px;
+        font-size: 14px;
         line-height: 1;
         text-align: left;
     }
@@ -412,14 +393,14 @@
         padding: 10px;
         text-align: left;
         vertical-align: top;
-        font-size: 16px;
+        font-size: 14px;
         line-height: 1;
         border: none;
     }
 
     .header {
         color: #ffffff;
-        font-size: 18px;
+        font-size: 14px;
         font-weight: 600;
         text-align: center;
         padding: 8px 10px;
@@ -641,7 +622,7 @@
                 <p style="margin-top:200px"></p>
                 <tr>
                     <th class="bg-light-blue" rowspan="2">
-                        <p class="quote-info raleway-font" style="font-size: 16px; font-weight:700;">Insurance company
+                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Insurance company
                         </p>
                     </th>
                     @foreach ($planIds as $planId)
@@ -675,12 +656,12 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-size: 16px; font-weight:700;">Plan name
+                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Plan name
                         </p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="font-size: 16px">
+                            <p class="text-center" style="font-size: 14px">
                                 {{ $plans[$planId]->name ?? '' }}
                             </p>
                         </th>
@@ -696,7 +677,7 @@
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
-                                    <p class="text-center" style="font-size: 16px">
+                                    <p class="text-center" style="font-size: 14px">
                                         {{ $flagValues['contents_value'] }}
                                     </p>
                                 </th>
@@ -712,7 +693,7 @@
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
-                                    <p class="text-center" style="font-size: 16px">
+                                    <p class="text-center" style="font-size: 14px">
                                         {{ $flagValues['personal_belongings_value'] }}
                                     </p>
                                 </th>
@@ -728,7 +709,7 @@
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
-                                    <p class="text-center" style="font-size: 16px">
+                                    <p class="text-center" style="font-size: 14px">
                                         {{ $flagValues['building_value'] }}
                                     </p>
                                 </th>
@@ -743,7 +724,7 @@
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="font-size: 16px">
+                            <p class="text-center" style="font-size: 14px">
                                 AED {{ number_format($plans[$planId]->actualPremium ?? 0, 2) }}
                             </p>
                         </th>
@@ -755,7 +736,7 @@
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="font-size: 16px">
+                            <p class="text-center" style="font-size: 14px">
                                 AED {{ number_format($plans[$planId]->vat ?? 0, 2) }}
                             </p>
                         </th>
@@ -763,7 +744,7 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-size: 16px; font-weight:700;"><b>Total Price (with VAT)</b></p>
+                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;"><b>Total Price (with VAT)</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
@@ -794,7 +775,7 @@
                                                 $buyNowText .
                                                 '<br>' .
                                                 '<small style="font-size: 10px; font-weight: normal; line-height: 1;">AED</small>' .
-                                                '<strong style="font-size: 16px; font-weight: bold; line-height: 1;">' .
+                                                '<strong style="font-size: 14px; font-weight: bold; line-height: 1;">' .
                                                 $totalPriceFormatted .
                                                 '</strong>' .
                                                 '</a>';
@@ -917,7 +898,7 @@
         <table class="tbl-footer" style="padding: 0 10px; margin: 0; width: 100%; border: none;">
             <tr>
                 <td colspan="2" class="text-center">
-                    <h4 style="font-size: 16px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
+                    <h4 style="font-size: 14px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
                         Insurance Brokerage Services LLC</h4>
                 </td>
             </tr>
