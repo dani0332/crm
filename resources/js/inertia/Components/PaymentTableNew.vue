@@ -2760,10 +2760,15 @@ const uploadDocument = (doc, files, count) => {
           reject(errors);
         },
         onSuccess: data => {
-          let quoteTypes = quoteTypesToCheck.filter(quoteType => quoteType !== 'Home');
-          let quoteDocuments = quoteTypes.includes(props.quoteType) || props.quoteSubType === quoteTypeCodeEnum.CORPLINE || props.sendUpdate
-            ? data.props.quoteDocuments
-            : data.props.quote.documents;
+          let quoteTypes = quoteTypesToCheck.filter(
+            quoteType => quoteType !== 'Home',
+          );
+          let quoteDocuments =
+            quoteTypes.includes(props.quoteType) ||
+            props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
+            props.sendUpdate
+              ? data.props.quoteDocuments
+              : data.props.quote.documents;
           quoteDocuments.sort((a, b) => b.id - a.id);
           if (count === 0) {
             isDiscountDocumentNotUploaded.value = false;
