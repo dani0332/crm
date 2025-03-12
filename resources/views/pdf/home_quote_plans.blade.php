@@ -25,13 +25,12 @@
     }
 
     html {
-        line-height: 1.5;
+        line-height: 1;
         margin: 0;
         padding: 0;
     }
 
     body {
-        /* line-height: 1.6; */
         line-height: 1;
         margin: 0;
         padding: 0;
@@ -222,14 +221,13 @@
     .btn-buy {
         background-color: #FE7333;
         color: #ffffff;
-        padding: 4px 12px;
+        padding: 0 35px;
         text-align: center;
         text-decoration: none;
         display: inline-block;
         font-size: 14px;
         font-weight: bold;
         border-radius: 5px;
-        margin: 5px 0;
     }
 
     .btn-buy:hover {
@@ -397,18 +395,8 @@
         text-align: left;
         vertical-align: top;
         font-size: 16px;
-        line-height: 1.5;
+        line-height: 1;
         border: none;
-    }
-
-    .disclaimer-title {
-        page-break-inside: avoid;
-        page-break-before: auto;
-        font-weight: bold;
-        font-size: 20px;
-        margin-bottom: 10px;
-        display: block;
-        text-align: left;
     }
 
     .disclaimer-text {
@@ -416,7 +404,7 @@
         page-break-before: auto;
         margin: 0;
         font-size: 16px;
-        line-height: 1.5;
+        line-height: 1;
         text-align: left;
     }
 
@@ -427,7 +415,7 @@
         text-align: left;
         vertical-align: top;
         font-size: 16px;
-        line-height: 1.5;
+        line-height: 1;
         border: none;
     }
 
@@ -807,8 +795,8 @@
                                                 '">' .
                                                 $buyNowText .
                                                 '<br>' .
-                                                '<small style="font-size: 10px; font-weight: normal; line-height: 1.2;">AED</small>' .
-                                                '<strong style="font-size: 16px; font-weight: bold; line-height: 1.2;">' .
+                                                '<small style="font-size: 10px; font-weight: normal; line-height: 1;">AED</small>' .
+                                                '<strong style="font-size: 16px; font-weight: bold; line-height: 1;">' .
                                                 $totalPriceFormatted .
                                                 '</strong>' .
                                                 '</a>';
@@ -913,20 +901,10 @@
 
                 <tr>
                     <td class="disclaimer-td" colspan="{{ sizeof($planIds) + 1 }}">
-                        <span class="disclaimer-title">
-                            Disclaimer and Material Information
-                        </span>
                         <p class="disclaimer-text">
-                            All quotes provided are indicative and based on the information you have supplied. While we
-                            strive for accuracy in our comparison tables, discrepancies may occur. In such instances,
-                            the
-                            terms detailed in the insurer's policy wordings and schedules will take precedence over the
-                            details provided by us. For the full text of the disclaimer and material information, please
-                            refer to the quote. Policy wordings and schedules will prevail. Additionally, your final
-                            price
-                            may be adjusted following the insurer's review of your risk profile after payment. We
-                            recommend
-                            reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
+                            <strong>Disclaimer: </strong>Quotes are based on the details you provided and may change after the insurer reviews
+                            you profile. If there are differences, the insurer's policy terms will apply.
+                            Please check your policy once issued to ensure it meets your needs.
                         </p>
                     </td>
                 </tr>
