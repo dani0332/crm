@@ -222,7 +222,7 @@ class SageApiService
 
         // Execute Prepayment Post in Progress Call
         if (! empty($preparedData['payment']?->send_update_log_id)) {
-            $prePaymentPostInProgress = $this->executeARPrepaymentReceiptPost([$sageRequestPayload, $sendUpdateLog, $preparedData['splitPayments']]);
+            $prePaymentPostInProgress = $this->executeARPrepaymentReceiptPost([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
             if (! $prePaymentPostInProgress['status']) {
                 return $prePaymentPostInProgress;
             }
@@ -692,7 +692,7 @@ class SageApiService
             info('Sage API : Payment frequency : '.$payment->frequency.' for '.$quote->code);
 
             // Execute AR Prepayment Receipt Post Call
-            $prePaymentPostInProgress = $this->executeARPrepaymentReceiptPost([$sageRequest, $quote, $paymentSplits]);
+            $prePaymentPostInProgress = $this->executeARPrepaymentReceiptPost([$sageRequest, $quote, $payment, $paymentSplits]);
             if (! $prePaymentPostInProgress['status']) {
                 return $prePaymentPostInProgress;
             }
@@ -768,7 +768,7 @@ class SageApiService
 
     private function executeARPrepaymentReceiptPost($sageRequestDataArray): array
     {
-        [$sageRequest, $quote, $paymentSplits] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment , $paymentSplits] = $sageRequestDataArray;
         $postedReceiptStatus = [];
 
         foreach ($paymentSplits as $paymentSplit) {
@@ -781,49 +781,55 @@ class SageApiService
             }
 
             $sageLogArray = $paymentSplit->sageApiLogs->keyBy('step')->toArray();
-            $sageResponse = json_decode($sageLogArray[2]['response'], true);
 
-            if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == SageEnum::STATUS_SUCCESS) {
-                $isLiveApiCallStep4 = true;
-                $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
+            if (isset($sageLogArray[2])) {
+                $sageResponse = json_decode($sageLogArray[2]['response'], true);
 
-                if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_SUCCESS) {
-                    info('SAGE API :  AR Prepayment Receipt Sent Already - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
-                    $isLiveApiCallStep4 = false;
-                    $postedResponse = json_decode($sageLogArray[4]['response'], true);
-                } else {
-                    info('SAGE API :  Checking status of AR Prepayment Receipt batch '.$sageResponse['BatchNumber'].' - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
-                    $arPrePaymentReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
-                    $arPrePaymentReceiptBatch = json_decode($arPrePaymentReceiptBatch, true);
-                    info('SAGE API :  Status of AR Prepayment Receipt batch '.$sageResponse['BatchNumber'].' - Batch Status: '.$arPrePaymentReceiptBatch['BatchStatus'].' - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
+                if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == SageEnum::STATUS_SUCCESS) {
+                    $isLiveApiCallStep4 = true;
+                    $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
 
-                    if ($arPrePaymentReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                        info('SAGE API : AR Prepayment Receipt batch '.$sageResponse['BatchNumber'].' already posted - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
-                        $postedResponse = $aRPostReceipts['payload'];
+                    if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_SUCCESS) {
+                        info('SAGE API :  AR Prepayment Receipt Sent Already - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
+                        $isLiveApiCallStep4 = false;
+                        $postedResponse = json_decode($sageLogArray[4]['response'], true);
                     } else {
-                        info('SAGE API :  Send aRPostReceiptsPayment - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
-                        $resp = $this->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
-                        $postedResponse = json_decode($resp, true);
+                        info('SAGE API :  Checking status of AR Prepayment Receipt batch '.$sageResponse['BatchNumber'].' - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
+                        $arPrePaymentReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
+                        $arPrePaymentReceiptBatch = json_decode($arPrePaymentReceiptBatch, true);
+                        info('SAGE API :  Status of AR Prepayment Receipt batch '.$sageResponse['BatchNumber'].' - Batch Status: '.$arPrePaymentReceiptBatch['BatchStatus'].' - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
+
+                        if ($arPrePaymentReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
+                            info('SAGE API : AR Prepayment Receipt batch '.$sageResponse['BatchNumber'].' already posted - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
+                            $postedResponse = $aRPostReceipts['payload'];
+                        } else {
+                            info('SAGE API :  Send aRPostReceiptsPayment - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
+                            $resp = $this->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+                            $postedResponse = json_decode($resp, true);
+                        }
                     }
-                }
 
-                if (isset($postedResponse['error'])) {
-                    $isLiveApiCallStep4 = false;
-                    $errorMessage = 'Error while making AR Prepayment Receipt Posted to sage';
-                    $message = 'aRPostReceiptsPayment - '.$sageResponse['BatchNumber'].' failed - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no;
-                    $postedReceiptStatus[] = ['status' => false, 'message' => $errorMessage];
+                    if (isset($postedResponse['error'])) {
+                        $isLiveApiCallStep4 = false;
+                        $errorMessage = 'Error while making AR Prepayment Receipt Posted to sage';
+                        $message = 'aRPostReceiptsPayment - '.$sageResponse['BatchNumber'].' failed - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no;
+                        $postedReceiptStatus[] = ['status' => false, 'message' => $errorMessage];
 
-                    $this->logErrorAndReturn([$paymentSplit, $message, $errorMessage, $aRPostReceipts, $postedResponse, 4, 4, SageEnum::STATUS_FAIL, $sageRequest->userId]);
-                }
+                        $this->logErrorAndReturn([$paymentSplit, $message, $errorMessage, $aRPostReceipts, $postedResponse, 4, 4, SageEnum::STATUS_FAIL, $sageRequest->userId]);
+                    }
 
-                info('SAGE API : '.$quote->code.' : aRPostReceiptsPayment - '.$sageResponse['BatchNumber'].' completed successfully - Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
-                if ($isLiveApiCallStep4) {
-                    $postedReceiptStatus[] = ['status' => true, 'message' => 'AR Prepayment Receipt posted on sage - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no];
-                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, 4, 4, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    info('SAGE API : '.$quote->code.' : aRPostReceiptsPayment - '.$sageResponse['BatchNumber'].' completed successfully - Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
+                    if ($isLiveApiCallStep4) {
+                        $postedReceiptStatus[] = ['status' => true, 'message' => 'AR Prepayment Receipt posted on sage - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no];
+                        $this->logSageApiCall($aRPostReceipts, $postedResponse, $paymentSplit, 4, 4, SageEnum::STATUS_SUCCESS, $sageRequest->userId);
+                    }
+                } else {
+                    info('SAGE API - Error found: Prepayment receipt is not ready to be post - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' - code: '.$quote->code);
+                    $postedReceiptStatus[] = ['status' => false, 'message' => 'Error found: Prepayment receipt is not ready to be post - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no];
                 }
             } else {
-                info('SAGE API - Error found: Prepayment receipt is not ready to be post - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' - code: '.$quote->code);
-                $postedReceiptStatus[] = ['status' => false, 'message' => 'Error found: Prepayment receipt is not ready to be post - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no];
+                info('SAGE API -  Posting of Prepayment skipped as Creation of prepayment is not found - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' - code: '.$quote->code);
+                $postedReceiptStatus[] = ['status' => true, 'message' => ' Posting of Prepayment skipped as Creation of prepayment is not found : '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no];
             }
         }
 

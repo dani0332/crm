@@ -82,7 +82,6 @@ class ApplicationStorageSeeder extends Seeder
         //     ],
         // );
         $this->seedBenchmarking();
-        $this->seedStopDeduplicateScript();
     }
 
     private function seedBirdWorkflowUrls()
@@ -344,19 +343,6 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS],
             [
                 'value' => 5000,
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-    }
-
-    public function seedStopDeduplicateScript()
-    {
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::STOP_DE_DUPLICATION_JOB],
-            [
-                'value' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
