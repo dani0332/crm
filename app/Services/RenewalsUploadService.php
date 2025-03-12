@@ -1312,7 +1312,7 @@ class RenewalsUploadService
             
         $memberDetails = [];
         $updateMemberDetails = [];
-
+        $isCase1 = count($memberDobs) >= 1 && ($existingMembers->count() == 1 || $existingMembers->count() == 0);
         foreach ($memberDobs as $index => $dob) {
             $dobFormatted = Carbon::parse($this->formatDate($dob))->toDateString();
             $memberNameArray = explode(' ', $memberNames[$index]);
@@ -1343,13 +1343,23 @@ class RenewalsUploadService
                 ]);
                 Customer::where('id', $quote->customer_id)->update($customerPayload);
 
-                // Update only if a single member exists
-                if(isset($existingMembers[$fullNameKey])) {
-                    $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
-                    $updateMemberDetails[] = Arr::only($memberDetails[$index], ['id', 'first_name', 'last_name','dob','emirate_of_your_visa_id','gender','nationality_id','member_category_id','salary_band_id']);
+                // Case 1: Policyholder goes to member details
+                if ($isCase1) {
+                    if (isset($existingMembers[$fullNameKey])) {
+                        // Update existing member if found
+                        $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
+                        $updateMemberDetails[] = Arr::only($memberDetails[$index], [
+                            'id','first_name','last_name',
+                            'dob','emirate_of_your_visa_id','gender',
+                            'nationality_id','member_category_id','salary_band_id'
+                        ]);
+                        unset($memberDetails[$index]);
+                    } 
+                } else {
+                    // Case 2: Policyholder excluded from member details
                     unset($memberDetails[$index]);
+                    continue;
                 }
-                continue;
             }
 
             // Update existing member if found
