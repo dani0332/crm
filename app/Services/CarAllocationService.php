@@ -399,12 +399,12 @@ class CarAllocationService extends AllocationService
         $advisors = [];
 
         // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
-        if ($lead->isInsurerPlanB() && $lead->isSIC(QuoteTypes::CAR) && !$lead->sic_advisor_requested && $lead->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer) {
-            info(self::class."::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor");
+        if ($lead->isInsurerPlanB() && $lead->isSIC(QuoteTypes::CAR) && ! $lead->sic_advisor_requested && $lead->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer) {
+            info(self::class.'::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor');
             $teamId = getTeamId(TeamNameEnum::ORGANIC);
             $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
 
-            // If no advisors are found, return an empty array to leave the lead unassigned 
+            // If no advisors are found, return an empty array to leave the lead unassigned
             // if found then return the advisors
             return empty($advisors) ? [] : $advisors;
         }
@@ -419,7 +419,6 @@ class CarAllocationService extends AllocationService
 
         return $advisors;
     }
-
 
     private function determineStatusOrder($isReassignmentJob)
     {
@@ -457,7 +456,7 @@ class CarAllocationService extends AllocationService
         $excludedUserIds = $this->getExcludedUserIds($teamId);
 
         $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
-        
+
         // If teamId is Organic, filter userIds to keep only the common ones
         if ($teamId == getTeamId(TeamNameEnum::ORGANIC)) {
             $organicUserIds = UserTeams::where('team_id', $teamId)->pluck('user_id')->toArray();
@@ -470,7 +469,7 @@ class CarAllocationService extends AllocationService
                 $userIds = [];
             }
         }
-        
+
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
             // Filter by advisor status.
