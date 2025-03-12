@@ -863,7 +863,7 @@
                     {{-- Only display the heading and benefit items if there are any benefit items --}}
                     @if (!empty($benefitItems))
                         {{-- Benefit Title Row (appears only once for each benefit) --}}
-                        <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
+                        <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #1D83BC;">
                             <td colspan="{{ count($planIds) + 1 }}">
                                 <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 12px; font-weight: 700;">
                                     {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover))) }}
