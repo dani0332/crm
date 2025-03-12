@@ -1197,23 +1197,14 @@ class CentralService extends BaseService
     public function preparePolicyToCustomerData($quote, $quoteTypeId, $workflowType, $existingEmailData)
     {
         $emailData = (object) [
-            'advisorEmail' => $quote->advisor->email ?? '',
-            'advisorLandLine' => $quote->advisor->landline_no ?? '',
-            'advisorMobilePhone' => $quote->advisor->mobile_no ?? '',
-            'advisorName' => $quote->advisor->name ?? '',
-            'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
             'appLink' => $existingEmailData->appDownloadLink ?? '',
-            'customerFullName' => ucfirst($quote->first_name),
             'policyNumber' => $quote->policy_number ?? '',
             'policyPeriodStart' => Carbon::parse($quote->policy_start_date)->format('d/m/Y'),
             'policyPeriodEnd' => Carbon::parse($quote->policy_expiry_date)->format('d/m/Y'),
             'refID' => $quote->code,
-            'rtaPortalLink' => 'https://vls.rta.ae/renewal/identityVerification',
-            'customerEmail' => $quote->email,
-            'workflowType' => $workflowType,
         ];
 
-        $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, existingEmailData: $existingEmailData);
+        $this->emailDataExtend(emailData: $emailData, quote: $quote, quoteTypeId: $quoteTypeId, workflowType: $workflowType);
 
         return $emailData;
     }
@@ -1228,31 +1219,31 @@ class CentralService extends BaseService
         }
 
         $emailData = (object) [
-            'advisorEmail' => $quote->advisor->email ?? '',
-            'advisorLandLine' => $quote->advisor->landline_no ?? '',
-            'advisorMobilePhone' => $quote->advisor->mobile_no ?? '',
-            'advisorName' => $quote->advisor->name ?? '',
-            'advisorProfilePhotoPath' => $quote->advisor->profile_photo_path ?? '',
-            'customerFullName' => ucfirst($quote->first_name),
             'policyNumber' => $sendUpdateLog->policy_number ?? $quote->policy_number ?? '',
             'policyPeriodStart' => Carbon::parse($sendUpdateLog->start_date ?? $quote->policy_start_date)->format('d/m/Y'),
             'policyPeriodEnd' => Carbon::parse($sendUpdateLog->expiry_date ?? $quote->policy_expiry_date)->format('d/m/Y'),
             'reason' => $notes,
             'refID' => $sendUpdateLog->code,
-            'rtaPortalLink' => 'https://vls.rta.ae/renewal/identityVerification',
-            'customerEmail' => $quote->email,
-            'workflowType' => $workflowType,
         ];
 
-        $this->emailDataExtend($emailData, $quote, $quoteTypeId, $sendUpdateLog);
-
-        // $emailData->documentUrl
+        $this->emailDataExtend($emailData, $quote, $quoteTypeId, $sendUpdateLog, $workflowType);
 
         return [1, $emailData, 'send-update', $quoteTypeId, $workflowType];
     }
 
-    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $existingEmailData = null): void
+    private function emailDataExtend(&$emailData, $quote, $quoteTypeId, $sendUpdateLog = null, $workflowType = null): void
     {
+        $emailData->advisorEmail = $quote->advisor->email ?? '';
+        $emailData->advisorLandLine = $quote->advisor->landline_no ?? '';
+        $emailData->advisorMobilePhone = $quote->advisor->mobile_no ?? '';
+        $emailData->advisorName = $quote->advisor->name ?? '';
+        $emailData->advisorProfilePhotoPath = $quote->advisor->profile_photo_path ?? '';
+        $emailData->advisorWhatsAppNo = str_replace(' ', '', $quote->advisor->mobile_no ?? '');
+        $emailData->customerFullName = ucfirst($quote->first_name);
+        $emailData->rtaPortalLink = 'https://vls.rta.ae/renewal/identityVerification';
+        $emailData->customerEmail = $quote->email;
+        $emailData->workflowType = $workflowType;
+
         $storageUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         $emailData->assistanceNumber = $quote?->insuranceProvider?->roadside_phone_number ?? '';
