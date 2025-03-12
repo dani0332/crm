@@ -494,9 +494,13 @@
         vertical-align: middle;
     }
 
+    .quote-number strong {
+        font-weight: 600; /* Reduce boldness */
+    }
+
     /* Highlighted Text */
     .header-text-highlight {
-        font-weight: 700;
+        font-weight: 600;
     }
 
     /* Separator Styling */
