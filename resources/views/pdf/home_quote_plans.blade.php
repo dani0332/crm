@@ -465,6 +465,7 @@
 
 
 
+    /* Bottom Header Container */
     .header-bottom {
         width: 100%;
         display: table;
@@ -475,6 +476,7 @@
         padding: 10px 0;
     }
 
+    /* Left Side Text */
     .header-text {
         display: table-cell;
         text-align: left;
@@ -482,6 +484,7 @@
         vertical-align: middle;
     }
 
+    /* Right Side Quote Number */
     .quote-number {
         display: table-cell;
         text-align: right;
@@ -491,9 +494,18 @@
         vertical-align: middle;
     }
 
-    .header-text-highlight{
+    /* Highlighted Text */
+    .header-text-highlight {
         font-weight: 700;
     }
+
+    /* Separator Styling */
+    .separator {
+        color: #D3D3D3; /* Match border color */
+        font-weight: normal; /* Ensure it's not bold */
+        padding: 0 5px; /* Adjust spacing */
+    }
+
 
 
 </style>
@@ -615,11 +627,11 @@
                 <!-- Left Side Text -->
                 <div class="header-text">
                     <strong class="raleway-font">Home insurance comparison table</strong>
-                    &nbsp; | &nbsp;
+                    <span class="separator">|</span>
                     Name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span>
-                    &nbsp; | &nbsp;
+                    <span class="separator">|</span>
                     Property type: <span class="header-text-highlight">{{ $accommodationText }}</span>
-                    &nbsp; | &nbsp;
+                    <span class="separator">|</span>
                     Coverage type: <span class="header-text-highlight">{{ $coverageText }}</span>
                 </div>
             
@@ -628,6 +640,7 @@
                     Quote reference number: <strong>{{ $quote->code }}</strong>
                 </div>
             </div>
+            
         </div>
     </header>
     
