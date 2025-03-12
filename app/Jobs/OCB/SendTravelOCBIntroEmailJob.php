@@ -81,7 +81,7 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
             $responseCode = $travelEmailService->sendTravelOCBIntroEmail($lead, $this->previousAdvisor, $this->triggerSICWorkflow, $this->handleZeroPlans, $this->forceSicWorkflow);
             if (in_array($responseCode, [200, 201])) {
                 info(self::class." - OCB INTRO Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$this->quoteUuid}");
-            } else {
+            } elseif ($this->attempts() == $this->tries) {
                 Log::error(self::class." - OCB INTRO Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$this->quoteUuid}");
             }
         } catch (Exception $e) {

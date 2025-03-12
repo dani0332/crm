@@ -129,6 +129,7 @@ class SendEmailCustomerService extends BaseService
                 'object' => $response->object(),
                 'respBody' => $response->body(),
                 'response' => "{$response->status()} {$response->body()}",
+                'sent' => 0,
             ];
 
             if ($result['code'] == 201) {
