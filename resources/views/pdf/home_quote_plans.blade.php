@@ -446,13 +446,13 @@
         background-color: white;
         border-radius: 5px;
         padding: 5px 10px 5px 0px;
-        height: 100px;
-        max-height: 100px;
+        height: 125px;
+        max-height: 125px;
     }
 
     .header .logo img {
-        max-height: 100px;
-        height: 100px;
+        max-height: 125px;
+        height: 125px;
     }
 
     header {
@@ -611,7 +611,6 @@
             <div class="logo">
                 <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo">
             </div>
-            <br>
             <div class="header-bottom">
                 <!-- Left Side Text -->
                 <div class="header-text">
