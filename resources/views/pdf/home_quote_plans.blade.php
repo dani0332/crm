@@ -105,42 +105,6 @@
             margin-bottom: 130px;
         }
 
-        .header {
-            background: #1d83bc;
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            padding: 8px 10px;
-            width: 100%;
-            height: 57px;
-            max-height: 57px;
-        }
-
-        .header .logo {
-            float: left;
-            background-color: white;
-            border-radius: 5px;
-            padding: 5px 10px 5px 0px;
-            height: 50px;
-            max-height: 50px;
-        }
-
-        .header .logo img {
-            max-height: 50px;
-            height: 50px;
-        }
-
-        .header h3 {
-            margin: 0;
-            padding-top: 20px;
-            font-size: 18px;
-            font-weight: 600;
-            float: right;
-            text-align: right;
-            padding-right: 18px;
-        }
-
         tbody>tr>td {
             border: 1px solid #bfbfbf;
         }
@@ -371,45 +335,6 @@
         tr:has(td) {
             display: none;
         }
-
-        .header {
-            background: #1d83bc;
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            padding: 8px 10px;
-            width: 100%;
-            height: 60px;
-            max-height: 60px;
-            background-image: url('{{ public_path('images/new-header-bg-image.png') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-        }
-
-        .header .logo {
-            float: left;
-            background-color: white;
-            border-radius: 5px;
-            padding: 5px 10px 5px 0px;
-            height: 50px;
-            max-height: 50px;
-        }
-
-        .header .logo img {
-            max-height: 50px;
-            height: 50px;
-        }
-
         .text-blue {
             color: #1d83bc;
         }
@@ -449,30 +374,6 @@
         th {
             width: auto;
         }
-
-        .header {
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            padding: 8px 10px;
-            width: 100%;
-            height: 60px;
-            max-height: 60px;
-            background-image: url('{{ public_path('images/new-header-bg-image.png') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-        }
-
         tr {
             page-break-inside: avoid;
             page-break-after: auto;
@@ -529,6 +430,45 @@
             line-height: 1.5;
             border: none;
         }
+
+        .header {
+        background: #1d83bc;
+        color: #ffffff;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: center;
+        padding: 8px 10px;
+        width: 100%;
+        height: 60px; /* Use the latest height value */
+        max-height: 60px;
+        background-image: url('{{ public_path('images/new-header-bg-image.png') }}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    .header .logo {
+        float: left;
+        background-color: white;
+        border-radius: 5px;
+        padding: 5px 10px 5px 0px;
+        height: 50px;
+        max-height: 50px;
+    }
+
+    .header .logo img {
+        max-height: 50px;
+        height: 50px;
+    }
+
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+    }
+
     </style>
 </head>
 
