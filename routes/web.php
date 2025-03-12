@@ -717,9 +717,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Sending NB Car Followups
     Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
+    Route::group(['middleware' => ['readonly_db']], function () {
+        Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
+        Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+    });
 
-    Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
-    Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
 });
