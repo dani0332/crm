@@ -438,7 +438,7 @@
         text-align: center;
         padding: 8px 10px;
         width: 100%;
-        height: 150px; /* Use the latest height value */
+        height: 150px;
         max-height: 150px;
     }
 
@@ -465,35 +465,34 @@
 
 
 
-    /* Bottom Section */
     .header-bottom {
         width: 100%;
         display: table;
-        border-top: 2px solid #D3D3D3; /* Light gray separator */
+        border-top: 2px solid #D3D3D3;
+        border-bottom: 2px solid #D3D3D3;
         font-size: 14px;
         color: #333;
-        padding: 20px 0;
+        padding: 10px 0;
     }
 
-    /* Left Side Text */
     .header-text {
         display: table-cell;
-        font-weight: 600;
         text-align: left;
-        width: 75%; /* Ensures proper spacing */
-        /* padding-left: 10px; */
+        width: 75%;
         vertical-align: middle;
     }
 
-    /* Right Side Quote Number */
     .quote-number {
         display: table-cell;
-        font-weight: 700;
         text-align: right;
         white-space: nowrap;
-        width: 25%; /* Ensures the quote number stays aligned */
-        /* padding-right: 10px; */
+        width: 25%;
+        padding-right: 20px;
         vertical-align: middle;
+    }
+
+    .header-text-highlight{
+        font-weight: 700;
     }
 
 
@@ -618,11 +617,11 @@
                 <div class="header-text">
                     <strong>Home insurance comparison table</strong>
                     &nbsp; | &nbsp;
-                    Name: <span class="highlight">John Wick</span>
+                    Name: <span class="header-text-highlight">John Wick</span>
                     &nbsp; | &nbsp;
-                    Property type: <span class="highlight">Villa</span>
+                    Property type: <span class="header-text-highlight">Villa</span>
                     &nbsp; | &nbsp;
-                    Coverage type: <span class="highlight">Building and Contents</span>
+                    Coverage type: <span class="header-text-highlight">Building and Contents</span>
                 </div>
             
                 <!-- Right Side Quote Number -->
