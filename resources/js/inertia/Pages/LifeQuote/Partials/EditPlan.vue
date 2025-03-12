@@ -1,8 +1,9 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { errorMessages } from 'vue/compiler-sfc';
 import moment from 'moment';
 import { reactify } from '@vueuse/core';
+import { isNull } from 'lodash';
 const props = defineProps({
   uuid: String,
   insuranceProviders: Array,
@@ -26,6 +27,8 @@ let riders = props.lifeRiders.map(rider => ({
     price: 0,
     coverValue: 0,
     text: rider.text,
+    loading: 0, 
+    final_price: 0,
 }));
 
 const showInsurerError = ref(false);
@@ -33,7 +36,7 @@ const showGetQuoteBtn = ref(false);
 const showSaveButton = ref(false);
 
 let selectedTabIndex = ref(0);
-let overallLoading = ref(0);
+let overallLoadingState = ref(false);
 let totalPrice = props.selectedPlan.actualPremium;  
 let errorMessage = ref(null)
 
@@ -99,7 +102,8 @@ const editForm = reactive({
   isManualPlan: props.selectedPlan.isManualPlan,
   version: props.selectedPlan.version, 
   isApi: props.selectedPlan.isApi, 
-  isManualUpdate: props.selectedPlan.isManualPlan ? true : false
+  isManualUpdate: props.selectedPlan.isManualPlan ? true : false, 
+  overallLoading: 0
 });
 
 let actualPremium = ref(parseFloat(props.selectedPlan.actualPremium)); 
@@ -214,13 +218,13 @@ const getQuote = () => {
 onMounted(() => {
   if (editForm.providerId) {
     ridersData.value = props.selectedPlan.riders.map(rider => ({
-          
             riderId: rider.id,
             active: rider.active ?? 0,
             price: rider.price ?? 0,
             coverValue: rider.coverValue ?? 0,
             text: rider.text,
-            loading:rider?.loading ?? 0
+            loading:rider?.loading ?? 0,
+            final_price: rider?.final_price ?? 0,
     }));
 
     console.log(ridersData.value);
@@ -229,28 +233,51 @@ onMounted(() => {
 
 const getRiderPrice = () => {
   // Calculate the total price for active riders
-  return ridersData.value.filter(rider => rider.active == 1)  // Filter active riders
-    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.price) || 0), 0); // Sum the prices
+  const totalActivePrice =  ridersData.value.filter(rider => rider.active == 1) 
+    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.price) || 0), 0);
+    
+  const totalRiderLoading = ridersData.value
+    .filter(rider => rider.active == parseInt(1))  // Filter active riders
+    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.loading) || 0), 0);
+
+  const totalFinalPrice = ridersData.value
+    .filter(rider => rider.active == parseInt(1))  // Filter active riders
+    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.final_price) || 0), 0);
+
+  let totalRiderPrice = parseFloat(totalActivePrice); 
+  // Disable Overall Loading if there is rider loading added on rider level
+  if(totalRiderLoading > 0){
+    overallLoadingState = true;
+    totalRiderPrice  = totalRiderPrice + totalRiderLoading;   
+  }else{
+    totalRiderPrice = totalRiderPrice + totalFinalPrice; 
+    overallLoadingState = false; 
+  }
+  return totalRiderPrice; 
 }
 
-// Calculate total price where active != 0
 watch(ridersData, (newRidersData) => {
-  console.log('Rider Data', ridersData)
-  // Calculate the total price for active riders
-  const totalActivePrice = newRidersData
-    .filter(rider => rider.active == parseInt(1))  // Filter active riders
-    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.price) || 0), 0); // Sum the prices
-
-    // Add the total active rider price to the actualPremium
-    actualPremium.value = parseFloat(editForm.actualPremium) + parseFloat(totalActivePrice);
+  let price = getRiderPrice();  
+  actualPremium.value = parseFloat(editForm.actualPremium) + price;
 }, { deep: true });
+
+// EditForm Overloading
+const updatePriceWithOverloading = () => {
+  let price = editForm.overallLoading;
+  const totalRider = getRiderPrice();
+
+  if(!price || isNaN(price)){
+    price = 0;  
+    console.log('Is Nan')
+  } 
+  console.log('price', price)
+  actualPremium.value = parseFloat(editForm.actualPremium) + parseFloat(price) + parseFloat(totalRider);
+} 
 
 const handleActualPremium = () => {
   const totalRider = getRiderPrice();
   actualPremium.value = parseFloat(editForm.actualPremium) + parseFloat(totalRider);
 }
-
-
 
 // tabs 
 const tabs = ref([
@@ -260,7 +287,6 @@ const tabs = ref([
   { index: 3, label: 'Exclusions' },
   { index: 4, label: 'Policy Detail' },
 ]);
-
 
 const setActiveTab = (index, selected) => {
   selectedTabIndex.value = index; 
@@ -275,6 +301,8 @@ const setActiveTab = (index, selected) => {
 const getInputRules = (rider) => {
   return parseInt(rider.active) == 1 ? [isRequired] : [];
 };
+
+const computedFinalPrice = (rider) => computed(() => (parseFloat(rider.price) + parseFloat(rider.loading)));
 
 </script>
 
@@ -486,7 +514,7 @@ const getInputRules = (rider) => {
                             class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
                           </div>
                           <div class="col-span-2" v-if="props.selectedPlan.isUnderwritten">
-                            <x-input type="number" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
+                            <x-input type="number" class="w-full h-10 p-2 rounded-md" disabled />
                           </div>
                           <div class="col-span-1">
                             <x-input type="number" v-if="props.selectedPlan.isUnderwritten" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
@@ -516,11 +544,21 @@ const getInputRules = (rider) => {
                             </div>
 
                             <div class="col-span-2" v-if="props.selectedPlan.isUnderwritten">
-                              <x-input type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.loading"/>
+                              <x-input type="number" 
+                              :disabled="!props.selectedPlan.isManualPlan || !rider.active || editForm.overallLoading > 0 || rider.final_price > 0" 
+                              class="w-full h-10 p-2 rounded-md" v-model="rider.loading"/>
                             </div>
 
                             <div class="col-span-1" v-if="props.selectedPlan.isUnderwritten">
-                              <x-input type="number" :disabled="true" class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
+                                
+                                <x-input v-if="parseFloat(rider.loading) == 0" type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active || editForm.overallLoading > 0 || rider.loading > 0" 
+                                  class="w-full h-10 p-2 rounded-md" v-model="rider.final_price" 
+                                />
+                               
+                                <div v-else type="number"
+                                  class="appearance-none block w-full placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]"  
+                                >{{ computedFinalPrice(rider) }}</div>
+                                  {{ rider.loading }}
                             </div>
                         </div>
                     </div>
@@ -652,7 +690,10 @@ const getInputRules = (rider) => {
         <!-- Overall Loading input field -->
         <div class="flex items-center" v-if="props.selectedPlan.isUnderwritten">
           <span class="mr-2">Overall Loading:</span>
-          <input type="number" class="w-32 p-4 border h-6 rounded border-gray-500" /> <!-- Adjust width as needed -->
+          <x-input type="number" @input="updatePriceWithOverloading()" 
+          :disabled="overallLoadingState"
+          v-model="editForm.overallLoading" 
+          class="w-32 h-10 pt-3" /> <!-- Adjust width as needed -->
         </div>
 
         <!-- Total Price section -->
