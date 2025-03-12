@@ -187,7 +187,7 @@
         font-size: 12px;
         font-weight: 400;
         text-align: left;
-        padding: 8px;
+        padding: 0;
         max-width: 100%;
     }
 
@@ -851,7 +851,7 @@
                         {{-- Benefit Title Row (appears only once for each benefit) --}}
                         <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #1D83BC;">
                             <td colspan="{{ count($planIds) + 1 }}">
-                                <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 12px; font-weight: 700;">
+                                <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 2px; font-weight: 700;">
                                     {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover))) }}
                                 </p>
                             </td>
@@ -862,7 +862,7 @@
                             <tr style="page-break-inside: avoid;">
                                 {{-- First column: Benefit Code --}}
                                 <td style="background-color: #DBEEFF">
-                                    <p class="text-left font-bold raleway-font" style="font-weight: 700;">
+                                    <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
                                         {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code))) }}
                                     </p>
                                 </td>
