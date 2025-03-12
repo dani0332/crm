@@ -200,8 +200,8 @@ const autoApplyDateRangeFields = [
   'insured_name',
   'member_first_name',
   'member_last_name',
-  'company_name',
-  'policy_number',
+  /* 'company_name',
+  'policy_number',*/
   'quote_status',
   'payment_status',
   'line_of_business',
@@ -217,12 +217,14 @@ function updateDateRange() {
   availableFilters.date_range = presetDates[2].value;
 }
 
-autoApplyDateRangeFields.forEach(fields => {
+autoApplyDateRangeFields.forEach(field => {
   watch(
-    () => availableFilters[fields],
+    () => availableFilters[field],
     () => {
       if (checkAutoDateApplyFilters()) {
-        updateDateRange();
+        if (availableFilters.company_name == '') {
+          updateDateRange();
+        }
       }
     },
   );
@@ -247,7 +249,10 @@ function filterValidation(filtersCleaned) {
   }
 
   if (checkAutoDateApplyFilters()) {
-    if (!availableFilters.date_type || !availableFilters.date_range) {
+    if (
+      (!availableFilters.date_type || !availableFilters.date_range) &&
+      availableFilters.company_name == ''
+    ) {
       notification.error({
         title: 'Date range is required for the selected filters',
         position: 'top',
