@@ -207,15 +207,13 @@
     .btn-all-quotes {
         background-color: #1d83bc;
         color: #ffffff;
-        padding: 8px;
-        margin-top: 10px;
+        padding: 5px 40px;
         text-align: center;
         text-decoration: none;
         display: inline-block;
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 600;
         border-radius: 5px;
-        margin-bottom: 0px;
     }
 
     .btn-buy {
@@ -895,7 +893,9 @@
                 <tr>
                     <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
                         <a target="_blank" class="btn-all-quotes"
-                            href="{{ $websiteURL . '/home-insurance/quote/' . $quote->uuid }}">View all quotes</a>
+                            href="{{ $websiteURL . '/home-insurance/quote/' . $quote->uuid }}">
+                            View all quotes
+                        </a>
                     </td>
                 </tr>
 
