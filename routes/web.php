@@ -119,7 +119,7 @@ Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTie
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
-Route::group(['middleware' => ['auth', 'last_login_check', 'throttle:30,1']], function () {
+Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/login-as/{id}', [ImpersonateController::class, 'loginAs'])->name('login-as.id.login');
     Route::get('/leave-login-as', [ImpersonateController::class, 'leave'])->name('login-as.leave');
 
