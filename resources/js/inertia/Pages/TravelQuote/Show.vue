@@ -1589,8 +1589,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
         </Link>
         <Link
           v-else-if="
-            quote.source == leadSource.RENEWAL_UPLOAD && quote.previous_quote_policy_number
-            &&
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            quote.previous_quote_policy_number &&
             canAny([
               permissionsEnum.VIEW_LEGACY_DETAILS,
               permissionsEnum.VIEW_ALL_LEADS,
