@@ -1831,7 +1831,7 @@ const editPaymentModal = (
 
   if (
     payment.collection_type === 'insurer' &&
-    isEditPaymentEnabled() &&
+    isEditPaymentEnabled(payment) &&
     split_payment_id == 0 &&
     sr_no == 0 &&
     capture_approval == 0
@@ -3611,14 +3611,14 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
   return paymentTypes.filter(item => !methodsToExclude.includes(item.value));
 };
 
-const isEditPaymentEnabled = () => {
+const isEditPaymentEnabled = payment => {
   const statusesToCheck = [
     paymentStatusEnum.AUTHORISED,
     paymentStatusEnum.PAID,
     paymentStatusEnum.CAPTURED,
   ];
 
-  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(
+  const hasAnyAuthorizedPayment = payment.payment_splits.some(
     item =>
       statusesToCheck.includes(item.payment_status_id) &&
       item.payment_method.code === 'CC',
@@ -4083,7 +4083,7 @@ onBeforeMount(() => {
                               </x-badge>
                               <template #tooltip>
                                 {{
-                                  isEditPaymentEnabled()
+                                  isEditPaymentEnabled(item)
                                     ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT
                                     : paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED
                                 }}
