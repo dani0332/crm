@@ -215,15 +215,6 @@
             width: 100px;
             min-width: 100px;
             height: 100px;
-            border-left: none;
-            border-top: none;
-        }
-
-        .alfred img {
-            width: 100%;
-            max-width: 100px;
-            height: 100px;
-            display: block;
         }
 
         .quote-info {
@@ -669,8 +660,9 @@
             <thead>
                 <p style="margin-top:95px"></p>
                 <tr>
-                    <th class="alfred" id="alfred-th" rowspan="2">
-                        <img src="{{ public_path('images/home-alfred.png') }}" />
+                    <th class="bg-light-blue" rowspan="2">
+                        <p class="quote-info raleway-font" style="font-size: 16px; font-weight:700;">Insurance company
+                        </p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th class="provider" style="border: solid 1px #bfbfbf;">
@@ -702,10 +694,8 @@
                     @endforeach
                 </tr>
                 <tr>
-                    <th class="bg-light-blue" style="background-color: #DBEEFF !important">
-                        <p class="quote-info raleway-font" style="font-size: 16px; font-weight:700;">Home insurance comparison for:
-                            <b>{{ $quote->first_name }}
-                                {{ $quote->last_name }}</b>
+                    <th class="bg-light-blue">
+                        <p class="quote-info raleway-font" style="font-size: 16px; font-weight:700;">Plan name
                         </p>
                     </th>
                     @foreach ($planIds as $planId)
@@ -716,8 +706,7 @@
                         </th>
                     @endforeach
                 </tr>
-                {{--  make these rows dynamic as per discussion with Anne --}}
-                
+
                 {{-- rows for building, content and personal belonging value --}}
                 @isset($homeQuoteFlags['contents_value_flag'])
                     @if($homeQuoteFlags['contents_value_flag'])
