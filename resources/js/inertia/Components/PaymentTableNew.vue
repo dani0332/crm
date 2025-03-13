@@ -216,6 +216,7 @@ const isPaymentAuthorized = computed(() => {
        notPaidStatusIds.includes(payment.payment_status_id)
      );
      if (hasNotPaidPayments) {
+       return payments.some(payment =>
          payment.payment_splits.some(item => item.payment_method.code === 'CC')
        );
      }
