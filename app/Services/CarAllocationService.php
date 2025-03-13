@@ -321,7 +321,7 @@ class CarAllocationService extends AllocationService
 
         // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
         if ($lead->isEligibleForOrganicAssignmentForPlanB()) {
-            info(self::class."::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor");
+            info(self::class.'::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor');
             $teamId = getTeamId(TeamNameEnum::ORGANIC);
         }
 
@@ -415,7 +415,6 @@ class CarAllocationService extends AllocationService
         return $advisors;
     }
 
-
     private function determineStatusOrder($isReassignmentJob)
     {
         $statusOrder = [
@@ -452,7 +451,7 @@ class CarAllocationService extends AllocationService
         $excludedUserIds = $this->getExcludedUserIds($teamId);
 
         $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
-        
+
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
             // Filter by advisor status.
