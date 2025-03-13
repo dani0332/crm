@@ -101,7 +101,7 @@
     }
 
     tbody {
-        margin-bottom: 130px;
+        margin-bottom: 230px;
     }
 
     tbody>tr>td {
@@ -243,40 +243,6 @@
     th.provider-name {
         padding: 0;
         margin: 0;
-    }
-
-    footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 130px;
-        padding: 0;
-        background-color: #1d83bc;
-        color: #fff;
-        text-align: center;
-        z-index: 1000;
-    }
-
-    table.tbl-footer {
-        padding: 7px 30px;
-        margin: 0;
-        width: 100%;
-        border: none;
-    }
-
-    table.tbl-footer tr td,
-    table.tbl-footer tr td a {
-        color: #ffffff;
-        border: none;
-        font-size: 14px;
-        font-weight: 400;
-    }
-
-    table.tbl-footer tr td {
-        padding: 0;
-        margin: 0;
-        width: auto;
     }
 
     .text-left {
@@ -477,6 +443,51 @@
         padding: 0 5px; /* Adjust spacing */
     }
 
+    footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 230px;
+        padding: 0;
+        background-color: #1d83bc;
+        color: #fff;
+        text-align: center;
+        z-index: 1000;
+    }
+
+    table.tbl-footer {
+        padding: 7px 30px;
+        margin: 0;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    table.tbl-footer tr td,
+    table.tbl-footer tr td a {
+        color: #ffffff;
+        border: none;
+        font-size: 14px;
+        font-weight: 400;
+    }
+
+    table.tbl-footer tr td {
+        padding: 0;
+        margin: 0;
+        width: auto;
+        border: none;
+    }
+
+    table {
+        border-collapse: collapse;
+    }
+
+    .footer-col {
+        border-radius: 10px;
+        border: 2px solid #CF9E3C;
+        padding: 10px;
+        text-align: left;
+    }
 
 
 </style>
@@ -895,40 +906,38 @@
 
     {{-- PDF Page Footer --}}
     <footer style="background-color: #1d83bc; color: #fff; text-align: center; padding: 5px;">
-        <table class="tbl-footer" style="padding: 0 10px; margin: 0; width: 100%; border: none;">
+        <table class="tbl-footer" style="padding: 0 10px; margin: 0; width: 100%; border-collapse: collapse;">
             <tr>
-                <td colspan="2" class="text-center">
+                <td colspan="3" class="text-center" style="border: none;">
                     <h4 style="font-size: 14px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
                         Insurance Brokerage Services LLC</h4>
                 </td>
             </tr>
+        </table>
+        <table style="width: 100%; border-collapse: collapse;">
             <tr>
-                <td class="text-left" style="font-size: 10px;">UAE Central Bank Registration number 85</td>
-                <td class="text-right" style="font-size: 10px;">27th Floor, Control Tower, Motor City</td>
-            </tr>
-            <tr>
-                <td class="text-left" style="font-size: 10px;">Registered member of the Emirates Insurance Association
+                <td style="border: none; padding: 5px; width: 33%;">
+                    <div class="footer-col">
+                        <p>UAE Central Bank Registration No. 85</p>
+                    </div>
                 </td>
-                <td class="text-right" style="font-size: 10px;">Dubai, United Arab Emirates, P.O Box 26423</td>
-            </tr>
-            <tr>
-                <td class="text-left" style="font-size: 10px;">Department of Economy & Tourism in Dubai Trade License
-                    number 238534</td>
-                <td class="text-right" style="font-size: 10px;">Tel: <a href="tel:+800253733"
-                        style="color: #fff; text-decoration: none;">800 ALFRED (800-253-733)</a></td>
-            </tr>
-            <tr>
-                <td class="text-left" style="font-size: 10px;">Holder of Health Insurance Intermediary Permit ID
-                    Number BRK-00003 from Dubai Health Authority</td>
-                <td class="text-right" style="font-size: 10px;"><a href="https://insurancemarket.ae"
-                        style="color: #fff; text-decoration: none;">www.insurancemarket.ae</a></td>
-            </tr>
-            <tr>
-                <td class="text-left" style="font-size: 10px;">Registered member of Insurance Business Group under the
-                    Dubai Chamber of Commerce and Industry</td>
+                <td style="border: none; padding: 5px; width: 33%;">
+                    <div class="footer-col">
+                        <p>Your insurance advisor is: </p>
+                    </div>
+                </td>
+                <td style="border: none; padding: 5px; width: 33%;">
+                    <div class="footer-col">
+                        <p>Your insurance advisor is: </p>
+                        <img style="height: 110px; border-radius: 50%;"
+                            src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
+                            alt="advisor">
+                    </div>
+                </td>
             </tr>
         </table>
     </footer>
+    
 
     {{-- Last Page --}}
     <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}"
