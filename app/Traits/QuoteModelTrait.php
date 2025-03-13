@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
@@ -15,6 +16,8 @@ use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use App\Traits\QuoteTraits\QuoteAllocatable;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 
@@ -196,5 +199,51 @@ trait QuoteModelTrait
                 $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
             });
         }
+    }
+
+    public function assignmentTypeText(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return AssignmentTypeEnum::getAssignmentTypeText($this->assignment_type);
+            }
+        );
+    }
+
+    public function dobFormatted(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->dob ? Carbon::parse($this->dob)->format('d-m-Y') : null;
+            }
+        );
+    }
+
+    public function previousPolicyExpiryDateFormatted(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->previous_policy_expiry_date ? Carbon::parse($this->previous_policy_expiry_date)->format('d-m-Y') : null;
+            }
+        );
+    }
+
+    public function insurerAmlStatusText(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return match ($this->insurer_aml_status) {
+                    AMLStatusCode::InsurerAMLScreeningPending => AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending),
+                    AMLStatusCode::InsurerAMLScreeningCleared => AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared),
+                    AMLStatusCode::InsurerAMLScreeningFailed => AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed),
+                    default => AMLStatusCode::InsurerAMLScreeningNA,
+                };
+            }
+        );
+    }
+
+    public function isPaymentLinkRequested(): bool
+    {
+        return $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 }

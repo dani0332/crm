@@ -577,7 +577,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' updateQuoteApiIssuanceStatus executed');
 
         $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'  allocation of failed lead started');
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'  allocation of failed lead executed');
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
@@ -604,8 +604,16 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info(self::class.' fn:'.__FUNCTION__.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
-        $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
-        if ($response && $response['advisorId']) {
+        $advisorId = $quote?->advisor_id;
+        info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  check if advisor id already assigned :  '.$advisorId);
+        if (! $advisorId) {
+            $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
+            if ($response && $response['advisorId']) {
+                $advisorId = $response['advisorId'];
+            }
+        }
+
+        if ($advisorId) {
             info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
             /* Send Failed notification only when Insurer API status is not failed already to prevent multiple email triggers and Insurer API Status is not null */
             if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
@@ -730,7 +738,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return Http::timeout(20)->withHeaders($headers)->post($url, $payload);
     }
 
-    private function calculateCoverDaysForExpiryDate($quote, $travelType): mixed
+    public function calculateCoverDaysForExpiryDate($quote, $travelType): mixed
     {
         $coverDays = $quote->days_cover_for;
         $isInboundLead = $travelType === TravelQuoteEnum::ALLIANCE_IN_BOUND;

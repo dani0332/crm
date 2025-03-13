@@ -9,7 +9,6 @@ import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
-  quote: Object,
   documentTypes: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
@@ -1326,6 +1325,7 @@ function capitalizeString(str) {
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <QuotePayments

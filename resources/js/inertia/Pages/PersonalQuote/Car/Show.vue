@@ -1640,22 +1640,7 @@ const allowStatusUpdate = computed(() => {
 });
 
 const convertToNumber = (value, decimalPlace = 2) => {
-  // Step 1: Round to (decimalPlace + 2) decimal places
-  const roundToExtra =
-    Math.round(value * Math.pow(10, decimalPlace + 2)) /
-    Math.pow(10, decimalPlace + 2);
-
-  // Step 2: Round to (decimalPlace + 1) decimal places
-  const roundToOneLess =
-    Math.round(roundToExtra * Math.pow(10, decimalPlace + 1)) /
-    Math.pow(10, decimalPlace + 1);
-
-  // Step 3: Round to (decimalPlace) decimal places
-  const roundToFinal =
-    Math.round(roundToOneLess * Math.pow(10, decimalPlace)) /
-    Math.pow(10, decimalPlace);
-
-  return roundToFinal;
+  return useRoundIt(value).toFixed(2);
 };
 
 function genderFormatForProfile(gender) {
@@ -1671,6 +1656,14 @@ function capitalizeString(str) {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const isCommercialVehicle = computed(() => {
+  let isCConditionMeet = false;
+  if (isPlanDetailEnabled.value) {
+    isCConditionMeet = true;
+  }
+  return isCConditionMeet;
+});
 </script>
 
 <template>
@@ -3726,6 +3719,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isCapBtnEnabled="isCommercialVehicle"
+      :isPlanDetailSectionEnabled="isPlanDetailEnabled"
     />
 
     <PaymentTable
