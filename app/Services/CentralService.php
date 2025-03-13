@@ -1092,7 +1092,7 @@ class CentralService extends BaseService
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'commissionInPayments' => $commissionInPayments,
             'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
-            'isADNICProvider' => $isADNICProvider
+            'isADNICProvider' => $isADNICProvider,
         ];
 
         // If payment object is provided, check commission status and merge with TAP configuration
