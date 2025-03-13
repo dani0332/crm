@@ -151,7 +151,7 @@ trait QuoteAllocatable
 
     public function isInsurerPlanB()
     {
-        return $this->insuranceProvider?->payment_gateway_id === PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK;
+        return $this->insuranceProvider?->payment_gateway_id === PaymentGatewayEnum::getPaymentGatewayPaymentLink();
     }
 
     public function isEligibleForOrganicAssignmentForPlanB(): bool
