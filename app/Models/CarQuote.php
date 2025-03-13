@@ -183,7 +183,7 @@ class CarQuote extends BaseModel
 
     public function insuranceProvider()
     {
-        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code', 'payment_gateway_id']);
     }
 
     public function car_model_id()
