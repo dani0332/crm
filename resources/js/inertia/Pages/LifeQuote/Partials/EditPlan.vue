@@ -556,9 +556,8 @@ const computedFinalPrice = (rider) => computed(() => (parseFloat(rider.price) + 
                                 />
                                
                                 <div v-else type="number"
-                                  class="appearance-none block w-full placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]"  
+                                  class="appearance-none block w-16 ml-2 placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]"  
                                 >{{ computedFinalPrice(rider) }}</div>
-                                  {{ rider.loading }}
                             </div>
                         </div>
                     </div>
@@ -566,22 +565,20 @@ const computedFinalPrice = (rider) => computed(() => (parseFloat(rider.price) + 
                 </TabPanel>
             
                 <TabPanel>
-  <div
-    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
-    v-if="props?.selectedPlan?.benefits?.inclusion"
-  >
-    <div
-      v-for="data in props?.selectedPlan?.benefits?.inclusion || []"
-      :key="data.code"
-      class="mb-3 text-center"
-    >
-      <dt class="font-semibold">{{ data.text }}</dt>
-      <dd>{{ data.value ?? 'Included' }}</dd>
-    </div>
-  </div>
-</TabPanel>
-
-
+                  <div
+                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
+                    v-if="props?.selectedPlan?.benefits?.inclusion"
+                  >
+                    <div
+                      v-for="data in props?.selectedPlan?.benefits?.inclusion || []"
+                      :key="data.code"
+                      class="mb-3 text-center"
+                    >
+                      <dt class="font-semibold">{{ data.text }}</dt>
+                      <dd>{{ data.value ?? 'Included' }}</dd>
+                    </div>
+                  </div>
+                </TabPanel>
                 <TabPanel>
                 <div
                   class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
