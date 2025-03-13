@@ -442,4 +442,21 @@ class RenewalsUploadController extends Controller
 
         return $quotes;
     }
+
+    public function updateNonMotorRenewals()
+    {
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
+
+        // Now Only allowed for Home
+        $lobs = [
+            quoteTypeCode::Home => QuoteTypeShortCode::HOM,
+        ];
+
+        return inertia('Renewals/NonMotorUploadUpdate', [
+            'lobs' => $lobs,
+            'azureStorageUrl' => $azureStorageUrl,
+            'azureStorageContainer' => $azureStorageContainer,
+        ]);
+    }
 }

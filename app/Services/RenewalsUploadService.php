@@ -19,6 +19,8 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
+use App\Enums\RangeLookupKeyEnums;
+use App\Enums\RangeLookupIdEnums;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\ThirdPartyTagEnum;
@@ -58,6 +60,7 @@ use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteStatus;
 use App\Models\QuoteTag;
 use App\Models\QuoteType;
+use App\Models\RangeLookup;
 use App\Models\RenewalBatch;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
@@ -167,6 +170,7 @@ class RenewalsUploadService
     {
         $uploadLeadData = [
             'renewal_import_code' => $this->generateRandomString(),
+            'quote_type' => array_key_exists('lob', $data) ? $data['lob'] : null,
             'file_name' => $uploadedFile['file_name'],
             'file_path' => $uploadedFile['azure_file_path'],
             'status' => ProcessStatusCode::UPLOADED,
@@ -532,7 +536,11 @@ class RenewalsUploadService
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
                 // start file import
-                $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
+                if ($renewalsUploadLead->quote_type == QuoteTypeShortCode::HOM) {
+                    $renewalsUpload = new UploadAndUpdateHomeImport($renewalsUploadLead);
+                } else {
+                    $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
+                }
                 $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
 
                 // todo: correct these values
@@ -1587,7 +1595,7 @@ class RenewalsUploadService
                     }
                 }
                 // If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
-                if ($lead->quote_type != quoteTypeCode::TRA) {
+                if ($lead->quote_type != quoteTypeCode::TRA && $lead->quote_type != QuoteTypeShortCode::HOM) {
                     if (! $leadData->insurer) {
                         $leadValidationErrors->push('Insurance Provider is required');
                     } elseif (! ($insurer = InsuranceProvider::where('code', $leadData->insurer)->first())) {
@@ -1601,7 +1609,7 @@ class RenewalsUploadService
                     }
                 }
 
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->product_type) {
+                if ($lead->quote_type != QuoteTypeShortCode::HOM && $lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->product_type) {
                     $leadValidationErrors->push('Product Type is Required');
                 }
                 if ($leadData->advisor && $isSIC == 0 && ! User::where('email', $leadData->advisor)->first()) {
@@ -1799,6 +1807,107 @@ class RenewalsUploadService
                             //     ! $batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                             // }
                         }
+                        break;
+                    case QuoteTypeShortCode::HOM:
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HOM) {
+                            if ($leadData->insurance_type) {
+                                if ($leadData->insurance_type !== QuoteTypeShortCode::HOM) {
+                                    $leadValidationErrors->push('Invalid Insurance Type Text');
+                                    break;
+                                }
+                            }
+                            if ($leadData->current_insurance_provider) {
+                                if (! InsuranceProvider::where('text', $leadData->current_insurance_provider)->first()) {
+                                    $leadValidationErrors->push('Invalid Current Insurance Provider Text');
+                                    break;
+                                }
+                            }
+                            if ($leadData->you_are_a) {
+                                $leadPossessionType = RangeLookup::where('text', $leadData->you_are_a)
+                                                        ->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)
+                                                        ->first();
+                                if (! $leadPossessionType) {
+                                    $leadValidationErrors->push('Invalid Ownership Status Text');
+                                    break;
+                                }
+
+                                if ($leadPossessionType->id === RangeLookupIdEnums::LANDLORD_RENTING_OUT) {
+                                    if (! $leadData->occupancy_status_for_owners) {
+                                        $leadValidationErrors->push('Occupancy Status for Owners is required with Selected Ownership Status');
+                                        break;
+                                    }
+                                    if ($leadData->contents) {
+                                        $leadValidationErrors->push('Content is not required with Selected Ownership Status');
+                                        break;
+                                    }
+                                    if ($leadData->personal_belongings) {
+                                        $leadValidationErrors->push('Personal Belonging is not required with Selected Ownership Status');
+                                        break;
+                                    }
+                                    if (! $leadData->building) {
+                                        $leadValidationErrors->push('Building is required with Selected Ownership Status');
+                                        break;
+                                    }
+                                }
+                            }
+                            if ($leadData->i_live_in_a) {
+                                $leadAccommodationType = RangeLookup::where('text', $leadData->i_live_in_a)
+                                                        ->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)
+                                                        ->first();
+                                if (! $leadAccommodationType) {
+                                    $leadValidationErrors->push('Invalid Type of Property Text');
+                                    break;
+                                }
+                            }
+                            if ($leadData->occupancy_status_for_owners) {
+                                $leadOccupancyType = RangeLookup::where('text', $leadData->occupancy_status_for_owners)
+                                                        ->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)
+                                                        ->first();
+                                if (! $leadOccupancyType) {
+                                    $leadValidationErrors->push('Invalid Occupancy Status for Owners Text');
+                                    break;
+                                }
+                            }
+                            if ($leadData->cover_required) {
+                                $leadCoverageType = RangeLookup::where('text', $leadData->cover_required)
+                                                        ->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)
+                                                        ->first();
+                                if (! $leadCoverageType) {
+                                    $leadValidationErrors->push('Invalid Cover Required Text');
+                                    break;
+                                }
+                            }
+                            if ($leadData->contents) {
+                                $leadContents = RangeLookup::where('text', $leadData->contents)
+                                                        ->where('key', RangeLookupKeyEnums::CONTENT_VALUES)
+                                                        ->first();
+                                if (! $leadContents) {
+                                    $leadValidationErrors->push('Invalid Contents Text');
+                                    break;
+                                }
+                            }
+                            if ($leadData->personal_belongings) {
+                                $leadPersonalBelongings = RangeLookup::where('text', $leadData->personal_belongings)
+                                                        ->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)
+                                                        ->first();
+                                if (! $leadPersonalBelongings) {
+                                    $leadValidationErrors->push('Invalid Personal Belongings Text');
+                                    break;
+                                }
+                            }
+                            if ($leadData->premium) {
+                                if (! $leadData->insurance_provider) {
+                                    $leadValidationErrors->push('Insurance Provider is required with Premium');
+                                    break;
+                                }
+                                if (! $leadData->plan_name) {
+                                    $leadValidationErrors->push('Plan Name is required with Premium');
+                                    break;
+                                }
+                            }
+                        }
+                        $checkBatch = $this->validateBatch('', $leadData->end_date, $lead->type == RenewalsUploadType::CREATE_LEADS, $lead);
+                        ! $checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         break;
                     default:
                         $checkBatch = $this->validateBatch($leadData->batch, $leadData->end_date, $lead->type == RenewalsUploadType::CREATE_LEADS, $lead);
