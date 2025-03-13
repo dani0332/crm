@@ -215,6 +215,9 @@ const isisUpfrontFrequency = computed(
 const isCustomFrequency = computed(
   () => paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM,
 );
+const isSplitFrequency = computed(
+  () => paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS,
+);
 const isSinglePayment = computed(() => paymentMethodsForm.payment_no == 1);
 const isCreditApprovalApplied = computed(
   () => paymentMethodsForm.credit_approval !== '',
@@ -916,6 +919,13 @@ const handlePaymentTypes = count => {
       ? frequenciesToFilterForCount
       : frequenciesToFilterForInsurer;
 
+    // Bypass multi payment for ADNIC and showing CREDIT CARD for all child payments for Split Frequency
+    const isADNICProvider =
+      page.props?.bookPolicyDetails?.isADNICProvider || false;
+    if (isADNICProvider && isSplitFrequency.value) {
+      return paymentTypesWithoutCheck;
+    }
+
     if (count >= 2 || !isMultiPaymentEnabled) {
       if (frequenciesToFilter.includes(paymentMethodsForm.frequency)) {
         paymentTypesWithoutCheck = filterPaymentTypes(
@@ -925,7 +935,6 @@ const handlePaymentTypes = count => {
       }
     }
   }
-
   return paymentTypesWithoutCheck;
 };
 
