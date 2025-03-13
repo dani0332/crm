@@ -152,7 +152,7 @@ class RateCoverageUploadService
                         'plan_id' => DB::table('health_plan')->where('code', $data['plan_code'])->value('id'),
                         'is_active' => 1,
                         'created_at' => now(),
-                        'updated_at' => now(), 
+                        'updated_at' => now(),
                     ];
                 }
 
