@@ -117,7 +117,7 @@ class TravelRenewalService extends BaseService
                 'newPolicyExpiryDate' => $newPolicyExpiryDate,
                 'policyExpiryDate' => $policyExpiryDate,
             ];
-            $travelQuotePayload = (object)$this->createTravelRenewalPayload($quote, $batch, $policyDates, $destinationIds, $members, $customer);
+            $travelQuotePayload = (object) $this->createTravelRenewalPayload($quote, $batch, $policyDates, $destinationIds, $members, $customer);
             TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
             info(self::class." - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid} | Time:".now());
         } else {
