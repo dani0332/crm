@@ -212,9 +212,14 @@ const isPaymentAuthorized = computed(() => {
        paymentStatusEnum.PARTIALLY_PAID,
        paymentStatusEnum.PARTIAL_CAPTURED
      ];
-     return payments.some(payment =>
-       notPaidStatusIds.includes(payment.payment_status_id),
+     const hasNotPaidPayments = payments.some(payment =>
+       notPaidStatusIds.includes(payment.payment_status_id)
      );
+     if (hasNotPaidPayments) {
+         payment.payment_splits.some(item => item.payment_method.code === 'CC')
+       );
+     }
+
   }
   return false
 });
