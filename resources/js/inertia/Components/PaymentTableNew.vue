@@ -922,8 +922,9 @@ const handlePaymentTypes = count => {
       : frequenciesToFilterForInsurer;
 
     // Bypass multi payment for ADNIC and showing CREDIT CARD for all child payments for Split Frequency
-    const isADNICProvider= page.props?.bookPolicyDetails?.isADNICProvider || false;
-    if (isADNICProvider && isSplitFrequency.value){
+    const isADNICProvider =
+      page.props?.bookPolicyDetails?.isADNICProvider || false;
+    if (isADNICProvider && isSplitFrequency.value) {
       return paymentTypesWithoutCheck;
     }
 
@@ -3729,8 +3730,6 @@ const fetchInsurerAMLStatus = async () => {
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
 });
-
-
 </script>
 
 <template>
