@@ -1312,7 +1312,7 @@ class RenewalsUploadService
             
         $memberDetails = [];
         $updateMemberDetails = [];
-        $isCase1 = count($memberDobs) >= 1 && ($existingMembers->count() == 1 || $existingMembers->count() == 0);
+        $isCase1 = count($memberDobs) == 1 ;
         foreach ($memberDobs as $index => $dob) {
             $dobFormatted = Carbon::parse($this->formatDate($dob))->toDateString();
             $memberNameArray = explode(' ', $memberNames[$index]);
@@ -1343,7 +1343,7 @@ class RenewalsUploadService
                 ]);
                 Customer::where('id', $quote->customer_id)->update($customerPayload);
 
-                // Case 1: Policyholder goes to member details
+                // Case 1: Policyholder goes to member details if its individual
                 if ($isCase1) {
                     if (isset($existingMembers[$fullNameKey])) {
                         // Update existing member if found
@@ -1358,7 +1358,6 @@ class RenewalsUploadService
                 } else {
                     // Case 2: Policyholder excluded from member details
                     unset($memberDetails[$index]);
-                    continue;
                 }
             }
 
