@@ -115,10 +115,9 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
-        // DTT Scheduling
-        $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('10:15')->onOneServer()->withoutOverlapping();
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
-        $schedule->command('DttWithDate')->timezone('Asia/Dubai')->dailyAt('019:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('DttWithDate')->timezone('Asia/Dubai')->dailyAt('19:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('DttHealth')->timezone('Asia/Dubai')->dailyAt('09:03')->onOneServer()->withoutOverlapping();
         $schedule->command('DttHealthFollowUp')->timezone('Asia/Dubai')->dailyAt('11:48')->onOneServer()->withoutOverlapping();
