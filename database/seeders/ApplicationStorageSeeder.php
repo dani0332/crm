@@ -228,20 +228,21 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        // TODO:: Need to confirm email addresses with Shahrukh
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS],
+            ['key_name' => ApplicationStorageEnums::DTT_FROM],
             [
-                'value' => '',
+                'value' => '2025-02-19',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
             ],
         );
+
+        // TODO:: Need to confirm email addresses with Shahrukh
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW],
+            ['key_name' => ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS],
             [
-                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/5fd51eb0-a17a-43d4-b9a8-11910469e7ac/invoke-sync',
+                'value' => '',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
