@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Builders\HealthQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
@@ -58,7 +59,7 @@ class HealthQuoteService extends BaseService
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -335,6 +336,36 @@ class HealthQuoteService extends BaseService
     }
 
     public function getGridData($model = null, $request = null)
+    {
+
+        $searchProperties = [];
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
+        $isRenewalManager = Auth::user()->isRenewalManager();
+        $isNewManager = Auth::user()->isNewBusinessManager();
+        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
+        if ($model != null) {
+            if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
+                $searchProperties = $model->renewalSearchProperties;
+            } elseif ($isNewManager || $isNewAdvisor) {
+                $searchProperties = $model->newBusinessSearchProperties;
+            } else {
+                $searchProperties = $model->searchProperties;
+            }
+        }
+
+        $query =  $this->healthQuoteQueryBuilder->processGridData();
+
+        if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
+            $dateFrom = $this->parseDate($request['created_at'], true);
+            $dateTo = $this->parseDate($request['created_at_end'], true);
+            $query = $query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
+        };
+
+        return $query;
+    }
+
+    public function getGridDataOld($model = null, $request = null)
     {
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();

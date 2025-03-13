@@ -20,6 +20,7 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted'];
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -47,13 +48,13 @@ class HealthQuote extends Model implements AuditableContract
                 $healthQuote = new HealthQuote;
                 $endorsmentDetails = $healthQuote->isCPDEndorsment(request()->sendUpdateId);
                 if ($endorsmentDetails['isCPDEndorsment']) {
-                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD (' . $model->getOriginal('policy_booking_date') . ') - New PBD (' . $model->policy_booking_date . '). QuoteType: ' . request()->quoteType . ' - QuoteUUID: ' . request()->quoteUuid . ' - SendUpdateUUID: ' . $endorsmentDetails['sendUpdateUUID']);
                     $skipBookingDateUpdateForNonCPD = false;
                 }
             }
 
             if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
-                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                info($model->code . ' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from ' . $model->getOriginal('policy_booking_date') . ' to ' . $model->policy_booking_date);
                 unset($model->policy_booking_date); // lock the policy booking date field
             }
         });
@@ -147,7 +148,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function getFullNameAttribute()
     {
-        return $this->first_name.' '.$this->last_name;
+        return $this->first_name . ' ' . $this->last_name;
     }
 
     public function documents()
@@ -233,11 +234,11 @@ class HealthQuote extends Model implements AuditableContract
                 $customerMember->save();
             }
 
-            return $customerMember->first_name.' '.$customerMember->last_name;
+            return $customerMember->first_name . ' ' . $customerMember->last_name;
         } else {
             $healthQuote = HealthQuote::find($id);
             if ($healthQuote) {
-                return $healthQuote->first_name.' '.$healthQuote->last_name;
+                return $healthQuote->first_name . ' ' . $healthQuote->last_name;
             }
         }
 
@@ -263,7 +264,7 @@ class HealthQuote extends Model implements AuditableContract
     {
         $payload = $this->healthQuotePlan?->payload;
         if ($payload && property_exists($payload, 'plans')) {
-            return collect($payload->plans)->filter(fn ($plan) => $plan && $plan->id === $this->plan_id)->first();
+            return collect($payload->plans)->filter(fn($plan) => $plan && $plan->id === $this->plan_id)->first();
         }
 
         return null;
@@ -277,5 +278,47 @@ class HealthQuote extends Model implements AuditableContract
     public function isVolumeLead()
     {
         return $this->health_team_type === HealthTeamType::EBP;
+    }
+
+    public function previousAdvisor()
+    {
+        return $this->belongsTo(User::class, 'previous_advisor_id');
+    }
+
+    public function dependentMembers()
+    {
+        return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id', 'id')
+            ->where('is_primary', false);
+    }
+
+    public function renewalBatch()
+    {
+        return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
+    }
+
+    public function insured()
+    {
+        return $this->belongsTo(Customer::class, 'currently_insured_id');
+    }
+
+    public function entity()
+    {
+        return $this->belongsTo(Entity::class, 'entity_id');
+    }
+
+    public function planProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'plan_provider_id');
+    }
+
+    public function quotePlan()
+    {
+        return $this->hasOne(HealthQuotePlan::class, 'id', 'plan_id');
+    }
+
+    public function scopeFilterBySegment($query)
+    {
+        $segmentFilter = request()->input('segment_filter');
+        self::applySegmentFilter($query, $segmentFilter, 'health_quote_request', QuoteTypeId::Health);
     }
 }
