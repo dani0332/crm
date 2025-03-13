@@ -113,7 +113,7 @@ class TravelRenewalService extends BaseService
 
         if (! empty($quote->region_cover_for_id) && count($members) > 0) {
 
-            $travelQuotePayload = (object) $this->createTravelRenewalPayload($quote, $batch, $policyStartDate, $newPolicyExpiryDate, $destinationIds, $members, $customer);
+            $travelQuotePayload = (object) $this->createTravelRenewalPayload($quote, $batch, $policyStartDate, $newPolicyExpiryDate, $destinationIds, $members, $customer, $policyExpiryDate);
             TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
             info(self::class." - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid} | Time:".now());
         } else {
@@ -130,7 +130,7 @@ class TravelRenewalService extends BaseService
 
     }
 
-    public function createTravelRenewalPayload($quote, $batch, $policyStartDate, $newPolicyExpiryDate, $destinationIds, $members, $customer)
+    public function createTravelRenewalPayload($quote, $batch, $policyStartDate, $newPolicyExpiryDate, $destinationIds, $members, $customer, $policyExpiryDate)
     {
         return [
             'firstName' => trim($quote->first_name),
@@ -154,11 +154,11 @@ class TravelRenewalService extends BaseService
             'insuredFirstName' => isset($customer->insured->first_name) ? $customer->insured->first_name : (isset($customer->insured_first_name) ? $customer->insured_first_name : ''),
             'insuredLastName' => isset($customer->insured->last_name) ? $customer->insured->last_name : (isset($customer->insured_last_name) ? $customer->insured_last_name : ''),
             'isEcommerce' => $quote->is_ecommerce ?? null,
-            'startDate' => $policyStartDate,
+            'startDate' => Carbon::parse($policyStartDate)->format('Y-m-d') ,
             'policyExpiryDate' => Carbon::parse($newPolicyExpiryDate)->format('Y-m-d'),
             'coverageCode' => $quote->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP : $quote->coverage_code,
             'regionCoverForId' => $quote->region_cover_for_id,
-            'previousPolicyExpiryDate' => $quote->policy_expiry_date,
+            'previousPolicyExpiryDate' =>  Carbon::parse($policyExpiryDate)->format('Y-m-d'),
             'tripStarted' => false,
         ];
     }
