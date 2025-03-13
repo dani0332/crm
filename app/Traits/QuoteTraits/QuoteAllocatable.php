@@ -6,6 +6,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use Carbon\Carbon;
 
 trait QuoteAllocatable
@@ -151,5 +152,13 @@ trait QuoteAllocatable
     public function isInsurerPlanB()
     {
         return $this->insuranceProvider?->payment_gateway_id === PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK;
+    }
+
+    public function isEligibleForOrganicAssignmentForPlanB(): bool
+    {
+        return $this->isInsurerPlanB()
+            && $this->isSIC(QuoteTypes::CAR)
+            && ! $this->sic_advisor_requested
+            && $this->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 }

@@ -319,6 +319,12 @@ class CarAllocationService extends AllocationService
         $tierUserIds = $this->fetchTierUserIds($tier->id, $advisorId);
         $tierUserIds = $this->applyRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
+        // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
+        if ($lead->isEligibleForOrganicAssignmentForPlanB()) {
+            info(self::class.'::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor');
+            $teamId = getTeamId(TeamNameEnum::ORGANIC);
+        }
+
         // Apply team filter if a team ID is provided
         if ($teamId) {
             $tierUserIds = $this->filterUsersByTeam($tierUserIds, $teamId);
@@ -398,17 +404,6 @@ class CarAllocationService extends AllocationService
 
         $advisors = [];
 
-        // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
-        if ($lead->isInsurerPlanB() && $lead->isSIC(QuoteTypes::CAR) && ! $lead->sic_advisor_requested && $lead->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer) {
-            info(self::class.'::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor');
-            $teamId = getTeamId(TeamNameEnum::ORGANIC);
-            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
-
-            // If no advisors are found, return an empty array to leave the lead unassigned
-            // if found then return the advisors
-            return empty($advisors) ? [] : $advisors;
-        }
-
         if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::CAR)) && ($tier->isValue() || $tier->isVolume())) {
             $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob, $lead);
         }
@@ -456,19 +451,6 @@ class CarAllocationService extends AllocationService
         $excludedUserIds = $this->getExcludedUserIds($teamId);
 
         $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
-
-        // If teamId is Organic, filter userIds to keep only the common ones
-        if ($teamId == getTeamId(TeamNameEnum::ORGANIC)) {
-            $organicUserIds = UserTeams::where('team_id', $teamId)->pluck('user_id')->toArray();
-
-            // Keep only the common userIds to avoid assigning to non-organic users
-            $userIds = array_values(array_intersect($userIds, $organicUserIds));
-
-            // If no common userIds exist, set it to an empty array for lead to remain unassigned
-            if (empty($userIds)) {
-                $userIds = [];
-            }
-        }
 
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
