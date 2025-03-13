@@ -800,7 +800,7 @@ class HomeQuoteService extends BaseService
 
     public function getQuotePlans($id, $extraData = [])
     {
-        $quoteUuId = HomeQuote::where('uuid', '=', $id)->value('uuid');
+        $quoteUuId = PersonalQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-home-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');

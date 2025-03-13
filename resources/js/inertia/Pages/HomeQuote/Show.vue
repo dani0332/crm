@@ -2152,7 +2152,7 @@ const viewPlanDetailsLoader = ref({});
       :quoteCode="$page.props.quote.code"
     />
 
-    <ApiLogs :type="modelClassHome" :id="$page.props.quote.home_quote.id" />
+    <ApiLogs :type="modelClassHome" :id="$page.props?.quote?.home_quote?.id" />
 
     <LeadHistory :quote="$page.props.quote" />
 
