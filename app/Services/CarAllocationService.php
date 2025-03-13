@@ -154,7 +154,7 @@ class CarAllocationService extends AllocationService
         $excludedTeams = [TeamNameEnum::AFFINITY];
 
         // If team is not available, it should not be assigned.
-        if (empty($teamId) || $teamId == 0) {
+        if (empty($teamId) || $teamId == 0 || $teamId == getTeamId(TeamNameEnum::ORGANIC)) {
             $excludedTeams[] = TeamNameEnum::SIC_UNASSISTED;
         }
 
@@ -318,6 +318,12 @@ class CarAllocationService extends AllocationService
         // Get initial tier users
         $tierUserIds = $this->fetchTierUserIds($tier->id, $advisorId);
         $tierUserIds = $this->applyRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
+
+        // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
+        if ($lead->isEligibleForOrganicAssignmentForPlanB()) {
+            info(self::class.'::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor');
+            $teamId = getTeamId(TeamNameEnum::ORGANIC);
+        }
 
         // Apply team filter if a team ID is provided
         if ($teamId) {

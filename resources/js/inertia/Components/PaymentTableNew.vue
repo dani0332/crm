@@ -67,6 +67,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isPlanDetailSectionEnabled: {
+    type: Boolean,
+    default: false,
+  },
   bookPolicyDetails: {
     type: Array,
     default: [],
@@ -210,6 +214,9 @@ const isisUpfrontFrequency = computed(
 );
 const isCustomFrequency = computed(
   () => paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM,
+);
+const isSplitFrequency = computed(
+  () => paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS,
 );
 const isSinglePayment = computed(() => paymentMethodsForm.payment_no == 1);
 const isCreditApprovalApplied = computed(
@@ -914,6 +921,13 @@ const handlePaymentTypes = count => {
       ? frequenciesToFilterForCount
       : frequenciesToFilterForInsurer;
 
+    // Bypass multi payment for ADNIC and showing CREDIT CARD for all child payments for Split Frequency
+    const isADNICProvider =
+      page.props?.bookPolicyDetails?.isADNICProvider || false;
+    if (isADNICProvider && isSplitFrequency.value) {
+      return paymentTypesWithoutCheck;
+    }
+
     if (count >= 2 || !isMultiPaymentEnabled) {
       if (frequenciesToFilter.includes(paymentMethodsForm.frequency)) {
         paymentTypesWithoutCheck = filterPaymentTypes(
@@ -923,7 +937,6 @@ const handlePaymentTypes = count => {
       }
     }
   }
-
   return paymentTypesWithoutCheck;
 };
 
@@ -1827,7 +1840,7 @@ const editPaymentModal = (
 
   if (
     payment.collection_type === 'insurer' &&
-    isEditPaymentEnabled() &&
+    isEditPaymentEnabled(payment) &&
     split_payment_id == 0 &&
     sr_no == 0 &&
     capture_approval == 0
@@ -2436,7 +2449,9 @@ const addPayment = isValid => {
       });
     return;
   }
-
+  if (props.isPlanDetailSectionEnabled) {
+    data.plan_id = null;
+  }
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
@@ -3605,14 +3620,14 @@ const filterPaymentTypes = (paymentTypes, methodsToExclude) => {
   return paymentTypes.filter(item => !methodsToExclude.includes(item.value));
 };
 
-const isEditPaymentEnabled = () => {
+const isEditPaymentEnabled = payment => {
   const statusesToCheck = [
     paymentStatusEnum.AUTHORISED,
     paymentStatusEnum.PAID,
     paymentStatusEnum.CAPTURED,
   ];
 
-  const hasAnyAuthorizedPayment = props.payments[0].payment_splits.some(
+  const hasAnyAuthorizedPayment = payment.payment_splits.some(
     item =>
       statusesToCheck.includes(item.payment_status_id) &&
       item.payment_method.code === 'CC',
@@ -3625,19 +3640,22 @@ const isEditPaymentEnabled = () => {
   return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
 };
 
-// voidPaymentModal
-const voidPaymentModel = ref(false);
+let voidPaymentObject = {};
 const voidPaymentProcess = ref(false);
-const isVoidPaymentEnabled = computed(() => {
+const voidPaymentModelPopup = ref(false);
+const voidPaymentModel = payment => {
+  voidPaymentModelPopup.value = true;
+  voidPaymentObject = payment;
+};
+
+const isVoidPaymentEnabled = payment => {
   return (
     props.isFuncsEnabled.tapIntegration &&
     can(permissionEnum.PAYMENTS_VOID) &&
-    props.payments[0].payment_status_id ===
-      page.props.paymentStatusEnum.AUTHORISED &&
-    props.payments[0].payment_gateway_id ===
-      props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+    payment.payment_status_id === page.props.paymentStatusEnum.AUTHORISED &&
+    payment.payment_gateway_id === props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
   );
-});
+};
 
 const voidPayment = () => {
   voidPaymentProcess.value = true;
@@ -3645,8 +3663,8 @@ const voidPayment = () => {
     quote_type_id: page.props.quoteTypeId,
     quote_id: props.quoteRequest.id,
     quote_uuid: props.quoteRequest.uuid,
-    payment_id: props.payments[0].id,
-    payment_code: props.payments[0].code,
+    payment_id: voidPaymentObject.id,
+    payment_code: voidPaymentObject.code,
     send_update_log_id: props.sendUpdate?.id ?? null,
   };
 
@@ -3654,7 +3672,7 @@ const voidPayment = () => {
     .post(`/payments/${props.quoteType}/void-payment`, data)
     .then(res => {
       voidPaymentProcess.value = false;
-      voidPaymentModel.value = false;
+      voidPaymentModelPopup.value = false;
       if (res.data.status === false) {
         notification.error({
           title: res.data.message,
@@ -4074,7 +4092,7 @@ onBeforeMount(() => {
                               </x-badge>
                               <template #tooltip>
                                 {{
-                                  isEditPaymentEnabled()
+                                  isEditPaymentEnabled(item)
                                     ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT
                                     : paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED
                                 }}
@@ -4156,12 +4174,12 @@ onBeforeMount(() => {
                               </x-button>
                             </template>
                           </template>
-                          <template v-if="isVoidPaymentEnabled">
+                          <template v-if="isVoidPaymentEnabled(item)">
                             <x-button
                               size="xs"
                               color="orange"
                               outlined
-                              @click="voidPaymentModel = true"
+                              @click="voidPaymentModel(item)"
                             >
                               Void
                             </x-button>
@@ -6691,8 +6709,9 @@ onBeforeMount(() => {
             </x-form>
           </div>
         </div>
+
         <x-modal
-          v-model="voidPaymentModel"
+          v-model="voidPaymentModelPopup"
           size="lg"
           title="Void Authorized Payment"
           show-close
