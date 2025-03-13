@@ -13,6 +13,7 @@ final class PaymentGatewayEnum extends Enum
     public static function getPaymentGatewayPaymentLink()
     {
         $env = config('constants.APP_ENV', 'production');
+
         return $env !== 'production' ? 5 : 4;
     }
 
