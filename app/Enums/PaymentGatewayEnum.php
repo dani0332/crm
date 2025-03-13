@@ -8,13 +8,7 @@ final class PaymentGatewayEnum extends Enum
 {
     public const PAYMENT_GATEWAY_CHECKOUT = 2;
     public const PAYMENT_GATEWAY_TAP = 3;
-    public const PAYMENT_GATEWAY_PAYMENT_LINK = null;
-
-    public static function getPaymentGatewayPaymentLink()
-    {
-        $env = config('constants.APP_ENV', 'production');
-        return in_array($env, ['production', 'staging']) ? 4 : 5;
-    }
+    public const PAYMENT_GATEWAY_PAYMENT_LINK = 4;
 
     public static function getName($gatewayId)
     {
@@ -23,7 +17,7 @@ final class PaymentGatewayEnum extends Enum
                 return 'checkout';
             case self::PAYMENT_GATEWAY_TAP:
                 return 'tap';
-            case self::getPaymentGatewayPaymentLink():
+            case self::PAYMENT_GATEWAY_PAYMENT_LINK:
                 return 'payment_link';
         }
 
