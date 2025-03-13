@@ -249,9 +249,9 @@ const getRiderPrice = () => {
   if(totalRiderLoading > 0){
     overallLoadingState = true;
     totalRiderPrice  = totalRiderPrice + totalRiderLoading;   
-  }else{
+  }else if(totalFinalPrice > 0){
     totalRiderPrice = totalRiderPrice + totalFinalPrice; 
-    overallLoadingState = false; 
+    overallLoadingState = true; 
   }
   return totalRiderPrice; 
 }
