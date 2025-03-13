@@ -936,7 +936,6 @@ const handlePaymentTypes = count => {
       }
     }
   }
-git 
   return paymentTypesWithoutCheck;
 };
 
