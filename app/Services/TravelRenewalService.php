@@ -158,11 +158,11 @@ class TravelRenewalService extends BaseService
             'insuredFirstName' => isset($customer->insured->first_name) ? $customer->insured->first_name : (isset($customer->insured_first_name) ? $customer->insured_first_name : ''),
             'insuredLastName' => isset($customer->insured->last_name) ? $customer->insured->last_name : (isset($customer->insured_last_name) ? $customer->insured_last_name : ''),
             'isEcommerce' => $quote->is_ecommerce ?? null,
-            'startDate' => Carbon::parse($policyDates['policyStartDate'])->format('Y-m-d') ,
+            'startDate' => Carbon::parse($policyDates['policyStartDate'])->format('Y-m-d'),
             'policyExpiryDate' => Carbon::parse($policyDates['newPolicyExpiryDate'])->format('Y-m-d'),
             'coverageCode' => $quote->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP ? TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP : $quote->coverage_code,
             'regionCoverForId' => $quote->region_cover_for_id,
-            'previousPolicyExpiryDate' =>  Carbon::parse($policyDates['policyExpiryDate'])->format('Y-m-d'),
+            'previousPolicyExpiryDate' => Carbon::parse($policyDates['policyExpiryDate'])->format('Y-m-d'),
             'tripStarted' => false,
         ];
     }
