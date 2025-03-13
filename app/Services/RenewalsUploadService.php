@@ -150,7 +150,7 @@ class RenewalsUploadService
 
         // Getting original file name
         $fileName = request()->file('file_name')->getClientOriginalName();
-        
+
         // Generating name for file for azure usage
         $azureFileName = get_guid().'_'.$fileName;
 
@@ -1238,7 +1238,7 @@ class RenewalsUploadService
             $fullNameKey = strtolower(trim($firstName . ' ' . $lastName));
             $premium = $memberPremiums[$index];
 
-            if($existingCustomersMember[$fullNameKey] && isset($premium)) {
+            if(isset($existingCustomersMember[$fullNameKey]) && isset($premium)) {
                 $memberPremiumBreakdown[] = [
                     'memberId' => $existingCustomersMember[$fullNameKey]->id,
                     'ratesPerCopay' => [
