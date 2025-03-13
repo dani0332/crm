@@ -57,7 +57,7 @@ class DttWithDate extends Command
 
         // Fetch date range from ApplicationStorage
         $date = $storageService->getValueByKey(ApplicationStorageEnums::DTT_FROM);
-        if (is_null($date)) {
+        if (is_null($date) || $date->is_active == 0) {
             info('DttWithRange: No date range provided in dtt_from_to, skipping execution');
 
             return false;
