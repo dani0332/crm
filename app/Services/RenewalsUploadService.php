@@ -19,8 +19,8 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
-use App\Enums\RangeLookupKeyEnums;
 use App\Enums\RangeLookupIdEnums;
+use App\Enums\RangeLookupKeyEnums;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\ThirdPartyTagEnum;
@@ -1824,8 +1824,8 @@ class RenewalsUploadService
                             }
                             if ($leadData->you_are_a) {
                                 $leadPossessionType = RangeLookup::where('text', $leadData->you_are_a)
-                                                        ->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)
-                                                        ->first();
+                                    ->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)
+                                    ->first();
                                 if (! $leadPossessionType) {
                                     $leadValidationErrors->push('Invalid Ownership Status Text');
                                     break;
@@ -1852,8 +1852,8 @@ class RenewalsUploadService
                             }
                             if ($leadData->i_live_in_a) {
                                 $leadAccommodationType = RangeLookup::where('text', $leadData->i_live_in_a)
-                                                        ->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)
-                                                        ->first();
+                                    ->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)
+                                    ->first();
                                 if (! $leadAccommodationType) {
                                     $leadValidationErrors->push('Invalid Type of Property Text');
                                     break;
@@ -1861,8 +1861,8 @@ class RenewalsUploadService
                             }
                             if ($leadData->occupancy_status_for_owners) {
                                 $leadOccupancyType = RangeLookup::where('text', $leadData->occupancy_status_for_owners)
-                                                        ->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)
-                                                        ->first();
+                                    ->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)
+                                    ->first();
                                 if (! $leadOccupancyType) {
                                     $leadValidationErrors->push('Invalid Occupancy Status for Owners Text');
                                     break;
@@ -1870,8 +1870,8 @@ class RenewalsUploadService
                             }
                             if ($leadData->cover_required) {
                                 $leadCoverageType = RangeLookup::where('text', $leadData->cover_required)
-                                                        ->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)
-                                                        ->first();
+                                    ->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)
+                                    ->first();
                                 if (! $leadCoverageType) {
                                     $leadValidationErrors->push('Invalid Cover Required Text');
                                     break;
@@ -1879,8 +1879,8 @@ class RenewalsUploadService
                             }
                             if ($leadData->contents) {
                                 $leadContents = RangeLookup::where('text', $leadData->contents)
-                                                        ->where('key', RangeLookupKeyEnums::CONTENT_VALUES)
-                                                        ->first();
+                                    ->where('key', RangeLookupKeyEnums::CONTENT_VALUES)
+                                    ->first();
                                 if (! $leadContents) {
                                     $leadValidationErrors->push('Invalid Contents Text');
                                     break;
@@ -1888,8 +1888,8 @@ class RenewalsUploadService
                             }
                             if ($leadData->personal_belongings) {
                                 $leadPersonalBelongings = RangeLookup::where('text', $leadData->personal_belongings)
-                                                        ->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)
-                                                        ->first();
+                                    ->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)
+                                    ->first();
                                 if (! $leadPersonalBelongings) {
                                     $leadValidationErrors->push('Invalid Personal Belongings Text');
                                     break;
