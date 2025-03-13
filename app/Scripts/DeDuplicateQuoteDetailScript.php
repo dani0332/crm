@@ -11,7 +11,8 @@ class DeDuplicateQuoteDetailScript
     public static function run()
     {
         $limit = request('limit', 10);
-        $tableName = request('tableName', 'car_quote_request_detail_duplicate1');
+        $tableName = request('tableName', 'car_quote_request_detail_duplicate');
+        $foreignKey = request('foreignKey', 'car_quote_request_id');
 
         try {
             $isScriptStopped = getAppStorageValueByKey(ApplicationStorageEnums::STOP_DE_DUPLICATION_JOB) == 1;
@@ -25,11 +26,11 @@ class DeDuplicateQuoteDetailScript
             info(self::class.' - De-Duplication Job Started');
 
             $duplicates = DB::table($tableName)
-                ->select('car_quote_request_id', DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
-                ->groupBy('car_quote_request_id')
-                ->havingRaw('COUNT(car_quote_request_id) > 1')
+                ->select($foreignKey, DB::raw('GROUP_CONCAT(id ORDER BY id) as ids'))
+                ->groupBy($foreignKey)
+                ->havingRaw("COUNT({$foreignKey}) > 1")
                 ->where('is_deleted', 0)
-                ->orderBy('car_quote_request_id')
+                ->orderBy($foreignKey)
                 ->limit($limit)
                 ->get();
 
@@ -85,7 +86,7 @@ class DeDuplicateQuoteDetailScript
                     foreach ($filteredRecords as $record) {
                         $currentRecord = (array) $record;
                         foreach ($lastRecordData as $column => $lastValue) {
-                            if (! in_array($column, ['id', 'created_at', 'updated_at', 'car_quote_request_id', 'advisor_assigned_date', 'advisor_assigned_by_id']) &&
+                            if (! in_array($column, ['id', 'created_at', 'updated_at', $foreignKey, 'advisor_assigned_date', 'advisor_assigned_by_id']) &&
                                 (empty($lastValue) || is_null($lastValue)) &&
                                 ! empty($currentRecord[$column]) &&
                                 ! is_null($currentRecord[$column]) &&
@@ -126,7 +127,7 @@ class DeDuplicateQuoteDetailScript
 
             info(self::class.' - De-Duplication Job Completed');
 
-            return 'De-duplication completed successfully';
+            return response()->json(['success' => true, 'message' => 'De-duplication completed successfully']);
 
         } catch (Exception $e) {
             info(self::class.' - Fatal error: '.$e->getMessage());
