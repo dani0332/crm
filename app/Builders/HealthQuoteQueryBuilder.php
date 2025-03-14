@@ -60,7 +60,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'aml_status',
             'insurance_provider_id',
             'insurer_aml_status',
-            'renewal_batch_id'
+            'renewal_batch_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
