@@ -225,7 +225,10 @@ const onDataExport = () => {
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end)
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -510,7 +513,7 @@ const insurerAMLStatusOption = computed(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or policy expiry dates are required to export data.
               </span>
             </template>
           </x-tooltip>
