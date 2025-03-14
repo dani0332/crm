@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\HealthQuote;
+use App\Models\QuoteStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
@@ -152,7 +153,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             )
             ->when(
                 request()->filled('email') && request()->filled('email') == '',
-                fn ($q) => $q->whereNotIn('quote_status_id', [9]),
+                fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
 
             )
             ->when($this->shouldApplyDatesFilter(), function ($query) {
