@@ -145,7 +145,11 @@ const insuredFormDetails = useForm({
   industry_type_code: props.entityDetails?.entity?.industry_type_code ?? null,
   emirate_of_registration_id:
     props.entityDetails?.entity?.emirate_of_registration_id ?? null,
-  get_quote_email_gig: page.props.gigInsurerDefaultEmail,
+  get_quote_email_gig:
+    (props.quoteType.code === 'Car'
+      ? props.quoteDetails?.car_quote_request_detail?.insurer_quote_email
+      : props.quoteDetails?.quote_detail?.insurer_quote_email) ??
+    page.props.gigInsurerDefaultEmail,
 });
 
 const rules = {
@@ -768,7 +772,8 @@ watch(
             label="Email in GIG portal"
             v-if="
               quoteType.id === page.props.quoteTypeIdEnum.Car ||
-              quoteType.id === page.props.quoteTypeIdEnum.Bike
+              quoteType.id === page.props.quoteTypeIdEnum.Bike ||
+              quoteType.id === page.props.quoteTypeIdEnum.Home
             "
           >
             <x-input

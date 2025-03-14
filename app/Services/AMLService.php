@@ -121,6 +121,7 @@ class AMLService
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::HOME->id())->with([
+                'quoteDetail',
                 'homeQuote',
                 'homeQuote.possessionType',
                 'homeQuote.accommodationType',
@@ -188,6 +189,7 @@ class AMLService
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
+                'quoteDetail',
                 'bikeQuote',
                 'customer.detail',
                 'quoteStatus',
