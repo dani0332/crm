@@ -143,7 +143,7 @@ class HomeQuoteService extends BaseService
             ')
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
+            ->leftJoin('payment_status  as ps', 'ps.id', '=', 'py.payment_status_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -343,8 +343,9 @@ class HomeQuoteService extends BaseService
         }
 
         // payment_status_id filter
+        // No option in front side for now to filter payments
         if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
+            $this->query->whereIn('py.payment_status_id', $request->payment_status);
         }
 
         // is_cold filter

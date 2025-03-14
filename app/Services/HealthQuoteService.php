@@ -219,7 +219,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
-            ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id')
+            ->leftjoin('payment_status', 'py.payment_status_id', 'payment_status.id')
             ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
             ->leftJoin('renewal_batches as rb', 'hqr.renewal_batch_id', '=', 'rb.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
@@ -498,8 +498,9 @@ class HealthQuoteService extends BaseService
         }
 
         // payment_status_id filter
+        // We are not using on frontend side
         if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
+            $this->query->whereIn('py.payment_status_id', $request->payment_status);
         }
 
         // is_cold filter
@@ -1938,8 +1939,9 @@ class HealthQuoteService extends BaseService
                       ) AS HealthTeams"),
                 DB::raw("GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ') AS AdvisorTeamName"),
             ])
+            ->leftJoin('payments as py', 'py.code', '=', 'q.code')
             ->leftJoin('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
-            ->leftJoin('payment_status as ps', 'q.payment_status_id', '=', 'ps.id')
+            ->leftJoin('payment_status as ps', 'py.payment_status_id', '=', 'ps.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
             ->leftJoin('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
