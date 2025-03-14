@@ -503,7 +503,7 @@
     }
 
     .footer-content-2{
-        font-size: 12px !important;
+        font-size: 14px !important;
     }
 
 
