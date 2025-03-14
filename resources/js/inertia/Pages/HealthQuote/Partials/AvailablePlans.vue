@@ -272,6 +272,7 @@ const adjustingPrices = ref([]);
 const membersLoadingPrices = ref([]);
 const finalPrice = ref(0);
 const totalLoadingPrice = ref(0);
+const totalAdjustedPrice = ref(0);
 const vatAmount = ref(0);
 const loadingPriceBeingUpdated = ref(false);
 
@@ -342,6 +343,14 @@ const updateGeneralInfo = () => {
         Number(totalLoadingPrice.value) + Number(loadingPrice.price);
     });
   }
+  totalAdjustedPrice.value = 0;
+  if (adjustingPrices.value.length > 0) {
+    adjustingPrices.value.forEach(adjustedPrice => {
+      totalAdjustedPrice.value =
+        Number(totalAdjustedPrice.value) + Number(adjustedPrice.price);
+    });
+  }
+
   loadingPriceBeingUpdated.value = false;
   emit('membersDetailsReviewed', true);
   //   }
@@ -665,7 +674,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
                       (props.plan.icpFee || 0) +
-                      totalLoadingPrice)?.toLocaleString()
+                      totalLoadingPrice + totalAdjustedPrice)?.toLocaleString()
                   }}
                 </dd>
                 <dd v-else>
@@ -675,8 +684,14 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
                       (props.plan.icpFee || 0) +
-                      totalLoadingPrice)?.toLocaleString()
+                      totalLoadingPrice + totalAdjustedPrice)?.toLocaleString()
                   }}
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Adjusted Price</dt>
+                <dd>
+                  {{ Number(totalAdjustedPrice).toFixed(2)?.toLocaleString() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -685,6 +700,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                   {{ Number(totalLoadingPrice).toFixed(2)?.toLocaleString() }}
                 </dd>
               </div>
+              
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Total VAT amount</dt>
                 <dd>
