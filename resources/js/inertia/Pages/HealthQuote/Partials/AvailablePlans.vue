@@ -886,6 +886,27 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                   </div>
                 </template>
 
+                <template #header-adjustedPrice="header">
+                  <div class="customize-header large-tip">
+                    <x-tooltip placement="bottom">
+                      <span
+                        class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
+                      >
+                        {{ header.text }}
+                      </span>
+                      <template #tooltip>
+                        <div
+                          class="whitespace-normal text-wrap normal-case text-[10px]"
+                        >
+                          <p>
+                            This price, adjusted either by adding or subtracting from the Base Price, aligns with updated rates from the insurer, accommodating changes that may affect the displayed price
+                          </p>
+                        </div>
+                      </template>
+                    </x-tooltip>
+                  </div>
+                </template>
+
                 <template #header-loadingPrice="header">
                   <div class="customize-header large-tip">
                     <x-tooltip placement="bottom">
