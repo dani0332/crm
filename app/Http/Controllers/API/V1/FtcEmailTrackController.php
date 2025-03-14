@@ -45,7 +45,9 @@ class FtcEmailTrackController extends Controller
             'status' => $request->status,
         ];
         $trackEmail = $this->ftcEmailTrackService->updateTrackEmail($payload, '', $request->link);
-
+        if ($trackEmail == null) {
+            return response()->json(['message' => 'Email track not found.'], Response::HTTP_NOT_FOUND);
+        }
         return response()->json(['message' => 'Email track updated successfully.', 'data' => $trackEmail], Response::HTTP_OK);
     }
 }

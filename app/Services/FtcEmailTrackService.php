@@ -16,6 +16,9 @@ class FtcEmailTrackService
     public function updateTrackEmail($payload, $id, $link = null)
     {
         $trackEmail = $link == null ? FtcEmailTrack::find($id) : FtcEmailTrack::where('link', $link)->first();
+        if($trackEmail == null) {
+            return null;
+        }
         $trackEmail->update($payload);
 
         return $trackEmail;
