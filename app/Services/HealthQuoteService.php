@@ -337,8 +337,9 @@ class HealthQuoteService extends BaseService
 
     public function getGridData($model = null, $request = null)
     {
-        $query =  $this->healthQuoteQueryBuilder->processGridData();
+        $query = $this->healthQuoteQueryBuilder->processGridData();
         $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health);
+
         return $query;
     }
 

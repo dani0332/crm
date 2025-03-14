@@ -2,14 +2,10 @@
 
 namespace App\Exports;
 
-use App\Enums\CustomerTypeEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\TeamNameEnum;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Traits\ExcelExportable;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class HealthQuotesExport
 {

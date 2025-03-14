@@ -61,7 +61,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insurance_provider_id',
             'insurer_aml_status',
             'renewal_batch_id',
-            'previous_policy_expiry_date'
+            'previous_policy_expiry_date',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
