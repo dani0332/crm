@@ -576,7 +576,7 @@ class TravelQuoteService extends BaseService
                     }
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
-                } elseif ($item == 'py.payment_status_id' && ! empty($request[$item])) {
+                } elseif ($item == 'payment_status_id' && ! empty($request[$item])) {
                     $this->query->where('py.payment_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'is_ecommerce', 'previous_policy_expiry_date', 'next_followup_date'];
