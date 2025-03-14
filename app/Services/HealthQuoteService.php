@@ -1440,6 +1440,7 @@ class HealthQuoteService extends BaseService
     public function healthPlanModifyV2($request)
     {
         $loadingPrices = $request->get('loadingPrice');
+        $adjustingPrices = $request->get('adjustingPrice');
         $manualPremiumPrices = $request->get('manualPremiumPrice');
 
         if (empty($request->get('selectedCopay'))) {
@@ -1469,6 +1470,12 @@ class HealthQuoteService extends BaseService
                                 $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
                             }
                             if (
+                                isset($adjustingPrices[$key]) &&
+                                (int) $adjustingPrices[$key]['memberId'] == $value['memberId']
+                            ) {
+                                $copay['adjustedPrice'] = (float) $adjustingPrices[$key]['price'];
+                            }
+                            if (
                                 isset($manualPremiumPrices[$key]) &&
                                 (int) $manualPremiumPrices[$key]['memberId'] == $value['memberId']
                                 && $manualPremiumPrices[$key]['premium'] != 0
@@ -1494,7 +1501,6 @@ class HealthQuoteService extends BaseService
                 'plans' => [$plansArray],
                 'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
-
             info('Health Plan Modify V2 Request Data: '.json_encode($dataArray));
             $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 

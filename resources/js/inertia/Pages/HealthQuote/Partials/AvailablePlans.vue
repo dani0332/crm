@@ -158,7 +158,6 @@ const selectedCopay = ref([]);
 const defaultCopayId = ref(props.plan?.selectedCopayId);
 
 const onCoPaySelect = copayId => {
-  debugger;
   props.plan.ratesPerCopay?.forEach(element => {
     if (element.healthPlanCoPaymentId == copayId) {
       let copayDetails = {
@@ -277,7 +276,6 @@ const vatAmount = ref(0);
 const loadingPriceBeingUpdated = ref(false);
 
 const handleLoadingPrice = (event, memberId) => {
-  debugger;
   loadingPriceBeingUpdated.value = true;
   const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
   if (index > -1) {
@@ -336,7 +334,6 @@ const memberIndexPerId = id => {
 };
 
 const updateGeneralInfo = () => {
-  debugger;
   //   if (confirm('Do you want to update this values?')) {
   totalLoadingPrice.value = 0;
   if (loadingPrices.value.length > 0) {
@@ -351,7 +348,6 @@ const updateGeneralInfo = () => {
 };
 
 const onLoadingPricesUpdate = (member, updateManual = 1) => {
-  debugger;
   updateGeneralInfo();
   const memberData = {
     quoteUID: usePage().props.quote.uuid,
@@ -447,7 +443,6 @@ const markMemberBasePriceRevise = (event, id) => {
 };
 
 onUpdated(() => {
-  debugger;
   defaultCopayId.value = props.plan?.selectedCopayId;
   hidePlan.value = props.plan?.isHidden;
   loadingPrices.value = [];
@@ -496,7 +491,7 @@ onUpdated(() => {
       }
 
       // Handle adjusting prices
-      const adjustedPriceValue = data.adjustingPrice ?? 0;
+      const adjustedPriceValue = data.adjustedPrice ?? 0;
       if (isDefaultCopayMatch) {
         adjustingPrices.value.push({
           memberId: members.memberId,
