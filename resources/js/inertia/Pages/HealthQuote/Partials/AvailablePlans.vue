@@ -269,6 +269,7 @@ const getDefaultVaues = () => {
 };
 
 const loadingPrices = ref([]);
+const adjustingPrices = ref([]);
 const membersLoadingPrices = ref([]);
 const finalPrice = ref(0);
 const totalLoadingPrice = ref(0);
@@ -283,6 +284,18 @@ const handleLoadingPrice = (event, memberId) => {
     loadingPrices.value[index].price = event.target.value;
   } else {
     loadingPrices.value.push({
+      memberId: memberId,
+      price: event.target.value,
+    });
+  }
+};
+
+const handleAdjustingPrice = (event, memberId) => {
+  const index = adjustingPrices.value.findIndex(m => m.memberId == memberId);
+  if (index > -1) {
+    adjustingPrices.value[index].price = event.target.value;
+  } else {
+    adjustingPrices.value.push({
       memberId: memberId,
       price: event.target.value,
     });
@@ -349,6 +362,10 @@ const onLoadingPricesUpdate = (member, updateManual = 1) => {
     defaultCopayId: defaultCopayId.value,
     selectedCopay: selectedCopay.value,
     loadingPrice: loadingPrices.value.map(m => ({
+      memberId: m.memberId,
+      price: parseFloat(m.price),
+    })),
+    adjustingPrice: adjustingPrices.value.map(m => ({
       memberId: m.memberId,
       price: parseFloat(m.price),
     })),
@@ -434,6 +451,7 @@ onUpdated(() => {
   defaultCopayId.value = props.plan?.selectedCopayId;
   hidePlan.value = props.plan?.isHidden;
   loadingPrices.value = [];
+  adjustingPrices.value = [];
   manualPlansMembersPremium.value = [];
   selectedCopay.value = [];
   totalLoadingPrice.value = 0;
@@ -474,6 +492,20 @@ onUpdated(() => {
         loadingPrices.value.push({
           memberId: members.memberId,
           price: loadingPriceValue,
+        });
+      }
+
+      // Handle adjusting prices
+      const adjustedPriceValue = data.adjustingPrice ?? 0;
+      if (isDefaultCopayMatch) {
+        adjustingPrices.value.push({
+          memberId: members.memberId,
+          price: adjustedPriceValue,
+        });
+      } else if (isSelectedCopayMatch) {
+        adjustingPrices.value.push({
+          memberId: members.memberId,
+          price: adjustedPriceValue,
         });
       }
 
@@ -992,7 +1024,84 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                 </template>
 
                 <template #item-adjustedPrice="item">
-                
+                  <section v-for="data in item.ratesPerCopay">
+                    <x-input
+                      v-if="
+                        data.healthPlanCoPaymentId == selectedCopay.id &&
+                        data.adjustingPrice != undefined
+                      "
+                      v-model="
+                        adjustingPrices[memberIndexPerId(item.memberId)].price
+                      "
+                      :disabled="!isManual"
+                      size="sm"
+                      type="number"
+                      step="0.01"
+                      onkeydown="return event.keyCode !== 69"
+                      @paste.prevent
+                      @keyup="handleAdjustingPrice($event, item.memberId)"
+                    />
+                    <x-input
+                      v-if="
+                        data.healthPlanCoPaymentId == selectedCopay.id &&
+                        data.adjustingPrice == undefined
+                      "
+                      v-model="
+                        adjustingPrices[memberIndexPerId(item.memberId)].price
+                      "
+                      :disabled="!isManual"
+                      size="sm"
+                      type="number"
+                      step="0.01"
+                      onkeydown="return event.keyCode !== 69"
+                      @paste.prevent
+                      @keyup="handleAdjustingPrice($event, item.memberId)"
+                    />
+                    <x-input
+                      v-else-if="
+                        (selectedCopay === undefined ||
+                          selectedCopay.length == 0) &&
+                        data.healthPlanCoPaymentId == defaultCopayId &&
+                        data.adjustingPrice != undefined
+                      "
+                      v-model="
+                        adjustingPrices[memberIndexPerId(item.memberId)].price
+                      "
+                      :disabled="!isManual"
+                      size="sm"
+                      type="number"
+                      step="0.01"
+                      onkeydown="return event.keyCode !== 69"
+                      @paste.prevent
+                      @keyup="handleAdjustingPrice($event, item.memberId)"
+                    />
+                    <x-input
+                      v-else-if="
+                        (selectedCopay === undefined ||
+                          selectedCopay.length == 0) &&
+                        data.healthPlanCoPaymentId == defaultCopayId &&
+                        data.adjustingPrice == undefined
+                      "
+                      v-model="
+                        adjustingPrices[memberIndexPerId(item.memberId)].price
+                      "
+                      :disabled="!isManual"
+                      size="sm"
+                      type="number"
+                      step="0.01"
+                      onkeydown="return event.keyCode !== 69"
+                      @paste.prevent
+                      @keyup="handleAdjustingPrice($event, item.memberId)"
+                    />
+                  </section>
+                  <!-- <x-input
+                    v-model="
+                      membersLoadingPrices[memberIndexPerId(item.memberId)]
+                    "
+                    :disabled="!isManual"
+                    size="sm"
+                    @keyup="handleLoadingPrice($event, item.memberId)"
+                  /> -->
                 </template>
 
 
