@@ -101,7 +101,7 @@
     }
 
     tbody {
-        margin-bottom: 230px;
+        margin-bottom: 300px;
     }
 
     tbody>tr>td {
@@ -443,85 +443,115 @@
         padding: 0 5px; /* Adjust spacing */
     }
 
-   /* Footer Fixed Position */
    .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            background-color: #1d83bc;
-            color: #ffffff;
-            padding: 10px;
-            text-align: center;
-            height: 200px;
-            font-family: Arial, sans-serif;
-        }
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 10px;
+        text-align: center;
+        height: 300px;
+        font-family: Arial, sans-serif;
+    }
 
-        /* Footer Table Layout */
-        .footer-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+    .footer-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
 
-        .footer-td {
-            width: 33%;
-            padding: 10px;
-            vertical-align: top;
-            border: none;
-        }
+    .footer-td {
+        padding: 10px;
+        vertical-align: top;
+        border: none;
+    }
 
-        /* Footer Boxes */
-        .footer-box {
-            border-radius: 10px;
-            border: 2px solid #CF9E3C;
-            padding: 10px;
-            background-color: rgba(255, 255, 255, 0.1);
-            text-align: left;
-        }
+    .footer-box {
+        border-radius: 24px;
+        border: 2px solid #CF9E3C;
+        padding: 10px;
+        text-align: left;
+    }
 
-        /* Footer Links */
-        .footer-link {
-            color: #ffffff;
-            text-decoration: none;
-        }
+    .footer-link {
+        color: #ffffff;
+        text-decoration: none;
+    }
 
-        .footer-link:hover {
-            text-decoration: underline;
-        }
+    .footer-link:hover {
+        text-decoration: underline;
+    }
 
-        /* Google Material Icons */
-        .material-icons {
-            font-size: 14px;
-            color: #ffffff;
-            margin-right: 5px;
-            vertical-align: middle;
-        }
+    .material-icons {
+        font-size: 14px;
+        color: #ffffff;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
 
-        /* Advisor Section */
-        .advisor-container {
-            display: flex;
-            align-items: center;
-        }
+    .footer-header {
+        font-size: 14px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 10px;
+    }
 
-        .advisor-img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
+    .footer-content-1{
+        font-size: 10px !important;
+    }
 
-        .advisor-text {
-            text-align: left;
-        }
+    .footer-content-2{
+        font-size: 14px !important;
+    }
 
-        /* Header Text */
-        .footer-header {
-            font-size: 14px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 10px;
-        }
+
+
+    .advisor-section {
+        text-align: left;
+        display: table;
+        width: 100%;
+    }
+
+    .advisor-photo {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: table-cell;
+        vertical-align: middle;
+    }
+    .advisor-details {
+        display: table-cell;
+        vertical-align: middle;
+        /* padding-left: 5px; */
+    }
+
+    .advisor-name {
+        font-weight: bold;
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .advisor-role {
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .advisor-contact {
+        margin: 5px 0 0 0;
+        padding: 0;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .advisor-contact .icon {
+        width: 12px;
+        height: 12px;
+        vertical-align: middle;
+        /* margin-right: 5px; */
+        display: inline-block;
+    }
 
 </style>
 </head>
@@ -939,61 +969,60 @@
 
     {{-- PDF Page Footer --}}
     <div class="footer">
-        <!-- Header Title -->
         <h4 class="footer-header">
             InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
         </h4>
     
-        <!-- Footer Table -->
         <table class="footer-table">
             <tr>
-                <!-- Column 1: Company Info -->
-                <td class="footer-td">
-                    <div class="footer-box">
-                        <p>UAE Central Bank Registration No. 85</p>
-                        <p>Registered Member of Gulf Insurance Federation</p>
-                        <p>Registered Member of Emirates Insurance Federation, number B6</p>
-                        <p>Department of Economy & Tourism in Dubai Trade Licence No. 238534</p>
-                        <p>Registered member of the DIFC Insurance Association with membership number 10049</p>
-                        <p>Holder of Health Insurance Intermediary Permit ID No. BRK-00003 from Dubai Health Authority</p>
-                        <p>Registered member of Insurance Business Group under the Dubai Chamber of Commerce and Industry, number 34774</p>
+                <td class="footer-td" style="width: 40%">
+                    <div class="footer-box" style="line-height: 0.8;">
+                        <p class="footer-content-1">UAE Central Bank Registration No. 85</p>
+                        <p class="footer-content-1">Registered Member of Gulf Insurance Federation</p>
+                        <p class="footer-content-1">Registered Member of Emirates Insurance Federation, number B6</p>
+                        <p class="footer-content-1">Department of Economy & Tourism in Dubai Trade Licence No. 238534</p>
+                        <p class="footer-content-1">Registered member of the DIFC Insurance Association with membership number 10049</p>
+                        <p class="footer-content-1">Holder of Health Insurance Intermediary Permit ID No. BRK-00003 from Dubai Health Authority</p>
+                        <p class="footer-content-1">Registered member of Insurance Business Group under the Dubai Chamber of Commerce and Industry, number 34774</p>
                     </div>
                 </td>
     
-                <!-- Column 2: Address & Contact -->
-                <td class="footer-td">
-                    <div class="footer-box">
-                        <p>27th floor, Control Tower, Detroit Road, Motor City, PO Box - 26423, Dubai, United Arab Emirates.</p>
-                        <p>Happiness Center number:</p>
-                        <p><span class="material-icons">call</span> 800 ALFRED (800 256 733)</p>
+                <td class="footer-td" style="width: 25%">
+                    <div class="footer-box" style="margin-top: 6px; line-height: 0.8;">
+                        <p class="footer-content-2">27th floor, Control Tower, Detroit Road, Motor City, PO Box - 26423, Dubai, United Arab Emirates.</p>
+                        <p class="footer-content-2">Happiness Center number:</p>
+                        <p class="footer-content-2"><span class="material-icons">call</span> 800 ALFRED (800 256 733)</p>
                         <a href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share" class="footer-link">
                             <span class="material-icons">open_in_new</span> View on map
                         </a>
                     </div>
                 </td>
     
-                <!-- Column 3: Advisor Info -->
-                <td class="footer-td">
+                <td class="footer-td" style="width: 35%;">
                     <div class="footer-box">
-                        <div class="advisor-container">
-                            <img class="advisor-img" 
-                                src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}" 
-                                alt="advisor">
-                            <div class="advisor-text">
-                                <p style="font-weight: bold; font-size: 14px;">Rahul Matiwadekar</p>
-                                <p style="font-size: 12px;">Insurance advisor</p>
+                        <div class="advisor-section">
+                            <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
+                                 alt="Advisor Photo" class="advisor-photo">
+                            
+                            <div class="advisor-details" style="line-height: 0.8;">
+                                <p class="advisor-name">John Doe</p>
+                                <p class="advisor-role">Senior Investment Advisor</p>
+                                <p class="advisor-contact">
+                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
+                                    <span>john.doe@example.com</span><br>
+                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
+                                    <span>+1 (234) 567-8901</span><br>
+                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
+                                    <span>+1 (234) 567-8901</span><br>
+                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
+                                    <span>800 ALFRED (800 253 733)</span>
+                                </p>
                             </div>
                         </div>
-                        <p><span class="material-icons">email</span> 
-                            <a href="mailto:rahul.matiwadekar@insurancemarket.ae" class="footer-link">rahul.matiwadekar@insurancemarket.ae</a>
-                        </p>
-                        <p><span class="material-icons">call</span> +971 55 281 4756 
-                            <img src="{{ public_path('images/whatsapp-small.png') }}" style="width: 16px; vertical-align: middle;">
-                        </p>
-                        <p><span class="material-icons">phone</span> +971 4 818 5657</p>
-                        <p><span class="material-icons">support_agent</span> 800 ALFRED (800 253 733)</p>
                     </div>
                 </td>
+
+                
             </tr>
         </table>
     </div>
@@ -1004,3 +1033,13 @@
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
