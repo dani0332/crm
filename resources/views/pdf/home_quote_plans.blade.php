@@ -515,8 +515,8 @@
     }
 
     .advisor-photo {
-        width: 60px;
-        height: 60px;
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
         display: table-cell;
         vertical-align: middle !important;
@@ -530,25 +530,23 @@
 
     .advisor-name {
         font-weight: bold;
-        font-size: 14px;
+        font-size: 12px;
         margin: 0;
     }
 
     .advisor-role {
-        font-size: 13px;
+        font-size: 10px;
         margin: 0;
     }
 
     .advisor-contact {
-        margin: 5px 0 0 0;
-        padding: 0;
         font-size: 12px;
         line-height: 1;
     }
 
     .advisor-contact .icon {
-        width: 12px;
-        height: 12px;
+        width: 10px;
+        height: 10px;
         vertical-align: middle;
         display: inline-block;
     }
