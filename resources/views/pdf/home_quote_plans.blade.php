@@ -562,7 +562,10 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_home_first_page.jpg') }}" class="page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/home_pdf_first_page.jpg') }}" class="page-image" />
+
+    {{-- Second Page --}}
+    <img src="{{ public_path('images/quote_plans_pages/home_pdf_second_page.jpg') }}" class="page-image" />
 
     @php
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
@@ -1012,11 +1015,15 @@
                                 <p class="advisor-role">Senior Investment Advisor</p>
                                 <p class="advisor-contact">
                                     <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
-                                    <span>john.doe@example.com</span><br>
+                                    <span>john.doe@example.com</span>
+                                    <br>
                                     <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
-                                    <span>+1 (234) 567-8901</span><br>
+                                    <span>+1 (234) 567-8901</span>
+                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
+                                    <br>
                                     <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
-                                    <span>+1 (234) 567-8901</span><br>
+                                    <span>+1 (234) 567-8901</span>
+                                    <br>
                                     <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
                                     <span>800 ALFRED (800 253 733)</span>
                                 </p>
@@ -1029,9 +1036,13 @@
         </table>
     </div>
 
-    {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}"
+    {{-- Second Last Page --}}
+    <img src="{{ public_path('images/quote_plans_pages/home_pdf_second_last_page.jpg') }}"
         class="full-page-image" />
+
+    {{-- Last Page --}}
+    <img src="{{ public_path('images/quote_plans_pages/home_pdf_last_page.jpg') }}"
+    class="full-page-image" />
 </body>
 
 </html>
