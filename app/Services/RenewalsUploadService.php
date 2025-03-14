@@ -147,9 +147,10 @@ class RenewalsUploadService
     public function uploadRenewalsFile($isTravel = false)
     {
         $path = 'renewals';
+        $timestamp = Carbon::now()->timestamp;
 
         // Getting original file name
-        $fileName = request()->file('file_name')->getClientOriginalName();
+        $fileName = $timestamp.'-'.request()->file('file_name')->getClientOriginalName();
 
         // Generating name for file for azure usage
         $azureFileName = get_guid().'_'.$fileName;
@@ -355,6 +356,7 @@ class RenewalsUploadService
             }
         } catch (\Exception $exception) {
             info('BATCH: one of batch is failed. Exception : '.$exception->getMessage());
+            info($exception->getTraceAsString());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
         }
     }
@@ -1358,6 +1360,7 @@ class RenewalsUploadService
                 } else {
                     // Case 2: Policyholder excluded from member details
                     unset($memberDetails[$index]);
+                    continue;
                 }
             }
 
@@ -1376,7 +1379,7 @@ class RenewalsUploadService
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$memberDetails],
         ]);
-
+        dd($updateMemberDetails);
         $updateResponse = count($updateMemberDetails) > 0 && Ken::request('/update-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$updateMemberDetails],
@@ -1386,6 +1389,7 @@ class RenewalsUploadService
             info(' Health Members added/updated successfully for UUID: '.$quote->uuid);
             $this->updateBasePricePlan($quote, $data);
         }
+        dd("we hhere");
     }
 
     /**
