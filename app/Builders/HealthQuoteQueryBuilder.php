@@ -59,6 +59,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'sic_advisor_requested',
             'aml_status',
             'insurance_provider_id',
+            'insurer_aml_status',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -109,14 +110,16 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('is_ecommerce', isBool: true)
             ->filterIn('insurer_aml_status')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
-            ->filterBySegment(request('segment_filter'), QuoteTypeId::Health)
+            ->filterBySegment('segment_filter', QuoteTypeId::Health)
+            ->filterByPaymentDueDates('payment_due_date')
+            ->filterByDateRange('booking_date', 'policy_booking_date')
             ->filterByAdvisorAssignedDates('healthQuoteRequestDetail', ['assigned_to_date_start', 'assigned_to_date_end'], verifyQuoteStatus: true)
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
-            ->when(request()->filled('previous_policy_expiry_date'), function ($query) {
-                $query->where(fn ($q) => $q->filterByDate('previous_policy_expiry_date')
-                    ->filterByDate('previous_policy_expiry_date_end', 'previous_policy_expiry_date', false));
+            ->when(request()->filled('policy_expiry_date') && request()->filled('policy_expiry_date_end'), function ($query) {
+                $query->where(fn($q) => $q->filterByDate('policy_expiry_date')
+                    ->filterByDate('previous_policy_expiry_date', 'policy_expiry_date_end', false));
             })
             ->when(Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM'), function ($query) {
                 $query->filterBy('advisor_id', Auth::user()->id);
@@ -124,8 +127,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when(is_array(request('advisors')) && in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
                 $query->whereNull('advisor_id');
             })
-            ->when(is_array(request('advisors')) && ! in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
-                $query->filterIn(request('advisors'), 'advisor_id');
+            ->when(is_array(request('advisors')) && !in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
+                $query->filterIn('advisors', 'advisor_id');
             })
             ->when(request('is_renewal') == 'Yes', function ($query) {
                 $query->whereNotNull('previous_quote_policy_number');
@@ -146,7 +149,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
                 fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
 
-            )->when(
+            )
+            ->when(
                 request()->filled('email') && request()->filled('email') == '',
                 fn ($q) => $q->whereNotIn('quote_status_id', [9]),
 
@@ -156,6 +160,9 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when($this->shouldApplyDatesFilter() && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
+            })
+            ->when(request()->filled('last_modified_date'), function ($query) {
+                $query->filterByDateRange('last_modified_date', 'updated_at');
             })
             ->when(
                 request()->filled('sortBy'),

@@ -337,32 +337,7 @@ class HealthQuoteService extends BaseService
 
     public function getGridData($model = null, $request = null)
     {
-
-        $searchProperties = [];
-        $isRenewalUser = Auth::user()->isRenewalUser();
-        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
-        $isRenewalManager = Auth::user()->isRenewalManager();
-        $isNewManager = Auth::user()->isNewBusinessManager();
-        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-        if ($model != null) {
-            if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
-                $searchProperties = $model->renewalSearchProperties;
-            } elseif ($isNewManager || $isNewAdvisor) {
-                $searchProperties = $model->newBusinessSearchProperties;
-            } else {
-                $searchProperties = $model->searchProperties;
-            }
-        }
-
-        $query = $this->healthQuoteQueryBuilder->processGridData();
-
-        if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-            $dateFrom = $this->parseDate($request['created_at'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], true);
-            $query = $query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
-        }
-
-        return $query;
+        return $this->healthQuoteQueryBuilder->processGridData();
     }
 
     public function getGridDataOld($model = null, $request = null)
