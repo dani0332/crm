@@ -519,12 +519,13 @@
         height: 60px;
         border-radius: 50%;
         display: table-cell;
-        vertical-align: middle;
+        vertical-align: middle !important;
     }
+
     .advisor-details {
         display: table-cell;
-        vertical-align: middle;
-        /* padding-left: 5px; */
+        vertical-align: middle !important;
+        line-height: 1;
     }
 
     .advisor-name {
@@ -542,14 +543,13 @@
         margin: 5px 0 0 0;
         padding: 0;
         font-size: 12px;
-        line-height: 1.4;
+        line-height: 1;
     }
 
     .advisor-contact .icon {
         width: 12px;
         height: 12px;
         vertical-align: middle;
-        /* margin-right: 5px; */
         display: inline-block;
     }
 
@@ -1004,7 +1004,7 @@
                             <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
                                  alt="Advisor Photo" class="advisor-photo">
                             
-                            <div class="advisor-details" style="line-height: 0.8;">
+                            <div class="advisor-details">
                                 <p class="advisor-name">John Doe</p>
                                 <p class="advisor-role">Senior Investment Advisor</p>
                                 <p class="advisor-contact">
