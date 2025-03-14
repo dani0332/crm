@@ -60,6 +60,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'aml_status',
             'insurance_provider_id',
             'insurer_aml_status',
+            'renewal_batch_id'
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -67,7 +68,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'emirate:id,text',
             'advisor:id,name,email,mobile_no,landline_no',
             'previousAdvisor:id,name',
-            'healthQuoteRequestDetail:id,health_quote_request_id,next_followup_date,transapp_code,notes,insly_id',
+            'healthQuoteRequestDetail:id,health_quote_request_id,next_followup_date,transapp_code,notes,insly_id,lost_reason_id',
             'healthLeadType:id,text',
             'lostReason:id,text',
             'salaryBand:id,text',
@@ -79,7 +80,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quoteRequestEntityMapping.entity:id,code,trade_license_no,company_name,company_address,industry_type_code,emirate_of_registration_id',
             'quotePlan',
             'paymentStatus:id,text',
-            'payments:id,paymentable_id,paymentable_type,authorized_at',
+            'payment:id,authorized_at',
             'insuranceProvider:id,text,code',
             'quoteStatus:id,text',
         ]);

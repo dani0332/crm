@@ -60,11 +60,13 @@ const assignForm = useForm({
   isManualAllocationAllowed: 1,
 });
 
+console.log(page.props);
+
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'PAYMENT AUTHORISED DATE', value: 'payments.authorized_at', is_active: true },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status.text', is_active: true },
   {
@@ -99,7 +101,7 @@ const tableHeader = ref([
   },
   { text: 'HEALTH TEAM TYPE', value: 'health_team_type', is_active: true },
   { text: 'TRANSAPP CODE', value: 'health_quote_request_detail.transapp_code', is_active: true },
-  { text: 'LOST REASON', value: 'health_lead_type.lost_reason', is_active: true },
+  { text: 'LOST REASON', value: 'health_quote_request_detail.lost_reason.text', is_active: true },
   {
     text: 'STARTING FROM',
     value: 'price_starting_from',
@@ -109,7 +111,7 @@ const tableHeader = ref([
   { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
-  { text: 'LEAD TYPE', value: 'health_lead_type.lead_type_id_text', is_active: true },
+  { text: 'LEAD TYPE', value: 'health_lead_type.text', is_active: true },
   { text: 'SALARY BAND', value: 'salary_band.text', is_active: true },
   {
     text: 'MEMBER CATEGORY',
@@ -133,7 +135,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batches.text', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch.name', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {

@@ -321,4 +321,9 @@ class HealthQuote extends Model implements AuditableContract
         $segmentFilter = request()->input('segment_filter');
         self::applySegmentFilter($query, $segmentFilter, 'health_quote_request', QuoteTypeId::Health);
     }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'paymentable_id', 'id');
+    }
 }
