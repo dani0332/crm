@@ -141,14 +141,16 @@ const insuredFormDetails = useForm({
   trade_license_no: props.entityDetails?.entity?.trade_license_no,
   company_name: props.entityDetails?.entity?.company_name,
   company_address: props.entityDetails?.entity?.company_address,
-  
+
   entity_type_code: props.entityDetails?.entity?.entity_type_code ?? 'Parent',
   industry_type_code: props.entityDetails?.entity?.industry_type_code ?? null,
   emirate_of_registration_id:
     props.entityDetails?.entity?.emirate_of_registration_id ?? null,
-  get_quote_email_gig: (props.quoteType.code === 'Car'
+  get_quote_email_gig:
+    (props.quoteType.code === 'Car'
       ? props.quoteDetails?.car_quote_request_detail?.insurer_quote_email
-      : props.quoteDetails?.quote_detail?.insurer_quote_email) ?? page.props.gigInsurerDefaultEmail,
+      : props.quoteDetails?.quote_detail?.insurer_quote_email) ??
+    page.props.gigInsurerDefaultEmail,
 });
 
 const rules = {
