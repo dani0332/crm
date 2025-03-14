@@ -1640,22 +1640,7 @@ const allowStatusUpdate = computed(() => {
 });
 
 const convertToNumber = (value, decimalPlace = 2) => {
-  // Step 1: Round to (decimalPlace + 2) decimal places
-  const roundToExtra =
-    Math.round(value * Math.pow(10, decimalPlace + 2)) /
-    Math.pow(10, decimalPlace + 2);
-
-  // Step 2: Round to (decimalPlace + 1) decimal places
-  const roundToOneLess =
-    Math.round(roundToExtra * Math.pow(10, decimalPlace + 1)) /
-    Math.pow(10, decimalPlace + 1);
-
-  // Step 3: Round to (decimalPlace) decimal places
-  const roundToFinal =
-    Math.round(roundToOneLess * Math.pow(10, decimalPlace)) /
-    Math.pow(10, decimalPlace);
-
-  return roundToFinal;
+  return useRoundIt(value).toFixed(2);
 };
 
 function genderFormatForProfile(gender) {
@@ -1672,17 +1657,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
 
-const isPuaOrManualPlan = computed(() => {
+const isCommercialVehicle = computed(() => {
   let isCConditionMeet = false;
-  if (selectedProviderPlan?.value?.id && availablePlansItems?.value) {
-    const selectedPlan = availablePlansItems?.value.find(
-      plan => plan.id === selectedProviderPlan?.value?.id,
-    );
-    if (selectedPlan) {
-      if (selectedPlan.puaType || selectedPlan.isManualPlan) {
-        isCConditionMeet = true;
-      }
-    }
+  if (isPlanDetailEnabled.value) {
+    isCConditionMeet = true;
   }
   return isCConditionMeet;
 });
@@ -3741,8 +3719,10 @@ const isPuaOrManualPlan = computed(() => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isCapBtnEnabled="isPuaOrManualPlan"
+      :isCapBtnEnabled="isCommercialVehicle"
+      :isPlanDetailSectionEnabled="isPlanDetailEnabled"
     />
+
     <PaymentTable
       v-else
       :payments="payments"

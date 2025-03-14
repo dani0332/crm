@@ -134,6 +134,7 @@ const {
   policy_start_date,
   isEmail,
   isMobileNo,
+  maxCharacters,
   emiratesNumber,
 } = useRules();
 const confirmDeleteData = reactive({
@@ -1589,6 +1590,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
+            quote.previous_quote_policy_number &&
             canAny([
               permissionsEnum.VIEW_LEGACY_DETAILS,
               permissionsEnum.VIEW_ALL_LEADS,
@@ -2594,7 +2596,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             v-model="travelerForm.first_name"
             label="Member Name*"
             placeholder="Member Name"
-            :rules="[isRequired]"
+            :rules="[isRequired, maxCharacters(40)]"
             :hasError="travelerForm.errors.first_name"
           />
           <ComboBox
@@ -3368,6 +3370,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <PaymentTable
