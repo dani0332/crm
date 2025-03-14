@@ -20,7 +20,7 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'created_at'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'created_at', 'updated_at'];
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
