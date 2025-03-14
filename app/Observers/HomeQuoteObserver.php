@@ -8,7 +8,6 @@ use App\Enums\QuoteTypes;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
-use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\SendEmailCustomerService;

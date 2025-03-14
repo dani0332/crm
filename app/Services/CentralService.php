@@ -26,7 +26,6 @@ use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Facades\Marshall;
-use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;

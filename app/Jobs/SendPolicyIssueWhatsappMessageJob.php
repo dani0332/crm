@@ -14,7 +14,8 @@ class SendPolicyIssueWhatsappMessageJob implements ShouldQueue
 
     public $tries = 3;
     public $timeout = 100;
-    /*public $backoff = 300;*/
+
+    /* public $backoff = 300; */
     private $quote;
     private $quoteTypeId;
 

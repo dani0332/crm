@@ -75,7 +75,7 @@ class LifeQuoteObserver
             $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$lifeQuote->code.' Policy Issued ');
-            /*(new CentralService)->triggerPolicyIssuedWhatsappMessageToCustomer($lifeQuote, QuoteTypes::LIFE->id());*/
+            /* (new CentralService)->triggerPolicyIssuedWhatsappMessageToCustomer($lifeQuote, QuoteTypes::LIFE->id()); */
             SendPolicyIssueWhatsappMessageJob::dispatch($lifeQuote, QuoteTypes::LIFE->id())->onQueue('insly');
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
