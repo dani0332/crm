@@ -356,7 +356,6 @@ class RenewalsUploadService
             }
         } catch (\Exception $exception) {
             info('BATCH: one of batch is failed. Exception : '.$exception->getMessage());
-            info($exception->getTraceAsString());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
         }
     }
@@ -1379,7 +1378,7 @@ class RenewalsUploadService
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$memberDetails],
         ]);
-        dd($updateMemberDetails);
+
         $updateResponse = count($updateMemberDetails) > 0 && Ken::request('/update-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$updateMemberDetails],
@@ -1389,7 +1388,6 @@ class RenewalsUploadService
             info(' Health Members added/updated successfully for UUID: '.$quote->uuid);
             $this->updateBasePricePlan($quote, $data);
         }
-        dd("we hhere");
     }
 
     /**
@@ -2356,8 +2354,6 @@ class RenewalsUploadService
         } catch (\Exception $exception) {
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
             Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
-            Log::error($exception->getTraceAsString());
-
             return false;
         }
     }
