@@ -575,7 +575,8 @@ class CarAllocationService extends AllocationService
     public function getUsersByLeadSourceRules($lead)
     {
         if ($lead->registration_type == CarRegistrationType::COMPANY) {
-            info(self::class . "- Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: {$lead->uuid} | Time: " . now());
+            info(self::class."- Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
             return $this->getRulesForVehicleUse($lead);
         } else {
             $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
@@ -591,7 +592,8 @@ class CarAllocationService extends AllocationService
                     'lead_sources.id AS leadSourceId',
                     DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
                 );
-            info(self::class . "- Lead is not registered as a company, applying  rules for lead with Ref-ID:  {$lead->uuid} | Time: " . now());
+            info(self::class."- Lead is not registered as a company, applying  rules for lead with Ref-ID:  {$lead->uuid} | Time: ".now());
+
             return $records->get();
         }
     }
@@ -629,18 +631,18 @@ class CarAllocationService extends AllocationService
     private function getCompanyUsageRules($lead, $ruleName = null)
     {
         // if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_CAR_QUOTE) {
-            info(self::class." - Applying rule: {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} | Time: ".now());
+        info(self::class." - Applying rule: {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} | Time: ".now());
 
-            return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
-                ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-                ->join('users', 'users.id', 'rule_users.user_id')
-                ->where('rules.name', $ruleName)
-                ->where('rule_type', RuleTypeEnum::VEHICLE_USE)
-                ->where('rules.is_active', 1)
-                ->groupBy('rule_details.rule_id')
-                ->select(
-                    DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-                )->get();
+        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('rules.name', $ruleName)
+            ->where('rule_type', RuleTypeEnum::VEHICLE_USE)
+            ->where('rules.is_active', 1)
+            ->groupBy('rule_details.rule_id')
+            ->select(
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+            )->get();
         // } else {
         //     info(self::class." -No rule found for {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} Time: ".now());
         // }
