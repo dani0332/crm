@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\TravelQuote;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -100,6 +101,7 @@ class TravelQuoteObserver
             isset($dirty['quote_status_id']) &&
             $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            SendPolicyIssueWhatsappMessageJob::dispatch($travelQuote, QuoteTypes::TRAVEL->id())->onQueue('insly');
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
 

@@ -22,9 +22,11 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Facades\Marshall;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
@@ -1170,4 +1172,37 @@ class CentralService extends BaseService
 
         return in_array($insuranceProviderCode, $enabledProviders);
     }
+
+    public function sendPolicyIssuedWhatsappMessage($quote, $quoteTypeId)
+    {
+        $lobName = QuoteTypes::getName($quoteTypeId);
+        if ($quote?->businessTypeOfInsurance) {
+            $lobName = $quote?->businessTypeOfInsurance?->text;
+        }
+        $workFlowType = WorkflowTypeEnum::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER ?? null;
+
+        $messageData = [
+            'customerName' => "{$quote->first_name} {$quote->last_name}",
+            'policyNumber' => $quote->policy_number,
+            'lob' => $lobName,
+            'whatsAppNumber' => formatMobileNo($quote->mobile_no),
+            'workflowType' => $workFlowType,
+            'quoteUUID' => $quote->uuid,
+            'refId' => $quote->code,
+        ];
+        info(self::class.'fn:'.__FUNCTION__.' trigger workflow to Send Whatsapp Message : Ref-ID: '.$quote->code.' | Time: '.now());
+        $workFlowEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL)->first();
+        if ($workFlowEvent) {
+            $response = app(BirdService::class)->triggerWebHookRequest($workFlowEvent->value, $messageData);
+            info(self::class.'fn:'.__FUNCTION__.'sendPolicyIssuedWhatsappMessage workflow event triggered for lead  Ref-ID: {$quote->uuid} |Time: '.now());
+
+            return $response->status_code;
+        } else {
+            info(self::class.'fn:'.__FUNCTION__.' workflow key not found for lead : Ref-ID: '.$quote->code.' | Time: '.now());
+        }
+
+        return null;
+
+    }
+
 }

@@ -7,8 +7,10 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\CentralService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -72,6 +74,9 @@ class LifeQuoteObserver
             isset($dirty['quote_status_id']) &&
             $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            info(self::class.' fn:'.__FUNCTION__.' - Quote Code '.$lifeQuote->code.' Policy Issued ');
+            /*(new CentralService)->triggerPolicyIssuedWhatsappMessageToCustomer($lifeQuote, QuoteTypes::LIFE->id());*/
+            SendPolicyIssueWhatsappMessageJob::dispatch($lifeQuote, QuoteTypes::LIFE->id())->onQueue('insly');
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
 

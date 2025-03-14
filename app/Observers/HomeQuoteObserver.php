@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
 use App\Repositories\PaymentRepository;
@@ -93,6 +94,7 @@ class HomeQuoteObserver
             isset($dirty['quote_status_id']) &&
             $homeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            SendPolicyIssueWhatsappMessageJob::dispatch($homeQuote, QuoteTypes::HOME->id())->onQueue('insly');
             $payment = $homeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($homeQuote, $payment, QuoteTypes::HOME->value);
 
