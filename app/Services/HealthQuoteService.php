@@ -354,13 +354,13 @@ class HealthQuoteService extends BaseService
             }
         }
 
-        $query =  $this->healthQuoteQueryBuilder->processGridData();
+        $query = $this->healthQuoteQueryBuilder->processGridData();
 
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $query = $query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
-        };
+        }
 
         return $query;
     }

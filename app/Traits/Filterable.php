@@ -93,7 +93,7 @@ trait Filterable
             $query->whereHas($relation, function ($query) use ($startDateFilterName, $endDateFilterName) {
                 $query->whereBetween('advisor_assigned_date', [$this->parseDate(request($startDateFilterName), true), $this->parseDate(request($endDateFilterName), false)]);
             });
-        })->when($verifyQuoteStatus, fn($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]));
+        })->when($verifyQuoteStatus, fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]));
     }
 
     public function scopeFilterByPaymentDueDates($query, $filterName)

@@ -112,10 +112,10 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBySegment(request('segment_filter'), QuoteTypeId::Health)
             ->filterByAdvisorAssignedDates('healthQuoteRequestDetail', ['assigned_to_date_start', 'assigned_to_date_end'], verifyQuoteStatus: true)
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
-                $query->where(fn($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
+                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
             ->when(request()->filled('previous_policy_expiry_date'), function ($query) {
-                $query->where(fn($q) => $q->filterByDate('previous_policy_expiry_date')
+                $query->where(fn ($q) => $q->filterByDate('previous_policy_expiry_date')
                     ->filterByDate('previous_policy_expiry_date_end', 'previous_policy_expiry_date', false));
             })
             ->when(Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM'), function ($query) {
@@ -124,16 +124,16 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when(is_array(request('advisors')) && in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
                 $query->whereNull('advisor_id');
             })
-            ->when(is_array(request('advisors')) && !in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
+            ->when(is_array(request('advisors')) && ! in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
                 $query->filterIn(request('advisors'), 'advisor_id');
             })
-            ->when(request('is_renewal') == "Yes", function ($query) {
+            ->when(request('is_renewal') == 'Yes', function ($query) {
                 $query->whereNotNull('previous_quote_policy_number');
             })
             ->when(request('stale_at'), function ($query) {
                 $query->whereNotNull('stale_at');
             })
-            ->when(request('is_renewal') != "Yes", function ($query) {
+            ->when(request('is_renewal') != 'Yes', function ($query) {
                 $query->whereNull('previous_quote_policy_number');
             })
             ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
@@ -144,11 +144,11 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when(
                 ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
-                fn($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
+                fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
 
             )->when(
                 request()->filled('email') && request()->filled('email') == '',
-                fn($q) => $q->whereNotIn('quote_status_id', [9]),
+                fn ($q) => $q->whereNotIn('quote_status_id', [9]),
 
             )
             ->when($this->shouldApplyDatesFilter(), function ($query) {
@@ -159,8 +159,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when(
                 request()->filled('sortBy'),
-                fn($q) => $q->orderBy(request('sortBy'), request('sortType')),
-                fn($q) => $q->orderBy('created_at', 'DESC'),
+                fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
+                fn ($q) => $q->orderBy('created_at', 'DESC'),
             );
     }
 
@@ -168,6 +168,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
     {
         $query = $this->buildGrid();
         $this->applyFilters($query);
+
         return $query;
     }
 }
