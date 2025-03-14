@@ -443,51 +443,68 @@
         padding: 0 5px; /* Adjust spacing */
     }
 
+    /* Footer Container */
     footer {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
         height: 230px;
-        padding: 0;
+        padding: 10px;
         background-color: #1d83bc;
         color: #fff;
         text-align: center;
         z-index: 1000;
     }
 
-    table.tbl-footer {
-        padding: 7px 30px;
-        margin: 0;
+    /* Footer Table */
+    .tbl-footer {
+        padding: 5px 10px;
+        width: 100%;
+        border: none;
+    }
+
+    .footer-table {
         width: 100%;
         border-collapse: collapse;
     }
 
-    table.tbl-footer tr td,
-    table.tbl-footer tr td a {
-        color: #ffffff;
+    /* Footer Cells */
+    .footer-td {
         border: none;
-        font-size: 14px;
-        font-weight: 400;
+        padding: 10px;
+        vertical-align: top;
+        width: 33%;
     }
 
-    table.tbl-footer tr td {
-        padding: 0;
-        margin: 0;
-        width: auto;
-        border: none;
-    }
-
-    table {
-        border-collapse: collapse;
-    }
-
+    /* Footer Content Box */
     .footer-col {
         border-radius: 10px;
         border: 2px solid #CF9E3C;
-        padding: 10px;
+        padding: 12px;
         text-align: left;
+        background-color: rgba(255, 255, 255, 0.1);
     }
+
+    /* Footer Links */
+    .footer-link {
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .footer-link:hover {
+        text-decoration: underline;
+    }
+
+    /* Google Material Icons */
+    .material-icons {
+        font-size: 16px;
+        color: #ffffff;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+
+
 
 
 </style>
@@ -905,38 +922,70 @@
     </main>
 
     {{-- PDF Page Footer --}}
-    <footer style="background-color: #1d83bc; color: #fff; text-align: center; padding: 5px;">
-        <table class="tbl-footer" style="padding: 0 10px; margin: 0; width: 100%; border-collapse: collapse;">
+    <footer style="background-color: #1d83bc; color: #fff; text-align: center; padding: 10px;">
+        <table class="tbl-footer">
             <tr>
-                <td colspan="3" class="text-center" style="border: none;">
-                    <h4 style="font-size: 14px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
-                        Insurance Brokerage Services LLC</h4>
+                <td colspan="3" class="text-center">
+                    <h4 style="font-size: 16px; margin: 0; font-weight: bold;">
+                        InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
+                    </h4>
                 </td>
             </tr>
         </table>
-        <table style="width: 100%; border-collapse: collapse;">
+    
+        <table class="footer-table">
             <tr>
-                <td style="border: none; padding: 5px; width: 33%;">
+                <!-- First Column -->
+                <td class="footer-td">
                     <div class="footer-col">
                         <p>UAE Central Bank Registration No. 85</p>
+                        <p>Registered Member of Gulf Insurance Federation</p>
+                        <p>Registered Member of Emirates Insurance Federation, number B6</p>
+                        <p>Department of Economy & Tourism in Dubai Trade Licence No. 238534</p>
+                        <p>Registered member of the DIFC Insurance Association with membership number 10049</p>
+                        <p>Holder of Health Insurance Intermediary Permit ID No. BRK-00003 from Dubai Health Authority</p>
+                        <p>Registered member of Insurance Business Group under the Dubai Chamber of Commerce and Industry, number 34774</p>
                     </div>
                 </td>
-                <td style="border: none; padding: 5px; width: 33%;">
+    
+                <!-- Second Column -->
+                <td class="footer-td">
                     <div class="footer-col">
-                        <p>Your insurance advisor is: </p>
+                        <p>27th floor, Control Tower, Detroit Road, Motor City, PO Box - 26423, Dubai, United Arab Emirates.</p>
+                        <p>Happiness Center number:</p>
+                        <p><span class="material-icons" style="vertical-align: middle;">call</span> 800 ALFRED (800 256 733)</p>
+                        <a href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
+                            <span class="material-icons" style="vertical-align: middle;">open_in_new</span>
+                        </a>
                     </div>
                 </td>
-                <td style="border: none; padding: 5px; width: 33%;">
+    
+                <!-- Third Column (Insurance Advisor Info) -->
+                <td class="footer-td">
                     <div class="footer-col">
-                        <p>Your insurance advisor is: </p>
-                        <img style="height: 110px; border-radius: 50%;"
-                            src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
-                            alt="advisor">
+                        <div style="display: flex; align-items: center;">
+                            <img style="height: 80px; border-radius: 50%; margin-right: 10px;"
+                                src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
+                                alt="advisor">
+                            <div>
+                                <p style="font-weight: bold; font-size: 14px;">Rahul Matiwadekar</p>
+                                <p style="font-size: 12px;">Insurance advisor</p>
+                            </div>
+                        </div>
+                        <p><span class="material-icons" style="vertical-align: middle;">email</span>
+                            <a href="mailto:rahul.matiwadekar@insurancemarket.ae" class="footer-link">rahul.matiwadekar@insurancemarket.ae</a>
+                        </p>
+                        <p><span class="material-icons" style="vertical-align: middle;">call</span> +971 55 281 4756
+                            <img src="{{ public_path('images/whatsapp-small.png') }}" style="width: 20px; vertical-align: middle;">
+                        </p>
+                        <p><span class="material-icons" style="vertical-align: middle;">phone</span> +971 4 818 5657</p>
+                        <p><span class="material-icons" style="vertical-align: middle;">support_agent</span> 800 ALFRED (800 253 733)</p>
                     </div>
                 </td>
             </tr>
         </table>
     </footer>
+    
     
 
     {{-- Last Page --}}
