@@ -68,6 +68,7 @@ final class ApplicationStorageEnums extends Enum
     public const SAGE_ENABLED = 'SAGE_ENABLED';
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
     public const DTT_ENABLED = 'DTT_ENABLED';
+    public const DTT_FROM = 'DTT_FROM';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
     public const DTT_HEALTH_ENABLED = 'DTT_HEALTH_ENABLED';
@@ -198,4 +199,6 @@ final class ApplicationStorageEnums extends Enum
 
     public const SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL = 'SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER_EVENT_URL';
 
+    public const STOP_DE_DUPLICATION_JOB = 'STOP_DE_DUPLICATION_JOB';
+    public const BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW = 'BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW';
 }

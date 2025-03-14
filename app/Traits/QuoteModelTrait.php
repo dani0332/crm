@@ -241,4 +241,9 @@ trait QuoteModelTrait
             }
         );
     }
+
+    public function isPaymentLinkRequested(): bool
+    {
+        return $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
+    }
 }

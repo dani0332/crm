@@ -21,5 +21,7 @@ final class WorkflowTypeEnum extends Enum
     public const HOME_AUTOMATED_FOLLOWUPS = 'home_automated_followups';
     public const WHATSAPP_NOTIFICATION_TO_CUSTOMER_NO_PLANS = 'whatsapp_notification_to_customer_no_plans';
     public const TRAVEL_ALLIANCE_FAILED_ALLOCATION = 'travel_alliance_failed_allocation';
+    public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
+    public const INTRODUCTORY_EMAIL_TO_CUSTOMER = 'introductory_email_to_customer';
     public const SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER = 'send_policy_issued_whatsapp_message_to_customer';
 }
