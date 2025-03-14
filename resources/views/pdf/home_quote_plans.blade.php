@@ -509,24 +509,29 @@
 
 
     .advisor-section {
-        text-align: left;
         display: table;
         width: 100%;
+    }
+
+    .advisor-photo-container {
+        display: table-cell;
+        vertical-align: middle;
+        width: 70px;
     }
 
     .advisor-photo {
         width: 70px;
         height: 70px;
         border-radius: 50%;
-        display: table-cell;
-        vertical-align: middle;
-        padding-right: 8px;
+        display: block;
+        margin: auto;
     }
 
     .advisor-details {
         display: table-cell;
         vertical-align: middle;
         line-height: 1.1;
+        padding-left: 10px;
     }
 
     .advisor-name {
@@ -997,8 +1002,10 @@
                 <td class="footer-td" style="width: 30%;">
                     <div class="footer-box">
                         <div class="advisor-section">
-                            <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
-                                 alt="Advisor Photo" class="advisor-photo">
+                            <div class="advisor-photo-container">
+                                <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
+                                     alt="Advisor Photo" class="advisor-photo">
+                            </div>
                             
                             <div class="advisor-details">
                                 <p class="advisor-name">John Doe</p>
@@ -1017,8 +1024,6 @@
                         </div>
                     </div>
                 </td>
-                
-
                 
             </tr>
         </table>
