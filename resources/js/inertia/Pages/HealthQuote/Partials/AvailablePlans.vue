@@ -458,7 +458,6 @@ onUpdated(() => {
   adjustingPrices.value = [];
   manualPlansMembersPremium.value = [];
   selectedCopay.value = [];
-  totalLoadingPrice.value = 0;
   isManual.value = false;
   loadingPriceBeingUpdated.value = false;
   getDefaultVaues();
@@ -518,10 +517,7 @@ onUpdated(() => {
     });
   });
 
-  loadingPrices.value.forEach(data => {
-    totalLoadingPrice.value =
-      Number(totalLoadingPrice.value) + Number(data.price);
-  });
+  updateGeneralInfo();
 });
 const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
   createReusableTemplate();
