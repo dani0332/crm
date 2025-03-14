@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\Revival\CarRevivalLeadsCreationJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
@@ -56,14 +57,14 @@ class DttWithDate extends Command
         }
 
         // Fetch date range from ApplicationStorage
-        $date = $storageService->getValueByKey(ApplicationStorageEnums::DTT_FROM);
-        if (is_null($date) || $date->is_active == 0) {
-            info('DttWithRange: No date range provided in dtt_from_to, skipping execution');
+        $date = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_FROM)->first();
+        if (! isset($date) || $date->is_active == 0) {
+            info('DttWithRange: No date provided in dtt_from, skipping execution');
 
             return false;
         }
 
-        $currentDate = Carbon::parse($date);
+        $currentDate = Carbon::parse($date->value);
 
         $excludeSources = [
             LeadSourceEnum::AFIA_RENEWAL,
