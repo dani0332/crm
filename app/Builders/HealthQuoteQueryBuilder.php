@@ -118,7 +118,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
             ->when(request()->filled('policy_expiry_date') && request()->filled('policy_expiry_date_end'), function ($query) {
-                $query->where(fn($q) => $q->filterByDate('policy_expiry_date')
+                $query->where(fn ($q) => $q->filterByDate('policy_expiry_date')
                     ->filterByDate('previous_policy_expiry_date', 'policy_expiry_date_end', false));
             })
             ->when(Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM'), function ($query) {
@@ -127,7 +127,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when(is_array(request('advisors')) && in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
                 $query->whereNull('advisor_id');
             })
-            ->when(is_array(request('advisors')) && !in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
+            ->when(is_array(request('advisors')) && ! in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
                 $query->filterIn('advisors', 'advisor_id');
             })
             ->when(request('is_renewal') == 'Yes', function ($query) {
