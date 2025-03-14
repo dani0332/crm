@@ -515,17 +515,18 @@
     }
 
     .advisor-photo {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
         display: table-cell;
-        vertical-align: middle !important;
+        vertical-align: middle;
+        padding-right: 8px;
     }
 
     .advisor-details {
         display: table-cell;
-        vertical-align: middle !important;
-        line-height: 1;
+        vertical-align: middle;
+        line-height: 1.1;
     }
 
     .advisor-name {
@@ -547,7 +548,7 @@
     .advisor-contact .icon {
         width: 10px;
         height: 10px;
-        vertical-align: middle;
+        vertical-align: baseline;
         display: inline-block;
     }
 
@@ -1019,6 +1020,7 @@
                         </div>
                     </div>
                 </td>
+                
 
                 
             </tr>
