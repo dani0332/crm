@@ -503,7 +503,7 @@
     }
 
     .footer-content-2{
-        font-size: 14px !important;
+        font-size: 12px !important;
     }
 
 
@@ -990,10 +990,7 @@
                     <div class="footer-box" style="margin-top: 6px; line-height: 0.8;">
                         <p class="footer-content-2">27th floor, Control Tower, Detroit Road, Motor City, PO Box - 26423, Dubai, United Arab Emirates.</p>
                         <p class="footer-content-2">Happiness Center number:</p>
-                        <p class="footer-content-2"><span class="material-icons">call</span> 800 ALFRED (800 256 733)</p>
-                        <a href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share" class="footer-link">
-                            <span class="material-icons">open_in_new</span> View on map
-                        </a>
+                        <p class="footer-content-2">800 ALFRED (800 256 733)</p>
                     </div>
                 </td>
     
