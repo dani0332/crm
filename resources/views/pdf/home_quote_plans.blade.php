@@ -515,8 +515,8 @@
     }
 
     .advisor-photo {
-        width: 60px;
-        height: 60px;
+        width: 70px;
+        height: 70px;
         border-radius: 50%;
         display: table-cell;
         vertical-align: middle;
@@ -974,7 +974,7 @@
     
         <table class="footer-table">
             <tr>
-                <td class="footer-td" style="width: 40%">
+                <td class="footer-td" style="width: 45%">
                     <div class="footer-box" style="line-height: 0.8;">
                         <p class="footer-content-1">UAE Central Bank Registration No. 85</p>
                         <p class="footer-content-1">Registered Member of Gulf Insurance Federation</p>
@@ -994,7 +994,7 @@
                     </div>
                 </td>
     
-                <td class="footer-td" style="width: 35%;">
+                <td class="footer-td" style="width: 30%;">
                     <div class="footer-box">
                         <div class="advisor-section">
                             <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
