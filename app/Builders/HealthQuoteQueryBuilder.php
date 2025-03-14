@@ -89,7 +89,6 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
     public function applyFilters(Builder $query)
     {
         $query
-            ->filterByDateRange('transaction_approved_dates', 'created_at')
             ->filterBy('code')
             ->matchBy('first_name')
             ->matchBy('last_name')
