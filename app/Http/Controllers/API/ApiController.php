@@ -25,6 +25,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
 use App\Models\QuoteFlowDetails;
+use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
@@ -239,6 +240,11 @@ class ApiController extends Controller
     public function Ken2Connectivity()
     {
         return Ken::renewalRequest('/get-connectivity-check', 'get');
+    }
+
+    public function duplicateEntries()
+    {
+        return DeDuplicateQuoteDetailScript::run();
     }
 
     public function markAutoCaptureFailed($quoteUuid, $quoteType)
