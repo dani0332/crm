@@ -45,6 +45,6 @@ class HealthQuoteRequestDetail extends Model implements AuditableContract
 
     public function lostReason()
     {
-        return $this->hasOne(LostReasons::class, 'id', 'lost_reason_i');
+        return $this->hasOne(LostReasons::class, 'id', 'lost_reason_id');
     }
 }

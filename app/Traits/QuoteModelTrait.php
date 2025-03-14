@@ -260,4 +260,9 @@ trait QuoteModelTrait
             ->where('plan_id', $this->plan_id)
             ->exists();
     }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
+    }
 }
