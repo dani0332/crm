@@ -282,12 +282,6 @@
         color: #1d83bc;
     }
 
-    .page-image {
-        width: 100%;
-        height: 100%;
-        z-index: 9999;
-    }
-
     table td,
     table th {
         max-width: 160px;
@@ -443,7 +437,7 @@
         padding: 0 5px; /* Adjust spacing */
     }
 
-   .footer {
+    .footer {
         position: fixed;
         bottom: 0;
         left: 0;
@@ -563,10 +557,9 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page.jpg') }}" class="page-image" />
-
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header.jpg') }}" class="full-page-image" style="height: 50% !important"/>
     {{-- Second Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page.jpg') }}" class="page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
 
     @php
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
@@ -1038,11 +1031,11 @@
     </div>
 
     {{-- Second Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page.jpg') }}"
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}"
         class="full-page-image" />
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page.jpg') }}"
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}"
     class="full-page-image" />
 </body>
 
