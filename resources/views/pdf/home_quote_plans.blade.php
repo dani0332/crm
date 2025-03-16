@@ -253,6 +253,7 @@
     .full-page-image {
         width: 100%;
         z-index: 999;
+        height: 88%;
     }
 
     .text-center {
@@ -553,8 +554,10 @@
 <body>
     {{-- First Page --}}
     <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header.jpg') }}" class="full-page-image" style="height: 100% !important" />
+    <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
     <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
+    <div style="page-break-after: always;"></div>
 
     @php
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
@@ -1028,6 +1031,7 @@
     {{-- Second Last Page --}}
     <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}"
         class="full-page-image" />
+    <div style="page-break-after: always;"></div>
 
     {{-- Last Page --}}
     <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}"
