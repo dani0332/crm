@@ -562,10 +562,10 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/home_pdf_first_page.jpg') }}" class="page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page.jpg') }}" class="page-image" />
 
     {{-- Second Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/home_pdf_second_page.jpg') }}" class="page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page.jpg') }}" class="page-image" />
 
     @php
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
@@ -1014,17 +1014,17 @@
                                 <p class="advisor-name">John Doe</p>
                                 <p class="advisor-role">Senior Investment Advisor</p>
                                 <p class="advisor-contact">
-                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
+                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
                                     <span>john.doe@example.com</span>
                                     <br>
-                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
+                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
                                     <span>+1 (234) 567-8901</span>
                                     <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
                                     <br>
-                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
+                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
                                     <span>+1 (234) 567-8901</span>
                                     <br>
-                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon"> 
+                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
                                     <span>800 ALFRED (800 253 733)</span>
                                 </p>
                             </div>
@@ -1037,11 +1037,11 @@
     </div>
 
     {{-- Second Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/home_pdf_second_last_page.jpg') }}"
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page.jpg') }}"
         class="full-page-image" />
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/home_pdf_last_page.jpg') }}"
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page.jpg') }}"
     class="full-page-image" />
 </body>
 
