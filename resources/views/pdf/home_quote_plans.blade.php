@@ -459,6 +459,7 @@
 
     .footer-table {
         width: 100%;
+        table-layout: fixed;
         border-collapse: collapse;
     }
 
@@ -980,7 +981,7 @@
             InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
         </h4>
     
-        <table class="footer-table">
+        <table class="footer-table" align="center">
             <tr>
                 <td class="footer-td" style="width: 45%">
                     <div class="footer-box" style="line-height: 0.8;">
@@ -1003,7 +1004,7 @@
                 </td>
     
                 <td class="footer-td" style="width: 30%;">
-                    <div class="footer-box">
+                    <div class="footer-box" style="margin-right: 20px;">
                         <div class="advisor-section">
                             <div class="advisor-photo-container">
                                 <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
