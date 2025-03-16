@@ -3,6 +3,7 @@
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -1017,7 +1018,7 @@ if (! function_exists('getAppStorageValueByKey')) {
             return $query->value;
         };
 
-        if (! $useCache) {
+        if (! $useCache || config('constants.APP_ENV') !== EnvEnum::PRODUCTION) {
             return $getStorageValue();
         }
 
