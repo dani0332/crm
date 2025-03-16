@@ -97,7 +97,7 @@
     }
 
     tbody {
-        margin-bottom: 185px;
+        margin-bottom: 160px;
     }
 
     tbody>tr>td {
@@ -444,7 +444,7 @@
         color: #ffffff;
         padding: 10px;
         text-align: center;
-        height: 185px;
+        height: 160px;
     }
 
     .footer-table {
@@ -462,7 +462,7 @@
     .footer-box {
         border-radius: 24px;
         border: 2px solid #CF9E3C;
-        padding: 10px;
+        padding: 6px 10px;
         text-align: left;
     }
 
@@ -486,7 +486,6 @@
         font-size: 14px;
         font-weight: bold;
         text-align: center;
-        margin-bottom: 10px;
     }
 
     .footer-content-1{
@@ -521,7 +520,7 @@
     .advisor-details {
         display: table-cell;
         vertical-align: middle;
-        line-height: 1.1;
+        line-height: 0.9;
         padding-left: 10px;
     }
 
@@ -1003,7 +1002,7 @@
                 </td>
     
                 <td class="footer-td" style="width: 30%;">
-                    <div class="footer-box" style="margin-right: 20px;">
+                    <div class="footer-box" style="margin-right: 20px; padding: 0 10px">
                         <div class="advisor-section">
                             <div class="advisor-photo-container">
                                 <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
