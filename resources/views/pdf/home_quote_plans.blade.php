@@ -1006,24 +1006,26 @@
                                      alt="Advisor Photo" class="advisor-photo">
                             </div>
                             
-                            <div class="advisor-details">
-                                <p class="advisor-name">John Doe</p>
-                                <p class="advisor-role">Senior Investment Advisor</p>
-                                <p class="advisor-contact">
-                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
-                                    <span style="text-decoration: underline;">john.doe@example.com</span>
-                                    <br>
-                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
-                                    <span>+1 (234) 567-8901</span>
-                                    <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
-                                    <br>
-                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
-                                    <span>+1 (234) 567-8901</span>
-                                    <br>
-                                    <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
-                                    <span>800 ALFRED (800 253 733)</span>
-                                </p>
-                            </div>
+                            @if($quote->advisor)
+                                <div class="advisor-details">
+                                    <p class="advisor-name">{{ $quote->advisor?->name }}</p>
+                                    <p class="advisor-role">Senior Investment Advisor</p>
+                                    <p class="advisor-contact">
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
+                                        <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
+                                        <br>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
+                                        <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
+                                        <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
+                                        <br>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
+                                        <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
+                                        <br>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
+                                        <span>800 ALFRED (800 253 733)</span>
+                                    </p>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </td>
