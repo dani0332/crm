@@ -7,9 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-    /* * {
-        font-family: "DejaVu Sans", sans-serif !important;
-    } */
     * {
         font-family: 'Prompt', sans-serif !important;
     }
@@ -36,7 +33,6 @@
         padding: 0;
         font-size: 12px;
         font-weight: 400;
-        font-family: "DejaVu Sans", sans-serif !important;
     }
 
     div,
@@ -448,7 +444,6 @@
         padding: 10px;
         text-align: center;
         height: 185px;
-        font-family: Arial, sans-serif;
     }
 
     .footer-table {
