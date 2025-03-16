@@ -101,7 +101,7 @@
     }
 
     tbody {
-        margin-bottom: 300px;
+        margin-bottom: 185px;
     }
 
     tbody>tr>td {
@@ -453,7 +453,7 @@
         color: #ffffff;
         padding: 10px;
         text-align: center;
-        height: 300px;
+        height: 185px;
         font-family: Arial, sans-serif;
     }
 
