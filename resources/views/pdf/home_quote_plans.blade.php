@@ -503,7 +503,7 @@
     }
 
     .footer-content-2{
-        font-size: 14px !important;
+        font-size: 12px !important;
     }
 
 
@@ -996,7 +996,7 @@
     
                 <td class="footer-td" style="width: 25%">
                     <div class="footer-box" style="margin-top: 6px; line-height: 0.8;">
-                        <p class="footer-content-2">27th floor, Control Tower, Detroit Road, Motor City, PO Box - 26423, Dubai, United Arab Emirates.</p>
+                        <p class="footer-content-2">27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.</p>
                         <p class="footer-content-2">Happiness Center number:</p>
                         <p class="footer-content-2">800 ALFRED (800 256 733)</p>
                     </div>
@@ -1015,7 +1015,7 @@
                                 <p class="advisor-role">Senior Investment Advisor</p>
                                 <p class="advisor-contact">
                                     <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
-                                    <span>john.doe@example.com</span>
+                                    <span style="text-decoration: underline;">john.doe@example.com</span>
                                     <br>
                                     <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
                                     <span>+1 (234) 567-8901</span>
