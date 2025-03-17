@@ -1898,7 +1898,6 @@ const doCapturePaymentValidation = (totalAmount) => {
       }
     })
     .catch(err => {
-      console.log(err);
       isTransactionCaptureButtonEnabled.value = false;
     }).finally(() => {
       capturePaymentValidationInProcess.value = false;
@@ -3728,7 +3727,6 @@ const voidPayment = () => {
       });
     })
     .catch(err => {
-      console.log(err);
       voidPaymentProcess.value = false;
       if (err.response.data) {
         notification.error({
