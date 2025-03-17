@@ -493,7 +493,7 @@
     }
 
     .footer-content-2{
-        font-size: 12px !important;
+        font-size: 13px !important;
     }
 
 
@@ -552,7 +552,7 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header.jpg') }}" class="full-page-image" style="height: 100% !important" />
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header.jpg') }}" class="full-page-image" />
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
     <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
@@ -986,23 +986,24 @@
                 </td>
     
                 <td class="footer-td" style="width: 28%">
-                    <div class="footer-box" style="margin-top: 6px; line-height: 0.8;">
+                    <div class="footer-box" style="margin-top: 8px; line-height: 0.8; position: relative;">
                         <p class="footer-content-2">27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
-                            <a
-                            class="text-white"
-                            href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share"
-                            style="margin-left: 60px;">
-                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
-                                style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
-                            </a>
                         </p>
                         <p class="footer-content-2">Happiness Center number:</p>
                         <p class="footer-content-2">800 ALFRED (800 256 733)</p>
+                        <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
+                            <a
+                            class="text-white"
+                            href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
+                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
+                                style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
+                            </a>
+                        </div>
                     </div>
                 </td>
     
                 <td class="footer-td" style="width: 30%;">
-                    <div class="footer-box" style="margin-right: 20px; padding: 0 10px">
+                    <div class="footer-box" style="margin-right: 20px; padding: 5px 10px">
                         <div class="advisor-section">
                             <div class="advisor-photo-container">
                                 <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
@@ -1015,7 +1016,11 @@
                                     <p class="advisor-role">Insurance Advisor</p>
                                     <p class="advisor-contact">
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
+                                        @if (strlen($quote->advisor->email) > 49)
+                                        <span style="text-decoration: underline; font-size:10px">{{ $quote->advisor->email }}</span>
+                                        @else
                                         <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
+                                        @endif
                                         <br>
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
                                         <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
