@@ -24,16 +24,12 @@ class HomeAllocation extends BaseAllocation
 
     private function getValueAdvisors()
     {
-        return cache()->remember('home_value_advisors', now()->addHour(), function () {
-            return explode(',', getAppStorageValueByKey(ApplicationStorageEnums::HOME_VALUE_ADVISORS));
-        });
+        return explode(',', getAppStorageValueByKey(ApplicationStorageEnums::HOME_VALUE_ADVISORS, useCache: true));
     }
 
     private function getVolumeAdvisors()
     {
-        return cache()->remember('home_volume_advisors', now()->addHour(), function () {
-            return explode(',', getAppStorageValueByKey(ApplicationStorageEnums::HOME_VOLUME_ADVISORS));
-        });
+        return explode(',', getAppStorageValueByKey(ApplicationStorageEnums::HOME_VOLUME_ADVISORS, useCache: true));
     }
 
     private function isValueLocation(): bool
