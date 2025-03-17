@@ -110,7 +110,7 @@
 
     td>p,
     th>p {
-        padding: 4px;
+        padding: 2px;
         font-size: 12px !important;
         text-align: center;
         font-weight: 400;
@@ -215,13 +215,13 @@
     .btn-buy {
         background-color: #FE7333;
         color: #ffffff;
-        padding: 0 35px;
+        padding: 3px 35px;
         text-align: center;
         text-decoration: none;
         display: inline-block;
         font-size: 14px;
-        font-weight: bold;
         border-radius: 5px;
+        line-height: 0.7;
     }
 
     .btn-buy:hover {
@@ -230,6 +230,7 @@
 
     .provider-logo {
         width: 45px;
+        height: auto;
     }
 
     .no-border {
@@ -284,7 +285,7 @@
         max-width: 160px;
         width: 160px;
         height: auto;
-        padding: 4px 8px;
+        padding: 2px;
         text-align: center;
         vertical-align: middle;
         word-wrap: break-word;
@@ -820,7 +821,7 @@
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="text-align: center; margin: 0; padding: 0;">
+                            <p class="text-center" style="text-align: center; margin: 0; padding: 2px;">
                                 @php
                                     if (isset($plans[$planId])) {
                                         if (isset($selectedPlanIds) && in_array($planId, $selectedPlanIds)) {
@@ -846,8 +847,8 @@
                                                 '">' .
                                                 $buyNowText .
                                                 '<br>' .
-                                                '<small style="font-size: 10px; font-weight: normal; line-height: 1;">AED</small>' .
-                                                '<strong style="font-size: 14px; font-weight: bold; line-height: 1;">' .
+                                                '<small style="font-size: 10px; font-weight: normal;">AED </small>' .
+                                                '<strong style="font-size: 14px; font-weight: bold;">' .
                                                 $totalPriceFormatted .
                                                 '</strong>' .
                                                 '</a>';
