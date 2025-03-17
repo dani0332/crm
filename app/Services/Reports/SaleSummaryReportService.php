@@ -185,9 +185,15 @@ class SaleSummaryReportService extends ManagementReport
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('((
-                    sum(IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ))) +
-                    sum(IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ))) -
-                    sum(IFNULL( IF(ps.discount_value IS NULL OR ps.discount_value = 0, send_update_logs.discount, ps.discount_value) , 0 ))) as total_endorsement_amount'),
+                    sum(CASE WHEN send_update_logs.price_vat_applicable is not null OR send_update_logs.price_vat_applicable != 0.00
+                        THEN IFNULL(IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_applicable ), 0)
+                        ELSE 0 END) +
+                    sum(IFNULL(IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) +
+                    sum(CASE WHEN send_update_logs.price_vat_applicable is null OR send_update_logs.price_vat_applicable = 0.00
+                        THEN IFNULL(IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_not_applicable ), 0)
+                        ELSE 0 END) -
+                    sum(IFNULL(IF(ps.discount_value IS NULL OR ps.discount_value = 0, send_update_logs.discount, ps.discount_value), 0))
+                ) ) as total_endorsement_amount'),
                 DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_vat_applicable, 0) ELSE 0 END) as commission_vat_applicable'),
                 DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.vat_on_commission, 0) ELSE 0 END) as commission_vat'),
                 DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(p.commission_vat_not_applicable, IFNULL(send_update_logs.commission_vat_not_applicable, 0)) ELSE 0 END) as commission_vat_not_applicable'),
@@ -260,9 +266,15 @@ class SaleSummaryReportService extends ManagementReport
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('-1 * ((
-                 sum(IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))) +
-                 sum(IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0))) -
-                 sum(IFNULL(p.discount_value, 0))) as total_endorsement_amount'),
+                    sum(CASE WHEN send_update_logs.price_vat_applicable is not null THEN
+                        IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))
+                        ELSE 0 END) +
+                    sum(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0))) +
+                    sum(CASE WHEN send_update_logs.price_vat_applicable is null THEN
+                        IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))
+                        ELSE 0 END) -
+                    sum(IFNULL(p.discount_value, 0))
+                ) ) as total_endorsement_amount'),
                 DB::raw('sum(-1 * IFNULL(s2.commission_vat_applicable, IFNULL(p.commission_vat_applicable, 0))) as commission_vat_applicable'),
                 DB::raw('sum(-1 * IFNULL(p.commission_vat, IFNULL(s2.vat_on_commission, 0))) as commission_vat'),
                 DB::raw('sum(-1 * IFNULL(s2.commission_vat_not_applicable, IFNULL(p.commission_vat_not_applicable, 0))) as commission_vat_not_applicable'),
