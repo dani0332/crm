@@ -60,7 +60,6 @@ const assignForm = useForm({
   isManualAllocationAllowed: 1,
 });
 
-console.log(page.props);
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
@@ -603,6 +602,7 @@ watch(() => {
     filters.created_at_end = '';
   }
 });
+
 
 const insurerAMLStatusOption = computed(() => {
   return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
