@@ -48,13 +48,13 @@ class HealthQuote extends Model implements AuditableContract
                 $healthQuote = new HealthQuote;
                 $endorsmentDetails = $healthQuote->isCPDEndorsment(request()->sendUpdateId);
                 if ($endorsmentDetails['isCPDEndorsment']) {
-                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD (' . $model->getOriginal('policy_booking_date') . ') - New PBD (' . $model->policy_booking_date . '). QuoteType: ' . request()->quoteType . ' - QuoteUUID: ' . request()->quoteUuid . ' - SendUpdateUUID: ' . $endorsmentDetails['sendUpdateUUID']);
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
                     $skipBookingDateUpdateForNonCPD = false;
                 }
             }
 
             if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
-                info($model->code . ' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from ' . $model->getOriginal('policy_booking_date') . ' to ' . $model->policy_booking_date);
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
                 unset($model->policy_booking_date); // lock the policy booking date field
             }
         });
@@ -148,7 +148,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function getFullNameAttribute()
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 
     public function documents()
@@ -234,11 +234,11 @@ class HealthQuote extends Model implements AuditableContract
                 $customerMember->save();
             }
 
-            return $customerMember->first_name . ' ' . $customerMember->last_name;
+            return $customerMember->first_name.' '.$customerMember->last_name;
         } else {
             $healthQuote = HealthQuote::find($id);
             if ($healthQuote) {
-                return $healthQuote->first_name . ' ' . $healthQuote->last_name;
+                return $healthQuote->first_name.' '.$healthQuote->last_name;
             }
         }
 
@@ -264,7 +264,7 @@ class HealthQuote extends Model implements AuditableContract
     {
         $payload = $this->healthQuotePlan?->payload;
         if ($payload && property_exists($payload, 'plans')) {
-            return collect($payload->plans)->filter(fn($plan) => $plan && $plan->id === $this->plan_id)->first();
+            return collect($payload->plans)->filter(fn ($plan) => $plan && $plan->id === $this->plan_id)->first();
         }
 
         return null;
