@@ -1829,7 +1829,6 @@ const editPaymentModal = async (
   sr_no,
   capture_approval,
 ) => {
-
   isTransactionCaptureButtonEnabled.value = true;
 
   if (
@@ -1861,8 +1860,12 @@ const editPaymentModal = async (
   }
 
   // Payment Capture Validation for GIG
-  if(capture_approval == 1 && payment?.insurance_provider?.code == 'AXA' && (props.quoteType === 'Bike' || props.quoteType === 'Car')) {
-   await doCapturePaymentValidation(payment.total_amount); 
+  if (
+    capture_approval == 1 &&
+    payment?.insurance_provider?.code == 'AXA' &&
+    (props.quoteType === 'Bike' || props.quoteType === 'Car')
+  ) {
+    await doCapturePaymentValidation(payment.total_amount);
   }
 
   resetPaymentForm();
@@ -1879,7 +1882,7 @@ const editPaymentModal = async (
   setFrequencyTypes();
 };
 
-const doCapturePaymentValidation = (totalAmount) => {
+const doCapturePaymentValidation = totalAmount => {
   const data = {
     modelType: props.quoteType,
     uuid: props.quoteRequest.uuid,
@@ -1890,19 +1893,21 @@ const doCapturePaymentValidation = (totalAmount) => {
   return axios
     .post(`/payments/${props.quoteType}/payments-capture-validation`, data)
     .then(res => {
-      if(res?.data?.response?.status == 'CAPTURE_VALIDATION_CLEARED') {
+      if (res?.data?.response?.status == 'CAPTURE_VALIDATION_CLEARED') {
         premiumToCapture.value = res?.data?.response?.premiumAmount;
       } else {
         isTransactionCaptureButtonEnabled.value = false;
-        capturePaymentValidationErrorMessage.value = res?.data?.response?.message;
+        capturePaymentValidationErrorMessage.value =
+          res?.data?.response?.message;
       }
     })
     .catch(err => {
       isTransactionCaptureButtonEnabled.value = false;
-    }).finally(() => {
+    })
+    .finally(() => {
       capturePaymentValidationInProcess.value = false;
     });
-}
+};
 
 const resetPaymentForm = () => {
   paymentMethodsForm.reset();
@@ -2043,7 +2048,9 @@ const processPaymentSplits = payment => {
     dueDateModels.value[i] = split.due_date
       ? moment(split.due_date).format('YYYY-MM-DD')
       : '';
-    collectionAmountModels.value[i] = premiumToCapture.value ? premiumToCapture.value : split.collection_amount;
+    collectionAmountModels.value[i] = premiumToCapture.value
+      ? premiumToCapture.value
+      : split.collection_amount;
 
     if (['CHQ', 'PDC'].includes(split.payment_method.code)) {
       isCheckDetailsEnabled.value[i] = true;
@@ -3107,9 +3114,7 @@ const fetchPlans = () => {
     .then(res => {
       planText.value = res.data.text;
     })
-    .catch(err => {
-      
-    });
+    .catch(err => {});
 };
 
 // Ecom leads
@@ -5807,7 +5812,11 @@ onBeforeMount(() => {
                           class="text-sm text-red-500 dark:text-red-400"
                           >{{ isCreditPaymentInvalidError[count] }}</sup
                         >
-                        <small class="text-red-600 text-sm" v-if="capturePaymentValidationErrorMessage">{{capturePaymentValidationErrorMessage}}</small>
+                        <small
+                          class="text-red-600 text-sm"
+                          v-if="capturePaymentValidationErrorMessage"
+                          >{{ capturePaymentValidationErrorMessage }}</small
+                        >
                       </template>
                     </div>
                     <div class="w-1/5 px-2" v-else>
@@ -6250,8 +6259,8 @@ onBeforeMount(() => {
                     <x-button
                       v-if="
                         (isApproveClicked ||
-                        (isCreditApprovalView && !isDeclineClicked))
-                        && isTransactionCaptureButtonEnabled
+                          (isCreditApprovalView && !isDeclineClicked)) &&
+                        isTransactionCaptureButtonEnabled
                       "
                       class="mr-2 focus:outline-black"
                       size="sm"
@@ -6259,7 +6268,9 @@ onBeforeMount(() => {
                       type="submit"
                       tabindex="0"
                       :loading="paymentMethodsForm.processing"
-                      :disabled="isApproveConfirmed || !isTransactionCaptureButtonEnabled"
+                      :disabled="
+                        isApproveConfirmed || !isTransactionCaptureButtonEnabled
+                      "
                     >
                       <template v-if="isCreditApprovalView && isCreditCardView">
                         Capture
