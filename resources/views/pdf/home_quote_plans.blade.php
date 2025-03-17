@@ -18,7 +18,7 @@
     @page {
         margin: 0;
         padding: 0;
-        margin-bottom: 160px;
+        margin-bottom: 170px;
     }
 
     html {
@@ -97,7 +97,7 @@
     }
 
     tbody {
-        margin-bottom: 160px;
+        margin-bottom: 170px;
     }
 
     tbody>tr>td {
