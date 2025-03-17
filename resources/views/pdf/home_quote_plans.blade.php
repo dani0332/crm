@@ -1012,7 +1012,7 @@
                             @if($quote->advisor)
                                 <div class="advisor-details">
                                     <p class="advisor-name">{{ $quote->advisor?->name }}</p>
-                                    <p class="advisor-role">Senior Investment Advisor</p>
+                                    <p class="advisor-role">Insurance Advisor</p>
                                     <p class="advisor-contact">
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
                                         <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
@@ -1022,7 +1022,7 @@
                                         <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
                                         <br>
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
-                                        <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
+                                        <span>{{ $quote->advisor->landline_no }}</span>
                                         <br>
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
                                         <span>800 ALFRED (800 253 733)</span>
