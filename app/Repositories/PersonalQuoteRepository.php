@@ -7,8 +7,10 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Facades\Capi;
+use App\Jobs\OCR\PopulateDocumentData;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
@@ -175,6 +177,10 @@ class PersonalQuoteRepository extends BaseRepository
                     info('Insurance Provider not found - Ref: '.$quote->code);
 
                     return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
+                }
+
+                if ($quote) {
+                    PopulateDocumentData::dispatchSync(QuoteTypes::tryFrom(ucfirst(request('quote_type'))) ?: request('quote_type'), $quote, $documentType, $filePathAzure);
                 }
 
                 return ['status' => true, 'message' => 'File Uploaded'];

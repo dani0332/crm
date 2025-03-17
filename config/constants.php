@@ -155,4 +155,6 @@ return [
     'ALLIANCE_API_BASE_URL' => env('ALLIANCE_API_BASE_URL', ''),
     'ALLIANCE_AGENCY_ID' => env('ALLIANCE_AGENCY_ID', ''),
     'ALLIANCE_AGENCY_CODE' => env('ALLIANCE_AGENCY_CODE', ''),
+    'OCR_API_ENDPOINT' => 'https://ocraitest.alfred.ae/api/v2',
+    'OCR_API_KEY' => 'qRxyHWpjuacZlWmPfZcaBVUqszVOwmPPrLakQitdXoReefLuvtNcOrhMfjxiTnBgs',
 ];

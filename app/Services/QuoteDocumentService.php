@@ -654,6 +654,19 @@ class QuoteDocumentService extends BaseService
         return true;
     }
 
+    public function getDocumentUrl($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
+    {
+        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
+
+        if (Storage::disk($storageDisk)->exists($fileName)) {
+            $encodedFileName = urlencode($fileName);
+
+            return Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Generate a temporary URL for a document stored in a specified storage disk.
      *
@@ -664,19 +677,11 @@ class QuoteDocumentService extends BaseService
      */
     public function getDocumentTempURL($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
     {
-        // Calculate the expiry time for the temporary URL
-        $expiryTime = now()->addMinutes($expiryTimeInMinutes);
+        $url = $this->getDocumentUrl($fileName, $storageDisk, $expiryTimeInMinutes);
 
-        // Check if the file exists in the specified storage disk
-        if (Storage::disk($storageDisk)->exists($fileName)) {
-            // Generate the temporary URL
-            $encodedFileName = urlencode($fileName);
-            $temporaryUrl = Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
-
-            // Return the temporary URL if generated
-            return response()->json(['url' => $temporaryUrl]);
+        if ($url) {
+            return response()->json(['url' => $url]);
         } else {
-            // Return an error message if the file does not exist
             return response()->json(['error' => 'File does not exist on server']);
         }
     }
