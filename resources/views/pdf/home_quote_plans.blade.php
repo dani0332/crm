@@ -489,7 +489,7 @@
     }
 
     .footer-content-1{
-        font-size: 10px !important;
+        font-size: 9px !important;
     }
 
     .footer-content-2{
@@ -973,7 +973,7 @@
     
         <table class="footer-table" align="center">
             <tr>
-                <td class="footer-td" style="width: 45%">
+                <td class="footer-td" style="width: 42%">
                     <div class="footer-box" style="line-height: 0.8;">
                         <p class="footer-content-1">UAE Central Bank Registration No. 85</p>
                         <p class="footer-content-1">Registered Member of Gulf Insurance Federation</p>
@@ -985,7 +985,7 @@
                     </div>
                 </td>
     
-                <td class="footer-td" style="width: 25%">
+                <td class="footer-td" style="width: 28%">
                     <div class="footer-box" style="margin-top: 6px; line-height: 0.8;">
                         <p class="footer-content-2">27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
                             <a
