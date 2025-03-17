@@ -1,10 +1,10 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -4244,6 +4244,6 @@ const isCommercialVehicle = computed(() => {
 
   <lead-raw-data
     :modelType="'Car'"
-    :code="$page.props.quote.code"
+    :uuid="$page.props.quote.uuid"
   ></lead-raw-data>
 </template>

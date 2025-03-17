@@ -1,6 +1,6 @@
 <script setup>
 const props = defineProps({
-  code: {
+  uuid: {
     type: String,
   },
   modelType: {
@@ -31,7 +31,7 @@ const membersHeaders = ref([{ Text: '', value: '' }]);
 const onSubmit = () => {
   isloading.value = true;
   let data = {
-    code: props.code.split('-')[1],
+    uuid: props.uuid,
     modelType: props.modelType,
     jsonData: true,
   };

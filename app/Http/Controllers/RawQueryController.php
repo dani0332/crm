@@ -31,7 +31,7 @@ class RawQueryController extends Controller
 
         if (isset($fieldsMap[$modelType])) {
             $entity = $modelType::select($fieldsMap[$modelType])
-                ->where('uuid', $request->code)
+                ->where('uuid', $request->uuid)
                 ->first();
 
             return response()->json(['record' => $entity]);
