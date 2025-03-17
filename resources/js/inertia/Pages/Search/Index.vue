@@ -272,7 +272,7 @@ function checkMemberOrCompanyFilter() {
   const { member_first_name, member_last_name, company_name } =
     availableFilters;
 
-  if (member_first_name || member_last_name || company_name) {
+  if (member_first_name || member_last_name) {
     let isQueryStringSet = false;
     for (const [key] of Object.entries(params)) {
       if (key === 'line_of_business') {
