@@ -185,7 +185,7 @@ class SaleSummaryReportService extends ManagementReport
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('((
-                    sum(CASE WHEN send_update_logs.price_vat_applicable is not null OR send_update_logs.price_vat_applicable != 0.00
+                    sum(CASE WHEN send_update_logs.price_vat_applicable is not null AND send_update_logs.price_vat_applicable != 0.00
                         THEN IFNULL(IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_applicable ), 0)
                         ELSE 0 END) +
                     sum(IFNULL(IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) +
