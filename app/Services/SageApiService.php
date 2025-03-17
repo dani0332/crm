@@ -155,21 +155,33 @@ class SageApiService
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
             info('fn:sendUpdateSageLogs - Fetching logs for CPD Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
+            $getReverseInvoiceRelation = [];
             $quoteModelObject = $this->getModelObject($sendUpdateRequest->quoteType);
             $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
+            $sageLogsArray = $sendUpdateLog->sageApiLogs?->keyBy('step')->toArray();
             $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quoteDetails, $sendUpdateRequest->reversalInvoice);
-            if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
-                // This case if the Reversal Invoice is Endorsement itself
-                $getReverseInvoiceRelation = [
-                    'section_type' => $sendUpdateLog->getMorphClass(),
-                    'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
-                ];
-            } else {
-                // This case if the Reversal Invoice is Main Lead
+            $isReversalInvoiceEndorsement = app(SendUpdateLogService::class)->isReversalInvoiceEndorsement($sendUpdateRequest->reversalInvoice);
+
+            if($getPaymentByInsurerInvoiceNumber && $getPaymentByInsurerInvoiceNumber->send_update_log_id == null) {
+                info('fn:sendUpdateSageLogs - Getting Relation for Sage API Logs - Reversal Invoice is from Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
                 $getReverseInvoiceRelation = [
                     'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
                     'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
                 ];
+            } else {
+                info('fn:sendUpdateSageLogs - Getting Relation for Sage API Logs - Reversal Invoice is Endorsment itself - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
+                if($isReversalInvoiceEndorsement !== null) {
+                    $getReverseInvoiceRelation = [
+                        'section_type' => $sendUpdateLog->getMorphClass(),
+                        'section_id' => $isReversalInvoiceEndorsement->id,
+                    ];
+                }
+            }
+
+            if (empty($getReverseInvoiceRelation)) {
+                info('fn:sendUpdateSageLogs - Reversal invoice logs not found for reverse and correction- QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
+                
+                return [$sageLogsArray, $reversalInvoiceLogs];
             }
 
             $getReverseInvoicesLogs = SageApiLog::where($getReverseInvoiceRelation)
@@ -198,10 +210,6 @@ class SageApiService
             if (empty($reversalInvoiceLogs)) {
                 info('fn:sendUpdateSageLogs - Reversal invoice logs not found for reverse and correction- QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
             }
-
-            // The Sage logs array for CPD should include GET logs for AR, AP, and Reversal/Correction invoices. Additionally, for discount adjustments, "Straight" should be included.
-            // Reminder:: After including "Straight" for the discount, all entry types will be included in the logs array.
-            $sageLogsArray = $sendUpdateLog->sageApiLogs?->keyBy('step')->toArray();
         }
 
         return [$sageLogsArray, $reversalInvoiceLogs];
