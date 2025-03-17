@@ -1245,7 +1245,7 @@ class RenewalsUploadService
                     'ratesPerCopay' => [
                         [
                             "healthPlanCoPaymentId" => $healthCoPlan->id,
-                            "basePrice" => $premium
+                            "basePrice" => (float)  $premium
                         ]
                     ]
                 ];
