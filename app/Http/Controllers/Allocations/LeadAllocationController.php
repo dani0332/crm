@@ -7,8 +7,10 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
+use App\Models\Team;
 use App\Models\User;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
@@ -39,6 +41,8 @@ class LeadAllocationController extends Controller
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
 
+            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $this->quoteType->value)->first();
+
             $users = User::activeUser()
                 ->select(
                     'users.id as userId',
@@ -51,7 +55,15 @@ class LeadAllocationController extends Controller
                     'la.manual_assignment_count as manualAllocationCount',
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.reset_cap',
-                    DB::RAW('GROUP_CONCAT(teams.name ORDER BY teams.name ASC SEPARATOR ", ") as teamNames')
+                    DB::RAW("
+                        GROUP_CONCAT(
+                            CASE
+                                WHEN teams.parent_team_id = {$team?->id} THEN teams.name
+                                ELSE NULL
+                            END
+                            ORDER BY teams.name ASC SEPARATOR ', '
+                        ) AS teamNames
+                    ")
                 )
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
