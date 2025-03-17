@@ -34,8 +34,10 @@ use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
+use App\Models\UserManager;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -1039,7 +1041,8 @@ class LeadAllocationService extends BaseService
                 ->whereIn('lead_allocation.quote_type_id', (array) $quoteTypeIds);
 
             $query = $query->when(! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation), function ($query) {
-                return $query->where('u.manager_id', auth()->user()->id);
+                $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
+                $query->whereIn('lead_allocation.user_id', $userIds);
             });
             $query = $query->when(! empty(request('userIds')), function ($query) {
                 return $query->whereIn('u.id', (array) request('userIds'));
