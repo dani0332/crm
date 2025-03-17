@@ -87,6 +87,7 @@
         min-width: 100%;
         text-indent: 0;
         border-color: #bfbfbf;
+        color: #333333;
         max-width: 100%;
         border-spacing: 0;
         border-radius: 10px;
@@ -142,7 +143,7 @@
     .bg-light-blue {
         border: 1px solid #bfbfbf;
         padding: 1px 8px;
-        color: #252525;
+        color: #5B5F60;
     }
 
     .bg-light-blue p {
@@ -452,6 +453,7 @@
         width: 100%;
         table-layout: fixed;
         border-collapse: collapse;
+        color: #ffffff
     }
 
     .footer-td {
@@ -915,7 +917,7 @@
                         @foreach ($benefitItems as $code => $item)
                             <tr style="page-break-inside: avoid;">
                                 {{-- First column: Benefit Code --}}
-                                <td style="background-color: #DBEEFF">
+                                <td style="background-color: #DBEEFF; color: #5B5F60">
                                     <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
                                         {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code))) }}
                                     </p>
