@@ -3108,7 +3108,7 @@ const fetchPlans = () => {
       planText.value = res.data.text;
     })
     .catch(err => {
-      console.log(err);
+      
     });
 };
 
