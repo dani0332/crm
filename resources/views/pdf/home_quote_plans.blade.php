@@ -4,538 +4,559 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Plans Comparison PDF</title>
-
-    <style>
-        * {
-            font-family: "DejaVu Sans", sans-serif !important;
-        }
-
-        @page {
-            margin: 0;
-            padding: 0;
-            margin-bottom: 160px;
-        }
-
-        html {
-            line-height: 1.5;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            /* line-height: 1.6; */
-            line-height: 1;
-            margin: 0;
-            padding: 0;
-            font-size: 12px;
-            font-weight: 400;
-            font-family: "DejaVu Sans", sans-serif !important;
-        }
-
-        div,
-        span,
-        table,
-        tbody,
-        tfoot,
-        thead,
-        tr,
-        th,
-        td,
-        blockquote,
-        dl,
-        dd,
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        hr,
-        figure,
-        p,
-        pre {
-            margin: 0;
-            font-size: 12px;
-            font-weight: 400;
-        }
-
-        a {
-            text-decoration: inherit;
-        }
-
-        b,
-        strong {
-            font-weight: 700;
-        }
-
-        table.tbl-dec {
-            margin: auto;
-            padding: auto;
-            border: none;
-            font-size: 12px;
-        }
-
-        table.tbl-dec tr td,
-        table.tbl-dec tr td a {
-            border: none;
-        }
-
-        table {
-            min-width: 100%;
-            text-indent: 0;
-            border-color: #bfbfbf;
-            max-width: 100%;
-            border-spacing: 0;
-            border-radius: 10px;
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            table-layout: fixed;
-        }
-
-        tbody {
-            margin-bottom: 130px;
-        }
-
-        .header {
-            background: #1d83bc;
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            padding: 8px 10px;
-            width: 100%;
-            height: 57px;
-            max-height: 57px;
-        }
-
-        .header .logo {
-            float: left;
-            background-color: white;
-            border-radius: 5px;
-            padding: 5px 10px 5px 0px;
-            height: 50px;
-            max-height: 50px;
-        }
-
-        .header .logo img {
-            max-height: 50px;
-            height: 50px;
-        }
-
-        .header h3 {
-            margin: 0;
-            padding-top: 20px;
-            font-size: 18px;
-            font-weight: 600;
-            float: right;
-            text-align: right;
-            padding-right: 18px;
-        }
-
-        tbody>tr>td {
-            border: 1px solid #bfbfbf;
-        }
-
-        thead>tr>th {
-            border: 1px solid #bfbfbf;
-        }
-
-        td>p,
-        th>p {
-            padding: 4px;
-            font-size: 12px !important;
-            text-align: center;
-            font-weight: 400;
-        }
-
-        .text-left {
-            text-align: left;
-        }
-
-        .text-xs {
-            font-size: 10px;
-            font-weight: 400;
-        }
-
-        .text-sm {
-            font-size: 12px;
-            font-weight: 400;
-        }
-
-        .text-xl {
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .blue-box {
-            background: #ddfdfc;
-        }
-
-        .bg-light-blue {
-            border: 1px solid #bfbfbf;
-            padding: 1px 8px;
-            color: #252525;
-        }
-
-        .bg-light-blue p {
-            padding: 1px !important;
-        }
-
-        .text-black {
-            color: #000000;
-        }
-
-        .provider {
-            border: 1px solid #bfbfbf;
-            font-size: 15px;
-            line-height: 20px;
-            font-weight: 400;
-            color: #4ea4a8;
-            vertical-align: middle;
-            max-height: 40px;
-            height: 40px;
-        }
-
-        .spacer {
-            padding: 3px;
-        }
-
-        .alfred {
-            text-align: right;
-            padding: 0;
-            width: 100px;
-            min-width: 100px;
-            height: 100px;
-            border-left: none;
-            border-top: none;
-        }
-
-        .alfred img {
-            width: 100%;
-            max-width: 100px;
-            height: 100px;
-            display: block;
-        }
-
-        .quote-info {
-            text-align: right;
-            vertical-align: bottom;
-            margin-top: -1px;
-            font-size: 12px;
-            font-weight: 400;
-            text-align: left;
-            padding: 8px;
-            max-width: 100%;
-        }
-
-        .info h5 {
-            background: #1d83bc;
-            color: #ffffff;
-            padding: 3px;
-            font-weight: 600;
-            margin: 0 0 10px 0;
-        }
-
-        .info p {
-            font-size: 12px;
-            font-weight: 400;
-        }
-
-        .btn-all-quotes {
-            background-color: #1d83bc;
-            color: #ffffff;
-            padding: 8px;
-            margin-top: 10px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 20px;
-            font-weight: 600;
-            border-radius: 5px;
-            margin-bottom: 0px;
-        }
-
-        .btn-buy {
-            background-color: #FE7333;
-            color: #ffffff;
-            padding: 4px 12px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 5px;
-            margin: 5px 0;
-        }
-
-        .btn-buy:hover {
-            background-color: #d7fbd0;
-        }
-
-        .text-heading {
-            color: #ffffff;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .text-heading p {
-            margin: 0;
-            padding-left: 12px;
-        }
-
-        .heading-desc {
-            font-size: 12px;
-            font-weight: 400;
-        }
-
-        .provider-logo {
-            width: 80px;
-        }
-
-        .no-border {
-            border: none;
-        }
-
-        th.provider-name {
-            padding: 0;
-            margin: 0;
-        }
-
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 130px;
-            padding: 0;
-            background-color: #1d83bc;
-            color: #fff;
-            text-align: center;
-            z-index: 1000;
-        }
-
-        table.tbl-footer {
-            padding: 7px 30px;
-            margin: 0;
-            width: 100%;
-            border: none;
-        }
-
-        table.tbl-footer tr td,
-        table.tbl-footer tr td a {
-            color: #ffffff;
-            border: none;
-            font-size: 12px;
-            font-weight: 400;
-        }
-
-        table.tbl-footer tr td {
-            padding: 0;
-            margin: 0;
-            width: auto;
-        }
-
-        .text-left {
-            text-align: left;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-
-        .full-page-image {
-            width: 100%;
-            z-index: 999;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-white {
-            color: #ffffff;
-        }
-
-        .text-underline {
-            text-decoration: underline;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        tr:has(td) {
-            display: none;
-        }
-
-        .header {
-            background: #1d83bc;
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            padding: 8px 10px;
-            width: 100%;
-            height: 60px;
-            max-height: 60px;
-            background-image: url('{{ public_path('images/new-header-bg-image.png') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-        }
-
-        .header .logo {
-            float: left;
-            background-color: white;
-            border-radius: 5px;
-            padding: 5px 10px 5px 0px;
-            height: 50px;
-            max-height: 50px;
-        }
-
-        .header .logo img {
-            max-height: 50px;
-            height: 50px;
-        }
-
-        .text-blue {
-            color: #1d83bc;
-        }
-
-        .page-image {
-            width: 100%;
-            height: 100%;
-            z-index: 9999;
-        }
-
-        table td,
-        table th {
-            max-width: 160px;
-            width: 160px;
-            height: auto;
-            padding: 4px 8px;
-            text-align: center;
-            vertical-align: middle;
-            word-wrap: break-word;
-            white-space: normal;
-        }
-
-        main {
-            padding: 10px 20px;
-        }
-
-        .head-caption {
-            padding: 10px;
-            right: 5px !important;
-            top: 150px !important;
-            font-size: 14px;
-            font-weight: 600;
-            text-align: right;
-        }
-
-        td,
-        th {
-            width: auto;
-        }
-
-        .header {
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            padding: 8px 10px;
-            width: 100%;
-            height: 60px;
-            max-height: 60px;
-            background-image: url('{{ public_path('images/new-header-bg-image.png') }}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-        }
-
-        tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
-        }
-
-        table.disclaimer-table {
-            margin: auto;
-            padding: auto;
-            table-layout: fixed;
-            page-break-inside: avoid;
-            page-break-before: auto;
-            width: 100%;
-            border-collapse: separate;
-            border: none !important;
-        }
-
-        table.disclaimer-table td {
-            page-break-inside: avoid;
-            page-break-before: auto;
-            padding: 10px;
-            text-align: left;
-            vertical-align: top;
-            font-size: 16px;
-            line-height: 1.5;
-            border: none;
-        }
-
-        .disclaimer-title {
-            page-break-inside: avoid;
-            page-break-before: auto;
-            font-weight: bold;
-            font-size: 20px;
-            margin-bottom: 10px;
-            display: block;
-            text-align: left;
-        }
-
-        .disclaimer-text {
-            page-break-inside: avoid;
-            page-break-before: auto;
-            margin: 0;
-            font-size: 16px;
-            line-height: 1.5;
-            text-align: left;
-        }
-
-        .content {}
-
-        .disclaimer-td {
-            padding: 10px;
-            text-align: left;
-            vertical-align: top;
-            font-size: 16px;
-            line-height: 1.5;
-            border: none;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    * {
+        font-family: 'Prompt', sans-serif !important;
+    }
+
+    .raleway-font {
+        font-family: 'Raleway', sans-serif !important;
+    }
+
+    @page {
+        margin: 0;
+        padding: 0;
+        margin-bottom: 160px;
+    }
+
+    html {
+        line-height: 1;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        line-height: 1;
+        margin: 0;
+        padding: 0;
+        font-size: 12px;
+        font-weight: 400;
+    }
+
+    div,
+    span,
+    table,
+    tbody,
+    tfoot,
+    thead,
+    tr,
+    th,
+    td,
+    blockquote,
+    dl,
+    dd,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    hr,
+    figure,
+    p,
+    pre {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 400;
+    }
+
+    a {
+        text-decoration: inherit;
+    }
+
+    b,
+    strong {
+        font-weight: 700;
+    }
+
+    table.tbl-dec {
+        margin: auto;
+        padding: auto;
+        border: none;
+        font-size: 12px;
+    }
+
+    table.tbl-dec tr td,
+    table.tbl-dec tr td a {
+        border: none;
+    }
+
+    table {
+        min-width: 100%;
+        text-indent: 0;
+        border-color: #bfbfbf;
+        max-width: 100%;
+        border-spacing: 0;
+        border-radius: 10px;
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        table-layout: fixed;
+    }
+
+    tbody {
+        margin-bottom: 160px;
+    }
+
+    tbody>tr>td {
+        border: 1px solid #bfbfbf;
+    }
+
+    thead>tr>th {
+        border: 1px solid #bfbfbf;
+    }
+
+    td>p,
+    th>p {
+        padding: 4px;
+        font-size: 12px !important;
+        text-align: center;
+        font-weight: 400;
+    }
+
+    .text-left {
+        text-align: left;
+    }
+
+    .text-xs {
+        font-size: 10px;
+        font-weight: 400;
+    }
+
+    .text-sm {
+        font-size: 12px;
+        font-weight: 400;
+    }
+
+    .text-xl {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .blue-box {
+        background: #ddfdfc;
+    }
+
+    .bg-light-blue {
+        border: 1px solid #bfbfbf;
+        padding: 1px 8px;
+        color: #252525;
+    }
+
+    .bg-light-blue p {
+        padding: 1px !important;
+    }
+
+    .text-black {
+        color: #000000;
+    }
+
+    .provider {
+        border: 1px solid #bfbfbf;
+        font-size: 14px;
+        line-height: 1;
+        font-weight: 400;
+        color: #4ea4a8;
+        vertical-align: middle;
+        max-height: 35px;
+        height: 35px;
+    }
+
+    .spacer {
+        padding: 3px;
+    }
+
+    .alfred {
+        text-align: right;
+        padding: 0;
+        width: 100px;
+        min-width: 100px;
+        height: 100px;
+    }
+
+    .quote-info {
+        text-align: right;
+        vertical-align: bottom;
+        margin-top: -1px;
+        font-size: 14px;
+        font-weight: 400;
+        text-align: left;
+        padding: 0;
+        max-width: 100%;
+    }
+
+    .info h5 {
+        background: #1d83bc;
+        color: #ffffff;
+        padding: 3px;
+        font-weight: 600;
+        margin: 0 0 10px 0;
+    }
+
+    .info p {
+        font-size: 14px;
+        font-weight: 400;
+    }
+
+    .btn-all-quotes {
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 5px 40px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 18px;
+        font-weight: 600;
+        border-radius: 5px;
+    }
+
+    .btn-buy {
+        background-color: #FE7333;
+        color: #ffffff;
+        padding: 0 35px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 5px;
+    }
+
+    .btn-buy:hover {
+        background-color: #d7fbd0;
+    }
+
+    .provider-logo {
+        width: 45px;
+    }
+
+    .no-border {
+        border: none;
+    }
+
+    th.provider-name {
+        padding: 0;
+        margin: 0;
+    }
+
+    .text-left {
+        text-align: left;
+    }
+
+    .text-right {
+        text-align: right;
+    }
+
+
+    .full-page-image {
+        width: 100%;
+        z-index: 999;
+        height: 88%;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .text-white {
+        color: #ffffff;
+    }
+
+    .text-underline {
+        text-decoration: underline;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    tr:has(td) {
+        display: none;
+    }
+    .text-blue {
+        color: #1d83bc;
+    }
+
+    table td,
+    table th {
+        max-width: 160px;
+        width: 160px;
+        height: auto;
+        padding: 4px 8px;
+        text-align: center;
+        vertical-align: middle;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
+    main {
+        padding: 10px 20px;
+    }
+
+    .head-caption {
+        padding: 10px;
+        right: 5px !important;
+        top: 150px !important;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: right;
+    }
+
+    td,
+    th {
+        width: auto;
+    }
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+
+    table.disclaimer-table {
+        margin: auto;
+        padding: auto;
+        table-layout: fixed;
+        page-break-inside: avoid;
+        page-break-before: auto;
+        width: 100%;
+        border-collapse: separate;
+        border: none !important;
+    }
+
+    table.disclaimer-table td {
+        page-break-inside: avoid;
+        page-break-before: auto;
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+        font-size: 14px;
+        line-height: 1;
+        border: none;
+    }
+
+    .disclaimer-text {
+        page-break-inside: avoid;
+        page-break-before: auto;
+        margin: 0;
+        font-size: 14px;
+        line-height: 1;
+        text-align: left;
+    }
+
+    .content {}
+
+    .disclaimer-td {
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+        font-size: 14px;
+        line-height: 1;
+        border: none;
+    }
+
+    .header {
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+        padding: 8px 10px;
+        width: 100%;
+        height: 150px;
+        max-height: 150px;
+    }
+
+    .header .logo {
+        background-color: white;
+        border-radius: 5px;
+        padding: 5px 10px 5px 0px;
+        height: 125px;
+        max-height: 125px;
+    }
+
+    .header .logo img {
+        max-height: 125px;
+        height: 125px;
+    }
+
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 150px;
+    }
+
+
+
+    /* Bottom Header Container */
+    .header-bottom {
+        width: 100%;
+        display: table;
+        border-top: 2px solid #D3D3D3;
+        border-bottom: 2px solid #D3D3D3;
+        font-size: 14px;
+        color: #333;
+        padding: 10px 0;
+    }
+
+    /* Left Side Text */
+    .header-text {
+        display: table-cell;
+        text-align: left;
+        width: 75%;
+        vertical-align: middle;
+    }
+
+    /* Right Side Quote Number */
+    .quote-number {
+        display: table-cell;
+        text-align: right;
+        white-space: nowrap;
+        width: 25%;
+        padding-right: 20px;
+        vertical-align: middle;
+    }
+
+    .quote-number strong {
+        font-weight: 600; /* Reduce boldness */
+    }
+
+    /* Highlighted Text */
+    .header-text-highlight {
+        font-weight: 600;
+    }
+
+    /* Separator Styling */
+    .separator {
+        color: #D3D3D3; /* Match border color */
+        font-weight: normal; /* Ensure it's not bold */
+        padding: 0 5px; /* Adjust spacing */
+    }
+
+    .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #1d83bc;
+        color: #ffffff;
+        padding: 10px;
+        text-align: center;
+        height: 160px;
+    }
+
+    .footer-table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+    }
+
+    .footer-td {
+        padding: 10px;
+        vertical-align: top;
+        border: none;
+    }
+
+    .footer-box {
+        border-radius: 24px;
+        border: 2px solid #CF9E3C;
+        padding: 6px 10px;
+        text-align: left;
+    }
+
+    .footer-link {
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .footer-link:hover {
+        text-decoration: underline;
+    }
+
+    .material-icons {
+        font-size: 14px;
+        color: #ffffff;
+        margin-right: 5px;
+        vertical-align: middle;
+    }
+
+    .footer-header {
+        font-size: 14px;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .footer-content-1{
+        font-size: 10px !important;
+    }
+
+    .footer-content-2{
+        font-size: 12px !important;
+    }
+
+
+
+    .advisor-section {
+        display: table;
+        width: 100%;
+    }
+
+    .advisor-photo-container {
+        display: table-cell;
+        vertical-align: middle;
+        width: 70px;
+    }
+
+    .advisor-photo {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: block;
+        margin: auto;
+    }
+
+    .advisor-details {
+        display: table-cell;
+        vertical-align: middle;
+        line-height: 0.9;
+        padding-left: 10px;
+    }
+
+    .advisor-name {
+        font-weight: bold;
+        font-size: 12px;
+        margin: 0;
+    }
+
+    .advisor-role {
+        font-size: 10px;
+        margin: 0;
+    }
+
+    .advisor-contact {
+        font-size: 12px;
+        line-height: 1;
+    }
+
+    .advisor-contact .icon {
+        width: 10px;
+        height: 10px;
+        vertical-align: baseline;
+        display: inline-block;
+    }
+
+</style>
 </head>
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_home_first_page.jpg') }}" class="page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header.jpg') }}" class="full-page-image" style="height: 100% !important" />
+    <div style="page-break-after: always;"></div>
+    {{-- Second Page --}}
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
+    <div style="page-break-after: always;"></div>
 
     @php
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
@@ -641,28 +662,40 @@
 
     {{-- PDF Page Header --}}
     <header>
-        <div class="header"
-            style="position: fixed; top: 0; left: 0; right: 0; z-index: 1000; color: #ffffff; padding: 8px 10px; height: 60px; background-image: url('{{ public_path('images/new-header-bg-image.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
-            <div class="logo"
-                style="float: left; background-color: white; border-radius: 5px; padding: 5px 10px 5px 0px; height: 50px;">
-                <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo"
-                    style="max-height: 50px; height: 50px;" />
+        <div class="header">
+            <div class="logo">
+                <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo">
             </div>
-            <h3
-                style="margin: 0; padding-top: 5px; font-size: 18px; float: right; text-align: right; padding-right: 18px;">
-                Your tailor made home insurance <br />comparison table
-            </h3>
+            <div class="header-bottom">
+                <!-- Left Side Text -->
+                <div class="header-text">
+                    <strong class="raleway-font">Home insurance comparison table</strong>
+                    <span class="separator">|</span>
+                    Name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span>
+                    <span class="separator">|</span>
+                    Property type: <span class="header-text-highlight">{{ $accommodationText }}</span>
+                    <span class="separator">|</span>
+                    Coverage type: <span class="header-text-highlight">{{ $coverageText }}</span>
+                </div>
+            
+                <!-- Right Side Quote Number -->
+                <div class="quote-number">
+                    Quote reference number: <strong>{{ $quote->code }}</strong>
+                </div>
+            </div>
+            
         </div>
     </header>
-
+    
     {{-- PDF Page Inner Content --}}
     <main>
         <table class="main-table" style="width: 100%; table-layout: auto;">
             <thead>
-                <p style="margin-top:95px"></p>
+                <p style="margin-top:200px"></p>
                 <tr>
-                    <th class="alfred" id="alfred-th" rowspan="2">
-                        <img src="{{ public_path('images/home-alfred.png') }}" />
+                    <th class="bg-light-blue" rowspan="2">
+                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Insurance company
+                        </p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th class="provider" style="border: solid 1px #bfbfbf;">
@@ -694,32 +727,29 @@
                     @endforeach
                 </tr>
                 <tr>
-                    <th class="bg-light-blue" style="background-color: #DBEEFF !important">
-                        <p class="quote-info" style="font-size: 16px">Home insurance comparison for:
-                            <b>{{ $quote->first_name }}
-                                {{ $quote->last_name }}</b>
+                    <th class="bg-light-blue">
+                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Plan name
                         </p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="font-size: 16px">
+                            <p class="text-center" style="font-size: 14px">
                                 {{ $plans[$planId]->name ?? '' }}
                             </p>
                         </th>
                     @endforeach
                 </tr>
-                {{--  make these rows dynamic as per discussion with Anne --}}
-                
+
                 {{-- rows for building, content and personal belonging value --}}
                 @isset($homeQuoteFlags['contents_value_flag'])
                     @if($homeQuoteFlags['contents_value_flag'])
                         <tr>
                             <th class="bg-light-blue">
-                                <p class="quote-info"><b>Contents value</b></p>
+                                <p class="quote-info raleway-font" style="font-weight:700;"><b>Contents value</b></p>
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
-                                    <p class="text-center" style="font-size: 16px">
+                                    <p class="text-center" style="font-size: 14px">
                                         {{ $flagValues['contents_value'] }}
                                     </p>
                                 </th>
@@ -731,11 +761,11 @@
                     @if($homeQuoteFlags['personal_belongings_flag'])
                         <tr>
                             <th class="bg-light-blue">
-                                <p class="quote-info"><b>Personal belongings value</b></p>
+                                <p class="quote-info raleway-font" style="font-weight:700;"><b>Personal belongings value</b></p>
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
-                                    <p class="text-center" style="font-size: 16px">
+                                    <p class="text-center" style="font-size: 14px">
                                         {{ $flagValues['personal_belongings_value'] }}
                                     </p>
                                 </th>
@@ -747,11 +777,11 @@
                     @if($homeQuoteFlags['building_value_flag'])
                         <tr>
                             <th class="bg-light-blue">
-                                <p class="quote-info"><b>Building value</b></p>
+                                <p class="quote-info raleway-font" style="font-weight:700;"><b>Building value</b></p>
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
-                                    <p class="text-center" style="font-size: 16px">
+                                    <p class="text-center" style="font-size: 14px">
                                         {{ $flagValues['building_value'] }}
                                     </p>
                                 </th>
@@ -762,11 +792,11 @@
                 {{-- rows for building, content and personal belonging value --}}
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info"><b>Gross Price</b></p>
+                        <p class="quote-info raleway-font" style="font-weight:700;"><b>Gross Price</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="font-size: 16px">
+                            <p class="text-center" style="font-size: 14px">
                                 AED {{ number_format($plans[$planId]->actualPremium ?? 0, 2) }}
                             </p>
                         </th>
@@ -774,11 +804,11 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info"><b>Vat</b></p>
+                        <p class="quote-info raleway-font" style="font-weight:700;"><b>Vat</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
-                            <p class="text-center" style="font-size: 16px">
+                            <p class="text-center" style="font-size: 14px">
                                 AED {{ number_format($plans[$planId]->vat ?? 0, 2) }}
                             </p>
                         </th>
@@ -786,7 +816,7 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info" style="font-size: 16px"><b>Total Price (with VAT)</b></p>
+                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;"><b>Total Price (with VAT)</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
@@ -816,8 +846,8 @@
                                                 '">' .
                                                 $buyNowText .
                                                 '<br>' .
-                                                '<small style="font-size: 10px; font-weight: normal; line-height: 1.2;">AED</small>' .
-                                                '<strong style="font-size: 16px; font-weight: bold; line-height: 1.2;">' .
+                                                '<small style="font-size: 10px; font-weight: normal; line-height: 1;">AED</small>' .
+                                                '<strong style="font-size: 14px; font-weight: bold; line-height: 1;">' .
                                                 $totalPriceFormatted .
                                                 '</strong>' .
                                                 '</a>';
@@ -872,9 +902,9 @@
                     {{-- Only display the heading and benefit items if there are any benefit items --}}
                     @if (!empty($benefitItems))
                         {{-- Benefit Title Row (appears only once for each benefit) --}}
-                        <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #2f8ec4;">
+                        <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #1D83BC;">
                             <td colspan="{{ count($planIds) + 1 }}">
-                                <p class="text-left font-bold" style="color: #ffffff; padding-left: 12px;">
+                                <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 2px; font-weight: 700;">
                                     {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover))) }}
                                 </p>
                             </td>
@@ -885,7 +915,7 @@
                             <tr style="page-break-inside: avoid;">
                                 {{-- First column: Benefit Code --}}
                                 <td style="background-color: #DBEEFF">
-                                    <p class="text-left font-bold">
+                                    <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
                                         {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code))) }}
                                     </p>
                                 </td>
@@ -916,26 +946,18 @@
                 <tr>
                     <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
                         <a target="_blank" class="btn-all-quotes"
-                            href="{{ $websiteURL . '/home-insurance/quote/' . $quote->uuid }}">View all quotes</a>
+                            href="{{ $websiteURL . '/home-insurance/quote/' . $quote->uuid }}">
+                            View all quotes
+                        </a>
                     </td>
                 </tr>
 
                 <tr>
                     <td class="disclaimer-td" colspan="{{ sizeof($planIds) + 1 }}">
-                        <span class="disclaimer-title">
-                            Disclaimer and Material Information
-                        </span>
                         <p class="disclaimer-text">
-                            All quotes provided are indicative and based on the information you have supplied. While we
-                            strive for accuracy in our comparison tables, discrepancies may occur. In such instances,
-                            the
-                            terms detailed in the insurer's policy wordings and schedules will take precedence over the
-                            details provided by us. For the full text of the disclaimer and material information, please
-                            refer to the quote. Policy wordings and schedules will prevail. Additionally, your final
-                            price
-                            may be adjusted following the insurer's review of your risk profile after payment. We
-                            recommend
-                            reviewing the policy wording carefully once issued to ensure it meets your coverage needs.
+                            <strong>Disclaimer: </strong>Quotes are based on the details you provided and may change after the insurer reviews
+                            you profile. If there are differences, the insurer's policy terms will apply.
+                            Please check your policy once issued to ensure it meets your needs.
                         </p>
                     </td>
                 </tr>
@@ -944,45 +966,95 @@
     </main>
 
     {{-- PDF Page Footer --}}
-    <footer style="background-color: #1d83bc; color: #fff; text-align: center; padding: 5px;">
-        <table class="tbl-footer" style="padding: 0 10px; margin: 0; width: 100%; border: none;">
+    <div class="footer">
+        <h4 class="footer-header">
+            InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
+        </h4>
+    
+        <table class="footer-table" align="center">
             <tr>
-                <td colspan="2" class="text-center">
-                    <h4 style="font-size: 16px; margin: 0;">InsuranceMarket.ae is the registered trademark of AFIA
-                        Insurance Brokerage Services LLC</h4>
+                <td class="footer-td" style="width: 45%">
+                    <div class="footer-box" style="line-height: 0.8;">
+                        <p class="footer-content-1">UAE Central Bank Registration No. 85</p>
+                        <p class="footer-content-1">Registered Member of Gulf Insurance Federation</p>
+                        <p class="footer-content-1">Registered Member of Emirates Insurance Federation, number B6</p>
+                        <p class="footer-content-1">Department of Economy & Tourism in Dubai Trade Licence No. 238534</p>
+                        <p class="footer-content-1">Registered member of the DIFC Insurance Association with membership number 10049</p>
+                        <p class="footer-content-1">Holder of Health Insurance Intermediary Permit ID No. BRK-00003 from Dubai Health Authority</p>
+                        <p class="footer-content-1">Registered member of Insurance Business Group under the Dubai Chamber of Commerce and Industry, number 34774</p>
+                    </div>
                 </td>
-            </tr>
-            <tr>
-                <td class="text-left" style="font-size: 10px;">UAE Central Bank Registration number 85</td>
-                <td class="text-right" style="font-size: 10px;">27th Floor, Control Tower, Motor City</td>
-            </tr>
-            <tr>
-                <td class="text-left" style="font-size: 10px;">Registered member of the Emirates Insurance Association
+    
+                <td class="footer-td" style="width: 25%">
+                    <div class="footer-box" style="margin-top: 6px; line-height: 0.8;">
+                        <p class="footer-content-2">27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
+                            <a
+                            class="text-white"
+                            href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share"
+                            style="margin-left: 60px;">
+                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
+                                style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
+                            </a>
+                        </p>
+                        <p class="footer-content-2">Happiness Center number:</p>
+                        <p class="footer-content-2">800 ALFRED (800 256 733)</p>
+                    </div>
                 </td>
-                <td class="text-right" style="font-size: 10px;">Dubai, United Arab Emirates, P.O Box 26423</td>
-            </tr>
-            <tr>
-                <td class="text-left" style="font-size: 10px;">Department of Economy & Tourism in Dubai Trade License
-                    number 238534</td>
-                <td class="text-right" style="font-size: 10px;">Tel: <a href="tel:+800253733"
-                        style="color: #fff; text-decoration: none;">800 ALFRED (800-253-733)</a></td>
-            </tr>
-            <tr>
-                <td class="text-left" style="font-size: 10px;">Holder of Health Insurance Intermediary Permit ID
-                    Number BRK-00003 from Dubai Health Authority</td>
-                <td class="text-right" style="font-size: 10px;"><a href="https://insurancemarket.ae"
-                        style="color: #fff; text-decoration: none;">www.insurancemarket.ae</a></td>
-            </tr>
-            <tr>
-                <td class="text-left" style="font-size: 10px;">Registered member of Insurance Business Group under the
-                    Dubai Chamber of Commerce and Industry</td>
+    
+                <td class="footer-td" style="width: 30%;">
+                    <div class="footer-box" style="margin-right: 20px; padding: 0 10px">
+                        <div class="advisor-section">
+                            <div class="advisor-photo-container">
+                                <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
+                                     alt="Advisor Photo" class="advisor-photo">
+                            </div>
+                            
+                            @if($quote->advisor)
+                                <div class="advisor-details">
+                                    <p class="advisor-name">{{ $quote->advisor?->name }}</p>
+                                    <p class="advisor-role">Insurance Advisor</p>
+                                    <p class="advisor-contact">
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
+                                        <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
+                                        <br>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
+                                        <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
+                                        <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
+                                        <br>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
+                                        <span>{{ $quote->advisor->landline_no }}</span>
+                                        <br>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
+                                        <span>800 ALFRED (800 253 733)</span>
+                                    </p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </td>
+                
             </tr>
         </table>
-    </footer>
+    </div>
+
+    {{-- Second Last Page --}}
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}"
+        class="full-page-image" />
+    <div style="page-break-after: always;"></div>
 
     {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/imcrm_plans_bike_last_page.jpg') }}"
-        class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}"
+    class="full-page-image" />
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
