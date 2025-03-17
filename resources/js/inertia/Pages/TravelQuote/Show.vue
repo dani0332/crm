@@ -1,9 +1,9 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -1188,6 +1188,18 @@ const getAddonVat = item => {
     });
   });
   return addonVat;
+};
+
+const totalPremiumWithVat = (discountPremium, vat, addons) => {
+  let addonVat = 0;
+  addons.forEach(item => {
+    item.addonOptions.forEach(option => {
+      if (option.isSelected && option.price != 0) {
+        addonVat += useRoundIt(option.price) + useRoundIt(option.vat);
+      }
+    });
+  });
+  return useRoundIt(discountPremium + addonVat + vat);
 };
 
 const isProfileUpdateAllow = computed(() => {
@@ -3169,10 +3181,18 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
               <template #item-premiumWithVat="item">
                 {{
+                  totalPremiumWithVat(
+                    item.discountPremium,
+                    item.vat,
+                    item.addons,
+                  )
+                }}
+
+                <!-- {{
                   parseFloat(
                     item.discountPremium + item.vat + getAddonVat(item),
                   ).toFixed(2)
-                }}
+                }} -->
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
@@ -3262,10 +3282,18 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </template>
                 <template #item-premiumWithVat="item">
                   {{
+                    totalPremiumWithVat(
+                      item.discountPremium,
+                      item.vat,
+                      item.addons,
+                    )
+                  }}
+
+                  <!-- {{
                     parseFloat(
                       item.discountPremium + item.vat + getAddonVat(item),
                     ).toFixed(2)
-                  }}
+                  }} -->
                 </template>
                 <template #item-action="item">
                   <div class="flex gap-2">
