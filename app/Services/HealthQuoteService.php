@@ -339,6 +339,7 @@ class HealthQuoteService extends BaseService
     {
         $query = $this->healthQuoteQueryBuilder->processGridData();
         $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health);
+        $this->adjustQueryByDateFilters($query, 'health_quote_request');
 
         return $query;
     }
