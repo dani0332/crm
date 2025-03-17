@@ -66,6 +66,8 @@ class QuoteAllocation extends Command
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeTravelAllocation(QuoteTypeId::Travel, $to, $chunkSize, $allocationStartDate);
 
+            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
+
             // Disabled Auto Allocation for now as this feature is not needed at the moment
             /*
             $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
@@ -73,7 +75,6 @@ class QuoteAllocation extends Command
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
             */
             LoggerService::endLogging();
         } else {
