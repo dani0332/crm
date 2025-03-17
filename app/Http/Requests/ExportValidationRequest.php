@@ -31,6 +31,7 @@ class ExportValidationRequest extends FormRequest
 
         // Merge the modified data back into the request
         $this->merge($data);
+        request()->merge($data); // Sync with global request
     }
 
     public function rules()
