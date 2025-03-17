@@ -1205,4 +1205,20 @@ class CentralService extends BaseService
 
         return in_array($insuranceProviderCode, $enabledProviders);
     }
+
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    {
+        try {
+            $data = [
+                'quoteUID' => $uuid,
+                'quoteTypeId' => $quoteTypeId,
+                'captureAmount' => $captureAmount,
+            ];
+
+            return Ken::request('/capture-payment-validation', 'put', $data);
+
+        } catch (\Throwable $th) {
+            return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
+        }
+    }
 }

@@ -611,7 +611,7 @@ class CRUDService extends BaseService
                 $maxAttempts = 3;
                 for ($i = 0; $i < $maxAttempts; $i++) {
                     try {
-                        info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action.");
+                        info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action with payment amount {$amount}.");
                         PaymentAction::updateOrInsert(
                             ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
                             [
