@@ -1618,6 +1618,6 @@ class SendUpdateLogService
 
     public function isReversalInvoiceEndorsement($taxInvoiceNumber)
     {
-        return SendUpdateLog::where('insurer_tax_number', $taxInvoiceNumber)->first();
+        return SendUpdateLog::where('insurer_tax_invoice_number', $taxInvoiceNumber)->first();
     }
 }
