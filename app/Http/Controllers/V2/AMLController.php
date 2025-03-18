@@ -521,6 +521,7 @@ class AMLController extends Controller
                     info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start - Ref-ID: '.$quoteRequestId);
                     $enableInsurerScreening = [
                         QuoteTypes::CAR->id(),
+                        QuoteTypes::HOME->id(),
                         QuoteTypes::TRAVEL->id(),
                         QuoteTypes::BIKE->id(),
                     ];
