@@ -84,17 +84,25 @@
     }
 
     table {
-        min-width: 100%;
         text-indent: 0;
         border-color: #bfbfbf;
         color: #333333;
-        max-width: 100%;
         border-spacing: 0;
         border-radius: 10px;
-        width: 100%;
         border-collapse: collapse;
         font-size: 12px;
-        table-layout: fixed;
+        table-layout: auto;
+    }
+
+    .not-full {
+        width: auto;
+        margin: 0 auto;
+    }
+
+    .is-full {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
     }
 
     tbody {
@@ -552,7 +560,6 @@
         vertical-align: baseline;
         display: inline-block;
     }
-
 </style>
 </head>
 
@@ -664,6 +671,14 @@
             ->sortByDesc('isRenewal')
             ->pluck('id')
             ->toArray();
+
+
+            if(count($planIds) == 5){
+                $tableClass = 'is-full';
+            }
+            else{
+                $tableClass = 'not-full';
+            }
     @endphp
 
     {{-- PDF Page Header --}}
@@ -695,7 +710,7 @@
     
     {{-- PDF Page Inner Content --}}
     <main>
-        <table class="main-table" style="width: 100%; table-layout: auto;">
+        <table class="main-table {{ $tableClass }}">
             <thead>
                 <p style="margin-top:200px"></p>
                 <tr>

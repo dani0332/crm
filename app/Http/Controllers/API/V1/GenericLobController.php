@@ -19,6 +19,8 @@ class GenericLobController extends Controller
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
         info('Exporting Plans PDF for '.$quoteType.' Quote');
+
+        // Call the service as usual
         $service = app('App\\Services\\'.ucfirst($quoteType).'QuoteService');
         $response = $service->exportPlansPdf($quoteType, $request->validated());
 
@@ -27,8 +29,21 @@ class GenericLobController extends Controller
         }
 
         $pdf = $response['pdf'];
+        $fileName = $response['name'];
+        
+        // ✅ Store the PDF in `storage/temp/` outside `app/`
+        $storagePath = storage_path("temp"); // Storage path
+        if (!file_exists($storagePath)) {
+            mkdir($storagePath, 0777, true); // Ensure directory exists
+        }
+        
+        $filePath = $storagePath . DIRECTORY_SEPARATOR . $fileName;
+        $pdf->save($filePath);
 
-        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $response['name']]);
+        return response()->json([
+            'message' => 'PDF successfully generated',
+            'local_path' => $filePath, // ✅ Full path to locally saved file
+        ]);
     }
 
     public function getQuoteForOCBEmail(OCBEmailRequest $OCBEmailRequest)
