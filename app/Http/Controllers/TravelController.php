@@ -150,6 +150,7 @@ class TravelController extends Controller
 
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
+        dd($payments->first()->paymentSplits->first()->toArray());
         $paymentMethods = $this->lookupService->getPaymentMethods();
 
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);

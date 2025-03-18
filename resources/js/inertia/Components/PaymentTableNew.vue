@@ -2035,6 +2035,7 @@ const processPaymentSplits = payment => {
 
   for (let i = 1; i <= payment.total_payments; i++) {
     const split = payment.payment_splits[i - 1];
+    console.log('split : ', split);
     readOnlyPayments.value[i] = paidStatusIds.includes(split.payment_status_id);
     if (readOnlyPayments.value[i]) {
       totalPaidAmount.value++;
@@ -3768,6 +3769,24 @@ const fetchInsurerAMLStatus = async () => {
   }
 };
 
+const enablePostPrepaymentButton = splitPayment => {
+  console.log(
+    'showPostPrepaymentButton : showPrepaymentPostButton : ',
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
+    ' , batchNumber : ',
+    splitPayment.prepayment_receipt_status?.batchNumber,
+  );
+  let showPrepaymentPostButton =
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton;
+  let { quoteStatusEnum } = page.props;
+  let quoteStatusId = props.quoteRequest.quote_status_id;
+  let isPolicyBooked = quoteStatusEnum.PolicyBooked === quoteStatusId;
+  if (isPolicyBooked && showPrepaymentPostButton) {
+    return true;
+  }
+  return false;
+};
+
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
 });
@@ -4237,7 +4256,10 @@ onBeforeMount(() => {
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td></td>
+                        <td class="text-center">
+                          {{ splitPayment.id
+                          }}{{ splitPayment.prepayment_receipt_status }}
+                        </td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ splitPayment.payment_method.name }}</td>
@@ -4370,6 +4392,16 @@ onBeforeMount(() => {
                               outlined
                               >Retry</x-button
                             >
+
+                            <x-button
+                              v-if="enablePostPrepaymentButton(splitPayment)"
+                              size="xs"
+                              color="red"
+                              class="ml-2"
+                              @click="triggerPostPrepayment(splitPayment)"
+                              outlined
+                              >Post
+                            </x-button>
                           </div>
                         </td>
                       </tr>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PaymentStatusEnum;
+use App\Enums\SageEnum;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,9 @@ class PaymentSplits extends Model implements Auditable
         'code', 'sr_no', 'payment_method', 'check_detail', 'payment_amount', 'due_date', 'payment_status_id', 'collection_amount', 'bank_reference_number', 'decline_reason_id',
         'decline_custom_reason', 'sage_reciept_id', 'digital_wallet', 'payment_link', 'payment_link_created_at', 'payment_allocation_status',
         'captured_at', 'authorized_at', 'is_approved', 'reference',  'discount_value', 'verified_by', 'verified_at', 'price_vat_applicable', 'price_vat', 'commission_vat_applicable', 'commission_vat',
+    ];
+    protected $appends = [
+        'prepayment_receipt_status',
     ];
 
     public function payment()
@@ -91,5 +95,26 @@ class PaymentSplits extends Model implements Auditable
     public function paymentCharges(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(PaymentCharge::class, 'payment_split_id', 'id');
+    }
+
+    public function sageProcess()
+    {
+        return $this->morphOne(SageProcess::class, 'model');
+    }
+
+    public function getPrepaymentReceiptStatusAttribute()
+    {
+        $prepaymentData = [];
+        $sageProcess = $this->sageProcess;
+        $sageApiLogs = $this->sageApiLogs->keyBy('step')->toArray();
+        $prepaymentCreationResponse = isset($sageApiLogs[2]) ? json_decode($sageApiLogs[2]['response'], true) : null;
+        $batchNumber = $prepaymentCreationResponse ? $prepaymentCreationResponse['BatchNumber'] : null;
+        $lastStep = end($sageApiLogs);
+        $isPrepaymentAlreadyPosted = $lastStep['sage_request_type'] == SageEnum::SRT_POST_PP_REC && $lastStep['status'] == SageEnum::STATUS_SUCCESS;
+        $prepaymentData['lastStep'] = $lastStep;
+        $prepaymentData['showPrepaymentPostButton'] = $batchNumber && ! $isPrepaymentAlreadyPosted;
+        $prepaymentData['batchNumber'] = $batchNumber;
+
+        return $prepaymentData;
     }
 }
