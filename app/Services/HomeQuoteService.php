@@ -1348,7 +1348,7 @@ class HomeQuoteService extends BaseService
 
     private function formatCurrency(float $value): string
     {
-        return 'AED '.number_format($value, 2, '.', '');
+        return 'AED ' . number_format($value, 0, '', ',');
     }
 
     private function getValueById(array $values, int $id): ?array
