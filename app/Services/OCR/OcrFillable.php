@@ -4,27 +4,24 @@ namespace App\Services\OCR;
 
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 
 trait OcrFillable
 {
-    private function getDocumentTypeCode(DocumentType $documentType): ?string
-    {
-        return match ($documentType->code) {
-            'DL_CAR' => 'DL',
-            'TI' => 'TI',
-            default => null,
-        };
-    }
-
     private function fillTaxInvoice(Model $quote, object $data)
     {
-        dd('Tax Invoice', $quote->payment, $data, $data->invoiceNumber);
-    }
+        $quote->update([
+            'price_vat_applicable' => $data->invoiceAmount?->amount,
+            'vat' => $data->invoiceVAT?->amount,
+            'price_with_vat' => $data->invoiceTotal?->amount,
+        ]);
 
-    private function fillDrivingLicense(Model $quote, object $data)
-    {
-        dd('Driving License', $data);
+        $quote->payment?->update([
+            'insurer_invoice_date' => Carbon::parse($data->invoiceDate)->toDateTimeString(),
+            'insurer_tax_number' => $data->invoiceNumber,
+        ]);
     }
 
     private function fill(
@@ -33,12 +30,16 @@ trait OcrFillable
         DocumentType $documentType,
         object $data
     ) {
-        if ($documentType->code === 'TI') {
-            $this->fillTaxInvoice($quote, $data);
-        }
+        try {
+            if ($documentType->code === 'TI') {
+                $this->fillTaxInvoice($quote, $data);
+            }
 
-        if ($documentType->code === 'DL_CAR') {
-            $this->fillDrivingLicense($quote, $data);
+            return true;
+        } catch (Exception $e) {
+            info(self::class." - Exception occurred during data fill: {$e->getMessage()}");
+
+            return false;
         }
     }
 }
