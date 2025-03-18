@@ -13,14 +13,14 @@ trait OcrFillable
     private function fillTaxInvoice(Model $quote, object $data)
     {
         $quote->update([
-            'price_vat_applicable' => $data->invoiceAmount?->amount,
-            'vat' => $data->invoiceVAT?->amount,
-            'price_with_vat' => $data->invoiceTotal?->amount,
+            'price_vat_applicable' => $data->invoiceAmount?->amount ?? $quote->price_vat_applicable,
+            'vat' => $data->invoiceVAT?->amount ?? $quote->vat,
+            'price_with_vat' => $data->invoiceTotal?->amount ?? $quote->price_with_vat,
         ]);
 
         $quote->payment?->update([
-            'insurer_invoice_date' => Carbon::parse($data->invoiceDate)->toDateTimeString(),
-            'insurer_tax_number' => $data->invoiceNumber,
+            'insurer_invoice_date' => $data->invoiceDate ? Carbon::parse($data->invoiceDate)->toDateTimeString() : $quote->payment?->insurer_invoice_date,
+            'insurer_tax_number' => $data->invoiceNumber ?? $quote->payment?->insurer_tax_number,
         ]);
     }
 
