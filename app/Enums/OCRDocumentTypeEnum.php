@@ -4,7 +4,7 @@ namespace App\Enums;
 
 use App\Models\DocumentType;
 
-enum OCRDocumentTypeEnum:string
+enum OCRDocumentTypeEnum: string
 {
     case DRIVING_LICENSE = 'DL';
     case TAX_INVOICE = 'TI';
@@ -18,18 +18,23 @@ enum OCRDocumentTypeEnum:string
         };
     }
 
-    public static function isOCREnabled(DocumentType $documentType)
+    public static function isOCREnabled(DocumentType $documentType, QuoteTypes $quoteType)
     {
         $documentType = self::getDocumentType($documentType);
 
-        return $documentType?->isEnabled() ?? false;
+        return $documentType?->isEnabled($quoteType);
     }
 
-    public function isEnabled()
+    public static function getEnabledTypes(QuoteTypes $quoteType)
     {
-        return match($this) {
-            self::DRIVING_LICENSE, self::TAX_INVOICE => true,
-            default => false,
+        return match ($quoteType) {
+            QuoteTypes::CAR => [self::DRIVING_LICENSE, self::TAX_INVOICE],
+            default => [],
         };
+    }
+
+    public function isEnabled(QuoteTypes $quoteType)
+    {
+        return in_array($this, self::getEnabledTypes($quoteType));
     }
 }
