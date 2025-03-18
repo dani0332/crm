@@ -42,8 +42,9 @@ class PopulateDocumentData implements ShouldQueue
             $this->documentPath
         );
 
-        if($isSuccess === null) {
+        if ($isSuccess === null) {
             info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code} with UUID: {$this->quote->uuid}");
+
             return;
         }
 
