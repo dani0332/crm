@@ -2185,6 +2185,7 @@ watch(
                       placeholder="Enter Commission Amount"
                       size="xs"
                       :icon-left="isNegativeValue ? 'minus' : ''"
+                      @change="calculateCommission"
                     />
                     <template #tooltip>
                       {{

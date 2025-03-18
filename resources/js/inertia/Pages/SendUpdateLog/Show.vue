@@ -643,6 +643,7 @@ const notesOptions = computed(() => {
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="props.isFuncsEnabled"
       :realQuote="props.realQuote"
+      :isPlanDetailSectionEnabled="true"
     />
 
     <LazyPolicyDetails
