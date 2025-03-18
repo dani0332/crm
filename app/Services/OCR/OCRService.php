@@ -2,6 +2,7 @@
 
 namespace App\Services\OCR;
 
+use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
 use App\Services\QuoteDocumentService;
@@ -39,7 +40,7 @@ class OCRService
         }
     }
 
-    private function getData(string $docUrl, string $docType)
+    private function getData(string $docUrl, OCRDocumentTypeEnum $docType)
     {
         $response = $this->sendRequest('/process-document', [
             'doc_url' => $docUrl,
@@ -54,14 +55,20 @@ class OCRService
     }
 
     public function process(
-        QuoteTypes|string $quoteType,
+        QuoteTypes $quoteType,
         Model $quote,
         DocumentType $documentType,
-        string $documentPath)
+        string $documentPath): ?bool
     {
-        $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
+        $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
-        $docType = $this->getDocumentTypeCode($documentType);
+        if (! $docType?->isEnabled($quoteType)) {
+            info(self::class."::process - OCR is not enabled for this document type {$documentType->code} for quote {$quote?->uuid}");
+
+            return null;
+        }
+
+        $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
         $data = Cache::remember('data', now()->addHour(1), fn () => $this->getData($url, $docType));
 
@@ -72,6 +79,10 @@ class OCRService
                 $documentType,
                 $data
             );
+
+            return true;
         }
+
+        return false;
     }
 }
