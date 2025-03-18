@@ -33,7 +33,7 @@ class PopulateDocumentData implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle()
     {
         $isSuccess = app(OCRService::class)->process(
             $this->quoteType,
@@ -41,6 +41,11 @@ class PopulateDocumentData implements ShouldQueue
             $this->documentType,
             $this->documentPath
         );
+
+        if($isSuccess === null) {
+            info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code} with UUID: {$this->quote->uuid}");
+            return;
+        }
 
         if ($isSuccess) {
             info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code} with UUID: {$this->quote->uuid}");
