@@ -28,7 +28,7 @@ enum OCRDocumentTypeEnum: string
     public static function getEnabledTypes(QuoteTypes $quoteType)
     {
         return match ($quoteType) {
-            QuoteTypes::CAR => [self::DRIVING_LICENSE, self::TAX_INVOICE],
+            QuoteTypes::CAR => [self::TAX_INVOICE],
             default => [],
         };
     }

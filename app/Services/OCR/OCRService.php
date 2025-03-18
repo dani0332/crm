@@ -73,14 +73,12 @@ class OCRService
         $data = Cache::remember('data', now()->addHour(1), fn () => $this->getData($url, $docType));
 
         if ($data) {
-            $this->fill(
+            return $this->fill(
                 $quoteType,
                 $quote,
                 $documentType,
                 $data
             );
-
-            return true;
         }
 
         return false;
