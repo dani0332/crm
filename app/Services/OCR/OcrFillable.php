@@ -19,7 +19,7 @@ trait OcrFillable
 
     private function fillTaxInvoice(Model $quote, object $data)
     {
-        dd('Tax Invoice', $data, $data->invoiceNumber);
+        dd('Tax Invoice', $quote->payment, $data, $data->invoiceNumber);
     }
 
     private function fillDrivingLicense(Model $quote, object $data)
