@@ -94,7 +94,7 @@ class ExportValidationRequest extends FormRequest
                         $start = Carbon::parse($this->input('payment_due_date')[0])->startOfDay();
                         $end = Carbon::parse($this->input('payment_due_date')[1])->endOfDay();
                         $error_fields = 'payment due date';
-                    } elseif (request()->has('booking_date')) {
+                    } elseif (request()->filled('booking_date')) {
                         $start = Carbon::parse($this->input('booking_date')[0])->startOfDay();
                         $end = Carbon::parse($this->input('booking_date')[1])->endOfDay();
                         $error_fields = 'booking date';
@@ -102,7 +102,7 @@ class ExportValidationRequest extends FormRequest
                         $start = Carbon::parse($this->input('created_at_start'));
                         $end = Carbon::parse($this->input('created_at_end'));
                         $error_fields = 'created date';
-                    }elseif ($this->filled('policy_expiry_date') && $this->filled('policy_expiry_date_end')) {
+                    } elseif ($this->filled('policy_expiry_date') && $this->filled('policy_expiry_date_end')) {
                         $start = Carbon::parse($this->input('policy_expiry_date'));
                         $end = Carbon::parse($this->input('policy_expiry_date_end'));
                         $error_fields = 'policy expiry date';
