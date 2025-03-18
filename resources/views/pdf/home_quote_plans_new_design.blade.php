@@ -204,13 +204,16 @@
     .btn-all-quotes {
         background-color: #1d83bc;
         color: #ffffff;
-        padding: 5px 40px;
+        padding-left: 70px;
+        padding-right: 70px;
+        padding-bottom: 7px;
         text-align: center;
         text-decoration: none;
         display: inline-block;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
         border-radius: 5px;
+        position: relative;
     }
 
     .btn-buy {
@@ -951,6 +954,10 @@
                         <a target="_blank" class="btn-all-quotes"
                             href="{{ $websiteURL . '/home-insurance/quote/' . $quote->uuid }}">
                             View all quotes
+                            <div style="position: absolute; right: 50px; top: 8px;">
+                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
+                                    style="width: 16px; height: 16px; vertical-align: baseline; display: block;">
+                            </div>
                         </a>
                     </td>
                 </tr>
