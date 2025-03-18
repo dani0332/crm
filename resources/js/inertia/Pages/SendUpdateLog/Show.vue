@@ -165,6 +165,7 @@ watch(() => sendUpdateForm.notes, (newValue) => {
 const onUpdateLog = isValid => {
   if (! sendUpdateForm.notes) {
     notesFieldError.value = true;
+    return;
   }
   if (!isValid) return;
   sendUpdateForm.patch(
