@@ -776,10 +776,10 @@ class SendUpdateLogService
                 $payment = $quote->payments->first();
                 $splitPayments = $payment->paymentSplits;
 
-                if($payment == null || $splitPayments->first() === null) {
+                if ($payment == null || $splitPayments->first() === null) {
                     $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments);
                     info('fn:preparedDetailsForEndorsement - '.($isNewPaymentStructure ? 'Payment structure migrated - Payment ' : 'Payment not migrated. Split payment ').' not found against main lead. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
-                    
+
                     return ['status' => false, 'message' => 'Payment not found against Main Lead'];
                 }
             }
@@ -855,7 +855,7 @@ class SendUpdateLogService
         $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
         $preparedDetailsForEndorsement = $this->preparedDetailsForEndorsement($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
 
-        if(isset($preparedDetailsForEndorsement['status']) && !$preparedDetailsForEndorsement['status']) {
+        if (isset($preparedDetailsForEndorsement['status']) && ! $preparedDetailsForEndorsement['status']) {
             return ['status' => false, 'message' => $preparedDetailsForEndorsement['message']];
         }
 

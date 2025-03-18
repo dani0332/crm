@@ -162,7 +162,7 @@ class SageApiService
             $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quoteDetails, $sendUpdateRequest->reversalInvoice);
             $isReversalInvoiceEndorsement = app(SendUpdateLogService::class)->isReversalInvoiceEndorsement($sendUpdateRequest->reversalInvoice);
 
-            if($getPaymentByInsurerInvoiceNumber && $getPaymentByInsurerInvoiceNumber->send_update_log_id == null) {
+            if ($getPaymentByInsurerInvoiceNumber && $getPaymentByInsurerInvoiceNumber->send_update_log_id == null) {
                 info('fn:sendUpdateSageLogs - Getting Relation for Sage API Logs - Reversal Invoice is from Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
                 $getReverseInvoiceRelation = [
                     'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
@@ -170,7 +170,7 @@ class SageApiService
                 ];
             } else {
                 info('fn:sendUpdateSageLogs - Getting Relation for Sage API Logs - Reversal Invoice is Endorsment itself - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
-                if($isReversalInvoiceEndorsement !== null) {
+                if ($isReversalInvoiceEndorsement !== null) {
                     $getReverseInvoiceRelation = [
                         'section_type' => $sendUpdateLog->getMorphClass(),
                         'section_id' => $isReversalInvoiceEndorsement->id,
@@ -180,7 +180,7 @@ class SageApiService
 
             if (empty($getReverseInvoiceRelation)) {
                 info('fn:sendUpdateSageLogs - Reversal invoice logs not found for reverse and correction- QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
-                
+
                 return [$sageLogsArray, $reversalInvoiceLogs];
             }
 
