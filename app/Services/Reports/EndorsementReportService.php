@@ -81,7 +81,7 @@ class EndorsementReportService extends ManagementReport
                 (CASE WHEN send_update_logs.price_vat_applicable is not null AND send_update_logs.price_vat_applicable != 0.00
                 THEN IFNULL(IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_applicable ), 0)
                 ELSE 0 END) +
-                IFNULL(IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ) + 
+                IFNULL(IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ) +
                 (CASE WHEN send_update_logs.price_vat_applicable is null OR send_update_logs.price_vat_applicable = 0.00
                 THEN IFNULL(IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_not_applicable ), 0)
                 ELSE 0 END) -
