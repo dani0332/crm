@@ -404,6 +404,13 @@ final class PermissionsEnum extends Enum
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
 
+    public const LIFE_LEADPOOL = 'life-leadpool'; 
+    public const HOME_LEADPOOL = 'home-leadpool'; 
+    public const YACHT_LEADPOOL = 'yacht-leadpool'; 
+    public const PET_LEADPOOL = 'pet-leadpool'; 
+    public const CORPLINE_LEADPOOL = 'corpline-leadpool'; 
+    public const CYCLE_LEADPOOL = 'cycle-leadpool'; 
+
     public static function getAdvisorConversionReportPermissions()
     {
         return [

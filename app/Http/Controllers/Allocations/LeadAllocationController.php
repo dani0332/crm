@@ -147,6 +147,19 @@ class LeadAllocationController extends Controller
             'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
             'quoteType' => $quoteType->value,
             'data' => $data,
+            'lobSpecificLeadAllocation' => $this->lobSpecificLeadAllocation()
         ]);
+    }
+
+    private function lobSpecificLeadAllocation(){
+        $permission =  match ($this->quoteType) {
+            QuoteTypes::CORPLINE => PermissionsEnum::CORPLINE_LEADPOOL,
+            QuoteTypes::CYCLE => PermissionsEnum::CYCLE_LEADPOOL,
+            QuoteTypes::PET => PermissionsEnum::PET_LEADPOOL,
+            QuoteTypes::YACHT => PermissionsEnum::YACHT_LEADPOOL,
+            QuoteTypes::LIFE => PermissionsEnum::LIFE_LEADPOOL,
+            QuoteTypes::HOME => PermissionsEnum::HOME_LEADPOOL,
+        };
+        return request()->user()->can($permission); 
     }
 }
