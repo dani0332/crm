@@ -33,7 +33,7 @@ class PopulateDocumentData implements ShouldQueue
 
     private function validateMimeType()
     {
-        return in_array($this->fileMimeType, ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']);
+        return in_array($this->fileMimeType, ['application/pdf', ...OCRService::IMAGE_MIME_TYPES]);
     }
 
     /**
@@ -51,7 +51,8 @@ class PopulateDocumentData implements ShouldQueue
             $this->quoteType,
             $this->quote,
             $this->documentType,
-            $this->documentPath
+            $this->documentPath,
+            $this->fileMimeType,
         );
 
         if ($isSuccess === null) {

@@ -16,6 +16,8 @@ class OCRService
 {
     use Ocrable, OcrFillable;
 
+    public const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
+
     public function __construct(protected QuoteDocumentService $quoteDocumentService) {}
 
     private function sendRequest(string $endpoint, array $data = [], string $method = 'POST')
@@ -40,11 +42,17 @@ class OCRService
         }
     }
 
-    private function getData(string $docUrl, OCRDocumentTypeEnum $docType)
+    private function isMimeTypeImage(string $fileMimeType)
+    {
+        return in_array($fileMimeType, self::IMAGE_MIME_TYPES);
+    }
+
+    private function getData(string $docUrl, OCRDocumentTypeEnum $docType, string $fileMimeType)
     {
         $response = $this->sendRequest('/process-document', [
             'doc_url' => $docUrl,
             'doc_type' => $docType,
+            'image' => $this->isMimeTypeImage($fileMimeType),
         ]);
 
         if ($response['ok']) {
@@ -58,8 +66,9 @@ class OCRService
         QuoteTypes $quoteType,
         Model $quote,
         DocumentType $documentType,
-        string $documentPath): ?bool
-    {
+        string $documentPath,
+        string $fileMimeType,
+    ): ?bool {
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
         if (! $docType?->isEnabled($quoteType)) {
@@ -70,7 +79,7 @@ class OCRService
 
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
-        $data = Cache::remember('data', now()->addHour(1), fn () => $this->getData($url, $docType));
+        $data = Cache::remember('data', now()->addHour(1), fn () => $this->getData($url, $docType, $fileMimeType));
 
         if ($data) {
             return $this->fill(
