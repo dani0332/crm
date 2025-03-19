@@ -35,7 +35,7 @@ class CustomThrottleMiddleware
         // If over limit, log it
         if ($hits > $limit) {
 
-            info('Rate limit exceeded , Identifier : ' . $identifier, [
+            info('Rate limit exceeded , Identifier : '.$identifier, [
                 'userId' => $userId,
                 'identifier' => $identifier,
                 'url' => $request->fullUrl(),
