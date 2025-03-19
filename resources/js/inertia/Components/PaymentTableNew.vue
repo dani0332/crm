@@ -3144,6 +3144,12 @@ onMounted(() => {
   showLackingPayment();
 });
 
+const isChildPaymentDeletable = computed(() => {
+  if (props.payments.length !== 2) return false;
+  const childPaymentNotAuthorised = ![paymentStatusEnum.AUTHORISED, paymentStatusEnum.CAPTURED, paymentStatusEnum.PAID, paymentStatusEnum.PARTIAL_CAPTURED, paymentStatusEnum.PARTIALLY_PAID].includes(props.payments[1].payment_status_id);
+  return props.quoteType == 'Travel' && page.props?.aboveAgeMembers && childPaymentNotAuthorised;
+});
+
 const getPlanName = computed(() => {
   const plan = planDetail.value;
   if (props.quoteType === 'Bike') {
@@ -3690,6 +3696,14 @@ const voidPaymentModel = payment => {
   voidPaymentObject = payment;
 };
 
+let deletePaymentObject = {};
+const deletePaymentProcess = ref(false);
+const deletePaymentModelPopup = ref(false);
+const deletePaymentModel = payment => {
+  deletePaymentModelPopup.value = true;
+  deletePaymentObject = payment;
+}
+
 const isVoidPaymentEnabled = payment => {
   return (
     props.isFuncsEnabled.tapIntegration &&
@@ -3741,6 +3755,50 @@ const voidPayment = () => {
       } else {
         notification.error({
           title: 'Void authorized payment process failed',
+          position: 'top',
+        });
+      }
+    });
+};
+
+const deletePayment = () => {
+  deletePaymentProcess.value = true;
+  let data = {
+    payment_id: deletePaymentObject.id,
+    payment_code: deletePaymentObject.code,
+  };
+
+  axios
+    .post(`/payments/${props.quoteType}/delete-payment`, data)
+    .then(res => {
+      deletePaymentProcess.value = false;
+      deletePaymentModelPopup.value = false;
+      if (res.data.status === false) {
+        notification.error({
+          title: res.data.message,
+          position: 'top',
+        });
+        return;
+      }
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+
+      router.reload({
+        only: ['payments'],
+      });
+    })
+    .catch(err => {
+      deletePaymentProcess.value = false;
+      if (err.response.data) {
+        notification.error({
+          title: err.response.data[0],
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Delete authorized payment process failed',
           position: 'top',
         });
       }
@@ -4151,7 +4209,17 @@ onBeforeMount(() => {
                               Edit
                             </x-button>
                           </template>
-                          <template v-if="can(permissionEnum.ApprovePayments)">
+                          <template v-if="index==1 && isChildPaymentDeletable">
+                            <x-button
+                              size="xs"
+                              color="orange"
+                              outlined
+                              @click="deletePaymentModel(item)"
+                            >
+                              Delete
+                            </x-button>
+                          </template>
+                          <template v-if="can(permissionEnum.ApprovePayments) && !isChildPaymentDeletable">
                             <x-button
                               v-if="
                                 getCaptureOption(item) === 'capture' &&
@@ -6780,6 +6848,30 @@ onBeforeMount(() => {
                 @click="voidPayment"
               >
                 <span>Confirm</span>
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+        <x-modal
+          v-model="deletePaymentModelPopup"
+          size="lg"
+          title="Delete Payment"
+          show-close
+          backdrop
+        >
+          <x-form :auto-focus="false">
+            <div class="text-lg text-center">
+              <span> Are you sure to Delete this payment?</span>
+            </div>
+            <div class="mt-2 text-center">
+              <x-button
+                size="sm"
+                color="orange"
+                class="mt-4 text-center"
+                :loading="deletePaymentProcess"
+                @click="deletePayment"
+              >
+                <span>Delete</span>
               </x-button>
             </div>
           </x-form>

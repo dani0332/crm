@@ -685,4 +685,11 @@ class CentralController extends Controller
 
         return response()->json(['response' => $response]);
     }
+
+    public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $response = app(CentralService::class)->deletePayment($request);
+
+        return response()->json($response);
+    }
 }

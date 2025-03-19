@@ -35,6 +35,7 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
@@ -1207,5 +1208,21 @@ class CentralService extends BaseService
         } catch (\Throwable $th) {
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
+    }
+
+    public function deletePayment($request):array
+    {
+        info('fn:deletePayment - process started');
+        $payment = Payment::where(['id' => $request->payment_id, 'code' => $request->payment_code, 'paymentable_type' => TravelQuote::class])->first();
+        if(!$payment) {
+            info('fn:deletePayment - Payment not found');
+            return ['status' => false, 'message' => 'Payment not found'];
+        }
+
+        // Delete Payment and Payment Splits
+        PaymentSplits::where('code', $request->payment_code)->delete();
+        Payment::where('id', $request->payment_id)->delete();
+
+        return ['status' => true, 'message' => 'Delete payment processed'];
     }
 }
