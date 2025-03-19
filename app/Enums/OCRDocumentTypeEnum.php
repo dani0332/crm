@@ -20,6 +20,9 @@ enum OCRDocumentTypeEnum: string
         return match ($documentType->code) {
             'DL_CAR' => self::DRIVING_LICENSE,
             'TI' => self::TAX_INVOICE,
+            'CPC' => self::CERTIFICATE_OF_ISSUANCE,
+            'CTIRBB' => self::TAX_INVOICE_RAISED_BY_BUYER,
+            'CPS' => self::MOTOR_INSURANCE_POLICY_SCHEDULE,
             default => null,
         };
     }
