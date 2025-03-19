@@ -291,7 +291,7 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
                         'Group Medical',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
-                        fn ($s) => $s->attributes(['icon' => 'group-medical'])
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
