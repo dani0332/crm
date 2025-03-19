@@ -12,7 +12,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\UserManager;
 use App\Traits\TeamHierarchyTrait;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -86,7 +88,8 @@ class LeadAllocationController extends Controller
                 $users = $users->whereIn('teams.id', $userTeamIds);
             }
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $users = $users->where('users.manager_id', auth()->id());
+                $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
+                $users = $users->whereIn('users.id', $userIds);
             }
 
             return $users->get();

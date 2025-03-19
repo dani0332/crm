@@ -10,9 +10,11 @@ use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\User;
+use App\Models\UserManager;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class CarLeadAllocationDashboardService extends BaseService
@@ -63,7 +65,8 @@ class CarLeadAllocationDashboardService extends BaseService
                 $users = $users->whereIn('teams.id', $userTeamIds);
             }
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $users = $users->where('users.manager_id', auth()->user()->id);
+                $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
+                $users = $users->whereIn('users.id', $userIds);
             }
 
             return $users->get();
