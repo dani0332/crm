@@ -4244,6 +4244,6 @@ const isCommercialVehicle = computed(() => {
 
   <lead-raw-data
     :modelType="'Car'"
-    :uuid="$page.props.quote.uuid"
+    :uuid="$page.props.record.uuid"
   ></lead-raw-data>
 </template>
