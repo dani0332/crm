@@ -8,6 +8,12 @@ enum OCRDocumentTypeEnum: string
 {
     case DRIVING_LICENSE = 'DL';
     case TAX_INVOICE = 'TI';
+    case TAX_INVOICE_RAISED_BY_BUYER = 'TIB';
+    case CERTIFICATE_OF_ISSUANCE = 'PC';
+    case MOTOR_INSURANCE_POLICY_SCHEDULE = 'MPS';
+    case ID_CARD = 'IDC';
+    case VISA = 'VI';
+    case PASSPORT = 'PP';
 
     public static function getDocumentType(DocumentType $documentType): ?self
     {
@@ -28,7 +34,12 @@ enum OCRDocumentTypeEnum: string
     public static function getEnabledTypes(QuoteTypes $quoteType)
     {
         return match ($quoteType) {
-            QuoteTypes::CAR => [self::TAX_INVOICE],
+            QuoteTypes::CAR => [
+                self::TAX_INVOICE,
+                self::TAX_INVOICE_RAISED_BY_BUYER,
+                self::CERTIFICATE_OF_ISSUANCE,
+                self::MOTOR_INSURANCE_POLICY_SCHEDULE,
+            ],
             default => [],
         };
     }
