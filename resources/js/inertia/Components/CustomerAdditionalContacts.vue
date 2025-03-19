@@ -237,7 +237,8 @@ onMounted(() => {
           :items="contacts || []"
           border-cell
           hide-rows-per-page
-          hide-footer
+          :rows-per-page="15"
+          :hide-footer="contacts?.length < 15"
         >
           <template #item-key="{ key }">
             <span v-if="key === 'email'"> Email Address </span>
