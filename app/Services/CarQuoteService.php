@@ -967,6 +967,7 @@ class CarQuoteService extends BaseService
             'currently_insured_with',
             'claim_history_id',
             'previous_policy_expiry_date',
+            'previous_policy_start_date',
             'quote_status_id',
             'payment_status_id',
             'advisor_id',
