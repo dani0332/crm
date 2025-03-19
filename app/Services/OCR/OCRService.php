@@ -9,7 +9,6 @@ use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class OCRService
@@ -81,7 +80,7 @@ class OCRService
 
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
-        $data = Cache::remember('data', now()->addHour(1), fn () => $this->getData($url, $docType, $fileMimeType));
+        $data = $this->getData($url, $docType, $fileMimeType);
 
         if ($data) {
             return $this->fill(
