@@ -53,6 +53,8 @@ class OCRService
             'doc_url' => $docUrl,
             'doc_type' => $docType,
             'image' => $this->isMimeTypeImage($fileMimeType),
+            'provider' => config('constants.OCR_API_AI_PROVIDER'),
+            'model' => config('constants.OCR_API_AI_MODEL'),
         ]);
 
         if ($response['ok']) {
@@ -83,9 +85,8 @@ class OCRService
 
         if ($data) {
             return $this->fill(
-                $quoteType,
                 $quote,
-                $documentType,
+                $docType,
                 $data
             );
         }
