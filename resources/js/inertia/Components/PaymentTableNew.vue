@@ -3146,8 +3146,18 @@ onMounted(() => {
 
 const isChildPaymentDeletable = computed(() => {
   if (props.payments.length !== 2) return false;
-  const childPaymentNotAuthorised = ![paymentStatusEnum.AUTHORISED, paymentStatusEnum.CAPTURED, paymentStatusEnum.PAID, paymentStatusEnum.PARTIAL_CAPTURED, paymentStatusEnum.PARTIALLY_PAID].includes(props.payments[1].payment_status_id);
-  return props.quoteType == 'Travel' && page.props?.aboveAgeMembers && childPaymentNotAuthorised;
+  const childPaymentNotAuthorised = ![
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.CAPTURED,
+    paymentStatusEnum.PAID,
+    paymentStatusEnum.PARTIAL_CAPTURED,
+    paymentStatusEnum.PARTIALLY_PAID,
+  ].includes(props.payments[1].payment_status_id);
+  return (
+    props.quoteType == 'Travel' &&
+    page.props?.aboveAgeMembers &&
+    childPaymentNotAuthorised
+  );
 });
 
 const getPlanName = computed(() => {
@@ -3702,7 +3712,7 @@ const deletePaymentModelPopup = ref(false);
 const deletePaymentModel = payment => {
   deletePaymentModelPopup.value = true;
   deletePaymentObject = payment;
-}
+};
 
 const isVoidPaymentEnabled = payment => {
   return (
@@ -4209,7 +4219,9 @@ onBeforeMount(() => {
                               Edit
                             </x-button>
                           </template>
-                          <template v-if="index==1 && isChildPaymentDeletable">
+                          <template
+                            v-if="index == 1 && isChildPaymentDeletable"
+                          >
                             <x-button
                               size="xs"
                               color="orange"
@@ -4219,7 +4231,12 @@ onBeforeMount(() => {
                               Delete
                             </x-button>
                           </template>
-                          <template v-if="can(permissionEnum.ApprovePayments) && !isChildPaymentDeletable">
+                          <template
+                            v-if="
+                              can(permissionEnum.ApprovePayments) &&
+                              !isChildPaymentDeletable
+                            "
+                          >
                             <x-button
                               v-if="
                                 getCaptureOption(item) === 'capture' &&
