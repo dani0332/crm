@@ -1212,10 +1212,10 @@ class CentralService extends BaseService
 
     public function deletePayment($request): array
     {
-        info('fn:deletePayment - process started');
+        info('fn:deletePayment - process started: '.$request->payment_id);
         $payment = Payment::where(['id' => $request->payment_id, 'code' => $request->payment_code, 'paymentable_type' => TravelQuote::class])->first();
         if (! $payment) {
-            info('fn:deletePayment - Payment not found');
+            info('fn:deletePayment - Payment not found: '.$request->payment_id);
 
             return ['status' => false, 'message' => 'Payment not found'];
         }
