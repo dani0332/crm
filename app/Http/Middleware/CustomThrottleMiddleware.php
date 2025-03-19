@@ -26,7 +26,7 @@ class CustomThrottleMiddleware
         $key = $identifier.':urlPath:'.$urlPath;
 
         // Default Laravel throttle limit
-        $limit = 3;
+        $limit = 30;
         $decay = 60; // seconds (1 minute)
 
         // Increment the counter but don't block
