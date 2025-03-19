@@ -174,7 +174,7 @@ class PersonalQuoteRepository extends BaseRepository
                     info('Watermark job not dispatched - Ref: '.$quote->code);
                 }
 
-                $this->populateDocumentData($documentType, $quote, $filePathAzure);
+                $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType);
 
                 if (! $insuranceProviderId && request()->is_send_update) {
                     info('Insurance Provider not found - Ref: '.$quote->code);
@@ -195,7 +195,7 @@ class PersonalQuoteRepository extends BaseRepository
         }
     }
 
-    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure)
+    private function populateDocumentData(DocumentType $documentType, $quote, $filePathAzure, $fileMimeType)
     {
         if ($quote instanceof SendUpdateLog) {
             info(self::class."::populateDocumentData - Send Update Log found, skipping document data population for UUID: {$quote->uuid}");
@@ -209,7 +209,8 @@ class PersonalQuoteRepository extends BaseRepository
                 $quoteType,
                 $quote,
                 $documentType,
-                $filePathAzure
+                $filePathAzure,
+                $fileMimeType,
             );
         }
     }

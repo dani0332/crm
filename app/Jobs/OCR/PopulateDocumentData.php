@@ -27,14 +27,26 @@ class PopulateDocumentData implements ShouldQueue
         protected QuoteTypes $quoteType,
         protected Model $quote,
         protected DocumentType $documentType,
-        protected string $documentPath
+        protected string $documentPath,
+        protected string $fileMimeType,
     ) {}
+
+    private function validateMimeType()
+    {
+        return in_array($this->fileMimeType, ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg']);
+    }
 
     /**
      * Execute the job.
      */
     public function handle()
     {
+        if (! $this->validateMimeType()) {
+            info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code} with UUID: {$this->quote->uuid}");
+
+            return;
+        }
+
         $isSuccess = app(OCRService::class)->process(
             $this->quoteType,
             $this->quote,
@@ -60,7 +72,7 @@ class PopulateDocumentData implements ShouldQueue
                 $this->fail(new Exception($errorMessage));
             } else {
                 // Retry the job
-                $this->release(now()->addMinutes(2));
+                $this->release(now()->addMinutes(2 * $this->attempts()));
             }
         }
     }
