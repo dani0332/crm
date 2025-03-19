@@ -157,4 +157,6 @@ return [
     'ALLIANCE_AGENCY_CODE' => env('ALLIANCE_AGENCY_CODE', ''),
     'OCR_API_ENDPOINT' => 'https://ocraitest.alfred.ae/api/v2',
     'OCR_API_KEY' => 'qRxyHWpjuacZlWmPfZcaBVUqszVOwmPPrLakQitdXoReefLuvtNcOrhMfjxiTnBgs',
+    'OCR_API_AI_PROVIDER' => 'openai',
+    'OCR_API_AI_MODEL' => 'gpt-4o-mini',
 ];
