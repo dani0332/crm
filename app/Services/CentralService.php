@@ -1213,11 +1213,33 @@ class CentralService extends BaseService
     public function deletePayment($request): array
     {
         info('fn:deletePayment - process started: '.$request->payment_id);
-        $payment = Payment::where(['id' => $request->payment_id, 'code' => $request->payment_code, 'paymentable_type' => TravelQuote::class])->first();
+        
+        $payment = Payment::where(
+            [
+                'id' => $request->payment_id, 
+                'code' => $request->payment_code, 
+                'paymentable_type' => TravelQuote::class,
+            ])
+            ->whereNotIn('payment_status_id', [
+                PaymentStatusEnum::AUTHORISED,
+                PaymentStatusEnum::CAPTURED,
+                PaymentStatusEnum::PAID,
+                PaymentStatusEnum::PARTIAL_CAPTURED,
+                PaymentStatusEnum::PARTIALLY_PAID
+            ])
+            ->first();
         if (! $payment) {
             info('fn:deletePayment - Payment not found: '.$request->payment_id);
 
             return ['status' => false, 'message' => 'Payment not found'];
+        }
+
+        $quote = $payment->paymentable;
+        $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
+        if($quote->payments()->count() < 2 || !$aboveAgeMembers) {
+            info('fn:deletePayment - Payment cannot be deleted: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment cannot be deleted'];
         }
 
         // Delete Payment and Payment Splits
