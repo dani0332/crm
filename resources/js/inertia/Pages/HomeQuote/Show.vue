@@ -962,13 +962,6 @@ const confirmSendEmail = () => {
 };
 
 const viewPlanDetailsLoader = ref({});
-
-const isPlanDetailEnabled = computed(() => {
-  if (page.props.quote.source == page.props.leadSource.RENEWAL_UPLOAD) {
-    return true;
-  }
-  return false;
-});
 </script>
 
 <template>
@@ -1785,17 +1778,7 @@ const isPlanDetailEnabled = computed(() => {
       :quote-status-enum="quoteStatusEnum"
     />
 
-    <PlanDetails
-      v-if="isPlanDetailEnabled"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :expanded="sectionExpanded"
-      :vatPrice="vatPercentage"
-      :isAddUpdate="isAddUpdate"
-    />
-
-    <div v-else class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
