@@ -6,7 +6,9 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserManager;
 use App\Traits\TeamHierarchyTrait;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -53,7 +55,8 @@ class TravelLeadAllocationDashboardService extends BaseService
             }
 
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $users = $users->where('users.manager_id', auth()->user()->id);
+                $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
+                $users = $users->whereIn('users.id', $userIds);
             }
 
             return $users->get();

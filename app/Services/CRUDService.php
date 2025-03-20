@@ -110,8 +110,14 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($model->modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+        $dataQuery = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->getGridData($model, $request);
+
+        if ($request->has('debug') && $request->debug == 'true') {
+            dd($dataQuery->toRawSql());
+        }
+
+        return $dataQuery;
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $leadType)
@@ -605,7 +611,7 @@ class CRUDService extends BaseService
                 $maxAttempts = 3;
                 for ($i = 0; $i < $maxAttempts; $i++) {
                     try {
-                        info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action.");
+                        info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action with payment amount {$amount}.");
                         PaymentAction::updateOrInsert(
                             ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
                             [

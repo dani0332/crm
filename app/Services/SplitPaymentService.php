@@ -802,6 +802,7 @@ class SplitPaymentService
     {
         DB::beginTransaction();
         try {
+            $oldQuoteStatus = null;
             if ($sendUpdateId > 0) {
                 $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
             } else {
@@ -850,23 +851,27 @@ class SplitPaymentService
                 if ($sendUpdateId) {
                     app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
+                    info('Quote code: '.$quoteModel->code.' Quote status updated to Transaction Approved for send update');
+
                 } else {
 
                     $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
+                    info('Quote code: '.$quoteModel->code.' Lock Lead status: '.$lockLeadSectionsDetails['lead_status'].' Quote Status ID: '.$quoteModel->quote_status_id);
                     if (! $lockLeadSectionsDetails['lead_status'] || $quoteModel->quote_status_id == QuoteStatusEnum::TransactionDeclined) {
                         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
 
                         app(CRUDService::class)->calculateScore($quoteModel, $modelType);
-                        info('Master payment code: '.$quoteModel->code.' Transaction Score Calculated');
+                        info('Quote code: '.$quoteModel->code.' Transaction Score Calculated and quote status updated to Transaction Approved for main lead');
                     }
 
                 }
                 $quoteModel->save();
-                if (! $sendUpdateId) {
+                info('Quote code: '.$quoteModel->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quoteModel->quote_status_id);
+                if (! $sendUpdateId && $oldQuoteStatus != null && $quoteModel->quote_status_id != $oldQuoteStatus) {
                     QuoteStatusLog::create([
                         'quote_type_id' => $quoteTypeId,
                         'quote_request_id' => $quoteModel->id,
-                        'current_quote_status_id' => QuoteStatusEnum::TransactionApproved,
+                        'current_quote_status_id' => $quoteModel->quote_status_id,
                         'previous_quote_status_id' => $oldQuoteStatus,
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
@@ -1225,20 +1230,16 @@ class SplitPaymentService
             ->first();
     }
 
-    public function validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, $businessTypeId = null, $planId = null)
+    public function validateAuthorizedPayment($validator, $code)
     {
 
-        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-        $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+        $payment = Payment::where('code', $code)->with('paymentSplits')->first();
 
-        if (! $isCreditCardEnabled) {
-            $payment = Payment::where('code', $code)->with('paymentSplits')->first();
-            // Get insurance provider details
-            if ($payment && $payment->isInsurerPayment()) {
-                $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
-                if ($hasAnyAuthorizedPayment) {
-                    $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
-                }
+        // Check if payment is authorized
+        if ($payment) {
+            $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
+            if ($hasAnyAuthorizedPayment) {
+                $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
             }
         }
     }
