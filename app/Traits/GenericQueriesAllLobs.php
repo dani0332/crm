@@ -269,6 +269,7 @@ trait GenericQueriesAllLobs
                 $payment->isCreditCardEnabled = $tapPaymentConfiguration['isCreditCardEnabled'];
                 $payment->isGIGProvider = $tapPaymentConfiguration['isGIGProvider'];
                 $payment->isMultiplePaymentsEnabled = $tapPaymentConfiguration['isMultiplePaymentsEnabled'];
+
                 return $payment;
             });
         }
