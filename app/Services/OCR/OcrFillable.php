@@ -18,6 +18,17 @@ trait OcrFillable
         return null;
     }
 
+    private function parseDate($date, $default = null, $format = 'Y-m-d')
+    {
+        try {
+            return $date ? Carbon::parse($date)->format($format) : $default;
+        } catch (Exception $e) {
+            info(self::class." - Exception occurred during date parsing: {$e->getMessage()}");
+
+            return $default;
+        }
+    }
+
     private function fillTaxInvoice(Model $quote, object $data)
     {
         $price = $this->resolveProp($data, 'price');
@@ -26,11 +37,11 @@ trait OcrFillable
             'price_vat_applicable' => $this->resolveProp($price, 'baseAmount') ?? $quote->price_vat_applicable,
             'vat' => $this->resolveProp($price, 'VAT') ?? $quote->vat,
             'price_with_vat' => $this->resolveProp($price, 'totalAmount') ?? $quote->price_with_vat,
-            'policy_issuance_date' => $this->resolveProp($data, 'issuanceDate') ? Carbon::parse($data->issuanceDate)->toDateTimeString() : $quote->policy_issuance_date,
+            'policy_issuance_date' => $this->parseDate($this->resolveProp($data, 'issuanceDate'), $quote->policy_issuance_date),
         ]);
 
         $quote->payment?->update([
-            'insurer_invoice_date' => $this->resolveProp($data, 'invoiceDate') ? Carbon::parse($data->invoiceDate)->toDateTimeString() : $quote->payment?->insurer_invoice_date,
+            'insurer_invoice_date' => $this->parseDate($this->resolveProp($data, 'invoiceDate'), $quote->payment?->insurer_invoice_date),
             'insurer_tax_number' => $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_tax_number,
         ]);
     }
@@ -51,8 +62,8 @@ trait OcrFillable
     {
         $quote->update([
             'policy_number' => $this->resolveProp($data, 'policyNumber') ?? $quote->policy_number,
-            'policy_start_date' => $this->resolveProp($data, 'policyStartDate') ? Carbon::parse($data->policyStartDate)->toDateTimeString() : $quote->policy_start_date,
-            'policy_expiry_date' => $this->resolveProp($data, 'policyExpiryDate') ? Carbon::parse($data->policyExpiryDate)->toDateTimeString() : $quote->policy_expiry_date,
+            'policy_start_date' => $this->parseDate($this->resolveProp($data, 'policyStartDate'), $quote->policy_start_date),
+            'policy_expiry_date' => $this->parseDate($this->resolveProp($data, 'policyExpiryDate'), $quote->policy_expiry_date),
         ]);
     }
 
