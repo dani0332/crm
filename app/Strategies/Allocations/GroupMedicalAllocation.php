@@ -23,6 +23,7 @@ class GroupMedicalAllocation extends BaseAllocation
 
     protected function fetchAdvisor(int $onlineStatus)
     {
+        $emails =  [];
        if(empty($this->lead->health_plan_type_id)){
             info(self::class . " - PlanTypeId :{$this->lead->health_plan_type_id} is empty | quote Ref-ID: {$this->lead->uuid} | time: " . now());
            return null;
@@ -31,9 +32,19 @@ class GroupMedicalAllocation extends BaseAllocation
 
         $team = $this->getTeamByCriteria($planType, $this->lead->number_of_employees);
 
-        info(self::class . " - group medical team: $team | plan type: $planType | number of employees: {$this->lead->number_of_employees} | online status: $onlineStatus |
+        info(self::class . " - group medical team: {$team} | plan type: {$planType} | number of employees: {$this->lead->number_of_employees} | online status: $onlineStatus |
          quote Ref-ID: {$this->lead->uuid} | time: " . now());
-        $emails = $team === self::TEAM_MICRO ? $this->getMicroAdvisors() : $this->getNonMicroAdvisors();
+
+
+        if($team === self::TEAM_MICRO){
+            $emails =   $this->getMicroAdvisors() ;
+            info(self::class . " - Micro Advisors: " . implode(',', $emails) . " | quote Ref-ID: {$this->lead->uuid} | time: " . now());
+        }
+        if($team === self::TEAM_NON_MICRO){
+
+            $emails =   $this->getNonMicroAdvisors() ;
+            info(self::class . " - Non-Micro Advisors: " . implode(',', $emails) . " | quote Ref-ID: {$this->lead->uuid} | time: " . now());
+        }
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::GMAdvisor])
             ->whereIn('users.email', $emails)
             ->first();
@@ -41,14 +52,14 @@ class GroupMedicalAllocation extends BaseAllocation
 
     private function getMicroAdvisors()
     {
-        return cache()->remember('group_medical_micro_advisors', now()->addHour(), function () {
+        return cache()->remember('group_medical_micro_advisors', now()->addMinutes(2), function () {
             return explode(',', getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_MICRO_ADVISORS));
         });
     }
 
     private function getNonMicroAdvisors()
     {
-        return cache()->remember('group_medical_non_micro_advisors', now()->addHour(), function () {
+        return cache()->remember('group_medical_non_micro_advisors', now()->addMinutes(2), function () {
             return explode(',', getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_NON_MICRO_ADVISORS));
         });
     }
@@ -61,13 +72,13 @@ class GroupMedicalAllocation extends BaseAllocation
         switch ($this->lead->health_plan_type_id) {
             case HealthPlanTypeEnum::ENTRY_LEVEL->value:
                 if ($employeeRange === self::EMPLOYEE_RANGE_0_5) {
-                    info(self::class . " - Employee Range: {$employeeRange} | Plan Type: {$planType} | Number of Employees: {$numberOfEmployees} | Quote Ref-ID: {$this->lead->uuid} | Time: " . now());
-                    return ''; // N/A (default to Non-Micro)
+                   info(self::class . " - Entry Level Plan - Employee Range: {$employeeRange} | Plan Type: {$planType} | Number of Employees: {$numberOfEmployees} | Quote Ref-ID: {$this->lead->uuid} | Time: " . now());
+                    return null; // N/A (default to Non-Micro)
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_6_50) {
                     return self::TEAM_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_51_100) {
                     return self::TEAM_MICRO;
-                } else {
+                } elseif ($employeeRange === self::EMPLOYEE_RANGE_101_PLUS) {
                     return self::TEAM_NON_MICRO;
                 }
                 break;
@@ -124,6 +135,7 @@ class GroupMedicalAllocation extends BaseAllocation
             $numberOfEmployees >= 0 && $numberOfEmployees <= 5 => self::EMPLOYEE_RANGE_0_5,
             $numberOfEmployees >= 6 && $numberOfEmployees <= 50 => self::EMPLOYEE_RANGE_6_50,
             $numberOfEmployees >= 51 && $numberOfEmployees <= 100 => self::EMPLOYEE_RANGE_51_100,
+            $numberOfEmployees > 100 => self::EMPLOYEE_RANGE_101_PLUS,
         };
     }
 }
