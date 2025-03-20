@@ -205,7 +205,7 @@ class PersonalQuoteRepository extends BaseRepository
 
         $quoteType = QuoteTypes::tryFrom(ucfirst(request('quote_type')));
         if ($quote && $quoteType && $filePathAzure) {
-            PopulateDocumentData::dispatchSync(
+            PopulateDocumentData::dispatch(
                 $quoteType,
                 $quote,
                 $documentType,

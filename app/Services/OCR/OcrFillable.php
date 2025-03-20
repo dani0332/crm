@@ -27,10 +27,10 @@ trait OcrFillable
     private function fillTaxInvoiceRaisedByBuyer(Model $quote, object $data)
     {
         $quote->payment?->update([
-            'comission_vat' => $data?->commission?->VAT ?? $quote->payment?->comission_vat,
-            'comission' => $data?->commission?->baseAmount ?? $quote->payment?->comission,
+            'commission_vat' => $data?->commission?->VAT ?? $quote->payment?->comission_vat,
+            'commission' => $data?->commission?->baseAmount ?? $quote->payment?->comission,
             'insurer_commmission_invoice_number' => $data->taxInvoiceNumber ?? $quote->payment?->insurer_commmission_invoice_number,
-            'comission_vat_applicable' => $data?->commission?->totalAmount ?? $quote->payment?->comission_vat_applicable,
+            'commission_vat_applicable' => $data?->commission?->totalAmount ?? $quote->payment?->comission_vat_applicable,
         ]);
     }
 
