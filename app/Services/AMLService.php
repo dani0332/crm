@@ -184,6 +184,7 @@ class AMLService
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
+                'quoteDetail',
                 'bikeQuote',
                 'customer.detail',
                 'quoteStatus',
@@ -245,6 +246,7 @@ class AMLService
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
+            ->where('users.is_active', 1)
             ->whereIn('roles.name', $complianceRole)->get();
 
         foreach ($recipients as $recipient) {

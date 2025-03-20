@@ -52,7 +52,7 @@ const tableHeader = [
   { text: 'LEAD SOURCE', value: 'source' },
   { text: 'ADVISOR REQUESTED', value: 'sic_advisor_requested' },
   { text: 'NATIONALITY', value: 'nationality.text' },
-  { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for_id.text' },
+  { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for.text' },
   { text: 'CAR MAKE', value: 'car_make.text' },
   { text: 'CAR MODEL', value: 'car_model.text' },
   { text: 'CAR MODEL YEAR', value: 'year_of_manufacture' },
@@ -62,7 +62,7 @@ const tableHeader = [
   { text: 'VEHICLE TYPE', value: 'vehicle_type.text' },
   { text: 'TYPE OF CAR INSURANCE', value: 'car_type_insurance.text' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
-  { text: 'CLAIM HISTORY', value: 'claim_history_id.text' },
+  { text: 'CLAIM HISTORY', value: 'claim_history.text' },
   { text: 'CREATED DATE', value: 'created_at' },
   {
     text: 'POLICY EXPIRY DATE',
@@ -73,7 +73,7 @@ const tableHeader = [
     value: 'car_quote_request_detail.advisor_assigned_date_formatted',
   },
   { text: 'LEAD COST', value: 'tier.cost_per_lead' },
-  { text: 'LEAD STATUS', value: 'quote_status_id.text' },
+  { text: 'LEAD STATUS', value: 'quote_status.text' },
   { text: 'INSURER AML STATUS', value: 'insurer_aml_status_text' },
   { text: 'PAYMENT STATUS', value: 'payment_status.text' },
   { text: 'ECOMMERCE', value: 'is_ecommerce' },
@@ -105,8 +105,8 @@ const tableHeader = [
 
 const ecommerceOptions = [
   { value: '', label: 'Please select is ecommerce' },
-  { value: 'Yes', label: 'Yes' },
-  { value: 'No', label: 'No' },
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
 ];
 
 const filteredTableHeader = computed(() => {

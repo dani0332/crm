@@ -1337,7 +1337,7 @@ function capitalizeString(str) {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      isPlanDetailSectionEnabled="true"
+      :isPlanDetailSectionEnabled="true"
     />
     <PaymentTable
       v-else
