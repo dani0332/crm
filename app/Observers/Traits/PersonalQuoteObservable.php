@@ -54,14 +54,14 @@ trait PersonalQuoteObservable
         }
     }
 
-    protected function handleIntroEmails(PersonalQuote $personalQuote): void
+    protected function handleIntroEmails(PersonalQuote $personalQuote ,$oldAdvisorId=null): void
     {
         if ($personalQuote->isHome()) {
             info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: ".now());
             SendHomeOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
             info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
-            $oldAdvisorId = $personalQuote->getOriginal('advisor_id');
-            if ($personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
+            info(self::class." - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+            if ($personalQuote->source != LeadSourceEnum::IMCRM && !empty($oldAdvisorId)) {
                 if($oldAdvisorId != $personalQuote->advisor_id){
                     info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
 

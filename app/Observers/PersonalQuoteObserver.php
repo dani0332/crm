@@ -27,6 +27,7 @@ class PersonalQuoteObserver
      */
     public function updated(PersonalQuote $personalQuote): void
     {
+        $oldAdvisorId = $personalQuote->getOriginal('advisor_id') ?? null;
         $this->printChangeLog($personalQuote);
 
         if ($personalQuote->isDirty('quote_status_id')) {
@@ -35,8 +36,9 @@ class PersonalQuoteObserver
 
         if ($personalQuote->isDirty('advisor_id') && ! empty($personalQuote->advisor_id)) {
             $this->handleAdvisorChange($personalQuote);
-            $this->handleIntroEmails($personalQuote);
+            $this->handleIntroEmails($personalQuote ,$oldAdvisorId);
         }
+
     }
 
 }
