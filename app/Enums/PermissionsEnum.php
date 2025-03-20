@@ -410,7 +410,9 @@ final class PermissionsEnum extends Enum
     public const PET_LEADPOOL = 'pet-leadpool'; 
     public const CORPLINE_LEADPOOL = 'corpline-leadpool'; 
     public const CYCLE_LEADPOOL = 'cycle-leadpool'; 
-
+    public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool'; 
+    public const SAVINGS_LEADPOOL = 'savings-leadpool'; 
+    
     public static function getAdvisorConversionReportPermissions()
     {
         return [
