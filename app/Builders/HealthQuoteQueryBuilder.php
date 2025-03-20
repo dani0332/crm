@@ -68,6 +68,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'created_at',
             'updated_at',
             'assignment_type',
+            'gender',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',

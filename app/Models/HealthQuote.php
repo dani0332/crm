@@ -6,6 +6,7 @@ use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -13,6 +14,7 @@ use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -20,7 +22,7 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
-    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'created_at', 'updated_at', 'customer_type'];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted', 'created_at', 'updated_at', 'customer_type', 'car_teams'];
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -48,13 +50,13 @@ class HealthQuote extends Model implements AuditableContract
                 $healthQuote = new HealthQuote;
                 $endorsmentDetails = $healthQuote->isCPDEndorsment(request()->sendUpdateId);
                 if ($endorsmentDetails['isCPDEndorsment']) {
-                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD (' . $model->getOriginal('policy_booking_date') . ') - New PBD (' . $model->policy_booking_date . '). QuoteType: ' . request()->quoteType . ' - QuoteUUID: ' . request()->quoteUuid . ' - SendUpdateUUID: ' . $endorsmentDetails['sendUpdateUUID']);
                     $skipBookingDateUpdateForNonCPD = false;
                 }
             }
 
             if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
-                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                info($model->code . ' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from ' . $model->getOriginal('policy_booking_date') . ' to ' . $model->policy_booking_date);
                 unset($model->policy_booking_date); // lock the policy booking date field
             }
         });
@@ -148,7 +150,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function getFullNameAttribute()
     {
-        return $this->first_name.' '.$this->last_name;
+        return $this->first_name . ' ' . $this->last_name;
     }
 
     public function documents()
@@ -234,11 +236,11 @@ class HealthQuote extends Model implements AuditableContract
                 $customerMember->save();
             }
 
-            return $customerMember->first_name.' '.$customerMember->last_name;
+            return $customerMember->first_name . ' ' . $customerMember->last_name;
         } else {
             $healthQuote = HealthQuote::find($id);
             if ($healthQuote) {
-                return $healthQuote->first_name.' '.$healthQuote->last_name;
+                return $healthQuote->first_name . ' ' . $healthQuote->last_name;
             }
         }
 
@@ -264,7 +266,7 @@ class HealthQuote extends Model implements AuditableContract
     {
         $payload = $this->healthQuotePlan?->payload;
         if ($payload && property_exists($payload, 'plans')) {
-            return collect($payload->plans)->filter(fn ($plan) => $plan && $plan->id === $this->plan_id)->first();
+            return collect($payload->plans)->filter(fn($plan) => $plan && $plan->id === $this->plan_id)->first();
         }
 
         return null;
@@ -320,5 +322,29 @@ class HealthQuote extends Model implements AuditableContract
     {
         $segmentFilter = request()->input('segment_filter');
         self::applySegmentFilter($query, $segmentFilter, 'health_quote_request', QuoteTypeId::Health);
+    }
+
+    public function getCarTeamsAttribute()
+    {
+        if ($this->advisor_id) {
+
+            $carTeam = $this->getProductByName(quoteTypeCode::Car);
+
+            $query = DB::table(DB::raw("(SELECT GROUP_CONCAT(DISTINCT t1.name SEPARATOR ', ') AS CarTeams
+                        FROM teams t1
+                            WHERE t1.parent_team_id = $carTeam->id
+                            AND t1.name IN (
+                                SELECT t2.name
+                                FROM teams t2
+                                JOIN user_team ut2 ON t2.id = ut2.team_id
+                                WHERE ut2.user_id = " . $this->advisor_id . ")
+                        ) AS CarTeams"))
+                ->select(DB::raw('CarTeams'))
+                ->first();
+
+            return $query ? $query->CarTeams : null;
+        } else {
+            return "N/A";
+        }
     }
 }

@@ -105,7 +105,7 @@ class HealthQuotesExport
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             $quote->payment_status?->payment_status_text ?? 'N/A',
-            $quote->CarTeams ?? 'N/A',
+            $quote->car_teams ?? 'N/A',
         ];
     }
 }
