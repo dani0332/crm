@@ -1178,18 +1178,6 @@ const onCopyText = text => {
     });
 };
 
-const getAddonVat = item => {
-  let addonVat = 0;
-  item.addons.forEach(addon => {
-    addon.addonOptions.forEach(option => {
-      if (option.isSelected && option.price != 0) {
-        addonVat += parseInt(option.price) + option.vat;
-      }
-    });
-  });
-  return addonVat;
-};
-
 const totalPremiumWithVat = (discountPremium, vat, addons) => {
   let addonVat = 0;
   addons.forEach(item => {
@@ -3187,12 +3175,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     item.addons,
                   )
                 }}
-
-                <!-- {{
-                  parseFloat(
-                    item.discountPremium + item.vat + getAddonVat(item),
-                  ).toFixed(2)
-                }} -->
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
@@ -3288,12 +3270,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       item.addons,
                     )
                   }}
-
-                  <!-- {{
-                    parseFloat(
-                      item.discountPremium + item.vat + getAddonVat(item),
-                    ).toFixed(2)
-                  }} -->
                 </template>
                 <template #item-action="item">
                   <div class="flex gap-2">
