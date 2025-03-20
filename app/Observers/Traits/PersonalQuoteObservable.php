@@ -62,13 +62,18 @@ trait PersonalQuoteObservable
             info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
             $oldAdvisorId = $personalQuote->getOriginal('advisor_id');
             if ($personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
+                if($oldAdvisorId != $personalQuote->advisor_id){
+                    info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
 
-                info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+                    $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
+                    info(self::class." Sending {$emailType} email to customer for home quote {$personalQuote->uuid} | Time: ".now());
+                    app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, QuoteTypes::HOME->value, $oldAdvisorId);
+                    info(self::class." | {$emailType} email sent to customer for home quote {$personalQuote->uuid} | Time: ".now());
+                }
+                else {
+                    info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+                }
 
-                $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-                info(self::class." Sending {$emailType} email to customer for home quote {$personalQuote->uuid} | Time: ".now());
-                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, QuoteTypes::HOME->value, $oldAdvisorId);
-                info(self::class." | {$emailType} email sent to customer for home quote {$personalQuote->uuid} | Time: ".now());
 
             } else {
                 info(self::class." - lead source: {$personalQuote->source} |  - Old Advisor ID: {$oldAdvisorId} |  Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
