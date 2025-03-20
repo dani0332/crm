@@ -1234,7 +1234,7 @@ class SplitPaymentService
     {
 
         $payment = Payment::where('code', $code)->with('paymentSplits')->first();
-        
+
         // Check if payment is authorized
         if ($payment) {
             $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);

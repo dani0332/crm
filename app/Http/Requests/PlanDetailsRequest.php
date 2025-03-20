@@ -54,7 +54,7 @@ class PlanDetailsRequest extends FormRequest
         $code = request()->code;
         $insuranceProviderId = request()->insurance_provider_id;
 
-        $validator->after(function ($validator) use ($quoteType, $code, $insuranceProviderId) {
+        $validator->after(function ($validator) use ($quoteType, $code) {
             $repository = getRepositoryObject($quoteType);
             $quoteModel = $repository::where('code', $code)->firstOrFail();
             $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
