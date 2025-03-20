@@ -28,14 +28,14 @@ const props = defineProps({
   todayTotalUnAssignedLeadCount: {
     type: Number,
     default: 0,
-  }
+  },
 });
 
 const autoRefresh = ref(true);
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
-const lobSpecificLeadAllocation = page.props.lobSpecificLeadAllocation; 
+const lobSpecificLeadAllocation = page.props.lobSpecificLeadAllocation;
 const notification = useToast();
 
 const statusModal = getStatusModal();
@@ -80,7 +80,8 @@ const currentRow = id => {
 
 const editCap = id => {
   if (
-    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]) || lobSpecificLeadAllocation
+    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]) ||
+    lobSpecificLeadAllocation
   ) {
     const row = leadData?.value.find(item => item.id === id);
     row.capEdit = true;
@@ -230,7 +231,12 @@ watch(
 onMounted(() => {
   tableHeader.value = tableHeader.value.filter(column => {
     if (
-      !hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]) && !lobSpecificLeadAllocation
+      !hasAnyRole([
+        rolesEnum.Admin,
+        rolesEnum.LeadPool,
+        rolesEnum.Engineering,
+      ]) &&
+      !lobSpecificLeadAllocation
     ) {
       return column.value !== 'reset_cap';
     }
