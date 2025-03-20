@@ -318,6 +318,11 @@ class InstantAlfredService extends BaseService
                     'total_tokens' => '$response.usage.total_tokens',
                 ],
             ];
+            $pipeline[] = [
+                '$sort' => [
+                    'created_at' => -1,  // Sort by created_at in descending order
+                ],
+            ];
         } elseif ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             $pipeline[] = [
                 '$group' => [
