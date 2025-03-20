@@ -304,6 +304,10 @@ const getInputRules = (rider) => {
 
 const computedFinalPrice = (rider) => computed(() => (parseFloat(rider.price) + parseFloat(rider.loading)));
 
+const closeModal = ()  => {
+    this.shown = false; 
+}
+
 </script>
 
 <template>
@@ -316,6 +320,7 @@ const computedFinalPrice = (rider) => computed(() => (parseFloat(rider.price) + 
     backdrop
     is-form
     @submit="onSubmit"
+    @close="closeModal"
   >
     <div class="w-full">
         <TabGroup
@@ -558,7 +563,7 @@ const computedFinalPrice = (rider) => computed(() => (parseFloat(rider.price) + 
                                 <div v-else type="number"
                                   class="appearance-none block w-16 ml-2 placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]"  
                                 >{{ computedFinalPrice(rider) }}</div>
-                            </div>
+                              </div>
                         </div>
                     </div>
 
