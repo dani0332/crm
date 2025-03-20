@@ -73,7 +73,7 @@ class OCRService
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
         if (! $docType?->isEnabled($quoteType)) {
-            info(self::class."::process - OCR is not enabled for this document type {$documentType->code} for quote {$quote?->uuid}");
+            info(self::class."::process - OCR is not enabled for this document type {$documentType->code}");
 
             return null;
         }
