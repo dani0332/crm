@@ -60,12 +60,15 @@ const assignForm = useForm({
   isManualAllocationAllowed: 1,
 });
 
-
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at', is_active: true },
+  {
+    text: 'PAYMENT AUTHORISED DATE',
+    value: 'payment.authorized_at',
+    is_active: true,
+  },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status.text', is_active: true },
   {
@@ -99,8 +102,16 @@ const tableHeader = ref([
     sortable: true,
   },
   { text: 'HEALTH TEAM TYPE', value: 'health_team_type', is_active: true },
-  { text: 'TRANSAPP CODE', value: 'health_quote_request_detail.transapp_code', is_active: true },
-  { text: 'LOST REASON', value: 'health_quote_request_detail.lost_reason.text', is_active: true },
+  {
+    text: 'TRANSAPP CODE',
+    value: 'health_quote_request_detail.transapp_code',
+    is_active: true,
+  },
+  {
+    text: 'LOST REASON',
+    value: 'health_quote_request_detail.lost_reason.text',
+    is_active: true,
+  },
   {
     text: 'STARTING FROM',
     value: 'price_starting_from',
@@ -602,7 +613,6 @@ watch(() => {
     filters.created_at_end = '';
   }
 });
-
 
 const insurerAMLStatusOption = computed(() => {
   return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
