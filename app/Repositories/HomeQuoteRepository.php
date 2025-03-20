@@ -612,7 +612,7 @@ class HomeQuoteRepository extends BaseRepository
                                 'paymentMethod',
                                 'documents',
                                 'verifiedByUser',
-                                'paymentCharges'
+                                'paymentCharges',
                             ])
                                 ->orderBy('sr_no', 'asc');
                         },

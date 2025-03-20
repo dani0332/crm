@@ -2,6 +2,7 @@
 
 namespace App\Observers\Traits;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -12,11 +13,10 @@ use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\PaymentRepository;
+use App\Services\SendEmailCustomerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Enums\LeadSourceEnum;
-use App\Services\SendEmailCustomerService;
 
 trait PersonalQuoteObservable
 {
@@ -61,7 +61,7 @@ trait PersonalQuoteObservable
             SendHomeOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
             info(self::class.' - dispatched home intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
             $oldAdvisorId = $personalQuote->getOriginal('advisor_id');
-            if ($personalQuote->source != LeadSourceEnum::IMCRM && !empty($oldAdvisorId)) {
+            if ($personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
 
                 info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
 

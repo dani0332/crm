@@ -510,7 +510,7 @@ class AMLController extends Controller
 
                 if ($quoteTypeId == QuoteTypes::HOME->id()) {
                     $personalQuoteDetailHomeRequest = PersonalQuoteDetail::where('personal_quote_id', $quoteRequestId)->first();
-                    $personalQuoteDetailHomeRequest->insurer_quote_email  = $AMLCheckRequest->get_quote_email_gig;
+                    $personalQuoteDetailHomeRequest->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
                     if ($personalQuoteDetailHomeRequest->isDirty()) {
                         info('AML Screening Bridger - Insurer Quote Email updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
                         $personalQuoteDetailHomeRequest->save();
