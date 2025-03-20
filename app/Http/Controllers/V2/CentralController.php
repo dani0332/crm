@@ -40,6 +40,7 @@ use App\Http\Requests\ExportValidationRequest;
 use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
+use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
@@ -675,5 +676,13 @@ class CentralController extends Controller
         }
 
         return $response;
+    }
+
+    public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
+
+        return response()->json(['response' => $response]);
     }
 }
