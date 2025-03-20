@@ -166,7 +166,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 fn($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
 
             )
-            ->when($this->shouldApplyDatesFilter(), function ($query) {
+            ->when($this->shouldApplyDatesFilter() && ! request()->filled('created_at_start'), function ($query) {
                 $query->filterByToday();
             })
             ->when($this->shouldApplyDatesFilter() && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
