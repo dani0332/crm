@@ -168,6 +168,10 @@ const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
 const isCollectedByEnabled = ref(false);
+const isTransactionCaptureButtonEnabled = ref(true);
+const premiumToCapture = ref(0);
+const capturePaymentValidationInProcess = ref(false);
+const capturePaymentValidationErrorMessage = ref('');
 const modal2Ref = ref(null);
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
@@ -214,6 +218,9 @@ const isisUpfrontFrequency = computed(
 );
 const isCustomFrequency = computed(
   () => paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM,
+);
+const isSplitFrequency = computed(
+  () => paymentMethodsForm.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS,
 );
 const isSinglePayment = computed(() => paymentMethodsForm.payment_no == 1);
 const isCreditApprovalApplied = computed(
@@ -918,6 +925,13 @@ const handlePaymentTypes = count => {
       ? frequenciesToFilterForCount
       : frequenciesToFilterForInsurer;
 
+    // Bypass multi payment for ADNIC and showing CREDIT CARD for all child payments for Split Frequency
+    const isADNICProvider =
+      page.props?.bookPolicyDetails?.isADNICProvider || false;
+    if (isADNICProvider && isSplitFrequency.value) {
+      return paymentTypesWithoutCheck;
+    }
+
     if (count >= 2 || !isMultiPaymentEnabled) {
       if (frequenciesToFilter.includes(paymentMethodsForm.frequency)) {
         paymentTypesWithoutCheck = filterPaymentTypes(
@@ -927,7 +941,6 @@ const handlePaymentTypes = count => {
       }
     }
   }
-
   return paymentTypesWithoutCheck;
 };
 
@@ -1810,12 +1823,14 @@ const handleDeletePayment = async () => {
     });
 };
 
-const editPaymentModal = (
+const editPaymentModal = async (
   payment,
   split_payment_id,
   sr_no,
   capture_approval,
 ) => {
+  isTransactionCaptureButtonEnabled.value = true;
+
   if (
     sr_no === 0 &&
     payment.payment_status.id === paymentStatusEnum.PAID &&
@@ -1844,6 +1859,15 @@ const editPaymentModal = (
     return false;
   }
 
+  // Payment Capture Validation for GIG
+  if (
+    capture_approval == 1 &&
+    payment?.insurance_provider?.code == 'AXA' &&
+    (props.quoteType === 'Bike' || props.quoteType === 'Car')
+  ) {
+    await doCapturePaymentValidation(payment.total_amount);
+  }
+
   resetPaymentForm();
   initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
   handleCollectionTypeChange();
@@ -1856,6 +1880,33 @@ const editPaymentModal = (
   processPaymentSplits(payment);
   finalizePaymentForm(payment, capture_approval);
   setFrequencyTypes();
+};
+
+const doCapturePaymentValidation = totalAmount => {
+  const data = {
+    modelType: props.quoteType,
+    uuid: props.quoteRequest.uuid,
+    captureAmount: totalAmount,
+  };
+
+  capturePaymentValidationInProcess.value = true;
+  return axios
+    .post(`/payments/${props.quoteType}/payments-capture-validation`, data)
+    .then(res => {
+      if (res?.data?.response?.status == 'CAPTURE_VALIDATION_CLEARED') {
+        premiumToCapture.value = res?.data?.response?.premiumAmount;
+      } else {
+        isTransactionCaptureButtonEnabled.value = false;
+        capturePaymentValidationErrorMessage.value =
+          res?.data?.response?.message;
+      }
+    })
+    .catch(err => {
+      isTransactionCaptureButtonEnabled.value = false;
+    })
+    .finally(() => {
+      capturePaymentValidationInProcess.value = false;
+    });
 };
 
 const resetPaymentForm = () => {
@@ -1997,7 +2048,9 @@ const processPaymentSplits = payment => {
     dueDateModels.value[i] = split.due_date
       ? moment(split.due_date).format('YYYY-MM-DD')
       : '';
-    collectionAmountModels.value[i] = split.collection_amount;
+    collectionAmountModels.value[i] = premiumToCapture.value
+      ? premiumToCapture.value
+      : split.collection_amount;
 
     if (['CHQ', 'PDC'].includes(split.payment_method.code)) {
       isCheckDetailsEnabled.value[i] = true;
@@ -3061,9 +3114,7 @@ const fetchPlans = () => {
     .then(res => {
       planText.value = res.data.text;
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => {});
 };
 
 // Ecom leads
@@ -3681,7 +3732,6 @@ const voidPayment = () => {
       });
     })
     .catch(err => {
-      console.log(err);
       voidPaymentProcess.value = false;
       if (err.response.data) {
         notification.error({
@@ -4116,6 +4166,7 @@ onBeforeMount(() => {
                                   : alertCapture(item)
                               "
                               :disabled="isApproveConfirmed"
+                              :loading="capturePaymentValidationInProcess"
                             >
                               Capture
                             </x-button>
@@ -5761,6 +5812,11 @@ onBeforeMount(() => {
                           class="text-sm text-red-500 dark:text-red-400"
                           >{{ isCreditPaymentInvalidError[count] }}</sup
                         >
+                        <small
+                          class="text-red-600 text-sm"
+                          v-if="capturePaymentValidationErrorMessage"
+                          >{{ capturePaymentValidationErrorMessage }}</small
+                        >
                       </template>
                     </div>
                     <div class="w-1/5 px-2" v-else>
@@ -6202,8 +6258,9 @@ onBeforeMount(() => {
                     </x-button>
                     <x-button
                       v-if="
-                        isApproveClicked ||
-                        (isCreditApprovalView && !isDeclineClicked)
+                        (isApproveClicked ||
+                          (isCreditApprovalView && !isDeclineClicked)) &&
+                        isTransactionCaptureButtonEnabled
                       "
                       class="mr-2 focus:outline-black"
                       size="sm"
@@ -6211,7 +6268,9 @@ onBeforeMount(() => {
                       type="submit"
                       tabindex="0"
                       :loading="paymentMethodsForm.processing"
-                      :disabled="isApproveConfirmed"
+                      :disabled="
+                        isApproveConfirmed || !isTransactionCaptureButtonEnabled
+                      "
                     >
                       <template v-if="isCreditApprovalView && isCreditCardView">
                         Capture
