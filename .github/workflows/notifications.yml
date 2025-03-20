@@ -8,8 +8,6 @@ on:
 jobs:
   notifications:
     runs-on: ubuntu-latest
-
-    steps:
     steps:
       - name: Set Google Chat Webhook URL
         run: |
