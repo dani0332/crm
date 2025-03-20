@@ -65,6 +65,7 @@ class QuoteAllocation extends Command
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeTravelAllocation(QuoteTypeId::Travel, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::GROUP_MEDICAL, $to, $chunkSize, $allocationStartDate);
 
             // Disabled Auto Allocation for now as this feature is not needed at the moment
             /*
