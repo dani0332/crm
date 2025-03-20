@@ -23,7 +23,6 @@ use App\Models\CustomerInsured;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
-use App\Models\InsuranceProvider;
 use App\Models\JetskiQuote;
 use App\Models\KycLog;
 use App\Models\LifeQuote;
