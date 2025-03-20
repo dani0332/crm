@@ -160,7 +160,7 @@ class LeadAllocationController extends Controller
             QuoteTypes::LIFE => PermissionsEnum::LIFE_LEADPOOL,
             QuoteTypes::HOME => PermissionsEnum::HOME_LEADPOOL,
             QuoteTypes::GROUP_MEDICAL => PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
-            QuoteTypes::SAVINGS => PermissionsEnum::SAVINGS_LEADPOOL
+            // QuoteTypes::SAVINGS => PermissionsEnum::SAVINGS_LEADPOOL
         };
         return request()->user()->can($permission); 
     }
