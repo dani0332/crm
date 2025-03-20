@@ -28,9 +28,9 @@ const emit = defineEmits(['update:selectedPlanChanged']);
 
 const updateSelectedPlan = () => {
   isLoading.value = true;
-
   let data = {
     plan_id: props.plan.id,
+    provider_code: props.plan?.providerCode ?? null,
   };
 
   if (props.quoteType.toLocaleLowerCase() == 'health') {
