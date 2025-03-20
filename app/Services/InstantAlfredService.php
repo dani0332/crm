@@ -118,7 +118,8 @@ class InstantAlfredService extends BaseService
                     'tqpd.plan_name',
                 ]);
             })
-            ->groupBy('pqr.id');
+            ->groupBy('pqr.id')
+            ->orderBy('pqrd.chat_initiated_at', 'desc');
         $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
 
         return $aliases;
