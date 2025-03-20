@@ -105,8 +105,8 @@ const tableHeader = [
 
 const ecommerceOptions = [
   { value: '', label: 'Please select is ecommerce' },
-  { value: 'Yes', label: 'Yes' },
-  { value: 'No', label: 'No' },
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
 ];
 
 const filteredTableHeader = computed(() => {

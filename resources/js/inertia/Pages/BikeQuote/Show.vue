@@ -1325,7 +1325,7 @@ function capitalizeString(str) {
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      isPlanDetailSectionEnabled="false"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <QuotePayments

@@ -1134,7 +1134,7 @@ const allowStatusUpdate = computed(() => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      isPlanDetailSectionEnabled="true"
+      :isPlanDetailSectionEnabled="true"
     />
 
     <PolicyDetail
