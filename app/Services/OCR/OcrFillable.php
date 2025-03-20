@@ -9,8 +9,27 @@ use Illuminate\Database\Eloquent\Model;
 
 trait OcrFillable
 {
+    private function resolveProp($object, $prop)
+    {
+        if (property_exists($object, $prop)) {
+            return $object->$prop;
+        }
+
+        return null;
+    }
+
     private function fillTaxInvoice(Model $quote, object $data)
     {
+        dd([
+            'price_vat_applicable' => $data->price?->baseAmount ?? $quote->price_vat_applicable,
+            'vat' => $data->price?->VAT ?? $quote->vat,
+            'price_with_vat' => $data->price?->totalAmount ?? $quote->price_with_vat,
+            'policy_issuance_date' => $data->issuanceDate ? Carbon::parse($data->issuanceDate)->toDateTimeString() : $quote->policy_issuance_date,
+        ], [
+            // 'insurer_invoice_date' => $data->invoiceDate ? Carbon::parse($data->invoiceDate)->toDateTimeString() : $quote->payment?->insurer_invoice_date,
+            'insurer_tax_number' => $data->taxInvoiceNumber ?? $quote->payment?->insurer_tax_number,
+        ]);
+
         $quote->update([
             'price_vat_applicable' => $data->price?->baseAmount ?? $quote->price_vat_applicable,
             'vat' => $data->price?->VAT ?? $quote->vat,
