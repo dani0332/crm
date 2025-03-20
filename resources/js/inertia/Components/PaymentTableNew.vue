@@ -464,6 +464,15 @@ const rules = {
     }
     return 'Value cannot be empty';
   },
+  isValidUrl: v => {
+    if (!v) return true; // Allow empty value
+    try {
+      const url = new URL(v);
+      return url.protocol === 'http:' || url.protocol === 'https:' || 'Please enter a valid URL starting with http:// or https://';
+    } catch {
+      return 'Please enter a valid URL';
+    }
+  }
 };
 
 const isPaymentLocked = computed(() => {
@@ -2165,6 +2174,7 @@ const paymentMethodsForm = useForm({
   status: 'create',
   approvalModal: '',
   insurerPaymentLink: '',
+  insurerPaymentLinkError: '',
 });
 
 const validateViewPayment = isValid => {
@@ -2281,7 +2291,24 @@ const validatePaymentAmount = isValid => {
   return false;
 };
 
+const validateInsurerPaymentLink = () => {
+  const validationResult = rules.isValidUrl(paymentMethodsForm.insurerPaymentLink);
+  if (validationResult !== true) {
+    paymentMethodsForm.errors.insurerPaymentLink = validationResult;
+  } else {
+    delete paymentMethodsForm.errors.insurerPaymentLink;
+  }
+};
+
 const addPayment = (isValid) => {
+  if (insurerPaymentLinkIndex.value >= 0 && paymentMethodsForm.insurerPaymentLink) {
+    const urlValidation = rules.isValidUrl(paymentMethodsForm.insurerPaymentLink);
+    if (urlValidation !== true) {
+      paymentMethodsForm.errors.insurerPaymentLink = urlValidation;
+      return;
+    }
+  }
+
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
@@ -5082,10 +5109,15 @@ onBeforeMount(() => {
                   <x-input
                     v-if="!isFieldReadonly"
                     class="w-full"
+                    :class="{ 'custom-select-error': paymentMethodsForm.errors.insurerPaymentLink }"
                     placeholder="Enter valid url e.g: https://imcrm.alfred.ae/login"
                     v-model="paymentMethodsForm.insurerPaymentLink"
                     :disabled="isMasterPaymentPaid"
+                    @input="validateInsurerPaymentLink"
                   />
+                  <p v-if="paymentMethodsForm.errors.insurerPaymentLink" class="text-sm text-red-500 dark:text-red-400 mt-1">
+                    {{ paymentMethodsForm.errors.insurerPaymentLink }}
+                  </p>
                 </x-field>
               </div>
             </div>
