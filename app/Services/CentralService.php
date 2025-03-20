@@ -1065,6 +1065,8 @@ class CentralService extends BaseService
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
+        $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
+
         // Check if multiple payments are enabled for the provider
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
 
@@ -1084,6 +1086,7 @@ class CentralService extends BaseService
             'isTapCaptureProcessStart' => $isTapCaptureProcessStart,
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'commissionInPayments' => $commissionInPayments,
+            'isADNICProvider' => $isADNICProvider,
         ];
 
         // If payment object is provided, check commission status and merge with TAP configuration
@@ -1153,7 +1156,7 @@ class CentralService extends BaseService
     // Todo: This method will remove in future if Business confirm we will enable capture of all providers
     private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
     {
-        // Capture are enabled for the following providers
+        // Capture are enabled for the all LOB's against specific providers
         $enabledProviders = [
             InsurerProviderEnum::GIG_INSURANCE,
             InsurerProviderEnum::RAK_INSURANCE,
@@ -1163,14 +1166,14 @@ class CentralService extends BaseService
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
         ];
 
-        // Capture is enabled for the Orient and Travel
+        // Capture is enabled for the Orient Provider and Travel
         if ($quoteTypeId == QuoteTypeId::Travel) {
             $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
         }
-
-        //        if ($quoteTypeId == QuoteTypeId::Health) {
-        //            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
-        //        }
+        // Capture is enabled for the Abu Dhabi Provider and Health
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
+        }
         //
         //        if ($quoteTypeId == QuoteTypeId::Car) {
         //            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
@@ -1178,5 +1181,21 @@ class CentralService extends BaseService
         //
 
         return in_array($insuranceProviderCode, $enabledProviders);
+    }
+
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    {
+        try {
+            $data = [
+                'quoteUID' => $uuid,
+                'quoteTypeId' => $quoteTypeId,
+                'captureAmount' => $captureAmount,
+            ];
+
+            return Ken::request('/capture-payment-validation', 'put', $data);
+
+        } catch (\Throwable $th) {
+            return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
+        }
     }
 }
