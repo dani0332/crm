@@ -695,7 +695,8 @@ const isDisabledSendPCB = computed(() => {
     if (
       payment.collection_type == 'insurer' &&
       ccPayments.length > 0 &&
-      props.bookPolicyDetails?.text == sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT
+      props.bookPolicyDetails?.text == sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT &&
+      props.bookPolicyDetails?.isCommissionDisabled
     ) {
       return true;
     }
