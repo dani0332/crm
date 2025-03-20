@@ -251,6 +251,13 @@ trait QuoteModelTrait
 
     public function isPUA(): bool
     {
-        return CarQuotePlanDetail::where('quote_uuid', $this->uuid)->whereIn('pua_type', PuaEnum::TAGS)->where('plan_id', $this->plan_id)->exists();
+        if (empty($this->plan_id)) {
+            return false;
+        }
+        
+        return CarQuotePlanDetail::where('quote_uuid', $this->uuid)
+            ->whereIn('pua_type', PuaEnum::TAGS)
+            ->where('plan_id', $this->plan_id)
+            ->exists();
     }
 }
