@@ -10,10 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    steps:
+      - name: Set Google Chat Webhook URL
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "CHAT_WEBHOOK=${{ secrets.GOOGLE_CHAT_WEBHOOK_MAIN }}" >> $GITHUB_ENV
+          else
+            echo "CHAT_WEBHOOK=${{ secrets.GOOGLE_CHAT_WEBHOOK }}" >> $GITHUB_ENV
+          fi
+
       - name: Google Chat Notification
         uses: Co-qn/google-chat-notification@releases/v1
         with:
           name: Build
-          url: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
+          url: ${{ env.CHAT_WEBHOOK }}
           status: ${{ job.status }}
         if: always()
