@@ -854,10 +854,13 @@ const handleCollectionTypeChange = () => {
   );
 
   if (paymentMethodsForm.collection_type === 'insurer') {
+    let isIPLPermission = can(permissionEnum.INSURER_PAYMENT_LINK);
+
     const excludedPaymentMethods = [
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
       page.props.paymentMethodsEnum?.Cash,
+      !isIPLPermission && page.props.paymentMethodsEnum?.InsurerPaymentLink
     ];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item => !excludedPaymentMethods.includes(item.value),
@@ -866,9 +869,9 @@ const handleCollectionTypeChange = () => {
       page.props.paymentMethodsEnum?.InsurerPayment;
   } else {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item =>
-        ![page.props.paymentMethodsEnum?.InsurerPayment, page.props.paymentMethodsEnum?.InsurerPaymentLink].includes(item.value),
-    );
+      (item) => {
+        return ![page.props.paymentMethodsEnum?.InsurerPayment, page.props.paymentMethodsEnum?.InsurerPaymentLink].includes(item.value);
+    });
     paymentMethodsModels.value[1] = '';
   }
   applyPermissions();
@@ -5063,7 +5066,7 @@ onBeforeMount(() => {
                   </span>
                 </x-field>
               </div>
-              <div class="col-span-2" v-if="insurerPaymentLinkIndex >= 0">
+              <div class="col-span-2" v-if="insurerPaymentLinkIndex >= 0 && can(permissionEnum.INSURER_PAYMENT_LINK)">
                 <x-tooltip>
                   <span class="border-b-2 border-dotted border-black text-sm"
                     >INSURER PAYMENT LINK - {{ paymentMethodsModels[insurerPaymentLinkIndex] }}</span
@@ -6319,7 +6322,7 @@ onBeforeMount(() => {
                     }}
                   </x-button>
                 </div>
-                <template v-if="paymentMethodsModels[insurerPaymentLinkIndex] === page.props.paymentMethodsEnum?.InsurerPaymentLink">
+                <template v-if="paymentMethodsModels[insurerPaymentLinkIndex] === page.props.paymentMethodsEnum?.InsurerPaymentLink && can(permissionEnum.INSURER_PAYMENT_LINK)">
                   <InsurerPaymentLink ref="insurerPaymentComponent" :insurerPaymentLinkIndex="insurerPaymentLinkIndex" :paymentForm="paymentMethodsForm" :payments="payments" @updateOnParent="(e,f,g) => updateFromInsurerPaymentLink(e, f, g)"/>
                 </template>
               </div>
