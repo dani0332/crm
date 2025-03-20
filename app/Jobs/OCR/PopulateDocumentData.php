@@ -5,6 +5,7 @@ namespace App\Jobs\OCR;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
+use App\Services\Logger\LoggerService;
 use App\Services\OCR\OCRService;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -41,8 +42,10 @@ class PopulateDocumentData implements ShouldQueue
      */
     public function handle()
     {
+        LoggerService::startQuoteLogging($this->quote?->uuid);
+
         if (! $this->validateMimeType()) {
-            info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code} with UUID: {$this->quote->uuid}");
+            info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
 
             return;
         }
@@ -56,18 +59,18 @@ class PopulateDocumentData implements ShouldQueue
         );
 
         if ($isSuccess === null) {
-            info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code} with UUID: {$this->quote->uuid}");
+            info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
 
             return;
         }
 
         if ($isSuccess) {
-            info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code} with UUID: {$this->quote->uuid}");
+            info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
         } else {
-            info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code} with UUID: {$this->quote->uuid}");
+            info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
 
             if ($this->attempts() >= $this->tries) {
-                $errorMessage = "Maximum attempts reached for {$this->quoteType?->value} & Document Type {$this->documentType?->code} with UUID: {$this->quote->uuid}";
+                $errorMessage = "Maximum attempts reached for {$this->quoteType?->value} & Document Type {$this->documentType?->code}";
                 info(self::class." - {$errorMessage}");
 
                 $this->fail(new Exception($errorMessage));
@@ -76,6 +79,8 @@ class PopulateDocumentData implements ShouldQueue
                 $this->release(now()->addMinutes(2 * $this->attempts()));
             }
         }
+
+        LoggerService::endLogging();
     }
 
     public function middleware()
