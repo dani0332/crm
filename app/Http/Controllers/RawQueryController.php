@@ -9,19 +9,18 @@ use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class RawQueryController extends Controller
 {
     // Define constants for common fields
     private const COMMON_FIELDS = [
-       'id', 'uuid', 'customer_id', 'quote_status_id', 'payment_status_id',
-    'advisor_id', 'nationality_id'
+        'id', 'uuid', 'customer_id', 'quote_status_id', 'payment_status_id',
+        'advisor_id', 'nationality_id',
     ];
-
     private const COMMON_TRACKING_FIELDS = [
-         'source', 'lead_allocation_failed_at', 'created_at'
+        'source', 'lead_allocation_failed_at', 'created_at',
     ];
 
     // Add specific fields for each quote type
@@ -52,7 +51,6 @@ class RawQueryController extends Controller
             'pa_id',
         ],
     ];
-
     private const QUOTE_TYPES = [
         'health' => HealthQuote::class,
         'home' => HomeQuote::class,
@@ -111,8 +109,8 @@ class RawQueryController extends Controller
                     "{$type}_quote_request_id",
                     'utm_source',
                     'utm_medium',
-                    'utm_campaign'
-                ]
+                    'utm_campaign',
+                ],
             ];
         }
     }
@@ -121,8 +119,8 @@ class RawQueryController extends Controller
     {
         try {
             $modelType = $this->getModelType($request->modelType);
-            
-            if (!isset($this->fieldsMap[$modelType])) {
+
+            if (! isset($this->fieldsMap[$modelType])) {
                 return response()->json(['error' => 'Invalid model type'], 400);
             }
 
@@ -137,6 +135,7 @@ class RawQueryController extends Controller
     private function getModelType(string $requestType): string
     {
         $nameSpace = 'App\\Models\\';
+
         return checkPersonalQuotes(ucwords($requestType))
             ? $nameSpace.'PersonalQuote'
             : $nameSpace.ucwords($requestType).'Quote';
@@ -150,9 +149,9 @@ class RawQueryController extends Controller
         if (isset($this->relationMap[$modelType])) {
             foreach ($this->relationMap[$modelType] as $relation) {
                 $query->with([
-                    $relation => function($query) use ($relation, $modelType) {
+                    $relation => function ($query) use ($relation, $modelType) {
                         $query->select($this->relationFieldsMap[$modelType][$relation]);
-                    }
+                    },
                 ]);
             }
         }
