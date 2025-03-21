@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Repositories\EmbeddedProductRepository;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanType;
@@ -438,6 +439,8 @@ class RenewalsUploadService
                 $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
                 info($logPrefix.' fetch plans is completed');
             }
+
+            EmbeddedProductRepository::generateEPRenewal($batch);
 
             return true;
         } catch (\Exception $exception) {
