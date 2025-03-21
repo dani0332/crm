@@ -73,7 +73,7 @@ class GroupMedicalAllocation extends BaseAllocation
             case HealthPlanTypeEnum::ENTRY_LEVEL->value:
                 if ($employeeRange === self::EMPLOYEE_RANGE_0_5) {
                    info(self::class . " - Entry Level Plan - Employee Range: {$employeeRange} | Plan Type: {$planType} | Number of Employees: {$numberOfEmployees} | Quote Ref-ID: {$this->lead->uuid} | Time: " . now());
-                    return null; // N/A (default to Non-Micro)
+                    return self::TEAM_MICRO; //
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_6_50) {
                     return self::TEAM_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_51_100) {
@@ -90,7 +90,7 @@ class GroupMedicalAllocation extends BaseAllocation
                     return self::TEAM_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_51_100) {
                     return self::TEAM_MICRO;
-                } else {
+                } elseif ($employeeRange === self::EMPLOYEE_RANGE_101_PLUS) {
                     return self::TEAM_NON_MICRO;
                 }
                 break;
@@ -102,7 +102,7 @@ class GroupMedicalAllocation extends BaseAllocation
                     return self::TEAM_NON_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_51_100) {
                     return self::TEAM_NON_MICRO;
-                } else {
+                } elseif ($employeeRange === self::EMPLOYEE_RANGE_101_PLUS) {
                     return self::TEAM_NON_MICRO;
                 }
                 break;
@@ -114,7 +114,7 @@ class GroupMedicalAllocation extends BaseAllocation
                     return self::TEAM_MICRO;
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_51_100) {
                     return self::TEAM_MICRO;
-                } else {
+                } elseif ($employeeRange === self::EMPLOYEE_RANGE_101_PLUS) {
                     return self::TEAM_NON_MICRO;
                 }
                 break;
