@@ -177,6 +177,10 @@ class SplitPaymentService
                 }
             }
 
+            if($quote->quote_status_id == QuoteStatusEnum::PolicyBooked){
+                $postPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess( [$quote, $request->modelType, $splitPayment]);
+            }
+
             // Reminder:: Please do not remove this code until all cases works fine on PROD
             //            $isLiveApiCallStep4 = true;
             //            $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);

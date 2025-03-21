@@ -3769,19 +3769,60 @@ const fetchInsurerAMLStatus = async () => {
   }
 };
 
+const triggerPostPrepayment = async splitPayment => {
+  console.log(' triggerPostPrepayment : ', splitPayment.id);
+  let quoteStatusId = props.quoteRequest.quote_status_id;
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked === quoteStatusId;
+  if (!isPolicyBooked) {
+    notification.warning({
+      title:
+        'Posting of Prepayment cannot be trigered as Policy is not Booked yet!',
+      position: 'top',
+    });
+  }
+  try {
+    NProgress.start();
+    const response = await axios.post(route('post.prepayment.to.sage'), {
+      paymentSplit: splitPayment.id,
+      quoteRequestId: props.quoteRequest.id,
+      quoteType: page.props.quoteType,
+    });
+    NProgress.done();
+    if (response.data.success) {
+      notification.success({
+        title: 'Post Prepayment to Sage Process Started',
+        position: 'top',
+      });
+      router.reload({
+        only: ['payments'],
+      });
+    }
+  } catch (error) {
+    let errorMessages = error.response.data.errors;
+    Object.keys(errorMessages).forEach(function (key) {
+      notification.error({
+        title: errorMessages[key],
+        position: 'top',
+      });
+    });
+  }
+};
 const enablePostPrepaymentButton = splitPayment => {
   console.log(
     'showPostPrepaymentButton : showPrepaymentPostButton : ',
     splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
     ' , batchNumber : ',
     splitPayment.prepayment_receipt_status?.batchNumber,
+    splitPayment.prepayment_receipt_status,
   );
-  let showPrepaymentPostButton =
-    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton;
-  let { quoteStatusEnum } = page.props;
-  let quoteStatusId = props.quoteRequest.quote_status_id;
-  let isPolicyBooked = quoteStatusEnum.PolicyBooked === quoteStatusId;
-  if (isPolicyBooked && showPrepaymentPostButton) {
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked ===
+    props.quoteRequest.quote_status_id;
+  if (
+    isPolicyBooked &&
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
+  ) {
     return true;
   }
   return false;
@@ -4257,8 +4298,7 @@ onBeforeMount(() => {
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
                         <td class="text-center">
-                          {{ splitPayment.id
-                          }}{{ splitPayment.prepayment_receipt_status }}
+                          {{ splitPayment.id }}
                         </td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
