@@ -5,6 +5,7 @@ namespace App\Builders;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\TravelQuoteEnum;
 use App\Models\TravelQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -93,7 +94,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('previous_quote_policy_premium')
             ->filterIn('quote_status', 'quote_status_id')
             ->filterIn('insurance_provider_ids', 'insurance_provider_id')
-            ->filterIn('payment_status', 'payment_status_id')
+            ->filterBy('payment_status_id')
             ->filterIn('renewal_batches', 'renewal_batch_id')
             ->filterIn('insurer_api_status_id')
             ->filterBy('currently_insured_with')
@@ -101,7 +102,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDate('travel_start_date', 'start_date')
             ->filterByDate('next_followup_date')
             ->filterByDate('next_followup_date_end', 'next_followup_date', false)
-            ->filterByDate('previous_policy_expiry_date')
+            ->filterByDate('previous_policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('previous_policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
@@ -111,11 +112,12 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterIn('amlStatus')
             ->filterIn('plan_name', 'plan_id')
             ->filterBy('source')
+            ->filterByAdvisors(request('advisor_id'))
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->filterByDateRange('advisor_assigned_date')
             ->filterBySegment('segment_filter', QuoteTypeId::Travel)
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
-                $query->where(fn($q) => $q->filtpolicy_expiry_dateerBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
+                $query->where(fn($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
             ->when(Auth::user()->isSpecificTeamAdvisor('Travel'), function ($query) {
                 $query->filterBy('advisor_id', Auth::user()->id);
@@ -136,7 +138,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
                 fn($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
             )
-            ->when($this->shouldApplyDatesFilter() && ! request()->filled('created_at_start'), function ($query) {
+            ->when($this->shouldApplyDatesFilter() && ! request()->filled('last_modified_date') && ! request()->filled('created_at_start') && ! request()->filled('renewal_batches') && ! request()->filled('policy_expiry_date') && ! request()->filled('policy_expiry_date_end'), function ($query) {
                 $query->filterByToday();
             })
             ->when($this->shouldApplyDatesFilter() && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
@@ -147,6 +149,50 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when(request()->filled('last_modified_date'), function ($query) {
                 $query->filterByDateRange('last_modified_date', 'updated_at');
+            })
+            ->when(request()->filled('coverage_code'), function ($q) {
+                $q->where(function ($q) {
+                    $q->where('coverage_code', request('coverage_code'))
+                        ->orWhere(function ($qInner) {
+                            $qInner->when(request('coverage_code') == TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, function ($qInner) {
+                                $qInner->where('days_cover_for', '<', 93);
+                            })->when(in_array(request('coverage_code'), [TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP, TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP]), function ($qInner) {
+                                $qInner->where('days_cover_for', '>', 92);
+                            });
+                        });
+                });
+            })
+            ->when(request()->filled('direction_code'), function ($q) {
+                $q->when(request('direction_code') == TravelQuoteEnum::TRAVEL_UAE_OUTBOUND, function ($q) {
+                    $q->where(function ($q) {
+                        $q->where('direction_code', request('direction_code'))
+                            ->orWhere(function ($qInner) {
+                                $qInner->where('currently_located_in_id', TravelQuoteEnum::CURRENTLY_LOCATED_ID_UAE)
+                                    ->where('region_cover_for_id', '!=', TravelQuoteEnum::REGION_COVER_ID_UAE);
+                            });
+                    });
+                })->when(request('direction_code') == TravelQuoteEnum::TRAVEL_UAE_INBOUND, function ($q) {
+                    $q->where(function ($q) {
+                        $q->where('direction_code', request('direction_code'))
+                            ->orWhere('region_cover_for_id', TravelQuoteEnum::REGION_COVER_ID_UAE);
+                    });
+                });
+            })
+            ->when(!empty(request('api_issuance_status_id')), function ($q) {
+                $apiIssuanceStatusIds = (array) request('api_issuance_status_id');
+
+                $q->when(in_array('blank', $apiIssuanceStatusIds), function ($q) use ($apiIssuanceStatusIds) {
+                    $q->where(function ($subQuery) use ($apiIssuanceStatusIds) {
+                        $subQuery->whereNull('api_issuance_status_id')
+                            ->orWhere('api_issuance_status_id', '');
+
+                        $subQuery->when(count($apiIssuanceStatusIds) > 1, function ($subQuery) use ($apiIssuanceStatusIds) {
+                            $subQuery->orWhereIn('api_issuance_status_id', $apiIssuanceStatusIds);
+                        });
+                    });
+                }, function ($q) use ($apiIssuanceStatusIds) {
+                    $q->whereIn('api_issuance_status_id', $apiIssuanceStatusIds);
+                });
             })
             ->when(
                 request()->filled('sortBy'),

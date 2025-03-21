@@ -339,66 +339,10 @@ class TravelQuoteService extends BaseService
 
     public function getGridData($model, $request)
     {
-
         $query = $this->travelQuoteQueryBuilder->processGridData();
-        $this->whereBasedOnRole($query, 'tqr');
-        $this->adjustQueryByDateFilters($query, 'tqr');
+        $this->whereBasedOnRole($query, 'travel_quote_request');
+        $this->adjustQueryByDateFilters($query, 'travel_quote_request');
         return $query;
-
-        if (isset($request->coverage_code)) {
-            $this->query->where(function ($q) use ($request) {
-                $q->where('tqr.coverage_code', $request->coverage_code)
-                    ->orWhere(function ($qInner) use ($request) {
-                        if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP) {
-                            $qInner->where('days_cover_for', '<', 93);
-                        }
-                        if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP || $request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP) {
-                            $qInner->where('days_cover_for', '>', 92);
-                        }
-                    });
-            });
-        }
-        if (isset($request->direction_code)) {
-            if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_OUTBOUND) {
-                $this->query->where(function ($q) use ($request) {
-                    $q->where('tqr.direction_code', $request->direction_code)
-                        ->orWhere(function ($qInner) {
-                            $qInner->where('currently_located_in_id', TravelQuoteEnum::CURRENTLY_LOCATED_ID_UAE)
-                                ->where('region_cover_for_id', '!=', TravelQuoteEnum::REGION_COVER_ID_UAE);
-                        });
-                });
-            }
-            if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_INBOUND) {
-                $this->query->where(function ($q) use ($request) {
-                    $q->where('tqr.direction_code', $request->direction_code)
-                        ->orWhere('region_cover_for_id', TravelQuoteEnum::REGION_COVER_ID_UAE);
-                });
-            }
-        }
-
-
-        if (! empty($request->api_issuance_status_id)) {
-            $apiIssuanceStatusIds = (array) $request->api_issuance_status_id;
-
-            $this->query->when(in_array('blank', $apiIssuanceStatusIds), function ($query) use ($apiIssuanceStatusIds) {
-                $query->where(function ($subQuery) use ($apiIssuanceStatusIds) {
-                    $subQuery->whereNull('tqr.api_issuance_status_id')
-                        ->orWhere('tqr.api_issuance_status_id', '');
-
-                    if (count($apiIssuanceStatusIds) > 1) {
-                        $subQuery->orWhereIn('tqr.api_issuance_status_id', $apiIssuanceStatusIds);
-                    }
-                });
-            }, function ($query) use ($apiIssuanceStatusIds) {
-                $query->whereIn('tqr.api_issuance_status_id', $apiIssuanceStatusIds);
-            });
-        }
-
-        if (isset($request->sortBy) && $request->sortBy != '') {
-            return $this->query->orderBy($request->sortBy, $request->sortType);
-        } else {
-            return $this->query->orderBy('tqr.created_at', 'DESC');
-        }
 
     }
 
@@ -450,7 +394,8 @@ class TravelQuoteService extends BaseService
         if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start)
         && ! isset($request->payment_due_date) && ! isset($request->booking_date)
     && ! isset($request->renewal_batches) && ! isset($request->previous_quote_policy_number) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number) && ! isset($request->policy_expiry_date) && ! isset($request->policy_expiry_date_end)) {
-            $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+            
+        $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if ($request->transaction_approved_dates) {
             $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
