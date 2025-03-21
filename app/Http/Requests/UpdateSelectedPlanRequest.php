@@ -47,8 +47,8 @@ class UpdateSelectedPlanRequest extends FormRequest
         $planId = request()->plan_id;
         $code = request()->code;
 
-        $validator->after(function ($validator) use ($quoteType, $insuranceProviderId, $planId, $code) {
-            app(SplitPaymentService::class)->validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, null, $planId);
+        $validator->after(function ($validator) use ($code) {
+            app(SplitPaymentService::class)->validateAuthorizedPayment($validator, $code);
         });
     }
 }
