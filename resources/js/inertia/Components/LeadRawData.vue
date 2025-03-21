@@ -31,7 +31,7 @@ const membersHeaders = ref([{ Text: '', value: '' }]);
 const onSubmit = () => {
   isloading.value = true;
   let data = {
-    uuid: props.uuid,
+    uuid: page.props?.record?.uuid || page.props?.quote?.uuid,
     modelType: props.modelType,
     jsonData: true,
   };
