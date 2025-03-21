@@ -45,6 +45,9 @@ class TravelQuote extends Model implements AuditableContract
         'insurer_api_status',
         'api_issuance_status',
         'insurer_api_email_action',
+        'insurer_aml_status_text',
+        'previous_policy_expiry_date_formatted',
+        'dob_formatted'
     ];
 
     protected static function booted()
@@ -55,13 +58,13 @@ class TravelQuote extends Model implements AuditableContract
                 $travelQuote = new TravelQuote;
                 $endorsmentDetails = $travelQuote->isCPDEndorsment(request()->sendUpdateId);
                 if ($endorsmentDetails['isCPDEndorsment']) {
-                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD (' . $model->getOriginal('policy_booking_date') . ') - New PBD (' . $model->policy_booking_date . '). QuoteType: ' . request()->quoteType . ' - QuoteUUID: ' . request()->quoteUuid . ' - SendUpdateUUID: ' . $endorsmentDetails['sendUpdateUUID']);
                     $skipBookingDateUpdateForNonCPD = false;
                 }
             }
 
             if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
-                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                info($model->code . ' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from ' . $model->getOriginal('policy_booking_date') . ' to ' . $model->policy_booking_date);
                 unset($model->policy_booking_date); // lock the policy booking date field
             }
         });
@@ -317,5 +320,15 @@ class TravelQuote extends Model implements AuditableContract
     public function isSenior()
     {
         return $this->customerMembers->where('age', '>=', 65)->count() > 0;
+    }
+
+    public function renewalBatch()
+    {
+        return $this->belongsTo(renewalBatch::class, 'renewal_batch_id');
+    }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
     }
 }
