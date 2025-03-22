@@ -1176,9 +1176,9 @@ class CentralService extends BaseService
             $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
         }
 
-        if ($quoteTypeId == QuoteTypeId::Car) {
-            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
-        }
+        // if ($quoteTypeId == QuoteTypeId::Car) {
+        //     $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        // }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
             $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
