@@ -565,7 +565,7 @@
 
 <body>
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header.jpg') }}" class="full-page-image" style="margin-top: 80px;"/>
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header_and_footer.jpg') }}" class="full-page-image" style="height: 100%;"/>
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
     <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
