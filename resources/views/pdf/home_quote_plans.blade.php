@@ -813,7 +813,7 @@
                 {{-- rows for building, content and personal belonging value --}}
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-weight:700;"><b>Gross Price</b></p>
+                        <p class="quote-info raleway-font" style="font-weight:700;"><b>Gross price</b></p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
