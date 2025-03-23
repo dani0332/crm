@@ -715,7 +715,7 @@
                 <p style="margin-top:200px"></p>
                 <tr>
                     <th class="bg-light-blue" rowspan="2">
-                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Insurance company
+                        <p class="quote-info raleway-font" style="font-weight:700;">Insurance company
                         </p>
                     </th>
                     @foreach ($planIds as $planId)
@@ -749,7 +749,7 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Plan name
+                        <p class="quote-info raleway-font" style="font-weight:700;">Plan name
                         </p>
                     </th>
                     @foreach ($planIds as $planId)
@@ -766,7 +766,7 @@
                     @if($homeQuoteFlags['contents_value_flag'])
                         <tr>
                             <th class="bg-light-blue">
-                                <p class="quote-info raleway-font" style="font-weight:700;"><b>Contents value</b></p>
+                                <p class="quote-info raleway-font" style="font-weight:700;">Contents value</p>
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
@@ -782,7 +782,7 @@
                     @if($homeQuoteFlags['personal_belongings_flag'])
                         <tr>
                             <th class="bg-light-blue">
-                                <p class="quote-info raleway-font" style="font-weight:700;"><b>Personal belongings value</b></p>
+                                <p class="quote-info raleway-font" style="font-weight:700;">Personal belongings value</p>
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
@@ -798,7 +798,7 @@
                     @if($homeQuoteFlags['building_value_flag'])
                         <tr>
                             <th class="bg-light-blue">
-                                <p class="quote-info raleway-font" style="font-weight:700;"><b>Building value</b></p>
+                                <p class="quote-info raleway-font" style="font-weight:700;">Building value</p>
                             </th>
                             @foreach ($planIds as $planId)
                                 <th>
@@ -813,7 +813,7 @@
                 {{-- rows for building, content and personal belonging value --}}
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-weight:700;"><b>Gross price</b></p>
+                        <p class="quote-info raleway-font" style="font-weight:700;">Gross price</p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
@@ -825,7 +825,7 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-weight:700;"><b>Vat</b></p>
+                        <p class="quote-info raleway-font" style="font-weight:700;">Vat</p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
@@ -837,7 +837,7 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;"><b>Total Price (with VAT)</b></p>
+                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Total Price (with VAT)</p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
