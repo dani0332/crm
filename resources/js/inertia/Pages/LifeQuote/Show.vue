@@ -57,6 +57,7 @@ defineProps({
   currencies: Array,
   lifeRiders: Array,
 });
+
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
@@ -97,6 +98,18 @@ const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
 const variantPlan = ref(null);
 const selectedPlans = ref([]);
 let selectedPlan = ref(null);
+
+let ecomDetail = ref(null); 
+let riders = ref({});
+
+const activeRiders = (data) => {
+  if(!data){
+    return 'N/A'; 
+  }
+  return data.filter(item => item.active === true) 
+  .map(item => item.text)            
+  .join(', ');         
+}
 
 const viewPlan = item => {
   selectedPlan = item;
@@ -719,6 +732,15 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
+      const planData = res?.data[0]; 
+
+      const foundPlan = planData.find(plan => 
+        plan.planId === selectedProviderPlan && 
+        plan.version === selectedProviderPlanVersion
+      );
+
+      ecomDetail.value = foundPlan;
+
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
       console.log('Plan data', plansTable.data); 
     })
@@ -812,6 +834,7 @@ const getBMITag = () => {
 
     return tag || { text: "Invalid BMI", color: "gray" };
   }
+
 
 </script>
 
@@ -1784,6 +1807,92 @@ const getBMITag = () => {
       </Collapsible>
     </div>
 
+    <!-- Ecom Plan Detail -->
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              E-COM Detail 
+            </h3>
+          </div>
+        </template>
+
+        <template #body>
+          <x-divider class="my-4" />
+          <div>
+             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Price</dt>
+                <dd>{{ ecomDetail?.actualPremium ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Authorised AT</dt>
+                <dd>{{ quote?.payments[0]?.authorized_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">PAID AT</dt>
+                <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote.payment_status ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ ecomDetail?.providerName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT METHOD</dt>
+                <dd v-if="quote.payment_gateway == null">N/A</dd>
+                <dd v-else>{{ quote.payment_gateway == 'NGENIUS' ? 'CREDIT CARD' : quote.payment_gateway }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ ecomDetail?.planName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ECOMMERCE</dt>
+                <dd>{{ quote.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">QUOTE LINK</dt>
+                <dd>{{ ecomLifeInsuranceQuoteUrl + quote.uuid }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UNDER WRITTEN</dt>
+                <dd v-if="ecomDetail == null">N/A</dd>
+                <dd v-else>{{ ecomDetail?.isUnderwritten ? 'Yes' : 'No' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN SOURCE</dt>
+                <dd v-if="ecomDetail == null">N/A</dd>
+                <dd v-else>{{ ecomDetail?.isApi ? 'API' : 'Manual' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">VARIENT</dt>
+                <dd>V{{ ecomDetail?.version ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT REFERENCE</dt>
+                <dd>{{ quote.life_quote.payment_reference ?? 'N/A' }}</dd>
+             
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ORDER REFERENCE</dt>
+                <dd>{{ quote.order_reference ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADDONS</dt>
+                <dd>{{ activeRiders(ecomDetail?.riders) ?? 'N/A' }}</dd>
+              </div>
+             </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
+
+
     <LazyCreatePlan
       v-model="modals.createPlan"
       :uuid="quote.uuid"
@@ -1822,15 +1931,6 @@ const getBMITag = () => {
         :lifeRiders="lifeRiders"
     />
     </template>
-
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :vatPrice="vatPercentage"
-      :expanded="sectionExpanded"
-      :isAddUpdate="isAddUpdate"
-    />
 
     <MigratePayment
       v-if="!isNewPaymentStructure"
@@ -1929,6 +2029,14 @@ const getBMITag = () => {
     <LeadHistory :quote="$page.props.quote" />
 
     <AuditLogs
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <ApiLogs
       :quoteType="$page.props.modelType"
       :type="modelClass"
       :id="$page.props.quote.id"

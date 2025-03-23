@@ -224,6 +224,8 @@ function filterQuotes(isValid) {
   const filtersCleaned = cleanObj(filters);
   filtersCount.value = Object.keys(filtersCleaned).length;
 
+  manageFilterCount(); 
+
   router.visit(route('life-quotes-list'), {
     method: 'get',
     data: {
@@ -413,6 +415,8 @@ onMounted(() => {
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
   filtersCount.value = Object.keys(filtersCleaned).length;
+
+  manageFilterCount()
 });
 
 const resetDateFilters = filterName => {
@@ -474,6 +478,15 @@ watch(
   },
   { deep: true },
 );
+
+const manageFilterCount = () => {
+  if(filters['sum_insured_range'] && filters['sum_insured_currency_id']) {
+    filtersCount.value = filtersCount.value - 1;
+  }else if(!filters['sum_insured_range'] || !filters['sum_insured_currency_id']){
+    filtersCount.value = filtersCount.value - 1; 
+  }
+}
+
 </script>
 
 <template>
