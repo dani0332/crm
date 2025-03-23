@@ -949,7 +949,7 @@
                                         $planValue = $matchingBenefit->value ?? 'Excluded';
                                     @endphp
                                     <td>
-                                        <p class="text-left">{{ $planValue }}</p>
+                                        <p class="text-center">{{ $planValue }}</p>
                                     </td>
                                 @endforeach
                             </tr>
