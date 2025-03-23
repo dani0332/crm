@@ -640,8 +640,8 @@
                 ? json_decode(collect($quotePlan->benefits->fineArtAndCollectible)->keyBy('code')->toJson())
                 : [];
 
-            $quotePlan->jewlleryAndValuable = isset($quotePlan->benefits->jewlleryAndValuable)
-                ? json_decode(collect($quotePlan->benefits->jewlleryAndValuable)->keyBy('code')->toJson())
+            $quotePlan->jewelleryAndValuable = isset($quotePlan->benefits->jewelleryAndValuable)
+                ? json_decode(collect($quotePlan->benefits->jewelleryAndValuable)->keyBy('code')->toJson())
                 : [];
 
             $discountPremium = $vat = [];
@@ -901,7 +901,7 @@
                         'personalBelonging',
                         'contentAndPersonalBelonging',
                         'fineArtAndCollectible',
-                        'jewlleryAndValuable',
+                        'jewelleryAndValuable',
                         'additionalCover',
                     ];
                 @endphp
