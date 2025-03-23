@@ -894,7 +894,7 @@ class HomeQuoteService extends BaseService
                 'personalBelongings' => $selectedPlan->benefits->personalBelonging ?? '',
                 'contentAndPersonalBelonging' => $selectedPlan->benefits->contentAndPersonalBelonging ?? '',
                 'fineArtAndCollectible' => $selectedPlan->benefits->fineArtAndCollectible ?? '',
-                'jewlleryAndValuable' => $selectedPlan->benefits->jewlleryAndValuable ?? '',
+                'jewelleryAndValuable' => $selectedPlan->benefits->jewelleryAndValuable ?? '',
             ],
             'listQuotePlanBenefitsExclusions' => $selectedPlan->benefits->exclusion ?? [],
             'listQuotePlanBenefitsAditionalCovers' => $selectedPlan->benefits->additionalCover ?? [],

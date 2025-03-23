@@ -693,7 +693,7 @@ const getPlanDetails = async item => {
       personalBelonging = '',
       contentAndPersonalBelonging = '',
       fineArtAndCollectible = '',
-      jewlleryAndValuable = '',
+      jewelleryAndValuable = '',
       exclusion = [],
       additionalCover = [],
     } = benefits;
@@ -710,7 +710,7 @@ const getPlanDetails = async item => {
         personalBelongings: personalBelonging,
         contentsAndPersonalBelongings: contentAndPersonalBelonging,
         'Fine Art And Collectible(s)': fineArtAndCollectible,
-        'Jewellery And Valuable(s)': jewlleryAndValuable,
+        'Jewellery And Valuable(s)': jewelleryAndValuable,
       },
       listQuotePlanBenefitsExclusions: exclusion,
       listQuotePlanBenefitsAditionalCovers: additionalCover,
