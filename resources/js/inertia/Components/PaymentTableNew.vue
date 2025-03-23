@@ -2018,6 +2018,7 @@ const initializePaymentForm = (
     paymentMethodsForm.isGIGProvider = payment.isGIGProvider;
     paymentMethodsForm.isMultiplePaymentsEnabled =
       payment.isMultiplePaymentsEnabled;
+    paymentMethodsForm.isCaptureButtonEnabled = payment.isCaptureButtonEnabled;
   }
 };
 
@@ -3068,8 +3069,29 @@ const alertCapture = payment => {
 const getCaptureOption = computed(() => {
   return payment => {
     if (props.payments.length === 0) return;
+
+    let isCaptureButtonEnabled =
+      page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+      isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
+    }
+
     const paymentMethodCC = filterCCPayments(payment);
-    return paymentMethodCC.length > 0 ? 'capture' : 'approve';
+
+    // Check if the conditions for 'capture' are met
+    const isCreditCardPayment = paymentMethodCC.length > 0;
+    const isNotInsurerPayment = payment.collection_type !== 'insurer';
+
+    // Return 'capture' if all conditions are met, otherwise return 'approve'
+    if (
+      (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
+      (isCaptureButtonEnabled && hasAnyCCSplitPayment())
+    ) {
+      return 'capture';
+    }
+    return 'approve';
+
+    // return paymentMethodCC.length > 0 ? 'capture' : 'approve';
   };
 });
 
