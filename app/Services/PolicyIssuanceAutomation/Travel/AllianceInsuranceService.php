@@ -661,12 +661,9 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             WatermarkDocumentsJob::dispatch(
                 $newDocument->id, $quote->uuid, $documentType->id
             );
-            logger()->info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'WatermarkDocumentsJob dispatched');
         }
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
-
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
 
     private function getMimeTypeAndFileName($documentUrl): array
