@@ -926,7 +926,7 @@
                         <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #1D83BC;">
                             <td colspan="{{ count($planIds) + 1 }}">
                                 <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 2px; font-weight: 700;">
-                                    {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover))) }}
+                                    {{ ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover)))) }}
                                 </p>
                             </td>
                         </tr>
@@ -937,7 +937,7 @@
                                 {{-- First column: Benefit Code --}}
                                 <td style="background-color: #DBEEFF; color: #5B5F60">
                                     <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
-                                        {{ ucwords(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code))) }}
+                                        {{ ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code)))) }}
                                     </p>
                                 </td>
 
