@@ -109,7 +109,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('sic_advisor_requested', ignoreAll: true)
             ->filterBy('is_ecommerce', isBool: true)
             ->filterIn('insurer_aml_status')
-            ->filterIn('amlStatus')
+            ->filterIn('amlStatus', 'aml_status')
             ->filterIn('plan_name', 'plan_id')
             ->filterBy('source')
             ->filterByAdvisors(request('advisor_id'))
