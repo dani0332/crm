@@ -2062,7 +2062,7 @@ const isPlanDetailEnabled = computed(() => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPlanDetailSectionEnabled="false"
+      :isPlanDetailSectionEnabled="isPlanDetailEnabled"
     />
 
     <QuotePayments

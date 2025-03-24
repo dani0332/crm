@@ -206,6 +206,8 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
+} else if (props.quoteType === 'Home' && props.quoteRequest.source === 'Renewal_upload') {
+  initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
     ? props.quoteRequest.premium
@@ -1690,7 +1692,9 @@ const addPaymentModal = () => {
   discountError.value = '';
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
-
+  console.log('totalPrice.value', totalPrice.value);
+  console.log('planDetail.value', planDetail.value);
+  console.log('sendUpdate', props.sendUpdate);
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -3022,7 +3026,7 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   ) {
     return true;
   }
-  return getValidStatuses(paymentRecord.payment_splits[0]);
+  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
 };
 
 const getCaptureValidation = computed(() => {
@@ -3068,6 +3072,7 @@ const alertCapture = payment => {
 
 const getCaptureOption = computed(() => {
   return payment => {
+    // Return early if there are no payments
     if (props.payments.length === 0) return;
 
     let isCaptureButtonEnabled =
@@ -3090,8 +3095,6 @@ const getCaptureOption = computed(() => {
       return 'capture';
     }
     return 'approve';
-
-    // return paymentMethodCC.length > 0 ? 'capture' : 'approve';
   };
 });
 
