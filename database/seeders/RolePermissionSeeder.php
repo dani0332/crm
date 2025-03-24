@@ -22,6 +22,7 @@ class RolePermissionSeeder extends Seeder
         // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
         $this->addBridgerSkipPermission();
+        $this->addPostPrepaymentButtonPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -137,6 +138,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::SKIP_BRIDGER_AML,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPostPrepaymentButtonPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::SHOW_POST_PREPAYMENT_BUTTON,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

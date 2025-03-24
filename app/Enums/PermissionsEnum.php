@@ -403,6 +403,7 @@ final class PermissionsEnum extends Enum
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
+    public const SHOW_POST_PREPAYMENT_BUTTON = 'show-post-prepayment-button';
 
     public static function getAdvisorConversionReportPermissions()
     {
