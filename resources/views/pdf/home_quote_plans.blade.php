@@ -837,7 +837,7 @@
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Total Price (with VAT)</p>
+                        <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Total price (with VAT)</p>
                     </th>
                     @foreach ($planIds as $planId)
                         <th>
