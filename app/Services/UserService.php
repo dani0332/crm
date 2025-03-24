@@ -45,8 +45,11 @@ class UserService extends BaseService
 
         $user->save();
 
-        if ($request->department_ids != null) {
+        // Handle department sync - remove all if empty or null
+        if ($request->department_ids !== null && !empty($request->department_ids)) {
             app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);
+        } else {
+            app(DepartmentService::class)->syncUserDepartments($user, []);
         }
 
         if ($request->manager != '0' && isset($request->manager)) {
