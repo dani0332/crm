@@ -1,4 +1,6 @@
 <script setup>
+import { useRoundIt } from '@/inertia/Composables/utilities.js';
+
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -47,11 +49,11 @@ const totalPremiumWithVat = computed(() => {
   props.plan.addons.forEach(addon => {
     addon.addonOptions.forEach(option => {
       if (option.isSelected && option.price != 0) {
-        addonVat += parseInt(option.price) + option.vat;
+        addonVat += useRoundIt(option.price) + useRoundIt(option.vat);
       }
     });
   });
-  return props.plan.discountPremium + addonVat + props.plan.vat;
+  return useRoundIt(props.plan.discountPremium + addonVat + props.plan.vat);
 });
 
 const validateAddons = addons => {
@@ -60,7 +62,7 @@ const validateAddons = addons => {
     for (let option of addon.addonOptions) {
       if (
         option.isSelected === true &&
-        parseInt(option.price ?? 0) === 0 &&
+        useRoundIt(option.price ?? 0) === 0 &&
         !excludedAddons.includes(addon.code)
       ) {
         notification.error({
@@ -88,7 +90,7 @@ const onUpdatePlan = () => {
       addons.push({
         addonId: addon.id,
         addonOptionId: option.id,
-        price: parseInt(option.price ?? 0),
+        price: useRoundIt(option.price ?? 0),
         vat: option.vat,
         isSelected: option.isSelected,
       });

@@ -44,6 +44,7 @@ use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
@@ -479,18 +480,27 @@ class AMLController extends Controller
                 if ($quoteTypeId == QuoteTypes::CAR->id()) {
                     $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteRequestId)->first();
                     $carQuoteRequestDetails->chassis_number = $AMLCheckRequest->chassis_number;
+                    $carQuoteRequestDetails->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
                     if ($carQuoteRequestDetails->isDirty()) {
-                        info('AML Screening Bridger - Chassis number updated - Ref-ID: '.$quoteRequestId);
+                        info('AML Screening Bridger - Chassis number and Insurer Quote Email updated - Ref-ID: '.$quoteRequestId);
                         $carQuoteRequestDetails->save();
                     }
                 }
 
                 if ($quoteTypeId == QuoteTypes::BIKE->id()) {
                     $bikeQuoteRequest = BikeQuote::where('personal_quote_id', $quoteRequestId)->first();
+                    $personalQuoteDetailBikeRequest = PersonalQuoteDetail::where('personal_quote_id', $quoteRequestId)->first();
+
                     $bikeQuoteRequest->chassis_number = $AMLCheckRequest->chassis_number;
+                    $personalQuoteDetailBikeRequest->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
+
                     if ($bikeQuoteRequest->isDirty()) {
                         info('AML Screening Bridger - Chassis number updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
                         $bikeQuoteRequest->save();
+                    }
+                    if ($personalQuoteDetailBikeRequest->isDirty()) {
+                        info('AML Screening Bridger - Insurer Quote Email updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
+                        $personalQuoteDetailBikeRequest->save();
                     }
                 }
 
@@ -498,7 +508,6 @@ class AMLController extends Controller
                     info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start - Ref-ID: '.$quoteRequestId);
                     $enableInsurerScreening = [
                         QuoteTypes::CAR->id(),
-                        QuoteTypes::HOME->id(),
                         QuoteTypes::TRAVEL->id(),
                         QuoteTypes::BIKE->id(),
                     ];
@@ -792,6 +801,7 @@ class AMLController extends Controller
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+        info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
 
         return true;
     }
@@ -838,6 +848,7 @@ class AMLController extends Controller
     public function sendHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
+        info(self::class.'- sendHapexReminder Hapex reminder sent for Quote UUID: '.$quote->uuid.' | Time - '.now());
 
         return true;
     }

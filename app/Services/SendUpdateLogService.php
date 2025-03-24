@@ -775,6 +775,13 @@ class SendUpdateLogService
 
                 $payment = $quote->payments->first();
                 $splitPayments = $payment->paymentSplits;
+
+                if ($payment == null || $splitPayments->first() === null) {
+                    $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments);
+                    info('fn:preparedDetailsForEndorsement - '.($isNewPaymentStructure ? 'Payment structure migrated - Payment ' : 'Payment not migrated. Split payment ').' not found against main lead. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
+
+                    return ['status' => false, 'message' => 'Payment not found against Main Lead'];
+                }
             }
 
             $payment->fill([
@@ -848,6 +855,10 @@ class SendUpdateLogService
         $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
         $preparedDetailsForEndorsement = $this->preparedDetailsForEndorsement($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
 
+        if (isset($preparedDetailsForEndorsement['status']) && ! $preparedDetailsForEndorsement['status']) {
+            return ['status' => false, 'message' => $preparedDetailsForEndorsement['message']];
+        }
+
         $paymentInsurerInvoiceNumber = ($preparedDetailsForEndorsement['payment']->insurer_tax_number ?? $preparedDetailsForEndorsement['payment']->insurer_commmission_invoice_number) ?? null;
         if (empty($paymentInsurerInvoiceNumber)) {
             info('fn:preparedDataForEndorsement - Payment not successfully updated - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
@@ -867,6 +878,7 @@ class SendUpdateLogService
             'insly_migrated' => $quoteDetails->insly_migrated,
             'insurance_provider_id' => $preparedDetailsForEndorsement['payment']->insurance_provider_id, // TODO:: Need to verify this field
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
+            'code' => $sendUpdateRequest->quoteCode,
         ];
 
         // Handle TapPay insurer payment against credit card and if payment available in Send update then create Receipt
@@ -1602,5 +1614,10 @@ class SendUpdateLogService
         }
 
         return '';
+    }
+
+    public function isReversalInvoiceEndorsement($taxInvoiceNumber)
+    {
+        return SendUpdateLog::where('insurer_tax_invoice_number', $taxInvoiceNumber)->first();
     }
 }
