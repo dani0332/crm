@@ -299,8 +299,7 @@ class UserController extends Controller
 
         if ($request->department_ids != null) {
             app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);
-        }
-        else {
+        } else {
             app(DepartmentService::class)->syncUserDepartments($user, []);
         }
         /*
