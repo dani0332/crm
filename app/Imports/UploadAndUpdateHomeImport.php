@@ -101,18 +101,18 @@ class UploadAndUpdateHomeImport implements SkipsOnFailure, ToModel, WithBatchIns
     {
         $columns = [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
-            'customer_email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'nullable|max:255'],
-            'customer_number' => ['index' => 2, 'title' => 'Customer Number', 'rules' => 'nullable|max:100'],
+            'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'nullable|max:255'],
+            'mobile_no' => ['index' => 2, 'title' => 'Customer Number', 'rules' => 'nullable|max:100'],
             'insurance_type' => ['index' => 3, 'title' => 'Insurance Type', 'rules' => 'required|max:10'],
             'current_insurance_provider' => ['index' => 4, 'title' => 'Current Insurance Provider', 'rules' => 'required|max:20'],
-            'advisor_email' => ['index' => 5, 'title' => 'Advisor Email', 'rules' => 'required|max:100'],
+            'advisor' => ['index' => 5, 'title' => 'Advisor Email', 'rules' => 'required|max:100'],
             'policy_number' => ['index' => 6, 'title' => 'Policy Number', 'rules' => 'required|max:100'],
-            'policy_start_date' => ['index' => 7, 'title' => 'Policy Start Date', 'rules' => ['nullable', 'max:10', function ($attribute, $value, $onFailure) {
+            'start_date' => ['index' => 7, 'title' => 'Policy Start Date', 'rules' => ['nullable', 'max:10', function ($attribute, $value, $onFailure) {
                 if (! $this->validateDate($value)) {
                     $onFailure('Invalid value provided for '.$attribute);
                 }
             }], 'type' => 'date'],
-            'policy_end_date' => ['index' => 8, 'title' => 'Policy End date', 'rules' => ['nullable', 'max:10', function ($attribute, $value, $onFailure) {
+            'end_date' => ['index' => 8, 'title' => 'Policy End date', 'rules' => ['nullable', 'max:10', function ($attribute, $value, $onFailure) {
                 if (! $this->validateDate($value)) {
                     $onFailure('Invalid value provided for '.$attribute);
                 }

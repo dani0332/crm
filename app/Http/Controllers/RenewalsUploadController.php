@@ -19,6 +19,7 @@ use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\CarQuote;
+use App\Models\HomeQuote;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
@@ -270,21 +271,39 @@ class RenewalsUploadController extends Controller
         }
 
         $query = RenewalQuoteProcess::query()
-            ->select('batch as renewal_batch')
+            ->select('renewal_quote_processes.batch as renewal_batch')
+            ->join('personal_quotes', 'renewal_quote_processes.batch', '=', 'personal_quotes.renewal_batch')
             ->where([
-                'quote_type' => QuoteTypeShortCode::CAR,
-                'type' => RenewalsUploadType::UPDATE_LEADS,
-            ]);
+                'renewal_quote_processes.quote_type' => ! empty($request->lob) ? $request->lob : QuoteTypeShortCode::HOM,
+                'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
+            ])
+            ->whereYear('personal_quotes.previous_policy_expiry_date', ! empty($request->year) ? $request->year : date('Y'))
+            ->whereMonth('personal_quotes.previous_policy_expiry_date', ! empty($request->month) ? $request->month : date('n'));
 
         if (! empty($request->batch)) {
-            $query->where('batch', $request->batch);
+            $query->where('renewal_quote_processes.batch', $request->batch);
         }
 
         $renewalQuotes = $query->distinct()
             ->simplePaginate();
 
+        $lobs = [
+            quoteTypeCode::Car => QuoteTypeShortCode::CAR,
+            quoteTypeCode::Home => QuoteTypeShortCode::HOM,
+        ];
+
+        $years = array_combine(range(date("Y"), 2010), range(date("Y"), 2010));
+
+        $months = [];
+        for ($m=1; $m<=12; $m++) {
+            $months[date('F', mktime(0,0,0,$m, 1, date('Y')))] = $m;
+        }
+
         return inertia('Renewals/Batches', [
-            'batches' => $renewalQuotes,
+            'lobs' => $lobs,
+            'years' => $years,
+            'months' => $months,
+            'batches' => $renewalQuotes
         ]);
     }
 
@@ -407,6 +426,14 @@ class RenewalsUploadController extends Controller
                 }
 
                 return redirect(config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid);
+                break;
+            case QuoteTypeShortCode::HOM:
+                $homeQuote = HomeQuote::where('previous_quote_policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
+                if (! $homeQuote) {
+                    return abort(404);
+                }
+
+                return redirect(config('constants.ECOM_HOME_INSURANCE_QUOTE_URL').$homeQuote->uuid);
                 break;
             default:
                 return abort(404);
