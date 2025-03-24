@@ -1125,7 +1125,7 @@ const getBMITag = () => {
             </dl>
           </div>
           <hr class="mt-1 mb-1">
-          <div>
+          <div class="mt-2">
             <h3 class="font-semibold text-primary-800 text-lg mb-2">Quote Details</h3>
              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
@@ -1871,7 +1871,7 @@ const getBMITag = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">VARIENT</dt>
-                <dd>V{{ ecomDetail?.version ?? 'N/A' }}</dd>
+                <dd>{{ ecomDetail?.version ? 'V' + ecomDetail?.version : 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
