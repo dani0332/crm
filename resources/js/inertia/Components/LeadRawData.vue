@@ -84,10 +84,42 @@ const onSubmit = () => {
               <div
                 v-for="(value, key) in leadDetails"
                 :key="key"
-                class="bg-gray-300 p-2 m-1 flex rounded-md"
+                class="p-3 m-2 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300"
               >
-                <span class="font-bold text-sm">{{ key }} </span
-                ><span class="text-sm"> : {{ value ?? 'Null' }}</span>
+                <div class="font-bold text-sm mb-2">
+                  {{ key }}
+                </div>
+
+                <!-- Simple value display -->
+                <div
+                  v-if="typeof value !== 'object' || value === null"
+                  class="text-sm bg-gray-100 p-2 rounded"
+                >
+                  {{ value ?? 'Null' }}
+                </div>
+
+                <!-- Object value display -->
+                <div
+                  v-else
+                  class="ml-2 space-y-2 flex items-center flex-wrap gap-2"
+                >
+                  <div
+                    v-for="(subValue, subKey) in value"
+                    :key="subKey"
+                    class="bg-white p-2 rounded"
+                  >
+                    <div class="font-bold text-xs mb-1">
+                      {{ subKey ?? 'Null' }}
+                    </div>
+
+                    <!-- Simple sub-value display -->
+                    <div class="text-xs bg-gray-100 p-1 rounded">
+                      {{
+                        subValue !== null && subValue !== '' ? subValue : 'Null'
+                      }}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </template>
