@@ -178,7 +178,7 @@ class SplitPaymentService
             }
 
             if($quote->quote_status_id == QuoteStatusEnum::PolicyBooked){
-                info(self::class . ' fn:' . __FUNCTION__ . ' trigger post prepayment schedule for PaymentSplitID : '. $splitPayment->id , $postPrepayment);
+                info(self::class . ' fn:' . __FUNCTION__ . ' trigger post prepayment schedule for PaymentSplitID : '. $splitPayment->id);
                 $postPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess( [$quote, $request->modelType, $splitPayment]);
                 if(!$postPrepayment['status']){
                     info(self::class . ' fn:' . __FUNCTION__ . ' failed to scheduled post prepayment for PaymentSplitID : '. $splitPayment->id , $postPrepayment);

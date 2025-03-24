@@ -2295,7 +2295,11 @@ class SageApiService
             'paymentSplitId' => $paymentSplit->id,
             'sageProcessRequestType' => SageEnum::SAGE_PROCESS_POST_PREPAYMENT_REQUEST,
         ];
-        $request = request()->all();
+        $request = [
+            "quoteType" => $quoteType,
+            "paymentSplit" => $paymentSplit->id,
+            "quoteRequestId" => $quote->id
+        ];
         $sageProcessData = [
             'user_id' => auth()->id(),
             'insurance_provider_id' => $insurer?->id,
