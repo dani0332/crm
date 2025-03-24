@@ -385,8 +385,8 @@ const updatePlanLoading = ref(false);
                   <div class="font-medium">{{ item.text }}</div>
 
                   <!-- Display the value field with line breaks -->
-                  <div v-if="item.value && item.value.includes('\n')" class="text-gray-500 whitespace-pre-line">
-                    {{ item.value }}
+                  <div v-if="item.value && item.value.includes('*')" class="text-gray-500 whitespace-pre-line">
+                    {{ item.value.replace(/\*/g, '\n*') }}
                   </div>
                   <div v-else class="text-gray-500">
                     {{ item.value ?? 'N/A' }}
