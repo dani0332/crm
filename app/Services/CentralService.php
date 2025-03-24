@@ -1001,18 +1001,34 @@ class CentralService extends BaseService
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called');
-        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
+        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyIssued]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
                 if (app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote)) {
+                    $oldQuoteStatus = $quote->quote_status_id;
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
                         'policy_issuance_status_other' => '',
                     ]);
+                    info('Quote code: '.$quote->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quote->quote_status_id);
+
+                    // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
+                    // No need to create quote status log
+                    if ($oldQuoteStatus != $quote->quote_status_id) {
+                        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+                        QuoteStatusLog::create([
+                            'quote_type_id' => $quoteTypeId,
+                            'quote_request_id' => $quote->id,
+                            'current_quote_status_id' => $quote->quote_status_id,
+                            'previous_quote_status_id' => $oldQuoteStatus,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now(),
+                        ]);
+                    }
                 }
                 info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
@@ -1048,14 +1064,24 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
-        $isCaptureButtonEnabled = $insuranceProvider && in_array($insuranceProvider->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE, InsurerProviderEnum::QATAR_INSURANCE, InsurerProviderEnum::ALLIANCE_INSURANCE]);
+        $isCaptureButtonEnabled = false;
+        if ($insuranceProvider) {
+            $isCaptureButtonEnabled = $this->isCaptureButtonEnabledForProvider($insuranceProvider->code, $quoteTypeId);
+        }
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
+        $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
+
         // Check if multiple payments are enabled for the provider
         $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
 
+        $sendUpdateLogId = null;
+        if ($sendUpdateLog) {
+            $sendUpdateLogId = $sendUpdateLog->id;
+        }
+
         // Check if TAP capture process should start
-        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isTapCaptureProcessStart($quote, $quoteTypeId, $sendUpdateLog) : false;
+        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isCapturePaymentStarted($quote->uuid, $quoteTypeId, $sendUpdateLogId) : false;
 
         // Prepare the TAP configuration array
         $tapConfiguration = [
@@ -1065,6 +1091,7 @@ class CentralService extends BaseService
             'isTapCaptureProcessStart' => $isTapCaptureProcessStart,
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'commissionInPayments' => $commissionInPayments,
+            'isADNICProvider' => $isADNICProvider,
             'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
         ];
 
@@ -1106,7 +1133,8 @@ class CentralService extends BaseService
             'quoteTypeId' => (int) $request->quote_type_id,
             'payments' => [
                 [
-                    'codeRef' => $request->payment_code,
+                    // Notes:: This case include for Travel Single plan and mix inquiry case
+                    'codeRef' => ($request->quote_type_id == QuoteTypeId::Travel) ? $request->payment_code.'-1' : $request->payment_code,
                 ],
             ],
         ];
@@ -1129,5 +1157,49 @@ class CentralService extends BaseService
         info('fn:voidPayment - Void authorized payment process completed');
 
         return ['status' => true, 'message' => 'Void payment processed'];
+    }
+
+    // Todo: This method will remove in future if Business confirm we will enable capture of all providers
+    private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
+    {
+        // Capture are enabled for the all LOB's against specific providers
+        $enabledProviders = [
+            InsurerProviderEnum::GIG_INSURANCE,
+            InsurerProviderEnum::RAK_INSURANCE,
+            InsurerProviderEnum::TOKIO_MARINE,
+            InsurerProviderEnum::QATAR_INSURANCE,
+            InsurerProviderEnum::ALLIANCE_INSURANCE,
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+        ];
+
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        }
+
+        if ($quoteTypeId == QuoteTypeId::Travel) {
+            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+        }
+
+        return in_array($insuranceProviderCode, $enabledProviders);
+    }
+
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    {
+        try {
+            $data = [
+                'quoteUID' => $uuid,
+                'quoteTypeId' => $quoteTypeId,
+                'captureAmount' => $captureAmount,
+            ];
+
+            return Ken::request('/capture-payment-validation', 'put', $data);
+
+        } catch (\Throwable $th) {
+            return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
+        }
     }
 }

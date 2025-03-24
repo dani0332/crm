@@ -3,6 +3,7 @@
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -26,7 +27,6 @@ use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
-use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -1001,15 +1001,23 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName, $default = false)
+    function getAppStorageValueByKey($keyName, $default = false, bool $useCache = false, $cacheTime = null)
     {
-        $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+        $getStorageValue = function () use ($keyName, $default) {
+            $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
-        if (! $query) {
-            return $default;
+            if (! $query) {
+                return $default;
+            }
+
+            return $query->value;
+        };
+
+        if (! $useCache || config('constants.APP_ENV') !== EnvEnum::PRODUCTION) {
+            return $getStorageValue();
         }
 
-        return $query->value;
+        return Cache::remember("APP_STORAGE_{$keyName}", $cacheTime ?: now()->addHour(), $getStorageValue);
     }
 }
 
@@ -1563,7 +1571,7 @@ if (! function_exists('getInsuranceProvider')) {
                 };
                 $model = $genericQueriesAllLobs->getModelObject($quoteType);
 
-                return $model::where('code', $quote->code)->first()?->insuranceProvider;
+                return $quote ? $model::where('code', $quote->code)->first()?->insuranceProvider : null;
             }
         }
 
@@ -1583,9 +1591,7 @@ if (! function_exists('isCHSAdvisor')) {
 if (! function_exists('isTapEnabled')) {
     function isTapEnabled($processType = []): bool
     {
-        $isTapEnabled = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION);
-
-        return $isTapEnabled;
+        return getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION, useCache: true);
     }
 }
 

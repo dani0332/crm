@@ -80,7 +80,7 @@ class HomeQuote extends Model implements AuditableContract
 
     public function insuranceProvider()
     {
-        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code']);
     }
 
     public function nationality()

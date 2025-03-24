@@ -184,6 +184,7 @@ class AMLService
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
+                'quoteDetail',
                 'bikeQuote',
                 'customer.detail',
                 'quoteStatus',
@@ -245,6 +246,7 @@ class AMLService
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
+            ->where('users.is_active', 1)
             ->whereIn('roles.name', $complianceRole)->get();
 
         foreach ($recipients as $recipient) {
@@ -718,5 +720,33 @@ class AMLService
         }
 
         return $return;
+    }
+
+    /**
+     * Clears the AML status for non-AXA insurance providers.
+     */
+    public function clearAmlStatusForNonGIG($quoteType, $code, $providerCode)
+    {
+        info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$providerCode}");
+
+        if ($providerCode == InsuranceProvidersEnum::AXA) {
+            info("Insurance Provider is GIG(AXA). Skipping AML status clearing for Quote Code: {$code}");
+
+            return false;
+        }
+
+        // Retrieve the quote details by quote type and code
+        $quoteDetails = $this->getQuoteObjectBy($quoteType, $code, 'code');
+
+        // Update the insurer AML status to null if it is not already null
+        if ($quoteDetails->insurer_aml_status !== null) {
+            $oldInsurerAmlStatus = $quoteDetails->insurer_aml_status;
+            $quoteDetails->insurer_aml_status = null;
+            $quoteDetails->save();
+
+            info("AML status change from {$oldInsurerAmlStatus} to null for Quote Code: {$code}");
+        }
+
+        return true;
     }
 }

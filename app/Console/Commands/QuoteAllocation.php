@@ -67,14 +67,15 @@ class QuoteAllocation extends Command
             $this->executeTravelAllocation(QuoteTypeId::Travel, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::GROUP_MEDICAL, $to, $chunkSize, $allocationStartDate);
 
+            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
+
             // Disabled Auto Allocation for now as this feature is not needed at the moment
             /*
             $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::CYCLE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
             */
             LoggerService::endLogging();
         } else {
@@ -302,6 +303,7 @@ class QuoteAllocation extends Command
                 $q->where('quote_type_id', $quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->leadAllocationFailed()
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
