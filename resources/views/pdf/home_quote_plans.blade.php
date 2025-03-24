@@ -937,7 +937,7 @@
                                 {{-- First column: Benefit Code --}}
                                 <td style="background-color: #DBEEFF; color: #5B5F60">
                                     <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
-                                        {{ ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $code)))) }}
+                                        {{ $item->text }}
                                     </p>
                                 </td>
 
