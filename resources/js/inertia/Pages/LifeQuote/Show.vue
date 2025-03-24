@@ -1808,7 +1808,7 @@ const getBMITag = () => {
     </div>
 
     <!-- Ecom Plan Detail -->
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div v-show="ecomDetail != null" class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -2037,7 +2037,6 @@ const getBMITag = () => {
     />
 
     <ApiLogs
-      :quoteType="$page.props.modelType"
       :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
