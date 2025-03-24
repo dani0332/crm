@@ -926,7 +926,21 @@
                         <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #1D83BC;">
                             <td colspan="{{ count($planIds) + 1 }}">
                                 <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 2px; font-weight: 700;">
-                                    {{ ucfirst(strtolower(preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', in_array($cover, ['content', 'personalBelonging', 'additionalCover']) ? $cover . 's' : $cover)))) }}
+                                    @php
+                                        $title = $cover;
+                                        if ($cover === 'contentAndPersonalBelonging') {
+                                            $title = 'Contents and personal belongings';
+                                        } elseif ($cover === 'fineArtAndCollectible') {
+                                            $title = 'Fine Art and Collectible(s)';
+                                        } elseif ($cover === 'jewelleryAndValuable') {
+                                            $title = 'Jewellery and Valuable(s)';
+                                        } elseif (in_array($cover, ['content', 'personalBelonging', 'additionalCover'])) {
+                                            $title = preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover. 's'));
+                                        } else {
+                                            $title = preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover));
+                                        }
+                                        echo ucfirst(strtolower($title));
+                                    @endphp
                                 </p>
                             </td>
                         </tr>
