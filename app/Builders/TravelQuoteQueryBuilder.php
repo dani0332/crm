@@ -20,9 +20,9 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
     public function buildGrid(): Builder
     {
         return $this->baseQuery([
-            'id',
+            'travel_quote_request.id',
             'uuid',
-            'code',
+            'travel_quote_request.code',
             'first_name',
             'last_name',
             'direction_code',
@@ -58,8 +58,8 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'dob',
             'nationality_id',
             'transaction_approved_at',
-            'created_at',
-            'updated_at',
+            'travel_quote_request.created_at',
+            'travel_quote_request.updated_at',
             'assignment_type',
             'gender',
             'premium'
@@ -102,7 +102,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDate('travel_start_date', 'start_date')
             ->filterByDate('next_followup_date')
             ->filterByDate('next_followup_date_end', 'next_followup_date', false)
-            ->filterByDate('previous_policy_expiry_date', 'previous_policy_expiry_date')
+            ->filterByDate('previous_policy_expiry_date')
             ->filterByDate('previous_policy_expiry_date_end', 'previous_policy_expiry_date', false)
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
             ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
@@ -115,7 +115,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByAdvisors(request('advisor_id'))
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->filterByDateRange('advisor_assigned_date')
-            ->filterBySegment('segment_filter', QuoteTypeId::Travel)
+            ->filterBySegment(request('segment_filter'), QuoteTypeId::Travel)
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
                 $query->where(fn($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
