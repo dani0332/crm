@@ -279,10 +279,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 ];
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
 
-                if($splitPayment['sr_no'] == 1) {
+                if ($splitPayment['sr_no'] == 1) {
                     $firstPaymentSplit = $paymentSplitRecord;
                 }
-                
+
                 if ($paymentSplitRecord) {
                     // add document references
                     if (isset($splitPayment['document_detail']) && count($splitPayment['document_detail'])) {
