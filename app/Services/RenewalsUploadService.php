@@ -426,8 +426,10 @@ class RenewalsUploadService
                         info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix) {
+                    ->finally(function () use ($logPrefix, $batch){
                         info($logPrefix.' everything done');
+
+                        EmbeddedProductRepository::generateEPRenewal($batch);
                     })
                     ->allowFailures()
                     ->withDelay(10)
@@ -439,8 +441,6 @@ class RenewalsUploadService
                 $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
                 info($logPrefix.' fetch plans is completed');
             }
-
-            EmbeddedProductRepository::generateEPRenewal($batch);
 
             return true;
         } catch (\Exception $exception) {

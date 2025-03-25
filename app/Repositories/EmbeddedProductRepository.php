@@ -1045,38 +1045,11 @@ class EmbeddedProductRepository extends BaseRepository
                 $codes = $quoteBatch->pluck('c1_code')->map(function ($code) {
                     return 'MDX-' . $code;
                 })->toArray();
-                $EpsToUpdate = EmbeddedTransaction::whereIn('code', $codes)->get();
-                $exisitngEpCodes = $EpsToUpdate->pluck('code')->toArray();
-
-                $newTransactions = [];
-                foreach ($quoteBatch as $quote) {
-                    if (!in_array('MDX-' . $quote->c1_code, $exisitngEpCodes)) {
-                        info('----- ' . 'MDX-' . $quote->c1_code);
-                        $newTransactions[] = [
-                            'quote_type_id' => QuoteTypeId::Car,
-                            'quote_request_id' => $quote->id,
-                            'quote_request_type' => 'App\\Models\\CarQuote',
-                            'code' => 'MDX-' . $quote->c1_code,
-                            'product_id' => $quote->product_id,
-                            'price_without_vat' => $quote->price_without_vat,
-                            'price_with_vat' => $quote->price_with_vat,
-                            'vat' => $quote->vat,
-                            'is_selected' => 1,
-                            'payment_status_id' => PaymentStatusEnum::DRAFT,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-                    }
-                }
-
-                if (!empty($newTransactions)) {
-                    EmbeddedTransaction::insert($newTransactions);
-                    info('EP Renewals - Inserted EPs for batch: ' . $batchName . ' - count: ' . count($newTransactions));
-                }
+                $EpsToUpdate = EmbeddedTransaction::whereIn('code', $codes)->get()->pluck('code')->toArray();
 
                 if(!empty($EpsToUpdate)) {
-                    EmbeddedTransaction::whereIn('code', $exisitngEpCodes)->update(['is_selected' => 1]);
-                    info('EP Renewals - Updated EPs for batch: ' . $batchName . ' - count: ' . count($exisitngEpCodes));
+                    EmbeddedTransaction::whereIn('code', $EpsToUpdate)->update(['is_selected' => 1]);
+                    info('EP Renewals - Updated EPs for batch: ' . $batchName . ' - count: ' . count($EpsToUpdate));
                 }
             });
         }
