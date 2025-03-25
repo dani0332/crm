@@ -447,7 +447,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     public function handlePaymentApprove($request)
     {
-        info("Payment approval process initiated: {$request->payment_code}, Capture Mode: " . ($request->is_capture ? 'Yes' : 'No'));
+        info("Payment approval process initiated: {$request->payment_code}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
                 $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
@@ -458,7 +458,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
-                }else {
+                } else {
                     info("Payment split not found or already paid: {$request->payment_code}, Split No: {$key}");
                 }
             }
@@ -474,7 +474,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     // This method handles the approval or decline of split payments based on the request.
     public function fetchUpdateSplitPaymentsApprove($request)
     {
-        info("Processing split payment request for {$request->payment_code} - Action: " . ($request->is_declined ? "Decline" : "Approve"));
+        info("Processing split payment request for {$request->payment_code} - Action: ".($request->is_declined ? 'Decline' : 'Approve'));
+
         return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);
     }
 

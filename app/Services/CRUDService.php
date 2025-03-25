@@ -672,7 +672,7 @@ class CRUDService extends BaseService
         ];
 
         $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
-        
+
         info("Payment code: {$data['code']} Payment Gateway Endpoint: {$paymentGatewayEndpoint}");
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/capture', 'post', $planData);
 
