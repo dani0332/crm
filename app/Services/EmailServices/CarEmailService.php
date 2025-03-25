@@ -438,4 +438,26 @@ class CarEmailService extends BaseService
             throw $th;
         }
     }
+
+    public function sendPCPFollowups($lead){
+        try {
+            info(self::class." - Sending sendPCPFollowups followups email for lead: ".$lead->uuid.' | Time: '.now());
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::MOTOR_PCP_FOLLOWUPS);
+            $birdMotorPCPEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_PCP_FOLLOWUPS)->first();
+            if ($birdMotorPCPEvent) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdMotorPCPEvent->value, $emailData);
+                info(self::class." - sendPCPFollowups event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                info(self::class." - sendPCPFollowups response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+                info(self::class." - sendPCPFollowups lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+            } else {
+                info(self::class." - sendPCPFollowups key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Throwable $th) {
+            $errorMessage = self::class." - sendPCPFollowups-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            info($errorMessage);
+            info(self::class." - sendPCPFollowups-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            throw $th;
+        }
+    }
 }

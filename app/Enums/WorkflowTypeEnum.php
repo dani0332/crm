@@ -23,4 +23,5 @@ final class WorkflowTypeEnum extends Enum
     public const TRAVEL_ALLIANCE_FAILED_ALLOCATION = 'travel_alliance_failed_allocation';
     public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
     public const INTRODUCTORY_EMAIL_TO_CUSTOMER = 'introductory_email_to_customer';
+    public const MOTOR_PCP_FOLLOWUPS = 'motor_pcp_followups';
 }
