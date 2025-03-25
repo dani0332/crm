@@ -96,7 +96,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('mobile_no')
             ->filterBy('policy_number')
             ->filterBy('previous_quote_policy_premium')
-            ->filterIn('quote_status', 'quote_status_id')
+            ->filterIn('quote_status_id')
             ->filterIn('insurance_provider_ids', 'insurance_provider_id')
             ->filterBy('payment_status_id')
             ->filterIn('renewal_batches', 'renewal_batch_id')
