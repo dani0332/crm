@@ -896,12 +896,12 @@
                 @php
                     // plan covers for sorting order as they are not sorted in API as per Excel Sheet
                     $planCovers = [
-                        'building',
                         'content',
                         'personalBelonging',
                         'contentAndPersonalBelonging',
                         'fineArtAndCollectible',
                         'jewelleryAndValuable',
+                        'building',
                         'additionalCover',
                     ];
                 @endphp
