@@ -1697,12 +1697,12 @@ const getBMITag = () => {
                     Hidden
                   </x-tag>
                 </div>
-              </template>
+              </template> 
 
               <template
                 #item-planName="{ planName, isUnderwritten, isManualPlan, isApi, isRateCalculator }"
               >
-                <p>
+                <p> 
                   {{ planName }}
                 </p>
                 <div class="flex gap-1">
@@ -1714,7 +1714,7 @@ const getBMITag = () => {
                   >
                     UW
                   </x-tag>
-                  <x-tag
+                  <x-tag   
                     v-else-if="isManualPlan && !isApi"
                     size="xs"
                     color="error"
@@ -1875,12 +1875,12 @@ const getBMITag = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
-                <dd>{{ quote.life_quote.payment_reference ?? 'N/A' }}</dd>
+                <dd>{{ quote?.life_quote?.payment_reference ?? 'N/A' }}</dd>
              
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ORDER REFERENCE</dt>
-                <dd>{{ quote.order_reference ?? 'N/A' }}</dd>
+                <dd>{{ quote?.order_reference ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDONS</dt>

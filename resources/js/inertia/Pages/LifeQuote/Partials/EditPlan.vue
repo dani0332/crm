@@ -386,13 +386,23 @@ const closeModal = ()  => {
                     UW
                   </x-tag>
                   <x-tag
-                    v-else-if="!props.selectedPlan.isManualPlan"
+                    v-else-if="props.selectedPlan.isApi"
                     size="xs"
                     color="error"
                     class="mt-0.5 text-[10px] bg-orange-200 text-orange-700 font-semibold px-2 py-1 rounded-md"
+
                   >
                     API
-                  </x-tag></dd>
+                  </x-tag>
+                  <x-tag
+                    v-else-if="props.selectedPlan.isManualPlan"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px] bg-gray-200 text-gray-700 font-semibold px-2 py-1 rounded-md"
+                  >
+                    Manual
+                  </x-tag>
+                </dd>
             </div>
 
             <div class="grid sm:grid-cols-2">
