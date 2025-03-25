@@ -147,7 +147,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when($this->shouldApplyDatesFilter() && ! request()->filled('last_modified_date') && ! request()->filled('created_at_start') && ! request()->filled('renewal_batches') && ! request()->filled('policy_expiry_date') && ! request()->filled('policy_expiry_date_end'), function ($query) {
                 $query->filterByToday();
             })
-            ->when($this->shouldApplyDatesFilter() && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
+            ->when($this->shouldApplyDatesFilter() && !request()->filled('renewal_batches') && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
             })
             ->when(request()->filled('last_modified_date'), function ($query) {
