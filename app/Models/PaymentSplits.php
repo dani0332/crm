@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class PaymentSplits extends Model implements Auditable
 {
@@ -25,6 +26,15 @@ class PaymentSplits extends Model implements Auditable
     ];
     protected $appends = [
         'prepayment_receipt_status',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'prepayment_receipt_status' => 'array',
     ];
 
     public function payment()
@@ -102,21 +112,28 @@ class PaymentSplits extends Model implements Auditable
         return $this->morphOne(SageProcess::class, 'model');
     }
 
-    public function getPrepaymentReceiptStatusAttribute()
+    /**
+     * Get the prepayment receipt status
+     */
+    protected function prepaymentReceiptStatus(): Attribute
     {
-        $prepaymentData = [];
-        $sageProcess = $this->sageProcess;
-        $sageApiLogs = $this->sageApiLogs->keyBy('step')->toArray();
-        $prepaymentCreationResponse = isset($sageApiLogs[2]) ? json_decode($sageApiLogs[2]['response'], true) : null;
-        $batchNumber = $prepaymentCreationResponse ? $prepaymentCreationResponse['BatchNumber'] : null;
-        $lastStep = end($sageApiLogs);
-        $isPrepaymentAlreadyPosted = $lastStep && $lastStep['sage_request_type'] == SageEnum::SRT_POST_PP_REC && $lastStep['status'] == SageEnum::STATUS_SUCCESS;
-        $sageProcessFailed = $sageProcess?->status == SageEnum::SAGE_PROCESS_FAILED_STATUS;
-        $prepaymentData['lastStep'] = $lastStep;
-        $prepaymentData['isPrepaymentAlreadyPosted'] = $isPrepaymentAlreadyPosted;
-        $prepaymentData['showPrepaymentPostButton'] = $batchNumber && ! $isPrepaymentAlreadyPosted && (! $sageProcess || $sageProcessFailed);
-        $prepaymentData['batchNumber'] = $batchNumber;
+        return Attribute::make(
+            get: function () {
+                $prepaymentData = [];
+                $sageProcess = $this->sageProcess;
+                $sageApiLogs = $this->sageApiLogs->keyBy('step')->toArray();
+                $prepaymentCreationResponse = isset($sageApiLogs[2]) ? json_decode($sageApiLogs[2]['response'], true) : null;
+                $batchNumber = $prepaymentCreationResponse ? $prepaymentCreationResponse['BatchNumber'] : null;
+                $lastStep = end($sageApiLogs);
+                $isPrepaymentAlreadyPosted = $lastStep && $lastStep['sage_request_type'] == SageEnum::SRT_POST_PP_REC && $lastStep['status'] == SageEnum::STATUS_SUCCESS;
+                $sageProcessFailed = $sageProcess?->status == SageEnum::SAGE_PROCESS_FAILED_STATUS;
+                $prepaymentData['lastStep'] = $lastStep;
+                $prepaymentData['isPrepaymentAlreadyPosted'] = $isPrepaymentAlreadyPosted;
+                $prepaymentData['showPrepaymentPostButton'] = $batchNumber && ! $isPrepaymentAlreadyPosted && (! $sageProcess || $sageProcessFailed);
+                $prepaymentData['batchNumber'] = $batchNumber;
 
-        return $prepaymentData;
+                return $prepaymentData;
+            }
+        );
     }
 }
