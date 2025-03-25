@@ -1292,6 +1292,9 @@ class CentralService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Life) {
             $emailData->planType = $quote->insuranceTenure->text;
             $emailData->policyTerm = $quote->numberOfYears->text;
+            if ($sendUpdateLog) {
+                $emailData->lifeDetails = 'NA';
+            }
         }
 
         if ($quoteTypeId == QuoteTypeId::Home) {
