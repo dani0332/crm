@@ -101,12 +101,12 @@ class RawQueryController extends Controller
             }
 
             // Initialize relation maps
-            $relation = "{$type}QuoteRequestDetail";
+            $relation = $type === 'personal' ? 'quoteDetail' : "{$type}QuoteRequestDetail";
             $this->relationMap[$class] = [$relation];
             $this->relationFieldsMap[$class] = [
                 $relation => [
                     'id',
-                    "{$type}_quote_request_id",
+                    $type === 'personal' ? 'personal_quote_id' : "{$type}_quote_request_id",
                     'utm_source',
                     'utm_medium',
                     'utm_campaign',
@@ -120,6 +120,7 @@ class RawQueryController extends Controller
         try {
             $modelType = $this->getModelType($request->modelType);
 
+            
             if (! isset($this->fieldsMap[$modelType])) {
                 return response()->json(['error' => 'Invalid model type'], 400);
             }
@@ -143,9 +144,10 @@ class RawQueryController extends Controller
 
     private function fetchQuoteData(string $modelType, string $uuid)
     {
+        // dd($modelType);
         $query = $modelType::select($this->fieldsMap[$modelType])
-            ->where('uuid', $uuid);
-
+        ->where('uuid', $uuid);
+        
         if (isset($this->relationMap[$modelType])) {
             foreach ($this->relationMap[$modelType] as $relation) {
                 $query->with([
