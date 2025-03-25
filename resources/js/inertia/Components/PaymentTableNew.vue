@@ -3029,7 +3029,7 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   ) {
     return true;
   }
-  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
+  return getValidStatuses(paymentRecord.payment_splits[0]);
 };
 
 const getCaptureValidation = computed(() => {
@@ -3075,7 +3075,6 @@ const alertCapture = payment => {
 
 const getCaptureOption = computed(() => {
   return payment => {
-    // Return early if there are no payments
     if (props.payments.length === 0) return;
 
     let isCaptureButtonEnabled =
@@ -3098,6 +3097,8 @@ const getCaptureOption = computed(() => {
       return 'capture';
     }
     return 'approve';
+
+    // return paymentMethodCC.length > 0 ? 'capture' : 'approve';
   };
 });
 

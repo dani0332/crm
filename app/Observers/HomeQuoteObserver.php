@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -36,13 +37,17 @@ class HomeQuoteObserver
         $dirty = $homeQuote->getDirty();
 
         if (isset($dirty['advisor_id'])) {
+            if ($homeQuote->source != LeadSourceEnum::IMCRM) {
 
-            $oldAdvisorId = $homeQuote->getOriginal('advisor_id');
-            info("HomeQuoteObserver - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$homeQuote->advisor_id} | Time: ".now());
-            $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
-            info(self::class." Sending {$emailType} email to customer for home quote {$homeQuote->uuid} | Time: ".now());
-            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($homeQuote, QuoteTypes::HOME->value, $oldAdvisorId);
-            info(self::class." | {$emailType} email sent to customer for home quote {$homeQuote->uuid} | Time: ".now());
+                $oldAdvisorId = $homeQuote->getOriginal('advisor_id');
+                info("HomeQuoteObserver - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$homeQuote->advisor_id} | Time: ".now());
+                $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
+                info(self::class." Sending {$emailType} email to customer for home quote {$homeQuote->uuid} | Time: ".now());
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($homeQuote, QuoteTypes::HOME->value, $oldAdvisorId);
+                info(self::class." | {$emailType} email sent to customer for home quote {$homeQuote->uuid} | Time: ".now());
+            } else {
+                info("HomeQuoteObserver - lead source: {$homeQuote->source} |  Advisor ID: {$homeQuote->advisor_id} | Time: ".now());
+            }
 
         }
         if (
