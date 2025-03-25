@@ -32,7 +32,9 @@ class DocumentTypeRepository extends BaseRepository
         // Handle special document requirements for business insurance types.
         if (in_array($quoteType, [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::BUSINESS->value, QuoteTypes::CORPLINE->value])) {
             // Retrieve the latest KYC log for additional business/customer details.
-            $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)
+            $latestKycLog = KycLog::withTrashed()
+                ->where('quote_request_id', $quote->id)
+                ->where('quote_type_id', QuoteTypes::BUSINESS->id())
                 ->where(function ($aml) {
                     $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
                     $aml->orWhereNull('screening_type');
@@ -60,7 +62,9 @@ class DocumentTypeRepository extends BaseRepository
 
         // Check if the quote type is Group medical or corpline .
         if (in_array($quoteType, [QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::BUSINESS->value, QuoteTypes::CORPLINE->value])) {
-            $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)
+            $latestKycLog = KycLog::withTrashed()
+                ->where('quote_request_id', $quote->id)
+                ->where('quote_type_id', QuoteTypes::BUSINESS->id())
                 ->where(function ($aml) {
                     $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
                     $aml->orWhereNull('screening_type');
@@ -96,7 +100,9 @@ class DocumentTypeRepository extends BaseRepository
 
         // Filter document types based on business insurance type and KYC search results.
         if ($quoteType === QuoteTypes::BUSINESS->value) {
-            $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $quote->id)
+            $latestKycLog = KycLog::withTrashed()
+                ->where('quote_request_id', $quote->id)
+                ->where('quote_type_id', QuoteTypes::BUSINESS->id())
                 ->where(function ($aml) {
                     $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
                     $aml->orWhereNull('screening_type');

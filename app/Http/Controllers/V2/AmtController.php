@@ -338,7 +338,9 @@ class AmtController extends Controller
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)
+        $latestKycLog = KycLog::withTrashed()
+            ->where('quote_request_id', $record->id)
+            ->where('quote_type_id', QuoteTypes::BUSINESS->id())
             ->where(function ($aml) {
                 $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
                 $aml->orWhereNull('screening_type');
