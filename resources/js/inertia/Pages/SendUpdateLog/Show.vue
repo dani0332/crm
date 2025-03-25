@@ -304,6 +304,57 @@ const isBookUpdate = computed(() => {
     props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED
   );
 });
+
+const disableCancelButton = computed(() => {
+  return (
+    [
+      props.sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER,
+      props.sendUpdateStatusEnum.UPDATE_BOOKED,
+      props.sendUpdateStatusEnum.REQUEST_CANCELLED,
+    ].includes(props.sendUpdateLog.status)
+  );
+});
+
+const cancelModal = ref(false);
+const isLoading = ref(false);
+const cancelReasonError = ref(false);
+
+const cancelForm = useForm({
+  cancel_reason: null,
+});
+
+
+const cancelSendUpdate = () => {
+  isLoading.value = true;
+  cancelReasonError.value = false;
+  
+  axios
+  .post('send-update-cancel', {
+    cancel_reason: cancelForm.cancel_reason,
+    send_update_log_id: props.sendUpdateLog.id,
+  })
+  .then(response => {
+    console.log(response);
+    cancelModal.value = false;
+    window.location.reload();
+  })
+  .catch(error => {
+    const flash_messages = error.response.data.errors;
+    Object.keys(flash_messages).forEach(function (key) {
+      notification.error({
+        title: flash_messages[key],
+        position: 'top',
+      });
+      
+      if (key === 'cancel_reason') {
+        cancelReasonError.value = true;
+      }
+    });
+  })
+  .finally(() => {
+    isLoading.value = false;
+  });
+};
 </script>
 
 <template>
@@ -311,6 +362,68 @@ const isBookUpdate = computed(() => {
     <title>Send Update {{ sendUpdateLog.category.text }}</title>
   </Head>
   <div>
+    <div class="flex justify-end gap-2 mb-4">
+      <x-button
+        v-if="can(permissionsEnum.CANCEL_SEND_UPDATE)"
+        color="primary"
+        size="sm"
+        class="text-xs"
+        :disabled="disableCancelButton"
+        @click="cancelModal = true"
+      >
+        Cancel Request
+      </x-button>
+      <Link :href="quoteLink">
+        <x-button color="primary" size="sm" class="mr-5 text-xs">
+          Go back to lead
+        </x-button>
+      </Link>
+    </div>
+
+    <x-modal
+      v-model="cancelModal"
+      size="md"
+      title="Send Update Cancel"
+      show-close
+    >
+      <x-label class="flex items-center gap-2 mt-5 mb-5">
+        <x-select
+          v-model="cancelForm.cancel_reason"
+          class="w-full"
+          placeholder="Select Cancel Reason"
+          :options="[
+            { value: 'reason_1', label: 'Reason 1' },
+            { value: 'reason_2', label: 'Reason 2' },
+            { value: 'reason_3', label: 'Reason 3' },
+          ]"
+          filterable
+          :error="cancelReasonError ? 'Reason field is required' : ''"
+        />
+      </x-label>
+      <template #actions>
+        <div class="gap-4 justify-end">
+          <x-button
+            class="focus:ring-2 focus:ring-black"
+            size="sm"
+            color="error"
+            @click.prevent="cancelSendUpdate()"
+            :loading="isLoading"
+          >
+            Confirm
+          </x-button>
+          <x-button
+            class="focus:ring-2 focus:ring-black"
+            size="sm"
+            ghost
+            :disabled="isLoading"
+            @click.prevent="cancelModal = false"
+          >
+            Cancel
+          </x-button>
+          <div></div>
+        </div>
+      </template>
+    </x-modal>
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible expanded>
         <template #header>
@@ -320,11 +433,6 @@ const isBookUpdate = computed(() => {
             >
               {{ sendUpdateLog.category.text }}
             </h3>
-            <Link :href="quoteLink">
-              <x-button color="primary" size="sm" class="mr-5 text-xs"
-                >Go back to lead</x-button
-              >
-            </Link>
           </div>
         </template>
         <template #body>

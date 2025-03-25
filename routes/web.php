@@ -630,6 +630,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/save-provider-details', 'saveProviderDetails')->name('save-provider-details');
         Route::post('/book-update-validation', 'sendUpdateValidation')->name('book-update-validation');
         Route::post('book-update', 'sendUpdate')->name('book-update');
+        Route::post('/send-update-cancel', 'sendUpdateCancel')->name('send-update-cancel');
     });
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');

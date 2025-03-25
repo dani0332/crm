@@ -478,4 +478,31 @@ class SendUpdateLogRepository extends BaseRepository
 
         return true;
     }
+
+    public function fetchCancelSendUpdate($sendUpdateLogId, $cancelReason)
+    {
+        $sendUpdate = $this->find($sendUpdateLogId);
+        info('function fetchCancelSendUpdate started - send update code: '.$sendUpdate->code);
+
+        try {
+            $oldStatus = $sendUpdate->status;
+
+            $sendUpdate->update([
+                'cancel_reason', $cancelReason,
+                'status', SendUpdateLogStatusEnum::REQUEST_CANCELLED,
+            ]);
+
+            info('Send Update Log cancelled successfully - code: '.$sendUpdate->code);
+
+            app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $oldStatus, SendUpdateLogStatusEnum::REQUEST_CANCELLED);
+
+            $response = ['message' => 'Send Update Log cancelled successfully.', 200];
+        } catch (\Exception $ex) {
+            info('Error while cancelling Send Update Log - code: '.$sendUpdate->code.' - Exception: '.$ex->getMessage());
+
+            $response = ['message' => 'Error while cancelling Send Update Log.', 500];
+        }
+
+        return $response;
+    }
 }
