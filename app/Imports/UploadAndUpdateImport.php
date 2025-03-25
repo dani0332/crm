@@ -112,16 +112,16 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
         $columns = [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
             'email' => [
-                'index' => 1, 
-                'title' => 'Customer Email', 
+                'index' => 1,
+                'title' => 'Customer Email',
                 'rules' => [
                     'nullable', 'max:255', 'email:rfc,dns',
                     function ($attribute, $value, $onFailure) {
-                        if ($value && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        if ($value && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                             $onFailure('The '.$attribute.' must contain a local part, @ symbol, and domain part (e.g., name@example.com).');
                         }
                     },
-                ]
+                ],
             ],
             'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'nullable|max:20'],
             'quote_type' => ['index' => 3, 'title' => 'Insurance Type', 'rules' => 'required|required|max:4'],

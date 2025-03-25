@@ -99,8 +99,8 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
                         if ($value == 0 || $value == '0') {
                             $onFailure('The '.$attribute.' cannot be 0.');
                         }
-                        
-                        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+
+                        if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                             $onFailure('The '.$attribute.' must contain a local part, @ symbol, and domain part (e.g., name@example.com).');
                         }
                     },
@@ -125,7 +125,7 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
             'advisor' => ['index' => 7, 'title' => 'Advisor Email', 'rules' => [
                 'max:100', 'nullable', 'email:rfc,dns',
                 function ($attribute, $value, $onFailure) {
-                    if ($value && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                    if ($value && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                         $onFailure('The '.$attribute.' must contain a local part, @ symbol, and domain part (e.g., name@example.com).');
                     }
                 },
@@ -148,7 +148,7 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
             'previous_advisor' => ['index' => 15, 'title' => 'Previous Advisor Email', 'rules' => [
                 'nullable', 'max:100', 'email:rfc,dns',
                 function ($attribute, $value, $onFailure) {
-                    if ($value && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                    if ($value && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
                         $onFailure('The '.$attribute.' must contain a local part, @ symbol, and domain part (e.g., name@example.com).');
                     }
                 },
