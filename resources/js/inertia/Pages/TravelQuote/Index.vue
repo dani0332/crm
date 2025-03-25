@@ -103,7 +103,7 @@ const tableHeader = [
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at' },
-  { text: 'PAYMENT EXPIRY', value: 'expiry_dates', is_active: true },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_dates'},
   { text: 'Travel Type', value: 'direction_code' },
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status.text' },
