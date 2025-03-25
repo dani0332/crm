@@ -602,7 +602,7 @@ class SplitPaymentService
     public function processSplitPaymentApprove($modelType, $quoteId, $splitPaymentId, $amountCollected, $isFromJob = false)
     {
         $paymentSplit = PaymentSplits::find($splitPaymentId);
-        info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Processing split payment approval started is from job: '.($isFromJob ? 'true' : 'false'));
+        info("Processing split payment approval for {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} is from job: " . ($isFromJob ? 'true' : 'false'));
 
         $payment = $paymentSplit->payment;
         $sendUpdateId = $payment->send_update_log_id;

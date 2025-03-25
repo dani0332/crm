@@ -338,11 +338,11 @@ class CustomerService extends BaseService
     {
         $customerId = $data->customer_id ?? null;
         $quoteUuid = $data->uuid ?? null;
+        $quoteCode = $data->code ?? null;
 
         if (! $customerId || ! $quoteUuid) {
-            Log::warning('Missing required data: customerId or quote UUID is not provided.', [
+            Log::warning('Quote Code: '.$quoteCode.' Missing required data: customerId or quote UUID is not provided.', [
                 'customerId' => $customerId,
-                'quote_uuid' => $quoteUuid,
             ]);
 
             return null;
@@ -354,7 +354,7 @@ class CustomerService extends BaseService
             ->first();
 
         if (! $customerAddress) {
-            Log::info('Customer address not found.', [
+            info('Quote Code: '.$quoteCode.' Customer address not found.', [
                 'customerId' => $customerId,
                 'quote_uuid' => $quoteUuid,
             ]);
