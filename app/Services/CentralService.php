@@ -1308,6 +1308,9 @@ class CentralService extends BaseService
         if ($quoteTypeId == QuoteTypeId::Health) {
             $emailData->tpa = $quote?->plan?->healthNetwork->text;
             $emailData->numberOfMembersCovered = (string) count($quote->members);
+            $emailData->policyHolderName = implode(', ', array_map(function ($member) {
+                return $member['first_name'];
+            }, $quote->members->toArray()));
         }
 
         if ($quoteTypeId == QuoteTypeId::Business) {
