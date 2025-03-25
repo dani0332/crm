@@ -36,6 +36,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use Illuminate\Support\Facades\Cache;
+use App\Enums\TeamNameEnum;
+use App\Models\Team;
+use App\Models\UserTeams;
 
 class CarQuoteService extends BaseService
 {
@@ -1979,5 +1983,30 @@ class CarQuoteService extends BaseService
         );
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Check if a user is a PCP advisor
+     *
+     * @param int $user_id The ID of the user to check
+     * @return bool True if the user is a PCP advisor, false otherwise
+     */
+    public function isPCPAdvisor($user_id)
+    {
+        try {
+            // Cache the PCP team ID for 24 hours since it rarely changes
+            $pcpTeamId = Cache::remember('pcp_team_id',now()->addMinutes(), function () {
+                return Team::where('name', TeamNameEnum::PCP)->value('id');
+            });
+            // If $pcpTeamId is null or empty, the function will return false
+            return !empty($pcpTeamId) && UserTeams::where('user_id', $user_id)->where('team_id', $pcpTeamId)->exists();
+
+        } catch (\Exception $e) {
+            info(self::class . ' - Error checking PCP advisor status: ' . $e->getMessage(), [
+                'user_id' => $user_id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
     }
 }

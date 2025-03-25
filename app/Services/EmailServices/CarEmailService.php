@@ -36,9 +36,10 @@ class CarEmailService extends BaseService
     public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false, $triggerOnlyWorkflow = false, bool $forceSicWorkflow = false)
     {
         $plans = $this->executePlansSelectionLogic($plans);
-
-        // Determine the email template ID
-        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow);
+        $isPCPTeamAdvisor = !empty($lead->advisor_id) ? $carQuoteService->isPCPAdvisor($lead->advisor_id) : false;
+        info(self::class . ' - PCP Team Advisor: ' . $isPCPTeamAdvisor . ' | Lead source: ' . $lead->source . ' | Ref-ID: ' . $lead->uuid . ' | time: ' . now());
+         // Determine the email template ID
+        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow,  $isPCPTeamAdvisor);
 
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
@@ -263,7 +264,7 @@ class CarEmailService extends BaseService
         return $result;
     }
 
-    private function getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow = false)
+    private function getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow = false, $isPCPTeamAdvisor = false)
     {
         if ($triggerSICWorkFlow) {
             info('Inside sic flow enabled: '.$lead->uuid);
@@ -272,6 +273,19 @@ class CarEmailService extends BaseService
                 return (int) $noAdvisorTemplateId->value;
             } else {
                 return 605; // keeping it as a fallback
+            }
+        }
+        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
+
+            $emailTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::PCP_FOLLOWUP_TEMPLATE_ID)->first();
+            info('getEmailTemplateId PCP Follow-Up email template id: ' . $emailTemplate->value ?? '');
+            if (! empty($emailTemplate->value)) {
+                $emailTemplateId = (int) $emailTemplate->value;
+                info('fn: getEmailTemplateId PCP Follow-Up email template id: ' . $emailTemplateId .'| Ref-ID' . $lead->uuid . ' | time:' . now());
+                return $emailTemplateId;
+            }
+            else {
+                info("PCP Follow-Up email template not found in Application Storage Ref-ID {$lead->uuid } | time:" . now());
             }
         }
         if (count($plans) == 0) {
