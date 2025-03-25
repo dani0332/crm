@@ -184,7 +184,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                     });
                 });
             })
-            ->when(!empty(request('api_issuance_status_id')), function ($q) {
+            ->when(request('api_issuance_status_id'), function ($q) {
                 $apiIssuanceStatusIds = (array) request('api_issuance_status_id');
 
                 $q->when(in_array('blank', $apiIssuanceStatusIds), function ($q) use ($apiIssuanceStatusIds) {
