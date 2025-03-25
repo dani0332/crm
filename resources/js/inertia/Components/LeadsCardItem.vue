@@ -37,6 +37,7 @@ const canDrag = computed(() => {
     props.id == quoteStatusEnum?.TransactionApproved ||
     props.id == quoteStatusEnum?.PolicyBooked ||
     props.id == quoteStatusEnum?.PolicyIssued ||
+    props.id == quoteStatusEnum?.PaymentLinkSentToCustomer ||
     props.id == quoteStatusEnum?.PolicySentToCustomer
     ? false
     : true;
