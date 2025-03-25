@@ -120,7 +120,6 @@ class RawQueryController extends Controller
         try {
             $modelType = $this->getModelType($request->modelType);
 
-            
             if (! isset($this->fieldsMap[$modelType])) {
                 return response()->json(['error' => 'Invalid model type'], 400);
             }
@@ -146,8 +145,8 @@ class RawQueryController extends Controller
     {
         // dd($modelType);
         $query = $modelType::select($this->fieldsMap[$modelType])
-        ->where('uuid', $uuid);
-        
+            ->where('uuid', $uuid);
+
         if (isset($this->relationMap[$modelType])) {
             foreach ($this->relationMap[$modelType] as $relation) {
                 $query->with([
