@@ -2362,7 +2362,7 @@ class SageApiService
 
         $isPolicyBooked = $quote?->quote_status_id == QuoteStatusEnum::PolicyBooked;
         if (! $isPolicyBooked) {
-            $response['errors'][] = 'Quote not found or Post Prepayment cannot be done as Policy is not booked yet.';
+            $response['errors']['policy-booked'] = 'Quote not found or Post Prepayment cannot be done as Policy is not booked yet.';
         }
 
         $prepaymentReceiptStatus = $paymentSplit->prepayment_receipt_status;
