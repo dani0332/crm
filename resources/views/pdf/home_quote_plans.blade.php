@@ -929,7 +929,7 @@
                                     @php
                                         $title = $cover;
                                         if ($cover === 'contentAndPersonalBelonging') {
-                                            $title = 'Contents and personal belongings';
+                                            $title = 'Contents and Personal belongings';
                                         } elseif ($cover === 'fineArtAndCollectible') {
                                             $title = 'Fine Art and Collectible(s)';
                                         } elseif ($cover === 'jewelleryAndValuable') {
