@@ -1374,11 +1374,13 @@ class RenewalsUploadService
         $memberDetails = arrayKeysToCamelCase($memberDetails);
         $updateMemberDetails = arrayKeysToCamelCase($updateMemberDetails);
 
+        info('Health quote update member: ' . json_encode($memberDetails));
         $addResponse = count($memberDetails) > 0 && Ken::request('/add-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$memberDetails],
         ]);
 
+        info('Health quote update member: '. json_encode($updateMemberDetails));
         $updateResponse = count($updateMemberDetails) > 0 && Ken::request('/update-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$updateMemberDetails],
