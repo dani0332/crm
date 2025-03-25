@@ -135,7 +135,7 @@ const tableHeader = [
   { text: 'CURRENTLY LOCATED IN', value: 'currently_located_in.text' },
   { text: 'EXPIRY DATE', value: 'expiry_date' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'PAYMENT STATUS', value: 'paymentStatus.text' },
+  { text: 'PAYMENT STATUS', value: 'payment_status.text' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
   {
     text: 'Previous Policy Premium',

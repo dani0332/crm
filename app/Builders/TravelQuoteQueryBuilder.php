@@ -62,7 +62,11 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'travel_quote_request.updated_at',
             'assignment_type',
             'gender',
-            'premium'
+            'premium',
+            'payment_status_id',
+            'currently_located_in_id',
+            'api_issuance_status_id',
+            'insurer_api_status_id'
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
@@ -77,7 +81,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insuranceProvider:id,text,code',
             'quoteStatus:id,text',
             'plan:id,text',
-            'currentlyLocatedIn',
+            'currentlyLocatedIn:id,text',
             'renewalBatch:id,name'
         ]);
     }
