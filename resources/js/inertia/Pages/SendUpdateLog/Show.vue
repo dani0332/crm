@@ -320,7 +320,7 @@ const isLoading = ref(false);
 const cancelReasonError = ref(false);
 
 const cancelForm = useForm({
-  cancel_reason: null,
+  cancel_reason: props.sendUpdateLog.cancel_reason,
 });
 
 
@@ -334,9 +334,14 @@ const cancelSendUpdate = () => {
     send_update_log_id: props.sendUpdateLog.id,
   })
   .then(response => {
-    console.log(response);
-    cancelModal.value = false;
-    window.location.reload();
+    if (response.status === 200) {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+      cancelModal.value = false;
+      window.location.reload();
+    }
   })
   .catch(error => {
     const flash_messages = error.response.data.errors;

@@ -465,6 +465,6 @@ class SendUpdateLogController extends Controller
     {
         $response = SendUpdateLogRepository::cancelSendUpdate($request->send_update_log_id, $request->cancel_reason);
 
-        return $response()->json($response);
+        return response()->json(['message' => $response['message']], $response['status']);
     }
 }
