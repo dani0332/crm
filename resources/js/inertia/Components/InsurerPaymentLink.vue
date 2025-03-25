@@ -80,7 +80,7 @@ defineExpose({
         "
         class="font-bold"
     >
-        <x-tooltip v-if="paymentForm.status == 'create'">
+        <x-tooltip v-if="paymentForm.status == 'create' && paymentLinkBtnDisabled">
             <x-button
                 color="orange"
                 type="submit"
