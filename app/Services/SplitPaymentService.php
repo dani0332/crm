@@ -63,16 +63,13 @@ class SplitPaymentService
         return $discount;
     }
 
-    public function uploadDiscountDocuments($discountDocuments, $code)
+    public function uploadDiscountDocuments($discountDocuments, $paymentSplitRecord)
     {
-        if (isset($discountDocuments) && count($discountDocuments)) {
-            $paymentSplitRecord = PaymentSplits::where(['code' => $code])->first();
-            foreach ($discountDocuments[0] as $document) {
-                $quoteDocumentRec = QuoteDocument::find($document['id']);
-                if ($quoteDocumentRec) {
-                    $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
-                    $quoteDocumentRec->save();
-                }
+        foreach ($discountDocuments[0] as $document) {
+            $quoteDocumentRec = QuoteDocument::find($document['id']);
+            if ($quoteDocumentRec) {
+                $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
+                $quoteDocumentRec->save();
             }
         }
     }
