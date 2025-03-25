@@ -1055,7 +1055,7 @@
                                     <p class="advisor-role">Insurance Advisor</p>
                                     <p class="advisor-contact">
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
-                                        @if (strlen($quote->advisor->email) > 49)
+                                        @if (strlen($quote->advisor->email) > 35)
                                         <span style="text-decoration: underline; font-size:10px">{{ $quote->advisor->email }}</span>
                                         @else
                                         <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
