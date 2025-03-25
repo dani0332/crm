@@ -37,7 +37,7 @@ watch(() => props.paymentForm.insurerPaymentLink, (newVal, oldVal) => {
 const closeNotification = () => {
   notification.error({
     title: 'Are you sure?',
-    message: 'your changes will be lost',
+    message: 'payment link has not been saved & not shared with customer',
     position: 'top',
     timeout: 0,
     action: {
