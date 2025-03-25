@@ -692,7 +692,7 @@ class CentralController extends Controller
     public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
     {
         try {
-            $request = (object) $postPrepaymentToSageRequest->validated();
+            $request = $postPrepaymentToSageRequest->safe();
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
             $paymentSplit = PaymentSplits::whereId($request->paymentSplit)->first();
 
@@ -712,9 +712,10 @@ class CentralController extends Controller
                 'message' => 'Prepayment posting to Sage has been scheduled and will be processed in the background.',
             ], 200);
         } catch (Exception $exception) {
+            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', $$exception->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $exception->getMessage(),
+                'message' => 'Prepayment posting is failed, please try again later.',
             ], 500);
         }
     }

@@ -20,7 +20,7 @@ class PostPrepaymentToSageRequest extends FormRequest
     {
 
         return [
-            'paymentSplit' => 'required|exists:payment_splits,id',
+            'paymentSplit' => 'required',
             'quoteRequestId' => 'required',
             'quoteType' => 'required',
         ];
@@ -32,17 +32,10 @@ class PostPrepaymentToSageRequest extends FormRequest
             if (! (new SageApiService)->isSageEnabled()) {
                 $validator->errors()->add('sage', 'Sage is not enabled.');
             }
-
-            /*$quote = $this->getQuoteObject(request()->quoteType, request()->quoteRequestId);
             $paymentSplit = PaymentSplits::whereId(request()->paymentSplit)->first();
-
-            $response = (new SageApiService)->preChecksForPostPrepaymentSchedule($quote, $paymentSplit);
-
-            if (! $response['status']) {
-                foreach ($response['error'] as $key => $error) {
-                    $validator->errors()->add($key, $error);
-                }
-            }*/
+            if (! $paymentSplit) {
+                $validator->errors()->add('payment_split', 'Payment split not found.');
+            }
         });
     }
 
