@@ -718,6 +718,7 @@ class CentralController extends Controller
             ], 200);
         } catch (Exception $exception) {
             info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', $$exception->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Prepayment posting is failed, please try again later.',
