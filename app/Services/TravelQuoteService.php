@@ -337,7 +337,7 @@ class TravelQuoteService extends BaseService
         return TravelQuote::orderBy('created_at', 'desc')->get();
     }
 
-    public function getGridData($model, $request)
+    public function getGridData()
     {
         $query = $this->travelQuoteQueryBuilder->processGridData();
         $this->whereBasedOnRole($query, 'travel_quote_request');
