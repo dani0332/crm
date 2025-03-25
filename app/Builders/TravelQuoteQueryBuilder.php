@@ -119,7 +119,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByAdvisors(request('advisor_id'))
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->filterByDateRange('advisor_assigned_date')
-            ->filterBySegment(request('segment_filter'), QuoteTypeId::Travel)
+            ->filterBySegment('travel_quote_request')
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
                 $query->where(fn($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
