@@ -927,19 +927,8 @@
                             <td colspan="{{ count($planIds) + 1 }}">
                                 <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 2px; font-weight: 700;">
                                     @php
-                                        $title = $cover;
-                                        if ($cover === 'contentAndPersonalBelonging') {
-                                            $title = 'Contents and Personal belongings';
-                                        } elseif ($cover === 'fineArtAndCollectible') {
-                                            $title = 'Fine Art and Collectible(s)';
-                                        } elseif ($cover === 'jewelleryAndValuable') {
-                                            $title = 'Jewellery and Valuable(s)';
-                                        } elseif (in_array($cover, ['content', 'personalBelonging', 'additionalCover'])) {
-                                            $title = preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover. 's'));
-                                        } else {
-                                            $title = preg_replace('/([a-z0-9])([A-Z])/', '$1 $2', str_replace(['-', '_'], ' ', $cover));
-                                        }
-                                        echo ucfirst(strtolower($title));
+                                        $firstBenefit = reset($benefitItems);
+                                        echo $firstBenefit->heading ?? $cover;
                                     @endphp
                                 </p>
                             </td>
