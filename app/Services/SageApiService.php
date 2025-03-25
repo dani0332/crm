@@ -2295,7 +2295,7 @@ class SageApiService
             'paymentSplitId' => $paymentSplit->id,
             'sageProcessRequestType' => SageEnum::SAGE_PROCESS_POST_PREPAYMENT_REQUEST,
         ];
-        $request = [
+        $requestData = [
             "quoteType" => $quoteType,
             "paymentSplit" => $paymentSplit->id,
             "quoteRequestId" => $quote->id
@@ -2305,7 +2305,7 @@ class SageApiService
             'insurance_provider_id' => $insurer?->id,
             'request' => json_encode([
                 'sagePayload' => $sagePayload,
-                'requestPayload' => $request,
+                'requestPayload' => $requestData,
             ]),
             'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
         ];
@@ -2328,6 +2328,10 @@ class SageApiService
             'sageProcessId' => $sageProcess->id,
             'sageProcessStatus' => $sageProcess->status
         ]);
+
+        $this->scheduleSageProcesses($insurer?->id);
+        info(self::class . ' fn: ' . __FUNCTION__ . '  scheduleSageProcesses triggered for Insurer - ' . $insurer?->id);
+
         $response['status'] = true;
         $response['message'] = 'Prepayment is scheduled for Posting';
         return $response;
