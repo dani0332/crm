@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
-use App\Models\PolicyIssuance;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
