@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
@@ -139,8 +140,10 @@ class UpdateLeadStatusRequest extends FormRequest
             ])->where(function ($ryuFilter) {
                 $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $ryuFilter->orWhereNull('decision');
-            })->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
-                ->whereNull('screenshot')->latest()->first();
+            })->where(function ($aml) {
+                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                $aml->orWhereNull('screening_type');
+            })->whereNull('screenshot')->latest()->first();
 
             $isTravelLeadTransactionApproved = false;
             if ((auth()->user()->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
