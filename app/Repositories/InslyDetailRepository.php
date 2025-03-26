@@ -108,12 +108,6 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
 
-        /* Temp Code - assign email for particular Policy id/number */
-        if ($policyID == 41679326) {
-            $email = 'ben.gibson@hotmail.ca';
-        }
-        /* Temp Code - assign email for particular Policy id/number */
-
         if (empty($email)) {
             return [
                 'status' => 400,
@@ -133,16 +127,17 @@ class InslyDetailRepository extends BaseRepository
             $advisorName = $policy['quote']['broker'] ?? null;
         }
 
+        $appUrl = config('constants.APP_URL');
+        $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
+
         /* Temp Code - assign email for particular Policy id/number */
-        $tempSalesPerson = 'Khevana Wathare';
-        $tempPolicyId = 69386544;
+        $tempSalesPersonId = 192;
+        $tempPolicyId = 62312605;
         if ($tempPolicyId == $policyID) {
-            $advisorName = $tempSalesPerson;
+            $advisorId = $tempSalesPersonId;
         }
         /* Temp Code - assign email for particular Policy id/number */
 
-        $appUrl = config('constants.APP_URL');
-        $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
         if ($advisorId == null) {
             return [
                 'status' => 400,
@@ -372,22 +367,6 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
-
-        /* Temp Code - assign email for particular Policy id/number */
-
-        /*$tempEmail = 'vitara@inbox.ru';
-        $tempPolicyId = 66495910;
-        if ($tempPolicyId == $policy['policy_oid']) {
-            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
-        }*/
-
-        $tempEmail = 'ben.gibson@hotmail.ca';
-        $tempPolicyId = 41679326;
-        if ($tempPolicyId == $policy['policy_oid']) {
-            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
-        }
-
-        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
