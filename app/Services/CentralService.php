@@ -1220,12 +1220,11 @@ class CentralService extends BaseService
                 'code' => $request->payment_code,
                 'paymentable_type' => TravelQuote::class,
             ])
-            ->whereNotIn('payment_status_id', [
-                PaymentStatusEnum::AUTHORISED,
-                PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PAID,
-                PaymentStatusEnum::PARTIAL_CAPTURED,
-                PaymentStatusEnum::PARTIALLY_PAID,
+            ->whereIn('payment_status_id', [
+                PaymentStatusEnum::PENDING,
+                PaymentStatusEnum::NEW,
+                PaymentStatusEnum::DRAFT,
+                PaymentStatusEnum::OVERDUE,
             ])
             ->first();
         if (! $payment) {

@@ -3146,12 +3146,11 @@ onMounted(() => {
 
 const isChildPaymentDeletable = computed(() => {
   if (props.payments.length !== 2) return false;
-  const childPaymentNotAuthorised = ![
-    paymentStatusEnum.AUTHORISED,
-    paymentStatusEnum.CAPTURED,
-    paymentStatusEnum.PAID,
-    paymentStatusEnum.PARTIAL_CAPTURED,
-    paymentStatusEnum.PARTIALLY_PAID,
+  const childPaymentNotAuthorised = [
+    paymentStatusEnum.PENDING,
+    paymentStatusEnum.NEW,
+    paymentStatusEnum.DRAFT,
+    paymentStatusEnum.OVERDUE,
   ].includes(props.payments[1].payment_status_id);
   return (
     props.quoteType == 'Travel' &&
