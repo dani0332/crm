@@ -7,11 +7,13 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\CarQuotePlanDetail;
 use App\Models\Payment;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
@@ -245,5 +247,17 @@ trait QuoteModelTrait
     public function isPaymentLinkRequested(): bool
     {
         return $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
+    }
+
+    public function isPUA(): bool
+    {
+        if (empty($this->plan_id)) {
+            return false;
+        }
+
+        return CarQuotePlanDetail::where('quote_uuid', $this->uuid)
+            ->whereIn('pua_type', PuaEnum::TAGS)
+            ->where('plan_id', $this->plan_id)
+            ->exists();
     }
 }

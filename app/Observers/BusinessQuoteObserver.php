@@ -2,12 +2,15 @@
 
 namespace App\Observers;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Jobs\MAWelcomeJob;
 use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -40,6 +43,20 @@ class BusinessQuoteObserver
                 $businessQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $businessQuote->transaction_approved_at];
+        }
+
+        if ($businessQuote->source != LeadSourceEnum::IMCRM && $businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+            info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Time: ".now());
+            $oldAdvisorId = $businessQuote->getOriginal('advisor_id');
+            info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$businessQuote->advisor_id} | Time: ".now());
+
+            $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
+            info(self::class." Sending {$emailType} email to customer for  group medical quote {$businessQuote->uuid} | Time: ".now());
+            app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, QuoteTypes::GROUP_MEDICAL->value, $oldAdvisorId);
+            info(self::class." | {$emailType} email sent to customer for group medical quote {$businessQuote->uuid} | Time: ".now());
+
+        } else {
+            info(self::class." - lead source: {$businessQuote->source} |  Advisor ID: {$businessQuote->advisor_id} | Time: ".now());
         }
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($businessQuote->quote_status_id)) {
