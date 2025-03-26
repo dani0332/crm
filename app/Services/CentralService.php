@@ -1092,8 +1092,8 @@ class CentralService extends BaseService
             'isTapCaptureProcessStart' => $isTapCaptureProcessStart,
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'commissionInPayments' => $commissionInPayments,
-            'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
             'isADNICProvider' => $isADNICProvider,
+            'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
         ];
 
         // If payment object is provided, check commission status and merge with TAP configuration
@@ -1160,11 +1160,7 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
-    /**
-     * Check if the capture button is enabled for a given quote type and insurance provider.
-     *
-     * @return bool
-     */
+    // Todo: This method will remove in future if Business confirm we will enable capture of all providers
     private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
     {
         // Capture are enabled for the all LOB's against specific providers
@@ -1177,19 +1173,17 @@ class CentralService extends BaseService
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
         ];
 
-        // Capture is enabled for the Orient Provider and Travel
-        if ($quoteTypeId == QuoteTypeId::Travel) {
-            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
-        }
-        // Capture is enabled for the Abu Dhabi Provider and Health
         if ($quoteTypeId == QuoteTypeId::Health) {
             $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
         }
-        //
-        //        if ($quoteTypeId == QuoteTypeId::Car) {
-        //            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
-        //        }
-        //
+
+        // if ($quoteTypeId == QuoteTypeId::Car) {
+        //     $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        // }
+
+        if ($quoteTypeId == QuoteTypeId::Travel) {
+            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+        }
 
         return in_array($insuranceProviderCode, $enabledProviders);
     }

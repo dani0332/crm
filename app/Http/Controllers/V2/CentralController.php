@@ -68,6 +68,7 @@ use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\NotificationService;
@@ -318,12 +319,16 @@ class CentralController extends Controller
     {
         $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $code, $request->provider_code);
+
         return redirect()->back();
     }
 
     public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
+
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
 
         return response()->json(['plan' => $response]);
     }
@@ -580,7 +585,7 @@ class CentralController extends Controller
                 // Send Automated Followup Email Job if Health Auto-Followups is enabled.
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
-                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
+                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addMinutes($delayDays));
                     info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
                 }
 
