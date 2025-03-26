@@ -534,6 +534,7 @@ class SendUpdateLogRepository extends BaseRepository
 
             $response = ['message' => 'Error while cancelling Send Update Log.', 'status' => 500];
         }
+        info('function fetchCancelSendUpdate ended - send update code: '.$sendUpdate->code);
 
         return $response;
     }
