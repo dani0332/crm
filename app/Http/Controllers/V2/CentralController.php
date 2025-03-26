@@ -690,4 +690,16 @@ class CentralController extends Controller
 
         return response()->json(['response' => $response]);
     }
+
+    public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validatedRequest = (object) $request->validate([
+            'payment_id' => 'required',
+            'payment_code' => 'required',
+        ]);
+
+        $response = app(CentralService::class)->deletePayment($validatedRequest);
+
+        return response()->json($response);
+    }
 }
