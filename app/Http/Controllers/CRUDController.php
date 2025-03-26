@@ -110,6 +110,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 
 class CRUDController extends Controller
 {
@@ -1845,6 +1846,11 @@ class CRUDController extends Controller
 
         if ($result['activityResponse']) {
             return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', 'Status updated successfully & Activity has been created');
+        }
+
+        if ($entity->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+            return redirect()->route('amt.show', $entity->uuid)
+                ->with('success', 'Lead Status has been Updated');
         }
 
         return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
