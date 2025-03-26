@@ -17,6 +17,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
 use App\Models\TravelQuote;
@@ -646,7 +647,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);
 
-        $quote->documents()->create([
+        $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
             'original_name' => $originalName ?? $docName,
             'doc_url' => $filePathAzure,
@@ -656,9 +657,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'doc_uuid' => generateUUID(),
         ]);
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
+        if ($newDocument->exists) {
+            WatermarkDocumentsJob::dispatch(
+                $newDocument->id, $quote->uuid, $documentType->id
+            );
+        }
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
     }
 
     private function getMimeTypeAndFileName($documentUrl): array
