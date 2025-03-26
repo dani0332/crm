@@ -164,6 +164,7 @@ class CarQuoteService extends BaseService
             ]);
         }
 
+        $driverName = $request->driver_name ?? null;
         $firstName = $request->first_name ?? null;
         $lastName = $request->last_name ?? null;
 
@@ -173,7 +174,7 @@ class CarQuoteService extends BaseService
             ->first();
         if ($registrationType == CarRegistrationType::COMPANY) {
             if($vehicleUse == CarVehicleUse::PRIVATE) {
-                $name = explode(' ', $firstName);
+                $name = explode(' ', $driverName);
                 $firstName = reset($name);
                 unset($name[0]);
                 $lastName = implode(' ', $name) ?? null;
@@ -1624,7 +1625,7 @@ class CarQuoteService extends BaseService
 
             if ($request->vehicle_use == CarVehicleUse::PRIVATE ) {
                 $validationArray = array_merge($validationArray, [
-                    'first_name' => 'required|string|between:1,20',
+                    'driver_name' => 'required|string|between:1,70',
                     'dob' => 'required',
                     'nationality_id' => 'required',
                     'uae_license_held_for_id' => 'required',

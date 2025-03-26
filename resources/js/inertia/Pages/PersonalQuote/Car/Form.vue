@@ -53,25 +53,12 @@ const bussinessActivityOptions = computed(() => {
   }));
 });
 
-const isCompanyCar = computed(() => {
-  return quoteForm.registration_type === carRegistrationTypeEnum.COMPANY;
-});
-
-const isPersonalCar = computed(() => {
-  return quoteForm.registration_type === carRegistrationTypeEnum.PERSONAL;
-});
-
-const isPrivateCar = computed(() => {
-  return isCompanyCar && quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE;
-});
-
 const quoteForm = useForm({
   modelType: '"Car"',
   model: props.model,
   renewal_batch: props.quote?.renewal_batch || '',
-  first_name: isPrivateCar 
-    ? `${props.quote?.first_name || ''} ${props.quote?.last_name || ''}`.trim() 
-    : props.quote?.first_name || '',
+  driver_name: `${props.quote?.first_name || ''} ${props.quote?.last_name || ''}`.trim(),
+  first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
@@ -117,6 +104,18 @@ const quoteForm = useForm({
   vehicle_use: props.quote?.vehicle_use || '',
   company_contact_name: `${props.quote.customer_first_name || ''} ${props.quote.customer_last_name || ''}`.trim(),
   business_activity_id: props.quote?.business_activity_id || '',
+});
+
+const isCompanyCar = computed(() => {
+  return quoteForm.registration_type === carRegistrationTypeEnum.COMPANY;
+});
+
+const isPersonalCar = computed(() => {
+  return quoteForm.registration_type === carRegistrationTypeEnum.PERSONAL;
+});
+
+const isPrivateCar = computed(() => {
+  return isCompanyCar.value && quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE;
 });
 
 const isDisbaled =
@@ -243,12 +242,14 @@ const clearFormValues = () => {
     delete quoteForm.company_name;
     delete quoteForm.company_contact_name;
     delete quoteForm.business_activity_id;
+    delete quoteForm.driver_name;
   } else {
 
+    delete quoteForm.first_name;
     delete quoteForm.last_name;
 
     if (quoteForm.vehicle_use === carVehicleUseEnum.COMMERCIAL) {
-      delete quoteForm.first_name;
+      delete quoteForm.driver_name;
       delete quoteForm.dob;
       delete quoteForm.nationality_id;
       delete quoteForm.uae_license_held_for_id;
@@ -537,14 +538,14 @@ const isAmlOrKycUpdated = computed(() => {
           />
         </x-field>
 
-        <x-field 
-        v-if="isPrivateCar || isPersonalCar"
-        :label="isPrivateCar ? 'DRIVER\'S NAME' : 'FIRST NAME'"
+        <x-field
+        v-if="isPersonalCar"
+        label="FIRST NAME"
         required>
           <x-input
             maxLength="20"
             v-model="quoteForm.first_name"
-            :rules="[isRequired, isPrivateCar ? v => v.trim().split(' ').length >= 2 || 'Please enter full name' : () => true]"
+            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.first_name"
           />
@@ -560,6 +561,19 @@ const isAmlOrKycUpdated = computed(() => {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.last_name"
+          />
+        </x-field>
+
+        <x-field
+        v-if="isPrivateCar"
+        label="DRIVER'S NAME"
+        required>
+          <x-input
+            maxLength="20"
+            v-model="quoteForm.driver_name"
+            :rules="[v => v.trim().split(' ').length >= 2 || 'Please enter full name']"
+            class="w-full"
+            :error="quoteForm.errors.driver_name"
           />
         </x-field>
 
