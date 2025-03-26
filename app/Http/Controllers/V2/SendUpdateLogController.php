@@ -257,6 +257,7 @@ class SendUpdateLogController extends Controller
             'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission']),
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
         ]);
     }
 

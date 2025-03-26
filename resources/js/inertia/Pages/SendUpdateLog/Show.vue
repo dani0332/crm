@@ -45,6 +45,7 @@ const props = defineProps({
   disableMainBtn: String,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  cancelOptions: Array,
 });
 
 const page = usePage();
@@ -360,6 +361,15 @@ const cancelSendUpdate = () => {
     isLoading.value = false;
   });
 };
+
+const cancelOptionsList = computed(() => {
+  if (props.cancelOptions) {
+    return props.cancelOptions.map(option => ({
+      value: option.code,
+      label: option.text,
+    }));
+  }
+});
 </script>
 
 <template>
@@ -396,11 +406,7 @@ const cancelSendUpdate = () => {
           v-model="cancelForm.cancel_reason"
           class="w-full"
           placeholder="Select Cancel Reason"
-          :options="[
-            { value: 'reason_1', label: 'Reason 1' },
-            { value: 'reason_2', label: 'Reason 2' },
-            { value: 'reason_3', label: 'Reason 3' },
-          ]"
+          :options="cancelOptionsList"
           filterable
           :error="cancelReasonError ? 'Reason field is required' : ''"
         />
