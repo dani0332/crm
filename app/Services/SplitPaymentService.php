@@ -688,7 +688,6 @@ class SplitPaymentService
                     $this->createReceipt($modelType, $quoteId, $paymentSplit, $sendUpdateId, $isFromJob);
                 }
             }
-
         }
 
         $paymentSplit = PaymentSplits::with([
@@ -703,9 +702,9 @@ class SplitPaymentService
             $paymentSplit->verified_at = now();
             $paymentSplit->verified_by = Auth::user()->id ?? null;
         }
-
+        $shouldCreateReceipt = $this->shouldCreateReceipt($parentPayment, $paymentSplit);
         if ($this->shouldProcessPayment($paymentSplit, $isFromJob, $modelType)) {
-            $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId, $parentPayment) {
+            $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId, $parentPayment, $shouldCreateReceipt) {
                 if (! isset($paymentSplit->collection_amount)) {
                     $paymentSplit->collection_amount = $amountCollected;
                     $paymentSplit->save();
@@ -718,13 +717,12 @@ class SplitPaymentService
 
                 // Create payment receipt for broker & As of now we are not using broker in payment
                 // We will remove this code soon
-                if ($this->shouldCreateReceipt($parentPayment, $paymentSplit)) {
+                if ($shouldCreateReceipt) {
                     $this->createReceipt($modelType, $quoteId, $paymentSplit, $sendUpdateId, $isFromJob);
                 }
 
                 // Handling the send update log status
                 if ($parentPayment->send_update_log_id) {
-
                     info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Starting send update log process");
 
                     $sendUpdateLog = $parentPayment->sendUpdateLog;
@@ -734,10 +732,12 @@ class SplitPaymentService
                     ]);
                     info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Send update log status updated successfully");
                 }
-                if ($isFromJob) {
-                    $this->processMasterPaymentApprove($modelType, $quoteId, $parentPayment->send_update_log_id, true);
-                }
             }, $maxRetries);
+
+            // Process master payment approve if the payment is from job
+            if ($isFromJob) {
+                $this->processMasterPaymentApprove($modelType, $quoteId, $parentPayment->send_update_log_id, true);
+            }
 
             if (isset($retryResponse['status']) && $retryResponse['status'] == PaymentProcessJobEnum::FAILED) {
                 info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} Failed to approve split payment");
