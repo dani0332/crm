@@ -35,7 +35,7 @@ class BusinessQuoteObserver
     public function updated(BusinessQuote $businessQuote): void
     {
         $dirty = $businessQuote->getDirty();
-        
+
         $oldAdvisorId = $businessQuote->getOriginal('advisor_id') ?? null;
 
         if (isset($dirty['advisor_id'])) {
@@ -61,7 +61,6 @@ class BusinessQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $businessQuote->transaction_approved_at];
         }
-
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($businessQuote->quote_status_id)) {
             BusinessQuote::withoutEvents(function () use ($businessQuote) {
