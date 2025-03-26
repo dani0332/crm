@@ -5,6 +5,8 @@ namespace App\Strategies\Allocations;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
+use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 use App\Services\SendEmailCustomerService;
@@ -106,6 +108,16 @@ class CarAllocation implements Allocation
         return $tier;
     }
 
+    private function evaluateTeamId(CarQuote $lead)
+    {
+        if ($this->teamId && $lead->isSIC(QuoteTypes::CAR) && $lead->isPUA()) {
+            $sicTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+            if ($sicTeamId == $this->teamId) {
+                $this->teamId = getTeamId(TeamNameEnum::ORGANIC);
+            }
+        }
+    }
+
     private function processTier($lead, $tier)
     {
         info('Tier identified. Proceeding to finalize the tier and tier name : '.$tier->name);
@@ -119,6 +131,8 @@ class CarAllocation implements Allocation
 
             return $this->carAllocationService->createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier->id);
         }
+
+        $this->evaluateTeamId($lead);
 
         info('Tier finalized is : '.$tier->name);
         $availableUsers = $this->findAvailableUsers($tier, $lead->source, $lead);

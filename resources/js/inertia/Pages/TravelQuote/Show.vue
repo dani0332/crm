@@ -1,9 +1,9 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -1178,16 +1178,16 @@ const onCopyText = text => {
     });
 };
 
-const getAddonVat = item => {
+const totalPremiumWithVat = (discountPremium, vat, addons) => {
   let addonVat = 0;
-  item.addons.forEach(addon => {
-    addon.addonOptions.forEach(option => {
+  addons.forEach(item => {
+    item.addonOptions.forEach(option => {
       if (option.isSelected && option.price != 0) {
-        addonVat += parseInt(option.price) + option.vat;
+        addonVat += useRoundIt(option.price) + useRoundIt(option.vat);
       }
     });
   });
-  return addonVat;
+  return useRoundIt(discountPremium + addonVat + vat);
 };
 
 const isProfileUpdateAllow = computed(() => {
@@ -1417,7 +1417,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails', 'quote'],
   });
 };
 
@@ -3169,9 +3169,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
               <template #item-premiumWithVat="item">
                 {{
-                  parseFloat(
-                    item.discountPremium + item.vat + getAddonVat(item),
-                  ).toFixed(2)
+                  totalPremiumWithVat(
+                    item.discountPremium,
+                    item.vat,
+                    item.addons,
+                  )
                 }}
               </template>
               <template #item-action="item">
@@ -3262,9 +3264,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </template>
                 <template #item-premiumWithVat="item">
                   {{
-                    parseFloat(
-                      item.discountPremium + item.vat + getAddonVat(item),
-                    ).toFixed(2)
+                    totalPremiumWithVat(
+                      item.discountPremium,
+                      item.vat,
+                      item.addons,
+                    )
                   }}
                 </template>
                 <template #item-action="item">
