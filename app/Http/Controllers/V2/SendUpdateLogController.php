@@ -303,7 +303,6 @@ class SendUpdateLogController extends Controller
         $model = PersonalQuote::class;
 
         if ($type === 'create') {
-
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                     if ($subType && $subType['slug'] === 'MPC') {
