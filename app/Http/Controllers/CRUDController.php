@@ -1848,7 +1848,10 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', 'Status updated successfully & Activity has been created');
         }
 
-        if ($entity->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+        if (
+            isset($entity->business_type_of_insurance_id) &&
+            $entity->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL
+        ) {
             return redirect()->route('amt.show', $entity->uuid)
                 ->with('success', 'Lead Status has been Updated');
         }
