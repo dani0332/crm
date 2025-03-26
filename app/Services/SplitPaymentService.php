@@ -780,41 +780,54 @@ class SplitPaymentService
     // function to process the master payment approve
     public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0, $paymentCode = '')
     {
+        $oldQuoteStatus = null;
+        if ($sendUpdateId > 0) {
+            $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
+        } else {
+            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            $oldQuoteStatus = $quoteModel->quote_status_id;
+        }
+        info("Master payment code: {$quoteModel->code} Processing master payment approval started");
+
+        $quoteModel->load(['payments' => function($query) use ($paymentCode, $sendUpdateId, $quoteModel) {
+            $query->with(['paymentSplits', 'insuranceProvider', 'sendUpdateLog']);
+            
+            if ($paymentCode != '') {
+                $query->where('code', $paymentCode);
+            } else {
+                $query->when($sendUpdateId > 0, 
+                    fn($q) => $q->where('send_update_log_id', $sendUpdateId),
+                    fn($q) => $q->where('code', $quoteModel->code)
+                );
+            }
+        }]);
+
+        $masterPayment = $quoteModel->payments->first();
+
+        $totalApproved = $quoteModel->payments->where('is_approved', 1)->count();
+        $totalPaymentsCount = $quoteModel->payments->count();
+
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $masterPaymentStatus = $masterPayment->payment_status_id;
+
+        $totalPaidPayments = $masterPayment->paymentSplits->whereIn('payment_status_id', [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::CAPTURED,
+        ])->count();
+    
+        $totalPartialPaidPayments = $masterPayment->paymentSplits->whereIn('payment_status_id', [
+            PaymentStatusEnum::PARTIAL_CAPTURED,
+            PaymentStatusEnum::PARTIALLY_PAID,
+        ])->count();
+    
+        if ($totalPaidPayments == $masterPayment->total_payments) {
+            $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
+        } elseif ($totalPartialPaidPayments > 0) {
+            $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
+        }
+            
         DB::beginTransaction();
         try {
-            $oldQuoteStatus = null;
-            if ($sendUpdateId > 0) {
-                $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
-            } else {
-                $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-                $oldQuoteStatus = $quoteModel->quote_status_id;
-            }
-
-            info('Master payment code: '.$quoteModel->code.' Processing master payment approval started');
-
-            if ($paymentCode != '') {
-                $masterPayment = $quoteModel->payments()->where('code', $paymentCode)->first();
-            } else {
-                $masterPayment = ($sendUpdateId > 0) ? $quoteModel->payments()->where('send_update_log_id', $sendUpdateId)->first() : $quoteModel->payments()->where('code', $quoteModel->code)->first();
-            }
-
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-            $masterPaymentStatus = $masterPayment->payment_status_id;
-            $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                PaymentStatusEnum::PAID,
-                PaymentStatusEnum::CAPTURED,
-            ])->where('code', $masterPayment->code)->count();
-
-            $totalPartialPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                PaymentStatusEnum::PARTIAL_CAPTURED,
-                PaymentStatusEnum::PARTIALLY_PAID,
-            ])->where('code', $masterPayment->code)->count();
-
-            if ($totalPaidPayments == $masterPayment->total_payments) {
-                $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
-            } elseif ($totalPartialPaidPayments > 0) {
-                $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
-            }
 
             $masterPayment->update([
                 'is_approved' => 1,
@@ -822,31 +835,30 @@ class SplitPaymentService
                 'updated_by' => Auth::user()->id ?? null,
             ]);
 
-            info('Master payment code: '.$quoteModel->code.' Master payment approved with Payment Status: '.$masterPaymentStatus);
+            $totalApproved++;
 
-            $successMessage = 'Transaction approved';
-            $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
-            $totalPaymentsCount = $quoteModel->payments()->count();
+            info("Master payment code: {$quoteModel->code} Master payment approved with Payment Status: {$masterPaymentStatus} and total approved payments: {$totalApproved} and total payments count: {$totalPaymentsCount}");
+
+            $successMessage = 'Processing master payment approval completed';
+            
             if (($masterPayment->insuranceProvider->code == InsuranceProvidersEnum::ALNC && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
                 if ($sendUpdateId) {
                     app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
-                    info('Quote code: '.$quoteModel->code.' Quote status updated to Transaction Approved for send update');
-
+                    info("Master payment code: {$quoteModel->code} Quote status updated to Transaction Approved for send update");
                 } else {
-
                     $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
-                    info('Quote code: '.$quoteModel->code.' Lock Lead status: '.$lockLeadSectionsDetails['lead_status'].' Quote Status ID: '.$quoteModel->quote_status_id);
+                    info("Master payment code: {$quoteModel->code} Lock Lead status: {$lockLeadSectionsDetails['lead_status']} Quote Status ID: {$quoteModel->quote_status_id}");
                     if (! $lockLeadSectionsDetails['lead_status'] || $quoteModel->quote_status_id == QuoteStatusEnum::TransactionDeclined) {
                         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
 
                         app(CRUDService::class)->calculateScore($quoteModel, $modelType);
-                        info('Quote code: '.$quoteModel->code.' Transaction Score Calculated and quote status updated to Transaction Approved for main lead');
+                        info("Master payment code: {$quoteModel->code} Transaction Score Calculated and quote status updated to Transaction Approved for main lead");
                     }
 
                 }
                 $quoteModel->save();
-                info('Quote code: '.$quoteModel->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quoteModel->quote_status_id);
+                info("Master payment code: {$quoteModel->code} - Old Quote Status: {$oldQuoteStatus} New Quote Status: {$quoteModel->quote_status_id}");
                 if (! $sendUpdateId && $oldQuoteStatus != null && $quoteModel->quote_status_id != $oldQuoteStatus) {
                     QuoteStatusLog::create([
                         'quote_type_id' => $quoteTypeId,
@@ -866,24 +878,24 @@ class SplitPaymentService
                     }
                     if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel, $quoteStatusId)) {
                         $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
-                        info('Master payment code: '.$quoteModel->code.' Duplicate lead created for Quote Code: '.$quoteModel->code.'-1');
+                        info("Master payment code: {$quoteModel->code} Duplicate lead created for Quote Code: {$quoteModel->code}-1");
                     }
                 }
             }
             if (! $sendUpdateId) {
                 $this->updateLeadStatus($masterPayment);
-                info('Master payment code: '.$quoteModel->code.' Lead status updated for Master Payment');
+                info("Master payment code: {$quoteModel->code} Lead status updated for Master Payment");
             }
 
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
-                info('Master payment code: '.$quoteModel->code.' Payment Process Job updated to SUCCESS');
+                info("Master payment code: {$quoteModel->code} Payment Process Job updated to SUCCESS");
             }
             DB::commit();
         } catch (\Exception $exception) {
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
-                info('Master payment code: '.$quoteModel->code.' Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' with error: '.$exception->getMessage());
+                info("Master payment code: {$quoteModel->code} Payment Process Job failed for Split Payment ID: {$splitPaymentId} with error: {$exception->getMessage()}");
                 $this->handleAutomationError($quoteModel, $modelType, $masterPayment);
             }
             Log::error('Error in processMasterPaymentApprove for Quote Code: '.$quoteModel->code.': '.$exception->getMessage());
