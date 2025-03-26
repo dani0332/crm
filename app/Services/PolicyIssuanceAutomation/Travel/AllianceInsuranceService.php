@@ -138,7 +138,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
                             return $uploadPolicyDocumentResponse;
                         }
-                        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued, 'policy_issuance_status_id ' => PolicyIssuanceStatusEnum::PolicyIssued, 'quote_status_date' => now()]);
+                        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued, 'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued, 'quote_status_date' => now()]);
                         $process->update(['completed_step' => $uploadPolicyDocumentResponse['completed_step']]);
                     }
 
