@@ -3803,7 +3803,7 @@ const deletePayment = () => {
       deletePaymentProcess.value = false;
       if (err.response.data) {
         notification.error({
-          title: err.response.data[0],
+          title: err.response.data?.message,
           position: 'top',
         });
       } else {
