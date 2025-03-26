@@ -1079,9 +1079,9 @@ class SplitPaymentService
     public function deleteSplitPayment($splitPaymentId)
     {
         $maxRetries = 2;
-        $this->handleWithDeadlockRetries(function () use ($splitPaymentId) {
-            $paymentSplit = PaymentSplits::find($splitPaymentId);
-            $masterPayment = $paymentSplit->payment;
+        $paymentSplit = PaymentSplits::find($splitPaymentId);
+        $masterPayment = $paymentSplit->payment;
+        $this->handleWithDeadlockRetries(function () use ($splitPaymentId, $paymentSplit, $masterPayment) {
             $this->deletePaymentSplit($paymentSplit);
             $this->updateMasterPayment($masterPayment);
         }, $maxRetries);
