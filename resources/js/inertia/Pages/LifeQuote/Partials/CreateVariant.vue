@@ -245,6 +245,7 @@ const onSubmit = isValid => {
               placeholder="Enter Sum Assured"
               :rules="[isRequired]"
               class="w-full"
+              type="number"
             />
           </div>
         </div>

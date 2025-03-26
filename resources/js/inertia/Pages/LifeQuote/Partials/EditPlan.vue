@@ -462,6 +462,7 @@ const closeModal = ()  => {
                 :disabled="editForm.isApi"
                 :rules="[isRequired]"
                 size="sm"
+                type="number"
               />
             </div>
 

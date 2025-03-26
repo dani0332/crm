@@ -146,6 +146,7 @@ const onNoteSubmit = isValid => {
 const notesLength = computed(() => notesForm.notes?.length ?? 0);
 
 const onEditNote = data => {
+  console.log('testing', data);
   notesForm.notes = data.note;
   notesForm.id = data.id;
   uploadedFiles.value = data.documents.map(file => {
@@ -266,7 +267,7 @@ watch(
     <div>
       <div class="flex justify-end">
         <x-button size="sm" color="orange" @click="showAddNotesModal()">
-          {{ isEdit ? 'Edit' : 'Add' }} Notes
+          Add Notes
         </x-button>
       </div>
       <DataTable
