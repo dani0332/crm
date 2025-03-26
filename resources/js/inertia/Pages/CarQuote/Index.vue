@@ -125,7 +125,7 @@ const tableHeader = [
   { text: 'CAR MODEL', value: 'car_model' },
   { text: 'CAR MODEL YEAR', value: 'year_of_manufacture' },
   { text: 'TYPE OF CAR INSURANCE', value: 'car_type_insurance_id' },
-  { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
+  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'CREATED DATE', value: 'created_at' },
   {
     text: 'ADVISOR ASSIGNED DATE',

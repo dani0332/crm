@@ -3,9 +3,13 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
+use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
 
@@ -43,7 +47,7 @@ class CarAllocation implements Allocation
                 return $this->carAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
-            info('Processing record for Quote Allocation with uuid: '.$lead->uuid, [
+            info('Processing record for Quote Allocation', [
                 'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
                 'source' => $lead->source,
@@ -55,7 +59,7 @@ class CarAllocation implements Allocation
             ]);
 
             if ($lead->isAllocationInProgress()) {
-                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+                info("Allocation is already started at {$lead->allocation_started_at}");
 
                 return $this->carAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
             }
@@ -67,7 +71,7 @@ class CarAllocation implements Allocation
             if ($tier) {
                 $response = $this->processTier($lead, $tier);
             } else {
-                info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+                info('Tier not found. Skipping for now.');
 
                 $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
 
@@ -91,7 +95,7 @@ class CarAllocation implements Allocation
         $tier = $lead->tier_id != null ? $this->getTier($lead->tier_id) : $this->findTier($lead);
 
         if ($tier) {
-            info('check the lead and identify if the tier update is required : '.$lead->uuid);
+            info('check the lead and identify if the tier update is required');
             $updatedTierId = $this->carAllocationService->updateTierBeforeEligibleUserIdentification($lead);
 
             if (! empty($updatedTierId) && $updatedTierId != $lead->tier_id) {
@@ -104,12 +108,22 @@ class CarAllocation implements Allocation
         return $tier;
     }
 
+    private function evaluateTeamId(CarQuote $lead)
+    {
+        if ($this->teamId && $lead->isSIC(QuoteTypes::CAR) && $lead->isPUA()) {
+            $sicTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+            if ($sicTeamId == $this->teamId) {
+                $this->teamId = getTeamId(TeamNameEnum::ORGANIC);
+            }
+        }
+    }
+
     private function processTier($lead, $tier)
     {
-        info('Tier identified. Proceeding to finalize the tier for lead : '.$lead->uuid.' with UUID : '.$lead->uuid.' and tier name : '.$tier->name);
+        info('Tier identified. Proceeding to finalize the tier and tier name : '.$tier->name);
 
         if ($this->evaluateTierOnly) {
-            info('Evaluate tier only. Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
+            info('Evaluate tier only. Tier finalized : '.$tier->name);
             $lead->tier_id = $tier->id;
             $lead->save();
 
@@ -118,7 +132,9 @@ class CarAllocation implements Allocation
             return $this->carAllocationService->createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier->id);
         }
 
-        info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
+        $this->evaluateTeamId($lead);
+
+        info('Tier finalized is : '.$tier->name);
         $availableUsers = $this->findAvailableUsers($tier, $lead->source, $lead);
         $rules = $this->findRules($lead);
         $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
@@ -134,6 +150,10 @@ class CarAllocation implements Allocation
 
         if ($advisorId && $advisorId != 0) {
             $this->assignLead($lead, $advisorId, $tier);
+
+            if ($lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+                app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($lead, $advisorId);
+            }
 
             return $this->carAllocationService->createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
         } else {

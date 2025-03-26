@@ -293,7 +293,7 @@ const submitPolicy = () => {
       Object.keys(flash_messages).forEach(function (key) {
         if (flash_messages[key]) {
           notification.error({
-            title: flash_messages[key],
+            title: flash_messages[key][0] ?? flash_messages[key],
             position: 'top',
           });
         }
@@ -451,6 +451,7 @@ const disableCommissionVatApplicable = computed(() => {
   // Enable Commission vat not applicable for all LOBs or when commission vat not applicable is  empty
   return !bp.isEditing || bpForm.commission_vat_not_applicable > 0;
 });
+
 const showSendAndBookPolicyButtonBlock = computed(() => {
   if (bpForm.isTapCaptureProcessStart || !isAllPaymentAuthorized()) {
     return false;
@@ -1048,10 +1049,7 @@ const isDisabledSendPCB = computed(() => {
                         @change="calculateCommission"
                         placeholder="Commission VAT APPLICABLE"
                         class="w-full"
-                        :disabled="
-                          disableCommissionVatApplicable ||
-                          bpForm.isCommissionDisabled
-                        "
+                        :disabled="disableCommissionVatApplicable"
                       />
                       <div
                         v-if="

@@ -17,6 +17,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
 use App\Models\TravelQuote;
@@ -577,7 +578,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' updateQuoteApiIssuanceStatus executed');
 
         $this->allocateLead($quote, $isInsurerApiStatusAlreadyFailed);
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'  allocation of failed lead started');
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.'  allocation of failed lead executed');
 
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
     }
@@ -604,8 +605,16 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info(self::class.' fn:'.__FUNCTION__.' - Going to allocate failed lead ................ Ref-ID: '.$uuid);
         $unassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
-        $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
-        if ($response && $response['advisorId']) {
+        $advisorId = $quote?->advisor_id;
+        info(self::class.' fn:'.__FUNCTION__.' - Quote Code : '.$quote->code.' -  check if advisor id already assigned :  '.$advisorId);
+        if (! $advisorId) {
+            $response = QuoteTypes::TRAVEL->allocate($uuid, $unassistedTeamId);
+            if ($response && $response['advisorId']) {
+                $advisorId = $response['advisorId'];
+            }
+        }
+
+        if ($advisorId) {
             info(self::class.' fn:'.__FUNCTION__.' - Going to dispatch SendTravelAllianceFailedAllocationEmailJob & SendBookPolicyDocumentsJob ................ Ref-ID: '.$uuid);
             /* Send Failed notification only when Insurer API status is not failed already to prevent multiple email triggers and Insurer API Status is not null */
             if (! $isInsurerApiStatusAlreadyFailed && $quote?->insurer_api_status != null) {
@@ -638,7 +647,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);
 
-        $quote->documents()->create([
+        $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
             'original_name' => $originalName ?? $docName,
             'doc_url' => $filePathAzure,
@@ -648,9 +657,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'doc_uuid' => generateUUID(),
         ]);
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
+        if ($newDocument->exists) {
+            WatermarkDocumentsJob::dispatch(
+                $newDocument->id, $quote->uuid, $documentType->id
+            );
+        }
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
     }
 
     private function getMimeTypeAndFileName($documentUrl): array
@@ -730,7 +743,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return Http::timeout(20)->withHeaders($headers)->post($url, $payload);
     }
 
-    private function calculateCoverDaysForExpiryDate($quote, $travelType): mixed
+    public function calculateCoverDaysForExpiryDate($quote, $travelType): mixed
     {
         $coverDays = $quote->days_cover_for;
         $isInboundLead = $travelType === TravelQuoteEnum::ALLIANCE_IN_BOUND;

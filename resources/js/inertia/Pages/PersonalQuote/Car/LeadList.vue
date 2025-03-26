@@ -45,53 +45,58 @@ const serverOptions = ref({
 
 const tableHeader = [
   { text: 'REF-ID', value: 'code' },
-  { text: 'BATCH', value: 'quote_batch_id_text' },
+  { text: 'BATCH', value: 'batch.name' },
   { text: 'Vehicle Use', value: 'vehicle_use' },
   { text: 'Company Name', value: 'car_company_name' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at_formatted' },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
-  { text: 'DATE OF BIRTH', value: 'dob' },
+  { text: 'DATE OF BIRTH', value: 'dob_formatted' },
   { text: 'LEAD SOURCE', value: 'source' },
   { text: 'ADVISOR REQUESTED', value: 'sic_advisor_requested' },
-  { text: 'NATIONALITY', value: 'nationality_id_text' },
-  { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for_id_text' },
-  { text: 'CAR MAKE', value: 'car_make_id_text' },
-  { text: 'CAR MODEL', value: 'car_model_id_text' },
+  { text: 'NATIONALITY', value: 'nationality.text' },
+  { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for.text' },
+  { text: 'CAR MAKE', value: 'car_make.text' },
+  { text: 'CAR MODEL', value: 'car_model.text' },
   { text: 'CAR MODEL YEAR', value: 'year_of_manufacture' },
   { text: 'FIRST REGISTRATION DATE', value: 'year_of_first_registration' },
   { text: 'CAR VALUE', value: 'car_value' },
   { text: 'CAR VALUE (AT ENQUIRY)', value: 'car_value_tier' },
-  { text: 'VEHICLE TYPE', value: 'vehicle_type_id_text' },
-  { text: 'TYPE OF CAR INSURANCE', value: 'current_insurance_status' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_text' },
-  { text: 'CLAIM HISTORY', value: 'claim_history_id_text' },
+  { text: 'VEHICLE TYPE', value: 'vehicle_type.text' },
+  { text: 'TYPE OF CAR INSURANCE', value: 'car_type_insurance.text' },
+  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
+  { text: 'CLAIM HISTORY', value: 'claim_history.text' },
   { text: 'CREATED DATE', value: 'created_at' },
   {
     text: 'POLICY EXPIRY DATE',
-    value: 'previous_policy_expiry_date',
-    sortable: true,
+    value: 'previous_policy_expiry_date_formatted',
   },
-  { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
-  { text: 'LEAD COST', value: 'cost_per_lead' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
-  { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
+  {
+    text: 'ADVISOR ASSIGNED DATE',
+    value: 'car_quote_request_detail.advisor_assigned_date_formatted',
+  },
+  { text: 'LEAD COST', value: 'tier.cost_per_lead' },
+  { text: 'LEAD STATUS', value: 'quote_status.text' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_text' },
+  { text: 'PAYMENT STATUS', value: 'payment_status.text' },
   { text: 'ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'TIER NAME', value: 'tier_id_text' },
-  { text: 'VISIT COUNT', value: 'visit_count' },
-  { text: 'FOLLOW UP DATE', value: 'next_followup_date' },
+  { text: 'TIER NAME', value: 'tier.name' },
+  { text: 'VISIT COUNT', value: 'quote_view_count.visit_count' },
+  {
+    text: 'FOLLOW UP DATE',
+    value: 'car_quote_request_detail.next_followup_date_formatted',
+  },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
+  { text: 'ADVISOR', value: 'advisor.name' },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PRICE', value: 'premium' },
-  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'LOST REASON', value: 'car_quote_request_detail.lost_reason.text' },
   { text: 'QUOTE LINK', value: 'quote_link' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
   {
@@ -104,8 +109,8 @@ const tableHeader = [
 
 const ecommerceOptions = [
   { value: '', label: 'Please select is ecommerce' },
-  { value: 'Yes', label: 'Yes' },
-  { value: 'No', label: 'No' },
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
 ];
 
 const filteredTableHeader = computed(() => {
@@ -1161,13 +1166,13 @@ const insurerAMLStatusOption = computed(() => {
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
       </template>
       <template #item-authorized_at="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ item.authorized_at }}
+        <p v-if="item.payment_status?.text === 'AUTHORISED'">
+          {{ item.payment?.authorized_at_formatted }}
         </p>
       </template>
       <template #item-expiry_date="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        <p v-if="item.payment_status?.text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.payment?.authorized_at_formatted) }}
         </p>
       </template>
     </DataTable>

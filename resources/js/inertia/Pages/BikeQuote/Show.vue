@@ -645,6 +645,10 @@ function capitalizeString(str) {
                 <dd>{{ quote?.bike_quote?.seat_capacity }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CHASSIS NUMBER</dt>
+                <dd>{{ quote?.bike_quote?.chassis_number }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Emirate Of Registration</dt>
                 <dd>{{ quote?.bike_quote?.emirates?.text }}</dd>
               </div>
@@ -1321,6 +1325,7 @@ function capitalizeString(str) {
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <QuotePayments

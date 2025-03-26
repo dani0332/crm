@@ -40,6 +40,7 @@ use App\Http\Requests\ExportValidationRequest;
 use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
+use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
@@ -67,6 +68,7 @@ use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\NotificationService;
@@ -317,12 +319,16 @@ class CentralController extends Controller
     {
         $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $code, $request->provider_code);
+
         return redirect()->back();
     }
 
     public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
+
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
 
         return response()->json(['plan' => $response]);
     }
@@ -579,7 +585,7 @@ class CentralController extends Controller
                 // Send Automated Followup Email Job if Health Auto-Followups is enabled.
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
-                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
+                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addMinutes($delayDays));
                     info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
                 }
 
@@ -658,7 +664,7 @@ class CentralController extends Controller
 
         $response = ['status' => false, 'message' => ''];
         if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
-            $resposneMessage = 'GIG server connection issue. Please check API logs for details of the error';
+            $responseMessage = 'GIG server connection issue. Please check API logs for details of the error';
 
             if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
                 $insurerAMLScreeningResponse = AML::where([
@@ -667,13 +673,21 @@ class CentralController extends Controller
                     'screening_type' => 'INSURER_'.InsuranceProvidersEnum::AXA,
                 ])->latest()->first();
 
-                $amlResponse = json_decode($insurerAMLScreeningResponse->results);
+                $amlResponse = ! empty($insurerAMLScreeningResponse) ? json_decode($insurerAMLScreeningResponse->results) : [];
 
-                return ['status' => true, 'message' => $amlResponse->message ?? $resposneMessage];
+                return ['status' => true, 'message' => $amlResponse?->message ?? $responseMessage];
             }
-            $response = ['status' => true, 'message' => $resposneMessage];
+            $response = ['status' => true, 'message' => $responseMessage];
         }
 
         return $response;
+    }
+
+    public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
+
+        return response()->json(['response' => $response]);
     }
 }

@@ -32,11 +32,13 @@ use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
+use App\Services\Logger\LoggerService;
 use App\Services\TravelAllocationService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CorplineAllocation;
 use App\Strategies\Allocations\CycleAllocation;
+use App\Strategies\Allocations\GroupMedicalAllocation;
 use App\Strategies\Allocations\HealthAllocation;
 use App\Strategies\Allocations\HomeAllocation;
 use App\Strategies\Allocations\LifeAllocation;
@@ -260,6 +262,8 @@ enum QuoteTypes: string
 
     public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false)
     {
+        LoggerService::startQuoteLogging($uuid);
+
         $allocationService = match ($this) {
             self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
             self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
@@ -271,6 +275,7 @@ enum QuoteTypes: string
             self::LIFE => new LifeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::CORPLINE => new CorplineAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::HOME => new HomeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::GROUP_MEDICAL => new GroupMedicalAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             default => null,
         };
 
@@ -294,6 +299,7 @@ enum QuoteTypes: string
             self::LIFE => [RolesEnum::LifeAdvisor],
             self::CORPLINE => [RolesEnum::CorpLineAdvisor],
             self::HOME => [RolesEnum::HomeAdvisor],
+            self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             default => [],
         };
     }

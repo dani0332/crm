@@ -21,7 +21,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
-use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
@@ -41,6 +40,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class CRUDService extends BaseService
@@ -110,8 +110,14 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($model->modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+        $dataQuery = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->getGridData($model, $request);
+
+        if ($request->has('debug') && $request->debug == 'true') {
+            dd($dataQuery->toRawSql());
+        }
+
+        return $dataQuery;
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $leadType)
@@ -343,19 +349,6 @@ class CRUDService extends BaseService
                 }
             }
 
-            if (
-                strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
-                && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-            ) {
-
-                if (
-                    $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-                    || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
-                    || $request->leadStatus == QuoteStatusEnum::TransactionApproved
-                ) {
-                    CammyJob::dispatch($entity, 'unsub');
-                }
-            }
             $quoteTypeId = constant(QuoteTypeId::class.'::'.$request->modelType);
 
             $activityResponse = false;
@@ -615,16 +608,31 @@ class CRUDService extends BaseService
     {
         if ($paymentSplit) {
             if ($amount > 0) {
-                PaymentAction::updateOrInsert(
-                    ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
-                    [
-                        'is_fulfilled' => 0,
-                        'action_type' => 'CAPTURE',
-                        'amount' => $amount,
-                        'created_by' => auth()->user()->email,
-                        'is_manager_approved' => 1,
-                    ]
-                );
+                $maxAttempts = 3;
+                for ($i = 0; $i < $maxAttempts; $i++) {
+                    try {
+                        info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action with payment amount {$amount}.");
+                        PaymentAction::updateOrInsert(
+                            ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
+                            [
+                                'is_fulfilled' => 0,
+                                'action_type' => 'CAPTURE',
+                                'amount' => $amount,
+                                'created_by' => auth()->user()->email,
+                                'is_manager_approved' => 1,
+                            ]
+                        );
+                        info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
+                        break;
+                    } catch (\Illuminate\Database\QueryException $e) {
+                        Log::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
+                        if ($i == $maxAttempts - 1) {
+                            Log::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');
+                            vAbort('Capture failed please try again later.');
+                        }
+                        sleep(1); // Wait before retrying
+                    }
+                }
 
                 $data = [
                     'uuid' => $quoteModel->uuid,

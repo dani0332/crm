@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\QuoteTypeId;
 use App\Models\QuoteType;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class QuoteTypeTableSeeder extends Seeder
 {
@@ -16,15 +15,6 @@ class QuoteTypeTableSeeder extends Seeder
      */
     public function run()
     {
-        $quoteTypes = DB::table('quote_type')->get();
-
-        foreach ($quoteTypes as $quoteType) {
-            if (! $quoteType->short_code) {
-                $shortCode = strtoupper(substr($quoteType->code, 0, 3));
-                DB::table('quote_type')->where('id', $quoteType->id)->update(['short_code' => $shortCode]);
-            }
-        }
-
         QuoteType::firstOrCreate(
             ['code' => 'CompanyCar'],
             [

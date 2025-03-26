@@ -1653,6 +1653,7 @@ const handlePlanSelected = plan => {
       'ecomDetails',
       'coPayment',
       'bookPolicyDetails',
+      'quote',
     ],
   });
 };
@@ -3258,15 +3259,25 @@ const applyEmiratesIdNumMasking = emiratesId =>
             >
               Download PDF
             </x-button>
-            <x-button
-              @click.prevent="validateEmailSending"
-              size="sm"
-              color="orange"
-              :disabled="doesEmailStatusExist || isOcaButtonDisabled"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Send OCA Email to Customer
-            </x-button>
+            <x-tooltip placement="top" align="left">
+              <x-button
+                @click.prevent="validateEmailSending"
+                size="sm"
+                color="orange"
+                :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Send OCA Email to Customer
+              </x-button>
+              <template #tooltip>
+                <div>
+                  When clicked, this button sends the One Click Apply (OCA)
+                  email to the customer with updated rates and coverage options,
+                  helping them finalize their purchase with ease.
+                </div>
+              </template>
+            </x-tooltip>
+
             <x-button
               v-if="plansTable.data.length > 0"
               size="sm"
@@ -3674,6 +3685,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <PaymentTable
