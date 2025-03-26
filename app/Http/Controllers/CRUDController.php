@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
@@ -1845,6 +1846,11 @@ class CRUDController extends Controller
 
         if ($result['activityResponse']) {
             return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', 'Status updated successfully & Activity has been created');
+        }
+
+        if ($entity->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
+            return redirect()->route('amt.show', $entity->uuid)
+                ->with('success', 'Lead Status has been Updated');
         }
 
         return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
