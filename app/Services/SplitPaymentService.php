@@ -884,7 +884,7 @@ class SplitPaymentService
             }
             if (! $sendUpdateId) {
                 $this->updateLeadStatus($masterPayment);
-                info("Master payment code: {$quoteModel->code} Lead status updated for Master Payment");
+                info("Master payment code: {$quoteModel->code} Lead status updated for quote according to payment status");
             }
 
             if ($isFromJob && $splitPaymentId > 0) {

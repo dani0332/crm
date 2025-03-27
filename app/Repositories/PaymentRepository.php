@@ -464,7 +464,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
         }
         // Log the master payment approval process
-        info('Master payment code: '.$request->payment_code.' processing master payment approval');
+        info('Master payment code: '.$request->payment_code.' processing master payment approval called');
 
         // process master payment approve
         return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
