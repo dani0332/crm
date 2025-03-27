@@ -264,7 +264,7 @@ onMounted(() => {
 });
 
 const setFormValues = () => {
-  if (isEdit.value && !isPersonalCar.value) {
+  if (isEdit.value && !isPrivateCar.value) {
       quoteForm.driver_name = '';
   }
 }
