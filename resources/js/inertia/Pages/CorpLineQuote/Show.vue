@@ -1606,7 +1606,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
 
     <lead-raw-data
       :modelType="'Business'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

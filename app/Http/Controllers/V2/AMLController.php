@@ -252,7 +252,10 @@ class AMLController extends Controller
             ->where(function ($aml) {
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $aml->orWhereNull('decision');
-            })->whereNull('screenshot')->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+            })->where(function ($aml) {
+                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                $aml->orWhereNull('screening_type');
+            });
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'asc')->get();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
@@ -408,8 +411,10 @@ class AMLController extends Controller
         ])->where(function ($ryuFilter) {
             $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
             $ryuFilter->orWhereNull('decision');
-        })->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
-            ->whereNull('screenshot')->get()->last() ?? [];
+        })->where(function ($aml) {
+            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+            $aml->orWhereNull('screening_type');
+        })->whereNull('screenshot')->get()->last() ?? [];
 
         if ($getMemberOrUBODetails) {
             info('AML Screening Bridger - Members found against Ref-ID: '.$quoteRequestId);

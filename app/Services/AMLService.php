@@ -382,7 +382,10 @@ class AMLService
                 $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $ryuFilter->orWhereNull('decision');
             })
-            ->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
+            ->where(function ($aml) {
+                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                $aml->orWhereNull('screening_type');
+            })
             ->whereNull('screenshot')
             ->orderBy('id', 'desc')
             ->value('splitted_customer_code');
@@ -412,8 +415,10 @@ class AMLService
         ])->where(function ($ryuFilter) {
             $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
             $ryuFilter->orWhereNull('decision');
-        })->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
-            ->whereNull('screenshot')->pluck('decision');
+        })->where(function ($aml) {
+            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+            $aml->orWhereNull('screening_type');
+        })->whereNull('screenshot')->pluck('decision');
 
         if ($fetchAMLRecords->count() == 0) {
             return true;

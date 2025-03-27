@@ -2175,7 +2175,7 @@ const isPlanDetailEnabled = computed(() => {
 
     <lead-raw-data
       :modelType="'Home'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>
