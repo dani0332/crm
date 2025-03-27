@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\PaymentSplits;
+use App\Models\SendUpdateLog;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -20,9 +21,10 @@ class PostPrepaymentToSageRequest extends FormRequest
     {
 
         return [
-            'paymentSplit' => 'required',
+            'paymentSplitId' => 'required',
             'quoteRequestId' => 'required',
             'quoteType' => 'required',
+            'sendUpdateId' => 'nullable',
         ];
     }
 
@@ -32,9 +34,13 @@ class PostPrepaymentToSageRequest extends FormRequest
             if (! (new SageApiService)->isSageEnabled()) {
                 $validator->errors()->add('sage', 'Sage is not enabled.');
             }
-            $paymentSplit = PaymentSplits::whereId(request()->paymentSplit)->first();
+            $paymentSplit = PaymentSplits::whereId(request()->paymentSplitId)->first();
             if (! $paymentSplit) {
                 $validator->errors()->add('payment_split', 'Payment split not found.');
+            }
+            $sendUpdateLog = SendUpdateLog::whereId(request()->sendUpdateId)->first();
+            if (request()->sendUpdateId && ! $sendUpdateLog) {
+                $validator->errors()->add('send_update', 'Send Update not found.');
             }
         });
     }

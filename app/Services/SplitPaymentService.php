@@ -177,7 +177,14 @@ class SplitPaymentService
                 }
             }
 
-            if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            $sendUpdateLog = $splitPayment->payment?->sendUpdateLog;
+            $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
+
+            $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
+
+            $shouldSchedulePostPrepayment = ($isPolicyBooked && !$sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+
+            if ($shouldSchedulePostPrepayment) {
                 info(self::class.' fn:'.__FUNCTION__.' trigger post prepayment schedule for PaymentSplitID : '.$splitPayment->id);
                 $postPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->modelType, $splitPayment]);
                 if (! $postPrepayment['status']) {

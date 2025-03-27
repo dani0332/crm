@@ -26,6 +26,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
+use App\Models\SendUpdateLog;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
@@ -2279,11 +2280,12 @@ class SageApiService
     public function schedulePostPrepaymentToSageProcess($data)
     {
         $response = ['status' => false, 'message' => null, 'errors' => [], 'data' => null];
-        [$quote, $quoteType, $paymentSplit] = $data;
+        [$quote, $quoteType, $paymentSplit, $sendUpdateLog] = $data;
         info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Scheduling Sage Process  for Prepayment Posting of Payment split.');
         $paymentSplit = $paymentSplit->refresh();
         $quote = $quote->refresh();
-        $preChecksForPostingPrepaymentOnSage = (new SageApiService)->preChecksForPostPrepaymentSchedule($quote, $paymentSplit);
+        $sendUpdateLog = $sendUpdateLog->refresh();
+        $preChecksForPostingPrepaymentOnSage = (new SageApiService)->preChecksForPostPrepaymentSchedule($quote, $sendUpdateLog, $paymentSplit);
 
         if (! $preChecksForPostingPrepaymentOnSage['status']) {
             $response['errors'] = $preChecksForPostingPrepaymentOnSage['errors'];
@@ -2301,12 +2303,14 @@ class SageApiService
             'quoteCode' => $quote->code,
             'quoteType' => $quoteType,
             'paymentSplitId' => $paymentSplit->id,
+            'sendUpdateId' => $sendUpdateLog?->id,
             'sageProcessRequestType' => SageEnum::SAGE_PROCESS_POST_PREPAYMENT_REQUEST,
         ];
         $requestData = [
             'quoteType' => $quoteType,
             'paymentSplit' => $paymentSplit->id,
             'quoteRequestId' => $quote->id,
+            'sendUpdateId' => $sendUpdateLog?->id,
         ];
         $sageProcessData = [
             'user_id' => auth()->id(),
@@ -2346,7 +2350,7 @@ class SageApiService
         return $response;
     }
 
-    public function preChecksForPostPrepaymentSchedule($quote, $paymentSplit)
+    public function preChecksForPostPrepaymentSchedule($quote, $sendUpdateLog, $paymentSplit)
     {
         $response = ['status' => false, 'message' => null, 'errors' => []];
         if (! $this->isSageEnabled()) {
@@ -2360,9 +2364,13 @@ class SageApiService
             $response['errors']['payment_split'] = 'Payment Split not found.';
         }
 
+        $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
         $isPolicyBooked = $quote?->quote_status_id == QuoteStatusEnum::PolicyBooked;
-        if (! $isPolicyBooked) {
-            $response['errors']['policy-booked'] = 'Quote not found or Post Prepayment cannot be done as Policy is not booked yet.';
+        $shouldSchedulePostPrepayment = ($isPolicyBooked && !$sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+
+        if (!$shouldSchedulePostPrepayment) {
+            $key = $sendUpdateLog ? 'Send Update' : 'Quote';
+            $response['errors']['booking-status'] = 'Post Prepayment cannot be done as '.$key.' is not booked yet.';
         }
 
         $prepaymentReceiptStatus = $paymentSplit->prepayment_receipt_status;
@@ -2391,12 +2399,16 @@ class SageApiService
     public function postPrepaymentToSage($data)
     {
         [$paymentSplit, $sageRequest, $request] = $data;
+        $paymentSplit = $paymentSplit->refresh();
         try {
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
-            $payment = $paymentSplit->payment;
+            if($request->sendUpdateId){
+                $quote = SendUpdateLog::whereId($request->sendUpdateId)->first();
+            }
+
             info(self::class.' fn: '.__FUNCTION__.'Starting postPrepaymentToSage for payment split ID: '.$paymentSplit->id.', Quote Code: '.$quote->code);
 
-            $response = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote, $paymentSplit]);
+            $response = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote , $paymentSplit]);
 
             info("Completed postPrepaymentToSage for payment split ID: {$paymentSplit->id}", [
                 'status' => $response['status'],

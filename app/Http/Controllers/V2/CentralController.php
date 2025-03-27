@@ -68,6 +68,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\SendUpdateLog;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\AMLService;
@@ -699,11 +700,15 @@ class CentralController extends Controller
         try {
             $request = $postPrepaymentToSageRequest->safe();
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
-            $paymentSplit = PaymentSplits::whereId($request->paymentSplit)->first();
+            $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
+            $sendUpdateLog = null;
+            if($request->sendUpdateId){
+                $sendUpdateLog = SendUpdateLog::whereId(request()->sendUpdateId)->first();
+            }
 
             info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Prepayment Posting of Payment split.');
 
-            $schedulePostPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->quoteType, $paymentSplit]);
+            $schedulePostPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->quoteType, $paymentSplit , $sendUpdateLog]);
 
             if (! $schedulePostPrepayment['status']) {
                 $errors = count($schedulePostPrepayment['errors']) > 0 ? $schedulePostPrepayment['errors'] : ['message' => $schedulePostPrepayment['message']];

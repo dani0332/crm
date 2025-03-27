@@ -3778,16 +3778,17 @@ const triggerPostPrepayment = async splitPayment => {
   if (!isPolicyBooked) {
     notification.warning({
       title:
-        'Posting of Prepayment cannot be trigered as Policy is not Booked yet!',
+        'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
       position: 'top',
     });
   }
   try {
     NProgress.start();
     const response = await axios.post(route('post.prepayment.to.sage'), {
-      paymentSplit: splitPayment.id,
+      paymentSplitId: splitPayment.id,
       quoteRequestId: props.quoteRequest.id,
       quoteType: page.props.quoteType,
+      sendUpdateId: props.sendUpdate?.id,
     });
     NProgress.done();
     if (response.data.success) {
@@ -3820,9 +3821,14 @@ const enablePostPrepaymentButton = splitPayment => {
   let isPolicyBooked =
     page.props.quoteStatusEnum.PolicyBooked ===
     props.quoteRequest.quote_status_id;
+  let isSendUpdateBooked =
+    props.sendUpdate?.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+  let isPolicyOrSendUpdateBooked =
+    (isPolicyBooked && !props.sendUpdate) ||
+    (props.sendUpdate && isSendUpdateBooked);
   if (
     can(permissionEnum.SHOW_POST_PREPAYMENT_BUTTON) &&
-    isPolicyBooked &&
+    isPolicyOrSendUpdateBooked &&
     splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
   ) {
     return true;
@@ -4299,9 +4305,7 @@ onBeforeMount(() => {
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td class="text-center">
-                          {{ splitPayment.id }}
-                        </td>
+                        <td class="text-center"></td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ splitPayment.payment_method.name }}</td>
