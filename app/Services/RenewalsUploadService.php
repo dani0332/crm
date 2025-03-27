@@ -1237,9 +1237,9 @@ class RenewalsUploadService
             $firstName = array_shift($memberNameArray);
             $lastName = implode(' ', $memberNameArray);
             $fullNameKey = strtolower(trim($firstName . ' ' . $lastName));
-            $premium = $memberPremiums[$index];
-
-            if(isset($existingCustomersMember[$fullNameKey]) && isset($premium)) {
+            
+            if(isset($existingCustomersMember[$fullNameKey]) && isset($memberPremiums[$index])) {
+                $premium = $memberPremiums[$index];
                 $memberPremiumBreakdown[] = [
                     'memberId' => $existingCustomersMember[$fullNameKey]->id,
                     'ratesPerCopay' => [
