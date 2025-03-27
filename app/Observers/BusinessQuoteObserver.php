@@ -41,7 +41,7 @@ class BusinessQuoteObserver
 
         if (isset($dirty['advisor_id'])) {
             $businessTypeInsurance= "";
-            
+
             switch ($businessQuote->business_type_of_insurance_id) {
                 case BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL:
                     $businessTypeInsurance = QuoteTypes::GROUP_MEDICAL->value;
@@ -50,12 +50,13 @@ class BusinessQuoteObserver
                     $businessTypeInsurance = BusinessTypeOfInsuranceEnum::PROPERTY;
                 break;
                 case BusinessTypeOfInsuranceIdEnum::SEVERAL_INSURANCES:
-                    $businessTypeInsurance = QuoteTypes::CORPLINE->value;
+                    $businessTypeInsurance = BusinessTypeOfInsuranceEnum::SEVERAL_INSURANCES;
                 break;
                 default:
                     $businessTypeInsurance = QuoteTypes::CORPLINE->value;
                     break;
             }
+
 
             if ($businessQuote->source != LeadSourceEnum::IMCRM && !empty($businessTypeInsurance)) {
                 info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Ref-ID: {$businessQuote->uuid} | Time: ".now());
@@ -63,7 +64,7 @@ class BusinessQuoteObserver
 
                 $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
                 info(self::class." Sending {$emailType} email to customer for  {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
-                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId);
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId, $businessQuote->businessTypeOfInsurance ?? []);
                 info(self::class." | {$emailType} email sent to customer for {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
 
             } else {

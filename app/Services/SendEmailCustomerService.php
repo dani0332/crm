@@ -1537,7 +1537,7 @@ class SendEmailCustomerService extends BaseService
         return $bccAdditional;
     }
 
-    public function sendIntroAndReassignEmail($quote, $quoteType = null, $oldAdvisorId = null)
+    public function sendIntroAndReassignEmail($quote, $quoteType = null, $oldAdvisorId = null, $businessTypeInsurance = [])
     {
         $advisor = User::where('id', $quote->advisor_id)->first();
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
@@ -1558,6 +1558,7 @@ class SendEmailCustomerService extends BaseService
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
+            'businessTypeInsurance' => $businessTypeInsurance ?? [],
             'workflowType' => empty($oldAdvisorId) ? workflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER : workflowTypeEnum::CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR,
         ];
 

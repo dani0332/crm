@@ -16,5 +16,5 @@ final class BusinessTypeOfInsuranceEnum extends Enum
     const HOLIDAY_HOME = 'Holiday Homes';
     const GOODS_IN_TRANSIT = 'Goods In Transit';
     const PROPERTY = 'Property';
-
+    const SEVERAL_INSURANCES = 'Several Insurances';
 }
