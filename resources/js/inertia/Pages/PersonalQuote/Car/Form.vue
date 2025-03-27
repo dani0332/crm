@@ -264,8 +264,13 @@ onMounted(() => {
 });
 
 const setFormValues = () => {
-  if (isEdit.value && !isPrivateCar.value) {
-      quoteForm.driver_name = '';
+  if (isEdit.value) {
+      if(isPrivateCar.value) {
+        quoteForm.first_name = props.quote.customer_first_name || '';
+        quoteForm.last_name = props.quote.customer_last_name || '';
+      } else {
+        quoteForm.driver_name = '';
+      }
   }
 }
 
