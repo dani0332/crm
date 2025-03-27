@@ -15,4 +15,6 @@ final class BusinessTypeOfInsuranceEnum extends Enum
     const MARINE_CARGO_OPEN_COVER = 'Marine Cargo - Open Cover';
     const HOLIDAY_HOME = 'Holiday Homes';
     const GOODS_IN_TRANSIT = 'Goods In Transit';
+    const PROPERTY = 'Property';
+
 }

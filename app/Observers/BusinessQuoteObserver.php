@@ -15,6 +15,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Enums\BusinessTypeOfInsuranceEnum;
 
 class BusinessQuoteObserver
 {
@@ -40,11 +41,20 @@ class BusinessQuoteObserver
 
         if (isset($dirty['advisor_id'])) {
             $businessTypeInsurance= "";
-            if($businessQuote->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL){
-                $businessTypeInsurance = QuoteTypes::GROUP_MEDICAL->value;
-            }
-            if($businessQuote->business_type_of_insurance_id != BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL){
-                $businessTypeInsurance = QuoteTypes::CORPLINE->value;
+            
+            switch ($businessQuote->business_type_of_insurance_id) {
+                case BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL:
+                    $businessTypeInsurance = QuoteTypes::GROUP_MEDICAL->value;
+                    break;
+                case BusinessTypeOfInsuranceIdEnum::PROPERTY:
+                    $businessTypeInsurance = BusinessTypeOfInsuranceEnum::PROPERTY;
+                break;
+                case BusinessTypeOfInsuranceIdEnum::SEVERAL_INSURANCES:
+                    $businessTypeInsurance = QuoteTypes::CORPLINE->value;
+                break;
+                default:
+                    $businessTypeInsurance = QuoteTypes::CORPLINE->value;
+                    break;
             }
 
             if ($businessQuote->source != LeadSourceEnum::IMCRM && !empty($businessTypeInsurance)) {
