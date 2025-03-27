@@ -1509,9 +1509,9 @@ class RenewalsUploadService
         $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead];
         $leadSources = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED];
 
-        if(!(in_array($carQuote->quote_status_id, $eligibleStatuses) && in_array($carQuote->source, $leadSources)) 
-            && !$carQuote->advisor_id && $carQuote->sic_flow_enabled) {
-            
+        if (! (in_array($carQuote->quote_status_id, $eligibleStatuses) && in_array($carQuote->source, $leadSources))
+            && ! $carQuote->advisor_id && $carQuote->sic_flow_enabled) {
+
             return false;
         }
 
