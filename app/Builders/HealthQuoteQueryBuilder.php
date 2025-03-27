@@ -65,8 +65,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'dob',
             'nationality_id',
             'transaction_approved_at',
-            'created_at',
-            'updated_at',
+            'health_quote_request.created_at',
+            'health_quote_request.updated_at',
             'assignment_type',
             'gender',
         ], [
