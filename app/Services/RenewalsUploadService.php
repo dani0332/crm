@@ -1509,10 +1509,14 @@ class RenewalsUploadService
         $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead];
         $leadSources = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED];
 
-        if(isset($carQuote->advisor_id) && in_array($carQuote->quote_status_id, $eligibleStatuses) && in_array($carQuote->source, $leadSources)) {
-            $carQuote->quote_status_id = QuoteStatusEnum::Quoted;
-            $carQuote->save();
+        if(!(in_array($carQuote->quote_status_id, $eligibleStatuses) && in_array($carQuote->source, $leadSources)) 
+            && !$carQuote->advisor_id && $carQuote->sic_flow_enabled) {
+            
+            return false;
         }
+
+        $carQuote->quote_status_id = QuoteStatusEnum::Quoted;
+        $carQuote->save();
 
         $notes = 'Change quote status to Quoted as OCB sent';
         app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id(), $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
