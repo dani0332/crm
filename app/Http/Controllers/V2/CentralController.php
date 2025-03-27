@@ -722,7 +722,7 @@ class CentralController extends Controller
                 'message' => 'Prepayment posting to Sage has been scheduled and will be processed in the background.',
             ], 200);
         } catch (Exception $exception) {
-            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', $$exception->getMessage());
+            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', $exception->getMessage());
 
             return response()->json([
                 'success' => false,
