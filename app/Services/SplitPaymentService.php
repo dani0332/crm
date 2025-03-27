@@ -182,7 +182,7 @@ class SplitPaymentService
 
             $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
 
-            $shouldSchedulePostPrepayment = ($isPolicyBooked && !$sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+            $shouldSchedulePostPrepayment = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
 
             if ($shouldSchedulePostPrepayment) {
                 info(self::class.' fn:'.__FUNCTION__.' trigger post prepayment schedule for PaymentSplitID : '.$splitPayment->id);

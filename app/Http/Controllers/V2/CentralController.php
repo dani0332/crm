@@ -702,13 +702,13 @@ class CentralController extends Controller
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
             $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
             $sendUpdateLog = null;
-            if($request->sendUpdateId){
+            if ($request->sendUpdateId) {
                 $sendUpdateLog = SendUpdateLog::whereId(request()->sendUpdateId)->first();
             }
 
             info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Prepayment Posting of Payment split.');
 
-            $schedulePostPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->quoteType, $paymentSplit , $sendUpdateLog]);
+            $schedulePostPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->quoteType, $paymentSplit, $sendUpdateLog]);
 
             if (! $schedulePostPrepayment['status']) {
                 $errors = count($schedulePostPrepayment['errors']) > 0 ? $schedulePostPrepayment['errors'] : ['message' => $schedulePostPrepayment['message']];
@@ -730,7 +730,6 @@ class CentralController extends Controller
             ], 500);
         }
     }
-
 
     public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
     {
