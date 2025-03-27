@@ -2366,9 +2366,9 @@ class SageApiService
 
         $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
         $isPolicyBooked = $quote?->quote_status_id == QuoteStatusEnum::PolicyBooked;
-        $shouldSchedulePostPrepayment = ($isPolicyBooked && !$sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+        $shouldSchedulePostPrepayment = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
 
-        if (!$shouldSchedulePostPrepayment) {
+        if (! $shouldSchedulePostPrepayment) {
             $key = $sendUpdateLog ? 'Send Update' : 'Quote';
             $response['errors']['booking-status'] = 'Post Prepayment cannot be done as '.$key.' is not booked yet.';
         }
@@ -2402,13 +2402,13 @@ class SageApiService
         $paymentSplit = $paymentSplit->refresh();
         try {
             $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
-            if($request->sendUpdateId){
+            if ($request->sendUpdateId) {
                 $quote = SendUpdateLog::whereId($request->sendUpdateId)->first();
             }
 
             info(self::class.' fn: '.__FUNCTION__.'Starting postPrepaymentToSage for payment split ID: '.$paymentSplit->id.', Quote Code: '.$quote->code);
 
-            $response = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote , $paymentSplit]);
+            $response = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote, $paymentSplit]);
 
             info("Completed postPrepaymentToSage for payment split ID: {$paymentSplit->id}", [
                 'status' => $response['status'],
