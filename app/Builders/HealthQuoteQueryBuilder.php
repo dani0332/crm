@@ -126,6 +126,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByDateRange('booking_date', 'policy_booking_date')
             ->filterByAdvisorAssignedDates('healthQuoteRequestDetail', ['assigned_to_date_start', 'assigned_to_date_end'], verifyQuoteStatus: true)
+            ->filterByDateRange('last_modified_date', 'updated_at')
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
                 $query->where(fn($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
@@ -172,9 +173,6 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when($this->shouldApplyDatesFilter() && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
-            })
-            ->when(request()->filled('last_modified_date'), function ($query) {
-                $query->filterByDateRange('last_modified_date', 'updated_at');
             })
             ->when(
                 request()->filled('sortBy'),
