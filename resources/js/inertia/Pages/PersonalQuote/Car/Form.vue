@@ -84,8 +84,7 @@ const quoteForm = useForm({
   car_type_insurance_id: props.quote?.car_type_insurance_id || null,
   claim_history_id: props.quote?.claim_history_id || null,
   seat_capacity: props.quote?.seat_capacity || '',
-  has_ncd_supporting_documents:
-    props.quote?.has_ncd_supporting_documents || null,
+  has_ncd_supporting_documents: props.quote?.has_ncd_supporting_documents,
   car_value_tier: props.quote?.car_value_tier || '',
   car_value: props.quote?.car_value || '',
   addressObj: {
