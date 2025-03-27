@@ -789,6 +789,9 @@ class SplitPaymentService
         }
         info("Master payment code: {$quoteModel->code} Processing master payment approval started");
 
+        $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
+        $totalPaymentsCount = $quoteModel->payments()->count();
+
         $quoteModel->load(['payments' => function($query) use ($paymentCode, $sendUpdateId, $quoteModel) {
             $query->with(['paymentSplits', 'insuranceProvider', 'sendUpdateLog']);
             
@@ -803,9 +806,6 @@ class SplitPaymentService
         }]);
 
         $masterPayment = $quoteModel->payments->first();
-
-        $totalApproved = $quoteModel->payments->where('is_approved', 1)->count();
-        $totalPaymentsCount = $quoteModel->payments->count();
 
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $masterPaymentStatus = $masterPayment->payment_status_id;
