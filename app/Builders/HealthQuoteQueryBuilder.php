@@ -168,10 +168,10 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 fn($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
 
             )
-            ->when($this->shouldApplyDatesFilter() && ! request()->filled('created_at_start'), function ($query) {
+            ->when($this->shouldApplyDatesFilter() && ! request()->filled('last_modified_date') && ! request()->filled('created_at_start') && ! request()->filled('renewal_batches') && ! request()->filled('policy_expiry_date') && ! request()->filled('policy_expiry_date_end'), function ($query) {
                 $query->filterByToday();
             })
-            ->when($this->shouldApplyDatesFilter() && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
+            ->when($this->shouldApplyDatesFilter() && !request()->filled('renewal_batches') && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
             })
             ->when(
