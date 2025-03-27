@@ -1,10 +1,10 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -1133,7 +1133,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
     <lead-raw-data
       :modelType="'Cycle'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>
