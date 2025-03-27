@@ -259,8 +259,15 @@ const clearFormValues = () => {
 };
 
 onMounted(() => {
+  setFormValues();
   setCarMakeAndModalValues();
 });
+
+const setFormValues = () => {
+  if (isEdit.value && !isPersonalCar.value) {
+      quoteForm.driver_name = '';
+  }
+}
 
 const setCarMakeAndModalValues = () => {
   if (quoteForm.car_make_id !== null) {
