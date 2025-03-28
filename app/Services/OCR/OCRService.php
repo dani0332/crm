@@ -26,7 +26,7 @@ class OCRService
                 ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
                 ->withHeader('x-api-key', config('constants.OCR_API_KEY'))
                 ->timeout(60)
-                ->beforeSending(fn () => info(self::class."::sendRequest - Calling OCR API via {$method} request to {$endpoint}"))
+                ->beforeSending(fn () => info(self::class."::sendRequest - Calling OCR API via {$method} request to {$endpoint}", $data))
                 ->when(
                     $method === 'GET',
                     fn (PendingRequest $http) => $http->get($endpoint, $data),
@@ -48,17 +48,13 @@ class OCRService
 
     private function getData(string $docUrl, OCRDocumentTypeEnum $docType, string $fileMimeType)
     {
-        $body = [
+        $response = $this->sendRequest('/process-document', [
             'doc_url' => $docUrl,
             'doc_type' => $docType,
             'image' => $this->isMimeTypeImage($fileMimeType),
             'provider' => config('constants.OCR_API_AI_PROVIDER'),
             'model' => config('constants.OCR_API_AI_MODEL'),
-        ];
-
-        info(self::class.'::getData - Requesting OCR data', $body);
-
-        $response = $this->sendRequest('/process-document', $body);
+        ]);
 
         if ($response['ok']) {
             return $response['object'];
