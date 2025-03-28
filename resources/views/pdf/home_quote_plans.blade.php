@@ -409,7 +409,7 @@
         border-top: 2px solid #D3D3D3;
         border-bottom: 2px solid #D3D3D3;
         font-size: 14px;
-        color: #333;
+        color: #5B5F60;
         padding: 10px 0;
     }
 
@@ -690,18 +690,18 @@
             <div class="header-bottom">
                 <!-- Left Side Text -->
                 <div class="header-text">
-                    <strong class="raleway-font">Home insurance comparison table</strong>
+                    <strong class="raleway-font" style="color: #5B5F60 !important; font-weight: 600 !important;">Home insurance comparison table</strong>
                     <span class="separator">|</span>
-                    Name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span>
+                    Name: <span class="header-text-highlight" style="color: #5B5F60 !important;">{{ $quote->first_name }} {{ $quote->last_name }}</span>
                     <span class="separator">|</span>
-                    Property type: <span class="header-text-highlight">{{ $accommodationText }}</span>
+                    Property type: <span class="header-text-highlight" style="color: #5B5F60 !important;">{{ $accommodationText }}</span>
                     <span class="separator">|</span>
-                    Coverage type: <span class="header-text-highlight">{{ $coverageText }}</span>
+                    Coverage type: <span class="header-text-highlight" style="color: #5B5F60 !important;">{{ $coverageText }}</span>
                 </div>
             
                 <!-- Right Side Quote Number -->
                 <div class="quote-number">
-                    Quote reference number: <strong>{{ $quote->code }}</strong>
+                    Quote reference number: <strong style="color: #5B5F60 !important;">{{ $quote->code }}</strong>
                 </div>
             </div>
             
