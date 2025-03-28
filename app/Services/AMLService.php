@@ -36,6 +36,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
+use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -391,7 +392,7 @@ class AMLService
             $status = CustomerTypeEnum::EntityShort;
         } elseif($status == null && $quoteTypeId == QuoteTypes::CAR->id()) {
 
-            $quote = CarQuote::where('id', $quoteRequestId)->select('registration_type')->first();
+            $quote = CarQuoteRepository::where('id', $quoteRequestId)->select('registration_type')->first();
             if($quote->registration_type == CarRegistrationType::COMPANY) {
                 $status = CustomerTypeEnum::EntityShort;
             } else {
