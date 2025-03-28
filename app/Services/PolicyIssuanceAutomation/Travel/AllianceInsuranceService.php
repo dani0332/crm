@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -142,7 +143,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
                             return $uploadPolicyDocumentResponse;
                         }
-                        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued]);
+                        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued, 'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued, 'quote_status_date' => now()]);
                         $process->update(['completed_step' => $uploadPolicyDocumentResponse['completed_step']]);
                     }
 
@@ -309,7 +310,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $insurerPolicyNumber = $policyPurchaseResult->policy_number;
         $insurerTaxNumber = $policyPurchaseResult->tax_invoice_number;
 
-        $quote->update(['policy_number' => $insurerPolicyNumber, 'quote_status_id' => QuoteStatusEnum::PolicyIssued, 'quote_status_date' => now()]);
+        $quote->update(['policy_number' => $insurerPolicyNumber]);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy Purchase Api called successfully and Quote is updated');
 
         $payment->update(['insurer_tax_number' => $insurerTaxNumber]);
