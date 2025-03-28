@@ -128,7 +128,8 @@ class CarAllocationService extends AllocationService
 
     public function getTierBasedOnValue($carLead, $tiersQuery): void
     {
-        if ($carLead->car_model_detail_id == null) {
+
+        if ($carLead->car_model_detail_id == null && !$this->isCommercialLead($carLead)) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
         } else {
             $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
@@ -951,4 +952,31 @@ class CarAllocationService extends AllocationService
             ->pluck('user_id')
             ->toArray();
     }
+    public function isCommercialLead($lead){
+
+        $commercialCarMake = CarMake::where('id', $lead->car_make_id)
+            ->where('is_commercial', true)
+            ->select('id')
+            ->first();
+
+        $commercialCarModel = CarModel::where('id', $lead->car_model_id)
+            ->where('is_commercial', true)
+            ->select('id')
+            ->first();
+
+        if($commercialCarMake && $commercialCarModel){
+            info(self::class." - Commercial car make and model found for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+            return true;
+        }
+         $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+
+        foreach ($commercialKeywords as $keyword) {
+            if (str_contains(strtolower(trim($lead->full_name)),strtolower(trim($keyword->name)))) {
+                info(self::class." - Commercial keywords found for lead with Ref-ID: {$lead->uuid} | Time:".now());
+                return true;
+            }
+        }
+         return false;
+    }
+
 }
