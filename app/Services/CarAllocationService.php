@@ -129,11 +129,12 @@ class CarAllocationService extends AllocationService
     public function getTierBasedOnValue($carLead, $tiersQuery): void
     {
 
+
         if ($carLead->car_model_detail_id == null && ! $this->isCommercialLead($carLead)) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
         } else {
-            $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
 
+            $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
             $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
 
             $axaValuation = array_filter($valuations, function ($provider) use ($axaProvider) {
@@ -276,12 +277,14 @@ class CarAllocationService extends AllocationService
             if (count($plans) > 0) {
                 info('More than one plan found against');
                 // Determine the tier based on a value and return the first matching tier.
+                info(self::class."- More than one plan found against Tier based on value is being calculated for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
                 $this->getTierBasedOnValue($carLead, $tiersQuery);
 
                 return $tiersQuery->first();
             } else {
                 // Check car value and age to determine the tier.
                 if ($carLead->car_value >= 300000) {
+                    info(self::class." - Car value is {$carLead->car_valu}   Tier H is being assigned for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
                     return $tiersQuery->Where('name', TiersEnum::TIER_H)->first();
                 }
 
@@ -289,11 +292,13 @@ class CarAllocationService extends AllocationService
                 $ageInYears = $userDob->age;
 
                 if ($carLead->car_value < 300000 || $ageInYears >= 21) {
+                    info(self::class." - Car value is {$carLead->car_value} and age is {$ageInYears} Tier 6 is being assigned for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
                     return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->first();
                 }
             }
         } else {
             // Determine the tier based on a value and return the first matching tier.
+            info(self::class."- Tier based on value is being calculated for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
             $this->getTierBasedOnValue($carLead, $tiersQuery);
 
             return $tiersQuery->first();
