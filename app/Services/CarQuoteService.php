@@ -75,10 +75,11 @@ class CarQuoteService extends BaseService
         $vehicleUse = $request->vehicle_use ?? CarVehicleUse::PRIVATE;
         $firstName = $request->first_name ?? null;
         $lastName = $request->last_name ?? null;
+        $driverName = $request->driver_name ?? null;
 
         if ($registrationType == CarRegistrationType::COMPANY) {
             if($vehicleUse == CarVehicleUse::PRIVATE) {
-                $name = explode(' ', $firstName);
+                $name = explode(' ', $driverName);
                 $firstName = reset($name);
                 unset($name[0]);
                 $lastName = implode(' ', $name) ?? null;
@@ -104,7 +105,7 @@ class CarQuoteService extends BaseService
             'emirateOfRegistrationId' => $request->emirate_of_registration_id,
             'carTypeInsuranceId' => $request->car_type_insurance_id,
             'claimHistoryId' => $request->claim_history_id,
-            'hasNcdSupportingDocuments' => $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
+            'hasNcdSupportingDocuments' => $request->has_ncd_supporting_documents,
             'additionalNotes' => $request->additional_notes,
             'carValue' => $request->car_value_tier,
             'carValueTier' => $request->car_value_tier,
@@ -226,8 +227,8 @@ class CarQuoteService extends BaseService
         if ($request->claim_history_id) {
             $carQuote->claim_history_id = $request->claim_history_id;
         }
-        if ($request->has_ncd_supporting_documents) {
-            $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
+        if (isset($request->has_ncd_supporting_documents)) {
+            $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents;
         }
         if ($request->premium) {
             $carQuote->premium = $request->premium;
