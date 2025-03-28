@@ -3666,7 +3666,7 @@ const isPolicySendUpdateBooked = option => {
     page.props.quoteStatusEnum.PolicyBooked;
   const isUpdateBooked =
     props.sendUpdate &&
-    props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+    props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
   const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
 
   if (isUpdateBooked && isCCAndInsurer) {
@@ -3889,7 +3889,7 @@ const enablePostPrepaymentButton = splitPayment => {
     page.props.quoteStatusEnum.PolicyBooked ===
     props.quoteRequest.quote_status_id;
   let isSendUpdateBooked =
-    props.sendUpdate?.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+    props.sendUpdate?.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
   let isPolicyOrSendUpdateBooked =
     (isPolicyBooked && !props.sendUpdate) ||
     (props.sendUpdate && isSendUpdateBooked);
