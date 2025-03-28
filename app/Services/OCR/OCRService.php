@@ -56,7 +56,7 @@ class OCRService
             'model' => config('constants.OCR_API_AI_MODEL'),
         ];
 
-        info(self::class."::getData - Requesting OCR data", $body);
+        info(self::class.'::getData - Requesting OCR data', $body);
 
         $response = $this->sendRequest('/process-document', $body);
 
