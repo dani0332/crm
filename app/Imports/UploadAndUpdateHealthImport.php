@@ -28,6 +28,7 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
     private $validCount = 0;
     private $failedCount = 0;
     private $renewalsUploadLead;
+    private $row;
 
     public function __construct(RenewalsUploadLeads $renewalsUploadLead)
     {
@@ -41,7 +42,26 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
      */
     public function rules(): array
     {
-        return $this->getRules();
+        return array_merge($this->getRules(), [
+            // check if the number of members is consistent across all member-related fields -- Cross field validations
+            '*.9' => ['required', function($attribute, $value, $onFailure) {
+                $memberCount = count(array_filter(explode('|', $value)));
+                
+                // Get values for all member-related columns
+                $dobCount = count(array_filter(explode('|', $this->row[10] ?? '')));
+                $nationalityCount = count(array_filter(explode('|', $this->row[11] ?? '')));
+                $genderCount = count(array_filter(explode('|', $this->row[12] ?? '')));
+                $emirateCount = count(array_filter(explode('|', $this->row[14] ?? '')));
+
+                // Check if all counts match
+                if (!($memberCount === $dobCount && 
+                    $memberCount === $nationalityCount && 
+                    $memberCount === $genderCount && 
+                    $memberCount === $emirateCount)) {
+                    $onFailure('The number of members must be consistent across all member-related fields (names, DOB, nationality, gender, and emirate of visa)');
+                }
+            }]
+        ]);
     }
 
     /**
@@ -49,6 +69,7 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
      */
     public function model(array $row)
     {
+        $this->row = $row;
         $this->validCount++;
 
         $quoteData = $this->mapQuoteData($row);
