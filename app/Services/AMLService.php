@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
@@ -387,6 +389,15 @@ class AMLService
 
         if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::EntityShort;
+        } elseif($status == null && $quoteTypeId == QuoteTypes::CAR->id()) {
+
+            $quote = CarQuote::where('id', $quoteRequestId)->select('registration_type')->first();
+            if($quote->registration_type == CarRegistrationType::COMPANY) {
+                $status = CustomerTypeEnum::EntityShort;
+            } else {
+                $status = CustomerTypeEnum::IndividualShort;
+            }
+
         } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::IndividualShort;
         }
