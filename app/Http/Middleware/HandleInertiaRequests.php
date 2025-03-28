@@ -236,6 +236,13 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::TRAVEL_SIC_ALLOCATION,
+            PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
@@ -293,6 +300,12 @@ class HandleInertiaRequests extends Middleware
                         'Yacht',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::YACHT]),
                         fn ($s) => $s->attributes(['icon' => 'yacht'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
+                        'Group Medical',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }

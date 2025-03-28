@@ -15,6 +15,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -1505,6 +1506,18 @@ class RenewalsUploadService
      */
     private function updateQuoteStatus($carQuote)
     {
+        $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead];
+        $leadSources = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED];
+
+        if (! (in_array($carQuote->quote_status_id, $eligibleStatuses) && in_array($carQuote->source, $leadSources))
+            && ! $carQuote->advisor_id && $carQuote->sic_flow_enabled) {
+
+            return false;
+        }
+
+        $carQuote->quote_status_id = QuoteStatusEnum::Quoted;
+        $carQuote->save();
+
         $notes = 'Change quote status to Quoted as OCB sent';
         app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id(), $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
     }

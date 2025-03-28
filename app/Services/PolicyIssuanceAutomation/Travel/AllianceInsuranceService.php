@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -17,6 +18,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\DocumentType;
 use App\Models\PolicyIssuanceLog;
 use App\Models\TravelQuote;
@@ -137,7 +139,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
                             return $uploadPolicyDocumentResponse;
                         }
-                        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued]);
+                        $quote->update(['quote_status_id' => QuoteStatusEnum::PolicyIssued, 'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued, 'quote_status_date' => now()]);
                         $process->update(['completed_step' => $uploadPolicyDocumentResponse['completed_step']]);
                     }
 
@@ -303,7 +305,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $insurerPolicyNumber = $policyPurchaseResult->policy_number;
         $insurerTaxNumber = $policyPurchaseResult->tax_invoice_number;
 
-        $quote->update(['policy_number' => $insurerPolicyNumber, 'quote_status_id' => QuoteStatusEnum::PolicyIssued, 'quote_status_date' => now()]);
+        $quote->update(['policy_number' => $insurerPolicyNumber]);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy Purchase Api called successfully and Quote is updated');
 
         $payment->update(['insurer_tax_number' => $insurerTaxNumber]);
@@ -646,7 +648,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);
 
-        $quote->documents()->create([
+        $newDocument = $quote->documents()->create([
             'doc_name' => $docName,
             'original_name' => $originalName ?? $docName,
             'doc_url' => $filePathAzure,
@@ -656,9 +658,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'doc_uuid' => generateUUID(),
         ]);
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
+        if ($newDocument->exists) {
+            WatermarkDocumentsJob::dispatch(
+                $newDocument->id, $quote->uuid, $documentType->id
+            );
+        }
 
-        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
+        info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Uploaded Document Name : '.$docName);
     }
 
     private function getMimeTypeAndFileName($documentUrl): array
