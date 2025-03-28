@@ -48,13 +48,17 @@ class OCRService
 
     private function getData(string $docUrl, OCRDocumentTypeEnum $docType, string $fileMimeType)
     {
-        $response = $this->sendRequest('/process-document', [
+        $body = [
             'doc_url' => $docUrl,
             'doc_type' => $docType,
             'image' => $this->isMimeTypeImage($fileMimeType),
             'provider' => config('constants.OCR_API_AI_PROVIDER'),
             'model' => config('constants.OCR_API_AI_MODEL'),
-        ]);
+        ];
+
+        info(self::class."::getData - Requesting OCR data", $body);
+
+        $response = $this->sendRequest('/process-document', $body);
 
         if ($response['ok']) {
             return $response['object'];
