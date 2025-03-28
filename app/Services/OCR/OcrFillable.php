@@ -52,9 +52,9 @@ trait OcrFillable
 
         $quote->payment?->update([
             'commission_vat' => $this->resolveProp($commission, 'VAT') ?? $quote->payment?->comission_vat,
-            'commission' => $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->comission,
+            'commission' => $this->resolveProp($commission, 'totalAmount') ?? $quote->payment?->comission,
             'insurer_commmission_invoice_number' => $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_commmission_invoice_number,
-            'commission_vat_applicable' => $this->resolveProp($commission, 'totalAmount') ?? $quote->payment?->comission_vat_applicable,
+            'commission_vat_applicable' => $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->comission_vat_applicable,
         ]);
     }
 
