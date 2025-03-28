@@ -129,7 +129,6 @@ class CarAllocationService extends AllocationService
     public function getTierBasedOnValue($carLead, $tiersQuery): void
     {
 
-
         if ($carLead->car_model_detail_id == null && ! $this->isCommercialLead($carLead)) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
         } else {
@@ -285,6 +284,7 @@ class CarAllocationService extends AllocationService
                 // Check car value and age to determine the tier.
                 if ($carLead->car_value >= 300000) {
                     info(self::class." - Car value is {$carLead->car_valu}   Tier H is being assigned for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
+
                     return $tiersQuery->Where('name', TiersEnum::TIER_H)->first();
                 }
 
@@ -293,6 +293,7 @@ class CarAllocationService extends AllocationService
 
                 if ($carLead->car_value < 300000 || $ageInYears >= 21) {
                     info(self::class." - Car value is {$carLead->car_value} and age is {$ageInYears} Tier 6 is being assigned for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
+
                     return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->first();
                 }
             }
