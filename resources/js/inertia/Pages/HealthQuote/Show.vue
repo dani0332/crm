@@ -194,6 +194,8 @@ const confirmDeleteData = reactive({
   member: null,
   activity: null,
   contact: null,
+  doc_id: null,
+  doc_uuid: null,
 });
 
 const cleanObj = obj => useCleanObj(obj);
@@ -1136,33 +1138,6 @@ const documentsTableItems = computed(() => {
     };
   });
 });
-
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
-const confirmDeleteDoc = () => {
-  quoteDocumentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        quoteDocumentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
-};
 
 //activities
 const activityTable = [

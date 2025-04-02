@@ -412,25 +412,28 @@ const handlePlanSelected = plan => {
   });
 };
 
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
   activity: null,
   contact: null,
+  doc_id: null,
+  doc_uuid: null,
 });
+
+const onDocDelete = (doc_id, doc_uuid) => {
+  modals.docConfirm = true;
+  confirmDeleteData.doc_id = doc_id;
+  confirmDeleteData.doc_uuid = doc_uuid;
+};
 
 const confirmDeleteDoc = () => {
   quoteDocumentsTable.isLoading = true;
   router.post(
     `/documents/delete`,
     {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
+      doc_id: confirmDeleteData.doc_id,
+      doc_uuid: confirmDeleteData.doc_uuid
     },
     {
       preserveScroll: true,
@@ -2514,13 +2517,13 @@ const updateProfileDetails = isValid => {
           {{ item.original_name }}
         </a>
       </template>
-      <template #item-action="{ doc_name }">
+      <template #item-action="{ doc_name, id, doc_uuid }">
         <div>
           <x-button
             size="xs"
             color="error"
             outlined
-            @click.prevent="onDocDelete(doc_name)"
+            @click.prevent="onDocDelete(id, doc_uuid)"
           >
             Delete
           </x-button>

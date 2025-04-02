@@ -147,9 +147,10 @@ const updateDocumentValidate = () => {
   emit('verifyDocuments', true);
 };
 
-const onDocDelete = name => {
+const onDocDelete = (doc_id, doc_uuid) => {
   modals.docConfirm = true;
-  confirmDeleteData.docs = name;
+  confirmDeleteData.doc_id = doc_id;
+  confirmDeleteData.doc_uuid = doc_uuid;
 };
 
 const confirmDeleteData = reactive({
@@ -157,6 +158,8 @@ const confirmDeleteData = reactive({
   member: null,
   activity: null,
   contact: null,
+  doc_id: null,
+  doc_uuid: null,
 });
 
 const confirmDeleteDoc = () => {
@@ -164,8 +167,8 @@ const confirmDeleteDoc = () => {
   router.post(
     `/documents/delete`,
     {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
+      doc_id: confirmDeleteData.doc_id,
+      doc_uuid: confirmDeleteData.doc_uuid
     },
     {
       preserveScroll: true,
@@ -334,7 +337,7 @@ const getS3TempUrl = async docURL => {
           </template>
           <template
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
-            #item-action="{ doc_name }"
+            #item-action="{ id, doc_uuid }"
           >
             <div>
               <x-tooltip
@@ -355,7 +358,7 @@ const getS3TempUrl = async docURL => {
                 size="xs"
                 color="error"
                 outlined
-                @click.prevent="onDocDelete(doc_name)"
+                @click.prevent="onDocDelete(id, doc_uuid)"
                 v-else-if="readOnlyMode.isDisable === true"
               >
                 Delete
