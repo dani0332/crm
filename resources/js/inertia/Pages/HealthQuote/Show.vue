@@ -194,8 +194,6 @@ const confirmDeleteData = reactive({
   member: null,
   activity: null,
   contact: null,
-  doc_id: null,
-  doc_uuid: null,
 });
 
 const cleanObj = obj => useCleanObj(obj);
