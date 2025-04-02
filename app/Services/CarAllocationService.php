@@ -132,8 +132,13 @@ class CarAllocationService extends AllocationService
         if ($carLead->car_model_detail_id == null && ! $this->isCommercialLead($carLead)) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
         } else {
+            if(! $this->isCommercialLead($carLead)){
+                $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
+            }
+            else {
+                $valuations = null;
+            }
 
-            $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
             $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
 
             $axaValuation = array_filter($valuations, function ($provider) use ($axaProvider) {
