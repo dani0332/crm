@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
+use App\Models\QuoteStatus;
 use App\Services\QuoteStatusService;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Facades\DB;
@@ -125,10 +126,8 @@ class CarQuoteRepository extends BaseRepository
      */
     public function fetchFollowupStarted($data)
     {
-        // need to discuss key, if id 33.
-        $quoteStatus = QuoteStatusEnum::getKey($data['quote_status_id']);
         $quoteTypeId = QuoteTypes::getIdFromValue($data['quote_type']);
-        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $data['quote_uuid'], $quoteStatus, [], $data['notes']);
+        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $data['quote_uuid'], $data['quote_status_id'], [], $data['notes']);
         $quote = $this->where('uuid', $data['quote_uuid'])->first();
 
         // set followup id coming from kyo

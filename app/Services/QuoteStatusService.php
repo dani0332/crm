@@ -20,7 +20,9 @@ class QuoteStatusService
         info('fn updateQuoteStatus started, quoteTypeId: '.$quoteTypeId.', quoteRequestId: '.$quoteRequestId);
         $AMLService = new AMLService;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-        $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->first(); // firstOrFail() removed because it was causing error on 33.
+        $quoteStatus = QuoteStatus::where(function($query) use ($quoteStatusType) {
+            $query->where('code', $quoteStatusType)->orWhere('id', $quoteStatusType);
+        })->firstOrFail();
 
         if (checkPersonalQuotes($quoteType->code) && (! $AMLService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
             $quoteRequestId = $AMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
