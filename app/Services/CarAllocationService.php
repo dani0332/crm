@@ -136,7 +136,8 @@ class CarAllocationService extends AllocationService
                 $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
             }
             else {
-                $valuations = null;
+                $valuations = [];
+                info(self::class.'- Commercial lead. No valuation found. Ref-ID: '.$carLead->uuid.' | Time: '.now());
             }
 
             $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
