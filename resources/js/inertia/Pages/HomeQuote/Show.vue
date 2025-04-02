@@ -1999,6 +1999,7 @@ const isPlanDetailEnabled = computed(() => {
                       :plan="item"
                       :quoteType="'Home'"
                       :uuid="quote.uuid"
+                      :code="quote.code"
                     />
 
                     <x-button
