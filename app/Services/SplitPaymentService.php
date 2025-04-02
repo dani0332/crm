@@ -693,7 +693,7 @@ class SplitPaymentService
                 $sageRequest->advisor_id = $quoteModel->advisor_id;
 
                 // 1- This case will run
-                /*$sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);*/
+                /* $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected); */
                 $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $paymentSplit, $amountCollected);
                 if ($sageResponse['status']) {
                     info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Sage receipt created successfully with Document Number: '.$sageResponse['message']);

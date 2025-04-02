@@ -826,7 +826,7 @@ class SageApiService
     public function createPrepaymentPremiumRecipt($sageRequest, $quote, $payment, $paymentSplit, $splitAmount = null)
     {
         $response = ['status' => false, 'message' => '', 'error' => '', 'documentNumber' => null];
-        $sageRequest = SagePayloadFactory::globalSagePrepaymentReceiptPayloadData([$quote,$payment, $paymentSplit , $sageRequest , $splitAmount]);
+        $sageRequest = SagePayloadFactory::globalSagePrepaymentReceiptPayloadData([$quote, $payment, $paymentSplit, $sageRequest, $splitAmount]);
 
         $quoteTypeId = $sageRequest->quoteTypeId;
         $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
@@ -896,7 +896,6 @@ class SageApiService
                 }
             }
 
-
             $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
             $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
 
@@ -904,8 +903,7 @@ class SageApiService
 
             $shouldSchedulePostPrepayment = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
 
-
-            if ($shouldSchedulePostPrepayment) { /* Handle NRA case where payment is approved after policy/send update is booked*/
+            if ($shouldSchedulePostPrepayment) { /* Handle NRA case where payment is approved after policy/send update is booked */
                 info(self::class.' fn:'.__FUNCTION__.' trigger post prepayment schedule for PaymentSplitID : '.$paymentSplit->id);
                 $postPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $sageRequest->quoteType, $paymentSplit]);
                 if (! $postPrepayment['status']) {
@@ -913,7 +911,7 @@ class SageApiService
                 } else {
                     info(self::class.' fn:'.__FUNCTION__.' post prepayment scheduled for PaymentSplitID : '.$paymentSplit->id, $postPrepayment);
                 }
-            }else{
+            } else {
                 $isLiveApiCallStep4 = true;
                 $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
                 if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_SUCCESS) {
