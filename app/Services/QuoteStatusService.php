@@ -20,7 +20,7 @@ class QuoteStatusService
         info('fn updateQuoteStatus started, quoteTypeId: '.$quoteTypeId.', quoteRequestId: '.$quoteRequestId);
         $AMLService = new AMLService;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-        $quoteStatus = QuoteStatus::where(function($query) use ($quoteStatusType) {
+        $quoteStatus = QuoteStatus::where(function ($query) use ($quoteStatusType) {
             $query->where('code', $quoteStatusType)->orWhere('id', $quoteStatusType);
         })->firstOrFail();
 
