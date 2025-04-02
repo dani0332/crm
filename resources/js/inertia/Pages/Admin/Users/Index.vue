@@ -1,6 +1,8 @@
 <script setup>
 const props = defineProps({
   users: Object,
+  roles: Array,
+  permissions: Array,
 });
 
 const page = usePage();
@@ -14,6 +16,8 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 const filters = reactive({
   email: '',
   name: '',
+  role: '',
+  permission: '',
   page: 1,
 });
 
@@ -100,11 +104,34 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-      <x-field label="EMAIL" required>
+      <x-field label="EMAIL">
         <x-input v-model="filters.email" class="w-full" type="email" />
       </x-field>
-      <x-field label="NAME" required>
+      <x-field label="NAME">
         <x-input class="w-full" v-model="filters.name" />
+      </x-field>
+      <x-field label="ROLE">
+        <x-select
+          v-model="filters.role"
+          :options="props.roles.map(role => ({ label: role, value: role }))"
+          class="w-full"
+          filterable
+        >
+        </x-select>
+      </x-field>
+      <x-field label="PERMISSION">
+        <x-select
+          v-model="filters.permission"
+          :options="
+            permissions.map(permission => ({
+              label: permission,
+              value: permission,
+            }))
+          "
+          class="w-full"
+          filterable
+        >
+        </x-select>
       </x-field>
     </div>
     <div class="flex justify-end gap-3">

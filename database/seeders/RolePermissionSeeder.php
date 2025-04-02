@@ -21,7 +21,8 @@ class RolePermissionSeeder extends Seeder
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
-        $this->addBridgerSkipPermission();
+        // $this->addBridgerSkipPermission();
+        $this->addPermissionListPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -142,5 +143,28 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function addPermissionListPermission(): void
+    {
+        $permission = Permission::firstOrCreate([
+            'name' => PermissionsEnum::PERMISSION_LIST,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
+        // Assign this permission to admin and engineering roles
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+        
+        foreach ($roles as $role) {
+            if (!$role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+                info("Permission {$permission->name} assigned to role {$role->name}");
+            } else {
+                info("Role {$role->name} already has permission {$permission->name}");
+            }
+        }
     }
 }

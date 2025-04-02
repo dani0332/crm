@@ -68,11 +68,49 @@ class UserController extends Controller
         if ($request->has('name')) {
             $query->where('u1.name', 'LIKE', '%'.$request->name.'%');
         }
+        
+        if ($request->has('role')) {
+            $role = $request->role;
+            $query->whereExists(function ($q) use ($role) {
+                $q->select(DB::raw(1))
+                  ->from('model_has_roles')
+                  ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                  ->whereRaw('model_has_roles.model_id = u1.id')
+                  ->where('roles.name', $role);
+            });
+        }
+        
+        if ($request->has('permission')) {
+            $permission = $request->permission;
+            $query->whereExists(function ($q) use ($permission) {
+                $q->select(DB::raw(1))
+                  ->from('model_has_permissions')
+                  ->join('permissions', 'permissions.id', '=', 'model_has_permissions.permission_id')
+                  ->whereRaw('model_has_permissions.model_id = u1.id')
+                  ->where('permissions.name', $permission);
+            })
+            ->orWhereExists(function ($q) use ($permission) {
+                $q->select(DB::raw(1))
+                  ->from('model_has_roles')
+                  ->join('role_has_permissions', 'role_has_permissions.role_id', '=', 'model_has_roles.role_id')
+                  ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+                  ->whereRaw('model_has_roles.model_id = u1.id')
+                  ->where('permissions.name', $permission);
+            });
+        }
 
         $users = $query->groupBy('u1.id')->simplePaginate();
+        
+        // Get all roles for the filter dropdown
+        $roles = Role::pluck('name')->all();
+        
+        // Get all permissions for the filter dropdown
+        $permissions = Permission::pluck('name')->all();
 
         return inertia('Admin/Users/Index', [
             'users' => $users,
+            'roles' => $roles,
+            'permissions' => $permissions,
         ]);
     }
 

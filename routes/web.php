@@ -87,6 +87,8 @@ use App\Http\Middleware\SetReadDbConnection;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PermissionController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -421,6 +423,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
+        Route::resource('permissions', PermissionController::class);
         Route::resource('sic-health-config', SICConfigurableController::class)->names([
             'index' => 'admin.sic-health-config.index',
             'store' => 'admin.sic-health-config.store',
