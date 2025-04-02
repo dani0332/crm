@@ -50,7 +50,7 @@ class OCRService
     {
         $response = $this->sendRequest('/process-document', [
             'doc_url' => $docUrl,
-            'doc_type' => $docType,
+            'doc_type' => $docType->value,
             'image' => $this->isMimeTypeImage($fileMimeType),
             'provider' => config('constants.OCR_API_AI_PROVIDER'),
             'model' => config('constants.OCR_API_AI_MODEL'),
