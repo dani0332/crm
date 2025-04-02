@@ -16,7 +16,21 @@ class QuoteStatusSeeder extends Seeder
      */
     public function run(): void
     {
-        // $quoteStatusSeeder = [
+        $quoteStatusSeeder = [
+            [
+                'code' => 'PaymentInitiated',
+                'text' => 'Payment Initiated',
+                'text_ar' => 'Payment Initiated',
+                'is_active' => 1,
+                'sort_order' => 20,
+                'is_deleted' => 0,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'deleted_at' => null,
+                'uuid' => 'ea826923-11bb-11ee-a8a6-2a23318a2517',
+                'created_by' => 'muhammad.waris@myalfred.com',
+                'updated_by' => 'muhammad.waris@myalfred.com',
+            ]
         //     [
         //         'code' => 'PaymentLinkRequestedByCustomer',
         //         'text' => 'Payment Link Requested By Customer',
@@ -59,37 +73,41 @@ class QuoteStatusSeeder extends Seeder
         //         'created_by' => 'muhammad.waris@myalfred.com',
         //         'updated_by' => 'muhammad.waris@myalfred.com',
         //     ],
-        // ];
+        ];
 
-        // foreach ($quoteStatusSeeder as $quoteStatus) {
-        //     $conditions = [
-        //         'code' => $quoteStatus['code'],
-        //     ];
-        //     QuoteStatus::firstOrCreate($conditions, $quoteStatus);
-        // }
+        foreach ($quoteStatusSeeder as $quoteStatus) {
+            $conditions = [
+                'code' => $quoteStatus['code'],
+            ];
+            QuoteStatus::firstOrCreate($conditions, $quoteStatus);
+        }
 
-        // $quoteTypes = QuoteType::all();
-        // foreach ($quoteTypes as $quoteType) {
-        //     $commonData = [
-        //         'quote_type_id' => $quoteType->id,
-        //         'sort_order' => 22,
-        //         'created_by' => 'muhammad.waris@myalfred.com',
-        //         'updated_by' => 'muhammad.waris@myalfred.com',
-        //         'created_at' => now(),
-        //         'updated_at' => now(),
-        //     ];
+        $quoteTypes = QuoteType::all();
+        foreach ($quoteTypes as $quoteType) {
+            $commonData = [
+                'quote_type_id' => $quoteType->id,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.waris@myalfred.com',
+                'updated_by' => 'muhammad.waris@myalfred.com',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
 
-        //     QuoteStatusMap::firstOrCreate([
-        //         'quote_status_id' => QuoteStatusEnum::PaymentLinkRequestedByCustomer,
-        //     ], $commonData);
+            // QuoteStatusMap::firstOrCreate([
+            //     'quote_status_id' => QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+            // ], $commonData);
 
-        //     QuoteStatusMap::firstOrCreate([
-        //         'quote_status_id' => QuoteStatusEnum::PaymentLinkInprogress,
-        //     ], $commonData);
+            // QuoteStatusMap::firstOrCreate([
+            //     'quote_status_id' => QuoteStatusEnum::PaymentLinkInprogress,
+            // ], $commonData);
 
-        //     QuoteStatusMap::firstOrCreate([
-        //         'quote_status_id' => QuoteStatusEnum::PaymentLinkSentToCustomer,
-        //     ], $commonData);
-        // }
+            // QuoteStatusMap::firstOrCreate([
+            //     'quote_status_id' => QuoteStatusEnum::PaymentLinkSentToCustomer,
+            // ], $commonData);
+
+            QuoteStatusMap::firstOrCreate([
+                'quote_status_id' => QuoteStatusEnum::PaymentInitiated,
+            ], $commonData);
+        }
     }
 }
