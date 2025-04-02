@@ -105,10 +105,19 @@ onMounted(() => {
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
       <x-field label="EMAIL">
-        <x-input v-model="filters.email" class="w-full" type="email" />
+        <x-input
+          v-model="filters.email"
+          class="w-full"
+          type="email"
+          placeholder="Search by email"
+        />
       </x-field>
       <x-field label="NAME">
-        <x-input class="w-full" v-model="filters.name" />
+        <x-input
+          class="w-full"
+          v-model="filters.name"
+          placeholder="Search by name"
+        />
       </x-field>
       <x-field label="ROLE">
         <x-select
@@ -116,6 +125,7 @@ onMounted(() => {
           :options="props.roles.map(role => ({ label: role, value: role }))"
           class="w-full"
           filterable
+          placeholder="Search by role"
         >
         </x-select>
       </x-field>
@@ -130,6 +140,7 @@ onMounted(() => {
           "
           class="w-full"
           filterable
+          placeholder="Search by permission"
         >
         </x-select>
       </x-field>

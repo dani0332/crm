@@ -65,10 +65,14 @@ const resetFilters = () => {
   <x-divider class="my-4" />
   <x-form :auto-focus="false" @submit="filterPermissions">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Permission name:">
-        <x-input class="w-full" v-model="filters.name" />
+      <x-field label="NAME">
+        <x-input
+          class="w-full"
+          v-model="filters.name"
+          placeholder="Search by permission name"
+        />
       </x-field>
-      <x-field label="Filter by role:">
+      <x-field label="ROLE">
         <x-select
           v-model="filters.role_id"
           :options="[
@@ -76,6 +80,7 @@ const resetFilters = () => {
             ...roles.map(role => ({ label: role.name, value: role.id })),
           ]"
           filterable
+          placeholder="Search by role"
         >
         </x-select>
       </x-field>
