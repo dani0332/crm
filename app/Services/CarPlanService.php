@@ -7,6 +7,7 @@ use App\Models\CarPlan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\QuoteTypeId;
 
 class CarPlanService extends BaseService
 {
@@ -216,7 +217,7 @@ class CarPlanService extends BaseService
         ])
             ->where('provider_id', $insuranceProviderId)
             ->whereNotIn('id', $quotePlanId)
-            ->where('quote_type_id', 1)
+            ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::CompanyCar])
             ->get();
     }
 }
