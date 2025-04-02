@@ -2035,6 +2035,7 @@ const processPaymentSplits = payment => {
 
   for (let i = 1; i <= payment.total_payments; i++) {
     const split = payment.payment_splits[i - 1];
+    console.log('split : ', split);
     readOnlyPayments.value[i] = paidStatusIds.includes(split.payment_status_id);
     if (readOnlyPayments.value[i]) {
       totalPaidAmount.value++;
@@ -3665,7 +3666,7 @@ const isPolicySendUpdateBooked = option => {
     page.props.quoteStatusEnum.PolicyBooked;
   const isUpdateBooked =
     props.sendUpdate &&
-    props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+    props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
   const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
 
   if (isUpdateBooked && isCCAndInsurer) {
@@ -3834,6 +3835,72 @@ const fetchInsurerAMLStatus = async () => {
       });
     }
   }
+};
+
+const triggerPostPrepayment = async splitPayment => {
+  console.log(' triggerPostPrepayment : ', splitPayment.id);
+  let quoteStatusId = props.quoteRequest.quote_status_id;
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked === quoteStatusId;
+  if (!isPolicyBooked) {
+    notification.warning({
+      title:
+        'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
+      position: 'top',
+    });
+  }
+  try {
+    NProgress.start();
+    const response = await axios.post(route('post.prepayment.to.sage'), {
+      paymentSplitId: splitPayment.id,
+      quoteRequestId: props.quoteRequest.id,
+      quoteType: page.props.quoteType,
+      sendUpdateId: props.sendUpdate?.id,
+    });
+    NProgress.done();
+    if (response.data.success) {
+      notification.success({
+        title: 'Post Prepayment to Sage Process Started',
+        position: 'top',
+      });
+      router.reload({
+        only: ['payments'],
+      });
+    }
+  } catch (error) {
+    let errorMessages = error.response.data.errors;
+    Object.keys(errorMessages).forEach(function (key) {
+      notification.error({
+        title: errorMessages[key],
+        position: 'top',
+      });
+    });
+  }
+};
+const enablePostPrepaymentButton = splitPayment => {
+  console.log(
+    'showPostPrepaymentButton : showPrepaymentPostButton : ',
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
+    ' , batchNumber : ',
+    splitPayment.prepayment_receipt_status?.batchNumber,
+    splitPayment.prepayment_receipt_status,
+  );
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked ===
+    props.quoteRequest.quote_status_id;
+  let isSendUpdateBooked =
+    props.sendUpdate?.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
+  let isPolicyOrSendUpdateBooked =
+    (isPolicyBooked && !props.sendUpdate) ||
+    (props.sendUpdate && isSendUpdateBooked);
+  if (
+    can(permissionEnum.SHOW_POST_PREPAYMENT_BUTTON) &&
+    isPolicyOrSendUpdateBooked &&
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
+  ) {
+    return true;
+  }
+  return false;
 };
 
 onBeforeMount(() => {
@@ -4322,7 +4389,7 @@ onBeforeMount(() => {
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td></td>
+                        <td class="text-center"></td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ splitPayment.payment_method.name }}</td>
@@ -4455,6 +4522,16 @@ onBeforeMount(() => {
                               outlined
                               >Retry</x-button
                             >
+
+                            <x-button
+                              v-if="enablePostPrepaymentButton(splitPayment)"
+                              size="xs"
+                              color="red"
+                              class="ml-2"
+                              @click="triggerPostPrepayment(splitPayment)"
+                              outlined
+                              >Post
+                            </x-button>
                           </div>
                         </td>
                       </tr>

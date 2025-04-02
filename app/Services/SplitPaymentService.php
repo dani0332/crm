@@ -177,6 +177,23 @@ class SplitPaymentService
                 }
             }
 
+            $sendUpdateLog = $splitPayment->payment?->sendUpdateLog;
+            $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
+
+            $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
+
+            $shouldSchedulePostPrepayment = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+
+            if ($shouldSchedulePostPrepayment) {
+                info(self::class.' fn:'.__FUNCTION__.' trigger post prepayment schedule for PaymentSplitID : '.$splitPayment->id);
+                $postPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->modelType, $splitPayment]);
+                if (! $postPrepayment['status']) {
+                    info(self::class.' fn:'.__FUNCTION__.' failed to scheduled post prepayment for PaymentSplitID : '.$splitPayment->id, $postPrepayment);
+                } else {
+                    info(self::class.' fn:'.__FUNCTION__.' post prepayment scheduled for PaymentSplitID : '.$splitPayment->id, $postPrepayment);
+                }
+            }
+
             // Reminder:: Please do not remove this code until all cases works fine on PROD
             //            $isLiveApiCallStep4 = true;
             //            $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
