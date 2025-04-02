@@ -74,7 +74,7 @@ const confirmDeleteDoc = () => {
     `/documents/delete`,
     {
       doc_id: confirmDeleteData.doc_id,
-      doc_uuid: confirmDeleteData.doc_uuid
+      doc_uuid: confirmDeleteData.doc_uuid,
     },
     {
       preserveScroll: true,

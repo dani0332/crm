@@ -2674,7 +2674,7 @@ const deleteForm = useForm({
   payment_process_job_id: null,
 });
 
-const deleteDocument = (docName, count, doc_id, doc_uuid,) => {
+const deleteDocument = (docName, count, doc_id, doc_uuid) => {
   if (paymentMethodsForm.status == 'edit') {
     if (fileUploadModels.value[count]) {
       fileUploadModels.value[count] = fileUploadModels.value[count].filter(
@@ -2713,7 +2713,7 @@ const deleteDocument = (docName, count, doc_id, doc_uuid,) => {
       `/documents/delete`,
       {
         doc_id,
-        doc_uuid
+        doc_uuid,
       },
       {
         preserveScroll: true,
@@ -5032,7 +5032,14 @@ onBeforeMount(() => {
                     </span>
                     <span
                       class="delete-pointer"
-                      @click="deleteDocument(fileData.doc_name, 0, fileData.id, fileData.doc_uuid,)"
+                      @click="
+                        deleteDocument(
+                          fileData.doc_name,
+                          0,
+                          fileData.id,
+                          fileData.doc_uuid,
+                        )
+                      "
                       v-if="!isFieldReadonly"
                     >
                       &#10006;
