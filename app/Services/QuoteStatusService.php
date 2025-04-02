@@ -17,9 +17,10 @@ class QuoteStatusService
 
     public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [], $notes = null)
     {
+        info('fn updateQuoteStatus started, quoteTypeId: '.$quoteTypeId.', quoteRequestId: '.$quoteRequestId);
         $AMLService = new AMLService;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-        $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
+        $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->first(); // firstOrFail() removed because it was causing error on 33.
 
         if (checkPersonalQuotes($quoteType->code) && (! $AMLService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
             $quoteRequestId = $AMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
@@ -45,7 +46,7 @@ class QuoteStatusService
             $previousStatusId = $updateQuote->quote_status_id;
             $currentStatusId = $quoteStatusID;
         } else {
-            $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+            $updateQuote = $this->getQuoteObjectBy($quoteType->code, $quoteRequestId, 'uuid');
 
             $updateQuote->aml_status = AMLStatusCode::AMLScreeningFailed;
 
