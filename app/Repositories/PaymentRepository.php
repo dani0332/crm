@@ -511,6 +511,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $successMessage = 'Payment Verified';
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
             $masterPayment = $splitPayment->payment;
+            $quote = $masterPayment->paymentable;
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 $paymentInformation = [
                     'collection_amount' => $request->collection_amount,
@@ -541,11 +542,20 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
 
+                $sendUpdateLog = $splitPayment->payment?->sendUpdateLog;
+                $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
+
+                $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
+
+                $shouldCreatePrepaymentPremiumReceipt = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+                info(self::class.' fn:'.__FUNCTION__.'Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
                 // create sage receipt
-                if ((new SageApiService)->isSageEnabled()) {
-                    $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
-                    if ($sageResponse['status'] == 'success') {
-                        $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
+                if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt) {
+                    $sageRequest = $request->safe()->all();
+                    /* $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment); */
+                    $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $splitPayment);
+                    if ($sageResponse['status']) {
+                        $paymentInformation['sage_reciept_id'] = $sageResponse['documentNumber'];
                         $splitPayment->update($paymentInformation);
                         if ($masterPayment) {
                             $masterPayment->update(
@@ -556,7 +566,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             );
                         }
                     } else {
-                        $failMessage = $sageResponse['response'];
+                        $failMessage = $sageResponse['message'];
                         vAbort($failMessage);
                     }
                 } else {

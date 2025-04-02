@@ -46,6 +46,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use stdClass;
 
 class SplitPaymentService
 {
@@ -133,7 +134,7 @@ class SplitPaymentService
             $sageResponse = json_decode($sageLogArray[2]['response'], true);
         } else {
             $request->merge(['sage_payment_code' => $splitPayment->payment_method]);
-            $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
+            $payLoadOptions = SagePayloadFactory::createPremiumPrepaymentPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);
         }
@@ -674,28 +675,36 @@ class SplitPaymentService
             // Log message for creating Sage receipt
             info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage receipt id: '.$paymentSplit->sage_reciept_id);
 
-            if ((new SageApiService)->isSageEnabled() && empty($paymentSplit->sage_reciept_id)) {
+            $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
+            $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
+
+            $isPolicyBooked = $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked;
+
+            $shouldCreatePrepaymentPremiumReceipt = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
+            if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
-                $request = Request::createFromGlobals();
-                $request->merge([
-                    'modelType' => $modelType,
-                    'quote_id' => $quoteId,
-                    'customer_id' => $quoteModel->customer_id,
-                    'advisor_id' => $quoteModel->advisor_id,
-                ]);
+                $sageRequest = new stdClass;
+                $sageRequest->userId = auth()->id();
+                $sageRequest->quoteType = $modelType;
+                $sageRequest->modelType = $modelType;
+                $sageRequest->quote_id = $quoteId;
+                $sageRequest->customer_id = $quoteModel->customer_id;
+                $sageRequest->advisor_id = $quoteModel->advisor_id;
 
                 // 1- This case will run
-                $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
-                if ($sageResponse['status'] == 'success') {
-                    info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Sage receipt created successfully with Document Number: '.$sageResponse['response']);
+                /*$sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);*/
+                $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $paymentSplit, $amountCollected);
+                if ($sageResponse['status']) {
+                    info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Sage receipt created successfully with Document Number: '.$sageResponse['message']);
 
                     $this->handleWithDeadlockRetries(function () use ($paymentSplit, $sageResponse) {
-                        $paymentSplit->sage_reciept_id = $sageResponse['response'];
+                        $paymentSplit->sage_reciept_id = $sageResponse['documentNumber'];
                         $paymentSplit->save();
                     }, $maxRetries);
 
                 } else {
-                    $sageMessage = $sageResponse['response'];
+                    $sageMessage = $sageResponse['message'];
                     info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Sage receipt creation failed with error: '.$sageMessage);
 
                     if ($isFromJob) {
