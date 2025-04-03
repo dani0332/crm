@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y \
     ghostscript \
     libwebp-dev
 
-RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 
