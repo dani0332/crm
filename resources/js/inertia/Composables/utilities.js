@@ -373,14 +373,22 @@ export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
   return axios
     .post('/quotes/export-logs/create', payload)
-    .then(res => {
-      return res.data.success;
+    .then(async res => {
+
+      const exportResponse = await axios.get(payload.url).then(resp => {
+        console.log('Export email sent successfully');
+        return resp.data;
+      }).catch(err => {
+        throw err;
+      });
+      res.data.message = exportResponse.message;
+      return res;
     })
     .catch(err => {
       throw err;
     })
     .finally(() => {
-      window.open(payload.url);
+      // Cleanup operations if needed
     });
 };
 

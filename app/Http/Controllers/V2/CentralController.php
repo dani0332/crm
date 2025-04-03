@@ -140,7 +140,7 @@ class CentralController extends Controller
                 return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:
-                return app(HealthQuotesExport::class)->download('Health-List');
+                return app(HealthQuotesExport::class)->emailCSV('Health-List', $request->all());
 
             case RetentionReportEnum::RETENTION:
                 return app(RetentionReportExport::class)->download('Retention-Report-List');

@@ -24,7 +24,7 @@ class HealthQuotesExport
 
     public function collection()
     {
-        return app(HealthQuoteService::class)->getGridData()->select(
+        return app(HealthQuoteService::class)->getGridData(null,$this->request_params)->select(
             'hqr.code',
             'hqr.first_name',
             'hqr.last_name',

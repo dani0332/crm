@@ -4,43 +4,48 @@ namespace App\Traits;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
+use App\Models\User;
 use Auth;
 
 trait RolePermissionConditions
 {
     use GetUserTreeTrait;
 
-    public function whereBasedOnRole($query, $prefix, $restrictedQuoteType = null)
+    public function whereBasedOnRole($query, $prefix, $restrictedQuoteType = null, User $user = null)
     {
-        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
-        $isRenewalManager = Auth::user()->isRenewalManager();
-        $isNewManager = Auth::user()->isNewBusinessManager();
-        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-        $isHealthManager = Auth::user()->isHealthManager();
-        $isCarManager = Auth::user()->isCarManager();
-        $isCarAdvisor = Auth::user()->isCarAdvisor();
-        $isAdvisor = Auth::user()->isAdvisor();
-        $isAdmin = Auth::user()->isAdmin();
+        if (Auth::check() && empty($user)) {
+            $user = Auth::user();
+        }
+
+        $isRenewalAdvisor = $user->isRenewalAdvisor();
+        $isRenewalManager = $user->isRenewalManager();
+        $isNewManager = $user->isNewBusinessManager();
+        $isNewAdvisor = $user->isNewBusinessAdvisor();
+        $isHealthManager = $user->isHealthManager();
+        $isCarManager = $user->isCarManager();
+        $isCarAdvisor = $user->isCarAdvisor();
+        $isAdvisor = $user->isAdvisor();
+        $isAdmin = $user->isAdmin();
 
         if ($isRenewalAdvisor) {
 
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
-            $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
+            $query->where($prefix.'.'.'advisor_id', $user->id);
         }
         if ($isRenewalManager) {
-            $ids = $this->walkTree(Auth::user()->id);
+            $ids = $this->walkTree($user->id);
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
         if ($isNewAdvisor) {
-            $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
+            $query->where($prefix.'.'.'advisor_id', $user->id);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
         if ($isAdvisor) {
-            $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
+            $query->where($prefix.'.'.'advisor_id', $user->id);
         }
         if ($isNewManager) {
-            $ids = $this->walkTree(Auth::user()->id);
+            $ids = $this->walkTree($user->id);
             //    $query->whereIn($prefix.'.'.'advisor_id', $ids);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
@@ -66,17 +71,17 @@ trait RolePermissionConditions
             }
             // This condition allows cross-LOB access if a user possesses two roles, such as health manager and car manager.
             if ($isHealthManager && $restrictedQuoteType == quoteTypeCode::Health && ! $isAdmin) {
-                $ids = $this->associateAdvisorsWithManager(Auth::user()->id);
-                $ids[] = Auth::user()->id;
+                $ids = $this->associateAdvisorsWithManager($user->id);
+                $ids[] = $user->id;
                 $query->whereIn($prefix.'.'.'advisor_id', $ids);
             }
         }
-        if ($isCarManager && $restrictedQuoteType == quoteTypeCode::Health && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
-            $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Car);
+        if ($isCarManager && $restrictedQuoteType == quoteTypeCode::Health && $user->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+            $ids = $this->walkTree($user->id, quoteTypeCode::Car);
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
-        if ($isCarAdvisor && $restrictedQuoteType == quoteTypeCode::Health && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
-            $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
+        if ($isCarAdvisor && $restrictedQuoteType == quoteTypeCode::Health && $user->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+            $query->where($prefix.'.'.'advisor_id', $user->id);
         }
     }
 }
