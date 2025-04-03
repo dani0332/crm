@@ -58,4 +58,5 @@ final class quoteStatusCode extends Enum
     const POLICY_BOOKING_QUEUED = 'Policy Booking Queued';
     const POLICY_BOOKING_FAILED = 'Policy Booking Failed';
     const PAYMENT_LINK_SENT_TO_CUSTOMER = 'Payment Link Sent to Customer';
+    const PaymentInitiated = 'Payment Initiated';
 }
