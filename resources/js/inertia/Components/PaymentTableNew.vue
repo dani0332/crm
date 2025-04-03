@@ -3195,7 +3195,7 @@ const providerId = computed(() => {
 
 const providerName = computed(() => {
   const plan = planDetail.value;
-  const ecomQuoteType = [...quoteTypesToCheck, 'Bike'] 
+  const ecomQuoteType = [...quoteTypesToCheck, 'Bike'];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
       provider => provider.id === providerId.value,
