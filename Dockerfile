@@ -119,9 +119,9 @@ RUN composer install --optimize-autoloader --no-dev
 # RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 # Create log files
-RUN mkdir -p /var/www/storage/logs
-RUN touch /var/www/storage/logs/laravel.log
-RUN chown -R www-data:www-data /var/www/storage
-RUN chmod -R 775 /var/www/storage
+#RUN mkdir -p /var/www/storage/logs
+#RUN touch /var/www/storage/logs/laravel.log
+#RUN chown -R www-data:www-data /var/www/storage
+#RUN chmod -R 775 /var/www/storage
 
 ENTRYPOINT ["/var/www/docker/run.sh"]
