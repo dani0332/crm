@@ -14,6 +14,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class HealthEmailService extends BaseService
 {
@@ -89,6 +90,21 @@ class HealthEmailService extends BaseService
             ->toArray();
     }
 
+    private function adjustLinks(array $documents): array
+    {
+        foreach ($documents as &$document) {
+            $link = $document['link'] ?? '';
+
+            if (! Str::startsWith($link, 'https')) {
+                $link = config('constants.AZURE_IM_STORAGE_URL').$link;
+            }
+
+            $document['link'] = $link;
+        }
+
+        return $documents ?? [];
+    }
+
     private function buildEmailDataForApplyNowEmail(HealthQuote $lead, ?User $advisor = null)
     {
         $currentPlan = $lead->getCurrentPlan();
@@ -132,8 +148,8 @@ class HealthEmailService extends BaseService
                 'tpa' => $currentPlan?->eligibilityName ?? '',
                 'actualPremium' => "AED {$getDiscountPremium()}",
                 'vat' => "AED {$getVat()}",
-                'tobs' => array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? []),
-                'networkLinks' => array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? []),
+                'tobs' => $this->adjustLinks(array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? [])),
+                'networkLinks' => $this->adjustLinks(array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? [])),
                 'mafLink' => $currentPlan?->mafLink,
             ],
             'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
