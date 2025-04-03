@@ -90,19 +90,23 @@ class HealthEmailService extends BaseService
             ->toArray();
     }
 
-    private function adjustLinks(array $documents): array
+    private function includeHostInAttachmentPath(array $documents): array
     {
-        foreach ($documents as &$document) {
-            $link = $document['link'] ?? '';
-
-            if (! Str::startsWith($link, 'https')) {
-                $link = config('constants.AZURE_IM_STORAGE_URL').$link;
-            }
-
-            $document['link'] = $link;
+        if (empty($documents)) {
+            return [];
         }
 
-        return $documents ?? [];
+        $storageUrl = rtrim(config('constants.AZURE_IM_STORAGE_URL', ''), '/');
+
+        return array_map(function (array $document) use ($storageUrl) {
+            $link = $document['link'] ?? '';
+
+            if (! empty($link) && ! Str::startsWith($link, ['http://', 'https://'])) {
+                $document['link'] = $storageUrl.'/'.ltrim($link, '/');
+            }
+
+            return $document;
+        }, $documents);
     }
 
     private function buildEmailDataForApplyNowEmail(HealthQuote $lead, ?User $advisor = null)
@@ -148,8 +152,8 @@ class HealthEmailService extends BaseService
                 'tpa' => $currentPlan?->eligibilityName ?? '',
                 'actualPremium' => "AED {$getDiscountPremium()}",
                 'vat' => "AED {$getVat()}",
-                'tobs' => $this->adjustLinks(array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? [])),
-                'networkLinks' => $this->adjustLinks(array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? [])),
+                'tobs' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? [])),
+                'networkLinks' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? [])),
                 'mafLink' => $currentPlan?->mafLink,
             ],
             'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
