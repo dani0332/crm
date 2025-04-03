@@ -18,6 +18,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\KycLogs;
 use App\Http\Controllers\Controller;
@@ -49,6 +50,7 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
@@ -396,6 +398,10 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
+        $isAutomation = $AMLCheckRequest->is_automation;
+        $systemUser = User::where('name', UserNameEnum::System)->first();
+        $processbyUser = $isAutomation ? $systemUser : auth()->user();
+
         info('AML Screening Bridger - Process Started - Ref-ID: '.$quoteRequestId);
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
@@ -426,11 +432,11 @@ class AMLController extends Controller
         }
 
         if ($updateQuote) {
-            if (auth()->user()->hasAnyRole([RolesEnum::AML, RolesEnum::PA])) {
+            if (auth()->user()?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]) || ($isAutomation && $systemUser?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]))) {
                 if (checkPersonalQuotes($quoteType->code)) {
-                    AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true);
+                    AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['pa_id' => $processbyUser->id]);
                 } else {
-                    $updateQuote->pa_id = auth()->user()->id;
+                    $updateQuote->pa_id = $processbyUser->id;
                     $updateQuote->save();
                 }
             }
@@ -549,7 +555,7 @@ class AMLController extends Controller
 
                 // Job dispatch for all members including customer
                 info('AML Screening Bridger - AML Screening Job Dispatched against Individual Customer - Ref-ID: '.$quoteRequestId);
-                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
@@ -577,7 +583,7 @@ class AMLController extends Controller
 
                     $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
                     info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
-                    BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
+                    BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
                 } else {
                     $fetchEntity->trade_license_no = $AMLCheckRequest->trade_license_no;
                     $fetchEntity->company_name = $AMLCheckRequest->company_name;
@@ -591,7 +597,7 @@ class AMLController extends Controller
                         $fetchEntity->refresh();
 
                         $entityDetailsForApi = ['company_name' => $fetchEntity->company_name, 'code' => $fetchEntity->code];
-                        BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
+                        BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
                     }
                     QuoteRequestEntityMapping::updateOrCreate([
                         'quote_type_id' => $quoteType->id,
@@ -611,7 +617,7 @@ class AMLController extends Controller
 
                 // Job dispatch for all UBO members
                 info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
-                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
             }
 
             $response = redirect()->back()->with('success', 'Quote is updated');
@@ -729,10 +735,10 @@ class AMLController extends Controller
         return response()->json($response);
     }
 
-    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType)
+    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType, $processByUser = null, $isAutomation = false)
     {
         foreach ($membersDetails as $memberDetail) {
-            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, auth()->user()->email);
+            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
         }
 
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {

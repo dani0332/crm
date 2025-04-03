@@ -238,7 +238,7 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false, $isAutomation = false)
     {
         $emailRecipients = [];
         $emailSystem = config('constants.APP_ENV');
@@ -272,9 +272,9 @@ class AMLService
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,
             ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser) {
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser, $isAutomation) {
                 $message->to($emailRecipients);
-                if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
+                if (!$isAutomation && (in_array($loginUserEmail, $emailRecipients)) || ! $forComplianceSuperUser) {
                     $message->cc($loginUserEmail);
                 }
                 $message->subject($emailSubject);
