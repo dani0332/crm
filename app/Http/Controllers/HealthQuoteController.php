@@ -328,6 +328,7 @@ class HealthQuoteController extends Controller
             ['id' => QuoteStatusEnum::PolicyDocumentsPending, 'title' => quoteStatusCode::POLICY_DOCUMENTS_PENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyDocumentsPending, $request)],
             ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::TransactionApproved, $request)],
             ['id' => QuoteStatusEnum::PaymentLinkSentToCustomer, 'title' => quoteStatusCode::PAYMENT_LINK_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PaymentLinkSentToCustomer, $request)],
+            ['id' => QuoteStatusEnum::PaymentInitiated, 'title' => quoteStatusCode::PaymentInitiated, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PaymentInitiated, $request)],
             ['id' => QuoteStatusEnum::PolicySentToCustomer, 'title' => quoteStatusCode::POLICY_SENT_TO_CUSTOMER, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicySentToCustomer, $request)],
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyIssued, $request)],
             ['id' => QuoteStatusEnum::PolicyBooked, 'title' => quoteStatusCode::POLICY_BOOKED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyBooked, $request)],
@@ -342,11 +343,13 @@ class HealthQuoteController extends Controller
             QuoteStatusEnum::ApplicationPending => 2,
             QuoteStatusEnum::ApplicationSubmitted => 3,
             QuoteStatusEnum::InNegotiation => 4,
-            QuoteStatusEnum::PaymentPending => 5,
-            QuoteStatusEnum::PolicyDocumentsPending => 7,
-            QuoteStatusEnum::TransactionApproved => 8,
-            QuoteStatusEnum::PolicySentToCustomer => 9,
-            QuoteStatusEnum::PolicyBooked => 10,
+            QuoteStatusEnum::PaymentLinkSentToCustomer => 5,
+            QuoteStatusEnum::PaymentInitiated => 6,
+            QuoteStatusEnum::PaymentPending => 7,
+            QuoteStatusEnum::PolicyDocumentsPending => 8,
+            QuoteStatusEnum::TransactionApproved => 9,
+            QuoteStatusEnum::PolicySentToCustomer => 10,
+            QuoteStatusEnum::PolicyBooked => 11,
         ];
 
         $renewals = [
