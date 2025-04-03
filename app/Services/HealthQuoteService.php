@@ -1677,8 +1677,10 @@ class HealthQuoteService extends BaseService
             $lead->quote_status_id != QuoteStatusEnum::AMLScreeningCleared && $statusesToRemove->push(QuoteStatusEnum::AMLScreeningCleared);
             $lead->quote_status_id != QuoteStatusEnum::AMLScreeningFailed && $statusesToRemove->push(QuoteStatusEnum::AMLScreeningFailed);
         }
-        // these statuses are not displayed in the health quote status dropdown cause these are events that are triggered by the system
-        $statusesToRemove->push(QuoteStatusEnum::PaymentInitiated, QuoteStatusEnum::PaymentLinkSentToCustomer);
+        if(!auth()->user()->hasPermissionTo(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+            // these statuses are not displayed in the health quote status dropdown cause these are events that are triggered by the system
+            $statusesToRemove->push(QuoteStatusEnum::PaymentInitiated, QuoteStatusEnum::PaymentLinkSentToCustomer);
+        }
 
         return $leadStatuses->whereNotIn('id', $statusesToRemove);
     }
