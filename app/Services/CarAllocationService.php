@@ -132,10 +132,9 @@ class CarAllocationService extends AllocationService
         if ($carLead->car_model_detail_id == null && ! $this->isCommercialLead($carLead)) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
         } else {
-            if(! $this->isCommercialLead($carLead)){
+            if (! $this->isCommercialLead($carLead)) {
                 $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
-            }
-            else {
+            } else {
                 $valuations = [];
                 info(self::class.'- Commercial lead. No valuation found. Ref-ID: '.$carLead->uuid.' | Time: '.now());
             }
