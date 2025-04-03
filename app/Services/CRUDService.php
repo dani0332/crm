@@ -285,7 +285,7 @@ class CRUDService extends BaseService
                 // Only allow if quote has payment link history and payment method is insurer payment link
                 if ($entity->hasInsurerPaymentLink() && !$entity->canUpdateToTransactionApproved()) {
                     // throw new \Exception('Cannot update to Transaction Approved status. Quote must have payment link history.');
-                    return ['entity' => $entity, 'error' => 'Cannot update to Transaction Approved status. Quote must have payment link history.'];
+                    return ['entity' => $entity, 'error' => 'Cannot update to Transaction Approved status. Quote must have payment initiated and payment link sent to customer.'];
                 }
             }
 
