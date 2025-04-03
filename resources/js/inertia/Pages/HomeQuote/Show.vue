@@ -1,12 +1,12 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 
 const props = defineProps({
   quote: Object,
@@ -2173,6 +2173,13 @@ const isPlanDetailEnabled = computed(() => {
     <ApiLogs :type="modelClassHome" :id="$page.props?.quote?.home_quote?.id" />
 
     <LeadHistory :quote="$page.props.quote" />
+
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'HOME'"
+      :expanded="sectionExpanded"
+    />
 
     <lead-raw-data
       :modelType="'Home'"
