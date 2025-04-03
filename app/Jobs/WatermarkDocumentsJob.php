@@ -55,7 +55,9 @@ class WatermarkDocumentsJob implements ShouldQueue
         $fileMimeType = $quoteDocument->doc_mime_type;
         $docName = str_replace('original_', '', $quoteDocument->doc_name);
 
-        if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') {
+        $extension = strtolower(pathinfo($quoteDocument->doc_name, PATHINFO_EXTENSION));
+
+        if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf' || $extension == 'pdf') {
             $watermarkData = $watermarkService->watermarkPdf($quoteDocument->doc_url, $docName, $this->uuid, $documentType);
         } elseif (in_array($fileMimeType, ['image/jpeg', 'image/png', 'image/jpg'])) {
             $watermarkData = $watermarkService->watermarkImage($quoteDocument->doc_url, $docName, $this->uuid, $documentType);

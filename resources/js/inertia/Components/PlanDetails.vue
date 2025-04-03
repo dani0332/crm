@@ -28,6 +28,7 @@ const planDetailsForm = useForm({
     ? useFormatPrice(props.quote.price_with_vat, true)
     : 0,
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
+  provider_code: null,
 });
 
 const insuranceProviderOptions = computed(() => {
@@ -78,10 +79,15 @@ const submitPlanDetailsForm = isValid => {
 
   if (!isValid) return;
 
+  let selectedProvider = props?.insuranceProviders?.find(
+    provider => provider.id == planDetailsForm.insurance_provider_id,
+  );
+  if (selectedProvider) {
+    planDetailsForm.provider_code = selectedProvider.code;
+  }
+
   let url = `/personal-quotes/${props.quoteType}/${props.quote?.code}/save-plan-details`;
-
   formProcessing.value = true;
-
   planDetailsForm.post(url, {
     preserveScroll: true,
     onError: errors => {

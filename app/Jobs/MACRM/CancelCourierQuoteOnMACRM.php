@@ -15,6 +15,10 @@ class CancelCourierQuoteOnMACRM implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 5;
+    public $timeout = 120;
+    public $backoff = 180;
+
     /**
      * Create a new job instance.
      */

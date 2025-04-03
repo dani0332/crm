@@ -232,6 +232,13 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::TRAVEL_SIC_ALLOCATION,
+            PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
@@ -289,6 +296,12 @@ class HandleInertiaRequests extends Middleware
                         'Yacht',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::YACHT]),
                         fn ($s) => $s->attributes(['icon' => 'yacht'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
+                        'Group Medical',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
@@ -466,17 +479,6 @@ class HandleInertiaRequests extends Middleware
                 $section
                     ->add('Valuation', route('valuation'), fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Vehicle Depreciation', route('vehicledepreciation.index'), fn ($s) => $s->attributes(['icon' => 'car']));
-            });
-        }
-
-        if (auth()->user()->hasAnyPermission([
-            PermissionsEnum::CAR_SOLD_LIST,
-            PermissionsEnum::CAR_UNCONTACTABLE_LIST,
-        ])) {
-            $nav = $nav->add('Car Sold / Uncon', '', function (Section $section) {
-                $section
-                    ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CAR_SOLD_LIST), 'Car Sold', route('car-sold-list'), fn ($s) => $s->attributes(['icon' => 'car']))
-                    ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CAR_UNCONTACTABLE_LIST), 'Car Uncontactable', route('car-uncontactable-list'), fn ($s) => $s->attributes(['icon' => 'car']));
             });
         }
 
