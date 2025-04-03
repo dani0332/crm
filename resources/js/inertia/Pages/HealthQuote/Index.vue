@@ -188,10 +188,8 @@ watch(
   () => filters,
   () => {
     if (
-      (
-        (filters.created_at_start && filters.created_at_end) ||
-        (filters.policy_expiry_date && filters.policy_expiry_date_end)
-      ) ||
+      (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date ||
       filters.transaction_approved_dates
@@ -401,7 +399,8 @@ const onDataExport = () => {
     filters.created_at_end = '';
   }
 
-  if ( filters.transaction_approved_dates &&
+  if (
+    filters.transaction_approved_dates &&
     filters.transaction_approved_dates[0] &&
     filters.transaction_approved_dates[1]
   ) {
@@ -936,8 +935,9 @@ const insurerAMLStatusOption = computed(() => {
             </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or policy expiry dates or Transaction Approved dates or payment due date
-                or booking date are required to export data.
+                Created dates or policy expiry dates or Transaction Approved
+                dates or payment due date or booking date are required to export
+                data.
               </span>
             </template>
           </x-tooltip>

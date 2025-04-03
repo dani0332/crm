@@ -224,7 +224,7 @@ const permissionsEnum = page.props.permissionsEnum;
 
 const exportLoader = ref(false);
 const onDataExport = () => {
-  if(filters.created_at_start && filters.created_at_end){
+  if (filters.created_at_start && filters.created_at_end) {
     let diff = calculateDaysDifference(
       filters.created_at_start,
       filters.created_at_end,
@@ -232,7 +232,8 @@ const onDataExport = () => {
 
     if (diff > 31) {
       notification.error({
-        message: 'Maximum of 31 days (created date) are allowed to be exported.',
+        message:
+          'Maximum of 31 days (created date) are allowed to be exported.',
         position: 'top',
       });
       return;
@@ -269,10 +270,8 @@ watch(
   () => filters,
   () => {
     if (
-      (
-        (filters.created_at_start && filters.created_at_end) ||
-        (filters.policy_expiry_date && filters.policy_expiry_date_end)
-      ) ||
+      (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date
     ) {
@@ -522,10 +521,7 @@ const insurerAMLStatusOption = computed(() => {
           />
         </x-field>
         <x-field label="Created Date End">
-          <DatePicker
-            v-model="filters.created_at_end"
-            name="created_at_end"
-          />
+          <DatePicker v-model="filters.created_at_end" name="created_at_end" />
         </x-field>
         <x-field label="Lead Status">
           <ComboBox
@@ -631,8 +627,8 @@ const insurerAMLStatusOption = computed(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or policy expiry dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

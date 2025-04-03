@@ -513,7 +513,8 @@ const insurerAMLStatusOption = computed(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or policy expiry dates are required to export data.
+                Created dates or policy expiry dates are required to export
+                data.
               </span>
             </template>
           </x-tooltip>
