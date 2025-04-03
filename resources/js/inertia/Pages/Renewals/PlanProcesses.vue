@@ -9,6 +9,8 @@ const page = usePage();
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
+
+
 const role = [rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.LifeManager];
 const roleLeadPool = [rolesEnum.LeadPool];
 const hasAnyRole = role => useHasAnyRole(role);

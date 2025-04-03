@@ -190,9 +190,18 @@ filters.month = new Date().getMonth() + 1;
       hide-rows-per-page
       hide-footer
     >
-      <template #item-action="{ action, renewal_batch }">
+      <template #item-action="{ action, renewal_batch, quote_type }">
         <x-button
+          v-if="quote_type === 'CAR'"
           :href="`/renewals/batches/${renewal_batch}/plans-processes`"
+          class="text-primary-500 btn-passed mr-2"
+          color="primary"
+        >
+          Fetch Plans
+        </x-button>
+        <x-button
+          v-else
+          :href="`/renewals/batches/${renewal_batch}/${quote_type}/plans-processes`"
           class="text-primary-500 btn-passed mr-2"
           color="primary"
         >

@@ -102,6 +102,36 @@ class RenewalsUploadController extends Controller
         return redirect()->route('batch-plans-processes', $batch)->with('error', 'No pending leads available to fetch plans');
     }
 
+    public function fetchPlansForNonMotor($batch, $quoteType){
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
+        }
+
+        $totalPending = RenewalQuoteProcess::where([
+            'quote_type' => $quoteType,
+            'batch' => $batch,
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
+        ])->count();
+
+        if ($totalPending > 0) {
+            $renewalStatusProcess = RenewalStatusProcess::create([
+                'batch' => $batch,
+                'total_leads' => $totalPending,
+                'status' => ProcessStatusCode::IN_PROGRESS,
+                'user_id' => auth()->id(),
+            ]);
+
+            FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);
+
+            return redirect()->route('batch-plans-processes', $batch)->with('success', 'Fetch plans is started for batch '.$batch);
+        }
+
+        return redirect()->route('batch-plans-processes', $batch)->with('error', 'No pending leads available to fetch plans');
+
+    }
+
     /**
      * renew the quote against the customer.
      */
@@ -269,13 +299,13 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
-
+        
         $query = RenewalQuoteProcess::query()
-            ->select('renewal_quote_processes.batch as renewal_batch')
+            ->select('renewal_quote_processes.batch as renewal_batch', 'renewal_quote_processes.quote_type as quote_type')
             ->join('personal_quotes', 'renewal_quote_processes.batch', '=', 'personal_quotes.renewal_batch')
             ->where([
                 'renewal_quote_processes.quote_type' => ! empty($request->lob) ? $request->lob : QuoteTypeShortCode::HOM,
-                'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
+                'renewal_quote_processes.type' => RenewalsUploadType::CREATE_LEADS,
             ])
             ->whereYear('personal_quotes.previous_policy_expiry_date', ! empty($request->year) ? $request->year : date('Y'))
             ->whereMonth('personal_quotes.previous_policy_expiry_date', ! empty($request->month) ? $request->month : date('n'));
@@ -328,6 +358,7 @@ class RenewalsUploadController extends Controller
             'batch' => $batch,
         ]);
     }
+    
 
     public function batchDetail($batch)
     {

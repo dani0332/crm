@@ -452,6 +452,76 @@ class RenewalsUploadService
         }
     }
 
+    public function fetchRenewalPlansForNonMotor(RenewalStatusProcess $renewalStatusProcess, $batch, $quoteType)
+    {
+        $logPrefix = 'FetchPlans FN: fetchRenewalPlans Batch: '.$batch;
+        info($logPrefix.'  Fetch plans started');
+
+        try {
+            $jobs = null;
+            $totalSkipped = 0;
+
+            $query = RenewalQuoteProcess::where([
+                'status' => RenewalProcessStatuses::PROCESSED,
+                'quote_type' => $quoteType,
+                'batch' => $batch,
+                'type' => RenewalsUploadType::UPDATE_LEADS,
+                'fetch_plans_status' => FetchPlansStatuses::PENDING,
+            ])->with(['renewalUploadLead', 'carQuote']);
+
+            $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
+                foreach ($leads as $lead) {
+                    if (! $lead->renewalUploadLead->skip_plans) {
+                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
+                    } else {
+                        info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
+                        $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
+                        $totalSkipped++;
+                    }
+                }
+            });
+
+            if ($totalSkipped > 0) {
+                $renewalStatusProcess->update(['total_completed' => $totalSkipped]);
+                info($logPrefix.' total leads for skipped plans ('.$totalSkipped.')');
+            }
+
+            if ($jobs != null && count($jobs)) {
+                info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
+
+                Haystack::build()
+                    ->onQueue('renewals')
+                    ->addJobs($jobs)
+                    ->then(function () use ($logPrefix, $renewalStatusProcess) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use ($logPrefix, $renewalStatusProcess) {
+                        // Haystack failed
+                        info($logPrefix.' one of batch is failed. ');
+                        $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(10)
+                    ->dispatch();
+
+                info($logPrefix.' all jobs are scheduled');
+            } else {
+                info($logPrefix.' no leads available for fetch plans, about to mark status as completed');
+                $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+                info($logPrefix.' fetch plans is completed');
+            }
+
+            return true;
+        } catch (\Exception $exception) {
+            Log::error($logPrefix.'Fetch plans failed.  Error: '.$exception->getMessage());
+            $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
+        }
+    }
+
     /**
      * fetch plans for individual quote.
      *
