@@ -10,6 +10,8 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Http\Traits\HasFtcEmailTrack;
 use App\Traits\FilterCriteria;
+use App\Traits\HasPaymentsTrait;
+use App\Traits\HasQuoteStatusLogsTrait;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +21,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, HasFtcEmailTrack, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, HasFtcEmailTrack, QuoteModelTrait, HasPaymentsTrait, HasQuoteStatusLogsTrait;
 
     protected $table = 'health_quote_request';
     protected $fillable = [];
@@ -162,11 +164,6 @@ class HealthQuote extends Model implements AuditableContract
     public function members()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
-    }
-
-    public function payments()
-    {
-        return $this->morphMany(Payment::class, 'paymentable');
     }
 
     public function plan()

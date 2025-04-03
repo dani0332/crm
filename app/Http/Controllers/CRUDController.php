@@ -1809,7 +1809,6 @@ class CRUDController extends Controller
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $lead = $this->carQuoteService->getEntityPlain($request->leadId);
             if ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued) {
-                // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
             }
 
@@ -1830,6 +1829,12 @@ class CRUDController extends Controller
 
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
+        
+        // Check for error in result
+        if (isset($result['error'])) {
+            return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('error', $result['error']);
+        }
+
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
             $this->crudService->calculateScore($plainEntity, $request->modelType);
@@ -1847,7 +1852,8 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', 'Status updated successfully & Activity has been created');
         }
 
-        return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
+        return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)
+            ->with('success', ' Lead Status has been Updated');
     }
 
     public function carPlanManualProcess(Request $request)

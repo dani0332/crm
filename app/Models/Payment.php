@@ -255,4 +255,28 @@ class Payment extends Model implements Auditable
     {
         return $this->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP;
     }
+
+    /**
+     * Check if payment has any splits with IPL payment method
+     * 
+     * @return bool
+     */
+    public function hasInsurerPaymentLink()
+    {
+        return $this->paymentSplits()
+            ->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink)
+            ->exists();
+    }
+
+    /**
+     * Get all payment splits that have IPL payment method
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function getInsurerLinkPaymentSplits()
+    {
+        return $this->paymentSplits()
+            ->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink)
+            ->get();
+    }
 }
