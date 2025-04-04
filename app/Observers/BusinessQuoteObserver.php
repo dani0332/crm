@@ -16,6 +16,7 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use App\Enums\BusinessTypeOfInsuranceEnum;
+use App\Services\BusinessQuoteService;
 
 class BusinessQuoteObserver
 {
@@ -64,7 +65,8 @@ class BusinessQuoteObserver
 
                 $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
                 info(self::class." Sending {$emailType} email to customer for  {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
-                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId, $businessQuote->businessTypeOfInsurance ?? []);
+                $shortenedBusinessType = app(BusinessQuoteService::class)->formatInsuranceName($businessQuote->businessTypeOfInsurance->code ?? '');
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId, $shortenedBusinessType ?? []);
                 info(self::class." | {$emailType} email sent to customer for {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
 
             } else {
