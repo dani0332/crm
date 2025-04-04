@@ -9,7 +9,7 @@ class LoggerService
     public static function startQuoteLogging(string $uuid, array $extra = [])
     {
         self::endLogging();
-        Log::withContext(['uuid' => $uuid, ...$extra]);
+        Log::withContext(['quote_uuid' => $uuid, ...$extra]);
     }
 
     public static function endLogging()
