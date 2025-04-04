@@ -513,7 +513,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $masterPayment = $splitPayment->payment;
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 $paymentStatusId = PaymentStatusEnum::CAPTURED;
-                if($request->actual_amount && $request->actual_amount > $request->collection_amount) {
+                if ($request->actual_amount && $request->actual_amount > $request->collection_amount) {
                     $paymentStatusId = PaymentStatusEnum::PARTIAL_CAPTURED;
                 }
                 $paymentInformation = [
