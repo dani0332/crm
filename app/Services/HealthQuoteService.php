@@ -1679,7 +1679,7 @@ class HealthQuoteService extends BaseService
         }
         if(!auth()->user()->hasPermissionTo(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
             // these statuses are not displayed in the health quote status dropdown cause these are events that are triggered by the system
-            $statusesToRemove->push(QuoteStatusEnum::PaymentInitiated, QuoteStatusEnum::PaymentLinkSentToCustomer);
+            $statusesToRemove->push(QuoteStatusEnum::PaymentInitiated);
         }
 
         return $leadStatuses->whereNotIn('id', $statusesToRemove);
