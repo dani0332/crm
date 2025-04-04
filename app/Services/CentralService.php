@@ -11,7 +11,9 @@ use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentGatewayIdEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
@@ -309,34 +311,105 @@ class CentralService extends BaseService
      */
     public function savePlanDetails($quoteType, $code, $data)
     {
-        return DB::transaction(function () use ($quoteType, $code, $data) {
-            $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
-            $repository = getRepositoryObject($quoteType);
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $repository = getRepositoryObject($quoteType);
 
-            $priceVatApp = $data->price_vat_applicable ?? 0;
-            $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+        $priceVatApp = $data->price_vat_applicable ?? 0;
+        $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
 
-            if ($quoteType == QuoteTypes::BUSINESS->value) {
-                $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
-            } else {
-                $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
-            }
+        if ($quoteType == QuoteTypes::BUSINESS->value) {
+            $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
+        } else {
+            $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
+        }
 
-            $quote = $repository::where('code', $code)->firstOrFail();
+        $quote = $repository::where('code', $code)->firstOrFail();
+        
+        $oldInsuranceProviderId = $quote->insurance_provider_id;
+        $newInsuranceProviderId = $data->insurance_provider_id;
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $businessTypeId = $quote->business_type_of_insurance_id ?? null;
+        $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId, null, $quote);
+       
+        return DB::transaction(function () use ($quoteType, $data, $quote, $isCreditCardEnabled, $newInsuranceProviderId, $oldInsuranceProviderId) {
             $quote->update($data->toArray());
 
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $quote->carQuoteRequestDetail->update(['insurer_quote_number' => $data->insurer_quote_number]);
             }
 
-            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-            $businessTypeId = $quote->business_type_of_insurance_id ?? null;
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId, null, $quote);
-            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
+            $this->synchronizePaymentInformation($quote, null, $newInsuranceProviderId, $isCreditCardEnabled);
 
+            info("Checking conditions for updating payment method for quote code: {$quote->code}", [
+                'quote_type' => $quoteType,
+                'source' => $quote->source,
+                'old_provider' => $oldInsuranceProviderId,
+                'new_provider' => $newInsuranceProviderId
+            ]);
+            if ($quoteType == QuoteTypes::HOME->value && $quote->source == LeadSourceEnum::RENEWAL_UPLOAD && $newInsuranceProviderId != $oldInsuranceProviderId) {
+                $this->updatePaymentMethodBasedOnInsurer($quote, $newInsuranceProviderId);
+            }
+            
             return true;
         });
+    }
+
+    private function updatePaymentMethodBasedOnInsurer($quote, $insuranceProviderId)
+    {
+        $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
+
+        $insurersWithoutCCRenewal = [
+            InsurerProviderEnum::GIG_INSURANCE,
+            InsurerProviderEnum::EMIRATES_INSURANCE,
+            InsurerProviderEnum::LIVANA_INSURANCE,
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE
+        ];
+
+        info("Updating payment method for home renewal lead", [
+            'quote_code' => $quote->code,
+            'insurer' => $insuranceProvider->code,
+            'payment_gateway_id' => $insuranceProvider->payment_gateway_id
+        ]);
+
+        // Define payment method based on payment gateway
+        $newPaymentMethod = in_array($insuranceProvider->code, $insurersWithoutCCRenewal) && $quote->source == LeadSourceEnum::RENEWAL_UPLOAD
+            ? PaymentMethodsEnum::InsurerPayment 
+            : PaymentMethodsEnum::CreditCard;
+
+        $pendingStatuses = [
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DRAFT,
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::OVERDUE
+        ];
+
+        // Update master payment and related splits
+        $payment = Payment::with('paymentSplits')
+            ->whereIn('payment_status_id', $pendingStatuses)
+            ->where('code', $quote->code)->first();
+            
+        if ($payment) {
+            $payment->payment_methods_code = $newPaymentMethod;
+            $payment->save();
+
+            info("Updated master payment method", [
+                'quote_code' => $quote->code,
+                'new_method' => $newPaymentMethod
+            ]);
+
+            // Update payment splits that are not in final status
+            $payment->paymentSplits()
+                ->whereIn('payment_status_id', $pendingStatuses)
+                ->update([
+                    'payment_method' => $newPaymentMethod
+                ]);
+
+            info("Updated payment splits payment method", [
+                'quote_code' => $quote->code,
+                'new_method' => $newPaymentMethod
+            ]);
+        }
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
@@ -981,7 +1054,7 @@ class CentralService extends BaseService
         }
     }
 
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true)
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true, $isHomeRenewalLead = false)
     {
         info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {
