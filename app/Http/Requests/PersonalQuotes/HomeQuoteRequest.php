@@ -25,8 +25,8 @@ class HomeQuoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => 'required|between:1,20',
-            'last_name' => 'required|between:1,50',
+            'first_name' => "required|between:1,20|regex:/^[\p{L}\s\-']+$/u|not_regex:/[\s\-']{2,}/",
+            'last_name' => "required|between:1,50|regex:/^[\p{L}\s\-']+$/u|not_regex:/[\s\-']{2,}/",
             'email' => 'required|email:rfc,dns|max:150',
             'mobile_no' => 'required|min:7|max:20',
             'has_contents' => self::SOMETIMES_BOOLEAN,
@@ -65,9 +65,13 @@ class HomeQuoteRequest extends FormRequest
         return [
             'first_name.required' => 'The first name is required.',
             'first_name.between' => 'The first name must be between 1 and 20 characters.',
+            'first_name.regex' => 'The first name must contain only letters, spaces, hyphens, and apostrophes.',
+            'first_name.not_regex' => 'The first name cannot contain consecutive spaces, hyphens, or apostrophes.',
 
             'last_name.required' => 'The last name is required.',
             'last_name.between' => 'The last name must be between 1 and 50 characters.',
+            'last_name.regex' => 'The last name must contain only letters, spaces, hyphens, and apostrophes.',
+            'last_name.not_regex' => 'The last name cannot contain consecutive spaces, hyphens, or apostrophes.',
 
             'email.required' => 'The email address is required.',
             'email.email' => 'Please provide a valid email address.',
