@@ -136,6 +136,11 @@ class InslyDetailRepository extends BaseRepository
         if ($tempPolicyId == $policyID) {
             $advisorId = $tempSalesPersonId;
         }
+        $tempSalesPersonId = 178;
+        $tempPolicyId = 69102576;
+        if ($tempPolicyId == $policyID) {
+            $advisorId = $tempSalesPersonId;
+        }
         /* Temp Code - assign email for particular Policy id/number */
 
         if ($advisorId == null) {
