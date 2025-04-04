@@ -57,6 +57,4 @@ class LoggerService
         Log::emergency($message, $context);
     }
 
-
-
 }
