@@ -23,7 +23,7 @@ class LogMiddleware
 
         Log::withContext([
             'request_id' => $requestId,
-            'request_path' => $request->method() . ' ' . $request->path(),
+            'request_path' => $request->method().' '.$request->path(),
             'request_ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'user_id' => $request->user()?->id,
