@@ -224,28 +224,31 @@ const permissionsEnum = page.props.permissionsEnum;
 
 const exportLoader = ref(false);
 const onDataExport = () => {
-  let diff = calculateDaysDifference(
-    filters.created_at_start,
-    filters.created_at_end,
-  );
+  if (filters.created_at_start && filters.created_at_end) {
+    let diff = calculateDaysDifference(
+      filters.created_at_start,
+      filters.created_at_end,
+    );
 
-  if (diff > 31) {
-    notification.error({
-      message: 'Maximum of 31 days (created date) are allowed to be exported.',
-      position: 'top',
-    });
-    return;
+    if (diff > 31) {
+      notification.error({
+        message:
+          'Maximum of 31 days (created date) are allowed to be exported.',
+        position: 'top',
+      });
+      return;
+    }
+
+    filters.created_at_start = useDateFormat(
+      filters.created_at_start,
+      'YYYY-MM-DD',
+    ).value;
+
+    filters.created_at_end = useDateFormat(
+      filters.created_at_end,
+      'YYYY-MM-DD',
+    ).value;
   }
-
-  filters.created_at_start = useDateFormat(
-    filters.created_at_start,
-    'YYYY-MM-DD',
-  ).value;
-
-  filters.created_at_end = useDateFormat(
-    filters.created_at_end,
-    'YYYY-MM-DD',
-  ).value;
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'amt');
@@ -268,6 +271,7 @@ watch(
   () => {
     if (
       (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date
     ) {
@@ -514,35 +518,10 @@ const insurerAMLStatusOption = computed(() => {
           <DatePicker
             v-model="filters.created_at_start"
             name="created_at_start"
-            :rules="
-              filters.previous_quote_policy_number ||
-              filters.code ||
-              filters.email ||
-              filters.renewal_batch ||
-              filters.payment_due_date ||
-              filters.booking_date ||
-              filters.company_name
-                ? []
-                : [isRequired]
-            "
           />
         </x-field>
         <x-field label="Created Date End">
-          <DatePicker
-            v-model="filters.created_at_end"
-            name="created_at_end"
-            :rules="
-              filters.previous_quote_policy_number ||
-              filters.code ||
-              filters.email ||
-              filters.renewal_batch ||
-              filters.payment_due_date ||
-              filters.booking_date ||
-              filters.company_name
-                ? []
-                : [isRequired]
-            "
-          />
+          <DatePicker v-model="filters.created_at_end" name="created_at_end" />
         </x-field>
         <x-field label="Lead Status">
           <ComboBox
@@ -648,8 +627,8 @@ const insurerAMLStatusOption = computed(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

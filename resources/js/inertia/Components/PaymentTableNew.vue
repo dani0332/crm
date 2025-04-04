@@ -3192,6 +3192,7 @@ const providerId = computed(() => {
 
 const providerName = computed(() => {
   const plan = planDetail.value;
+  const ecomQuoteType = [...quoteTypesToCheck, 'Bike'];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
       provider => provider.id === providerId.value,
@@ -3199,7 +3200,7 @@ const providerName = computed(() => {
 
     return provider.text || 'Not Available';
   } else if (
-    quoteTypesToCheck.includes(props.quoteType) &&
+    ecomQuoteType.includes(props.quoteType) &&
     plan.insurance_provider
   ) {
     return plan ? plan.insurance_provider.text : 'Not Available';
