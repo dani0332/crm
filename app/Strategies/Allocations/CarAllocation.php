@@ -129,7 +129,7 @@ class CarAllocation implements Allocation
 
             $lead->endAllocation();
 
-            return $this->carAllocationService->createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier->id);
+            return $this->carAllocationService->createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier);
         }
 
         $this->evaluateTeamId($lead);
