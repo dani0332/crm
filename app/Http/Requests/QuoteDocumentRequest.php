@@ -3,9 +3,11 @@
 namespace App\Http\Requests;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
+use App\Models\InsuranceProvider;
 use App\Rules\ValidateBase64;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -92,8 +94,10 @@ class QuoteDocumentRequest extends FormRequest
             } else {
                 // validate if payment is authorized
                 if (request()->quoteType != strtolower(quoteTypeCode::Travel)) {
-                    if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
-                        $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+                    if(!$this->isPlanBProviderSelected($quote)){
+                        if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+                            $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+                        }
                     }
                 }
             }
@@ -103,5 +107,16 @@ class QuoteDocumentRequest extends FormRequest
                 $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
             }
         });
+    }
+
+    private function isPlanBProviderSelected($quote){
+        $insuranceProvider = InsuranceProvider::find($quote->insurance_provider_id);
+        if (!$insuranceProvider) {
+            return false;
+        }
+        if (in_array($insuranceProvider->payment_gateway_id, [PaymentGatewayEnum::PAYMENT_GATEWAY_TAP, PaymentGatewayEnum::PAYMENT_GATEWAY_CHECKOUT])) {
+            return false;
+        }
+        return false;
     }
 }
