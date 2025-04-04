@@ -117,6 +117,6 @@ class QuoteDocumentRequest extends FormRequest
         if (in_array($insuranceProvider->payment_gateway_id, [PaymentGatewayEnum::PAYMENT_GATEWAY_TAP, PaymentGatewayEnum::PAYMENT_GATEWAY_CHECKOUT])) {
             return false;
         }
-        return false;
+        return true;
     }
 }
