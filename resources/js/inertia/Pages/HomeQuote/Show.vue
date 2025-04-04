@@ -964,9 +964,10 @@ const confirmSendEmail = () => {
 const viewPlanDetailsLoader = ref({});
 
 const isPlanDetailEnabled = computed(() => {
-  if (page.props.quote.source == page.props.leadSource.RENEWAL_UPLOAD) {
-    return true;
-  }
+  // TODO: Remove this after testing or when taking to Stage after BA confirmation
+  // if (page.props.quote.source == page.props.leadSource.RENEWAL_UPLOAD) {
+  //   return true;
+  // }
   return false;
 });
 </script>
