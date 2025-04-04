@@ -8,6 +8,8 @@ use Monolog\Logger;
 use Monolog\LogRecord;
 use Monolog\Formatter\FormatterInterface;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Auth;
+use Monolog\Level;
 
 class AxiomHandler extends AbstractProcessingHandler
 {
@@ -15,7 +17,7 @@ class AxiomHandler extends AbstractProcessingHandler
     private string $dataset;
     private const API_BASE_URL = 'https://api.axiom.co/v1/datasets/';
 
-    public function __construct($level = Logger::DEBUG, bool $bubble = true, ?string $apiToken = null, ?string $dataset = null)
+    public function __construct($level = Level::Debug, bool $bubble = true, ?string $apiToken = null, ?string $dataset = null)
     {
         parent::__construct($level, $bubble);
 
@@ -34,6 +36,7 @@ class AxiomHandler extends AbstractProcessingHandler
                 'extra' => $record->extra,
                 'timestamp' => $record->datetime->format('c'),
                 'environment' => app()->environment(),
+                'user_id' => Auth::id(),
             ];
 
             $response = Http::withToken($this->apiToken)
