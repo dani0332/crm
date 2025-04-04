@@ -502,8 +502,6 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
-  console.log(page.props.quote.home_quote.has_claimed_losses);  
-    
 
   if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD && 
         page.props.quote.advisor.name && 
