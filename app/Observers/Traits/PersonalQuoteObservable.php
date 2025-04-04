@@ -32,7 +32,8 @@ trait PersonalQuoteObservable
             }
 
             // For now PolicyCancelled Handling is only for Bike
-            if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled && $personalQuote->isBike()) {
+            if ($personalQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled &&
+            ($personalQuote->isBike() || $personalQuote->isHome())) {
                 $this->handleBikePolicyCancelled($personalQuote);
             }
         }
@@ -108,7 +109,7 @@ trait PersonalQuoteObservable
             'lead-status-update-myalfred-we'
         );
 
-        if ($personalQuote->isBike()) {
+        if ($personalQuote->isBike() || $personalQuote->isHome()) {
             try {
                 EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             } catch (Exception $e) {
