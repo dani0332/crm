@@ -178,6 +178,7 @@ const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
+const isApproveLowerAmountConfirmed = ref(true);
 
 const showLackingPayment = () => {
   if (is_lacking_payment.value && props.payments.length > 0) {
@@ -417,11 +418,19 @@ const closeInnerModal = () => {
   isGalleryModelOpen.value = false;
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+  isApproveLowerAmountConfirmed.value = true;
 };
 const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
   isApproveConfirm.value = false;
+  isApproveLowerAmountConfirmed.value = true;
+};
+const closeApprovalLowerAmountModal = () => {
+  isApproveConfirmed.value = false;
+  isApproveNotChecked.value = true;
+  isApproveConfirm.value = false;
+  isApproveLowerAmountConfirmed.value = true;
 };
 const closeAmlConfirmModal = () => {
   isAmlApprovalRequired.value = false;
@@ -1951,6 +1960,7 @@ const resetPaymentForm = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
   isAmlApprovalRequired.value = false;
+  isApproveLowerAmountConfirmed.value = true;
 };
 
 const initializePaymentForm = (
@@ -2212,10 +2222,14 @@ const validateViewPayment = isValid => {
     parseFloat(splitAmountModels.value[splitPaymentNo.value]) >
     parseFloat(paymentMethodsForm.collection_amount)
   ) {
-    approveErrorMessage.value =
-      'The entered amount is smaller than the total amount.';
-    isApprovePaymentError.value = true;
-    return true;
+    if(can(permissionEnum.PAYMENT_VERIFICATION_LOWER_AMOUNT)) {
+      isApproveLowerAmountConfirmed.value = false;
+    } else {
+      approveErrorMessage.value =
+        'The entered amount is smaller than the total amount.';
+      isApprovePaymentError.value = true;
+      return true;
+    }
   }
 
   if (
@@ -2335,6 +2349,7 @@ const addPayment = isValid => {
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
     if (validateViewPayment(isValid)) return;
+    isApproveLowerAmountConfirmed.value = true;
   } else if (paymentMethodsForm.status !== 'view') {
     if (validatePaymentOption()) return;
     if (isPaidEditable.value === true) {
@@ -2464,6 +2479,7 @@ const addPayment = isValid => {
       plan_id: planDetail?.value?.id || 0,
       customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
+      actual_amount: parseFloat(splitAmountModels.value?.[splitPaymentNo.value]),
       bank_reference_number: paymentMethodsForm.bank_reference_number,
       splitPaymentId: paymentMethodsForm.splitPaymentId,
       is_declined: isDeclineClicked.value,
@@ -2959,7 +2975,8 @@ const validateUpfrontCapture = paymentRecord => {
     return getValidStatuses(paymentSplitRec);
   const isIPPending =
     paymentSplitRec.payment_method.code === 'IP' &&
-    paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
+    (paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING ||
+    (paymentSplitRec.payment_status_id === paymentStatusEnum.PARTIALLY_PAID && paymentRecord.collection_type === 'insurer'));
   const isCAPayment =
     paymentSplitRec.payment_method.code === 'CA' &&
     paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
@@ -3004,7 +3021,8 @@ const validateSplitPaymentsCapture = paymentRecord => {
       let ipPending = ipPaymentStatus.filter(
         item =>
           item.payment_status_id === paymentStatusEnum.PENDING ||
-          item.payment_status_id === paymentStatusEnum.PAID,
+          item.payment_status_id === paymentStatusEnum.PAID ||
+          (item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID && paymentRecord.collection_type === 'insurer'),
       );
       return ipPending.length === ipPaymentStatus.length;
     } else {
@@ -6403,10 +6421,80 @@ onBeforeMount(() => {
                 </div>
               </div>
             </template>
+            <div
+              class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+              v-if="isApproveConfirmed && !isApproveLowerAmountConfirmed"
+            >
+              <div
+                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+              >
+                <div class="modal-confirm-header text-base text-white bg-white">
+                  <div
+                    class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
+                  >
+                    <div class="flex items-center space-x-2">
+                      Confirm Approval
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span
+                        @click="closeApprovalLowerAmountModal"
+                        class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+                      >
+                        <!-- Cross icon -->
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          tabindex="0"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          class="w-4 h-4 text-gray-800"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          ></path>
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="w-full h-full mt-2 flex flex-col items-center">
+                  <div
+                    class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
+                  >
+                    <div class="text-left">
+                      <span>The entered amount is less than the total amount. Do you want to proceed with approval?</span>
+                    </div>
+                  </div>
+                  <div class="flex flex-row space-x-4 mt-4">
+                    <x-button
+                      size="lg"
+                      type="submit"
+                      color="orange"
+                      class="px-4 py-2"
+                      @click="isApproveLowerAmountConfirmed = true"
+                    >
+                      <span>Yes</span>
+                    </x-button>
+                    <x-button
+                      size="lg"
+                      type="submit"
+                      color="gray"
+                      class="px-4 py-2"
+                      @click="closeApprovalLowerAmountModal"
+                    >
+                      <span>No</span>
+                    </x-button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <div
               class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
-              v-if="isApproveConfirmed"
+              v-if="isApproveConfirmed && isApproveLowerAmountConfirmed"
             >
               <div
                 class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
