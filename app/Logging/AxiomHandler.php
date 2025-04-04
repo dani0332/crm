@@ -32,11 +32,11 @@ class AxiomHandler extends AbstractProcessingHandler
                 'message' => $record->message,
                 'context' => $record->context,
                 'level' => $record->level->getName(),
-                'channel' => $record->channel,
                 'extra' => $record->extra,
                 'timestamp' => $record->datetime->format('c'),
                 'environment' => app()->environment(),
                 'user_id' => Auth::id(),
+                'service' => 'IMCRM',
             ];
 
             $response = Http::withToken($this->apiToken)
