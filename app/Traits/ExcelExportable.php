@@ -61,6 +61,7 @@ trait ExcelExportable
             $requestParams['recipientEmail'],
             $requestParams
         );
+        info("Dispatching ExportCsvAndSendEmailJob");
 
         /**
          *  string $exportClass,

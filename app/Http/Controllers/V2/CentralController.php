@@ -119,7 +119,7 @@ class CentralController extends Controller
                 return app(CarQuoteExportWithMakeModelTrims::class)->download(ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS));
             }
         }
-
+        info("CentralController@exportLeads");
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
                 return app(LifeQuotesExport::class)->download('life_leads');
