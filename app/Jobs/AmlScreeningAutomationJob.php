@@ -9,12 +9,16 @@ use App\Enums\QuoteTypes;
 use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Request;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
 
 class AmlScreeningAutomationJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     use GenericQueriesAllLobs;
 
     public $timeout = 60;
@@ -25,6 +29,8 @@ class AmlScreeningAutomationJob implements ShouldQueue
     private mixed $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
+    public $uniqueFor = 60 * 15; // 15 minutes
+    public $uniqueKey = null; // 15 minutes
 
     /**
      * Create a new job instance.
@@ -34,6 +40,7 @@ class AmlScreeningAutomationJob implements ShouldQueue
         $this->quoteRequestId = $quoteRequestId;
         $this->quoteType = $quoteType;
         $this->quoteRefId = $this->quoteType->shortCode();
+        $this->uniqueKey = strtolower($this->quoteRefId).'id-'.$this->quoteRequestId;
     }
 
     /**
@@ -132,5 +139,12 @@ class AmlScreeningAutomationJob implements ShouldQueue
         } catch (\Exception $e) {
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML screening failed' .' - Error: ' . $e->getMessage() . ' - line: ' . $e->getLine());
         }
+    }
+
+    public function middleware()
+    {
+        return [
+            new WithoutOverlapping('aml-screening-automation-'.$this->uniqueKey)
+        ];
     }
 }
