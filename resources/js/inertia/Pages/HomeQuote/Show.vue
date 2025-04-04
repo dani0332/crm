@@ -502,7 +502,9 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
-  onLoadAvailablePlansData();
+  if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
+    onLoadAvailablePlansData();
+  }
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
