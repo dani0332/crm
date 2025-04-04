@@ -223,7 +223,7 @@ return [
         'test' => [
             'supervisor-test' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals,insly,policy-issuance-automation',
+                'queue' => 'default,renewals,insly,policy-issuance-automation,aml-screening-automation',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,

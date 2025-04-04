@@ -8,6 +8,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
@@ -16,7 +17,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
-class AmlScreeningAutomationJob implements ShouldQueue
+class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     use GenericQueriesAllLobs;
@@ -146,5 +147,10 @@ class AmlScreeningAutomationJob implements ShouldQueue
         return [
             new WithoutOverlapping('aml-screening-automation-'.$this->uniqueKey)
         ];
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->uniqueKey;
     }
 }
