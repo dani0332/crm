@@ -516,8 +516,8 @@ onMounted(() => {
         page.props.quote.home_quote?.has_claimed_losses !== undefined &&
         (
         (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.TENANT && page.props.quote.home_quote?.owner_occupancy_type_id) ||
-        (page.props.quote.home_quote?.possession_type_id == 3 && page.props.quote.home_quote?.personal_belongings_value_id && page.props.quote.home_quote.contents_value_id) ||
-        (page.props.quote.home_quote?.possession_type_id == 3 && page.props.quote.home_quote.contents_value_id) ||
+        (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.OWNER_RENTING && page.props.quote.home_quote?.personal_belongings_value_id && page.props.quote.home_quote.contents_value_id) ||
+        (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.OWNER_RENTING && page.props.quote.home_quote.contents_value_id) ||
         (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.LANDLORD && page.props.quote.home_quote?.building_value) ||
         (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.LANDLORD && page.props.quote.home_quote?.contents_value_id)
         )
