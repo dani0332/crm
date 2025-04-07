@@ -16,6 +16,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use App\Services\Logger\LoggerService;
 
 class CycleQuoteRepository extends BaseRepository
 {
@@ -58,7 +59,7 @@ class CycleQuoteRepository extends BaseRepository
             'nationalityId' => $data['nationality_id'],
         ];
 
-        info('cycleQuote:'.json_encode($quoteData));
+        LoggerService::info('cycleQuote:'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
