@@ -1364,7 +1364,7 @@ class CRUDController extends Controller
         app(CustomerAddressService::class)->validateAddress($request);
 
         if ($modelType == quoteTypeCode::Car) {
-            $carQuoteRequest = CarQuote::with('carQuoteRequestDetail')->where('uuid', $id)->first();
+            $carQuoteRequest = CarQuote::where('uuid', $id)->first();
             if ($carQuoteRequest && $request->has('chassis_number')) {
                 CarQuoteRequestDetail::updateOrCreate(
                     ['car_quote_request_id' => $carQuoteRequest->id], 
