@@ -17,9 +17,9 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     public $timeout = 300; // 5 minutes
     public $tries = 3;
     public $backoff = 30;
-    protected $exportClass;
-    protected $recipientEmail;
-    protected $requestParams;
+    private $exportClass;
+    private $recipientEmail;
+    private $requestParams;
 
     /**
      * Create a new job instance.

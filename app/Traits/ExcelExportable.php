@@ -11,9 +11,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 trait ExcelExportable
 {
-    private $request_params = [];
-    private $fileContent = [];
-    abstract public function collection();
+    abstract public function collection($requestParams);
     abstract public function headings();
     abstract public function map($quote);
 
@@ -106,15 +104,13 @@ trait ExcelExportable
             $fromName = config('constants.MAIL_FROM_NAME');
         }
 
-        $this->request_params = $requestParams;
-
         // Generate CSV content in memory
         $csvFileName = $fileName.'-'.Carbon::now()->format('Y-m-d').'.csv';
         $stream = fopen('php://temp', 'r+');
 
         // Write CSV data
         fputcsv($stream, $this->headings());
-        $data = $this->collection();
+        $data = $this->collection($requestParams);
         foreach ($data as $quote) {
             fputcsv($stream, $this->map($quote));
         }
