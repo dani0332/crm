@@ -49,19 +49,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
+use App\Services\Logger\LoggerService;
 
 class HealthQuoteService extends BaseService
 {
     protected $query;
     protected $leadAllocationService;
     protected $httpService;
+    protected $loggerService;
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, LoggerService $loggerService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
+        $this->loggerService = $loggerService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
             // 'hqr.prefill_plan_id',
@@ -1185,13 +1188,13 @@ class HealthQuoteService extends BaseService
     public function assignWCU($request): array
     {
         $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
-        info('Leads ids to assign: '.json_encode($leadsIds));
+        LoggerService::info('Leads ids to assign: '.json_encode($leadsIds));
         $userId = $request->assigned_to_id_new;
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-                info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
+                LoggerService::warning('Cannot assign WCU as lead is in Transaction Approved state, lead id: '.$leadId);
                 array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
 
                 continue;
@@ -1201,7 +1204,7 @@ class HealthQuoteService extends BaseService
                 $lead->wcu_id = $userId;
                 $lead->health_team_type = $request->assign_team;
                 $lead->save();
-                info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
+                LoggerService::info('WCU advisor: '.$userId.' assigned to lead: '.$leadId);
             }
         }
 
@@ -1211,21 +1214,21 @@ class HealthQuoteService extends BaseService
     public function assignHealthTeam($request, $lead): bool
     {
         if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-            info('Cannot assign Health Team as lead is in Transaction Approved state');
+            LoggerService::warning('Cannot assign Health Team as lead is in Transaction Approved state');
 
             return false;
         }
         if ($lead->health_team_type != null && $lead->advisor_id != null) {
-            info('Removing previous advisor as lead already assigned to a health team');
+            LoggerService::info('Removing previous advisor as lead already assigned to a health team');
             $this->removePreviousAdvisorAndUpdateStatus($lead, QuoteStatusEnum::Qualified);
         }
         $selectedTeam = $request->get('assign_team');
         if ($selectedTeam == quoteTypeCode::GM) {
-            info('Assigning lead to GM');
+            LoggerService::info("Assigning lead to GM Ref-ID: {$lead->uuid}");
             $this->convertLeadToGM($lead);
             $lead->health_team_type = quoteTypeCode::GM;
         } else {
-            info('Assigning lead to '.$selectedTeam.' team');
+            LoggerService::info("Assigning lead to {$selectedTeam} team");
             $lead->health_team_type = $selectedTeam;
             if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                 $lead->wcu_id = null;
@@ -1283,7 +1286,7 @@ class HealthQuoteService extends BaseService
             // will update the car quote request detail entity about assignment
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId);
 
-            info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+            LoggerService::info('Manual assignment done and details table updated for lead: '.$lead->uuid.' and old advisor assigned date is: '.$oldAdvisorAssignedDate.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
             // update new and previous (if applicable) advisor counts in lead allocation table
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quote_type);
             // update existing record of quote view count if exists and reset count to zero
@@ -1309,10 +1312,11 @@ class HealthQuoteService extends BaseService
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
+            LoggerService::error('Lead or new advisor ID is null, unable to update allocation counts');
             return;
         }
 
-        info('Previous assignment type is : '.$previousAssignmentType);
+        LoggerService::info('Previous assignment type is: '.$previousAssignmentType);
 
         // Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
@@ -1495,7 +1499,7 @@ class HealthQuoteService extends BaseService
                 'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
-            info('Health Plan Modify V2 Request Data: '.json_encode($dataArray));
+            LoggerService::info('Health Plan Modify V2 Request Data: ',$dataArray);
             $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
             return $response;
@@ -1793,7 +1797,7 @@ class HealthQuoteService extends BaseService
     public function processCancelPayment($data)
     {
         $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
-        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        LoggerService::info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/'.$paymentGatewayEndpoint.'/cancel';
         $apiToken = config('constants.MARSHALL_API_TOKEN');
         $apiTimeout = config('constants.MARSHALL_API_TIMEOUT');
@@ -1825,7 +1829,7 @@ class HealthQuoteService extends BaseService
 
     public function assignLeadDirectlyForQA(int $userId, $lead): void
     {
-        info('inside the check for manual assignment QA');
+        LoggerService::info('inside the check for manual assignment QA');
         $lead->advisor_id = $userId;
         $lead->save();
 

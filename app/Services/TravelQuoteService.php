@@ -31,25 +31,28 @@ use App\Repositories\CustomerMembersRepository;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\Logger\LoggerService;
 use PDF;
 
 class TravelQuoteService extends BaseService
 {
     protected $query;
     protected $leadAllocationService;
+    protected $loggerService;
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(LeadAllocationService $leadAllocationService, LoggerService $loggerService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->loggerService = $loggerService;
         $this->query = TravelQuote::as('tqr')->select([
             'tqr.id',
             'tqr.uuid',
@@ -232,7 +235,7 @@ class TravelQuoteService extends BaseService
             'departureCountryId' => $request->departure_country_id ?? null,
         ];
 
-        info(self::class.' - saveTravelQuote', ['data' => $travelQuote]);
+        LoggerService::info(self::class.' - saveTravelQuote', ['data' => $travelQuote]);
         if ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0') {
 
             foreach ($request->members as $member) {
@@ -286,15 +289,15 @@ class TravelQuoteService extends BaseService
 
             return $response;
         }
-        // info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
+        // LoggerService::info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
-        // info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
+        // LoggerService::info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
 
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
-            info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
+            LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time: ".now());
         }
 
         return $response;
@@ -914,12 +917,13 @@ class TravelQuoteService extends BaseService
                 $getdecodeContents = json_decode($getContents);
 
                 return $getdecodeContents;
-
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
+
+            LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
 
             if (isset($response->message)) {
                 $responseBodyAsString = $response->message;
@@ -961,7 +965,7 @@ class TravelQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -982,6 +986,7 @@ class TravelQuoteService extends BaseService
         $userId = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
         if ($leadsIds == '' || $leadsIds == null) {
+            LoggerService::warning('No leads selected for assignment');
             return 'Please select lead(s) to assign';
         }
         if (substr($leadsIds, 0, 1) == ',') {
@@ -991,10 +996,12 @@ class TravelQuoteService extends BaseService
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
             if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
+                LoggerService::warning('Transaction Approved lead selected for assignment without proper permissions. Lead ID: ' . $leadId);
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }
         if ($userId == '' || $userId == null) {
+            LoggerService::warning('No user selected for lead assignment');
             return 'Please select user to assign leads';
         }
 
@@ -1070,7 +1077,6 @@ class TravelQuoteService extends BaseService
 
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
-
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
@@ -1078,6 +1084,7 @@ class TravelQuoteService extends BaseService
         $hasAdultAndSeniorMember = isset($data['hasAdultAndSeniorMember']) ? $data['hasAdultAndSeniorMember'] : false;
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         if (! isset($quotePlans->quotes->plans)) {
+            LoggerService::error('Quote plans not available for PDF export. Quote UUID: ' . $data['quote_uuid']);
             return ['error' => 'Quote plans not available'];
         }
 
@@ -1088,13 +1095,19 @@ class TravelQuoteService extends BaseService
         $quote->load(['advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
 
-        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+        try {
+            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+                ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
 
-        return ['pdf' => $pdf, 'name' => $pdfName];
+            // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+            $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+            return ['pdf' => $pdf, 'name' => $pdfName];
+        } catch (\Exception $e) {
+            LoggerService::error('Failed to generate Travel PDF for UUID: ' . $data['quote_uuid'] . ' Error: ' . $e->getMessage());
+            return ['error' => 'Failed to generate PDF: ' . $e->getMessage()];
+        }
     }
 
     public function setQuoteUpdatedAt($id)
@@ -1137,13 +1150,13 @@ class TravelQuoteService extends BaseService
 
             // Update the above 65 age member
             $aboveAgeMemberCount = $this->getAboveAgeMembers($leadModal->id);
-            info("Above age member count for lead code {$leadModal->code}: {$aboveAgeMemberCount}");
+            LoggerService::info("Above age member count for lead code {$leadModal->code}: {$aboveAgeMemberCount}");
             if ($aboveAgeMemberCount > 0) {
-                info("Updating above age members for lead code {$leadModal->code} to duplicate lead code {$duplicateLead->code}");
+                LoggerService::info("Updating above age members for lead code {$leadModal->code} to duplicate lead code {$duplicateLead->code}");
                 $this->updateAboveAgeMember($leadModal->id, $duplicateLead->id);
             }
 
-            info("Updating plan and premium for parent lead code {$leadModal->code} and child lead code {$duplicateLead->code}");
+            LoggerService::info("Updating plan and premium for parent lead code {$leadModal->code} and child lead code {$duplicateLead->code}");
             // update plan & premium for parent & child lead
             $this->updatePlanAndPremium($leadModal, $duplicateLead);
 
@@ -1167,13 +1180,13 @@ class TravelQuoteService extends BaseService
         $parentLead->plan_id = $parentPayment->plan_id;
         $parentLead->insurance_provider_id = $parentPayment->insurance_provider_id;
         $parentLead->save();
-        info("Updated parent lead code {$parentLead->code} with premium {$parentLead->premium} and plan ID {$parentLead->plan_id}");
+        LoggerService::info("Updated parent lead code {$parentLead->code} with premium {$parentLead->premium} and plan ID {$parentLead->plan_id}");
 
         $childLead->premium = $childPayment->total_price;
         $childLead->plan_id = $childPayment->plan_id;
         $childLead->insurance_provider_id = $childPayment->insurance_provider_id;
         $childLead->save();
-        info("Updated child lead code {$childLead->code} with premium {$childLead->premium} and plan ID {$childLead->plan_id}");
+        LoggerService::info("Updated child lead code {$childLead->code} with premium {$childLead->premium} and plan ID {$childLead->plan_id}");
     }
 
     public function getTravelDestinations($id)
@@ -1237,7 +1250,7 @@ class TravelQuoteService extends BaseService
     {
         if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
             if (! $enablePlanValidation->value) {
-                info('plan modification validation is disabled from backend');
+                LoggerService::info('Plan modification validation is disabled from backend');
 
                 return true;
             }
@@ -1263,11 +1276,11 @@ class TravelQuoteService extends BaseService
 
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (auth()->user()->hasRole(RolesEnum::TravelAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-                info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+                LoggerService::info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
 
                 return true;
             } elseif (auth()->user()->hasRole(RolesEnum::TravelManager) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-                info($logPrefix.' plan modify allowed to travel manager for uuid '.$quote->uuid);
+                LoggerService::info($logPrefix.' plan modify allowed to travel manager for uuid '.$quote->uuid);
 
                 return true;
             }
@@ -1275,13 +1288,13 @@ class TravelQuoteService extends BaseService
 
         if (auth()->user()->hasAnyRole([RolesEnum::TravelManager, RolesEnum::TravelAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
             if (in_array($quote->payment_status_id, $paymentStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
-                info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+                LoggerService::info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
                 return true;
             }
         }
 
-        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+        LoggerService::warning($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
 
         vAbort('Plan Modification is not allowed');
     }
