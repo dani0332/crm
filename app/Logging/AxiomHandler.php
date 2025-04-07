@@ -2,20 +2,22 @@
 
 namespace App\Logging;
 
-use Illuminate\Support\Facades\Http;
-use Monolog\Handler\AbstractProcessingHandler;
-use Monolog\Logger;
-use Monolog\LogRecord;
-use Monolog\Formatter\FormatterInterface;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Monolog\Formatter\FormatterInterface;
+use Monolog\Handler\AbstractProcessingHandler;
+use Monolog\Level;
+use Monolog\LogRecord;
 
 class AxiomHandler extends AbstractProcessingHandler
 {
     private string $apiToken;
     private string $dataset;
+
     private const API_BASE_URL = 'https://api.axiom.co/v1/datasets/';
 
-    public function __construct($level = Logger::DEBUG, bool $bubble = true, ?string $apiToken = null, ?string $dataset = null)
+    public function __construct($level = Level::Debug, bool $bubble = true, ?string $apiToken = null, ?string $dataset = null)
     {
         parent::__construct($level, $bubble);
 
@@ -30,10 +32,11 @@ class AxiomHandler extends AbstractProcessingHandler
                 'message' => $record->message,
                 'context' => $record->context,
                 'level' => $record->level->getName(),
-                'channel' => $record->channel,
                 'extra' => $record->extra,
                 'timestamp' => $record->datetime->format('c'),
                 'environment' => app()->environment(),
+                'user_id' => Auth::id(),
+                'service' => 'IMCRM',
             ];
 
             $response = Http::withToken($this->apiToken)
@@ -42,7 +45,7 @@ class AxiomHandler extends AbstractProcessingHandler
                 ->acceptJson()
                 ->post($this->getApiEndpoint(), [$data]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 $this->handleFailedRequest($response->status(), $response->body());
             }
         } catch (ConnectionException $e) {
@@ -54,12 +57,12 @@ class AxiomHandler extends AbstractProcessingHandler
 
     protected function getDefaultFormatter(): FormatterInterface
     {
-        return new \Monolog\Formatter\JsonFormatter();
+        return new \Monolog\Formatter\JsonFormatter;
     }
 
     private function getApiEndpoint(): string
     {
-        return self::API_BASE_URL . $this->dataset . '/ingest';
+        return self::API_BASE_URL.$this->dataset.'/ingest';
     }
 
     private function handleFailedRequest(int $statusCode, string $responseBody): void
@@ -73,11 +76,11 @@ class AxiomHandler extends AbstractProcessingHandler
 
     private function handleConnectionException(ConnectionException $e): void
     {
-        error_log('Axiom logging connection failed: ' . $e->getMessage());
+        error_log('Axiom logging connection failed: '.$e->getMessage());
     }
 
     private function handleGenericException(\Exception $e): void
     {
-        error_log('Axiom logging exception: ' . $e->getMessage());
+        error_log('Axiom logging exception: '.$e->getMessage());
     }
 }
