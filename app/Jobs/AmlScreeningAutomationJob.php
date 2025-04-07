@@ -6,7 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
-use App\Repositories\CustomerMembersRepository;
+use App\Services\AMLService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,7 +40,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     {
         $this->quoteRequestId = $quoteRequestId;
         $this->quoteType = $quoteType;
-        $this->quoteRefId = $this->quoteType->shortCode();
+        $this->quoteRefId = $this->quoteType->shortCode().' #'.$this->quoteRequestId;
         $this->uniqueKey = strtolower($this->quoteRefId.'id-'.$this->quoteRequestId);
     }
 
@@ -52,7 +52,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $this->quoteRequest = $this->getQuoteObject($this->quoteType->value, $this->quoteRequestId);
 
         if(!$this->quoteRequest) {
-            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' #'.$this->quoteRequestId.' - quote not found');
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - quote not found');
             return;
         }
         $this->quoteRefId =  $this->quoteRequest->code;
@@ -68,36 +68,29 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         }
 
         try {
-            // Get customer information
-            $customer = $this->quoteRequest?->customer?->toArray() ?? null;
-            if (!$customer) {
-                info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - customer not found');
-                return;
+            
+            $amlService = app(AMLService::class);
+
+            // Get customer required travel info
+            $customerTravelInfo = (array) $amlService->getCustomerTravelInfo($this->quoteRequestId, $this->quoteType->value);
+
+            if(empty($customerTravelInfo['id'])) {
+                info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' #'.$this->quoteRequestId.' - Record not found');
             }
 
-            // Get customer primary member (passport info)
-            $getQuotePrimaryMember = CustomerMembersRepository::getBy($this->quoteRequestId, $this->quoteType->value)->sortBy('id')->first();
-            if(!$getQuotePrimaryMember) {
-                info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - customer member not found');
-                return;
-            }
+            // Check customer required travel info is-complete
+            $checkCustomerTravelInfo = $amlService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
 
-            // override customer data with primary member data (first_name, last_name, nationality_id, dob, gender)
-            $customer = [...$customer, ...$getQuotePrimaryMember->toArray(), 'id' => $customer['id']];
-
-            if(isset($getQuotePrimaryMember->passport) && !empty($getQuotePrimaryMember->passport)) {
-                $customer['id_type'] = 'passport';
-                $customer['id_number'] = $getQuotePrimaryMember->passport;
-            } else {
-                info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - customer passport number is missing');
+            if(!isset($checkCustomerTravelInfo['status'])) {
+                info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - '.$checkCustomerTravelInfo['message']);
                 return;
             }
 
             // Get insured person details
             $insuredPersonRequest = new Request([
                 'is_automation' => true,
-                'id_type' => $customer['id_type'],
-                'id_number' => $customer['id_number']
+                'id_type' => 'passport',
+                'id_number' => $customerTravelInfo['passport'] ?? null
             ]);
 
             $amlController = app()->make(\App\Http\Controllers\V2\AMLController::class);
@@ -105,20 +98,20 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $insuredPersonData = json_decode($insuredPersonResponse->content(), true);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - reqFn: getInsuredPersonDetails' . ' - response: ' . ($insuredPersonData['status'] ? 'success' : 'error'));
 
-
+            $customer = null;
             if ($insuredPersonResponse->status() === 200 && $insuredPersonData['status'])
-                $customer = [...$customer, ...$insuredPersonData['response'], 'id' => $customer['id'], 'customer_type' => $customer['customer_type'] ?? CustomerTypeEnum::Individual];
+                $customer = [...$customerTravelInfo, ...$insuredPersonData['response']];
 
             // Prepare AML check request data
             $amlRequestData = [
                 'is_automation' => true,
-                'customer_id' => $customer['id'],
-                'customer_type' => $customer['customer_type'],
+                'customer_id' => $customer['customer_id'],
+                'customer_type' => CustomerTypeEnum::Individual,
                 'quote_type' => $this->quoteType->value,
                 'screening_id_type' => $insuredPersonRequest->id_type,
                 'screening_id_number' => $insuredPersonRequest->id_number,
-                'insured_first_name' => $customer['insured_first_name'] ?? $customer['first_name'],
-                'insured_last_name' => $customer['insured_last_name'] ?? $customer['last_name'],
+                'insured_first_name' => $customer['first_name'],
+                'insured_last_name' => $customer['last_name'],
                 'nationality_id' => $customer['nationality_id'],
                 'dob' => $customer['dob'],
                 'screening_gender' => $customer['gender'],
