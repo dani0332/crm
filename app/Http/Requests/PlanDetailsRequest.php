@@ -54,7 +54,7 @@ class PlanDetailsRequest extends FormRequest
         $code = request()->code;
         $insuranceProviderId = request()->insurance_provider_id;
 
-        $validator->after(function ($validator) use ($quoteType, $code, $insuranceProviderId) {
+        $validator->after(function ($validator) use ($quoteType, $code) {
             $repository = getRepositoryObject($quoteType);
             $quoteModel = $repository::where('code', $code)->firstOrFail();
             $businessTypeId = $quoteModel->business_type_of_insurance_id ?? null;
@@ -66,7 +66,7 @@ class PlanDetailsRequest extends FormRequest
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 
-            app(SplitPaymentService::class)->validateCreditCardPayment($validator, $quoteType, $code, $insuranceProviderId, $businessTypeId);
+            app(SplitPaymentService::class)->validateAuthorizedPayment($validator, $code);
         });
     }
 }

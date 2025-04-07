@@ -141,11 +141,16 @@ const insuredFormDetails = useForm({
   trade_license_no: props.entityDetails?.entity?.trade_license_no,
   company_name: props.entityDetails?.entity?.company_name,
   company_address: props.entityDetails?.entity?.company_address,
+
   entity_type_code: props.entityDetails?.entity?.entity_type_code ?? 'Parent',
   industry_type_code: props.entityDetails?.entity?.industry_type_code ?? null,
   emirate_of_registration_id:
     props.entityDetails?.entity?.emirate_of_registration_id ?? null,
-  get_quote_email_gig: page.props.gigInsurerDefaultEmail,
+  get_quote_email_gig:
+    (props.quoteType.code === 'Car'
+      ? props.quoteDetails?.car_quote_request_detail?.insurer_quote_email
+      : props.quoteDetails?.quote_detail?.insurer_quote_email) ??
+    page.props.gigInsurerDefaultEmail,
 });
 
 const rules = {
@@ -193,8 +198,14 @@ const submitQuoteUpdateForm = isValid => {
   insuredFormDetails.get(`${props.quoteDetails.id}/quoteUpdate`, {
     preserveScroll: true,
     onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
       notification.error({
-        title: errors.error || 'Quote not updated',
+        title: 'Quote not updated',
         position: 'top',
       });
     },
@@ -763,7 +774,10 @@ watch(
           </div>
           <x-field
             label="Email in GIG portal"
-            v-if="quoteType.id === page.props.quoteTypeIdEnum.Car"
+            v-if="
+              quoteType.id === page.props.quoteTypeIdEnum.Car ||
+              quoteType.id === page.props.quoteTypeIdEnum.Bike
+            "
           >
             <x-input
               v-model="insuredFormDetails.get_quote_email_gig"

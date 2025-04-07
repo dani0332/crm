@@ -71,44 +71,42 @@ const iconPosition = computed(() => {
 });
 </script>
 <template>
-  <div class="relative">
-    <x-datepicker
-      v-model="selectedData"
-      :format="props.withTime ? `dd/MM/yyyy HH:mm` : `dd/MM/yyyy`"
-      :enable-time-picker="props.withTime"
-      :month-change-on-scroll="false"
-      :is-24="false"
-      utc="preserve"
-      :disabled="props.disabled"
-      position="left"
-      class="w-full"
-      auto-apply
-      :clearable="!props.disabled"
-      text-input
-      :range="range"
-    >
-      <template #dp-input="{ value, onEnter, onTab, onBlur, onInput }">
-        <x-input
-          :model-value="value"
-          :label="props.label"
-          :size="props.size"
-          :disabled="props.disabled"
-          :helper="props.helper"
-          :icon-right="props.disabled ? null : value ? 'clear' : 'calendar'"
-          :loading="props.loading"
-          :rules="props.rules"
-          :tooltip="props.tooltip"
-          :placeholder="props.placeholder"
-          :hide-footer="props.hideFooter"
-          @keydown.tab="onTab"
-          @update:modelValue="onInput"
-          @blur="onBlur"
-          @keydown.enter.prevent="onEnter"
-          :error="props.error"
-        />
-      </template>
-    </x-datepicker>
-  </div>
+  <x-datepicker
+    v-model="selectedData"
+    :format="props.withTime ? `dd/MM/yyyy HH:mm` : `dd/MM/yyyy`"
+    :enable-time-picker="props.withTime"
+    :month-change-on-scroll="false"
+    :is-24="false"
+    utc="preserve"
+    :disabled="props.disabled"
+    position="left"
+    class="w-full"
+    auto-apply
+    :clearable="!props.disabled"
+    :range="range"
+    text-input
+  >
+    <template #dp-input="{ value, onEnter, onTab, onBlur, onInput }">
+      <x-input
+        :model-value="value"
+        :label="props.label"
+        :size="props.size"
+        :disabled="props.disabled"
+        :helper="props.helper"
+        :icon-right="props.disabled ? null : value ? 'clear' : 'calendar'"
+        :loading="props.loading"
+        :rules="props.rules"
+        :tooltip="props.tooltip"
+        :placeholder="props.placeholder"
+        :hide-footer="props.hideFooter"
+        @keydown.tab="onTab"
+        @update:modelValue="onInput"
+        @blur="onBlur"
+        @keydown.enter.prevent="onEnter"
+        :error="props.error"
+      />
+    </template>
+  </x-datepicker>
 </template>
 
 <style>
@@ -123,14 +121,5 @@ const iconPosition = computed(() => {
 
 .dp__cell_disabled {
   @apply opacity-20;
-}
-
-.fixed-datepicker .dp__arrow_bottom {
-  @apply top-0;
-  transform: translate(-50%, -50%) rotate(-45deg);
-}
-
-.fixed-datepicker .dp__outer_menu_wrap.dp--menu-wrapper {
-  @apply top-12 !important;
 }
 </style>
