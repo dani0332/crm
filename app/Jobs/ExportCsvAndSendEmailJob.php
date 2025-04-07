@@ -42,33 +42,9 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     {
         Log::info('CSV export job started for '.$this->requestParams['fileName'].' attempt: '.$this->attempts());
 
-        info('this->exportClass: '.$this->exportClass);
         try {
             // Instantiate the export class that uses the ExcelExportable trait
             $exportInstance = app($this->exportClass);
-
-            // <editor-fold desc="Demo work">
-            // Demo associative array
-            $demoArray = [
-                'name' => 'John Doe',
-                'email' => 'john.doe@example.com',
-                'age' => 30,
-                'role' => 'Developer',
-            ];
-
-            // Create a new Request instance and populate it
-            $demoRequest = Request::createFromBase(new \Symfony\Component\HttpFoundation\Request);
-            $demoRequest->request->add($demoArray); // Add data to the "post" bag
-
-            // Log to verify direct property access
-            info('Demo Request Test: '.print_r([
-                'request' => $demoRequest->all(),           // All input data
-                'name_property' => $demoRequest->name,      // Direct access: 'John Doe'
-                'email_property' => $demoRequest->email,    // Direct access: 'john.doe@example.com'
-                'age_property' => $demoRequest->age,        // Direct access: 30
-                'missing_property' => $demoRequest->missing, // Direct access: null
-            ], 1));
-            // </editor-fold>
 
             // Use the existing trait method to handle the email with CSV attachment
             // sendEmailWithCSVAttachment(recipientEmail, emailSubject,  requestParams, ccRecipients = [], fileName = 'export')

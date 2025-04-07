@@ -52,8 +52,10 @@ trait ExcelExportable
             }
         }
 
+        $currentDate = Carbon::now()->format('d-m-Y');
+        $requestParams['quoteType'] = ucfirst($requestParams['quoteType']);
         $requestParams['fileName'] = $fileName;
-        $requestParams['subject'] = 'Export Email';
+        $requestParams['subject'] = "{$requestParams['quoteType']} Export - {$currentDate}";
 
         // Dispatch job to process CSV generation and email sending
         ExportCsvAndSendEmailJob::dispatch(
@@ -122,9 +124,29 @@ trait ExcelExportable
         $csvContent = stream_get_contents($stream);
         fclose($stream);
 
+        $currentDate = Carbon::now()->format('d-m-Y');
+
+        // Get recipient name if available
+        $recipientName = "User";
+        if (!empty($requestParams['recipient_name'])) {
+            $recipientName = $requestParams['recipient_name'];
+        } else if (auth()->check() && $recipientEmail === auth()->user()->email) {
+            $recipientName = auth()->user()->name;
+        }
+
+        // Get the data collection and size information
+        $recordCount = count($data);
+        $fileSize = round(strlen($csvContent) / 1024, 2); // Size in KB
+
         $emailParams = [
-            'messageText' => 'Test message',
+            'recipientName' => $recipientName,
+            'quoteTypeName' => $requestParams['quoteType'],
+            'currentDate' => $currentDate,
+            'recordCount' => $recordCount,
+            'fileSize' => $fileSize,
+            'systemName' => config('constants.MAIL_FROM_NAME', 'The System')
         ];
+
         // Send email with attachment
         Mail::send(
             ['html' => 'ExportCSVMail'],
