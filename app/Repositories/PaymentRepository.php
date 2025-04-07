@@ -551,9 +551,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 info(self::class.' fn:'.__FUNCTION__.'Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
                 // create sage receipt
                 if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt) {
-                    $sageRequest = $request->safe()->all();
+                    $sageRequest = $request->safe();
                     /* $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment); */
-                    $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $splitPayment);
+                    $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $quote, $masterPayment, $splitPayment);
                     if ($sageResponse['status']) {
                         $paymentInformation['sage_reciept_id'] = $sageResponse['documentNumber'];
                         $splitPayment->update($paymentInformation);

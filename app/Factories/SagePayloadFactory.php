@@ -1220,10 +1220,10 @@ class SagePayloadFactory
             $sageRequest->collection_amount = $splitAmount;
         }
 
-        if (! $sageRequest->advisor_id) {
+        if (! isset($sageRequest->advisor_id)) {
             $sageRequest->advisor_id = $quote->advisor_id;
         }
-        if (! $sageRequest->customer_id) {
+        if (! isset($sageRequest->customer_id)) {
             $sageRequest->customer_id = $quote->customer_id;
         }
         if ($paymentSplit->sr_no == 1) {
@@ -1233,7 +1233,7 @@ class SagePayloadFactory
         $sageRequest->sage_payment_code = $paymentSplit->payment_method;
         $sageRequest->checkNumber = $paymentSplit->check_detail;
 
-        if (! $sageRequest->advisorDepartment) {
+        if (! isset($sageRequest->advisorDepartment)) {
             $advisorDepartment = '';
             if (! empty($quote->advisor_id)) {
                 $advisor = User::with('department')->where('id', $quote->advisor_id)->first();
@@ -1245,11 +1245,11 @@ class SagePayloadFactory
 
         $insuranceProvider = $sageRequest->insurerID ? InsuranceProvider::find($sageRequest->insurerID) : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
         $sageRequest->insurerName = $insuranceProvider?->text;
-        if (! $sageRequest->mainClassInsurance) {
+        if (! isset($sageRequest->mainClassInsurance)) {
             $sageRequest->mainClassInsurance = $sageRequest->quoteType;
         }
 
-        $sageRequest->orignalCommissionTaxInvoiceNumber = $paymentSplit?->insurer_commmission_invoice_number;
+        $sageRequest->orignalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
         $sageRequest->policyNumber = $quote?->policy_number;

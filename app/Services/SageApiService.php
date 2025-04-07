@@ -33,16 +33,18 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
+use App\Traits\HandlesDeadlockRetries;
 use Cache;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http; 
 
 class SageApiService
 {
     use GenericQueriesAllLobs;
-    use SageLoggable, TeamHierarchyTrait;
+    use HandlesDeadlockRetries;
+    use SageLoggable;
+    use TeamHierarchyTrait;
 
     protected $sageLogin;
     protected $sagePassword;
