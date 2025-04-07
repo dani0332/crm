@@ -270,8 +270,8 @@ class AllocationService extends BaseService
         ];
 
         if ($tier) {
-            $tier['tierId'] = $tier->id;
-            $tier['tierName'] = $tier->name;
+            $resp['tierId'] = $tier->id;
+            $resp['tierName'] = $tier->name;
         }
 
         return $resp;
