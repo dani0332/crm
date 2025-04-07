@@ -3837,9 +3837,33 @@ const fetchInsurerAMLStatus = async () => {
   }
 };
 
+const checkMissingTravelAmlRequirement = async () => {
+  // AML_PENDING, AML_SCREENING_FAILED  - AMLScreeningFailed
+  if (page.props.quoteTypeId == 8 && props.quoteRequest?.aml_status == page.props.amlStatusEnum.AMLScreeningFailed) {
+    NProgress.start();
+    const response = await axios.get(route('check-missing-travelAml-requirement'), {
+      params: {
+        quoteRequestId: props.quoteRequest.id,
+        quoteType: props.quoteType,
+        // quoteTypeId: page.props.quoteTypeId
+      },
+    });
+    NProgress.done();
+    if (!response.data?.status) {
+      notification.error({
+        title: response.data?.message,
+        position: 'top',
+        timeout: 5000,
+      });
+    }
+  }
+};
+
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
+  checkMissingTravelAmlRequirement();
 });
+
 </script>
 
 <template>

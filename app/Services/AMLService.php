@@ -346,6 +346,53 @@ class AMLService
         return CustomerMembersRepository::getBy($quoteRequestId, $quoteType->code, $membersFor);
     }
 
+    public function getCustomerTravelInfo($quoteRequestId, $quoteType)
+    {   
+        $model = $this->getModelObject($quoteType);
+
+        if(!class_exists($model)) {
+            return false;
+        }
+
+        $customerTravelInfo = DB::table('travel_quote_request as tqr')
+            ->join('customer as c', 'c.id', '=', 'tqr.customer_id')
+            ->join('customer_members as cm', function ($join) use ($model) {
+                $join->on('cm.quote_id', '=', 'tqr.id')
+                    ->where('cm.quote_type', '=', ltrim($model, '\\'));
+            })
+            ->select('tqr.id', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.dob', 'c.nationality_id', 'cm.passport')
+            ->where('tqr.id', $quoteRequestId)
+            ->first();
+
+        return $customerTravelInfo;
+    }
+
+    public function checkCustomerTravelInfoIsComplete($travelQuoteRequest) 
+    {
+        $message = '';
+        $requiredProperty = collect(['first_name', 'last_name', 'dob', 'nationality_id', 'passport']);
+
+        $missingDetails = [];
+        foreach($requiredProperty as $value) {
+
+            if(empty($travelQuoteRequest->{$value})) {
+                $propertyName = match ($value) {
+                    'dob' => 'date of birth',
+                    'nationality_id' => 'nationality',
+                    default => str_replace(['-', '_'], ' ', $value)
+                };
+                array_push($missingDetails, ucwords($propertyName));
+            }
+        }
+
+        $missingDetailCount = count($missingDetails);
+        if($missingDetailCount) {
+            $message = 'Missing Info: ' . join(', ', $missingDetails);
+        }
+
+        return ['status' => $missingDetailCount ? false : true, 'message' => $message];
+    }
+
     public static function updateAMLDecisionLexisNexis($request)
     {
         if (! $request->result_id) {

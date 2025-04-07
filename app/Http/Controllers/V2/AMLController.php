@@ -396,6 +396,18 @@ class AMLController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function checkMissingTravelAmlRequirement(Request $request)
+    {
+        $amlService = app(AMLService::class);
+        $customerTravelInfo = $amlService->getCustomerTravelInfo($request->quoteRequestId, $request->quoteType);
+
+        if(empty($customerTravelInfo->id)) {
+            return ['status' => false, 'message' => 'Record not found'];
+        }
+
+        return $amlService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
+    }
+
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
         $isAutomation = $AMLCheckRequest->is_automation;
