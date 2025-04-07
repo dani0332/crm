@@ -2463,6 +2463,7 @@ const updateProfileDetails = isValid => {
     "
     :bookPolicyDetails="bookPolicyDetails"
     :paymentGatewayEnum="paymentGatewayEnum"
+    :isPlanDetailSectionEnabled="false"
   />
 
   <!-- QuoteDocuments -->
