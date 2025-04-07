@@ -77,6 +77,7 @@ const updateFilter = (field, val) =>
       </x-field>
       <x-field label="ROLE">
         <x-select
+          :class="{ '_menu-item--active': !filters.role_id }"
           :modelValue="filters.role_id"
           :options="[
             { label: 'All Roles', value: '' },
@@ -134,3 +135,8 @@ const updateFilter = (field, val) =>
     }"
   />
 </template>
+<style>
+._menu-item--active {
+  @apply bg-transparent !important;
+}
+</style>
