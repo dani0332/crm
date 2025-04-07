@@ -383,6 +383,7 @@ class HomeQuoteRepository extends BaseRepository
                     'have_claimed_losses' => 'has_claimed_losses',
                     'owner_occupancy_type_id' => 'owner_occupancy_type_id',
                     'sub_area_id' => 'sub_area_id',
+                    'type_of_coverage_you_need' => 'coverage_type_id',
                 ];
 
                 // Map the data to database columns
