@@ -76,6 +76,10 @@ function setQueryStringFilters() {
   }
 }
 
+// Inline toggle function - will set to val if different, or empty if same value
+const updateFilter = (field, val) =>
+  (filters[field] = !val || filters[field] === val ? null : val);
+
 onMounted(() => {
   setQueryStringFilters();
   // // Update filters based on URL parameters
@@ -121,17 +125,19 @@ onMounted(() => {
       </x-field>
       <x-field label="ROLE">
         <x-select
-          v-model="filters.role"
+          :modelValue="filters.role"
           :options="props.roles.map(role => ({ label: role, value: role }))"
           class="w-full"
           filterable
           placeholder="Search by role"
+          clearable
+          @update:modelValue="val => updateFilter('role', val)"
         >
         </x-select>
       </x-field>
       <x-field label="PERMISSION">
         <x-select
-          v-model="filters.permission"
+          :modelValue="filters.permission"
           :options="
             permissions.map(permission => ({
               label: permission,
@@ -141,6 +147,7 @@ onMounted(() => {
           class="w-full"
           filterable
           placeholder="Search by permission"
+          @update:modelValue="val => updateFilter('permission', val)"
         >
         </x-select>
       </x-field>

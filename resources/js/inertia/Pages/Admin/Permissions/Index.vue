@@ -49,6 +49,9 @@ const resetFilters = () => {
   filters.role_id = '';
   filterPermissions();
 };
+
+const updateFilter = (field, val) =>
+  (filters[field] = !val || filters[field] === val ? null : val);
 </script>
 <template>
   <Head title="Permissions List" />
@@ -74,13 +77,14 @@ const resetFilters = () => {
       </x-field>
       <x-field label="ROLE">
         <x-select
-          v-model="filters.role_id"
+          :modelValue="filters.role_id"
           :options="[
             { label: 'All Roles', value: '' },
             ...roles.map(role => ({ label: role.name, value: role.id })),
           ]"
           filterable
           placeholder="Search by role"
+          @update:modelValue="val => updateFilter('role_id', val)"
         >
         </x-select>
       </x-field>
