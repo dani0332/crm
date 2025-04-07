@@ -119,7 +119,9 @@ class InstantAlfredService extends BaseService
                 ]);
             })
             ->groupBy('pqr.id')
-            ->orderBy('pqrd.chat_initiated_at', request()->sortType ?? 'desc');
+            ->when(isset(request()->sortType), function ($query) {
+                $query->orderBy('pqrd.chat_initiated_at', request()->sortType);
+            });
         $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
 
         return $aliases;
@@ -279,7 +281,6 @@ class InstantAlfredService extends BaseService
 
     public function createPipeline(Request $request, $itemIds, $type)
     {
-        info($request->sortType);
         $pipeline[] = [
             '$match' => [
                 'quote_id' => ['$in' => $itemIds],
