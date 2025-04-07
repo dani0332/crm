@@ -376,7 +376,6 @@ export const logAndExportQuotes = async payload => {
     .then(async res => {
 
       const exportResponse = await axios.get(payload.url).then(resp => {
-        console.log('Export email sent successfully');
         return resp.data;
       }).catch(err => {
         throw err;
@@ -389,6 +388,9 @@ export const logAndExportQuotes = async payload => {
     })
     .finally(() => {
       // Cleanup operations if needed
+      if(payload.exportType !== 'email'){
+        window.open(payload.url);
+      }
     });
 };
 

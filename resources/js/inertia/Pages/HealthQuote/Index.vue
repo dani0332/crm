@@ -383,7 +383,7 @@ const fixedValue = numberString => {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const exportLoader = ref(false);
-const onDataExport = () => {
+const onDataExport = (exportType = 'download') => {
   if (filters.created_at_start && filters.created_at_end) {
     filters.created_at_start = useDateFormat(
       filters.created_at_start,
@@ -414,10 +414,13 @@ const onDataExport = () => {
     ).value;
   }
 
+  filters.exportType = exportType;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'health');
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
+    exportType: exportType,
     url: url + '?' + new URLSearchParams(data).toString(),
   };
   exportLoader.value = true;
@@ -935,6 +938,16 @@ const insurerAMLStatusOption = computed(() => {
             class="justify-self-start mr-3"
           >
             Export
+          </x-button>
+          <x-button
+            v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click.prevent="onDataExport('email')"
+            class="justify-self-start mr-3"
+          >
+            Export via email
           </x-button>
           <x-tooltip
             v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)"
