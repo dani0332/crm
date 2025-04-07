@@ -14,6 +14,7 @@ use App\Http\Requests\QuotesDocumentRequest;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\CentralService;
 use App\Services\CustomerService;
+use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -56,12 +57,17 @@ class PersonalQuoteController extends Controller
             $quote = $this->getQuoteObject(QuoteTypes::TRAVEL->value, $quoteId);
             $this->stopHapexReminder($quote);
         }
-
+        
         $hasErrors = $responses->where('status', false)->count();
         $errors = $responses->where('status', false)->pluck('message')->toArray();
 
         if ($hasErrors) {
             return back()->with('error', implode(', ', $errors));
+        }
+
+        if ($request->document_type_code === DocumentTypeCode::SEND_UPDATE_PAYMENT_PROOF) {
+            $quote = $this->getQuoteObject($request->quote_type, $quoteId);
+            $quote->hasInsurerPaymentLink() && app(QuoteDocumentService::class)->updateQuoteAndPaymentStatusToPaymentPending($quote);
         }
 
         app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);
