@@ -65,8 +65,8 @@ class BusinessQuoteObserver
 
                 $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
                 info(self::class." Sending {$emailType} email to customer for  {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
-                $shortenedBusinessType = app(BusinessQuoteService::class)->formatInsuranceName($businessQuote->businessTypeOfInsurance->code ?? '');
-                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId, $shortenedBusinessType ?? []);
+                $businessTypeInsuranceText = $businessQuote->businessTypeOfInsurance->text ?? '';
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId, $businessTypeInsuranceText ?? []);
                 info(self::class." | {$emailType} email sent to customer for {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
 
             } else {
