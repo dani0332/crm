@@ -96,7 +96,7 @@ class CarAllocationService extends AllocationService
         return $continueAssignment;
     }
 
-    public function fetchLead($quoteId, $overrideAdvisorId)
+    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false)
     {
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -110,6 +110,10 @@ class CarAllocationService extends AllocationService
         }
 
         $lead = CarQuote::where('uuid', $quoteId)->first();
+
+        if($lead && $getLeadWithoutCriteria) {
+            return $lead;
+        }
 
         if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
             return null;
