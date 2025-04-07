@@ -31,7 +31,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     private QuoteTypes $quoteType;
     private string $quoteRefId;
     public $uniqueFor = 60 * 15; // 15 minutes
-    public $uniqueKey = null; // 15 minutes
+    public $uniqueKey = ''; // 15 minutes
 
     /**
      * Create a new job instance.
@@ -41,7 +41,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $this->quoteRequestId = $quoteRequestId;
         $this->quoteType = $quoteType;
         $this->quoteRefId = $this->quoteType->shortCode();
-        $this->uniqueKey = strtolower($this->quoteRefId).'id-'.$this->quoteRequestId;
+        $this->uniqueKey = strtolower($this->quoteRefId.'id-'.$this->quoteRequestId);
     }
 
     /**
