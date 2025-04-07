@@ -276,6 +276,7 @@ const totalAdjustedPrice = ref(0);
 const vatAmount = ref(0);
 const loadingPriceBeingUpdated = ref(false);
 
+
 const handleLoadingPrice = (event, memberId) => {
   loadingPriceBeingUpdated.value = true;
   const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
@@ -331,8 +332,8 @@ const checkLoadingPriceUpdate = e => {
 };
 
 const memberIndexPerId = id => {
-  return props.plan.memberPremiumBreakdown.findIndex(m => m.memberId == id);
-};
+  return props.plan.memberPremiumBreakdown.findIndex(m => m.memberId == id)
+}
 
 const updateGeneralInfo = () => {
   //   if (confirm('Do you want to update this values?')) {
@@ -521,6 +522,61 @@ onUpdated(() => {
 });
 const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
   createReusableTemplate();
+
+const formatPremium = (premium) => premium?.toLocaleString()
+
+const shouldShowPremium = (data) => {
+  return (
+    data.healthPlanCoPaymentId === selectedCopay.value.id || 
+    ((!selectedCopay.value || selectedCopay.value.length === 0) && 
+     data.healthPlanCoPaymentId === defaultCopayId.value)
+  )
+}
+
+const shouldShowAdjustedPrice = (data) => {
+  const hasSelectedCopay = data.healthPlanCoPaymentId === selectedCopay.value.id
+  const hasDefaultCopay = (!selectedCopay.value || selectedCopay.value.length === 0) && 
+                         data.healthPlanCoPaymentId === defaultCopayId.value
+  
+  return hasSelectedCopay || hasDefaultCopay
+}
+
+const shouldShowLoadingPrice = (data) => {
+  const hasSelectedCopay = data.healthPlanCoPaymentId === selectedCopay.value.id
+  const hasDefaultCopay = (!selectedCopay.value || selectedCopay.value.length === 0) && 
+                         data.healthPlanCoPaymentId === defaultCopayId.value
+  
+  return hasSelectedCopay || hasDefaultCopay
+}
+
+const shouldShowFinalPrice = (data) => {
+  const conditions = {
+    hasSelectedCopay: data.healthPlanCoPaymentId === selectedCopay.value.id,
+    hasDefaultCopay: (!selectedCopay.value || selectedCopay.value.length === 0) && 
+                     data.healthPlanCoPaymentId === defaultCopayId.value,
+    hasNoPremium: !data.premium || data.premium === undefined,
+    hasNoLoadingPrice: !data.loadingPrice || data.loadingPrice === 0,
+    hasLoadingPrice: data.loadingPrice !== undefined && data.loadingPrice !== 0
+  }
+
+  return (
+    (conditions.hasSelectedCopay || conditions.hasDefaultCopay) &&
+    (conditions.hasNoPremium || !conditions.hasNoPremium) &&
+    (conditions.hasLoadingPrice || conditions.hasNoLoadingPrice)
+  )
+}
+
+const calculateFinalPrice = (data, memberId) => {
+  const loadingPrice = Number(loadingPrices.value[memberIndexPerId(memberId)]?.price || 0)
+  const adjustingPrice = Number(adjustingPrices.value[memberIndexPerId(memberId)]?.price || 0)
+  const basePremium = data.premium || 0
+  const manualPremium = manualPlansMembersPremium.value[memberIndexPerId(memberId)]?.premium || 0
+
+  const total = loadingPrice + adjustingPrice + 
+                ((!data.premium || data.premium === undefined) ? manualPremium : basePremium)
+
+  return total.toLocaleString()
+}
 </script>
 
 <template>
@@ -955,28 +1011,6 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                   </div>
                 </template>
 
-                <!-- Here we goo  -->
-                <!-- <template #item-memberaction="item">
-                  <section v-for="data in item.ratesPerCopay">
-                    <x-checkbox
-                      v-if="data.healthPlanCoPaymentId == selectedCopay.id"
-                      v-model="data.priceIsRevised"
-                      :disabled="!isManual"
-                      @change="markMemberBasePriceRevise($event, item.memberId)"
-                    />
-                    <x-checkbox
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId
-                      "
-                      v-model="data.priceIsRevised"
-                      :disabled="!isManual"
-                      @change="markMemberBasePriceRevise($event, item.memberId)"
-                    />
-                  </section>
-                </template> -->
-
                 <template #item-membercategory="{ memberId }">
                   {{ memberCategoryText(memberId) }}
                 </template>
@@ -992,127 +1026,21 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                 </template>
 
                 <template #item-premium="item">
-                  <section v-for="data in item.ratesPerCopay">
-                    <!-- <x-input
-                      v-if="
-                        (!data.premium || data.premium == undefined) &&
-                        data.healthPlanCoPaymentId == selectedCopay.id
-                      "
-                      v-model="
-                        manualPlansMembersPremium[
-                          memberIndexPerId(item.memberId)
-                        ].premium
-                      "
+                  <section v-for="(data, index) in item.ratesPerCopay" :key="'item-premium-'+index">
+                    <x-input
+                      v-if="shouldShowPremium(data)"
+                      :modelValue="formatPremium(data.premium)"
                       :disabled="true"
                       size="sm"
                     />
-                    <x-input
-                      v-else-if="
-                        (!data.premium || data.premium == undefined) &&
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId
-                      "
-                      v-model="
-                        manualPlansMembersPremium[
-                          memberIndexPerId(item.memberId)
-                        ].premium
-                      "
-                      :disabled="true"
-                      size="sm"
-                    /> -->
-                    <x-input
-                      v-if="data.healthPlanCoPaymentId == selectedCopay.id"
-                      :modelValue="data.premium?.toLocaleString()"
-                      :disabled="true"
-                      size="sm"
-                    />
-                    <x-input
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId
-                      "
-                      :modelValue="data.premium?.toLocaleString()"
-                      :disabled="true"
-                      size="sm"
-                    />
-                    <!-- <x-button
-                      v-if="$page.props.permissions.pa"
-                      color="primary"
-                      class="ml-2"
-                      size="sm"
-                      outlined
-                      :loading="memberFormLoader"
-                      @click.prevent="onMemberUpdate(item)"
-                    >
-                      Update
-                    </x-button> -->
                   </section>
                 </template>
 
                 <template #item-adjustedPrice="item">
-                  <section v-for="data in item.ratesPerCopay">
+                  <section v-for="(data, index) in item.ratesPerCopay" :key="'item-adjustedPrice-'+index">
                     <x-input
-                      v-if="
-                        data.healthPlanCoPaymentId == selectedCopay.id &&
-                        data.adjustingPrice != undefined
-                      "
-                      v-model="
-                        adjustingPrices[memberIndexPerId(item.memberId)].price
-                      "
-                      :disabled="!isManual"
-                      size="sm"
-                      type="number"
-                      step="0.01"
-                      onkeydown="return event.keyCode !== 69"
-                      @paste.prevent
-                      @keyup="handleAdjustingPrice($event, item.memberId)"
-                    />
-                    <x-input
-                      v-if="
-                        data.healthPlanCoPaymentId == selectedCopay.id &&
-                        data.adjustingPrice == undefined
-                      "
-                      v-model="
-                        adjustingPrices[memberIndexPerId(item.memberId)].price
-                      "
-                      :disabled="!isManual"
-                      size="sm"
-                      type="number"
-                      step="0.01"
-                      onkeydown="return event.keyCode !== 69"
-                      @paste.prevent
-                      @keyup="handleAdjustingPrice($event, item.memberId)"
-                    />
-                    <x-input
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId &&
-                        data.adjustingPrice != undefined
-                      "
-                      v-model="
-                        adjustingPrices[memberIndexPerId(item.memberId)].price
-                      "
-                      :disabled="!isManual"
-                      size="sm"
-                      type="number"
-                      step="0.01"
-                      onkeydown="return event.keyCode !== 69"
-                      @paste.prevent
-                      @keyup="handleAdjustingPrice($event, item.memberId)"
-                    />
-                    <x-input
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId &&
-                        data.adjustingPrice == undefined
-                      "
-                      v-model="
-                        adjustingPrices[memberIndexPerId(item.memberId)].price
-                      "
+                      v-if="shouldShowAdjustedPrice(data)"
+                      v-model="adjustingPrices[memberIndexPerId(item.memberId)].price"
                       :disabled="!isManual"
                       size="sm"
                       type="number"
@@ -1122,79 +1050,13 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       @keyup="handleAdjustingPrice($event, item.memberId)"
                     />
                   </section>
-                  <!-- <x-input
-                    v-model="
-                      membersLoadingPrices[memberIndexPerId(item.memberId)]
-                    "
-                    :disabled="!isManual"
-                    size="sm"
-                    @keyup="handleLoadingPrice($event, item.memberId)"
-                  /> -->
                 </template>
 
-
                 <template #item-loadingPrice="item">
-                  <section v-for="data in item.ratesPerCopay">
+                  <section v-for="(data, index) in item.ratesPerCopay" :key="'item-loadingPrice-'+index">
                     <x-input
-                      v-if="
-                        data.healthPlanCoPaymentId == selectedCopay.id &&
-                        data.loadingPrice != undefined
-                      "
-                      v-model="
-                        loadingPrices[memberIndexPerId(item.memberId)].price
-                      "
-                      :disabled="!isManual"
-                      size="sm"
-                      type="number"
-                      step="0.01"
-                      onkeydown="return event.keyCode !== 69"
-                      @paste.prevent
-                      @keyup="handleLoadingPrice($event, item.memberId)"
-                    />
-                    <x-input
-                      v-if="
-                        data.healthPlanCoPaymentId == selectedCopay.id &&
-                        data.loadingPrice == undefined
-                      "
-                      v-model="
-                        loadingPrices[memberIndexPerId(item.memberId)].price
-                      "
-                      :disabled="!isManual"
-                      size="sm"
-                      type="number"
-                      step="0.01"
-                      onkeydown="return event.keyCode !== 69"
-                      @paste.prevent
-                      @keyup="handleLoadingPrice($event, item.memberId)"
-                    />
-                    <x-input
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId &&
-                        data.loadingPrice != undefined
-                      "
-                      v-model="
-                        loadingPrices[memberIndexPerId(item.memberId)].price
-                      "
-                      :disabled="!isManual"
-                      size="sm"
-                      type="number"
-                      step="0.01"
-                      onkeydown="return event.keyCode !== 69"
-                      @paste.prevent
-                      @keyup="handleLoadingPrice($event, item.memberId)"
-                    />
-                    <x-input
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId &&
-                        data.loadingPrice == undefined
-                      "
-                      v-model="
-                        loadingPrices[memberIndexPerId(item.memberId)].price
-                      "
+                      v-if="shouldShowLoadingPrice(data)"
+                      v-model="loadingPrices[memberIndexPerId(item.memberId)].price"
                       :disabled="!isManual"
                       size="sm"
                       type="number"
@@ -1204,212 +1066,18 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       @keyup="handleLoadingPrice($event, item.memberId)"
                     />
                   </section>
-                  <!-- <x-input
-                    v-model="
-                      membersLoadingPrices[memberIndexPerId(item.memberId)]
-                    "
-                    :disabled="!isManual"
-                    size="sm"
-                    @keyup="handleLoadingPrice($event, item.memberId)"
-                  /> -->
                 </template>
 
                 <template #item-finalPrice="item">
-                  <section v-for="data in item.ratesPerCopay">
+                  <section v-for="(data, index) in item.ratesPerCopay" :key="'item-finalPrice-'+index">
                     <x-input
-                      v-if="
-                        data.healthPlanCoPaymentId == selectedCopay.id &&
-                        (!data.premium || data.premium == undefined) &&
-                        (data.loadingPrice == undefined ||
-                          data.loadingPrice == 0)
-                      "
+                      v-if="shouldShowFinalPrice(data)"
                       :disabled="true"
                       size="sm"
-                      :modelValue="
-                        (
-                          Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]
-                              ?.price || 0,
-                          ) +
-                          Number(
-                            manualPlansMembersPremium[
-                              memberIndexPerId(item.memberId)
-                            ]?.premium || 0,
-                          )
-                        )?.toLocaleString()
-                      "
-                    />
-                    <x-input
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId &&
-                        (!data.premium || data.premium == undefined) &&
-                        (data.loadingPrice == undefined ||
-                          data.loadingPrice == 0)
-                      "
-                      :disabled="true"
-                      size="sm"
-                      :modelValue="
-                        (
-                          Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]
-                              ?.price || 0,
-                          ) +
-                          Number(
-                            manualPlansMembersPremium[
-                              memberIndexPerId(item.memberId)
-                            ]?.premium || 0,
-                          )
-                        )?.toLocaleString()
-                      "
-                    />
-
-                    <x-input
-                      v-else-if="
-                        data.healthPlanCoPaymentId == selectedCopay.id &&
-                        (!data.premium || data.premium == undefined) &&
-                        data.loadingPrice != undefined &&
-                        data.loadingPrice != 0
-                      "
-                      :disabled="true"
-                      size="sm"
-                      :modelValue="
-                        (
-                          Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]
-                              ?.price || 0,
-                          ) +
-                          Number(
-                            manualPlansMembersPremium[
-                              memberIndexPerId(item.memberId)
-                            ]?.premium || 0,
-                          )
-                        )?.toLocaleString()
-                      "
-                    />
-
-                    <x-input
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId &&
-                        data.healthPlanCoPaymentId == selectedCopay.id &&
-                        (!data.premium || data.premium == undefined) &&
-                        data.loadingPrice != undefined &&
-                        data.loadingPrice != 0
-                      "
-                      :disabled="true"
-                      size="sm"
-                      :modelValue="
-                        (
-                          Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]
-                              ?.price || 0,
-                          ) +
-                          Number(
-                            manualPlansMembersPremium[
-                              memberIndexPerId(item.memberId)
-                            ]?.premium || 0,
-                          )
-                        )?.toLocaleString()
-                      "
-                    />
-
-                    <x-input
-                      v-else-if="
-                        data.healthPlanCoPaymentId == selectedCopay.id &&
-                        data.loadingPrice != undefined &&
-                        data.loadingPrice != 0
-                      "
-                      :disabled="true"
-                      size="sm"
-                      :modelValue="
-                        (
-                          Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]
-                              ?.price || 0,
-                          ) + Number(data.premium || 0)
-                        )?.toLocaleString()
-                      "
-                    />
-                    <x-input
-                      v-else-if="
-                        data.healthPlanCoPaymentId == selectedCopay.id &&
-                        (data.loadingPrice == undefined ||
-                          data.loadingPrice == 0)
-                      "
-                      :disabled="true"
-                      size="sm"
-                      :value="
-                        (
-                          Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]
-                              ?.price || 0,
-                          ) + Number(data.premium || 0)
-                        )?.toLocaleString()
-                      "
-                    />
-                    <x-input
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId &&
-                        data.loadingPrice != undefined &&
-                        data.loadingPrice != 0
-                      "
-                      :disabled="true"
-                      size="sm"
-                      :modelValue="
-                        (
-                          Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]
-                              ?.price || 0,
-                          ) + Number(data.premium || 0)
-                        )?.toLocaleString()
-                      "
-                    />
-                    <x-input
-                      v-else-if="
-                        (selectedCopay === undefined ||
-                          selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId &&
-                        (data.loadingPrice == undefined ||
-                          data.loadingPrice == 0)
-                      "
-                      :disabled="true"
-                      size="sm"
-                      :modelValue="
-                        (
-                          Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]
-                              ?.price || 0,
-                          ) + Number(data.premium || 0)
-                        )?.toLocaleString()
-                      "
+                      :modelValue="calculateFinalPrice(data, item.memberId)"
                     />
                   </section>
                 </template>
-
-                <!-- <template #item-premium="{ item }">
-                <x-input
-                  :value="item.premium"
-                  :disabled="item.premium != 0 && !isManual"
-                  size="sm"
-                  @update:modelValue="onMemberPremiumUpdate(item, $event)"
-                />
-                <x-button
-                  v-if="$page.props.permissions.pa"
-                  color="primary"
-                  class="ml-2"
-                  size="sm"
-                  outlined
-                  :loading="memberFormLoader"
-                  @click.prevent="onMemberUpdate(item)"
-                >
-                  Update
-                </x-button>
-              </template> -->
               </DataTable>
               <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
                 <x-button
