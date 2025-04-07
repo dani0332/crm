@@ -383,15 +383,20 @@ class SendUpdateLogService
 
             $getRelations = $quoteObject->getRelations();
             $replicateObject = $quoteObject->replicate($modelRelationDetails['skipParentColumns']);
-            $replicateObject->fill([
+            $updateReplicateDetails = [
                 'code' => $quoteObject->code.'-'.$countChildRecords,
                 'uuid' => $quoteObject->uuid.'-'.$countChildRecords,
                 'quote_status_id' => QuoteStatusEnum::NewLead,
                 'parent_duplicate_quote_id' => $quoteObject->code,
                 'quote_link' => implode('/', $explodeQuoteLink),
                 'renewal_batch' => $quoteObject->renewal_batch ?? null,
-                'parent_id' => null,
-            ])->save();
+            ];
+
+            if ($quoteTypeCode == quoteTypeCode::Travel) {
+                $updateReplicateDetails['parent_id'] = null;
+            }
+
+            $replicateObject->fill($updateReplicateDetails)->save();
 
             foreach ($getRelations as $relation => $relationObject) {
                 if (! ($quoteTypeCode == quoteTypeCode::Travel && $relation == 'child')) {
