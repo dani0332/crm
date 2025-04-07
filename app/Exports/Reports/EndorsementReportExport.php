@@ -15,6 +15,7 @@ class EndorsementReportExport extends BaseReportsExport
             'Transactions',
             'Policy Start Date',
             'Payment Due Date',
+            'Payment Ref ID',
             'Price (VAT applicable)',
             'Total VAT',
             'Price (VAT not applicable)',
@@ -60,6 +61,7 @@ class EndorsementReportExport extends BaseReportsExport
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ? $quote->policy_start_date : ($quote->main_lead_policy_start_date ?? 'N/A'),
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
+            $quote->payment_ref_id ?? 'N/A',
             $this->resolveNumberFormat($quote->price_vat_applicable ?? 0),
             $this->resolveNumberFormat($quote->vat ?? 0),
             $this->resolveNumberFormat($quote->price_vat_not_applicable ?? 0),
@@ -98,6 +100,6 @@ class EndorsementReportExport extends BaseReportsExport
 
     public static function afterSheet(AfterSheet $event)
     {
-        self::performSum($event, ['G', 'H', 'I', 'J', 'K', 'L', 'K', 'M', 'N', 'O', 'Q']);
+        self::performSum($event, ['H', 'I', 'J', 'K', 'L', 'K', 'M', 'N', 'O', 'P', 'R']);
     }
 }
