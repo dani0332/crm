@@ -48,9 +48,6 @@ class BrokerCommissionService
         $isCreditCardEnabled = $brokerCommission ? true : false;
 
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::GIG_INSURANCE,
-            InsurerProviderEnum::EMIRATES_INSURANCE,
-            InsurerProviderEnum::LIVANA_INSURANCE,
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE
         ];
 
