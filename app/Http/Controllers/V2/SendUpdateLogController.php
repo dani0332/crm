@@ -85,7 +85,7 @@ class SendUpdateLogController extends Controller
         }
 
         if (! empty($childLeadResponse)) {
-            if ($childLeadResponse['childLeadsCount'] == 0) {
+            if ($childLeadResponse['childLeadsCount'] == 0 || ($quoteType->code == quoteTypeCode::Travel && $childLeadResponse['childLeadsCount'])) {
                 if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
                     return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
