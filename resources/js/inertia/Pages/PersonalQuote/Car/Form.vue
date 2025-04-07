@@ -538,17 +538,6 @@ const isAmlOrKycUpdated = computed(() => {
           />
         </x-field>
 
-        <x-field 
-        v-if="isCompanyCar"
-        label="COMPANY ADDRESS">
-          <x-input
-            v-model="quoteForm.company_address"
-            type="text"
-            class="w-full"
-            :error="quoteForm?.errors?.company_address"
-          />
-        </x-field>
-
         <x-field
         v-if="isPersonalCar"
         label="FIRST NAME"
