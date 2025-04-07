@@ -111,7 +111,7 @@ class CarAllocationService extends AllocationService
 
         $lead = CarQuote::where('uuid', $quoteId)->first();
 
-        if($lead && $getLeadWithoutCriteria) {
+        if ($lead && $getLeadWithoutCriteria) {
             return $lead;
         }
 
