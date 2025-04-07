@@ -47,6 +47,21 @@ trait HasPaymentsTrait
     }
 
     /**
+     * Get the last payment with an IPL split
+     *
+     * @return \App\Models\Payment|null
+     */
+    public function getLastPaymentWithInsurerPaymentLink()
+    {
+        return $this->payments()
+            ->whereHas('PaymentSplits', function ($query) {
+                $query->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+            })
+            ->latest()
+            ->first();
+    }
+
+    /**
      * Get all IPL payment splits across all payments
      *
      * @return \Illuminate\Database\Eloquent\Collection

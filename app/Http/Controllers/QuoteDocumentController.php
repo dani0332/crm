@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -149,6 +150,8 @@ class QuoteDocumentController extends Controller
         foreach ($request->file as $file) {
             $this->quoteDocumentService->uploadQuoteDocument($file['file'], $request->all(), $quote);
         }
+
+        $quote->hasInsurerPaymentLink() && $this->updateQuoteAndPaymentStatusToPaymentPending($quote);
 
         return redirect()->back()->with('success', 'Document Uploaded Successfully');
     }
@@ -397,5 +400,24 @@ class QuoteDocumentController extends Controller
     public function getS3TempUrl(Request $request)
     {
         return $this->quoteDocumentService->getDocumentTempURL($request->docURL);
+    }
+
+    /**
+     * This function use update payment statuses on payments and payment_split table 
+     *
+     * @param [type] $quote
+     * @return void
+     */
+    private function updateQuoteAndPaymentStatusToPaymentPending($quote)
+    {
+        $quote->quote_status_id = QuoteStatusEnum::PaymentPending;
+        $quote->save();
+        $payment = $quote->getLastPaymentWithInsurerPaymentLink();
+        $payment->payment_status_id = PaymentStatusEnum::PENDING;
+        foreach ($payment->paymentSplits as $split) {
+            $split->payment_status_id = PaymentStatusEnum::PENDING;
+            $split->save();
+        }
+        $payment->save();
     }
 }
