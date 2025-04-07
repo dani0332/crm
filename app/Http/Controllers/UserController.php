@@ -299,6 +299,8 @@ class UserController extends Controller
 
         if ($request->department_ids != null) {
             app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);
+        } else {
+            app(DepartmentService::class)->syncUserDepartments($user, []);
         }
         /*
          * temp fix: health lead allocation is using team_id to target health product
