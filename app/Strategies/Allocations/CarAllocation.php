@@ -169,7 +169,7 @@ class CarAllocation implements Allocation
 
     protected function fetchLead(): mixed
     {
-        return $this->carAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId);
+        return $this->carAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId, $this->evaluateTierOnly);
     }
 
     protected function getTier($tierId)
