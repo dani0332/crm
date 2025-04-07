@@ -1,14 +1,13 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import AvailablePlans from '@/inertia/Pages/BikeQuote/AvailablePlans.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
-  quote: Object,
   quote: Object,
   documentTypes: Object,
   quoteStatuses: Object,
@@ -356,10 +355,6 @@ function capitalizeString(str) {
   if (!str) return 'N/A';
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
-const manualPlanStatus = ref(false);
-const handleManualPlanStatus = status => {
-  manualPlanStatus.value = status;
-};
 </script>
 
 <template>
@@ -1304,7 +1299,6 @@ const handleManualPlanStatus = status => {
       :websiteURL="websiteURL"
       :linkedQuoteDetails="linkedQuoteDetails"
       @plan-selected="fetchUpdatedQuote"
-      @manual-plan-status="handleManualPlanStatus"
     />
 
     <PaymentTableNew
@@ -1331,7 +1325,7 @@ const handleManualPlanStatus = status => {
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isCapBtnEnabled="manualPlanStatus"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <QuotePayments
@@ -1419,7 +1413,7 @@ const handleManualPlanStatus = status => {
 
     <lead-raw-data
       :modelType="'Bike'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

@@ -125,6 +125,11 @@ const tableHeader = reactive([
       'Transaction payment status of invoice if its unpaid, partially paid or fully paid.',
   },
   {
+    text: 'Lead Status',
+    value: 'transaction_quote_status',
+    tooltip: 'Quote Status',
+  },
+  {
     text: 'Date Paid',
     value: 'date_paid',
     tooltip: 'Payment date',

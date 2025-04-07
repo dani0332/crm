@@ -66,6 +66,25 @@ const urls = computed(() => {
   return `/reports/payment-summary`;
 });
 
+const userMenu = [
+  {
+    label: 'HR Services',
+    icon: 'external',
+    active: false,
+    href: 'https://hrm.alfred.ae/attendance/mark',
+    target: '_blank',
+  },
+
+  {
+    label: 'Sign out',
+    icon: 'logout',
+    active: false,
+    onClick: () => {
+      onLogout();
+    },
+  },
+];
+
 const activitiesUrl = activityType => {
   const today = new Date();
   const filters = {
@@ -320,7 +339,7 @@ const isReceiveNotificationsEnabled = computed(() => {
                       outlined
                       rounded
                     />
-                    <span>{{ user.name }}</span>
+                    <span class="hidden md:block">{{ user.name }}</span>
                     <svg
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -359,30 +378,11 @@ const isReceiveNotificationsEnabled = computed(() => {
                         Back to {{ impersonatingUser.name }}
                       </span>
                     </a>
-                    <button
-                      class="flex gap-2 items-center px-2 group"
-                      @click="onLogout"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke="currentColor"
-                        class="w-6 h-6 text-error-600"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-                        />
-                      </svg>
-                      <span
-                        class="text-sm font-semibold group-hover:text-error-600"
-                      >
-                        Logout
-                      </span>
-                    </button>
+                    <div v-else class="p-2.5 text-xs">
+                      <div class="md:hidden block">{{ user.name }}</div>
+                      <div class="text-gray-500">{{ user.email }}</div>
+                    </div>
+                    <x-menu :items="userMenu" />
                   </x-popover-container>
                 </template>
               </x-popover>

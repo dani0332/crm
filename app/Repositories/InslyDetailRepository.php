@@ -127,16 +127,22 @@ class InslyDetailRepository extends BaseRepository
             $advisorName = $policy['quote']['broker'] ?? null;
         }
 
+        $appUrl = config('constants.APP_URL');
+        $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
+
         /* Temp Code - assign email for particular Policy id/number */
-        $tempSalesPerson = 'Shristi Chowdhury';
-        $tempPolicyId = 59306651;
+        $tempSalesPersonId = 399;
+        $tempPolicyId = 37673602;
         if ($tempPolicyId == $policyID) {
-            $advisorName = $tempSalesPerson;
+            $advisorId = $tempSalesPersonId;
+        }
+        $tempSalesPersonId = 178;
+        $tempPolicyId = 69102576;
+        if ($tempPolicyId == $policyID) {
+            $advisorId = $tempSalesPersonId;
         }
         /* Temp Code - assign email for particular Policy id/number */
 
-        $appUrl = config('constants.APP_URL');
-        $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
         if ($advisorId == null) {
             return [
                 'status' => 400,
@@ -366,14 +372,6 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
-
-        /* Temp Code - assign email for particular Policy id/number */
-        $tempEmail = 'vitara@inbox.ru';
-        $tempPolicyId = 66495910;
-        if ($tempPolicyId == $policy['policy_oid']) {
-            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
-        }
-        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;

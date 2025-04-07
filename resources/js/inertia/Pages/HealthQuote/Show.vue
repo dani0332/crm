@@ -1,8 +1,8 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -1653,6 +1653,7 @@ const handlePlanSelected = plan => {
       'ecomDetails',
       'coPayment',
       'bookPolicyDetails',
+      'quote',
     ],
   });
 };
@@ -3684,6 +3685,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <PaymentTable
@@ -4017,7 +4019,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
     <lead-raw-data
       :modelType="'Health'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

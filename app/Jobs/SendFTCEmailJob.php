@@ -57,7 +57,7 @@ class SendFTCEmailJob implements ShouldQueue
             // Lead must be SIC LEAD and payment authorized
             if ($lead) {
                 $isPaymentAuthorized = $lead->isPaymentAuthorized();
-                if ($isPaymentAuthorized) {
+                if ($isPaymentAuthorized || $lead->isPaymentLinkRequested()) {
                     $data = [
                         'quoteUID' => $this->quoteUUID,
                         'quoteTypeId' => (int) $this->quoteType->id(),
