@@ -49,6 +49,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
     {
         $quotes = app(CarQuoteService::class)->exportPUAUpdates()->select(
             'cqr.code as RefId',
+            'cqr.source as source',
             'cmk.text as CarMake',
             'cmd.text as CarModel',
             'n.text as Nationality',
@@ -87,6 +88,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
             "CAR PUA (Payment Status Date : $this->formatDate)",
         ], [
             'Ref-ID',
+            'Source',
             'Car Make',
             'Car Model',
             'Nationality',
@@ -123,6 +125,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
 
         return [
             $row->RefId ?? 'N/A',
+            $row->source ?? 'N/A',
             $row->CarMake ?? 'N/A',
             $row->CarModel ?? 'N/A',
             $row->Nationality ?? 'N/A',
