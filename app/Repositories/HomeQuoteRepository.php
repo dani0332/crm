@@ -398,6 +398,7 @@ class HomeQuoteRepository extends BaseRepository
                 if ($quote->homeQuote) {
                     $quote->homeQuote()->update($mappedData);
                 } else {
+                    $mappedData['uuid'] = $quote->uuid;
                     $quote->homeQuote()->create($mappedData);
                 }
 
