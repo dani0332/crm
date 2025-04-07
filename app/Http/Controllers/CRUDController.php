@@ -1367,8 +1367,8 @@ class CRUDController extends Controller
             $carQuoteRequest = CarQuote::where('uuid', $id)->first();
             if ($carQuoteRequest && $request->has('chassis_number')) {
                 CarQuoteRequestDetail::updateOrCreate(
-                    ['car_quote_request_id' => $carQuoteRequest->id], 
-                    ['chassis_number' => $request->chassis_number] 
+                    ['car_quote_request_id' => $carQuoteRequest->id],
+                    ['chassis_number' => $request->chassis_number]
                 );
             }
         }
