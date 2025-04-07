@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\SendEmailCustomerService;
@@ -65,14 +66,13 @@ class BusinessQuoteObserver
 
                 $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
                 info(self::class." Sending {$emailType} email to customer for  {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
-                $businessTypeInsuranceText = $businessQuote->businessTypeOfInsurance->text ?? '';
-                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId, $businessTypeInsuranceText ?? []);
+                $shortenedBusinessType = app(BusinessQuoteService::class)->formatInsuranceName($businessQuote->businessTypeOfInsurance->code ?? '');
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId, $shortenedBusinessType ?? []);
                 info(self::class." | {$emailType} email sent to customer for {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
 
             } else {
                 info(self::class." - lead source: {$businessQuote->source} |  Advisor ID: {$businessQuote->advisor_id}  | businessTypeInsurance:{ $businessTypeInsurance} | Ref-ID: {$businessQuote->uuid} Time: ".now());
             }
-
 
         }
         if (
@@ -120,6 +120,7 @@ class BusinessQuoteObserver
             isset($dirty['quote_status_id']) &&
             $businessQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
+            SendPolicyIssueWhatsappMessageJob::dispatch($businessQuote, QuoteTypes::BUSINESS->id())->onQueue('insly');
             $payment = $businessQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($businessQuote, $payment, QuoteTypes::BUSINESS->value);
 
