@@ -99,7 +99,7 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->groupBy('u1.id')->simplePaginate();
+        $users = $query->groupBy('u1.id')->simplePaginate()->withQueryString();
         
         // Get all roles for the filter dropdown
         $roles = Role::pluck('name')->all();
