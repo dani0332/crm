@@ -16,6 +16,6 @@ class CustomerDetail extends Model implements AuditableContract
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'id', 'customer_id');
+        return $this->belongsTo(Customer::class);
     }
 }

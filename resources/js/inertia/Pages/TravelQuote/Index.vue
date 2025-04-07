@@ -11,6 +11,7 @@ defineProps({
   amlStatuses: Object,
   insuranceProviders: Array,
   travelPlans: Array,
+  insurerAMLStatus: Array,
 });
 
 let params = useUrlSearchParams('history');
@@ -56,6 +57,7 @@ const filters = reactive({
   created_at_start: new Date() || '',
   created_at_end: new Date() || '',
   quote_status_id: [],
+  insurer_aml_status: [],
   advisor_id: [],
   is_ecommerce: '',
   payment_status_id: '',
@@ -80,6 +82,7 @@ const filters = reactive({
   amlStatus: [],
   insurance_provider_ids: [],
   plan_name: [],
+  travel_start_date: '',
 });
 
 const loader = reactive({
@@ -105,6 +108,7 @@ const tableHeader = [
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'AML Status', value: 'aml_status' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   {
     text: 'ADVISOR REQUESTED',
@@ -347,15 +351,13 @@ const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 const exportLoader = ref(false);
 const onDataExport = () => {
-  filters.created_at_start = useDateFormat(
-    filters.created_at_start,
-    'YYYY-MM-DD',
-  ).value;
+  filters.created_at_start = filters.created_at_start
+    ? useDateFormat(filters.created_at_start, 'YYYY-MM-DD').value
+    : '';
 
-  filters.created_at_end = useDateFormat(
-    filters.created_at_end,
-    'YYYY-MM-DD',
-  ).value;
+  filters.created_at_end = filters.created_at_end
+    ? useDateFormat(filters.created_at_end, 'YYYY-MM-DD').value
+    : '';
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'travel');
@@ -365,6 +367,7 @@ const onDataExport = () => {
   };
   exportLoader.value = true;
   logAndExportQuotes(payload).then(result => {
+    console.log(result);
     if (result)
       setTimeout(() => {
         exportLoader.value = false;
@@ -416,6 +419,7 @@ watch(
   () => {
     if (
       (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date
     ) {
@@ -514,6 +518,13 @@ watch(
   },
   { deep: true },
 );
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -624,6 +635,14 @@ watch(
             name="quote_status_id"
             placeholder="Search by Lead Status"
             :options="leadsStatusOptions"
+          />
+        </x-field>
+        <x-field label="Insurer AML Status">
+          <ComboBox
+            v-model="filters.insurer_aml_status"
+            name="insurer_aml_status"
+            placeholder="Search by Insurer AML Status"
+            :options="insurerAMLStatusOption"
           />
         </x-field>
         <x-field label="Policy Expiry Start Date">
@@ -828,6 +847,11 @@ watch(
             :options="computedTravelPlans"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.travel_start_date"
+          label="Travel Start Date"
+          format="dd-MM-yyyy"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -845,8 +869,8 @@ watch(
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

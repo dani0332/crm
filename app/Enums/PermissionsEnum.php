@@ -386,6 +386,7 @@ final class PermissionsEnum extends Enum
     public const PET_LEAD_ALLOCATION_DASHBOARD = 'pet-lead-allocation-dashboard';
     public const LIFE_LEAD_ALLOCATION_DASHBOARD = 'life-lead-allocation-dashboard';
     public const HOME_LEAD_ALLOCATION_DASHBOARD = 'home-lead-allocation-dashboard';
+    public const GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD = 'group-medical-lead-allocation-dashboard';
     public const UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE = 'update-lead-status-to-fake-duplicate';
     public const SEARCH_INSURER_TAX_INVOICE_NUMBER = 'search-insurer-tax-invoice-number';
     public const SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER = 'search-insurer-commission-tax-invoice-number';
@@ -401,6 +402,8 @@ final class PermissionsEnum extends Enum
     public const VIEW_ALL_REPORTS = 'view-all-reports';
     public const TAP_BETA_ACCESS = 'tap-beta-access';
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
+    public const PAYMENTS_VOID = 'payments-void';
+    public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
 
     public static function getAdvisorConversionReportPermissions()
     {

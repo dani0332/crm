@@ -3,8 +3,10 @@
 namespace App\Traits\QuoteTraits;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use Carbon\Carbon;
 
 trait QuoteAllocatable
@@ -108,9 +110,16 @@ trait QuoteAllocatable
         return ! $this->isSICFlowEnabled();
     }
 
+    public function scopePaymentLinkRequested($q)
+    {
+        $q->where('quote_status_id', QuoteStatusEnum::PaymentLinkRequestedByCustomer);
+    }
+
     public function scopeHasOneOfPaidStatus($q)
     {
-        $q->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+        $q->where(function ($sq) {
+            $sq->whereIn('payment_status_id', [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])->orWhere->paymentLinkRequested();
+        });
     }
 
     public function scopeRequestedAdvisorOrPaymentAuthorized($q)
@@ -127,7 +136,7 @@ trait QuoteAllocatable
 
     public function isRequestedAdvisorOrPaymentAuthorized()
     {
-        return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
+        return $this->sic_advisor_requested == 1 || in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 
     public function isRenewalUpload()
@@ -138,5 +147,18 @@ trait QuoteAllocatable
     public function isRevivalRepliedOrPaid()
     {
         return in_array($this->source, [LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID]);
+    }
+
+    public function isInsurerPlanB()
+    {
+        return $this->insuranceProvider?->payment_gateway_id === PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK;
+    }
+
+    public function isEligibleForOrganicAssignmentForPlanB(): bool
+    {
+        return $this->isInsurerPlanB()
+            && $this->isSIC(QuoteTypes::CAR)
+            && ! $this->sic_advisor_requested
+            && $this->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 }

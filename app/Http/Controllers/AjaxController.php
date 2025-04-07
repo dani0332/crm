@@ -267,8 +267,7 @@ class AjaxController extends Controller
                 $quote->save();
 
                 $customer = Customer::find($request->customer_id);
-
-                $customer->insured_first_name = $data['first_name'];
+                $customer->insured_first_name = $data['first_name']; // TODO:: Need to update the insurer details when contact and insured person FR approved
                 $customer->insured_last_name = $data['last_name'];
 
                 if ($data['id_type'] == Kyc::DOCUMENT_TYPE_EMIRATES) {

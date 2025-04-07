@@ -19,6 +19,7 @@ defineProps({
   },
   authorizedDays: Number,
   assignmentTypes: Object,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -66,6 +67,11 @@ const tableHeader = ref([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type', is_active: true },
   {
@@ -152,6 +158,7 @@ const filters = reactive({
   created_at_end: new Date() || '',
   sub_team: '',
   quote_status: [],
+  insurer_aml_status: [],
   advisors: [],
   is_ecommerce: '',
   is_renewal: '',
@@ -182,6 +189,7 @@ watch(
   () => {
     if (
       (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date ||
       filters.transaction_approved_dates
@@ -386,7 +394,13 @@ const onDataExport = () => {
       filters.created_at_end,
       'YYYY-MM-DD',
     ).value;
-  } else if (
+  } else {
+    filters.created_at_start = '';
+    filters.created_at_end = '';
+  }
+
+  if (
+    filters.transaction_approved_dates &&
     filters.transaction_approved_dates[0] &&
     filters.transaction_approved_dates[1]
   ) {
@@ -587,6 +601,13 @@ watch(() => {
     filters.created_at_end = '';
   }
 });
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -723,6 +744,12 @@ watch(() => {
           name="quote_status"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
+        />
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
         />
         <DatePicker
           v-model="filters.policy_expiry_date"
@@ -908,8 +935,9 @@ watch(() => {
             </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or Transaction Approved dates or payment due date
-                or booking date are required to export data.
+                Created dates or policy expiry dates or Transaction Approved
+                dates or payment due date or booking date are required to export
+                data.
               </span>
             </template>
           </x-tooltip>

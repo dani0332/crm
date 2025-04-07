@@ -42,10 +42,13 @@ const documentsReactive = ref([]);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const embeddedProductEnum = page.props.embeddedProductEnum;
+const embeddedProductTypeEnum = page.props.embeddedProductTypeEnum;
+const paymentGatewayEnum = page.props.paymentGatewayEnum;
 const modals = reactive({
   cancelPayment: false,
   viewDocuments: false,
   addDocument: false,
+  voidPayment: false,
 });
 
 const { isRequired, isEmail, isNumberOrDecimal, isMobileNo } = useRules();
@@ -65,6 +68,21 @@ const paymentForm = useForm({
   quote_id: null,
   processing: false,
 });
+
+const voidPaymentForm = useForm({
+  modelType: props.modelType,
+  embedded_id: null,
+  quote_id: null,
+  processing: false,
+});
+
+const voidPaymentFormAction = item => {
+  voidPaymentForm.reset();
+  voidPaymentForm.embedded_id = item.id;
+  voidPaymentForm.quote_id = props.quote.id;
+  voidPaymentForm.uuid = props.quote.uuid;
+  modals.voidPayment = true;
+};
 
 const syncDocumentLoader = ref(false);
 const downloadLoader = ref(false);
@@ -324,10 +342,16 @@ const toggleProduct = (ep, event) => {
   axios
     .post(requestUrl, data)
     .then(res => {
-      notification.success('Updated');
+      notification.success({
+        title: 'Updated',
+        position: 'top',
+      });
     })
     .catch(err => {
-      notification.error('Something went wrong');
+      notification.error({
+        title: 'Something went wrong',
+        position: 'top',
+      });
     });
 };
 const onActivitySubmit = isValid => {
@@ -339,17 +363,53 @@ const onActivitySubmit = isValid => {
     .post(url, paymentForm)
     .then(res => {
       modals.cancelPayment = false;
-      notification.success('Processed');
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+      router.get(window.location.href);
     })
     .catch(err => {
+      let message = 'Something went wrong';
       if (err.response.data) {
-        notification.error(err.response.data[0]);
-      } else {
-        notification.error('Something went wrong');
+        message = err.response.data[0];
       }
+      notification.error({
+        title: message,
+        position: 'top',
+      });
     })
     .finally(() => {
       paymentForm.processing = false;
+    });
+};
+const onVoidSubmit = isValid => {
+  if (!isValid) return;
+  const method = 'post';
+  const url = '/quotes/void-payment';
+  voidPaymentForm.processing = true;
+  axios
+    .post(url, voidPaymentForm)
+    .then(res => {
+      modals.voidPayment = false;
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+      router.get(window.location.href);
+    })
+    .catch(err => {
+      let message = 'Something went wrong';
+      if (err.response.data) {
+        message = err.response.data[0];
+      }
+      notification.error({
+        title: message,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      voidPaymentForm.processing = false;
     });
 };
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -572,13 +632,48 @@ const onAddDocumentSubmit = event => {
                 View Documents
               </x-button>
               <x-button
-                v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+                v-if="
+                  can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL) &&
+                  (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payment_status_id == paymentStatusEnum.DRAFT ||
+                    getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payments[0]?.payment_gateway_id ==
+                      paymentGatewayEnum.PAYMENT_GATEWAY_CHECKOUT ||
+                    (getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id == paymentStatusEnum.CAPTURED &&
+                      item.product_type ==
+                        embeddedProductTypeEnum.NON_INSURANCE &&
+                      getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                        ?.payments[0]?.payment_gateway_id ==
+                        paymentGatewayEnum.PAYMENT_GATEWAY_TAP))
+                "
                 size="xs"
                 color="#ff5e00"
                 :disabled="!item.can_cancel_payment"
                 @click.prevent="cancelPaymentForm(item)"
               >
                 Cancel Payments
+              </x-button>
+              <x-button
+                v-if="
+                  [
+                    paymentStatusEnum.DRAFT,
+                    paymentStatusEnum.AUTHORISED,
+                    paymentStatusEnum.CANCELLED,
+                  ].includes(
+                    getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                      ?.payment_status_id,
+                  ) &&
+                  getFirstPriceWithTransaction(item.prices)?.transactions[0]
+                    ?.payments[0]?.payment_gateway_id ==
+                    paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+                "
+                size="xs"
+                color="#ff5e00"
+                :disabled="!item.can_void_payment"
+                @click.prevent="voidPaymentFormAction(item)"
+              >
+                Void Payment
               </x-button>
             </div>
           </template>
@@ -628,6 +723,41 @@ const onAddDocumentSubmit = event => {
               type="submit"
             >
               Cancel Payment
+            </x-button>
+          </template>
+        </x-modal>
+        <x-modal
+          title="Void Authorized Payment"
+          v-model="modals.voidPayment"
+          size="md"
+          show-close
+          backdrop
+          is-form
+          @submit="onVoidSubmit"
+        >
+          <div>
+            <p>Are you sure to void this payment?</p>
+          </div>
+
+          <template #secondary-action>
+            <x-button
+              size="sm"
+              ghost
+              tabindex="-1"
+              :disabled="voidPaymentForm.processing"
+              @click.prevent="modals.voidPayment = false"
+            >
+              Cancel
+            </x-button>
+          </template>
+          <template #primary-action>
+            <x-button
+              size="sm"
+              color="#ff5e00"
+              :loading="voidPaymentForm.processing"
+              type="submit"
+            >
+              Confirm
             </x-button>
           </template>
         </x-modal>

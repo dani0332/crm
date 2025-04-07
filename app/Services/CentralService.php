@@ -7,9 +7,11 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
+use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
@@ -22,6 +24,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
+use App\Facades\Marshall;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
@@ -32,12 +35,14 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteExportLog;
 use App\Models\QuoteStatusLog;
+use App\Models\SendUpdateLog;
 use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
 use App\Models\TravelQuote;
@@ -318,7 +323,15 @@ class CentralService extends BaseService
             $quote = $repository::where('code', $code)->firstOrFail();
 
             $quote->update($data->toArray());
-            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id);
+
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                $quote->carQuoteRequestDetail->update(['insurer_quote_number' => $data->insurer_quote_number]);
+            }
+
+            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+            $businessTypeId = $quote->business_type_of_insurance_id ?? null;
+            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId);
+            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
 
             return true;
         });
@@ -955,7 +968,7 @@ class CentralService extends BaseService
         }
     }
 
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null)
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true)
     {
         info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {
@@ -967,8 +980,8 @@ class CentralService extends BaseService
             if ($insuranceProviderId) {
                 $payment->insurance_provider_id = $insuranceProviderId;
             }
-            app(PaymentService::class)->processMasterPayment($payment, $quoteObject);
-            app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment);
+            app(PaymentService::class)->processMasterPayment($payment, $quoteObject, $isCreditCardEnabled);
+            app(SplitPaymentService::class)->updateSplitPaymentStatusAndAmount($payment, $isCreditCardEnabled);
 
             return $this->isLackingPayment($payment);
         }
@@ -989,21 +1002,243 @@ class CentralService extends BaseService
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called');
-        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
+        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyIssued]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
                 if (app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote)) {
+                    $oldQuoteStatus = $quote->quote_status_id;
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
                         'policy_issuance_status_other' => '',
                     ]);
+                    info('Quote code: '.$quote->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quote->quote_status_id);
+
+                    // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
+                    // No need to create quote status log
+                    if ($oldQuoteStatus != $quote->quote_status_id) {
+                        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($type));
+                        QuoteStatusLog::create([
+                            'quote_type_id' => $quoteTypeId,
+                            'quote_request_id' => $quote->id,
+                            'current_quote_status_id' => $quote->quote_status_id,
+                            'previous_quote_status_id' => $oldQuoteStatus,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now(),
+                        ]);
+                    }
                 }
                 info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
         }
+    }
+
+    /**
+     * Get the TAP configuration for a given quote & send update.
+     *
+     * @param  string  $quoteType  The type of the quote.
+     * @param  object  $quote  The quote object or send update object.
+     * @param  object|null  $payment  The payment object (optional).
+     * @param  bool|null  $isTapProcessCheck  Flag to check if TAP capture process should start (optional).
+     * @return array The TAP configuration.
+     */
+    public function getTapConfiguration($quoteType, $quote, $payment = null, $isTapProcessCheck = null, $sendUpdateLog = null)
+    {
+        // Retrieve necessary IDs from the quote object
+        $businessTypeId = $quote->business_type_of_insurance_id ?? null;
+
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if ($payment && in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planId = $payment->plan_id ?? null;
+        } else {
+            $planId = $quote->plan_id ?? null;
+        }
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+
+        // Get insurance provider details
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType, $quote);
+        $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
+
+        // Get broker commission details
+        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+
+        $isCaptureButtonEnabled = false;
+        if ($insuranceProvider) {
+            $isCaptureButtonEnabled = $this->isCaptureButtonEnabledForProvider($insuranceProvider->code, $quoteTypeId);
+        }
+
+        $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
+        $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
+
+        // Check if multiple payments are enabled for the provider
+        $isMultiplePaymentsEnabled = $insuranceProvider && $insuranceProvider->multiple_payments;
+
+        $sendUpdateLogId = null;
+        if ($sendUpdateLog) {
+            $sendUpdateLogId = $sendUpdateLog->id;
+        }
+
+        // Check if TAP capture process should start
+        $isTapCaptureProcessStart = $isTapProcessCheck ? app(QuoteTagService::class)->isCapturePaymentStarted($quote->uuid, $quoteTypeId, $sendUpdateLogId) : false;
+
+        // Prepare the TAP configuration array
+        $tapConfiguration = [
+            'isCreditCardEnabled' => $isCreditCardEnabled,
+            'brokerCommission' => $brokerCommission,
+            'isGIGProvider' => $isGIGProvider,
+            'isTapCaptureProcessStart' => $isTapCaptureProcessStart,
+            'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
+            'commissionInPayments' => $commissionInPayments,
+            'isADNICProvider' => $isADNICProvider,
+            'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
+        ];
+
+        // If payment object is provided, check commission status and merge with TAP configuration
+        if ($payment) {
+            $commissionInfo = app(SplitPaymentService::class)->checkCommissionStatus($payment);
+            $tapConfiguration = array_merge($tapConfiguration, $commissionInfo);
+        }
+
+        return $tapConfiguration;
+    }
+
+    public function voidPayment($request): array
+    {
+        info('fn:voidPayment - Void authorized payment process started');
+        $payment = Payment::where('code', $request->payment_code)->first();
+        if (! $payment) {
+            info('fn:voidPayment - Payment not found. - Payment Code:'.$request->payment_code);
+
+            return ['status' => false, 'message' => 'Payment not found'];
+        }
+
+        $paymentAgainst = $request->send_update_log_id ? 'Send Update' : 'Main Lead';
+        info('fn:voidPayment - Payment found against '.$paymentAgainst.' - Payment Code:'.$request->payment_code);
+        $paymentGateways = [
+            PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT => PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT_TEXT,
+            PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP_TEXT,
+        ];
+
+        if ($payment->payment_gateway_id !== PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP) {
+            info('fn:voidPayment - Payment gateway not supported - Payment Gateway: '.$paymentGateways[$payment->payment_gateway_id].' Payment Code:'.$request->payment_code);
+
+            return ['status' => false, 'message' => 'Payment gateway not supported'];
+        }
+
+        $voidPaymentURL = '/payment/'.$paymentGateways[$payment->payment_gateway_id].'/cancel';
+        $payload = [
+            'quoteUID' => $request->quote_uuid,
+            'quoteTypeId' => (int) $request->quote_type_id,
+            'payments' => [
+                [
+                    // Notes:: This case include for Travel Single plan and mix inquiry case
+                    'codeRef' => ($request->quote_type_id == QuoteTypeId::Travel) ? $request->payment_code.'-1' : $request->payment_code,
+                ],
+            ],
+        ];
+
+        if ($request->send_update_log_id) {
+            $sendUpdateLog = SendUpdateLog::where('id', $request->send_update_log_id)->first();
+            $payload['quoteUID'] = $sendUpdateLog->uuid;
+            $payload['quoteTypeId'] = GenericRequestEnum::SEND_UPDATE_QUOTE_TYPE_MARSHAL;
+        }
+
+        $response = Marshall::request($voidPaymentURL, 'post', $payload);
+        info('fn:voidPayment - Payment Code:'.$request->payment_code.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment - payload:'.json_encode($payload).' - response:'.json_encode($response));
+
+        if (! empty($response)) {
+            info('fn:voidPayment - Void authorized payment process failed');
+
+            return ['status' => false, 'message' => 'Something went wrong'];
+        }
+
+        info('fn:voidPayment - Void authorized payment process completed');
+
+        return ['status' => true, 'message' => 'Void payment processed'];
+    }
+
+    // Todo: This method will remove in future if Business confirm we will enable capture of all providers
+    private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
+    {
+        // Capture are enabled for the all LOB's against specific providers
+        $enabledProviders = [
+            InsurerProviderEnum::GIG_INSURANCE,
+            InsurerProviderEnum::RAK_INSURANCE,
+            InsurerProviderEnum::TOKIO_MARINE,
+            InsurerProviderEnum::QATAR_INSURANCE,
+            InsurerProviderEnum::ALLIANCE_INSURANCE,
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+        ];
+
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
+        }
+
+        // if ($quoteTypeId == QuoteTypeId::Car) {
+        //     $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        // }
+
+        if ($quoteTypeId == QuoteTypeId::Travel) {
+            $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
+        }
+
+        return in_array($insuranceProviderCode, $enabledProviders);
+    }
+
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    {
+        try {
+            $data = [
+                'quoteUID' => $uuid,
+                'quoteTypeId' => $quoteTypeId,
+                'captureAmount' => $captureAmount,
+            ];
+
+            return Ken::request('/capture-payment-validation', 'put', $data);
+
+        } catch (\Throwable $th) {
+            return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
+        }
+    }
+
+    public function deletePayment($request): array
+    {
+        info('fn:deletePayment - process started: '.$request->payment_id);
+
+        $payment = Payment::where(
+            [
+                'id' => $request->payment_id,
+                'code' => $request->payment_code,
+                'paymentable_type' => TravelQuote::class,
+            ])
+            ->whereIn('payment_status_id', [
+                PaymentStatusEnum::PENDING,
+                PaymentStatusEnum::NEW,
+                PaymentStatusEnum::DRAFT,
+                PaymentStatusEnum::OVERDUE,
+            ])
+            ->first();
+        if (! $payment) {
+            info('fn:deletePayment - Payment not found: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment not found'];
+        }
+
+        $quote = $payment->paymentable;
+        $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
+        if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
+            info('fn:deletePayment - Payment cannot be deleted: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment cannot be deleted'];
+        }
+
+        // Delete Payment and Payment Splits
+        PaymentSplits::where('code', $request->payment_code)->delete();
+        Payment::where('id', $request->payment_id)->delete();
+
+        return ['status' => true, 'message' => 'Delete payment processed'];
     }
 }

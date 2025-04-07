@@ -45,7 +45,7 @@ class HealthAllocationService extends AllocationService
     {
         $lead = HealthQuote::where('uuid', $quoteId)->first();
         if ($lead) {
-            info("Processing Health record for Quote Allocation with uuid: {$lead->uuid}", [
+            info('Processing Health record for Quote Allocation', [
                 'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
@@ -107,12 +107,12 @@ class HealthAllocationService extends AllocationService
 
     public function assignTeamBasedOnPrices($lead)
     {
-        info("Inside assignHealthTeamBasedOnStartingPrice for quote: {$lead->uuid}");
+        info('Inside assignTeamBasedOnPrices');
 
         $priceStartingFrom = $this->determinePriceStartingFrom($lead);
 
         if ($priceStartingFrom == null) {
-            info("No team found for {$lead->uuid}");
+            info('No team found');
             $lead->is_error_email_sent = true;
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
         }
@@ -123,10 +123,10 @@ class HealthAllocationService extends AllocationService
             ->first();
 
         if ($healthTeam) {
-            info("Filtered team for {$lead->uuid} is: {$healthTeam->name}");
+            info("Filtered team is: {$healthTeam->name}");
             $lead->health_team_type = ($healthTeam->name === HealthTeamType::PCP && $lead->members->count() > 2) ? HealthTeamType::RM_NB : $healthTeam->name;
         } else {
-            info("No team found for {$lead->uuid}");
+            info('No team found');
             $lead->is_error_email_sent = true;
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
         }
@@ -139,10 +139,10 @@ class HealthAllocationService extends AllocationService
         if ($lead->isSIC(QuoteTypes::HEALTH)) {
             $price = ! empty($lead->plan_id) && ! empty($lead->premium) ? $lead->premium : $lead->price_starting_from;
             $planStatus = ! empty($lead->plan_id) ? 'found' : 'not found';
-            info("Plan {$planStatus} for {$lead->uuid} with plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
+            info("Plan {$planStatus} with plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
         } else {
             $price = $lead->price_starting_from;
-            info("No SIC lead for {$lead->uuid} | plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
+            info("No SIC lead | plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
         }
 
         return $price;
@@ -179,7 +179,7 @@ class HealthAllocationService extends AllocationService
 
         $advisor = null;
 
-        if ($lead->isBuyLeadApplicable() && ($lead->isValueLead() || $lead->isVolumeLead())) {
+        if ($lead->isBuyLeadApplicable($lead->isSIC(QuoteTypes::HEALTH)) && ($lead->isValueLead() || $lead->isVolumeLead())) {
             $advisor = $this->fetchAdvisor('getBLAdvisorByStatus', $leadTeam, $isReassignmentJob, $lead);
         }
 
@@ -207,7 +207,7 @@ class HealthAllocationService extends AllocationService
 
     public function getBLAdvisorByStatus($status, $leadTeam, HealthQuote $lead)
     {
-        info(self::class."::getBLAdvisorByStatus - trying to get advisors for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
+        info(self::class."::getBLAdvisorByStatus - trying to get advisors for team : {$leadTeam} with current status as {$status}");
 
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::HEALTH, $lead->isSIC(QuoteTypes::HEALTH), $lead->isValueLead());
 
@@ -226,13 +226,13 @@ class HealthAllocationService extends AllocationService
             ->first();
 
         if ($advisor) {
-            info(self::class."::getBLAdvisorByStatus - found Advisor : {$advisor->user_id} for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
+            info(self::class."::getBLAdvisorByStatus - found Advisor : {$advisor->user_id} for team : {$leadTeam} with current status as {$status}");
             $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::HEALTH, $lead->isSIC(QuoteTypes::HEALTH), $advisor->user_id, $lead->isValueLead());
             if ($this->buyLeadRequest) {
                 $this->buyLeadRequest->startProcessing();
                 $this->isBuyLeadAdvisor = true;
             } else {
-                info(self::class."::getBLAdvisorByStatus - Advisor found but Buy Lead Request not found for Advisor : {$advisor->user_id} for UUID: {$lead->uuid}");
+                info(self::class."::getBLAdvisorByStatus - Advisor found but Buy Lead Request not found for Advisor : {$advisor->user_id}");
                 $advisor = null;
             }
         }
@@ -242,7 +242,7 @@ class HealthAllocationService extends AllocationService
 
     public function getAdvisorByStatus($status, $leadTeam, HealthQuote $lead)
     {
-        info(self::class."::getAdvisorByStatus - trying to get advisors for team : {$leadTeam} with current status as {$status} for UUID: {$lead->uuid}");
+        info(self::class."::getAdvisorByStatus - trying to get advisors for team : {$leadTeam} with current status as {$status}");
 
         return $this->getAdvisorBaseQuery($status, $leadTeam)
             ->where('la.normal_allocation_enabled', true)
@@ -256,7 +256,7 @@ class HealthAllocationService extends AllocationService
     public function assignLead(HealthQuote $lead, $advisor, $assignmentType)
     {
         if ($lead->advisor_id === $advisor->id) {
-            info('Advisor is same as current advisor for lead : '.$lead->uuid.' so skipping assignment');
+            info('Advisor is same as current advisor so skipping assignment');
 
             $this->endBuyLeadProcessing();
 
@@ -288,9 +288,9 @@ class HealthAllocationService extends AllocationService
 
         if ($this->isBuyLeadAdvisor) {
             $this->buyLeadRequest->buyLead($lead, QuoteTypes::HEALTH);
-            info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' as bought lead');
+            info('Assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' as bought lead');
         } else {
-            info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+            info('Assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         }
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);

@@ -39,6 +39,7 @@ const props = defineProps({
   ecomHealthInsuranceQuoteUrl: String,
   bookPolicyDetails: Array,
   paymentDocument: Array,
+  paymentGatewayEnum: Array,
 });
 
 const page = usePage();
@@ -590,15 +591,6 @@ const onLeadStatus = () => {
       preserveScroll: true,
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
-      },
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages) {
-          notification.success({
-            title: 'Lead Status Updated',
-            position: 'top',
-          });
-        }
       },
     },
   );
@@ -2306,6 +2298,8 @@ const updateProfileDetails = isValid => {
                   :plan="item"
                   :quoteType="quoteType"
                   :uuid="quote.uuid"
+                  :insuranceProviderId="item.id"
+                  :code="quote.code"
                 />
 
                 <x-button
@@ -2468,6 +2462,8 @@ const updateProfileDetails = isValid => {
       ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
     "
     :bookPolicyDetails="bookPolicyDetails"
+    :paymentGatewayEnum="paymentGatewayEnum"
+    :isPlanDetailSectionEnabled="false"
   />
 
   <!-- QuoteDocuments -->

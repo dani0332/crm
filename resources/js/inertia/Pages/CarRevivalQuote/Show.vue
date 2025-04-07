@@ -31,6 +31,7 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentStatusEnum: Object,
   storageUrl: String,
+  paymentGatewayEnum: Array,
 });
 
 const page = usePage();
@@ -129,12 +130,6 @@ const onLeadStatus = () => {
     preserveScroll: true,
     onError: errors => {
       console.log(errors);
-    },
-    onSuccess: () => {
-      notification.success({
-        title: 'Lead Status Updated',
-        position: 'top',
-      });
     },
   });
 };
@@ -977,6 +972,8 @@ const sendPolicyToClient = () => {
         })
       "
       :storageUrl="storageUrl"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
