@@ -26,6 +26,7 @@ use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -34,9 +35,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use PDF;
-use App\Services\Logger\LoggerService;
 
 class CarQuoteService extends BaseService
 {
@@ -1218,6 +1217,7 @@ class CarQuoteService extends BaseService
         if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
             if (! $enablePlanValidation->value) {
                 LoggerService::info('plan modification validation is disabled from backend');
+
                 return true;
             }
         }
@@ -1240,9 +1240,11 @@ class CarQuoteService extends BaseService
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
                 LoggerService::info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+
                 return true;
             } elseif (auth()->user()->hasRole(RolesEnum::CarManager) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
                 LoggerService::info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid);
+
                 return true;
             }
         }
@@ -1251,12 +1253,14 @@ class CarQuoteService extends BaseService
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
             if (in_array($quote->payment_status_id, $paymentStatuses) || in_array($quote->quote_status_id, $quoteStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
                 LoggerService::info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+
                 return true;
             }
         }
 
         // If we reach here, modification is not allowed
         LoggerService::warning($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+
         return 'Plan Modification is not allowed';
     }
 

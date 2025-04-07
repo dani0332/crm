@@ -38,6 +38,7 @@ use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
@@ -49,7 +50,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
-use App\Services\Logger\LoggerService;
 
 class HealthQuoteService extends BaseService
 {
@@ -1313,6 +1313,7 @@ class HealthQuoteService extends BaseService
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
             LoggerService::error('Lead or new advisor ID is null, unable to update allocation counts');
+
             return;
         }
 
@@ -1499,7 +1500,7 @@ class HealthQuoteService extends BaseService
                 'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
-            LoggerService::info('Health Plan Modify V2 Request Data: ',$dataArray);
+            LoggerService::info('Health Plan Modify V2 Request Data: ', $dataArray);
             $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
             return $response;

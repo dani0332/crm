@@ -28,15 +28,14 @@ use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
 use App\Repositories\CustomerMembersRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Services\Logger\LoggerService;
 use PDF;
 
 class TravelQuoteService extends BaseService
@@ -987,6 +986,7 @@ class TravelQuoteService extends BaseService
         $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
         if ($leadsIds == '' || $leadsIds == null) {
             LoggerService::warning('No leads selected for assignment');
+
             return 'Please select lead(s) to assign';
         }
         if (substr($leadsIds, 0, 1) == ',') {
@@ -996,12 +996,14 @@ class TravelQuoteService extends BaseService
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
             if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-                LoggerService::warning('Transaction Approved lead selected for assignment without proper permissions. Lead ID: ' . $leadId);
+                LoggerService::warning('Transaction Approved lead selected for assignment without proper permissions. Lead ID: '.$leadId);
+
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }
         if ($userId == '' || $userId == null) {
             LoggerService::warning('No user selected for lead assignment');
+
             return 'Please select user to assign leads';
         }
 
@@ -1084,7 +1086,8 @@ class TravelQuoteService extends BaseService
         $hasAdultAndSeniorMember = isset($data['hasAdultAndSeniorMember']) ? $data['hasAdultAndSeniorMember'] : false;
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         if (! isset($quotePlans->quotes->plans)) {
-            LoggerService::error('Quote plans not available for PDF export. Quote UUID: ' . $data['quote_uuid']);
+            LoggerService::error('Quote plans not available for PDF export. Quote UUID: '.$data['quote_uuid']);
+
             return ['error' => 'Quote plans not available'];
         }
 
@@ -1105,8 +1108,9 @@ class TravelQuoteService extends BaseService
 
             return ['pdf' => $pdf, 'name' => $pdfName];
         } catch (\Exception $e) {
-            LoggerService::error('Failed to generate Travel PDF for UUID: ' . $data['quote_uuid'] . ' Error: ' . $e->getMessage());
-            return ['error' => 'Failed to generate PDF: ' . $e->getMessage()];
+            LoggerService::error('Failed to generate Travel PDF for UUID: '.$data['quote_uuid'].' Error: '.$e->getMessage());
+
+            return ['error' => 'Failed to generate PDF: '.$e->getMessage()];
         }
     }
 
