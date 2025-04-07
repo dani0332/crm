@@ -20,8 +20,10 @@ class LogMiddleware
         $startTime = microtime(true);
 
         $requestId = (string) Str::uuid();
+        $traceId = $request->header('x-Trace-Id', (string) Str::uuid());
 
         Log::withContext([
+            'trace_id' => $traceId,
             'request_id' => $requestId,
             'request_path' => $request->method().' '.$request->path(),
             'request_ip' => $request->ip(),
@@ -40,6 +42,7 @@ class LogMiddleware
         ]);
 
         $response->headers->set('X-Request-Id', $requestId);
+        $response->headers->set('X-Trace-Id', $traceId);
         $response->headers->set('X-Execution-Time', $executionTime);
 
         return $response;
