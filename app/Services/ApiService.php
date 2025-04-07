@@ -97,13 +97,10 @@ class ApiService
         $triggerOCB = $request->input('triggerOCB', false);
         $teamId = $request->input('teamId', false);
 
-        LoggerService::startQuoteLogging($allocationId);
-
-        info('request info', [
-            'url' => $request->fullUrl(),
-            'ip' => $request->ip(),
-            'agent' => $request->userAgent(),
-        ]);
+        $lead = QuoteTypes::getName($allocationType)?->model()?->where('uuid', $allocationId)?->first();
+        if ($lead) {
+            LoggerService::startQuoteLogging($lead);
+        }
 
         // Handle different scenarios based on request parameters
         if ($assignAdvisor && ! $triggerOCB) {

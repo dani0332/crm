@@ -2,14 +2,23 @@
 
 namespace App\Services\Logger;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 
 class LoggerService
 {
-    public static function startQuoteLogging(string $uuid, array $extra = [])
+    public static function startQuoteLogging(Model|string $lead, array $extra = [])
     {
+        $refID = null;
+
+        if ($lead instanceof string) {
+            $refID = $lead;
+        } elseif ($lead instanceof Model) {
+            $refID = $lead->code;
+        }
+
         self::endLogging();
-        Log::withContext(['quote_uuid' => $uuid, ...$extra]);
+        Log::withContext(['ref_id' => $refID, ...$extra]);
     }
 
     public static function endLogging()
