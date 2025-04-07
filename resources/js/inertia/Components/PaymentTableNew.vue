@@ -4347,7 +4347,9 @@ onBeforeMount(() => {
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td></td>
+                        <td>
+                          {{ splitPayment.code }}-{{ splitPayment.sr_no }}
+                        </td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ splitPayment.payment_method.name }}</td>
