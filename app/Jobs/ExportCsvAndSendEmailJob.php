@@ -17,7 +17,6 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     public $timeout = 300; // 5 minutes
     public $tries = 3;
     public $backoff = 30;
-
     protected $exportClass;
     protected $recipientEmail;
     protected $requestParams;
@@ -28,7 +27,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     public function __construct(
         string $exportClass,
         string $recipientEmail,
-        array  $requestParams,
+        array $requestParams,
 
     ) {
         $this->exportClass = $exportClass;
@@ -41,44 +40,35 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::info('CSV export job started for ' . $this->requestParams['fileName'] . ' attempt: ' . $this->attempts());
+        Log::info('CSV export job started for '.$this->requestParams['fileName'].' attempt: '.$this->attempts());
 
-        info("this->exportClass: ".$this->exportClass);
+        info('this->exportClass: '.$this->exportClass);
         try {
             // Instantiate the export class that uses the ExcelExportable trait
             $exportInstance = app($this->exportClass);
 
-
-
-
-
-            //<editor-fold desc="Demo work">
+            // <editor-fold desc="Demo work">
             // Demo associative array
             $demoArray = [
                 'name' => 'John Doe',
                 'email' => 'john.doe@example.com',
                 'age' => 30,
-                'role' => 'Developer'
+                'role' => 'Developer',
             ];
 
             // Create a new Request instance and populate it
-            $demoRequest = Request::createFromBase(new \Symfony\Component\HttpFoundation\Request());
+            $demoRequest = Request::createFromBase(new \Symfony\Component\HttpFoundation\Request);
             $demoRequest->request->add($demoArray); // Add data to the "post" bag
 
             // Log to verify direct property access
-            info("Demo Request Test: " . print_r([
-                    'request' => $demoRequest->all(),           // All input data
-                    'name_property' => $demoRequest->name,      // Direct access: 'John Doe'
-                    'email_property' => $demoRequest->email,    // Direct access: 'john.doe@example.com'
-                    'age_property' => $demoRequest->age,        // Direct access: 30
-                    'missing_property' => $demoRequest->missing // Direct access: null
-                ], 1));
-            //</editor-fold>
-
-
-
-
-
+            info('Demo Request Test: '.print_r([
+                'request' => $demoRequest->all(),           // All input data
+                'name_property' => $demoRequest->name,      // Direct access: 'John Doe'
+                'email_property' => $demoRequest->email,    // Direct access: 'john.doe@example.com'
+                'age_property' => $demoRequest->age,        // Direct access: 30
+                'missing_property' => $demoRequest->missing, // Direct access: null
+            ], 1));
+            // </editor-fold>
 
             // Use the existing trait method to handle the email with CSV attachment
             // sendEmailWithCSVAttachment(recipientEmail, emailSubject,  requestParams, ccRecipients = [], fileName = 'export')
@@ -90,10 +80,10 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
                 $this->requestParams['fileName'],
             );
 
-            Log::info('CSV export job completed for ' . $this->requestParams['fileName']);
+            Log::info('CSV export job completed for '.$this->requestParams['fileName']);
         } catch (\Throwable $e) {
-            Log::error('CSV export job failed for ' . $this->requestParams['fileName'] . ' attempt: ' . $this->attempts() . ' Exception: ' . $e->getMessage().', '.$e->getFile().':'.$e->getLine(),[
-                'trace' =>collect($e->getTrace())->filter(function ($trace) {
+            Log::error('CSV export job failed for '.$this->requestParams['fileName'].' attempt: '.$this->attempts().' Exception: '.$e->getMessage().', '.$e->getFile().':'.$e->getLine(), [
+                'trace' => collect($e->getTrace())->filter(function ($trace) {
                     return $trace;
                     // return isset($trace['file']) && str_contains($trace['file'], '/app');
                 })->all(),

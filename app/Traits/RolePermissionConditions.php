@@ -11,7 +11,7 @@ trait RolePermissionConditions
 {
     use GetUserTreeTrait;
 
-    public function whereBasedOnRole($query, $prefix, $restrictedQuoteType = null, User $user = null)
+    public function whereBasedOnRole($query, $prefix, $restrictedQuoteType = null, ?User $user = null)
     {
         if (Auth::check() && empty($user)) {
             $user = Auth::user();

@@ -3,8 +3,8 @@
 namespace App\Traits;
 
 use App\Enums\EnvEnum;
-use App\Models\User;
 use App\Jobs\ExportCsvAndSendEmailJob;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -39,7 +39,7 @@ trait ExcelExportable
     {
         $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
 
-        if(empty($requestParams['recipientEmail'])){
+        if (empty($requestParams['recipientEmail'])) {
             // To will be currentUserID
             if (auth()->check()) {
                 $currentUserEmailId = User::where('id', '=', auth()->user()->id)->value('email');
@@ -47,13 +47,13 @@ trait ExcelExportable
             } else {
                 return response()->json([
                     'error' => 'User not authenticated',
-                    'message' => 'Cannot send email as the user is not authenticated.'
+                    'message' => 'Cannot send email as the user is not authenticated.',
                 ], 401);
             }
         }
 
         $requestParams['fileName'] = $fileName;
-        $requestParams['subject'] = "Export Email";
+        $requestParams['subject'] = 'Export Email';
 
         // Dispatch job to process CSV generation and email sending
         ExportCsvAndSendEmailJob::dispatch(
@@ -61,7 +61,7 @@ trait ExcelExportable
             $requestParams['recipientEmail'],
             $requestParams
         );
-        info("Dispatching ExportCsvAndSendEmailJob");
+        info('Dispatching ExportCsvAndSendEmailJob');
 
         /**
          *  string $exportClass,
@@ -75,19 +75,19 @@ trait ExcelExportable
          * */
         // Return response to the user that export is being processed
         return response()->json([
-            'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.'
+            'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
         ]);
     }
 
     /**
      * Send email with CSV data as attachment using AML service style
      *
-     * @param string $templateName Email template name
-     * @param array $requestParams Parameters for the email template
-     * @param string $emailSubject Email subject
-     * @param string|array $recipientEmail Recipient email(s)
-     * @param array $ccRecipients CC recipients
-     * @param string $fileName Filename for the CSV attachment (without extension)
+     * @param  string  $templateName  Email template name
+     * @param  array  $requestParams  Parameters for the email template
+     * @param  string  $emailSubject  Email subject
+     * @param  string|array  $recipientEmail  Recipient email(s)
+     * @param  array  $ccRecipients  CC recipients
+     * @param  string  $fileName  Filename for the CSV attachment (without extension)
      * @return void
      */
     public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
@@ -123,7 +123,7 @@ trait ExcelExportable
         fclose($stream);
 
         $emailParams = [
-            'messageText' => "Test message"
+            'messageText' => 'Test message',
         ];
         // Send email with attachment
         Mail::send(
@@ -132,7 +132,7 @@ trait ExcelExportable
             function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvContent, $csvFileName) {
                 $message->to($recipientEmail);
 
-                if (!empty($ccRecipients)) {
+                if (! empty($ccRecipients)) {
                     $message->cc($ccRecipients);
                 }
 
@@ -146,6 +146,5 @@ trait ExcelExportable
             }
         );
 
-        return;
     }
 }
