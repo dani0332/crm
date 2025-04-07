@@ -399,9 +399,9 @@ class AMLController extends Controller
     public function checkMissingTravelAmlRequirement(Request $request)
     {
         $amlService = app(AMLService::class);
-        $customerTravelInfo = $amlService->getCustomerTravelInfo($request->quoteRequestId, $request->quoteType);
+        $customerTravelInfo = (array) $amlService->getCustomerTravelInfo($request->quoteRequestId, $request->quoteType);
 
-        if(empty($customerTravelInfo->id)) {
+        if(empty($customerTravelInfo['id'])) {
             return ['status' => false, 'message' => 'Record not found'];
         }
 

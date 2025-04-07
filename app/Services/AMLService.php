@@ -360,22 +360,22 @@ class AMLService
                 $join->on('cm.quote_id', '=', 'tqr.id')
                     ->where('cm.quote_type', '=', ltrim($model, '\\'));
             })
-            ->select('tqr.id', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.dob', 'c.nationality_id', 'cm.passport')
+            ->select('tqr.id', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.gender', 'c.dob', 'c.nationality_id', 'cm.passport')
             ->where('tqr.id', $quoteRequestId)
             ->first();
 
         return $customerTravelInfo;
     }
 
-    public function checkCustomerTravelInfoIsComplete($travelQuoteRequest) 
+    public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest) 
     {
         $message = '';
-        $requiredProperty = collect(['first_name', 'last_name', 'dob', 'nationality_id', 'passport']);
+        $requiredProperty = collect(['first_name', 'last_name', 'gender', 'dob', 'nationality_id', 'passport']);
 
         $missingDetails = [];
         foreach($requiredProperty as $value) {
 
-            if(empty($travelQuoteRequest->{$value})) {
+            if(empty($travelQuoteRequest[$value])) {
                 $propertyName = match ($value) {
                     'dob' => 'date of birth',
                     'nationality_id' => 'nationality',
