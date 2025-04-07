@@ -343,6 +343,7 @@ class HomeQuoteRepository extends BaseRepository
             'customerAddressData' => $customerAddressData,
             'lookUpData' => $lookUpData,
             'isFuncsEnabled' => $isFuncsEnabled,
+            'homePossessionTypeEnum' => HomePossessionType::asArray(),
         ];
     }
 

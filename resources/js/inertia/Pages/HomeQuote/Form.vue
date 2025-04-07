@@ -151,6 +151,7 @@ function onSubmit(isValid) {
       },
       onSuccess: () => {
         handleSuccess();
+        onLoadAvailablePlansData();
       },
       onFinish: () => {
         handleFinish();
@@ -503,6 +504,23 @@ const gender = computed(() => {
     { value: 'Female', label: 'Female' },
   ];
 });
+
+const onLoadAvailablePlansData = async () => {
+  const url = `/quotes/home/available-plans/${props.quote.uuid}`;
+  const data = {
+    jsonData: true,
+  };
+
+  try {
+    const response = await axios.post(url, data);
+
+    if (response.status !== 200) {    // Assuming the normal plans are stored in `data` field
+      console.error('Error: Unexpected status code', status);
+    } 
+  } catch (error) {
+    console.error('Failed to load available plans', error);
+  }
+};
 </script>
 
 <template>
