@@ -123,10 +123,10 @@ trait ExcelExportable
         $currentDate = Carbon::now()->format('d-m-Y');
 
         // Get recipient name if available
-        $recipientName = "User";
-        if (!empty($requestParams['recipient_name'])) {
+        $recipientName = 'User';
+        if (! empty($requestParams['recipient_name'])) {
             $recipientName = $requestParams['recipient_name'];
-        } else if (auth()->check() && $recipientEmail === auth()->user()->email) {
+        } elseif (auth()->check() && $recipientEmail === auth()->user()->email) {
             $recipientName = auth()->user()->name;
         }
 
@@ -140,7 +140,7 @@ trait ExcelExportable
             'currentDate' => $currentDate,
             'recordCount' => $recordCount,
             'fileSize' => $fileSize,
-            'systemName' => config('constants.MAIL_FROM_NAME', 'The System')
+            'systemName' => config('constants.MAIL_FROM_NAME', 'The System'),
         ];
 
         // Send email with attachment
