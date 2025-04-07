@@ -2146,9 +2146,15 @@ const finalizePaymentForm = (payment, capture_approval) => {
       props.quoteType === 'Travel' &&
       ['edit', 'view'].includes(paymentMethodsForm.status)
     ) {
-      planDetail.value = payment?.travel_plan ?? props.sendUpdate?.travel_plan ?? props.quoteRequest?.plan ?? null;
+      planDetail.value =
+        payment?.travel_plan ??
+        props.sendUpdate?.travel_plan ??
+        props.quoteRequest?.plan ??
+        null;
       if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-        planDetail.value['insurance_provider'] = payment?.travel_plan?.insurance_provider ?? props.sendUpdate?.insurance_provider;
+        planDetail.value['insurance_provider'] =
+          payment?.travel_plan?.insurance_provider ??
+          props.sendUpdate?.insurance_provider;
       }
     }
   };
