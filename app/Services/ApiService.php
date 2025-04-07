@@ -219,7 +219,8 @@ class ApiService
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, true);
-        info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['tierId'].' ------');
+        $tierID = $responsePayload['data']['tierId'] ?? 0;
+        info('------ Lead allocation request completed to evaluate tier only for '.$tierID.' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
