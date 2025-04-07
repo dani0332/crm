@@ -25,8 +25,8 @@ class HomeQuoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => 'required|between:1,20|regex:/^[a-zA-Z\-]+$/',
-            'last_name' => 'required|between:1,50|regex:/^[a-zA-Z\-]+$/',
+            'first_name' => 'required|between:1,20|regex:/^[a-zA-Z\s\-]+$/',
+            'last_name' => 'required|between:1,50|regex:/^[a-zA-Z\s\-]+$/',
             'email' => 'required|email:rfc,dns|max:150',
             'mobile_no' => 'required|min:7|max:20',
             'has_contents' => self::SOMETIMES_BOOLEAN,
@@ -65,11 +65,11 @@ class HomeQuoteRequest extends FormRequest
         return [
             'first_name.required' => 'The first name is required.',
             'first_name.between' => 'The first name must be between 1 and 20 characters.',
-            'first_name.regex' => 'The first name must contain only letters (A-Z, a-z) and hyphens (-). No numbers or special characters allowed.',
+            'first_name.regex' => 'The first name must contain only letters (A-Z, a-z), spaces, and hyphens (-). No numbers or other special characters allowed.',
 
             'last_name.required' => 'The last name is required.',
             'last_name.between' => 'The last name must be between 1 and 50 characters.',
-            'last_name.regex' => 'The last name must contain only letters (A-Z, a-z) and hyphens (-). No numbers or special characters allowed.',
+            'last_name.regex' => 'The last name must contain only letters (A-Z, a-z), spaces, and hyphens (-). No numbers or other special characters allowed.',
 
             'email.required' => 'The email address is required.',
             'email.email' => 'Please provide a valid email address.',
