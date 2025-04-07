@@ -647,6 +647,7 @@ class TravelQuoteService extends BaseService
         return TravelQuote::where('id', $id)->with([
             'child',
             'parent',
+            'plan',
             'payments' => function ($payment) {
                 $payment->with([
                     'paymentSplits' => function ($paymentSplit) {
