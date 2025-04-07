@@ -424,22 +424,24 @@ const onDataExport = (exportType = 'download') => {
     url: url + '?' + new URLSearchParams(data).toString(),
   };
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-    notification.success({
-      title: result.data.message,
-      position: 'top',
+  logAndExportQuotes(payload)
+    .then(result => {
+      notification.success({
+        title: result.data.message,
+        position: 'top',
+      });
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: 'Unable to start an export',
+        position: 'top',
+      });
+      throw err;
     });
-    if (result)
-      setTimeout(() => {
-        exportLoader.value = false;
-      }, 1000);
-  }).catch(err =>{
-    notification.error({
-      title: "Unable to start an export",
-      position: 'top',
-    });
-    throw err;
-  });
 };
 
 const exportRmLeads = () => {
