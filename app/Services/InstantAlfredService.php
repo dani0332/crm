@@ -321,7 +321,7 @@ class InstantAlfredService extends BaseService
             ];
             $pipeline[] = [
                 '$sort' => [
-                    'created_at' =>  $request->sortType == 'desc' ? -1 : 1,
+                    'created_at' => $request->sortType == 'desc' ? -1 : 1,
                 ],
             ];
         } elseif ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
@@ -371,7 +371,7 @@ class InstantAlfredService extends BaseService
             ];
             $pipeline[] = [
                 '$sort' => [
-                    'date_of_first_interaction' => $request->sortType == 'desc' ? -1 : 1
+                    'date_of_first_interaction' => $request->sortType == 'desc' ? -1 : 1,
                 ],
             ];
         }
