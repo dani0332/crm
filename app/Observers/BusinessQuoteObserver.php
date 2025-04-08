@@ -9,7 +9,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Jobs\MAWelcomeJob;
-use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\BusinessQuoteService;
