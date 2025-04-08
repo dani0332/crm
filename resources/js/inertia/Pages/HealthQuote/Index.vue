@@ -435,7 +435,7 @@ const onDataExport = (exportType = 'download') => {
       }, 1000);
   }).catch(err =>{
     notification.error({
-      title: "Unable to start an export",
+      title: err.response.data.message ? err.response.data.message : 'Unable to start an export',
       position: 'top',
     });
     throw err;
