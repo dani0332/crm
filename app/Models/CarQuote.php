@@ -357,7 +357,6 @@ class CarQuote extends BaseModel
     public function scopeFilterBySegment($query,$segmentFilter,$quoteTypeId,$requestParams)
     {
         $segmentFilter = request()->input('segment_filter');
-        self::applySegmentFilter($query, $segmentFilter, 'car_quote_request', QuoteTypeId::Car);
         self::applySegmentFilter($query, $segmentFilter, 'car_quote_request', QuoteTypeId::Car,$requestParams);
     }
 

@@ -869,11 +869,6 @@ class CarQuoteService extends BaseService
 
     public function getGridData($requestParams)
     {
-        return $this->carQuoteQueryBuilder->processGridData()
-            ->where(function ($query) {
-                if (Auth::user()->hasRole(RolesEnum::CarManager)) {
-                    $this->walkTree(Auth::id());
-
         $user = null;
 
         if (auth()->check() && empty($requestParams['user'])) {
