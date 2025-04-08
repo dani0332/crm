@@ -542,7 +542,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
 
-
+                /* Handle NRA case where payment is approved after policy/send update is booked */
                 $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quote, $splitPayment);
                 info(self::class.' fn:'.__FUNCTION__.' Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
                 // create sage receipt
@@ -551,6 +551,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $sageRequest->userId = auth()->id();
                     $sageRequest->quoteType = $request->modelType;
                     $sageRequest->advisor_id = $quote->advisor_id;
+                    /* Handle NRA case where payment is approved after policy/send update is booked */
                     $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $quote, $masterPayment, $splitPayment);
                     if ($sageResponse['status']) {
                         $paymentInformation['sage_reciept_id'] = $sageResponse['documentNumber'];

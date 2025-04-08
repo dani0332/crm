@@ -909,6 +909,7 @@ class SageApiService
                     info(self::class.' fn:'.__FUNCTION__.' post prepayment scheduled for PaymentSplitID : '.$paymentSplit->id, $postPrepayment);
                 }
             } else {
+                info(self::class.' fn:'.__FUNCTION__.' post prepayment for PaymentSplitID : '.$paymentSplit->id, ['BatchNumber' => $sageResponse['BatchNumber']]);
                 $isLiveApiCallStep4 = true;
                 $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
                 if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_SUCCESS) {
