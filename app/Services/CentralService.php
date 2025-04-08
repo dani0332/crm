@@ -35,6 +35,7 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
@@ -1064,6 +1065,11 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
 
+        $isCaptureButtonEnabled = false;
+        if ($insuranceProvider) {
+            $isCaptureButtonEnabled = $this->isCaptureButtonEnabledForProvider($insuranceProvider->code, $quoteTypeId);
+        }
+
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
 
@@ -1087,6 +1093,7 @@ class CentralService extends BaseService
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'commissionInPayments' => $commissionInPayments,
             'isADNICProvider' => $isADNICProvider,
+            'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
         ];
 
         // If payment object is provided, check commission status and merge with TAP configuration
@@ -1170,9 +1177,9 @@ class CentralService extends BaseService
             $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
         }
 
-        if ($quoteTypeId == QuoteTypeId::Car) {
-            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
-        }
+        // if ($quoteTypeId == QuoteTypeId::Car) {
+        //     $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        // }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
             $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
@@ -1195,5 +1202,43 @@ class CentralService extends BaseService
         } catch (\Throwable $th) {
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
+    }
+
+    public function deletePayment($request): array
+    {
+        info('fn:deletePayment - process started: '.$request->payment_id);
+
+        $payment = Payment::where(
+            [
+                'id' => $request->payment_id,
+                'code' => $request->payment_code,
+                'paymentable_type' => TravelQuote::class,
+            ])
+            ->whereIn('payment_status_id', [
+                PaymentStatusEnum::PENDING,
+                PaymentStatusEnum::NEW,
+                PaymentStatusEnum::DRAFT,
+                PaymentStatusEnum::OVERDUE,
+            ])
+            ->first();
+        if (! $payment) {
+            info('fn:deletePayment - Payment not found: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment not found'];
+        }
+
+        $quote = $payment->paymentable;
+        $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
+        if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
+            info('fn:deletePayment - Payment cannot be deleted: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment cannot be deleted'];
+        }
+
+        // Delete Payment and Payment Splits
+        PaymentSplits::where('code', $request->payment_code)->delete();
+        Payment::where('id', $request->payment_id)->delete();
+
+        return ['status' => true, 'message' => 'Delete payment processed'];
     }
 }

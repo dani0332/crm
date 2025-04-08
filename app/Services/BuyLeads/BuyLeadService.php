@@ -118,7 +118,7 @@ class BuyLeadService
             'requested_count' => $request->count,
             'cost_per_lead' => $cost,
             'request_type' => $requestType,
-            'expires_at' => now()->endOfDay(),
+            'expires_at' => null,
             'department_id' => Auth::user()->department_id,
             'segment' => $segment,
         ]);
