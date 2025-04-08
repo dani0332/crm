@@ -15,4 +15,8 @@ class RenewalStatusProcess extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
+
+    function personalQuotes(){
+        return $this->hasMany(PersonalQuote::class, 'renewal_batch', 'batch');
+    }
 }

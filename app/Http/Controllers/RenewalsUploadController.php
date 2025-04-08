@@ -16,6 +16,7 @@ use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
+use App\Jobs\Renewals\FetchHomeRenewalsPlansJob;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\CarQuote;
@@ -102,7 +103,8 @@ class RenewalsUploadController extends Controller
         return redirect()->route('batch-plans-processes', $batch)->with('error', 'No pending leads available to fetch plans');
     }
 
-    public function fetchPlansForNonMotor($batch, $quoteType){
+    public function fetchPlansNonMotor($batch, $quoteType){
+        
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
@@ -114,7 +116,7 @@ class RenewalsUploadController extends Controller
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ])->count();
-
+        
         if ($totalPending > 0) {
             $renewalStatusProcess = RenewalStatusProcess::create([
                 'batch' => $batch,
@@ -123,12 +125,18 @@ class RenewalsUploadController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);
-
-            return redirect()->route('batch-plans-processes', $batch)->with('success', 'Fetch plans is started for batch '.$batch);
+            // Dispatch the job based on the quote type
+            switch ($quoteType) {
+                case QuoteTypeShortCode::HOM:
+                    FetchHomeRenewalsPlansJob::dispatch($renewalStatusProcess, $batch, $quoteType);
+                    break;
+                default:
+                    break;
+            }
+            return redirect()->route('batch-plans-processes.non.motor', [$batch, $quoteType])->with('success', 'Fetch plans is started for batch '.$batch);
         }
 
-        return redirect()->route('batch-plans-processes', $batch)->with('error', 'No pending leads available to fetch plans');
+        return redirect()->route('batch-plans-processes.non.motor', [$batch, $quoteType])->with('error', 'No pending leads available to fetch plans');
 
     }
 
@@ -300,15 +308,16 @@ class RenewalsUploadController extends Controller
             return abort(403);
         }
         
+        
         $query = RenewalQuoteProcess::query()
             ->select('renewal_quote_processes.batch as renewal_batch', 'renewal_quote_processes.quote_type as quote_type')
             ->join('personal_quotes', 'renewal_quote_processes.batch', '=', 'personal_quotes.renewal_batch')
             ->where([
                 'renewal_quote_processes.quote_type' => ! empty($request->lob) ? $request->lob : QuoteTypeShortCode::HOM,
-                'renewal_quote_processes.type' => RenewalsUploadType::CREATE_LEADS,
+                'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
             ])
             ->whereYear('personal_quotes.previous_policy_expiry_date', ! empty($request->year) ? $request->year : date('Y'))
-            ->whereMonth('personal_quotes.previous_policy_expiry_date', ! empty($request->month) ? $request->month : date('n'));
+            ->whereMonth('personal_quotes.previous_policy_expiry_date', ! empty($request->month) ? $request->month : date('m'));
 
         if (! empty($request->batch)) {
             $query->where('renewal_quote_processes.batch', $request->batch);
@@ -356,6 +365,31 @@ class RenewalsUploadController extends Controller
         return inertia('Renewals/PlanProcesses', [
             'process' => $process,
             'batch' => $batch,
+        ]);
+    }
+
+    public function plansProcessesNonMotor($batch, $quoteType)
+    {
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
+        }
+
+        $process = RenewalStatusProcess::query()
+            ->select('renewal_status_processes.*')
+            ->leftJoin('personal_quotes', function($join) use ($batch, $quoteType) {
+                $join->on('renewal_status_processes.batch', '=', 'personal_quotes.renewal_batch')
+                    ->where('personal_quotes.quote_type_id', '=', $quoteType);
+            })
+            ->where('renewal_status_processes.batch', $batch)
+            ->with('createdby')
+            ->orderBy('renewal_status_processes.created_at', 'desc');
+            
+        $process = $process->simplePaginate();
+        
+        return inertia('Renewals/PlanProcessesNonMotor', [
+            'process' => $process,
+            'batch' => $batch,
+            'quoteType' => $quoteType,
         ]);
     }
     

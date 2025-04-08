@@ -36,6 +36,7 @@ use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
 use App\Jobs\Renewals\CreateRenewalsWorkflowJob;
 use App\Jobs\Renewals\CreateTravelRenewalQuotesJob;
+use App\Jobs\Renewals\FetchPlansForHomeRenewalsQuoteJob;
 use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
 use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
@@ -83,6 +84,7 @@ use DateTime;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PhpParser\Node\Stmt\Switch_;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class RenewalsUploadService
@@ -99,6 +101,8 @@ class RenewalsUploadService
     protected $userService;
     protected $healthQuoteService;
 
+    protected $homeQuoteService;
+
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
         CapiRequestService $capiRequestService,
@@ -108,7 +112,8 @@ class RenewalsUploadService
         LookupService $lookupService,
         SendEmailCustomerService $sendEmailCustomerService,
         UserService $userService,
-        HealthQuoteService $healthQuoteService
+        HealthQuoteService $healthQuoteService, 
+        HomeQuoteService $homeQuoteService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
         $this->capiRequestService = $capiRequestService;
@@ -119,6 +124,7 @@ class RenewalsUploadService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->userService = $userService;
         $this->healthQuoteService = $healthQuoteService;
+        $this->homeQuoteService = $homeQuoteService;
     }
 
     /*
@@ -379,6 +385,17 @@ class RenewalsUploadService
         return $quotePlans;
     }
 
+    function getPlansNonMotor($id, $quoteType){
+        info('fn: getPlansNonMotor: quoteType: '.$quoteType);   
+        
+        switch ($quoteType) {
+            case QuoteTypes::HOME:
+                return $this->homeQuoteService->getQuotePlans($id, true);
+            default:
+                return false;
+        }
+    }
+
     /**
      * @return void
      */
@@ -454,7 +471,7 @@ class RenewalsUploadService
 
     public function fetchRenewalPlansForNonMotor(RenewalStatusProcess $renewalStatusProcess, $batch, $quoteType)
     {
-        $logPrefix = 'FetchPlans FN: fetchRenewalPlans Batch: '.$batch;
+        $logPrefix ="FetchPlans FN: fetchRenewalPlans Batch: $batch";
         info($logPrefix.'  Fetch plans started');
 
         try {
@@ -467,14 +484,22 @@ class RenewalsUploadService
                 'batch' => $batch,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ])->with(['renewalUploadLead', 'carQuote']);
-
-            $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
+            ])->with(['renewalUploadLead', 'homeQuote']);
+            
+            
+            $query->chunkById(50, function ($leads) use ($quoteType, $renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
-                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
+                        switch ($quoteType) {
+                            case QuoteTypeShortCode::HOM:
+                                $jobs[] = new FetchPlansForHomeRenewalsQuoteJob($lead, $renewalStatusProcess);
+                                break;
+                            default:
+                                break;
+                        }
+                        
                     } else {
-                        info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
+                        info($logPrefix.' skipping fetch plans for uuid : '.$lead->homeQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                         $totalSkipped++;
                     }
@@ -486,6 +511,7 @@ class RenewalsUploadService
                 info($logPrefix.' total leads for skipped plans ('.$totalSkipped.')');
             }
 
+            
             if ($jobs != null && count($jobs)) {
                 info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
@@ -536,7 +562,7 @@ class RenewalsUploadService
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
             if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
-                info('FetchPlans FN: fetchRenewalPlans'.' can not proceed with quote as payment is already in process. ');
+                info(message: 'FetchPlans FN: fetchRenewalPlans'.' can not proceed with quote as payment is already in process. ');
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
 
                 return false;
@@ -573,6 +599,34 @@ class RenewalsUploadService
             }
         } else {
             info('FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+        }
+    }
+
+    public function fetchHomeQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
+    {
+        // $leadData = (object) $renewalQuoteProcess->data;
+
+        $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type); // Home
+        $quoteObject = $this->createQuoteObject($quoteType->code);
+
+        info('Job Started new');
+
+        if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
+
+            $plansResponse = $this->getPlansNonMotor($quote->uuid, $quoteType->code);
+
+            if ($plansResponse === true) {
+                info('Non Motor FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
+                // update status to plans fetched
+                $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
+                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
+            } else {
+                info('Non Motors FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
+                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+            }
+        } else {
+            info('Non Motors FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
             RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
@@ -1412,6 +1466,108 @@ class RenewalsUploadService
         return $this->carQuoteService->renewalCreatePlan($planData);
     }
 
+    public function createPlanHome($data, $quote, $createdById)
+    {
+        $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
+        info($logPrefix.' Create Plan Started');
+
+        $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
+
+        $carPlan = CarPlan::where([
+            'text' => $data['plan_name'],
+            'repair_type' => $data['plan_type'],
+            'provider_id' => $provider->id,
+        ])->with(['carAddons' => function ($q) {
+            $q->whereIn('code', [
+                CarPlanAddonsCode::DRIVER_COVER,
+                CarPlanAddonsCode::PASSENGER_COVER,
+                CarPlanAddonsCode::CAR_HIRE,
+                CarPlanAddonsCode::OMAN_COVER,
+                CarPlanAddonsCode::BREAKDOWN_COVER,
+            ])->with('carAddonOptions');
+        }])->first();
+
+        $planData = [
+            'quoteUID' => $quote->uuid,
+            'update' => false,
+            'url' => strval(request()->current_url),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval($createdById),
+        ];
+
+        $plan = [
+            'planId' => $carPlan->id,
+            'isDisabled' => false,
+            'isManualUpdate' => false,
+            'actualPremium' => $data['premium'] ?? 0,
+            'discountPremium' => $data['premium'] ?? 0,
+            'ancillaryExcess' => $data['ancillary_excess'] ?? 0,
+            'carValue' => $data['car_value'] ?? 0,
+        ];
+
+        if (! empty($data['insurer_quote_no'])) {
+            $plan['insurerQuoteNo'] = strval($data['insurer_quote_no']);
+        }
+
+        // excess will be used for comp or agency repair type
+        if ($data['plan_type'] == CarPlanType::COMP || $data['plan_type'] == CarPlanType::AGENCY) {
+            $plan['excess'] = $data['excess'];
+        }
+
+        // trim is optional
+        if (! empty($data['trim'])) {
+            if ($valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first()) {
+                if (! empty($valuation->insurer_available_trims)) {
+                    $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
+                    if (! empty($trims[$data['trim']]['admeId'])) {
+                        $plan['insurerTrimId'] = $trims[$data['trim']]['admeId'];
+                    }
+                }
+            }
+        }
+
+        $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
+
+        $addons = [
+            'driver_cover' => CarPlanAddonsCode::DRIVER_COVER,
+            'passenger_cover' => CarPlanAddonsCode::PASSENGER_COVER,
+            'car_hire' => CarPlanAddonsCode::CAR_HIRE,
+            'oman_cover' => CarPlanAddonsCode::OMAN_COVER,
+            'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
+        ];
+
+        foreach ($addons as $key => $addonCode) {
+            if (isset($planAddons[$addonCode]) && ! empty($data[$key])) {
+                $addon = $planAddons[$addonCode];
+
+                foreach ($addon['car_addon_options'] as $option) {
+                    if (strtolower(trim($option['value'])) == strtolower(trim($data[$key]))) {
+                        $price = $data[$key.'_amount'];
+
+                        $planDataAddon = [
+                            'addonId' => $option['addon_id'],
+                            'addonOptionId' => $option['id'],
+                            'price' => $price,
+                            'isSelected' => ($price == 0),
+                        ];
+
+                        $plan['addons'][] = $planDataAddon;
+                        break;
+                    }
+                }
+            } else {
+                info($logPrefix.'('.$addonCode.') not found');
+            }
+        }
+
+        $planData['plans'][] = $plan;
+
+        info($logPrefix.' PlanData: '.json_encode($planData));
+
+        return $this->carQuoteService->renewalCreatePlan($planData);
+    }
+
     public function getquoteStatusIdbyCode($quoteStatus)
     {
         return QuoteStatus::where('code', '=', $quoteStatus)->value('id');
@@ -2034,6 +2190,7 @@ class RenewalsUploadService
                         }
                         $checkBatch = $this->validateBatch('', $leadData->end_date, $lead->type == RenewalsUploadType::CREATE_LEADS, $lead);
                         ! $checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+
                         break;
                     default:
                         $checkBatch = $this->validateBatch($leadData->batch, $leadData->end_date, $lead->type == RenewalsUploadType::CREATE_LEADS, $lead);
@@ -2043,6 +2200,10 @@ class RenewalsUploadService
 
                 if ($leadValidationErrors->count() == 0) {
                     $lead->status = RenewalProcessStatuses::VALIDATED;
+
+                    $getBatch = $this->getBatch($leadData->end_date);
+                    $lead->batch = $getBatch?->name ?? null;
+
                 } else {
                     $lead->validation_errors = $leadValidationErrors;
                     $lead->status = RenewalProcessStatuses::BAD_DATA;
@@ -2106,6 +2267,27 @@ class RenewalsUploadService
         info('Batch not found with year: '.$year.' and batch name: '.$batchName);
 
         return false;
+    }
+
+    private function getBatch($endDate)
+    {
+       
+        // Extract year from endDate
+        $endDate = Carbon::createFromFormat('d/m/Y', $endDate);
+        $year = $endDate->format('Y');
+
+        // Extract week number from endDate and remove leading zero if present
+        $weekNumber = 'W'.$endDate->weekOfYear;
+
+        // Check if the batch exists in the table with the extracted year and week number
+        $batch = RenewalBatch::where([
+            ['name', $weekNumber.'-'.$year],
+            ['quote_type_id', null],
+        ])->first();
+
+        info('Get Batch: ', $batch->toArray());
+
+        return $batch; 
     }
 
     private function validateDate($date, $format = 'd/m/Y')

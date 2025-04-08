@@ -785,4 +785,44 @@ class HomeQuoteService extends BaseService
     }
 
     public function sendHomeOCB() {}
+
+    /**
+     * Get Quote Plans from KEN API
+     * 
+     * @param string $id
+     * @param boolean $latestRating
+     */
+    function getQuotePlans($id, $latestRating = false){  
+
+        info('fn: getQuotePlans: id: '.$id);
+        
+        try {
+            // Get Quote UUID from Home Quote
+            $quoteUuid = HomeQuote::where('uuid', $id)->value('uuid');
+
+            info('fn: Home Quote: quoteUuid: '.$quoteUuid);
+            
+            // Post data for Ken Api (Get Home Plans)
+            $data = [
+                'quoteUID' => $quoteUuid,
+                'getLatestRating' => $latestRating, 
+                'filters' => [
+                    [
+                        'field' => 'isDisabled',
+                        'value' => false
+                    ]
+                ],
+                'callSource' => 'imcrm',
+            ];
+
+            // Trigger KEN API 
+            app(abstract: KenService::class)->request('/get-home-quote-plans', 'post', $data);
+
+        } catch (\Throwable $th) {
+            info('fn: getQuotePlans: error: '.$th->getMessage().' Line: '.$th->getLine());
+            return false;
+        }
+        
+        return true;
+    }
 }

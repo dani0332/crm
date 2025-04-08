@@ -8,11 +8,14 @@ const uploadForm = useForm({
 });
 let file = '';
 let files = [];
+let isUploading = ref(false);
 defineProps({
   azureStorageUrl: String,
   azureStorageContainer: String,
   lobs: Object,
 });
+
+
 
 let errors = {
   type: '',
@@ -195,6 +198,7 @@ function handleFileUpload(event) {
 }
 function onSubmit(isValid) {
   if (isValid) {
+    isUploading.value = true;
     let formData = new FormData();
     formData.append('file_name', file);
     formData.append('lob', uploadForm.lob);
@@ -221,11 +225,14 @@ function onSubmit(isValid) {
         const title =
           error.response?.data?.message ||
           'Error while uploading . Please try again';
-        notification.error({
-          title: title,
-          position: 'top',
-        });
+          notification.error({
+            title: title,
+            position: 'top',
+          });
         console.log('FAILURE!!');
+      })
+      .finally(() => {
+        isUploading.value = false;
       });
   }
 }
@@ -309,7 +316,25 @@ uploadForm.lob = page.props.lobs.Home;
         </ul>
       </x-alert>
       <div class="flex justify-end gap-3 my-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Upload</x-button>
+        <x-button 
+          size="sm" 
+          color="#ff5e00" 
+          type="submit"
+          :disabled="isUploading"
+        >
+          <template v-if="isUploading">
+            <div class="flex items-center gap-2">
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Uploading...</span>
+            </div>
+          </template>
+          <template v-else>
+            Upload
+          </template>
+        </x-button>
       </div>
       <div class="flex items-center my-4">
         <x-button
