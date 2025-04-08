@@ -138,6 +138,9 @@ class CentralController extends Controller
                 return app(TravelQuoteExport::class)->download('travel_leads');
 
             case QuoteTypes::CAR->value:
+                if($request['exportType'] == 'email'){
+                    return app(CarQuoteExport::class)->emailCSV('Car-List', $request->all());
+                }
                 return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:

@@ -867,18 +867,32 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function getGridData()
+    public function getGridData($requestParams)
     {
         return $this->carQuoteQueryBuilder->processGridData()
             ->where(function ($query) {
                 if (Auth::user()->hasRole(RolesEnum::CarManager)) {
                     $this->walkTree(Auth::id());
+
+        $user = null;
+
+        if (auth()->check() && empty($requestParams['user'])) {
+            $user = auth()->user();
+        } else if (!empty($requestParams['user'])){
+            /* For queue when session data isn't present */
+             $user = $requestParams['user'];
+        }
+
+        return $this->carQuoteQueryBuilder->processGridData($requestParams)
+            ->where(function ($query) use($user) {
+                if ($user->hasRole(RolesEnum::CarManager)) {
+                    $this->walkTree($user->id);
                     $query->whereIn('advisor_id', $this->childUserIds);
-                } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
-                    $this->walkTree(Auth::id());
+                } elseif ($user->hasRole(RolesEnum::LeadPool)) {
+                    $this->walkTree($user->id);
                     $query->whereIn('advisor_id', $this->childUserIds)->orWhereNull('advisor_id');
-                } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
-                    $query->where('advisor_id', Auth::id());
+                } elseif ($user->hasRole(RolesEnum::CarAdvisor)) {
+                    $query->where('advisor_id', $user->id);
                 }
             });
     }

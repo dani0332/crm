@@ -108,6 +108,9 @@ trait ExcelExportable
         $csvFileName = $fileName.'-'.Carbon::now()->format('Y-m-d').'.csv';
         $stream = fopen('php://temp', 'r+');
 
+
+        $requestParams['user'] = User::where(['email' => $requestParams['recipientEmail']])->first();
+
         // Write CSV data
         fputcsv($stream, $this->headings());
         $data = $this->collection($requestParams);

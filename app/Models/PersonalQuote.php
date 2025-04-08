@@ -303,7 +303,7 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphMany(SageApiLog::class, 'section');
     }
 
-    public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeId)
+    public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeId,$requestParams)
     {
         self::applySegmentFilter($query, $segmentFilter, 'personal_quotes', $quoteTypeId);
     }

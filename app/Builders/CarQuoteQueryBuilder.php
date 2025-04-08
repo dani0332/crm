@@ -87,8 +87,18 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
         ]);
     }
 
-    public function applyFilters(Builder $query)
+    public function applyFilters(Builder $query,$requestParams)
     {
+
+        $request = collect($requestParams);
+        $user = null;
+        if (auth()->check()) {
+            $user = auth()->user();
+        } elseif (! empty($request->get('user'))) {
+            /* For queue when session data isn't present */
+            $user = $request->get('user');
+        }
+
         $query->when(
             ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
             fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]),
@@ -114,17 +124,17 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByTeams(request('teams'))
             ->filterByAdvisors(request('advisor_id'))
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
-            ->filterBySegment(request('segment_filter'), QuoteTypeId::Car)
+            ->filterBySegment(request('segment_filter'), QuoteTypeId::Car,$requestParams)
             ->filterBy('sic_advisor_requested', ignoreAll: true)
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByAdvisorAssignedDates('carQuoteRequestDetail', ['advisor_assigned_date', 'advisor_assigned_date_end'])
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
-            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
                 $query->whereRelation('payments', 'insurer_tax_number', request('insurer_tax_invoice_number'));
             })
-            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
                 $query->whereRelation('payments', 'insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
             })
             ->filterByDateRange('booking_date', 'policy_booking_date')
@@ -141,11 +151,11 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             );
     }
 
-    public function processGridData(): Builder
+    public function processGridData($requestParams): Builder
     {
         $query = $this->buildGrid();
 
-        $this->applyFilters($query);
+        $this->applyFilters($query, $requestParams);
 
         return $query;
     }

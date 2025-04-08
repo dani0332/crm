@@ -286,6 +286,7 @@ watch(
       filters.booking_date
     ) {
       canExport.value = true;
+      // Export buttons will be visible when date filters are set
     } else {
       canExport.value = false;
     }
@@ -539,17 +540,40 @@ watch(
   { deep: true },
 );
 
-const onExport = (url, isLoading = false) => {
+const onExport = (url, isLoading = false, exportType = 'download') => {
   exportLoader.value = isLoading;
+
+  // Add exportType to URL parameters if it's not already there
+  const separator = url.includes('?') ? '&' : '?';
+  const exportTypeParam = `exportType=${exportType}`;
+
+  // Only add exportType if it's not already in the URL
+  if (!url.includes('exportType=')) {
+    url = `${url}${separator}${exportTypeParam}`;
+  }
+
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
+    exportType: exportType,
     url: `${window.location.origin}${url}`,
   };
+
+  console.log("onexport", payload);
   logAndExportQuotes(payload).then(result => {
+    notification.success({
+      title: result.data.message,
+      position: 'top',
+    });
     if (result)
       setTimeout(() => {
         exportLoader.value = false;
       }, 1000);
+  }).catch(err => {
+    notification.error({
+      title: "Unable to start an export",
+      position: 'top',
+    });
+    throw err;
   });
 };
 
@@ -889,10 +913,24 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="onExport(`/car/leads-export?${objToUrl(filters)}`, true)"
+            @click="() => {
+              onExport(`/car/leads-export?${objToUrl(filters)}`, true, 'download')
+            }"
             class="justify-self-start mr-3"
           >
             Export
+          </x-button>
+          <x-button
+            v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click="() => {
+              onExport(`/car/leads-export?${objToUrl(filters)}`, true, 'email')
+            }"
+            class="justify-self-start mr-3"
+          >
+            Export via email
           </x-button>
           <x-tooltip
             v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)"
