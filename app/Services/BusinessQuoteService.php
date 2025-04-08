@@ -712,7 +712,7 @@ class BusinessQuoteService extends BaseService
         // Split the name into words and filter out 'insurance'
         $words = array_filter(
             preg_split('/\s+/', $trimmedName),
-            fn($word) => strtolower($word) !== 'insurance'
+            fn ($word) => strtolower($word) !== 'insurance'
         );
         $words = array_values($words); // Re-index the array
 
@@ -729,7 +729,8 @@ class BusinessQuoteService extends BaseService
                 return implode(' & ', $parts);
             }
         }
+
         // Return first two words for lengthy names (more than 3 words)
-        return $words[0] . ' ' . $words[1];
+        return $words[0].' '.$words[1];
     }
 }

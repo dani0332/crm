@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Enums\BusinessTypeOfInsuranceEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -11,13 +12,12 @@ use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\BusinessQuoteService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Enums\BusinessTypeOfInsuranceEnum;
-use App\Services\BusinessQuoteService;
 
 class BusinessQuoteObserver
 {
@@ -42,7 +42,7 @@ class BusinessQuoteObserver
         $oldAdvisorId = $businessQuote->getOriginal('advisor_id') ?? null;
 
         if (isset($dirty['advisor_id'])) {
-            $businessTypeInsurance= "";
+            $businessTypeInsurance = '';
 
             switch ($businessQuote->business_type_of_insurance_id) {
                 case BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL:
@@ -50,17 +50,16 @@ class BusinessQuoteObserver
                     break;
                 case BusinessTypeOfInsuranceIdEnum::PROPERTY:
                     $businessTypeInsurance = BusinessTypeOfInsuranceEnum::PROPERTY;
-                break;
+                    break;
                 case BusinessTypeOfInsuranceIdEnum::SEVERAL_INSURANCES:
                     $businessTypeInsurance = BusinessTypeOfInsuranceEnum::SEVERAL_INSURANCES;
-                break;
+                    break;
                 default:
                     $businessTypeInsurance = QuoteTypes::CORPLINE->value;
                     break;
             }
 
-
-            if ($businessQuote->source != LeadSourceEnum::IMCRM && !empty($businessTypeInsurance)) {
+            if ($businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance)) {
                 info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Ref-ID: {$businessQuote->uuid} | Time: ".now());
                 info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$businessQuote->advisor_id} | Ref-ID: {$businessQuote->uuid}  | Time: ".now());
 
