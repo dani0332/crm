@@ -94,10 +94,6 @@ const updateFilter = (field, val) =>
       <x-button size="sm" color="primary" @click.prevent="resetFilters">
         Reset
       </x-button>
-      <!-- <x-button type="button" size="md" color="gray" @click="resetFilters">
-        Reset
-      </x-button>
-      <x-button type="submit" size="md" color="primary"> Filter </x-button> -->
     </div>
   </x-form>
   <DataTable

@@ -88,14 +88,6 @@ class UserController extends Controller
                   ->join('permissions', 'permissions.id', '=', 'model_has_permissions.permission_id')
                   ->whereRaw('model_has_permissions.model_id = u1.id')
                   ->where('permissions.name', $permission);
-            })
-            ->orWhereExists(function ($q) use ($permission) {
-                $q->select(DB::raw(1))
-                  ->from('model_has_roles')
-                  ->join('role_has_permissions', 'role_has_permissions.role_id', '=', 'model_has_roles.role_id')
-                  ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-                  ->whereRaw('model_has_roles.model_id = u1.id')
-                  ->where('permissions.name', $permission);
             });
         }
 
