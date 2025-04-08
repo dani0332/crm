@@ -3426,6 +3426,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   basmah,
                   vat,
                   loadingPrice,
+                  adjustedPrice,
                 }"
               >
                 {{
@@ -3434,7 +3435,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       (policyFee || 0) +
                       (basmah || 0) +
                       vat +
-                      (loadingPrice || 0),
+                      (loadingPrice || 0) +
+                      (adjustedPrice || 0),
                   )
                 }}
               </template>
