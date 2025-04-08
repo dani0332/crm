@@ -149,7 +149,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when(request('stale_at'), function ($query) {
                 $query->whereNotNull('stale_at');
             })
-            ->when(request('is_renewal') != 'Yes', function ($query) {
+            ->when(request()->filled('is_renewal') && request('is_renewal') != 'Yes', function ($query) {
                 $query->whereNull('previous_quote_policy_number');
             })
             ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
@@ -179,6 +179,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
             );
+
+        dd($query->toRawSql());
     }
 
     public function processGridData(): Builder
