@@ -260,10 +260,21 @@ const genderSelect = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return page.props.leadStatuses.map((status) => {
+    var statusDisabled = false
+    // below status are not editable by advisor
+    if(status.id == page.props.quoteStatusEnum.PaymentLinkSentToCustomer) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    if(status.id == page.props.quoteStatusEnum.PaymentInitiated) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    return {
+      value: status.id,
+      label: status.text,
+      disabled: statusDisabled
+    }
+  });
 });
 
 const nationalityOptions = computed(() => {
@@ -684,6 +695,7 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+
       getSmallestCopayRateAsDefaultValue();
       plansTable.data.forEach(plan => {
         if (plan.isManualPlan) {
@@ -1004,6 +1016,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
   let smallestCopayLoadingPrice = 0;
+  let smallestCopayAdjustedPrice = 0;
   plansTable.data.forEach(element => {
     defaultCopayId = element.selectedCopayId;
     element.ratesPerCopay?.forEach(function callback(value, index) {
@@ -1016,6 +1029,9 @@ const getSmallestCopayRateAsDefaultValue = () => {
         smallestCopayLoadingPrice = Number(
           value.loadingPrice ? value.loadingPrice : 0,
         );
+        smallestCopayAdjustedPrice = Number(
+          value.adjustedPrice ? value.adjustedPrice : 0,
+        );
         defaultCopayId = element.selectedCopayId;
       } else if (
         element.selectedCopayId == undefined ||
@@ -1027,12 +1043,18 @@ const getSmallestCopayRateAsDefaultValue = () => {
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
           );
+          smallestCopayAdjustedPrice = Number(
+            value.adjustedPrice ? value.adjustedPrice : 0,
+          );
           defaultCopayId = value.healthPlanCoPaymentId;
         } else if (value.discountPremium < smallestCopayValue) {
           smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
+          );
+          smallestCopayAdjustedPrice = Number(
+            value.adjustedPrice ? value.adjustedPrice : 0,
           );
           defaultCopayId = value.healthPlanCoPaymentId;
         }
