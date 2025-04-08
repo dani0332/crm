@@ -799,10 +799,9 @@ class SageApiService
             $documentNumber = $createPrepaymentReceiptResponse['documentNumber'];
             if ($documentNumber) {
                 $this->handleWithDeadlockRetries(function () use ($paymentSplit, $documentNumber) {
-                    $paymentSplit->sage_reciept_id = $documentNumber;
-                    $paymentSplit->save();
+                    $paymentSplit->update(['sage_reciept_id' => $documentNumber]);
                 }, 5);
-                $paymentSplit->update();
+
             }
             $prepaymentResponses[] = $createPrepaymentReceiptResponse;
 
