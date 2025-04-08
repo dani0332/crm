@@ -898,14 +898,9 @@ class SageApiService
                 }
             }
 
-            $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
-            $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
+             $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
 
-            $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
-
-            $shouldSchedulePostPrepayment = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
-
-            if ($shouldSchedulePostPrepayment) { /* Handle NRA case where payment is approved after policy/send update is booked */
+            if ($this->shouldCreateAndSchedulePostPrepayment($quote, $paymentSplit, $sendUpdateLog)) { /* Handle NRA case where payment is approved after policy/send update is booked */
                 info(self::class.' fn:'.__FUNCTION__.' trigger post prepayment schedule for PaymentSplitID : '.$paymentSplit->id);
                 $postPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $sageRequest->quoteType, $paymentSplit, $sendUpdateLog]);
                 if (! $postPrepayment['status']) {
@@ -961,6 +956,19 @@ class SageApiService
         }
 
         return $response;
+    }
+
+    public function shouldCreateAndSchedulePostPrepayment($quote, $paymentSplit, $sendUpdateLog = null){
+        if(!$sendUpdateLog){
+            $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
+        }
+
+        $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
+
+        $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
+
+        return  ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+
     }
 
     private function executeARPrepaymentReceiptPost($sageRequestDataArray): array
@@ -2493,11 +2501,7 @@ class SageApiService
             $response['errors']['payment_split'] = 'Payment Split not found.';
         }
 
-        $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
-        $isPolicyBooked = $quote?->quote_status_id == QuoteStatusEnum::PolicyBooked;
-        $shouldSchedulePostPrepayment = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
-
-        if (! $shouldSchedulePostPrepayment) {
+        if (! $this->shouldCreateAndSchedulePostPrepayment($quote, $paymentSplit)) {
             $key = $sendUpdateLog ? 'Send Update' : 'Quote';
             $response['errors']['booking-status'] = 'Post Prepayment cannot be done as '.$key.' is not booked yet.';
         }

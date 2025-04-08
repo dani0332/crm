@@ -675,13 +675,8 @@ class SplitPaymentService
             // Log message for creating Sage receipt
             info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Creating Sage receipt current sage receipt id: '.$paymentSplit->sage_reciept_id);
 
-            $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
-            $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
-
-            $isPolicyBooked = $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked;
-
-            $shouldCreatePrepaymentPremiumReceipt = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
-            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
+            $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quoteModel, $paymentSplit); /* Handle NRA case where payment is approved after policy/send update is booked */
+            info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' trigger creation of Premium Sage receipt  : ', ['shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
             if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
                 $sageRequest = new stdClass;
@@ -693,8 +688,7 @@ class SplitPaymentService
                 $sageRequest->advisor_id = $quoteModel->advisor_id;
 
                 // 1- This case will run
-                /* $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected); */
-                $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $paymentSplit, $amountCollected);
+                $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $quoteModel,$payment, $paymentSplit, $amountCollected);
                 if ($sageResponse['status']) {
                     info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Sage receipt created successfully with Document Number: '.$sageResponse['message']);
 
