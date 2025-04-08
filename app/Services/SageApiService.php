@@ -37,7 +37,7 @@ use App\Traits\HandlesDeadlockRetries;
 use Cache;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Facades\Http;
 
 class SageApiService
 {
@@ -2535,7 +2535,7 @@ class SageApiService
                 $quote = SendUpdateLog::whereId($request->sendUpdateId)->first();
             }
 
-            info(self::class.' fn: '.__FUNCTION__.'Starting postPrepaymentToSage for payment split ID: '.$paymentSplit->id.', Quote Code: '.$quote->code);
+            info(self::class.' fn: '.__FUNCTION__.' Starting postPrepaymentToSage for payment split ID: '.$paymentSplit->id.', Quote Code: '.$quote?->code);
 
             $response = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote, $paymentSplit]);
 
@@ -2546,13 +2546,13 @@ class SageApiService
 
             return $response;
         } catch (\Exception $e) {
-            info("Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", [
+            info(self::class.' fn: '.__FUNCTION__. " Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", [
                 'error' => $e->getMessage(),
             ]);
 
             return [
                 'status' => false,
-                'message' => 'Error posting prepayment to Sage: '.$e->getMessage(),
+                'message' => 'Error posting prepayment to Sage : '.$e->getMessage(),
             ];
         }
     }

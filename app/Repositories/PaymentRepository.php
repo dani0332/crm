@@ -548,10 +548,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
 
                 $shouldCreatePrepaymentPremiumReceipt = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
-                info(self::class.' fn:'.__FUNCTION__.'Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
+                info(self::class.' fn:'.__FUNCTION__.' Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
                 // create sage receipt
                 if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt) {
                     $sageRequest = $request->safe();
+                    $sageRequest->userId = auth()->id();
+                    $sageRequest->quoteType = $request->modelType;
+                    $sageRequest->advisor_id = $quote->advisor_id;
                     /* $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment); */
                     $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $quote, $masterPayment, $splitPayment);
                     if ($sageResponse['status']) {
