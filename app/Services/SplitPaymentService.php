@@ -688,7 +688,7 @@ class SplitPaymentService
                 $sageRequest->advisor_id = $quoteModel->advisor_id;
 
                 /* Handle NRA case where payment is approved after policy/send update is booked */
-                $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $quoteModel,$payment, $paymentSplit, $amountCollected);
+                $sageResponse = (new SageApiService)->createPrepaymentPremiumRecipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);
                 if ($sageResponse['status']) {
                     info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' Sage receipt created successfully with Document Number: '.$sageResponse['message']);
 

@@ -31,9 +31,9 @@ use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
-use App\Traits\HandlesDeadlockRetries;
 use Cache;
 use Carbon\Carbon;
 use Exception;
@@ -891,7 +891,7 @@ class SageApiService
                 }
             }
 
-             $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
+            $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
 
             if ($this->shouldCreateAndSchedulePostPrepayment($quote, $paymentSplit, $sendUpdateLog)) { /* Handle NRA case where payment is approved after policy/send update is booked */
                 info(self::class.' fn:'.__FUNCTION__.' trigger post prepayment schedule for PaymentSplitID : '.$paymentSplit->id);
@@ -952,8 +952,9 @@ class SageApiService
         return $response;
     }
 
-    public function shouldCreateAndSchedulePostPrepayment($quote, $paymentSplit, $sendUpdateLog = null){
-        if(!$sendUpdateLog){
+    public function shouldCreateAndSchedulePostPrepayment($quote, $paymentSplit, $sendUpdateLog = null)
+    {
+        if (! $sendUpdateLog) {
             $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
         }
 
@@ -961,7 +962,7 @@ class SageApiService
 
         $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
 
-        return  ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+        return ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
 
     }
 
@@ -2522,7 +2523,7 @@ class SageApiService
 
             return $response;
         } catch (\Exception $e) {
-            info(self::class.' fn: '.__FUNCTION__. " Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", [
+            info(self::class.' fn: '.__FUNCTION__." Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", [
                 'error' => $e->getMessage(),
             ]);
 
