@@ -1,5 +1,4 @@
 <script setup>
-import { log } from '../../../../../public/vendors/pdfmake/build/pdfmake.js';
 
 defineProps({
   quotes: Object,
