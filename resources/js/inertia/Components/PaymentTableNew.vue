@@ -1865,7 +1865,7 @@ const editPaymentModal = async (
     payment?.insurance_provider?.code == 'AXA' &&
     (props.quoteType === 'Bike' || props.quoteType === 'Car')
   ) {
-    await doCapturePaymentValidation(payment.total_amount);
+    await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
 
   resetPaymentForm();
@@ -1882,11 +1882,12 @@ const editPaymentModal = async (
   setFrequencyTypes();
 };
 
-const doCapturePaymentValidation = totalAmount => {
+const doCapturePaymentValidation = (totalAmount, paymentCode) => {
   const data = {
     modelType: props.quoteType,
     uuid: props.quoteRequest.uuid,
     captureAmount: totalAmount,
+    paymentCode: paymentCode,
   };
 
   capturePaymentValidationInProcess.value = true;
@@ -4328,7 +4329,9 @@ onBeforeMount(() => {
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td></td>
+                        <td>
+                          {{ splitPayment.code }}-{{ splitPayment.sr_no }}
+                        </td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ splitPayment.payment_method.name }}</td>
