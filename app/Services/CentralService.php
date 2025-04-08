@@ -156,13 +156,12 @@ class CentralService extends BaseService
                     if ($record) {
                         $update = [
                             'parent_duplicate_quote_id' => $parentRecord->code,
-                            'advisor_id' => User::where('name', UserNameEnum::System)->first()->id,
+                            'advisor_id' => auth()->user()->id,
                         ];
                         if (strtolower($lob) == strtolower(quoteTypeCode::Health)) {
                             $subTeam = null;
-                            $currentUser = User::where('name', UserNameEnum::System)->first();
-                            if ($currentUser && isset($currentUser->subTeam)) {
-                                $subTeam = $currentUser->subTeam->name;
+                            if (auth()->user()->subTeam) {
+                                $subTeam = auth()->user()->subTeam->name;
                             }
                             $update['health_team_type'] = $subTeam;
                         }
@@ -216,7 +215,7 @@ class CentralService extends BaseService
 
                 $model['child']::updateOrCreate(
                     [$parentFieldName => $getQuoteLead->id],
-                    ['advisor_assigned_by_id' => User::where('name', UserNameEnum::System)->first()->id, 'advisor_assigned_date' => Carbon::now()]
+                    ['advisor_assigned_by_id' => auth()->user()->id, 'advisor_assigned_date' => Carbon::now()]
                 );
 
                 $quoteTypeId = $getQuoteLead?->quote_type_id ?? QuoteTypes::tryFrom(ucfirst(request('quoteType')))?->id();
@@ -457,9 +456,7 @@ class CentralService extends BaseService
         // Lock functionality check for Lead status Section
         $lockedForQuoteStatus = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED];
         $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, $lockedForQuoteStatus);
-        $isAuthenticated = app('auth')->check();
-        $hasSuperLeadPermission = $isAuthenticated ? app('auth')->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE) : false;
-        if ($isAuthenticated && $hasSuperLeadPermission) {
+        if (auth()->check() && auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
             in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked]) ? $lockFunctionalities['lead_status'] = true : $lockFunctionalities['lead_status'] = false;
         } elseif (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
             $lockFunctionalities['lead_status'] = true;
@@ -759,7 +756,7 @@ class CentralService extends BaseService
                 'status' => 0,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
-                'assignee_id' => $quoteDetails->advisor_id ?? User::where('name', UserNameEnum::System)->first()->id,
+                'assignee_id' => $quoteDetails->advisor_id ?? auth()->user()->id,
                 'uuid' => generateUuid(),
                 'due_date' => addDaysExcludeWeekend($getActivitySchedule->due_days),
                 'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
@@ -823,7 +820,7 @@ class CentralService extends BaseService
             $plansDataArr['url'] = strval(url()->current());
             $plansDataArr['ipAddress'] = request()->ip();
             $plansDataArr['userAgent'] = request()->header('User-Agent');
-            $plansDataArr['userId'] = strval(User::where('name', UserNameEnum::System)->first()->id);
+            $plansDataArr['userId'] = strval(auth()->id());
             $plansDataArr['filters'] = [[
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
@@ -873,9 +870,7 @@ class CentralService extends BaseService
     public function lockTransactionStatus($quote, $quoteTypeId, $quoteStatuses)
     {
         $lockLeadStatus = $this->lockLeadSectionsDetails($quote);
-        $isAuthenticated = app('auth')->check();
-        $hasSuperLeadPermission = $isAuthenticated ? app('auth')->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE) : false;
-        if ($lockLeadStatus['lead_status'] || ($isAuthenticated && $hasSuperLeadPermission)) {
+        if ($lockLeadStatus['lead_status'] || auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
             return $quoteStatuses;
         }
 
@@ -965,7 +960,7 @@ class CentralService extends BaseService
             $exportLogs = QuoteExportLog::create([
                 'type' => ExportLogsTypeEnum::SEARCH_MODULE,
                 'quote_type_id' => request()->quote_type_id ?? null,
-                'user_id' => User::where('name', UserNameEnum::System)->first()->id,
+                'user_id' => auth()->id(),
                 'ip_address' => request()->ip(),
                 'url' => request()->fullUrl(),
             ]);
