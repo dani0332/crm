@@ -98,7 +98,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $insuredPersonData = json_decode($insuredPersonResponse->content(), true);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - reqFn: getInsuredPersonDetails' . ' - response: ' . ($insuredPersonData['status'] ? 'success' : 'error'));
 
-            $customer = null;
+            $customer = $customerTravelInfo;
             if ($insuredPersonResponse->status() === 200 && $insuredPersonData['status'])
                 $customer = [...$customerTravelInfo, ...$insuredPersonData['response']];
 
