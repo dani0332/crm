@@ -11,7 +11,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -24,7 +23,6 @@ use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 trait QuoteModelTrait
@@ -69,12 +67,12 @@ trait QuoteModelTrait
 
     public function isPaymentAuthorized()
     {
-        return $this->payments->count() > 0 && $this->payments->every(fn(Payment $payment) => $payment->isPaymentAuthorized());
+        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
     }
 
     public function isPaid()
     {
-        return $this->payments->count() > 0 && $this->payments->every(fn(Payment $payment) => $payment->isPaymentAuthorized() || $payment->isPaid());
+        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized() || $payment->isPaid());
     }
 
     public function scopeAs($q, string $as)
@@ -97,7 +95,7 @@ trait QuoteModelTrait
                     LeadSourceEnum::REVIVAL,
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
-                ])->where("{$alias}.source", 'like', '%' . (config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE) . '%');
+                ])->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -105,7 +103,7 @@ trait QuoteModelTrait
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                })->where("{$alias}.source", 'like', '%' . (config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE) . '%');
+                })->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
                 $query->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,
@@ -184,7 +182,7 @@ trait QuoteModelTrait
 
     public function getForeignKey()
     {
-        return Str::snake(Str::singular($this->getTable())) . '_id';
+        return Str::snake(Str::singular($this->getTable())).'_id';
     }
 
     public static function applyRequestTableJoins($query, $request): void
@@ -202,7 +200,7 @@ trait QuoteModelTrait
         if ($request->hasAny($applicableFilters) && $request->has('line_of_business') && isset($quoteTypes[$request->line_of_business])) {
             $query->join($quoteTypes[$request->line_of_business], function ($join) use ($quoteTypes, $request) {
                 $join->where('personal_quotes.quote_type_id', '=', $request->line_of_business);
-                $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business] . '.code');
+                $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
             });
         }
     }
@@ -283,5 +281,4 @@ trait QuoteModelTrait
         );
     }
 
-   
 }
