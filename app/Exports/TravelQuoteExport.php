@@ -10,9 +10,9 @@ class TravelQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return TravelQuoteRepository::getData(true);
+        return TravelQuoteRepository::getData(true, $requestParams);
     }
 
     public function headings(): array

@@ -78,9 +78,8 @@ trait QuoteModelTrait
         $q->from("{$q->getModel()->getTable()} as {$as}");
     }
 
-    public static function applySegmentFilter($query, $segmentFilter, $alias, $quoteTypeId, $requestParams)
+    public static function applySegmentFilter($query, $segmentFilter, $alias, $quoteTypeId, $requestParams = [])
     {
-        $user = auth()->user();
         $request = collect($requestParams);
         $user = null;
         if (auth()->check()) {

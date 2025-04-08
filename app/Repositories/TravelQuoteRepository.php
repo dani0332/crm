@@ -22,7 +22,7 @@ class TravelQuoteRepository extends BaseRepository
         return TravelQuote::class;
     }
 
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $requestParams = [])
     {
         $query = $this->with([
             'travelQuoteRequestDetail.lostReason',
@@ -38,7 +38,7 @@ class TravelQuoteRepository extends BaseRepository
             'paymentStatus',
             'insuranceProvider',
         ])
-            ->filter(! $forExport)
+            ->filter(! $forExport, false, $requestParams)
             ->withFakeLeadCriteria();
 
         if (request()->has('travel_start_date') && request('travel_start_date') != '') {

@@ -9,9 +9,9 @@ class HomeQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return HomeQuoteRepository::getData(true);
+        return HomeQuoteRepository::getData(true, false, $requestParams);
     }
     public function headings(): array
     {

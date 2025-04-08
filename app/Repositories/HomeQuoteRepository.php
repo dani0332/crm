@@ -24,8 +24,17 @@ class HomeQuoteRepository extends BaseRepository
         )->orderBy('created_at', 'desc');
     }
 
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false,$requestParams = [])
     {
+        $user = null;
+
+        if (auth()->check() && empty($requestParams['user'])) {
+            $user = auth()->user();
+        } else if (!empty($requestParams['user'])) {
+            /* For queue when session data isn't present */
+            $user = $requestParams['user'];
+        }
+
         $query = $this->with([
             'quoteStatus',
             'homeQuoteRequestDetail.lostReason',
@@ -35,10 +44,10 @@ class HomeQuoteRepository extends BaseRepository
             'nationality',
             'insuranceProvider',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when($user->hasRole(RolesEnum::HomeAdvisor), function ($query) use($user) {
+                $query->where('advisor_id', $user->id);
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filter(! $forExport, $forTotalLeadsCount,$requestParams)
             ->withFakeLeadCriteria($forTotalLeadsCount);
         $this->adjustQueryByDateFilters($query, 'home_quote_request');
         $query->orderBy('home_quote_request.created_at', 'desc');
