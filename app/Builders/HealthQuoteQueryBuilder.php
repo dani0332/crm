@@ -179,8 +179,6 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
             );
-
-        dd($query->toRawSql());
     }
 
     public function processGridData(): Builder
