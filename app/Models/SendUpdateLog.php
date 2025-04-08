@@ -65,6 +65,12 @@ class SendUpdateLog extends Model implements AuditableContract
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code']);
     }
+
+    public function travelPlan(): BelongsTo
+    {
+        return $this->belongsTo(TravelPlan::class, 'plan_id', 'id')->select(['id', 'text', 'code']);
+    }
+
     public function getAuditables()
     {
         return [
