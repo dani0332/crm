@@ -64,16 +64,20 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
-  { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
   {
-    text: 'INSURER AML STATUS',
-    value: 'insurer_aml_status_display',
+    text: 'PAYMENT AUTHORISED DATE',
+    value: 'payment.authorized_at',
     is_active: true,
   },
-  { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
-  { text: 'ASSIGNMENT TYPE', value: 'assignment_type', is_active: true },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status.text', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_text',
+    is_active: true,
+  },
+  { text: 'ADVISOR', value: 'advisor.name', is_active: true },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text', is_active: true },
   {
     text: 'ADVISOR REQUESTED',
     value: 'sic_advisor_requested',
@@ -93,13 +97,21 @@ const tableHeader = ref([
   },
   {
     text: 'POLICY EXPIRY DATE',
-    value: 'previous_policy_expiry_date',
+    value: 'previous_policy_expiry_date_formatted',
     is_active: true,
     sortable: true,
   },
   { text: 'HEALTH TEAM TYPE', value: 'health_team_type', is_active: true },
-  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
-  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  {
+    text: 'TRANSAPP CODE',
+    value: 'health_quote_request_detail.transapp_code',
+    is_active: true,
+  },
+  {
+    text: 'LOST REASON',
+    value: 'health_quote_request_detail.lost_reason.text',
+    is_active: true,
+  },
   {
     text: 'STARTING FROM',
     value: 'price_starting_from',
@@ -109,16 +121,16 @@ const tableHeader = ref([
   { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
-  { text: 'LEAD TYPE', value: 'lead_type_id_text', is_active: true },
-  { text: 'SALARY BAND', value: 'salary_band_id_text', is_active: true },
+  { text: 'LEAD TYPE', value: 'health_lead_type.text', is_active: true },
+  { text: 'SALARY BAND', value: 'salary_band.text', is_active: true },
   {
     text: 'MEMBER CATEGORY',
-    value: 'member_category_id_text',
+    value: 'member_category.text',
     is_active: true,
   },
   {
     text: 'CURRENTLY INSURED WITH',
-    value: 'currently_insured_with_id_text',
+    value: 'insurance_provider.text',
     is_active: true,
   },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
@@ -133,7 +145,7 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch_text', is_active: true },
+  { text: 'Renewal Batch', value: 'renewal_batch.name', is_active: true },
 ]);
 
 const filteredTableHeader = computed(() => {
@@ -1048,13 +1060,13 @@ const insurerAMLStatusOption = computed(() => {
         </div>
       </template>
       <template #item-authorized_at="item">
-        <p v-if="item.payment_status_text === 'AUTHORISED'">
-          {{ item.authorized_at }}
+        <p v-if="item.payment_status?.payment_status_text === 'AUTHORISED'">
+          {{ item.payments.authorized_at }}
         </p>
       </template>
       <template #item-expiry_date="item">
-        <p v-if="item.payment_status_text === 'AUTHORISED'">
-          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        <p v-if="item.payment_status?.payment_status_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.payments.authorized_at) }}
         </p>
       </template>
       <template #item-sic_advisor_requested="{ sic_advisor_requested }">
