@@ -80,7 +80,7 @@ class HealthQuotesExport
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->health_team_type,
             $quote->healthQuoteRequestDetail?->transapp_code,
-            $quote->healthQuoteRequestDetail->lostReason?->text,
+            $quote->healthQuoteRequestDetail?->lostReason?->text,
             $quote->price_starting_from,
             $quote->premium,
             $quote->policy_number,
