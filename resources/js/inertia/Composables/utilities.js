@@ -374,12 +374,14 @@ export const logAndExportQuotes = async payload => {
   return axios
     .post('/quotes/export-logs/create', payload)
     .then(async res => {
-
-      const exportResponse = await axios.get(payload.url).then(resp => {
-        return resp.data;
-      }).catch(err => {
-        throw err;
-      });
+      const exportResponse = await axios
+        .get(payload.url)
+        .then(resp => {
+          return resp.data;
+        })
+        .catch(err => {
+          throw err;
+        });
       res.data.message = exportResponse.message;
       return res;
     })
@@ -388,7 +390,7 @@ export const logAndExportQuotes = async payload => {
     })
     .finally(() => {
       // Cleanup operations if needed
-      if(payload.exportType !== 'email'){
+      if (payload.exportType !== 'email') {
         window.open(payload.url);
       }
     });
