@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Permission;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PermissionController extends Controller
 {
@@ -25,18 +24,18 @@ class PermissionController extends Controller
     {
         // Start with base query
         $query = Permission::select('*');
-        
+
         // Filter by role if role_id is provided
         if ($request->has('role_id')) {
             $roleId = $request->role_id;
-            $query->whereHas('roles', function($q) use ($roleId) {
+            $query->whereHas('roles', function ($q) use ($roleId) {
                 $q->where('roles.id', $roleId);
             });
         }
 
         // Filter by name if provided
         if ($request->has('name')) {
-            $query->where('name', 'LIKE', '%' . $request->name . '%');
+            $query->where('name', 'LIKE', '%'.$request->name.'%');
         }
 
         // Get roles for the dropdown filter
@@ -67,7 +66,6 @@ class PermissionController extends Controller
     /**
      * Store a newly created permission in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -95,10 +93,10 @@ class PermissionController extends Controller
     public function show($id)
     {
         $permission = Permission::findOrFail($id);
-        
+
         // Get roles that have this permission
         $rolesWithPermission = \Spatie\Permission\Models\Role::with('permissions')
-            ->whereHas('permissions', function($q) use ($id) {
+            ->whereHas('permissions', function ($q) use ($id) {
                 $q->where('permissions.id', $id);
             })
             ->get();
@@ -127,24 +125,23 @@ class PermissionController extends Controller
     /**
      * Update the specified permission in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
     {
         $this->validate($request, [
-            'name' => 'required|unique:permissions,name,' . $id,
+            'name' => 'required|unique:permissions,name,'.$id,
             'guard_name' => 'nullable|string',
         ]);
 
         $permission = Permission::findOrFail($id);
         $permission->name = $request->input('name');
-        
+
         if ($request->has('guard_name')) {
             $permission->guard_name = $request->input('guard_name');
         }
-        
+
         $permission->save();
 
         // Clear permission cache
@@ -165,7 +162,7 @@ class PermissionController extends Controller
         try {
             $permission = Permission::findOrFail($id);
             $permission->delete();
-            
+
             // Clear permission cache
             app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
@@ -176,4 +173,4 @@ class PermissionController extends Controller
                 ->with('error', 'This permission cannot be deleted as it is in use');
         }
     }
-} 
+}

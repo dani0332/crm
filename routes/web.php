@@ -27,6 +27,7 @@ use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\QuoteExportLogController;
 use App\Http\Controllers\RateCoverageUploadController;
@@ -87,8 +88,6 @@ use App\Http\Middleware\SetReadDbConnection;
 use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PermissionController;
-
 
 /*
 |--------------------------------------------------------------------------

@@ -154,12 +154,12 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        
+
         // Assign this permission to admin and engineering roles
         $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
-        
+
         foreach ($roles as $role) {
-            if (!$role->hasPermissionTo($permission)) {
+            if (! $role->hasPermissionTo($permission)) {
                 $role->givePermissionTo($permission);
                 info("Permission {$permission->name} assigned to role {$role->name}");
             } else {
