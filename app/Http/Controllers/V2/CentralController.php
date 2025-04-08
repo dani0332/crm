@@ -698,7 +698,7 @@ class CentralController extends Controller
         ];
 
         info('paymentsCaptureValidation', $logPayload);
-        
+
         return response()->json(['response' => $response]);
     }
 
