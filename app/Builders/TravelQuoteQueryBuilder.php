@@ -4,7 +4,6 @@ namespace App\Builders;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\TravelQuoteEnum;
 use App\Models\TravelQuote;
 use Illuminate\Database\Eloquent\Builder;
@@ -68,7 +67,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'api_issuance_status_id',
             'insurer_api_status_id',
             'start_date',
-            'end_date'
+            'end_date',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
@@ -84,7 +83,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quoteStatus:id,text',
             'plan:id,text',
             'currentlyLocatedIn:id,text',
-            'renewalBatch:id,name'
+            'renewalBatch:id,name',
         ]);
     }
 
@@ -123,7 +122,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDateRange('advisor_assigned_date')
             ->filterBySegment('travel_quote_request')
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
-                $query->where(fn($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
+                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
             ->when(Auth::user()->isSpecificTeamAdvisor('Travel'), function ($query) {
                 $query->filterBy('advisor_id', Auth::user()->id);
@@ -142,12 +141,12 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when(
                 request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
-                fn($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
+                fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
             )
             ->when($this->shouldApplyDatesFilter() && ! request()->filled('last_modified_date') && ! request()->filled('created_at_start') && ! request()->filled('renewal_batches') && ! request()->filled('policy_expiry_date') && ! request()->filled('policy_expiry_date_end'), function ($query) {
                 $query->filterByToday();
             })
-            ->when($this->shouldApplyDatesFilter() && !request()->filled('renewal_batches') && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
+            ->when($this->shouldApplyDatesFilter() && ! request()->filled('renewal_batches') && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
             })
             ->when(request()->filled('last_modified_date'), function ($query) {
@@ -199,8 +198,8 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when(
                 request()->filled('sortBy'),
-                fn($q) => $q->orderBy(request('sortBy'), request('sortType')),
-                fn($q) => $q->orderBy('created_at', 'DESC'),
+                fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
+                fn ($q) => $q->orderBy('created_at', 'DESC'),
             );
     }
 
