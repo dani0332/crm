@@ -694,7 +694,6 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-      debugger;
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
 
       getSmallestCopayRateAsDefaultValue();
@@ -1097,7 +1096,6 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
   });
-  debugger;
 };
 
 const onSelectedCopay = data => {
