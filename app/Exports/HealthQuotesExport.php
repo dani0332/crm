@@ -22,7 +22,7 @@ class HealthQuotesExport
         $this->genderOptions = app(CRUDService::class)->getGenderOptions();
     }
 
-    public function collection($requestParams)
+    public function collection($requestParams = [])
     {
         return app(HealthQuoteService::class)->getGridData(null, $requestParams)->select(
             'hqr.code',
