@@ -234,10 +234,10 @@ class SageApiService
 
         // Execute Prepayment Post in Progress Call
         if (! empty($preparedData['payment']?->send_update_log_id)) {
-            /*$prePaymentPostInProgress = $this->executeARPrepaymentReceiptPost([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
-            if (! $prePaymentPostInProgress['status']) {
-                return $prePaymentPostInProgress;
-            }*/
+            $createPrepayment = $this->createARPrepaymentPremiumReceipts([$sageRequestPayload, $sendUpdateLog, $preparedData['payment'], $preparedData['splitPayments']]);
+            if (! $createPrepayment['status']) {
+                return $createPrepayment;
+            }
         }
 
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
@@ -712,12 +712,6 @@ class SageApiService
                 return $createPrepayment;
             }
 
-            // Execute AR Prepayment Receipt Post Call
-            /* $prePaymentPostInProgress = $this->executeARPrepaymentReceiptPost([$sageRequest, $quote, $payment, $paymentSplits]);
-             if (! $prePaymentPostInProgress['status']) {
-                 return $prePaymentPostInProgress;
-             }*/
-
             // Create AR Commission and Premium Invoice
             $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
             if (! $createARInvoicePremAndComm['status']) {
@@ -970,28 +964,6 @@ class SageApiService
 
         return  ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
 
-    }
-
-    private function executeARPrepaymentReceiptPost($sageRequestDataArray): array
-    {
-        [$sageRequest, $quote, $payment, $paymentSplits] = $sageRequestDataArray;
-        $postedReceiptStatus = [];
-
-        foreach ($paymentSplits as $paymentSplit) {
-
-            $postSinglePrepaymentResponse = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote, $paymentSplit]);
-            $postedReceiptStatus[] = ['status' => $postSinglePrepaymentResponse['status'], 'message' => $postSinglePrepaymentResponse['message'], 'error' => $postSinglePrepaymentResponse['error']];
-
-        }
-
-        // Check if there is any failed AR Prepayment Receipt
-        foreach ($postedReceiptStatus as $item) {
-            if ($item['status'] === false) {
-                return ['status' => false, 'message' => $item['message']];
-            }
-        }
-
-        return ['status' => true, 'message' => 'AR Prepayment Receipt posted on sage'];
     }
 
     private function createARInvoicePremAndComm($sageRequestDataArray)
