@@ -249,10 +249,10 @@ class CRUDService extends BaseService
             if (isset($request->nextFollowUpDate) && $request->nextFollowUpDate != '') {
                 $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->nextFollowUpDate));
             }
-            if (isset($request->lost_approval_status) && $request->lost_approval_status != '' && app('auth')->check() && app('auth')->user()->hasRole(RolesEnum::MarketingOperations)) {
+            if (isset($request->lost_approval_status) && $request->lost_approval_status != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                 $quoteDetailEntity->lost_approval_status = $request->lost_approval_status;
             }
-            if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && app('auth')->check() && app('auth')->user()->hasRole(RolesEnum::MarketingOperations)) {
+            if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                 $quoteDetailEntity->lost_approval_reason = $request->lost_approval_reason;
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '' && ($request->leadStatus == QuoteStatusEnum::FollowupCall || $request->leadStatus == QuoteStatusEnum::Interested || $request->leadStatus == QuoteStatusEnum::NoAnswer)) {
@@ -270,7 +270,7 @@ class CRUDService extends BaseService
             } else {
                 $entity->quote_status_id = $request->leadStatus;
             }
-            if ($request->leadStatus == QuoteStatusEnum::Qualified && app('auth')->check() && app('auth')->user()->isHealthWcuAdvisor()) {
+            if ($request->leadStatus == QuoteStatusEnum::Qualified && auth()->user()->isHealthWcuAdvisor()) {
                 $entity->wcu_id = null;
             }
             if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
@@ -291,7 +291,7 @@ class CRUDService extends BaseService
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable
                 || $request->leadStatus == QuoteStatusEnum::EarlyRenewal
             ) {
-                if (! empty($request->car_lost_quote_log_id) && app('auth')->check() && app('auth')->user()->hasRole(RolesEnum::MarketingOperations)) {
+                if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                     // perform approval or rejection
                     $carLostQuoteLog = CarLostQuoteLog::where([
                         'car_quote_request_id' => $entity->id,
@@ -303,7 +303,7 @@ class CRUDService extends BaseService
                         'quote_status_id' => $request->leadStatus,
                         'reason_id' => ($request->lost_approval_status == GenericRequestEnum::APPROVED) ? $request->approve_reason_id : $request->reject_reason_id,
                         'notes' => $request->lost_notes,
-                        'action_by_id' => app('auth')->check() ? app('auth')->id() : User::where('name', 'System')->first()->id,
+                        'action_by_id' => auth()->user()->id,
                     ];
 
                     $carLostQuoteLog->update($lostQuoteLogData);
@@ -319,7 +319,7 @@ class CRUDService extends BaseService
                             'name' => $fileName,
                             'path' => $azureFilePath,
                             'mime_type' => $request->mo_proof_document->getClientMimeType(),
-                            'created_by_id' => app('auth')->check() ? app('auth')->id() : User::where('name', 'System')->first()->id,
+                            'created_by_id' => auth()->user()->id,
                         ]);
                     }
 
@@ -327,10 +327,10 @@ class CRUDService extends BaseService
                         // send rejection email
                         CarLostStatusRejected::dispatch($entity, $carLostQuoteLog);
                     }
-                } elseif (app('auth')->check() && app('auth')->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
+                } elseif (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
                     // store request of car sold/uncontactable with proof
                     $carLostQuoteLog = $entity->carLostQuoteLogs()->create([
-                        'advisor_id' => app('auth')->id(),
+                        'advisor_id' => auth()->user()->id,
                         'quote_status_id' => $request->leadStatus,
                         'status' => GenericRequestEnum::PENDING,
                     ]);
@@ -345,7 +345,7 @@ class CRUDService extends BaseService
                         'name' => $fileName,
                         'path' => $azureFilePath,
                         'mime_type' => $request->proof_document->getClientMimeType(),
-                        'created_by_id' => app('auth')->check() ? app('auth')->id() : User::where('name', 'System')->first()->id,
+                        'created_by_id' => auth()->user()->id,
                     ]);
                 }
             }
@@ -406,8 +406,8 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-            if ((app('auth')->check() && app('auth')->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
-                app('auth')->check() && app('auth')->user()->hasAnyPermission(
+            if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+                app('auth')->user()->hasAnyPermission(
                     PermissionsEnum::HEALTH_QUOTES_ACCESS,
                     PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS
                 )
@@ -619,7 +619,7 @@ class CRUDService extends BaseService
                                 'is_fulfilled' => 0,
                                 'action_type' => 'CAPTURE',
                                 'amount' => $amount,
-                                'created_by' => app('auth')->user()->email ?? 'system',
+                                'created_by' => auth()->user()->email,
                                 'is_manager_approved' => 1,
                             ]
                         );
@@ -821,7 +821,7 @@ class CRUDService extends BaseService
                         $text = 'No';
                         $score = 1;
                     }
-                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold "Dual Nationality"?', 'value' => $text];
+                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold “Dual Nationality”?', 'value' => $text];
                     $customerScore += $score;
 
                     if ($customerDetail->deal_sanction_list == 1) {
@@ -1147,7 +1147,7 @@ class CRUDService extends BaseService
             $kycLogs = AML::where([
                 'quote_request_id' => $quoteModel->id,
             ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->orderBy('created_at', 'desc')->get();
-            $pdf = app('dompdf.wrapper')->loadView('pdf.risk_score_document', compact('quoteModel', 'detail', 'kycLogs', 'quoteType', 'data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
+            $pdf = PDF::loadView('pdf.risk_score_document', compact('quoteModel', 'detail', 'kycLogs', 'quoteType', 'data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
