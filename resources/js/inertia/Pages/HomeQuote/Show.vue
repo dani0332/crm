@@ -1881,7 +1881,7 @@ const isPlanDetailEnabled = computed(() => {
                 color="orange"
                 class="mr-2"
                 :disabled="quote.advisor_id != $page.props.auth.user.id"
-                v-if="readOnlyMode.isDisable === true"
+                v-if="readOnlyMode.isDisable === true && quote.source != $page.props.leadSource.RENEWAL_UPLOAD"
               >
                 Send OCB Email to Customer
               </x-button>
