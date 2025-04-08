@@ -5,13 +5,13 @@ namespace App\Exports;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Services\CarQuoteService;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use Illuminate\Support\Collection;
 
 class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, WithStyles
 {
@@ -47,7 +47,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
             self::HEADING_NEW_BUSINESS,
             self::HEADING_RENEWALS,
             self::HEADING_TOTAL,
-            self::HEADING_TPC_TOTAL
+            self::HEADING_TPC_TOTAL,
         ];
     }
 
@@ -74,7 +74,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     {
         $this->newBusinessCounts = $this->renewalsCounts = [
             PaymentStatusEnum::CAPTURED => 0,
-            PaymentStatusEnum::PARTIAL_CAPTURED => 0
+            PaymentStatusEnum::PARTIAL_CAPTURED => 0,
         ];
         $this->newBusinessTPC = $this->renewalsTPC = 0;
     }
@@ -105,13 +105,14 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     {
         return in_array($status, [
             PaymentStatusEnum::CAPTURED,
-            PaymentStatusEnum::PARTIAL_CAPTURED
+            PaymentStatusEnum::PARTIAL_CAPTURED,
         ]);
     }
 
     public function collection()
     {
         $quotes = $this->getQuotesData();
+
         return $quotes->merge($this->prepareSummary());
     }
 
@@ -158,7 +159,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
             $this->createSummaryRow(self::EMPTY_ROW),
             $this->createSummaryRow(self::EMPTY_ROW),
             $this->createSummaryRow(self::HEADING_TOTAL, $this->formatCount($this->totalLeads)),
-            $this->createSummaryRow(self::HEADING_TPC_TOTAL, $this->formatAmount($this->totalPremiumCaptured))
+            $this->createSummaryRow(self::HEADING_TPC_TOTAL, $this->formatAmount($this->totalPremiumCaptured)),
         ]);
     }
 
@@ -207,7 +208,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
 
     public function map($row): array
     {
-        if (!isset($row->RefId) && isset($row->PaymentStatus)) {
+        if (! isset($row->RefId) && isset($row->PaymentStatus)) {
             return $this->mapSummaryRow($row);
         }
 
@@ -252,6 +253,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     {
         $this->applyHeaderStyles($sheet);
         $this->applyBoldStyles($sheet);
+
         return [];
     }
 
@@ -263,7 +265,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
     private function applyBoldStyles(Worksheet $sheet): void
     {
         $rowCount = $sheet->getHighestRow();
-        
+
         for ($row = 1; $row <= $rowCount; $row++) {
             $value = $sheet->getCellByColumnAndRow(1, $row)->getValue();
             if (in_array($value, $this->boldHeadings)) {
