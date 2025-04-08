@@ -49,13 +49,11 @@ class AMLScreeningCommand extends Command
             return;
         }
 
-        $date = \Carbon\Carbon::yesterday();
         $quoteRequestQuery = $quoteModel::select('id', 'api_issuance_status_id', 'aml_status')
             ->where([
                 'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID, 
                 'aml_status' => AMLStatusCode::AMLPending
-            ])
-            ->where('created_at', '>', $date);
+            ]);
 
         $quoteRequestCount = $quoteRequestQuery->count();
 
