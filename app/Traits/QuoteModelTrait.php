@@ -268,11 +268,6 @@ trait QuoteModelTrait
         return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
     }
 
-    public function isPUA(QuoteTypes $quoteType): bool
-    {
-        return QuoteTag::where('quote_uuid', $this->uuid)->whereIn('quote_tags.name', PuaEnum::TAGS)->where('quote_tags.quote_type_id', $quoteType->id())->exists();
-    }
-
     public function customerType(): Attribute
     {
         return Attribute::make(
