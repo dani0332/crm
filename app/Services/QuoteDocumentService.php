@@ -20,8 +20,8 @@ use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
@@ -105,7 +105,10 @@ class QuoteDocumentService extends BaseService
         // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
-            // Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
+            // LoggerService::info('Document deleted', [
+            //     'quote_uuid' => $data['quote_uuid'],
+            //     'doc_name' => $data['doc_name']
+            // ]);
 
             return response()->json(['message' => 'document deleted successfully']);
         }
@@ -207,7 +210,7 @@ class QuoteDocumentService extends BaseService
 
             if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
                 SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
-                info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
+                LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
             }
 
             if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc) {
@@ -215,13 +218,13 @@ class QuoteDocumentService extends BaseService
                     $quoteDocument->id, $data['quote_uuid'], $documentType->id
                 )->afterCommit();
             } else {
-                info('Watermark job not dispatched - Ref: '.$quote->code);
+                LoggerService::info('Watermark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
 
         } catch (\Exception $exception) {
-            Log::info('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
+            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
@@ -482,7 +485,7 @@ class QuoteDocumentService extends BaseService
         $fileContent = file_get_contents($encodedUrl);
 
         if (! $fileContent) {
-            Log::error("Unable to read file azureFilePath: $azureFilePath ");
+            LoggerService::error("Unable to read file azureFilePath: $azureFilePath ");
             throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
         }
 
@@ -495,7 +498,7 @@ class QuoteDocumentService extends BaseService
         sleep(3);
 
         if (! file_exists($outputFile)) {
-            Log::error("Unable to read file outputFile: $outputFile ");
+            LoggerService::error("Unable to read file outputFile: $outputFile ");
             throw new \Exception("Unable to read file outputFile: $outputFile");
         }
 
@@ -503,7 +506,7 @@ class QuoteDocumentService extends BaseService
 
         $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
 
-        info('watermark job started for Quote: '.$uuid.' source file read successfully. File path: '.$outputFile);
+        LoggerService::info('watermark job started for Quote: '.$uuid.' source file read successfully. File path: '.$outputFile);
         $watermarkImagePath = public_path('images/watermark1.png');
         $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
 

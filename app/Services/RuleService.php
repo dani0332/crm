@@ -9,6 +9,7 @@ use App\Models\RuleUser;
 use DB;
 use Illuminate\Http\Request;
 use stdClass;
+use App\Services\Logger\LoggerService;
 
 class RuleService extends BaseService
 {
@@ -123,7 +124,7 @@ class RuleService extends BaseService
             $rule->ruleUsers()->attach($userIds);
         }
 
-        info('------ Rule update is successfully done by user : '.auth()->user()->id.' for rule : '.$rule->name.' ------');
+        LoggerService::info('------ Rule update is successfully done by user : '.auth()->user()->id.' for rule : '.$rule->name.' ------');
 
         return $rule;
     }

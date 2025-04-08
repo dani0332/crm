@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
+use App\Services\Logger\LoggerService;
 
 class EmailStatusService extends BaseService
 {
@@ -35,7 +36,6 @@ class EmailStatusService extends BaseService
 
     public function addBirdEmailStatus($request)
     {
-
         switch (request('quoteTypeId')) {
             case QuoteTypeId::Car:
                 $quote = CarQuote::where('uuid', $request->uuid)->first();
@@ -48,7 +48,10 @@ class EmailStatusService extends BaseService
                 break;
         }
         if (! $quote) {
-            info("lead not found for uuid: {$request->uuid} time: ".now());
+            LoggerService::warning("Lead not found for uuid: {$request->uuid} time: ".now(), [
+                'uuid' => $request->uuid,
+                'quoteTypeId' => request('quoteTypeId')
+            ]);
 
             return (object) ['message' => 'lead not found', 'status' => false];
         }
@@ -59,10 +62,21 @@ class EmailStatusService extends BaseService
             $request->customerEmail = $request->customer_email;
             $this->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
 
+            LoggerService::info('Email event logged successfully', [
+                'uuid' => $request->uuid,
+                'message_id' => $request->message_id,
+                'quote_id' => $quote->id
+            ]);
+
             return (object) ['message' => 'Email event logged successfully', 'status' => true];
         } else {
+            LoggerService::info('Email event already logged', [
+                'uuid' => $request->uuid,
+                'message_id' => $request->message_id,
+                'quote_id' => $quote->id
+            ]);
+
             return (object) ['message' => 'Email event already logged', 'status' => true];
         }
     }
-
 }

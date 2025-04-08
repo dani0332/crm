@@ -9,6 +9,7 @@ use App\Models\CustomerAddress;
 use App\Models\CustomerMembers;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use App\Services\Logger\LoggerService;
 
 class CustomerService extends BaseService
 {
@@ -173,7 +174,7 @@ class CustomerService extends BaseService
             $customer = null;
             $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
-                info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
+                LoggerService::info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
                 $customerArray = [
                     'first_name' => $lead->first_name,
                     'last_name' => $lead->last_name,
@@ -304,7 +305,7 @@ class CustomerService extends BaseService
             }
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
-                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);
+                LoggerService::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);
                 $lead->customer->update(['mobile_no' => $value]);
             }
         }
@@ -318,7 +319,7 @@ class CustomerService extends BaseService
     public function getCustomerIdByEmail(?string $email): ?int
     {
         if (empty($email)) {
-            Log::warning('Empty or null email provided to getCustomerIdByEmail.');
+            LoggerService::warning('Empty or null email provided to getCustomerIdByEmail.');
 
             return null;
         }
@@ -326,7 +327,7 @@ class CustomerService extends BaseService
         $customer = Customer::where('email', $email)->first();
 
         if (! $customer) {
-            Log::info('Customer with the provided email not found.', ['email' => $email]);
+            LoggerService::info('Customer with the provided email not found.', ['email' => $email]);
 
             return null;
         }
@@ -340,7 +341,7 @@ class CustomerService extends BaseService
         $quoteUuid = $data->uuid ?? null;
 
         if (! $customerId || ! $quoteUuid) {
-            Log::warning('Missing required data: customerId or quote UUID is not provided.', [
+            LoggerService::warning('Missing required data: customerId or quote UUID is not provided.', [
                 'customerId' => $customerId,
                 'quote_uuid' => $quoteUuid,
             ]);
@@ -354,7 +355,7 @@ class CustomerService extends BaseService
             ->first();
 
         if (! $customerAddress) {
-            Log::info('Customer address not found.', [
+            LoggerService::info('Customer address not found.', [
                 'customerId' => $customerId,
                 'quote_uuid' => $quoteUuid,
             ]);

@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class MyAlfredService
 {
@@ -24,7 +24,7 @@ class MyAlfredService
         $url = config('constants.SIB_URL');
         try {
 
-            info('AlfredFollowUpEmail Starting');
+            LoggerService::info('AlfredFollowUpEmail Starting');
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => $apiKey,
@@ -41,7 +41,7 @@ class MyAlfredService
             $response = Http::withHeaders($headers)
                 ->post($url, $body);
 
-            info('AlfredFollowUpEmail ---- Request Sent '.$customer->email);
+            LoggerService::info('AlfredFollowUpEmail ---- Request Sent '.$customer->email);
 
             $responseCode = $response->status();
             if ($responseCode == 200 || $responseCode == 201) {
@@ -53,12 +53,16 @@ class MyAlfredService
                 }
             }
 
-            info('AlfredFollowUpEmail ---- Received Code : '.$responseCode.' '.$customer->email);
-            info('AlfredFollowUpEmail ---- response object : '.json_encode($response->object()).'--'.$customer->email);
+            LoggerService::info('AlfredFollowUpEmail ---- Received Code : '.$responseCode.' '.$customer->email);
+            LoggerService::info('AlfredFollowUpEmail ---- response object : '.json_encode($response->object()).'--'.$customer->email);
 
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            Log::error($responseCode);
+            LoggerService::error('Error sending Alfred follow-up email: ' . $ex->getMessage(), [
+                'customer_email' => $customer->email,
+                'response_code' => $responseCode,
+                'trace' => $ex->getTraceAsString()
+            ]);
         }
 
         return $responseCode;
@@ -71,6 +75,10 @@ class MyAlfredService
             $password = config('constants.MA_V1_PASSWORD');
             $basicAuth = base64_encode("$username:$password");
 
+            LoggerService::info('Requesting eligible customers from Alfred API', [
+                'data' => $data
+            ]);
+
             $response = Http::timeout(20)->retry(2, 3000)
                 ->withHeaders([
                     'Authorization' => 'Basic '.$basicAuth,
@@ -81,11 +89,20 @@ class MyAlfredService
                 $response = $response->object();
 
                 if ($response->data) {
+                    LoggerService::info('Successfully retrieved eligible customers from Alfred API');
                     return $response;
                 }
             }
+
+            LoggerService::warning('No eligible customers found in Alfred API response', [
+                'status_code' => $response->status(),
+                'response' => $response->body()
+            ]);
         } catch (Exception $e) {
-            Log::error('getAlfredEligibleCustomers Error: '.$e->getMessage().$e->getTraceAsString());
+            LoggerService::error('getAlfredEligibleCustomers Error: '.$e->getMessage(), [
+                'data' => $data,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
         return null;

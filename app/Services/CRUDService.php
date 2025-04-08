@@ -41,6 +41,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\Logger\LoggerService;
 use PDF;
 
 class CRUDService extends BaseService
@@ -248,10 +249,10 @@ class CRUDService extends BaseService
             if (isset($request->nextFollowUpDate) && $request->nextFollowUpDate != '') {
                 $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->nextFollowUpDate));
             }
-            if (isset($request->lost_approval_status) && $request->lost_approval_status != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+            if (isset($request->lost_approval_status) && $request->lost_approval_status != '' && app('auth')->check() && app('auth')->user()->hasRole(RolesEnum::MarketingOperations)) {
                 $quoteDetailEntity->lost_approval_status = $request->lost_approval_status;
             }
-            if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+            if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && app('auth')->check() && app('auth')->user()->hasRole(RolesEnum::MarketingOperations)) {
                 $quoteDetailEntity->lost_approval_reason = $request->lost_approval_reason;
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '' && ($request->leadStatus == QuoteStatusEnum::FollowupCall || $request->leadStatus == QuoteStatusEnum::Interested || $request->leadStatus == QuoteStatusEnum::NoAnswer)) {
@@ -269,7 +270,7 @@ class CRUDService extends BaseService
             } else {
                 $entity->quote_status_id = $request->leadStatus;
             }
-            if ($request->leadStatus == QuoteStatusEnum::Qualified && auth()->user()->isHealthWcuAdvisor()) {
+            if ($request->leadStatus == QuoteStatusEnum::Qualified && app('auth')->check() && app('auth')->user()->isHealthWcuAdvisor()) {
                 $entity->wcu_id = null;
             }
             if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
@@ -290,7 +291,7 @@ class CRUDService extends BaseService
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable
                 || $request->leadStatus == QuoteStatusEnum::EarlyRenewal
             ) {
-                if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+                if (! empty($request->car_lost_quote_log_id) && app('auth')->check() && app('auth')->user()->hasRole(RolesEnum::MarketingOperations)) {
                     // perform approval or rejection
                     $carLostQuoteLog = CarLostQuoteLog::where([
                         'car_quote_request_id' => $entity->id,
@@ -302,7 +303,7 @@ class CRUDService extends BaseService
                         'quote_status_id' => $request->leadStatus,
                         'reason_id' => ($request->lost_approval_status == GenericRequestEnum::APPROVED) ? $request->approve_reason_id : $request->reject_reason_id,
                         'notes' => $request->lost_notes,
-                        'action_by_id' => auth()->user()->id,
+                        'action_by_id' => app('auth')->check() ? app('auth')->id() : User::where('name', 'System')->first()->id,
                     ];
 
                     $carLostQuoteLog->update($lostQuoteLogData);
@@ -318,7 +319,7 @@ class CRUDService extends BaseService
                             'name' => $fileName,
                             'path' => $azureFilePath,
                             'mime_type' => $request->mo_proof_document->getClientMimeType(),
-                            'created_by_id' => auth()->user()->id,
+                            'created_by_id' => app('auth')->check() ? app('auth')->id() : User::where('name', 'System')->first()->id,
                         ]);
                     }
 
@@ -326,10 +327,10 @@ class CRUDService extends BaseService
                         // send rejection email
                         CarLostStatusRejected::dispatch($entity, $carLostQuoteLog);
                     }
-                } elseif (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
+                } elseif (app('auth')->check() && app('auth')->user()->hasAnyRole([RolesEnum::CarAdvisor])) {
                     // store request of car sold/uncontactable with proof
                     $carLostQuoteLog = $entity->carLostQuoteLogs()->create([
-                        'advisor_id' => auth()->user()->id,
+                        'advisor_id' => app('auth')->id(),
                         'quote_status_id' => $request->leadStatus,
                         'status' => GenericRequestEnum::PENDING,
                     ]);
@@ -344,7 +345,7 @@ class CRUDService extends BaseService
                         'name' => $fileName,
                         'path' => $azureFilePath,
                         'mime_type' => $request->proof_document->getClientMimeType(),
-                        'created_by_id' => auth()->user()->id,
+                        'created_by_id' => app('auth')->check() ? app('auth')->id() : User::where('name', 'System')->first()->id,
                     ]);
                 }
             }
@@ -405,13 +406,13 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-            if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
-                auth()->user()->hasAnyPermission(
+            if ((app('auth')->check() && app('auth')->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+                app('auth')->check() && app('auth')->user()->hasAnyPermission(
                     PermissionsEnum::HEALTH_QUOTES_ACCESS,
                     PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS
                 )
             ) {
-                $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
+                $authUserTeamsId = $this->getUserTeams(app('auth')->id())->pluck('id')->toArray();
                 $query->whereIn('ut.team_id', $authUserTeamsId);
                 $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
             } else {
@@ -611,23 +612,23 @@ class CRUDService extends BaseService
                 $maxAttempts = 3;
                 for ($i = 0; $i < $maxAttempts; $i++) {
                     try {
-                        info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action with payment amount {$amount}.");
+                        LoggerService::info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action with payment amount {$amount}.");
                         PaymentAction::updateOrInsert(
                             ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
                             [
                                 'is_fulfilled' => 0,
                                 'action_type' => 'CAPTURE',
                                 'amount' => $amount,
-                                'created_by' => auth()->user()->email,
+                                'created_by' => app('auth')->user()->email ?? 'system',
                                 'is_manager_approved' => 1,
                             ]
                         );
-                        info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
+                        LoggerService::info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
                         break;
                     } catch (\Illuminate\Database\QueryException $e) {
-                        Log::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
+                        LoggerService::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
                         if ($i == $maxAttempts - 1) {
-                            Log::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');
+                            LoggerService::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');
                             vAbort('Capture failed please try again later.');
                         }
                         sleep(1); // Wait before retrying
@@ -672,7 +673,7 @@ class CRUDService extends BaseService
         ];
 
         $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
-        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        LoggerService::info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/capture', 'post', $planData);
 
         return $response;
@@ -820,7 +821,7 @@ class CRUDService extends BaseService
                         $text = 'No';
                         $score = 1;
                     }
-                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold “Dual Nationality”?', 'value' => $text];
+                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold "Dual Nationality"?', 'value' => $text];
                     $customerScore += $score;
 
                     if ($customerDetail->deal_sanction_list == 1) {
@@ -1146,7 +1147,7 @@ class CRUDService extends BaseService
             $kycLogs = AML::where([
                 'quote_request_id' => $quoteModel->id,
             ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->orderBy('created_at', 'desc')->get();
-            $pdf = PDF::loadView('pdf.risk_score_document', compact('quoteModel', 'detail', 'kycLogs', 'quoteType', 'data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
+            $pdf = app('dompdf.wrapper')->loadView('pdf.risk_score_document', compact('quoteModel', 'detail', 'kycLogs', 'quoteType', 'data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 

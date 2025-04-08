@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\Logger\LoggerService;
+
 class HttpRequestService extends BaseService
 {
     public function processRequest($data, $creds)
@@ -70,7 +72,7 @@ class HttpRequestService extends BaseService
             'url' => strval(url()->current()),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
-            'userId' => strval(auth()->id()),
+            'userId' => app('auth')->check() ? strval(app('auth')->id()) : '0',
             'filters' => [
                 [
                     'field' => 'isRenewalSort',
@@ -117,8 +119,8 @@ class HttpRequestService extends BaseService
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             // add info for error and exception along with stack trace
-            info('exception occurred in quote plans call with error : '.$e->getMessage());
-            info('exception occurred in quote plans call with error stack as  : '.$e->getTraceAsString());
+            LoggerService::error('Exception occurred in quote plans call with error: '.$e->getMessage());
+            LoggerService::error('Exception occurred in quote plans call with error stack as: '.$e->getTraceAsString());
             // Handle exceptions and errors
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
@@ -136,6 +138,8 @@ class HttpRequestService extends BaseService
 
             return $responseBodyAsString;
         }
+
+        return null; // Adding default return value for paths that don't return a value
     }
 
     public function getPlans($id, $getLatestRating, $isRenewalSort = false, $isDisabledEnabled = false, $quoteType = '', ?bool $allowUpdate = null)

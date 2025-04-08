@@ -10,8 +10,8 @@ use App\Jobs\UploadCoveragesJob;
 use App\Jobs\UploadRatesJob;
 use App\Models\RateCoverageProcess;
 use App\Models\RateCoverageUpload;
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class RateCoverageUploadService
 {
@@ -26,7 +26,9 @@ class RateCoverageUploadService
         $azureFileName = $datetime.'_'.$fileName;
 
         $azureFilePath = request()->file('file_name')->storeAs($path, $azureFileName, 'azureIM');
-        info('File Save in Azure', [$azureFilePath]);
+        LoggerService::info('File saved in Azure storage', [
+            'file_path' => $azureFilePath
+        ]);
 
         return [
             'file_name' => $fileName,
@@ -44,7 +46,7 @@ class RateCoverageUploadService
             'cannot_upload' => 0,
             'type' => RateCoverageEnum::COVERAGES,
         ];
-        info('Coverage Record Created in DB');
+        LoggerService::info('Coverage record created in database');
 
         return RateCoverageUpload::create($uploadLeadData);
     }
@@ -66,7 +68,7 @@ class RateCoverageUploadService
             // Set status to IN_PROGRESS
             $uploadCoverages->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
-            info($logPrefix.' In Progress Now');
+            LoggerService::info($logPrefix.' In Progress Now');
 
             $uploadCoverages = DB::transaction(function () use ($uploadCoverages) {
                 // Start file import
@@ -101,13 +103,13 @@ class RateCoverageUploadService
                 $this->createCoveragesData($uploadCoverages);
             }
 
-            info($logPrefix.' validation and creation is completed');
+            LoggerService::info($logPrefix.' validation and creation is completed');
 
             return true;
         } catch (\Exception $exception) {
             // Update the status to FAILED in case of an error
             $uploadCoverages->update(['status' => ProcessStatusCode::FAILED]);
-            Log::error($logPrefix.' Process Failed. Error: '.$exception->getMessage());
+            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage());
 
             return false;
         }
@@ -130,7 +132,7 @@ class RateCoverageUploadService
             $query->select('id')->from('health_plan')->whereIn('code', $planCodes);
         })->delete();
 
-        info('Coverage Record Created Start');
+        LoggerService::info('Coverage Record Created Start');
         RateCoverageProcess::where('rate_coverage_id', $uploadCoverages->id)
             ->chunk(500, function ($coverages) {
 
@@ -204,7 +206,7 @@ class RateCoverageUploadService
             'cannot_upload' => 0,
             'type' => RateCoverageEnum::RATES,
         ];
-        info('Rate Record Created In DB');
+        LoggerService::info('Rate record created in database');
 
         return RateCoverageUpload::create($uploadLeadData);
     }
@@ -217,7 +219,7 @@ class RateCoverageUploadService
             // Set status to IN_PROGRESS
             $uploadRate->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
-            info($logPrefix.' In Progress Now');
+            LoggerService::info($logPrefix.' In Progress Now');
 
             $uploadRate = DB::transaction(function () use ($uploadRate) {
                 // Start file import
@@ -251,13 +253,13 @@ class RateCoverageUploadService
                 $this->createRateData($uploadRate);
             }
 
-            info($logPrefix.' validation and creation is completed');
+            LoggerService::info($logPrefix.' validation and creation is completed');
 
             return true;
         } catch (\Exception $exception) {
             // Update the status to FAILED in case of an error
             $uploadRate->update(['status' => ProcessStatusCode::FAILED]);
-            Log::error($logPrefix.' Process Failed. Error: '.$exception->getMessage());
+            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage());
 
             return false;
         }
@@ -280,7 +282,7 @@ class RateCoverageUploadService
             $query->select('id')->from('health_plan')->whereIn('code', $planCodes);
         })->delete();
 
-        info('Rate Record Created Start');
+        LoggerService::info('Rate Record Created Start');
         RateCoverageProcess::where('rate_coverage_id', $uploadRate->id)
             ->chunk(500, function ($coverages) {
 

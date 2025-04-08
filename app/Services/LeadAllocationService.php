@@ -35,6 +35,7 @@ use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
 use App\Models\UserManager;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -94,7 +95,9 @@ class LeadAllocationService extends BaseService
 
             return $query->get();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error getting grid data: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -107,7 +110,7 @@ class LeadAllocationService extends BaseService
 
         $isAllocation = $isAllocation->first();
         if (! empty($isAllocation)) {
-            info('User is already allocated');
+            LoggerService::info('User is already allocated');
 
             return false;
         }
@@ -121,7 +124,10 @@ class LeadAllocationService extends BaseService
             $leadAllocation->is_available = false;
             $leadAllocation->save();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error creating lead allocation record: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -151,7 +157,14 @@ class LeadAllocationService extends BaseService
 
             $leadAllocation->save();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error updating user allocation record: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'allocation_count' => $allocationCount,
+                'max_capacity' => $maxCapacity,
+                'is_available' => $isAvailable,
+                'quote_type_id' => $quoteTypeId,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -161,7 +174,7 @@ class LeadAllocationService extends BaseService
             $startDate = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $endDate = now();
 
-            info('Health Unallocated Leads from date: '.$startDate.' to date: '.$endDate);
+            LoggerService::info('Health Unallocated Leads from date: '.$startDate.' to date: '.$endDate);
 
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
@@ -176,22 +189,24 @@ class LeadAllocationService extends BaseService
 
             return $unAllocatedLeads;
         } catch (\Throwable $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error getting health unallocated leads: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
     public function assignLead($lead, $advisorId, $isManualAssignment)
     {
-        info('assignLead -- started with lead : '.$lead->uuid.' , advisorId : '.$advisorId.' , isManualAssignment : '.$isManualAssignment);
+        LoggerService::info('assignLead -- started with lead : '.$lead->uuid.' , advisorId : '.$advisorId.' , isManualAssignment : '.$isManualAssignment);
         if ($this->checkIfAdvisorCanTakeLead($advisorId)) {
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
             }
-            info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
+            LoggerService::info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
             try {
                 DB::beginTransaction();
                 if ($isManualAssignment && $lead->advisor_id != null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
-                    info('Manual Lead and Advisor Null Check '.$lead->uuid);
+                    LoggerService::info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
 
@@ -202,7 +217,7 @@ class LeadAllocationService extends BaseService
                 $lead->advisor_id = $advisorId;
 
                 $lead->save();
-                info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
+                LoggerService::info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
                     $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
                 }
@@ -222,7 +237,11 @@ class LeadAllocationService extends BaseService
 
                 return true;
             } catch (\Exception $e) {
-                Log::error($e->getMessage());
+                LoggerService::error('Error assigning lead: ' . $e->getMessage(), [
+                    'lead_uuid' => $lead->uuid,
+                    'advisor_id' => $advisorId,
+                    'trace' => $e->getTraceAsString()
+                ]);
                 DB::rollback();
             }
         } else {
@@ -258,35 +277,39 @@ class LeadAllocationService extends BaseService
 
     public function updateLeadDetailRecord($leadId, $leadUId)
     {
-        info('updateLeadDetailRecord -- started for lead UUID: '.$leadUId);
+        LoggerService::info('updateLeadDetailRecord -- started for lead UUID: '.$leadUId);
         $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
         if ($leadDetail) {
             $leadDetail->advisor_assigned_date = now();
-            $leadDetail->advisor_assigned_by_id = auth()->id();
+            $leadDetail->advisor_assigned_by_id = app('auth')->check() ? app('auth')->id() : null;
             $leadDetail->save();
         }
-        info('updateLeadDetailRecord -- completed for lead uuid: '.$leadUId);
+        LoggerService::info('updateLeadDetailRecord -- completed for lead uuid: '.$leadUId);
     }
 
     public function removeLeadAllocationForOldAdvisor($lead)
     {
         try {
             DB::beginTransaction();
-            info('removeLeadAllocationForOldAdvisor -- started');
-            info('Removing lead allocation record for lead id: '.$lead->id.' and advisor id: '.$lead->advisor_id);
+            LoggerService::info('removeLeadAllocationForOldAdvisor -- started');
+            LoggerService::info('Removing lead allocation record for lead id: '.$lead->id.' and advisor id: '.$lead->advisor_id);
             $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $lead->id)->first();
             if ($leadDetail) {
                 if ($leadDetail->advisor_assigned_date != null) {
                     if (Carbon::parse($leadDetail->advisor_assigned_date)->startOfDay() == now()->startOfDay()) {
                         LeadAllocation::where('user_id', $lead->advisor_id)->where('allocation_count', '>', 0)->decrement('allocation_count', 1);
-                        info('Lead allocation count decremented for advisor id: '.$lead->advisor_id);
+                        LoggerService::info('Lead allocation count decremented for advisor id: '.$lead->advisor_id);
                     }
                 }
             }
 
             DB::commit();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error removing lead allocation for old advisor: ' . $e->getMessage(), [
+                'lead_id' => $lead->id,
+                'advisor_id' => $lead->advisor_id,
+                'trace' => $e->getTraceAsString()
+            ]);
             DB::rollback();
         }
     }
@@ -302,31 +325,34 @@ class LeadAllocationService extends BaseService
                 return true;
             }
 
-            info('checkIfAdvisorCanTakeLead -- started');
+            LoggerService::info('checkIfAdvisorCanTakeLead -- started');
             $leadAllocation = LeadAllocation::where('user_id', $advisorId)->first();
             if ($leadAllocation != null) {
                 if ($leadAllocation->is_available == 0) {
-                    info('Advisor '.$advisorId.' cannot take lead while he/she is not available');
+                    LoggerService::info('Advisor '.$advisorId.' cannot take lead while he/she is not available');
 
                     return false;
                 }
                 if ($leadAllocation->max_capacity == -1 || $leadAllocation->allocation_count < $leadAllocation->max_capacity) {
-                    info('Advisor '.$advisorId.' can take lead');
+                    LoggerService::info('Advisor '.$advisorId.' can take lead');
 
                     return true;
                 }
                 if ($leadAllocation->max_capacity == $leadAllocation->allocation_count && $leadAllocation->max_capacity != -1) {
-                    info('Advisor '.$advisorId.' cannot take lead. Max capacity reached');
+                    LoggerService::info('Advisor '.$advisorId.' cannot take lead. Max capacity reached');
 
                     return false;
                 }
             } else {
-                info('Advisor '.$advisorId.' has no allocation record');
+                LoggerService::info('Advisor '.$advisorId.' has no allocation record');
 
                 return false;
             }
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error checking if advisor can take lead: ' . $e->getMessage(), [
+                'advisor_id' => $advisorId,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -334,9 +360,9 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            info('updateLeadAllocationRecord -- started');
+            LoggerService::info('updateLeadAllocationRecord -- started');
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-            info('Max capacity for user '.$userId.' is '.$leadAllocation->max_capacity.' and allocation count is '.$leadAllocation->allocation_count);
+            LoggerService::info('Max capacity for user '.$userId.' is '.$leadAllocation->max_capacity.' and allocation count is '.$leadAllocation->allocation_count);
             $leadAllocation->allocation_count += 1;
             if ($isManualAssignment) {
                 $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count + 1;
@@ -346,9 +372,13 @@ class LeadAllocationService extends BaseService
             $leadAllocation->last_allocated = now()->timestamp;
             $leadAllocation->save();
             DB::commit();
-            info('Lead allocation record for user '.$userId.' updated. Current allocation count is '.$leadAllocation->allocation_count);
+            LoggerService::info('Lead allocation record for user '.$userId.' updated. Current allocation count is '.$leadAllocation->allocation_count);
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error updating lead allocation record: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'is_manual_assignment' => $isManualAssignment,
+                'trace' => $e->getTraceAsString()
+            ]);
             DB::rollback();
         }
     }
@@ -356,13 +386,13 @@ class LeadAllocationService extends BaseService
     public function getHealthUserSubTeamName($userId)
     {
         try {
-            info('getHealthUserSubTeamName -- started');
+            LoggerService::info('getHealthUserSubTeamName -- started');
             $user = User::where('id', $userId)->first();
             if ($user) {
                 if ($user->sub_team_id != null) {
-                    info('User '.$user->name.' has sub-team '.$user->sub_team_id);
+                    LoggerService::info('User '.$user->name.' has sub-team '.$user->sub_team_id);
                     $userSubTeam = Team::where('id', $user->sub_team_id)->first();
-                    info('User '.$user->name.' belongs to sub team '.$userSubTeam->name);
+                    LoggerService::info('User '.$user->name.' belongs to sub team '.$userSubTeam->name);
 
                     return strtolower($userSubTeam->name);
                 } else {
@@ -372,7 +402,10 @@ class LeadAllocationService extends BaseService
                 return null;
             }
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error getting health user sub team name: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -380,17 +413,17 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            info('setAdvisorsToUnavailable -- started');
+            LoggerService::info('setAdvisorsToUnavailable -- started');
 
             $dateTimeNow = now()->toTimeString();
 
-            info('Current time before unavailable is '.$dateTimeNow);
+            LoggerService::info('Current time before unavailable is '.$dateTimeNow);
 
             $currentDayUsers = LeadAllocation::join('users', 'users.id', 'lead_allocation.user_id')
                 ->where('allocation_count', '>', 1)->get();
 
             foreach ($currentDayUsers as $currentDayUser) {
-                info(' Current Time is : '.now().' user : '.$currentDayUser->name.' allocation_count :'.$currentDayUser->allocation_count.' , manual_allocation : '.$currentDayUser->manual_allocation.' , auto_allocation : '.$currentDayUser->auto_allocation);
+                LoggerService::info(' Current Time is : '.now().' user : '.$currentDayUser->name.' allocation_count :'.$currentDayUser->allocation_count.' , manual_allocation : '.$currentDayUser->manual_allocation.' , auto_allocation : '.$currentDayUser->auto_allocation);
             }
 
             LeadAllocation::whereNotNull('is_available')->update([
@@ -400,10 +433,12 @@ class LeadAllocationService extends BaseService
                 'auto_assignment_count' => 0,
             ]);
 
-            info('Advisors are now unavailable and allocation count is set to 0');
+            LoggerService::info('Advisors are now unavailable and allocation count is set to 0');
             DB::commit();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error setting advisors to unavailable: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             DB::rollback();
         }
     }
@@ -463,7 +498,11 @@ class LeadAllocationService extends BaseService
 
             return $leadAllocation->first();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error getting lead allocation record by user ID: ' . $e->getMessage(), [
+                'user_id' => $userId,
+                'quote_type_id' => $quoteTypeId,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -482,7 +521,10 @@ class LeadAllocationService extends BaseService
 
             return $availableUserId->first();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error getting next assignable user ID: ' . $e->getMessage(), [
+                'lead_uuid' => $lead->uuid,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -501,7 +543,9 @@ class LeadAllocationService extends BaseService
 
             return $availableAdvisors->get();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error getting available advisors: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -510,37 +554,37 @@ class LeadAllocationService extends BaseService
         try {
             $currentIterationTime = now();
 
-            info('----------------------- CAR LEAD ALLOCATION STARTED AT '.$currentIterationTime.' -----------------------');
+            LoggerService::info('----------------------- CAR LEAD ALLOCATION STARTED AT '.$currentIterationTime.' -----------------------');
 
             $carUnAllocatedLead = $this->getCarUnallocatedLeads();
 
-            info(count($carUnAllocatedLead).' unassigned car leads found.');
+            LoggerService::info(count($carUnAllocatedLead).' unassigned car leads found.');
 
             foreach ($carUnAllocatedLead as $carLead) {
-                info('----------------------- CAR LEAD ALLOCATION STARTED FOR LEAD '.$carLead->uuid.' -----------------------');
+                LoggerService::info('----------------------- CAR LEAD ALLOCATION STARTED FOR LEAD '.$carLead->uuid.' -----------------------');
 
-                info('trying to check tier against the current lead : '.$carLead->code);
+                LoggerService::info('trying to check tier against the current lead : '.$carLead->code);
 
                 // we will find tier as per the value of the lead and if already assigned then we will simply find the tier,
                 // since it might be here for reassignment of advisor
                 $selectedTier = $carLead->tier_id == null ? $this->getTierForValue($carLead) : Tier::where('id', $carLead->tier_id)->first();
 
                 if ($selectedTier) {
-                    info('Found tier '.$selectedTier->name.' against car lead : '.$carLead->code);
+                    LoggerService::info('Found tier '.$selectedTier->name.' against car lead : '.$carLead->code);
 
                     $loginAndAvailableUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id); // now we will try to find users based on selected tier
 
                     if ($carLead->source == LeadSourceEnum::REVIVAL_REPLIED) {
-                        info('Lead source is '.LeadSourceEnum::REVIVAL_REPLIED.' for uuid : '.$carLead->uuid);
+                        LoggerService::info('Lead source is '.LeadSourceEnum::REVIVAL_REPLIED.' for uuid : '.$carLead->uuid);
                         $loginAndAvailableUserIds = $this->getUsersForRevivalReplied($loginAndAvailableUserIds);
                     }
 
-                    info('Available and Login users against selected tier are : '.json_encode($loginAndAvailableUserIds));
+                    LoggerService::info('Available and Login users against selected tier are : '.json_encode($loginAndAvailableUserIds));
 
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead);
 
-                    info('count of matched records =====******======');
-                    info(count($matchedRuleRecords));
+                    LoggerService::info('count of matched records =====******======');
+                    LoggerService::info(count($matchedRuleRecords));
 
                     if (count($matchedRuleRecords) > 0) {
                         $ruleUserIds = [];
@@ -550,11 +594,11 @@ class LeadAllocationService extends BaseService
                         } else {
                             $ruleUserIds[] = (int) $matchedRuleRecords->first()->leadSourceUsers;
                         }
-                        info('Rule found and users against rule are '.json_encode($ruleUserIds));
+                        LoggerService::info('Rule found and users against rule are '.json_encode($ruleUserIds));
 
                         $finalAvailableAndLoginAdvisorIds = array_intersect($loginAndAvailableUserIds, $ruleUserIds);
 
-                        info('After intersection of users and rules, output is : '.json_encode($finalAvailableAndLoginAdvisorIds));
+                        LoggerService::info('After intersection of users and rules, output is : '.json_encode($finalAvailableAndLoginAdvisorIds));
                     } else {
                         $ruleUsers = RuleDetail::join('rules', 'rules.id', 'rule_details.rule_id')
                             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
@@ -563,10 +607,10 @@ class LeadAllocationService extends BaseService
                             ->pluck('rule_users.user_id')
                             ->toArray();
 
-                        info('Plucked users ====> ');
-                        info(json_encode($ruleUsers));
+                        LoggerService::info('Plucked users ====> ');
+                        LoggerService::info(json_encode($ruleUsers));
 
-                        info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
+                        LoggerService::info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
                         $finalAvailableAndLoginAdvisorIds = [];
 
                         foreach ($loginAndAvailableUserIds as $loginId) {
@@ -574,9 +618,9 @@ class LeadAllocationService extends BaseService
                                 array_push($finalAvailableAndLoginAdvisorIds, $loginId);
                             }
                         }
-                        info('final login and available users after rule exclusion are : '.json_encode($finalAvailableAndLoginAdvisorIds));
+                        LoggerService::info('final login and available users after rule exclusion are : '.json_encode($finalAvailableAndLoginAdvisorIds));
                     }
-                    info('common users at this point are '.json_encode($finalAvailableAndLoginAdvisorIds));
+                    LoggerService::info('common users at this point are '.json_encode($finalAvailableAndLoginAdvisorIds));
                     $userId = null;
                     if (count($finalAvailableAndLoginAdvisorIds) > 0) {
                         $userId = reset($finalAvailableAndLoginAdvisorIds);
@@ -584,7 +628,7 @@ class LeadAllocationService extends BaseService
                     if ($userId) {
                         try {
                             DB::beginTransaction();
-                            info('About to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
+                            LoggerService::info('About to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
 
                             $carQuote = CarQuote::where('id', $carLead->id)->first();
                             $carQuote->advisor_id = $userId;
@@ -593,17 +637,17 @@ class LeadAllocationService extends BaseService
                             $carQuote->auto_assigned = true;
                             if ($carQuote->quote_batch_id == null) {
                                 $quoteBatch = QuoteBatches::latest()->first();
-                                info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$carLead->uuid);
+                                LoggerService::info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$carLead->uuid);
                                 $carQuote->quote_batch_id = $quoteBatch->id;
                             } else {
-                                info('quote batch currently attached to quote : '.$carQuote->uuid.' and quote id is : '.$carQuote->quote_batch_id);
+                                LoggerService::info('quote batch currently attached to quote : '.$carQuote->uuid.' and quote id is : '.$carQuote->quote_batch_id);
                             }
                             $carQuote->save();
 
-                            info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
+                            LoggerService::info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
                             $this->updateCarLeadDetailRecord($carLead->id); // updating detail table about assignment
 
-                            info('updating user record in lead allocation table with count increment userId: '.$userId);
+                            LoggerService::info('updating user record in lead allocation table with count increment userId: '.$userId);
                             $this->updateLeadAllocationOnCarAutoAssignment($userId); // updating lead allocation record for user
 
                             $emailData = $this->buildEmailDateForLMSIntroEmail($userId, $carQuote); // create email body for intro email
@@ -611,31 +655,35 @@ class LeadAllocationService extends BaseService
                             $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
 
                             IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
-                            info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
+                            LoggerService::info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                             DB::commit();
                         } catch (\Throwable $th) {
-                            Log::error($th->message);
+                            LoggerService::error('Error processing car lead: ' . $th->message, [
+                                'trace' => $th->getTraceAsString()
+                            ]);
                             DB::rollBack();
                         }
                     } else {
-                        info('login users not found for selected lead so will try to assign only tier');
+                        LoggerService::info('login users not found for selected lead so will try to assign only tier');
 
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
 
                         if ($carQuote->tier_id == null) {
                             $carQuote->tier_id = $selectedTier->id;
                             $carQuote->save();
-                            info('Tier with name : '.$selectedTier->name.' and id : '.$selectedTier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
+                            LoggerService::info('Tier with name : '.$selectedTier->name.' and id : '.$selectedTier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
                         } else {
-                            info('Tier ('.$selectedTier->name.')is already assigned against car lead with uuid : '.$carQuote->uuid);
+                            LoggerService::info('Tier ('.$selectedTier->name.')is already assigned against car lead with uuid : '.$carQuote->uuid);
                         }
                     }
                 }
-                info('----------------------- CAR LEAD ALLOCATION ENDED FOR LEAD '.$carLead->uuid.' -----------------------');
+                LoggerService::info('----------------------- CAR LEAD ALLOCATION ENDED FOR LEAD '.$carLead->uuid.' -----------------------');
             }
-            info('----------------------- CAR LEAD ALLOCATION ENDED AT '.$currentIterationTime.' -----------------------');
+            LoggerService::info('----------------------- CAR LEAD ALLOCATION ENDED AT '.$currentIterationTime.' -----------------------');
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error processing car leads: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 
@@ -661,22 +709,22 @@ class LeadAllocationService extends BaseService
     public function updateLeadAllocationOnCarAutoAssignment($userId)
     {
         $leadAllocationRecord = LeadAllocation::where('user_id', $userId)->first();
-        info('Count before update for user Id : '.$userId.' , total count = '.$leadAllocationRecord->allocation_count.' and auto count = '.$leadAllocationRecord->auto_assignment_count);
+        LoggerService::info('Count before update for user Id : '.$userId.' , total count = '.$leadAllocationRecord->allocation_count.' and auto count = '.$leadAllocationRecord->auto_assignment_count);
         DB::statement("UPDATE lead_allocation SET allocation_count = allocation_count + 1 , auto_assignment_count = auto_assignment_count + 1 ,
              last_allocated = '".Carbon::now()->timestamp."' , updated_at = now() where user_id = ".$userId);
     }
 
     public function updateCarLeadDetailRecord($leadId)
     {
-        info('---- Inside updateCarLeadDetailRecord - leadId : '.$leadId);
+        LoggerService::info('---- Inside updateCarLeadDetailRecord - leadId : '.$leadId);
         $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
             ['car_quote_request_id' => $leadId],
             [
                 'advisor_assigned_date' => now(),
-                'advisor_assigned_by_id' => auth()->id(),
+                'advisor_assigned_by_id' => app('auth')->check() ? app('auth')->id() : null,
             ]
         );
-        info('---- updateCarLeadDetailRecord - updateOrCreate done for advisor data and by id - leadId : '.$leadId.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
+        LoggerService::info('---- updateCarLeadDetailRecord - updateOrCreate done for advisor data and by id - leadId : '.$leadId.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
     }
 
     public function getCarUnallocatedLeads()
@@ -689,7 +737,7 @@ class LeadAllocationService extends BaseService
 
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
 
-        info('Car leads fetch start date is :'.$from.'  and end datetime is : '.$to.' and pickup limit is : '.$carLeadPickupLimit.' and Pickup direction FIFO is : '.$isFIFO);
+        LoggerService::info('Car leads fetch start date is :'.$from.'  and end datetime is : '.$to.' and pickup limit is : '.$carLeadPickupLimit.' and Pickup direction FIFO is : '.$isFIFO);
 
         return CarQuote::whereNull('advisor_id')
             ->where('is_renewal_tier_email_sent', 0) // this check make sure that Tier R leads are excluded bcz we only send email for Tier R and not assign advisor
@@ -725,13 +773,13 @@ class LeadAllocationService extends BaseService
             ) {
                 $records = $this->getCommercialRule();
 
-                info('commercial records: '.json_encode($records->get()));
+                LoggerService::info('commercial records: '.json_encode($records->get()));
 
                 return $records->get();
             }
         }
 
-        info('keyword not found and vehicle is not commercial as well, so checking for normal rules');
+        LoggerService::info('keyword not found and vehicle is not commercial as well, so checking for normal rules');
 
         $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
             ->join('rules', 'rules.id', 'rule_details.rule_id')
@@ -747,7 +795,7 @@ class LeadAllocationService extends BaseService
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
             );
 
-        info('lead source records: '.json_encode($records->get()));
+        LoggerService::info('lead source records: '.json_encode($records->get()));
 
         return $records->get();
     }
@@ -769,7 +817,7 @@ class LeadAllocationService extends BaseService
         $dateFrom = Carbon::now()->addDays(-30);
         $dateTo = Carbon::now()->addDays(90);
 
-        info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
+        LoggerService::info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
 
         $renewalQuotesCount = CarQuote::select('id')->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereBetween('previous_policy_expiry_date', [$dateFrom, $dateTo])
@@ -781,11 +829,11 @@ class LeadAllocationService extends BaseService
             ->where('car_model_id', $lead->car_model_id)->count();
 
         if ($renewalQuotesCount > 0) {
-            info('car lead allocation found '.$renewalQuotesCount.' renewal quote(s) for car quote with uuid : '.$lead->uuid);
+            LoggerService::info('car lead allocation found '.$renewalQuotesCount.' renewal quote(s) for car quote with uuid : '.$lead->uuid);
 
             return true;
         } else {
-            info('car lead allocation did-not found a renewal for uuid : '.$lead->uuid);
+            LoggerService::info('car lead allocation did-not found a renewal for uuid : '.$lead->uuid);
 
             return false;
         }
@@ -793,14 +841,14 @@ class LeadAllocationService extends BaseService
 
     public function getTierForValue($carLead)
     {
-        info('Started searching tier for car lead : '.json_encode($carLead->code));
+        LoggerService::info('Started searching tier for car lead : '.json_encode($carLead->code));
 
         $tiers = Tier::where('is_active', 1); // getting all active tiers so that we can search among them.
 
-        info('car ecommerce info is : '.json_encode($carLead->is_ecommerce));
+        LoggerService::info('car ecommerce info is : '.json_encode($carLead->is_ecommerce));
 
         if ($carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::ThirdPartyOnly) {
-            info('since the car type of insurance is : '.$carLead->car_type_insurance_id.' , so select tier which can handle TPL leads ');
+            LoggerService::info('since the car type of insurance is : '.$carLead->car_type_insurance_id.' , so select tier which can handle TPL leads ');
 
             $tiers->where('can_handle_tpl', 1); // filter on tiers to get the tier which can handle TPL
 
@@ -811,7 +859,7 @@ class LeadAllocationService extends BaseService
         if (($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '')
             && $carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::Comprehensive
         ) {
-            info('Car value is : '.$carLead->car_value.' , so select tier which can handle null value');
+            LoggerService::info('Car value is : '.$carLead->car_value.' , so select tier which can handle null value');
 
             $tiers->where('can_handle_null_value', 1); // filter on tier to get the tier which can handle null value leads.
         }
@@ -821,11 +869,11 @@ class LeadAllocationService extends BaseService
             $highestValueTier = Tier::where('is_active', 1)->orderBy('max_price', 'desc')->first(); // getting tier with highest max_price value
 
             if ($carLead->car_value > $highestValueTier->max_price) {
-                info('lead '.$carLead->uuid.' have value higher then all the tiers so selecting tier '.$highestValueTier->name);
+                LoggerService::info('lead '.$carLead->uuid.' have value higher then all the tiers so selecting tier '.$highestValueTier->name);
 
                 return $highestValueTier;
             } else {
-                info('filtering tiers based on the car value which is : '.$carLead->car_value);
+                LoggerService::info('filtering tiers based on the car value which is : '.$carLead->car_value);
                 $tiers->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
             }
         }
@@ -837,11 +885,11 @@ class LeadAllocationService extends BaseService
             $tiers->where('can_handle_ecommerce', $carLead->is_ecommerce); // in case if ecommerce check is also applicable
         }
 
-        info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
+        LoggerService::info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
 
         $tiers = $tiers->get();
         if ($tiers != null) {
-            info('First tier after filtration is : '.json_encode($tiers->first()->name));
+            LoggerService::info('First tier after filtration is : '.json_encode($tiers->first()->name));
 
             return $tiers->first();
         }
@@ -853,7 +901,7 @@ class LeadAllocationService extends BaseService
     {
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id'); // getting all the users against selected tier
 
-        info('Tier users are :'.json_encode($tierUsers));
+        LoggerService::info('Tier users are :'.json_encode($tierUsers));
 
         // Following is the criteria to get users for lead allocation
         /**
@@ -904,11 +952,11 @@ class LeadAllocationService extends BaseService
         $carLeadAllocationSwitch = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
 
         $carLeadAllocationStartTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME');
-        info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
+        LoggerService::info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
 
         if ($endTimeForAllocation <= now()->toTimeString() && $carLeadAllocationSwitch == 1) {
             // stopping car lead allocation if the end time for allocation is reached and allocation is still ON
-            info('updateAllocationStatusIfNeeded -- Inside reset case');
+            LoggerService::info('updateAllocationStatusIfNeeded -- Inside reset case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
 
             // reset the max capacity for each user as the allocation is now stopped
@@ -916,7 +964,7 @@ class LeadAllocationService extends BaseService
         }
 
         if ($carLeadAllocationSwitch == 0 && $carLeadAllocationStartTime <= now()->toTimeString()) {
-            info('updateAllocationStatusIfNeeded -- Inside start case');
+            LoggerService::info('updateAllocationStatusIfNeeded -- Inside start case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
         }
     }
@@ -930,7 +978,7 @@ class LeadAllocationService extends BaseService
         if ($masterSwitchConfigValue == 0) {
             // if car lead allocation master switch is OFF then we shouldn't proceed further
             $shouldProcess = false;
-            info('shouldCarAllocationProceed -- Doppler -- output is : '.json_encode($shouldProcess));
+            LoggerService::info('shouldCarAllocationProceed -- Doppler -- output is : '.json_encode($shouldProcess));
 
             return false;
         }
@@ -940,7 +988,7 @@ class LeadAllocationService extends BaseService
             $shouldProcess = false;
         }
 
-        info('shouldCarAllocationProceed -- output is : '.json_encode($shouldProcess).'config value is : '.$masterSwitchConfigValue.' and app storage value is'.$normalSwitchValue.' and '.! $masterSwitchValue);
+        LoggerService::info('shouldCarAllocationProceed -- output is : '.json_encode($shouldProcess).'config value is : '.$masterSwitchConfigValue.' and app storage value is'.$normalSwitchValue.' and '.! $masterSwitchValue);
 
         return $shouldProcess;
     }
@@ -950,21 +998,21 @@ class LeadAllocationService extends BaseService
         $shouldProcess = false;
         $totalResetTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET');
 
-        info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
+        LoggerService::info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
         if ($totalResetTime <= now()->toTimeString()) {
-            info('should total reset is true');
+            LoggerService::info('should total reset is true');
 
             return true;
         }
 
-        info('should total reset is false');
+        LoggerService::info('should total reset is false');
 
         return false;
     }
 
     public function assignHealthTeamBasedOnStartingPrice($healthQuote)
     {
-        info('Inside assignHealthTeamBasedOnStartingPrice for quote : '.$healthQuote->uuid);
+        LoggerService::info('Inside assignHealthTeamBasedOnStartingPrice for quote : '.$healthQuote->uuid);
 
         $priceStartingFrom = $healthQuote->price_starting_from;
 
@@ -974,12 +1022,12 @@ class LeadAllocationService extends BaseService
             ->first();
 
         if ($healthTeam) {
-            info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
+            LoggerService::info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
             $healthQuote->update([
                 'health_team_type' => $healthTeam->name,
             ]);
         } else {
-            info('assignHealthTeamBasedOnStartingPrice team not found against : '.$healthQuote->uuid);
+            LoggerService::info('assignHealthTeamBasedOnStartingPrice team not found against : '.$healthQuote->uuid);
             $healthQuote->update([
                 'is_error_email_sent' => true,
             ]);
@@ -991,11 +1039,11 @@ class LeadAllocationService extends BaseService
     {
         $masterSwitchConfigValue = (int) config('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH');
         if ($masterSwitchConfigValue == 0) {
-            info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(false));
+            LoggerService::info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(false));
 
             return false;
         } else {
-            info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(true));
+            LoggerService::info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(true));
 
             return true;
         }
@@ -1054,7 +1102,10 @@ class LeadAllocationService extends BaseService
 
             return $query->simplePaginate(10)->withQueryString();
         } catch (\Exception $e) {
-            Log::error($e->getMessage());
+            LoggerService::error('Error getting allocation leads: ' . $e->getMessage(), [
+                'quote_type_ids' => $quoteTypeIds,
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 

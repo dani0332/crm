@@ -14,6 +14,7 @@ use App\Models\CarModelDetail;
 use App\Models\User;
 use App\Traits\CentralTrait;
 use Carbon\Carbon;
+use App\Services\Logger\LoggerService;
 
 class BikeEmailService extends BaseService
 {
@@ -37,17 +38,17 @@ class BikeEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
         $quotePlansCount = is_countable($plans) ? count($plans) : 0;
         if ($quotePlansCount > 0) {
-            info('Inside plans of count: '.$lead->uuid.'    ');
+            LoggerService::info('Inside plans of count: '.$lead->uuid.'    ');
             $pdfData = [
                 'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $lead->uuid,
             ];
             $pdf = $bikeQuoteService->exportPlansPdf(quoteTypeCode::Bike, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
-                info('Failed to generate PDF for UUID in bike email service: '.$lead->uuid.' Error: '.$pdf['error']);
+                LoggerService::error('Failed to generate PDF for UUID in bike email service: '.$lead->uuid.' Error: '.$pdf['error']);
             } else {
                 $emailData->pdfAttachment = (object) $pdf;
-                info('attaching pdf: '.$lead->uuid.'    ');
+                LoggerService::info('attaching pdf: '.$lead->uuid.'    ');
             }
         }
 
@@ -225,21 +226,24 @@ class BikeEmailService extends BaseService
 
     private function getEmailTemplateId($lead, $plans, $tierR)
     {
-        info('Getting Template Id for Bike OCB');
+        LoggerService::info('Getting Template Id for Bike OCB');
         if (count($plans) == 0) {
-            info('Zero Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 492 : 626);
+            $templateId = $lead->tier_id == $tierR->id ? 492 : 723;
+            LoggerService::info('Zero Plan Template Id for Bike OCB against UUID: '.$lead->uuid.' and Template Id: '.$templateId);
 
             // No plans with available ratings, send a specific email template
-            return $lead->tier_id == $tierR->id ? 492 : 723;
+            return $templateId;
         } elseif (count($plans) == 1) {
-            info('One Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 492 : 627);
+            $templateId = $lead->tier_id == $tierR->id ? 492 : 724;
+            LoggerService::info('One Plan Template Id for Bike OCB against UUID: '.$lead->uuid.' and Template Id: '.$templateId);
 
-            return $lead->tier_id == $tierR->id ? 492 : 724;
+            return $templateId;
         } else {
             // Plans with available ratings exist, send a different email template
-            info('Multiple Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 491 : 628);
+            $templateId = $lead->tier_id == $tierR->id ? 491 : 725;
+            LoggerService::info('Multiple Plan Template Id for Bike OCB against UUID: '.$lead->uuid.' and Template Id: '.$templateId);
 
-            return $lead->tier_id == $tierR->id ? 491 : 725;
+            return $templateId;
         }
     }
 

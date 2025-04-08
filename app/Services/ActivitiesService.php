@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use App\Services\Logger\LoggerService;
 
 class ActivitiesService extends BaseService
 {
@@ -227,13 +228,13 @@ class ActivitiesService extends BaseService
         $url = url('/')."/$path";
 
         if (strtoupper($activityType) === ActivityTypeEnum::CALL_BACK) {
-            info('InstantAlfred CallBack Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
+            LoggerService::info('InstantAlfred CallBack Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
             $title = 'InstantAlfred Callback Request';
             $message = 'Urgent callback request for ';
             event(new CallBackNotifications($record->uuid, $record->advisor_id, $url, $record->code, $title, $message));
 
         } else {
-            info('InstantAlfred Whatsapp Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
+            LoggerService::info('InstantAlfred Whatsapp Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
             $title = 'InstantAlfred WhatsApp Request';
             $message = 'Urgent Whatsapp request for ';
             event(new CallBackNotifications($record->uuid, $record->advisor_id, $url, $record->code, $title, $message));

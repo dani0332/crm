@@ -19,7 +19,6 @@ use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class ApiService
@@ -29,7 +28,7 @@ class ApiService
         try {
             return $this->checkmyAlredLink($request->email, $request);
         } catch (Exception $e) {
-            Log::error($e->getLine().' '.$e->getMessage().' '.$e->getFile());
+            LoggerService::error($e->getLine().' '.$e->getMessage().' '.$e->getFile());
 
             return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
         }
@@ -99,7 +98,7 @@ class ApiService
 
         LoggerService::startQuoteLogging($allocationId);
 
-        info('request info', [
+        LoggerService::info('request info', [
             'url' => $request->fullUrl(),
             'ip' => $request->ip(),
             'agent' => $request->userAgent(),
@@ -123,9 +122,9 @@ class ApiService
 
     private function assignAdvisorOnly($allocationType, $allocationId)
     {
-        info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
+        LoggerService::info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, false, true);
-        info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
+        LoggerService::info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
@@ -142,9 +141,9 @@ class ApiService
 
         $ocbEmailJob = $quoteType?->ocbEmailJob();
         if ($ocbEmailJob) {
-            info("------ Lead allocation request received to send OCB only for {$quoteUUID} ------");
+            LoggerService::info("------ Lead allocation request received to send OCB only for {$quoteUUID} ------");
             dispatch(new $ocbEmailJob($quoteUUID, null, false));
-            info("------ Lead allocation request completed to send OCB only for {$quoteUUID} ------");
+            LoggerService::info("------ Lead allocation request completed to send OCB only for {$quoteUUID} ------");
         }
 
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
@@ -152,9 +151,9 @@ class ApiService
 
     private function performLeadAllocation($allocationType, $leadId, $teamId)
     {
-        info('------ Lead allocation started for lead : '.$leadId.' ------');
+        LoggerService::info('------ Lead allocation started for lead : '.$leadId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId);
-        info('------ Lead allocation ended for lead '.$leadId.' ------');
+        LoggerService::info('------ Lead allocation ended for lead '.$leadId.' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
@@ -163,13 +162,13 @@ class ApiService
     {
         if (isset($request->quoteTypeId) && $request->quoteTypeId == QuoteTypes::HEALTH->id()) {
 
-            info('------ Health SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
+            LoggerService::info('------ Health SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
             SendHealthOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
-            info('------ Health SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
+            LoggerService::info('------ Health SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
 
             return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
         } else {
-            info('------ SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
+            LoggerService::info('------ SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
 
             $quoteTypeId = QuoteTypeId::Car;
             if ($request->has('quoteTypeId')) {
@@ -177,7 +176,7 @@ class ApiService
             }
             $quoteType = QuoteTypes::getName($quoteTypeId);
             if (! $quoteType) {
-                info("Invalid Quote Type ID {$quoteTypeId} for uuid : {$request->quoteUuid}");
+                LoggerService::warning("Invalid Quote Type ID {$quoteTypeId} for uuid : {$request->quoteUuid}");
 
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
             }
@@ -185,13 +184,13 @@ class ApiService
             $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
 
             if (! $lead) {
-                info("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
+                LoggerService::warning("Lead not found: {$request->quoteUuid} for quoteTypeId: {$quoteTypeId}");
 
                 return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found');
             }
 
             if ($lead->sic_flow_enabled) {
-                info("SIC workflow is enabled on this lead already for uuid: {$lead->uuid}");
+                LoggerService::info("SIC workflow is enabled on this lead already for uuid: {$lead->uuid}");
 
                 return apiResponse(null, Response::HTTP_OK, 'SIC workflow already enabled!');
             } else {
@@ -200,9 +199,9 @@ class ApiService
 
                 $ocbEmailJob = $quoteType?->ocbEmailJob();
                 if ($ocbEmailJob) {
-                    info("------ Going to Trigger Workflow for lead : {$request->quoteUuid} ------");
+                    LoggerService::info("------ Going to Trigger Workflow for lead : {$request->quoteUuid} ------");
                     dispatch(new $ocbEmailJob($request->quoteUuid, null, true, forceSicWorkflow: true));
-                    info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
+                    LoggerService::info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
 
                     return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
                 }
@@ -217,9 +216,9 @@ class ApiService
         $allocationType = $request->input('quoteTypeId');
         $allocationId = $request->input('quoteUUID');
 
-        info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
+        LoggerService::info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, true);
-        info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['tierId'].' ------');
+        LoggerService::info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['tierId'].' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
@@ -235,7 +234,7 @@ class ApiService
     {
         $responsePayload = QuoteTypes::getName($allocationType)->allocate(uuid: $allocationId, teamId: $teamId, overrideAdvisorId: $overrideAdvisorId, tierOnly: $tierOnly);
         if (is_null($responsePayload)) {
-            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
+            LoggerService::error('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
         }
 
@@ -270,7 +269,7 @@ class ApiService
         }
 
         if ($lead instanceof TravelQuote && $lead->isMultiTrip()) {
-            info(self::class." - handleZeroPlansEmail: First OCB Email Skipped because it is a Multi Trip Lead uuid: {$lead->uuid}");
+            LoggerService::info(self::class." - handleZeroPlansEmail: First OCB Email Skipped because it is a Multi Trip Lead uuid: {$lead->uuid}");
 
             return apiResponse(null, Response::HTTP_OK, 'First OCB Email Skipped because it is a Multi Trip Lead!');
         }
@@ -281,9 +280,9 @@ class ApiService
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'OCB Email not found!');
         }
 
-        info("------ Handling First OCB email when 0 Plans : {$request->quoteUuid} ------");
+        LoggerService::info("------ Handling First OCB email when 0 Plans : {$request->quoteUuid} ------");
         dispatch(new $ocbEmailJob($request->quoteUuid, null, handleZeroPlans: true));
-        info("------ Triggered Job for First OCB email when 0 Plans : {$request->quoteUuid} ------");
+        LoggerService::info("------ Triggered Job for First OCB email when 0 Plans : {$request->quoteUuid} ------");
 
         return apiResponse(null, Response::HTTP_OK, 'Email triggered successfully!');
     }

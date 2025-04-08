@@ -9,6 +9,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 
 class CapiRequestService
 {
@@ -74,11 +75,11 @@ class CapiRequestService
                         ['car_quote_request_id' => $carQuote->id],
                         [
                             'advisor_assigned_date' => now(),
-                            'advisor_assigned_by_id' => auth()->id() ?? User::where('name', UserNameEnum::System)->first(),
+                            'advisor_assigned_by_id' => User::where('name', UserNameEnum::System)->first()->id,
                         ]
                     );
 
-                    info('handleCarResponse - leadId : '.$carQuote->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
+                    LoggerService::info('handleCarResponse - leadId : '.$carQuote->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                 }
             }
         }
@@ -93,7 +94,7 @@ class CapiRequestService
                     ['health_quote_request_id' => $healthQuote->id],
                     [
                         'advisor_assigned_date' => now(),
-                        'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
+                        'advisor_assigned_by_id' => User::where('name', UserNameEnum::System)->first()->id,
                     ]
                 );
             }

@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Quadrant;
-use DB;
+use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class QuadrantService extends BaseService
 {
@@ -112,7 +114,10 @@ class QuadrantService extends BaseService
         if (isset($request->quad_users)) {
             $this->addUserAgainstQuadAndTiers($request->quad_users, $quad->id);
         }
-        info('------ Quadrant update is successfully done by user : '.auth()->user()->id.' for Quad : '.$quad->name.' ------');
+        LoggerService::info('Quadrant updated successfully: ' . $quad->name, [
+            'quadrant_id' => $quad->id,
+            'user_id' => Auth::id()
+        ]);
 
         return $quad;
     }
