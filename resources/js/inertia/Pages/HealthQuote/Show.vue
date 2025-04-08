@@ -694,6 +694,7 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
+      debugger;
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
 
       getSmallestCopayRateAsDefaultValue();
@@ -1082,11 +1083,13 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
       element.selectedCopayId = selectedCoPay.id;
       element.loadingPrice = smallestCopayLoadingPrice;
+      element.adjustedPrice = smallestCopayAdjustedPrice;
     } else {
       element.selectedCopayId = defaultCopayId;
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
       element.loadingPrice = smallestCopayLoadingPrice;
+      element.adjustedPrice = smallestCopayAdjustedPrice
     }
     element.coPayments.forEach(function callback(value, index) {
       if (value.id == element.selectedCopayId) {
@@ -1094,6 +1097,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
   });
+  debugger;
 };
 
 const onSelectedCopay = data => {
