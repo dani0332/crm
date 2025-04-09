@@ -40,7 +40,6 @@ use App\Services\SplitPaymentService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -506,7 +505,7 @@ class HomeQuoteRepository extends BaseRepository
                 $condition($query, request($field));
             }
         }
-        
+
         // Handle date range filters using adjustQueryByDateFilters
         if (request()->filled('payment_due_date') || request()->filled('booking_date')) {
             $this->adjustQueryByDateFilters($query, 'personal_quotes');
