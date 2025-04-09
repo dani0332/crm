@@ -236,11 +236,6 @@ class CarQuote extends BaseModel
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
-    public function payment()
-    {
-        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
-    }
-
     public function embeddedTransactions()
     {
         return $this->morphMany(EmbeddedTransaction::class, 'quote_request');

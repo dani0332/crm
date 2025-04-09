@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Builders\HealthQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
@@ -58,7 +59,7 @@ class HealthQuoteService extends BaseService
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -335,6 +336,15 @@ class HealthQuoteService extends BaseService
     }
 
     public function getGridData($model = null, $request = null)
+    {
+        $query = $this->healthQuoteQueryBuilder->processGridData();
+        $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health);
+        $this->adjustQueryByDateFilters($query, 'health_quote_request');
+
+        return $query;
+    }
+
+    public function getGridDataOld($model = null, $request = null)
     {
         $searchProperties = [];
         $request = collect($request);
