@@ -2,12 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Enums\LeadSourceEnum;
-use App\Models\RenewalBatch;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\EpCategoryEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -32,6 +31,7 @@ use App\Models\GenericDocument;
 use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Services\SendEmailCustomerService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
@@ -1015,19 +1015,19 @@ class EmbeddedProductRepository extends BaseRepository
 
         $quotes = DB::table('car_quote_request as c1')
             ->join('car_quote_request as c2', function ($join) {
-            $join->on('c1.email', '=', 'c2.email')
-                ->on('c1.car_make_id', '=', 'c2.car_make_id')
-                ->on('c1.car_model_id', '=', 'c2.car_model_id')
-                ->on('c1.year_of_manufacture', '=', 'c2.year_of_manufacture')
-                ->whereColumn('c1.code', '!=', 'c2.code');
+                $join->on('c1.email', '=', 'c2.email')
+                    ->on('c1.car_make_id', '=', 'c2.car_make_id')
+                    ->on('c1.car_model_id', '=', 'c2.car_model_id')
+                    ->on('c1.year_of_manufacture', '=', 'c2.year_of_manufacture')
+                    ->whereColumn('c1.code', '!=', 'c2.code');
             })
             ->join('embedded_transactions as e', function ($join) {
-            $join->on('e.quote_request_id', '=', 'c2.id')
-                ->where('e.quote_request_type', '=', 'App\\Models\\CarQuote');
+                $join->on('e.quote_request_id', '=', 'c2.id')
+                    ->where('e.quote_request_type', '=', 'App\\Models\\CarQuote');
             })
             ->join('payments as p', function ($join) {
-            $join->on('p.paymentable_id', '=', 'e.id')
-                ->where('p.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
+                $join->on('p.paymentable_id', '=', 'e.id')
+                    ->where('p.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
             })
             ->where(function ($query) use ($batch) {
                 $query->where('c1.renewal_batch', $batch->name)
@@ -1043,13 +1043,13 @@ class EmbeddedProductRepository extends BaseRepository
         if ($quotes->count() > 0) {
             $quotes->chunk(1000, function ($quoteBatch) use ($batchName) {
                 $codes = $quoteBatch->pluck('c1_code')->map(function ($code) {
-                    return 'MDX-' . $code;
+                    return 'MDX-'.$code;
                 })->toArray();
                 $EpsToUpdate = EmbeddedTransaction::whereIn('code', $codes)->get()->pluck('code')->toArray();
 
-                if(!empty($EpsToUpdate)) {
+                if (! empty($EpsToUpdate)) {
                     EmbeddedTransaction::whereIn('code', $EpsToUpdate)->update(['is_selected' => 1]);
-                    info('EP Renewals - Updated EPs for batch: ' . $batchName . ' - count: ' . count($EpsToUpdate));
+                    info('EP Renewals - Updated EPs for batch: '.$batchName.' - count: '.count($EpsToUpdate));
                 }
             });
         }

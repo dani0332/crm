@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Repositories\EmbeddedProductRepository;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanType;
@@ -71,6 +70,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Models\VehicleType;
 use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Services\EmailServices\CarEmailService;
 use App\Traits\GenericQueriesAllLobs;
@@ -427,7 +427,7 @@ class RenewalsUploadService
                         info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix, $batch){
+                    ->finally(function () use ($logPrefix, $batch) {
                         info($logPrefix.' everything done');
 
                         EmbeddedProductRepository::generateEPRenewal($batch);
