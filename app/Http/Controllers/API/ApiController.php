@@ -9,7 +9,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
-use App\Http\Requests\AIGWorkflowRequest;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
@@ -38,6 +37,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\AIGWorkflowRequest;
 
 class ApiController extends Controller
 {
@@ -98,11 +98,6 @@ class ApiController extends Controller
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
         return $this->apiService->triggerSICWorkflow($request);
-    }
-
-    public function triggerAIGWorkflow(AIGWorkflowRequest $request)
-    {
-        return $this->apiService->triggerAIGWorkflow($request);
     }
 
     public function evaluateTier(EvaluateTierRequest $request)
@@ -277,5 +272,10 @@ class ApiController extends Controller
         info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.',  Insurance Provider: '.$insuranceProvider?->code.' - Status update and allocation failed');
 
         return response()->json(['success' => false, 'message' => 'Failed to update Insurer and API Issuance statuses and lead allocation!']);
+    }
+
+    public function triggerAIGWorkflow(AIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerAIGWorkflow($request);
     }
 }
