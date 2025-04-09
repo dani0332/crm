@@ -294,7 +294,7 @@ class ApiController extends Controller
                 'message' => 'SAL sync job has been queued.',
                 'quoteUID' => $request->quoteUID,
             ], 202);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Log::error('SAL sync failed.', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
