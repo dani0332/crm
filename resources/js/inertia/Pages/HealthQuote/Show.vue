@@ -1020,6 +1020,13 @@ const getSmallestCopayRateAsDefaultValue = () => {
   plansTable.data.forEach(element => {
     defaultCopayId = element.selectedCopayId;
     element.ratesPerCopay?.forEach(function callback(value, index) {
+      
+      const safeNumber = (val) => {
+        if (val === null || val === undefined) return 0;
+        const num = Number(val);
+        return isNaN(num) ? 0 : num;
+      };
+
       if (
         element.selectedCopayId &&
         defaultCopayId == value.healthPlanCoPaymentId
@@ -1029,7 +1036,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
         smallestCopayLoadingPrice = Number(
           value.loadingPrice ? value.loadingPrice : 0,
         );
-        smallestCopayAdjustedPrice = Number(
+        smallestCopayAdjustedPrice = safeNumber(
           value.adjustedPrice ? value.adjustedPrice : 0,
         );
         defaultCopayId = element.selectedCopayId;
@@ -1043,7 +1050,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
           );
-          smallestCopayAdjustedPrice = Number(
+          smallestCopayAdjustedPrice = safeNumber(
             value.adjustedPrice ? value.adjustedPrice : 0,
           );
           defaultCopayId = value.healthPlanCoPaymentId;
@@ -1053,7 +1060,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
           );
-          smallestCopayAdjustedPrice = Number(
+          smallestCopayAdjustedPrice = safeNumber(
             value.adjustedPrice ? value.adjustedPrice : 0,
           );
           defaultCopayId = value.healthPlanCoPaymentId;
