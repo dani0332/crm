@@ -652,15 +652,25 @@ class HomeQuoteRepository extends BaseRepository
     private function appendExternalData($quote)
     {
         // fetch look up data
-        $lookUpData = app(LookupService::class)->getHomeLookUpData();
-        if ($lookUpData) {
-            $quote->lookUpData = $lookUpData;
+        try {
+            $lookUpData = app(LookupService::class)->getHomeLookUpData();
+            if ($lookUpData) {
+                $quote->lookUpData = $lookUpData;
+            }
+        } catch (\Exception $e) {
+            info('Error fetching home lookup data: ' . $e->getMessage());
+            $quote->lookUpData = [];
         }
 
         // fetch customer address data and append it
-        $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
-        if ($customerAddressData) {
-            $quote->customerAddressData = $customerAddressData;
+        try {
+            $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
+            if ($customerAddressData) {
+                $quote->customerAddressData = $customerAddressData;
+            }
+        } catch (\Exception $e) {
+            info('Error fetching customer address data: ' . $e->getMessage());
+            $quote->customerAddressData = [];
         }
     }
 }
