@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
+use App\Http\Requests\AIGWorkflowRequest;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
@@ -97,6 +98,11 @@ class ApiController extends Controller
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
         return $this->apiService->triggerSICWorkflow($request);
+    }
+
+    public function triggerAIGWorkflow(AIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerAIGWorkflow($request);
     }
 
     public function evaluateTier(EvaluateTierRequest $request)

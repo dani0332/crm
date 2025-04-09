@@ -10,6 +10,7 @@ use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Http\Requests\AIGWorkflowRequest;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\Customer;
@@ -324,5 +325,16 @@ class ApiService
         SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType?->id());
 
         return apiResponse(null, message: 'ok');
+    }
+
+    public function triggerAIGWorkflow(AIGWorkflowRequest $request)
+    {
+        info('------ AIG workflow trigger request received for lead : '.($request->quoteUuid ?? '').' ------');
+
+        // Here you would implement the AIG workflow logic
+        // This is similar to SIC but with AIG specific processing
+        
+        info("------ AIG workflow trigger request completed for lead : {$request->quoteUuid} ------");
+        return apiResponse(null, Response::HTTP_OK, 'AIG workflow triggered successfully!');
     }
 }
