@@ -206,7 +206,10 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
-} else if (props.quoteType === 'Home' && props.quoteRequest.source === 'Renewal_upload') {
+} else if (
+  props.quoteType === 'Home' &&
+  props.quoteRequest.source === 'Renewal_upload'
+) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
@@ -3241,7 +3244,10 @@ const setPaymentInitialPrice = () => {
       initialAmount.value = props.eCommercePrice;
     } else if (props.quoteType === 'Bike') {
       initialAmount.value = props.quoteRequest.premium;
-    }  else if (props.quoteType === 'Home' && props.quoteRequest.source === 'Renewal_upload') {
+    } else if (
+      props.quoteType === 'Home' &&
+      props.quoteRequest.source === 'Renewal_upload'
+    ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)

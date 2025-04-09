@@ -506,23 +506,32 @@ onMounted(() => {
   if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
     // Only check all these conditions if it's a RENEWAL_UPLOAD lead
     if (
-      page.props.quote.advisor.name && 
-      page.props.quote.advisor.mobile_no && 
-      page.props.quote.email && 
-      page.props.quote.customerAddressData?.floor_number && 
-      page.props.quote.customerAddressData?.building_name && 
-      page.props.quote.customerAddressData?.street && 
-      page.props.quote.home_quote?.sub_area_id && 
-      page.props.quote.home_quote?.possession_type_id && 
+      page.props.quote.advisor.name &&
+      page.props.quote.advisor.mobile_no &&
+      page.props.quote.email &&
+      page.props.quote.customerAddressData?.floor_number &&
+      page.props.quote.customerAddressData?.building_name &&
+      page.props.quote.customerAddressData?.street &&
+      page.props.quote.home_quote?.sub_area_id &&
+      page.props.quote.home_quote?.possession_type_id &&
       page.props.quote.home_quote?.accommodation_type_id &&
       page.props.quote.home_quote?.has_claimed_losses !== undefined &&
-      (
-        (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.TENANT && page.props.quote.home_quote?.owner_occupancy_type_id) ||
-        (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.OWNER_RENTING && page.props.quote.home_quote?.personal_belongings_value_id && page.props.quote.home_quote.contents_value_id) ||
-        (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.OWNER_RENTING && page.props.quote.home_quote.contents_value_id) ||
-        (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.LANDLORD && page.props.quote.home_quote?.building_value) ||
-        (page.props.quote.home_quote?.possession_type_id == page.props.homePossessionTypeEnum.LANDLORD && page.props.quote.home_quote?.contents_value_id)
-      )
+      ((page.props.quote.home_quote?.possession_type_id ==
+        page.props.homePossessionTypeEnum.TENANT &&
+        page.props.quote.home_quote?.owner_occupancy_type_id) ||
+        (page.props.quote.home_quote?.possession_type_id ==
+          page.props.homePossessionTypeEnum.OWNER_RENTING &&
+          page.props.quote.home_quote?.personal_belongings_value_id &&
+          page.props.quote.home_quote.contents_value_id) ||
+        (page.props.quote.home_quote?.possession_type_id ==
+          page.props.homePossessionTypeEnum.OWNER_RENTING &&
+          page.props.quote.home_quote.contents_value_id) ||
+        (page.props.quote.home_quote?.possession_type_id ==
+          page.props.homePossessionTypeEnum.LANDLORD &&
+          page.props.quote.home_quote?.building_value) ||
+        (page.props.quote.home_quote?.possession_type_id ==
+          page.props.homePossessionTypeEnum.LANDLORD &&
+          page.props.quote.home_quote?.contents_value_id))
     ) {
       // Only run onLoadAvailablePlansData for RENEWAL_UPLOAD leads if all conditions are met
       onLoadAvailablePlansData();
@@ -1881,7 +1890,10 @@ const isPlanDetailEnabled = computed(() => {
                 color="orange"
                 class="mr-2"
                 :disabled="quote.advisor_id != $page.props.auth.user.id"
-                v-if="readOnlyMode.isDisable === true && quote.source != $page.props.leadSource.RENEWAL_UPLOAD"
+                v-if="
+                  readOnlyMode.isDisable === true &&
+                  quote.source != $page.props.leadSource.RENEWAL_UPLOAD
+                "
               >
                 Send OCB Email to Customer
               </x-button>
