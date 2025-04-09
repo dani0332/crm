@@ -51,6 +51,11 @@ const tableHeader = reactive([
     tooltip: 'The due date of the child installment',
   },
   {
+    text: 'Payment Ref Id',
+    value: 'payment_ref_id',
+    tooltip: 'The payment ref id for the child installment',
+  },
+  {
     text: 'Price (VAT applicable)',
     value: 'price_vat_applicable',
     tooltip:

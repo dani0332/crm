@@ -91,7 +91,7 @@ class TierController extends Controller
         $tier = Tier::find($id);
 
         return inertia('Admin/AllocationConfig/Tiers/Form', [
-            'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
+            'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->orderby('name')->get(),
             'tier' => $tier->load('users'),
         ]);
     }
