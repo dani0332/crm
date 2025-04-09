@@ -10,6 +10,7 @@ use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -498,6 +499,7 @@ class CarQuoteService extends BaseService
             PaymentStatusEnum::DISPUTED,
             PaymentStatusEnum::FAILED,
             PaymentStatusEnum::DRAFT,
+            PaymentStatusEnum::PAYMENT_LINK_REQUESTED,
         ];
 
         if ($paymentEntityModel->payments) {
@@ -1232,6 +1234,21 @@ class CarQuoteService extends BaseService
             PaymentStatusEnum::DRAFT,
         ];
 
+        $quoteStatuses = [
+            QuoteStatusEnum::NewLead,
+            QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+            QuoteStatusEnum::PaymentLinkInprogress,
+            QuoteStatusEnum::PaymentLinkSentToCustomer,
+            QuoteStatusEnum::Quoted,
+            QuoteStatusEnum::FollowedUp,
+            QuoteStatusEnum::PaymentPending,
+            QuoteStatusEnum::SentForTransactionApproval,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::Stale,
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+        ];
+
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
                 info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
@@ -1245,7 +1262,7 @@ class CarQuoteService extends BaseService
         }
 
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-            if (in_array($quote->payment_status_id, $paymentStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
+            if (in_array($quote->payment_status_id, $paymentStatuses) || in_array($quote->quote_status_id, $quoteStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
                 info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
                 return true;
@@ -1885,6 +1902,9 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
             ->whereNotNull('cqp.pua_premium')
+            ->whereNot(function ($q) {
+                $q->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD)->whereNotNull('cqp.pua_type');
+            })
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
             ->whereColumn('cqp.plan_id', 'cqr.plan_id');

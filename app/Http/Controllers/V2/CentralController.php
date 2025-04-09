@@ -68,6 +68,7 @@ use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\NotificationService;
@@ -318,12 +319,16 @@ class CentralController extends Controller
     {
         $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $code, $request->provider_code);
+
         return redirect()->back();
     }
 
     public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
+
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
 
         return response()->json(['plan' => $response]);
     }
@@ -683,6 +688,29 @@ class CentralController extends Controller
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
         $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
 
+        $logPayload = [
+            'paymentCode' => $request->paymentCode,
+            'uuid' => $request->uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'responseStatus' => isset($response['status']) ? $response['status'] : null,
+            'responseMessage' => isset($response['message']) ? $response['message'] : null,
+            'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
+        ];
+
+        info('paymentsCaptureValidation', $logPayload);
+
         return response()->json(['response' => $response]);
+    }
+
+    public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validatedRequest = (object) $request->validate([
+            'payment_id' => 'required',
+            'payment_code' => 'required',
+        ]);
+
+        $response = app(CentralService::class)->deletePayment($validatedRequest);
+
+        return response()->json($response);
     }
 }
