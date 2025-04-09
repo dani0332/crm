@@ -59,7 +59,7 @@ const assignForm = useForm({
   isLeadPool: null,
   isManualAllocationAllowed: 1,
 });
-
+// adding comment
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
@@ -70,7 +70,7 @@ const tableHeader = ref([
     is_active: true,
   },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
-  { text: 'LEAD STATUSS', value: 'quote_status.text', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status.text', is_active: true },
   {
     text: 'INSURER AML STATUS',
     value: 'insurer_aml_status_text',
