@@ -40,6 +40,7 @@ use App\Services\SplitPaymentService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -85,14 +86,14 @@ class HomeQuoteRepository extends BaseRepository
             ->tap(fn ($query) => $this->applyFilters($query))
             ->when(! $shouldExcludeCreatedAtFilters, function ($query) {
                 if (request()->filled('created_at_start') && request()->filled('created_at_end')) {
-                    $query->whereBetween('created_at', [request('created_at_start'), request('created_at_end')]);
+                    $query->whereBetween('personal_quotes.created_at', [request('created_at_start'), request('created_at_end')]);
                 } else {
-                    $query->whereBetween('created_at', $this->getDateRange());
+                    $query->whereBetween('personal_quotes.created_at', $this->getDateRange());
                 }
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('personal_quotes.created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
@@ -153,9 +154,9 @@ class HomeQuoteRepository extends BaseRepository
     private function applyRenewalFilter($query): void
     {
         if (request('is_renewal') === quoteTypeCode::yesText) {
-            $query->whereNotNull('previous_quote_policy_number');
+            $query->whereNotNull('personal_quotes.previous_quote_policy_number');
         } elseif (request('is_renewal') === quoteTypeCode::noText) {
-            $query->whereNull('previous_quote_policy_number');
+            $query->whereNull('personal_quotes.previous_quote_policy_number');
         }
     }
 
@@ -505,6 +506,11 @@ class HomeQuoteRepository extends BaseRepository
                 $condition($query, request($field));
             }
         }
+        
+        // Handle date range filters using adjustQueryByDateFilters
+        if (request()->filled('payment_due_date') || request()->filled('booking_date')) {
+            $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        }
     }
 
     /**
@@ -513,22 +519,19 @@ class HomeQuoteRepository extends BaseRepository
     private function getFilterMappings(): array
     {
         return [
-            'code' => fn ($query, $value) => $query->where('code', $value),
-            'first_name' => fn ($query, $value) => $query->where('first_name', 'like', "%$value%"),
-            'last_name' => fn ($query, $value) => $query->where('last_name', 'like', "%$value%"),
-            'email' => fn ($query, $value) => $query->where('email', 'like', "%$value%"),
-            'mobile_no' => fn ($query, $value) => $query->where('mobile_no', 'like', "%$value%"),
-            'quote_status_id' => fn ($query, $value) => $query->where('quote_status_id', $value),
-            'policy_expiry_date' => fn ($query, $value) => $query->whereDate('policy_expiry_date', '>=', $value),
-            'policy_expiry_date_end' => fn ($query, $value) => $query->whereDate('policy_expiry_date', '<=', $value),
-            'previous_quote_policy_number' => fn ($query, $value) => $query->where('previous_quote_policy_number', $value),
-            'renewal_batches' => fn ($query, $value) => $query->whereIn('renewal_batch', (array) $value),
-            'payment_due_date' => fn ($query, $value) => $query->whereDate('payment_due_date', $value),
-            'booking_date' => fn ($query, $value) => $query->whereDate('booking_date', $value),
-            'last_modified_date' => fn ($query, $value) => $query->whereDate('last_modified_date', $value),
-            'advisor_assigned_date' => fn ($query, $value) => $query->whereDate('advisor_assigned_date', $value),
-            'insurer_tax_invoice_number' => fn ($query, $value) => $query->where('insurer_tax_invoice_number', $value),
-            'insurer_commission_tax_invoice_number' => fn ($query, $value) => $query->where('insurer_commission_tax_invoice_number', $value),
+            'code' => fn ($query, $value) => $query->where('personal_quotes.code', $value),
+            'first_name' => fn ($query, $value) => $query->where('personal_quotes.first_name', 'like', "%$value%"),
+            'last_name' => fn ($query, $value) => $query->where('personal_quotes.last_name', 'like', "%$value%"),
+            'email' => fn ($query, $value) => $query->where('personal_quotes.email', 'like', "%$value%"),
+            'mobile_no' => fn ($query, $value) => $query->where('personal_quotes.mobile_no', 'like', "%$value%"),
+            'quote_status_id' => fn ($query, $value) => $query->where('personal_quotes.quote_status_id', $value),
+            'policy_expiry_date' => fn ($query, $value) => $query->whereDate('personal_quotes.policy_expiry_date', '>=', $value),
+            'policy_expiry_date_end' => fn ($query, $value) => $query->whereDate('personal_quotes.policy_expiry_date', '<=', $value),
+            'previous_quote_policy_number' => fn ($query, $value) => $query->where('personal_quotes.previous_quote_policy_number', $value),
+            'renewal_batches' => fn ($query, $value) => $query->whereIn('personal_quotes.renewal_batch', (array) $value),
+            'advisor_assigned_date' => fn ($query, $value) => $query->whereDate('personal_quotes.advisor_assigned_date', $value),
+            'insurer_tax_invoice_number' => fn ($query, $value) => $query->where('personal_quotes.insurer_tax_invoice_number', $value),
+            'insurer_commission_tax_invoice_number' => fn ($query, $value) => $query->where('personal_quotes.insurer_commission_tax_invoice_number', $value),
         ];
     }
 

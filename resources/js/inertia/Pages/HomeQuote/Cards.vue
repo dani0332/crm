@@ -108,7 +108,6 @@ const filters = reactive({
   status_filters: null,
   policy_expiry_date: '',
   policy_expiry_date_end: '',
-  last_modified_date: null,
   advisor_assigned_date: null,
 });
 
@@ -400,13 +399,6 @@ const validateDateRange = () => {
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
-        />
-        <DatePicker
-          v-model="filters.last_modified_date"
-          name="created_at_start"
-          label="Last Modified Date"
-          range
-          format="dd-MM-yyyy"
         />
         <DatePicker
           v-if="hasRole(rolesEnum.HomeManager)"
