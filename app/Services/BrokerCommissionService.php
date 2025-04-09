@@ -6,8 +6,8 @@ use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BrokerCommission;
-use App\Models\LeadSource;
 use Illuminate\Support\Facades\Log;
+
 class BrokerCommissionService
 {
     /**
@@ -48,19 +48,19 @@ class BrokerCommissionService
         $isCreditCardEnabled = $brokerCommission ? true : false;
 
         $insurersWithoutCCRenewal = [
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
         ];
 
         try {
-            if ($quote 
-                && $quoteTypeId === QuoteTypeId::Home 
-                && $quote->source === LeadSourceEnum::RENEWAL_UPLOAD 
+            if ($quote
+                && $quoteTypeId === QuoteTypeId::Home
+                && $quote->source === LeadSourceEnum::RENEWAL_UPLOAD
                 && in_array($insuranceProvider->code, $insurersWithoutCCRenewal)
             ) {
                 $isCreditCardEnabled = false;
             }
         } catch (\Exception $e) {
-            Log::error('Quote code ' .$quote->code.  'Error in BrokerCommissionService::fetchBrokerCommission: ' . $e->getMessage());
+            Log::error('Quote code '.$quote->code.'Error in BrokerCommissionService::fetchBrokerCommission: '.$e->getMessage());
         }
 
         return [$isCreditCardEnabled, $brokerCommission, false];

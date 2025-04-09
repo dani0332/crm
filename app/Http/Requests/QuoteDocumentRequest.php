@@ -95,7 +95,7 @@ class QuoteDocumentRequest extends FormRequest
             } else {
                 // validate if payment is authorized
                 if (request()->quoteType != strtolower(quoteTypeCode::Travel)) {
-                    if(!$this->isPlanBProviderSelected($quote)){
+                    if (! $this->isPlanBProviderSelected($quote)) {
                         if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
                             $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
                         }
@@ -110,22 +110,24 @@ class QuoteDocumentRequest extends FormRequest
         });
     }
 
-    private function isPlanBProviderSelected($quote){
+    private function isPlanBProviderSelected($quote)
+    {
         $insuranceProvider = InsuranceProvider::find($quote->insurance_provider_id);
-        
+
         $insurersWithoutCCRenewal = [
             InsurerProviderEnum::GIG_INSURANCE,
             InsurerProviderEnum::EMIRATES_INSURANCE,
             InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
         ];
 
-        if (!$insuranceProvider) {
+        if (! $insuranceProvider) {
             return false;
         }
-        if (!in_array($insuranceProvider->code, $insurersWithoutCCRenewal) && in_array($insuranceProvider->payment_gateway_id, [PaymentGatewayEnum::PAYMENT_GATEWAY_TAP, PaymentGatewayEnum::PAYMENT_GATEWAY_CHECKOUT])) {
+        if (! in_array($insuranceProvider->code, $insurersWithoutCCRenewal) && in_array($insuranceProvider->payment_gateway_id, [PaymentGatewayEnum::PAYMENT_GATEWAY_TAP, PaymentGatewayEnum::PAYMENT_GATEWAY_CHECKOUT])) {
             return false;
         }
+
         return true;
     }
 }

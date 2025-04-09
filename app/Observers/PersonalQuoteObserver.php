@@ -36,7 +36,7 @@ class PersonalQuoteObserver
 
         if ($personalQuote->isDirty('advisor_id') && ! empty($personalQuote->advisor_id)) {
             $this->handleAdvisorChange($personalQuote);
-            $this->handleIntroEmails($personalQuote ,$oldAdvisorId);
+            $this->handleIntroEmails($personalQuote, $oldAdvisorId);
         }
 
     }

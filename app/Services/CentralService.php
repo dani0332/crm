@@ -11,7 +11,6 @@ use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
-use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -324,14 +323,14 @@ class CentralService extends BaseService
         }
 
         $quote = $repository::where('code', $code)->firstOrFail();
-        
+
         $oldInsuranceProviderId = $quote->insurance_provider_id;
         $newInsuranceProviderId = $data->insurance_provider_id;
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         $businessTypeId = $quote->business_type_of_insurance_id ?? null;
         $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId, null, $quote);
-       
+
         return DB::transaction(function () use ($quoteType, $data, $quote, $isCreditCardEnabled, $newInsuranceProviderId, $oldInsuranceProviderId) {
             $quote->update($data->toArray());
 
@@ -345,12 +344,12 @@ class CentralService extends BaseService
                 'quote_type' => $quoteType,
                 'source' => $quote->source,
                 'old_provider' => $oldInsuranceProviderId,
-                'new_provider' => $newInsuranceProviderId
+                'new_provider' => $newInsuranceProviderId,
             ]);
             if ($quoteType == QuoteTypes::HOME->value && $quote->source == LeadSourceEnum::RENEWAL_UPLOAD && $newInsuranceProviderId != $oldInsuranceProviderId) {
                 $this->updatePaymentMethodBasedOnInsurer($quote, $newInsuranceProviderId);
             }
-            
+
             return true;
         });
     }
@@ -363,51 +362,51 @@ class CentralService extends BaseService
             InsurerProviderEnum::GIG_INSURANCE,
             InsurerProviderEnum::EMIRATES_INSURANCE,
             InsurerProviderEnum::LIVANA_INSURANCE,
-            InsurerProviderEnum::SUKOON_OMAN_INSURANCE
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
         ];
 
-        info("Updating payment method for home renewal lead", [
+        info('Updating payment method for home renewal lead', [
             'quote_code' => $quote->code,
             'insurer' => $insuranceProvider->code,
-            'payment_gateway_id' => $insuranceProvider->payment_gateway_id
+            'payment_gateway_id' => $insuranceProvider->payment_gateway_id,
         ]);
 
         // Define payment method based on payment gateway
         $newPaymentMethod = in_array($insuranceProvider->code, $insurersWithoutCCRenewal) && $quote->source == LeadSourceEnum::RENEWAL_UPLOAD
-            ? PaymentMethodsEnum::InsurerPayment 
+            ? PaymentMethodsEnum::InsurerPayment
             : PaymentMethodsEnum::CreditCard;
 
         $pendingStatuses = [
             PaymentStatusEnum::PENDING,
             PaymentStatusEnum::DRAFT,
             PaymentStatusEnum::NEW,
-            PaymentStatusEnum::OVERDUE
+            PaymentStatusEnum::OVERDUE,
         ];
 
         // Update master payment and related splits
         $payment = Payment::with('paymentSplits')
             ->whereIn('payment_status_id', $pendingStatuses)
             ->where('code', $quote->code)->first();
-            
+
         if ($payment) {
             $payment->payment_methods_code = $newPaymentMethod;
             $payment->save();
 
-            info("Updated master payment method", [
+            info('Updated master payment method', [
                 'quote_code' => $quote->code,
-                'new_method' => $newPaymentMethod
+                'new_method' => $newPaymentMethod,
             ]);
 
             // Update payment splits that are not in final status
             $payment->paymentSplits()
                 ->whereIn('payment_status_id', $pendingStatuses)
                 ->update([
-                    'payment_method' => $newPaymentMethod
+                    'payment_method' => $newPaymentMethod,
                 ]);
 
-            info("Updated payment splits payment method", [
+            info('Updated payment splits payment method', [
                 'quote_code' => $quote->code,
-                'new_method' => $newPaymentMethod
+                'new_method' => $newPaymentMethod,
             ]);
         }
     }
