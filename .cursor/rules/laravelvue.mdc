@@ -30,11 +30,16 @@ alwaysApply: true
   - Use migrations and seeders to manage database schema changes and test data.
 
   Vue.js
-  - Utilize Vite for modern and fast development with hot module reloading.
-  - Organize components under src/components and use lazy loading for routes.
-  - Apply Vue Router for SPA navigation and dynamic routing.
-  - Implement Pinia for state management in a modular way.
-  - Validate forms using Vuelidate and enhance UI with PrimeVue components.
+  - Use Vue 3 with Composition API as your project is running Vue 3.5.x
+  - Utilize Inertia.js for seamless Laravel-Vue integration with @inertiajs/vue3.
+  - Take advantage of auto-imports and component registration via unplugin-auto-import and unplugin-vue-components.
+  - Implement UI components from @indielayer/ui and vue3-easy-data-table for structured interfaces.
+  - Follow the project's established directory structure for components, layouts, pages, and composables.
+  - Leverage Vite for bundling with hot module reloading as configured in your vite.config.js
+  - Use the VueUse composition utilities library that's already integrated
+  - Follow the centralized icon management approach via the icons.js file
+  - Work with TailwindCSS for styling according to your project configuration
+  - Maintain consistent layout patterns using the authenticated layout wrapper
   
   Dependencies
   - Laravel (latest stable version)
