@@ -219,7 +219,7 @@ class LookupService extends BaseService
     public function getHomeLookUpData()
     {
         return CacheManager::remember(CacheKeyEnum::HOME_LOOKUPS, function () {
-            return Capi::request('/api/v1-get-home-models', 'post');
+            return Capi::request('/api/v2-get-home-models', 'post');
         });
     }
 
