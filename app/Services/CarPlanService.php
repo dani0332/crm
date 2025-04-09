@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use App\Enums\CarPlanType;
+use App\Enums\QuoteTypeId;
 use App\Models\CarPlan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\QuoteTypeId;
 
 class CarPlanService extends BaseService
 {

@@ -653,7 +653,7 @@ class AMLController extends Controller
                 'quoteMember']
         )->where('id', $request->entity_id)->first();
 
-        if($request->quote_type_id == QuoteTypeId::Car) {
+        if ($request->quote_type_id == QuoteTypeId::Car) {
             CarQuoteRepository::where('id', $request->quote_request_id)->update(['company_name' => $entity->company_name]);
         }
 

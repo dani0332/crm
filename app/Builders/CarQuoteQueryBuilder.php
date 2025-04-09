@@ -2,13 +2,13 @@
 
 namespace App\Builders;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use App\Enums\CarRegistrationType;
 
 class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {

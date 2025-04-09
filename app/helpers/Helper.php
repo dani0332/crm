@@ -1551,7 +1551,7 @@ if (! function_exists('getInsuranceProvider')) {
                 $quoteDetails->fill(['full_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name]);
                 $vehicleType = \App\Models\VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
 
-                if ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD 
+                if ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD
                 && $vehicleType == strtoupper(QuoteTypes::BIKE->value)
                 && $quoteDetails?->registration_type === CarRegistrationType::PERSONAL) {
                     return $payment?->insuranceProvider;

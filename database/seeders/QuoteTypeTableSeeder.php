@@ -19,7 +19,7 @@ class QuoteTypeTableSeeder extends Seeder
             ['code' => 'CompanyCar'],
             [
                 'id' => QuoteTypeId::CompanyCar,
-                'short_code' => "COM",
+                'short_code' => 'COM',
                 'code' => 'CompanyCar',
                 'text' => 'Company Car Insurance',
                 'is_active' => 1,

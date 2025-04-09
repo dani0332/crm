@@ -10,6 +10,7 @@ use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanType;
+use App\Enums\CarRegistrationType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -112,7 +113,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use App\Enums\CarRegistrationType;
 
 class CRUDController extends Controller
 {
@@ -773,8 +773,8 @@ class CRUDController extends Controller
             $genericRequestEnum = GenericRequestEnum::asArray();
             $carPlanTypeEnum = CarPlanType::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
-            
-            if($quote->registration_type == CarRegistrationType::COMPANY) {
+
+            if ($quote->registration_type == CarRegistrationType::COMPANY) {
                 $documentQuoteTypeId = QuoteTypeId::CompanyCar;
             } else {
                 $documentQuoteTypeId = QuoteTypeId::Car;
@@ -1321,7 +1321,7 @@ class CRUDController extends Controller
                 : 'Pending';
 
             if ($record->registration_type == CarRegistrationType::COMPANY) {
-                $record->company_contact_name = $record->first_name . ' ' . $record->last_name;
+                $record->company_contact_name = $record->first_name.' '.$record->last_name;
             }
 
             return inertia('PersonalQuote/Car/Form', [

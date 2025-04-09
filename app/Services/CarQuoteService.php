@@ -7,6 +7,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BirdFlowStatusEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -26,7 +27,9 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
+use App\Models\Entity;
 use App\Models\QuoteBatches;
+use App\Models\QuoteRequestEntityMapping;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -38,9 +41,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use PDF;
-use App\Enums\CarRegistrationType;
-use App\Models\QuoteRequestEntityMapping;
-use App\Models\Entity;
 
 class CarQuoteService extends BaseService
 {
@@ -79,7 +79,7 @@ class CarQuoteService extends BaseService
         $driverName = $request->driver_name ?? null;
 
         if ($registrationType == CarRegistrationType::COMPANY) {
-            if($vehicleUse == CarVehicleUse::PRIVATE) {
+            if ($vehicleUse == CarVehicleUse::PRIVATE) {
                 $name = explode(' ', $driverName);
                 $firstName = reset($name);
                 unset($name[0]);
@@ -122,12 +122,12 @@ class CarQuoteService extends BaseService
             'referenceUrl' => config('constants.APP_URL'),
             'gender' => $request->gender ?? null,
             'chassisNumber' => $request->chassis_number,
-            "registrationType" => $registrationType,
-            "vehicleUse" => $vehicleUse,
-            "companyName" => $request->company_name ?? null,
+            'registrationType' => $registrationType,
+            'vehicleUse' => $vehicleUse,
+            'companyName' => $request->company_name ?? null,
             'companyAddress' => $request->company_address ?? null,
-            "pointOfContactName" => $request->company_contact_name ?? null,
-            "businessActivityId" => $request->business_activity_id ?? null,
+            'pointOfContactName' => $request->company_contact_name ?? null,
+            'businessActivityId' => $request->business_activity_id ?? null,
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -175,7 +175,7 @@ class CarQuoteService extends BaseService
             ->where('quote_request_id', $carQuote->id)
             ->first();
         if ($registrationType == CarRegistrationType::COMPANY) {
-            if($vehicleUse == CarVehicleUse::PRIVATE) {
+            if ($vehicleUse == CarVehicleUse::PRIVATE) {
                 $name = explode(' ', $driverName);
                 $firstName = reset($name);
                 unset($name[0]);
@@ -187,14 +187,14 @@ class CarQuoteService extends BaseService
                 $lastName = implode(' ', $name) ?? null;
             }
 
-            if(!$entityMapping) {
+            if (! $entityMapping) {
 
                 $entity = Entity::create([
                     'company_name' => $carQuote->company_name,
                 ]);
                 $entity->refresh();
                 $entityId = $entity->id;
-                $entity->update(['code' => CustomerTypeEnum::EntityShort . '-' . $entityId]);
+                $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);
 
                 QuoteRequestEntityMapping::updateOrCreate([
                     'quote_type_id' => QuoteTypeId::Car,
@@ -203,7 +203,7 @@ class CarQuoteService extends BaseService
             }
 
         } else {
-            if($entityMapping) {
+            if ($entityMapping) {
                 $entityMapping->entity->delete();
                 $entityMapping->delete();
             }
@@ -1625,7 +1625,7 @@ class CarQuoteService extends BaseService
                 'business_activity_id' => 'required',
             ]);
 
-            if ($request->vehicle_use == CarVehicleUse::PRIVATE ) {
+            if ($request->vehicle_use == CarVehicleUse::PRIVATE) {
                 $validationArray = array_merge($validationArray, [
                     'driver_name' => 'required|string|between:1,70',
                     'dob' => 'required',
@@ -1642,7 +1642,6 @@ class CarQuoteService extends BaseService
                 'uae_license_held_for_id' => 'required',
             ]);
         }
-
 
         return $validationArray;
     }

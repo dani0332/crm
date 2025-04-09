@@ -390,10 +390,10 @@ class AMLService
 
         if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::EntityShort;
-        } elseif($status == null && $quoteTypeId == QuoteTypes::CAR->id()) {
+        } elseif ($status == null && $quoteTypeId == QuoteTypes::CAR->id()) {
 
             $quote = CarQuoteRepository::where('id', $quoteRequestId)->select('registration_type')->first();
-            if($quote->registration_type == CarRegistrationType::COMPANY) {
+            if ($quote->registration_type == CarRegistrationType::COMPANY) {
                 $status = CustomerTypeEnum::EntityShort;
             } else {
                 $status = CustomerTypeEnum::IndividualShort;

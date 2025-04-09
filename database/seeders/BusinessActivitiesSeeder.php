@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\BusinessActivity;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class BusinessActivitiesSeeder extends Seeder
@@ -116,9 +115,9 @@ class BusinessActivitiesSeeder extends Seeder
             'Civil structures like bridge, tunnel, dam, dike and wharf', 'Railways depots',
             'Motor vehicle storage (open & covered)', 'Cold stores',
             'Tank farms',
-            "Extra hazardous goods warehouse as per nfpa class iv such as ammenities, disposable materials, furniture with foam & plastic, ,liquir, match box, paints, chemicals & liquids with flash point less than 37.8 0 c. and alike commodities. - for more details ,pls refer to the nfpa manual.",
+            'Extra hazardous goods warehouse as per nfpa class iv such as ammenities, disposable materials, furniture with foam & plastic, ,liquir, match box, paints, chemicals & liquids with flash point less than 37.8 0 c. and alike commodities. - for more details ,pls refer to the nfpa manual.',
 
-            "Hazardous goods warehouse - as per nfpa class iii - such as aerosols, charcoal, clothes, fiber, yarn, textiles, furniture ,without plastics & foam material, plastics, paper, leather goods, tobaco products, chemicals & liquid with flash point ,between 37.80 c & 600 c and alike commodities. - for more details pls refer to the nfpa manual.",
+            'Hazardous goods warehouse - as per nfpa class iii - such as aerosols, charcoal, clothes, fiber, yarn, textiles, furniture ,without plastics & foam material, plastics, paper, leather goods, tobaco products, chemicals & liquid with flash point ,between 37.80 c & 600 c and alike commodities. - for more details pls refer to the nfpa manual.',
 
             'Non hazardous warehouse as per nfpa class - i; such as white goods, metal parts, canned foods, machineries, spare parts, ,cement, dairy products, coffe, non combustible liquid, salt, soya, grains, medicines and alike commodities - refer nfpa ,manual for more details.',
 
@@ -189,10 +188,10 @@ class BusinessActivitiesSeeder extends Seeder
             'Churches / mosques / museums', 'Activities of business, employers and professional membership organizations',
             'Activities of trade unions', 'Undifferentiated goods-producing activities of private households for own use',
             'Undifferentiated service-producing activities of private households for own use',
-            'Activities of households as employers of domestic personnel', 'Activities of extraterritorial organizations and bodies'
+            'Activities of households as employers of domestic personnel', 'Activities of extraterritorial organizations and bodies',
         ];
 
-        foreach($activities as $activity) {
+        foreach ($activities as $activity) {
             BusinessActivity::firstOrCreate(['name' => $activity]);
         }
     }

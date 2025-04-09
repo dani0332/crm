@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
 use Illuminate\Database\Seeder;
-use App\Enums\QuoteTypeId;
-use App\Enums\DocumentTypeCode;
 
 class DocumentTypesSeeder extends Seeder
 {
@@ -35,7 +35,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'PPR',
@@ -54,7 +54,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'AUDIT',
@@ -73,7 +73,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'FTC_CAR',
@@ -92,7 +92,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CDPDR',
@@ -111,7 +111,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'EID_CAR',
@@ -130,7 +130,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'TAD',
@@ -149,7 +149,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'PP_CAR',
@@ -168,7 +168,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'VISA_CAR',
@@ -187,7 +187,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CTL',
@@ -206,7 +206,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'DL_CAR',
@@ -225,7 +225,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'BAL',
@@ -244,7 +244,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CPD',
@@ -263,7 +263,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CAR_MULKIY',
@@ -282,7 +282,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CEC',
@@ -301,7 +301,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CKYCD',
@@ -320,7 +320,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'Others_Car',
@@ -339,7 +339,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CVAT',
@@ -358,7 +358,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CAR_CDP',
@@ -377,7 +377,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'MAA_Car',
@@ -396,7 +396,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::QUOTE,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
 
             // Issuing documents
@@ -417,7 +417,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'SCRDOC',
@@ -436,7 +436,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'TI',
@@ -455,7 +455,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CTIRBB',
@@ -474,7 +474,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CPC',
@@ -493,7 +493,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 1,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'TAEA',
@@ -512,7 +512,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CPS',
@@ -531,7 +531,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 1,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CPDR',
@@ -550,7 +550,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CAR_ECARD',
@@ -569,7 +569,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
             [
                 'code' => 'CAR_GL',
@@ -588,7 +588,7 @@ class DocumentTypesSeeder extends Seeder
                 'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
                 'is_required_for_send_policy' => 0,
                 'business_type_of_insurance_id' => null,
-                'business_type_of_customer' => null
+                'business_type_of_customer' => null,
             ],
         ];
 
