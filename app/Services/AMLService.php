@@ -274,7 +274,7 @@ class AMLService
             ],
             function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser, $isAutomation) {
                 $message->to($emailRecipients);
-                if (!$isAutomation && (in_array($loginUserEmail, $emailRecipients)) || ! $forComplianceSuperUser) {
+                if (! $isAutomation && (in_array($loginUserEmail, $emailRecipients)) || ! $forComplianceSuperUser) {
                     $message->cc($loginUserEmail);
                 }
                 $message->subject($emailSubject);
@@ -347,10 +347,10 @@ class AMLService
     }
 
     public function getCustomerTravelInfo($quoteRequestId, $quoteType)
-    {   
+    {
         $model = $this->getModelObject($quoteType);
 
-        if(!class_exists($model)) {
+        if (! class_exists($model)) {
             return false;
         }
 
@@ -367,15 +367,15 @@ class AMLService
         return $customerTravelInfo;
     }
 
-    public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest) 
+    public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest)
     {
         $message = '';
         $requiredProperty = collect(['first_name', 'last_name', 'gender', 'dob', 'nationality_id', 'passport']);
 
         $missingDetails = [];
-        foreach($requiredProperty as $value) {
+        foreach ($requiredProperty as $value) {
 
-            if(empty($travelQuoteRequest[$value])) {
+            if (empty($travelQuoteRequest[$value])) {
                 $propertyName = match ($value) {
                     'dob' => 'date of birth',
                     'nationality_id' => 'nationality',
@@ -386,8 +386,8 @@ class AMLService
         }
 
         $missingDetailCount = count($missingDetails);
-        if($missingDetailCount) {
-            $message = 'Missing Info: ' . join(', ', $missingDetails);
+        if ($missingDetailCount) {
+            $message = 'Missing Info: '.implode(', ', $missingDetails);
         }
 
         return ['status' => $missingDetailCount ? false : true, 'message' => $message];

@@ -401,7 +401,7 @@ class AMLController extends Controller
         $amlService = app(AMLService::class);
         $customerTravelInfo = (array) $amlService->getCustomerTravelInfo($request->quoteRequestId, $request->quoteType);
 
-        if(empty($customerTravelInfo['id'])) {
+        if (empty($customerTravelInfo['id'])) {
             return ['status' => false, 'message' => 'Record not found'];
         }
 

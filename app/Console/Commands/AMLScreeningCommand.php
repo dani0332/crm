@@ -44,23 +44,24 @@ class AMLScreeningCommand extends Command
 
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
-        if(!$quoteModel || !class_exists($quoteModel)) {
+        if (! $quoteModel || ! class_exists($quoteModel)) {
             info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote Model not found');
+
             return;
         }
 
         $quoteRequestQuery = $quoteModel::select('id', 'api_issuance_status_id', 'aml_status')
             ->where([
-                'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID, 
-                'aml_status' => AMLStatusCode::AMLPending
+                'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
+                'aml_status' => AMLStatusCode::AMLPending,
             ]);
 
         $quoteRequestCount = $quoteRequestQuery->count();
 
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' '.$quoteRequestCount.' Record Found');
-        if($quoteRequestCount > 0) {
-            $quoteRequestQuery->chunk(100, function($quoteRequests) {
-                foreach($quoteRequests as $quoteRequest) {
+        if ($quoteRequestCount > 0) {
+            $quoteRequestQuery->chunk(100, function ($quoteRequests) {
+                foreach ($quoteRequests as $quoteRequest) {
                     AmlScreeningAutomationJob::dispatch($quoteRequest->id, $this->quoteType)->onQueue('aml-screening-automation');
                 }
             });
