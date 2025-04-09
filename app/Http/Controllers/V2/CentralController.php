@@ -585,7 +585,7 @@ class CentralController extends Controller
                 // Send Automated Followup Email Job if Health Auto-Followups is enabled.
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
-                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addMinutes($delayDays));
+                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
                     info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
                 }
 
@@ -688,6 +688,29 @@ class CentralController extends Controller
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
         $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
 
+        $logPayload = [
+            'paymentCode' => $request->paymentCode,
+            'uuid' => $request->uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'responseStatus' => isset($response['status']) ? $response['status'] : null,
+            'responseMessage' => isset($response['message']) ? $response['message'] : null,
+            'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
+        ];
+
+        info('paymentsCaptureValidation', $logPayload);
+
         return response()->json(['response' => $response]);
+    }
+
+    public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validatedRequest = (object) $request->validate([
+            'payment_id' => 'required',
+            'payment_code' => 'required',
+        ]);
+
+        $response = app(CentralService::class)->deletePayment($validatedRequest);
+
+        return response()->json($response);
     }
 }

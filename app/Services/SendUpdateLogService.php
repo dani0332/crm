@@ -363,6 +363,11 @@ class SendUpdateLogService
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
 
         $countChildRecords = $quoteModel::where('parent_duplicate_quote_id', $quoteObject->code)->count();
+        // for travel mix.
+        if ($quoteTypeCode == quoteTypeCode::Travel && (! is_null($quoteObject->child))) {
+            $countChildRecords += 1;
+        }
+
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
             'parent_ref_id' => $quoteObject->code,
@@ -372,27 +377,34 @@ class SendUpdateLogService
             $childLeadDetails['businessTypeOfInsurance'] = $quoteObject->business_type_of_insurance_id;
         }
 
-        if ($countChildRecords == 0) {
-
+        if ($countChildRecords == 0 || $quoteTypeCode == quoteTypeCode::Travel) {
             $countChildRecords++;
             $explodeQuoteLink = explode('/', $quoteObject->quote_link);
             $explodeQuoteLink[array_key_last($explodeQuoteLink)] = $quoteObject->code.'-'.$countChildRecords;
 
             $getRelations = $quoteObject->getRelations();
             $replicateObject = $quoteObject->replicate($modelRelationDetails['skipParentColumns']);
-            $replicateObject->fill([
+            $updateReplicateDetails = [
                 'code' => $quoteObject->code.'-'.$countChildRecords,
                 'uuid' => $quoteObject->uuid.'-'.$countChildRecords,
                 'quote_status_id' => QuoteStatusEnum::NewLead,
                 'parent_duplicate_quote_id' => $quoteObject->code,
                 'quote_link' => implode('/', $explodeQuoteLink),
                 'renewal_batch' => $quoteObject->renewal_batch ?? null,
-            ])->save();
+            ];
+
+            if ($quoteTypeCode == quoteTypeCode::Travel) {
+                $updateReplicateDetails['parent_id'] = null;
+            }
+
+            $replicateObject->fill($updateReplicateDetails)->save();
 
             foreach ($getRelations as $relation => $relationObject) {
-                $className = $modelRelationDetails['parentClass'];
-                if (method_exists($className, $relation) && $relationObject != null && ! empty($relationObject->toArray())) {
-                    $this->_createChildRelations($className, $relation, $relationObject, $modelRelationDetails, $replicateObject);
+                if (! ($quoteTypeCode == quoteTypeCode::Travel && $relation == 'child')) {
+                    $className = $modelRelationDetails['parentClass'];
+                    if (method_exists($className, $relation) && $relationObject != null && ! empty($relationObject->toArray())) {
+                        $this->_createChildRelations($className, $relation, $relationObject, $modelRelationDetails, $replicateObject);
+                    }
                 }
             }
 
