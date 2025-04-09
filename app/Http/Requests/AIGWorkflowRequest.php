@@ -33,4 +33,4 @@ class AIGWorkflowRequest extends FormRequest
             'quoteUuid.required' => 'Quote UUID is required',
         ];
     }
-} 
+}
