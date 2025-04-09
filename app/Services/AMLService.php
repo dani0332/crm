@@ -377,7 +377,10 @@ class AMLService
                 $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $ryuFilter->orWhereNull('decision');
             })
-            ->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
+            ->where(function ($aml) {
+                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                $aml->orWhereNull('screening_type');
+            })
             ->whereNull('screenshot')
             ->orderBy('id', 'desc')
             ->value('splitted_customer_code');
@@ -407,8 +410,10 @@ class AMLService
         ])->where(function ($ryuFilter) {
             $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
             $ryuFilter->orWhereNull('decision');
-        })->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
-            ->whereNull('screenshot')->pluck('decision');
+        })->where(function ($aml) {
+            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+            $aml->orWhereNull('screening_type');
+        })->whereNull('screenshot')->pluck('decision');
 
         if ($fetchAMLRecords->count() == 0) {
             return true;
@@ -720,5 +725,33 @@ class AMLService
         }
 
         return $return;
+    }
+
+    /**
+     * Clears the AML status for non-AXA insurance providers.
+     */
+    public function clearAmlStatusForNonGIG($quoteType, $code, $providerCode)
+    {
+        info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$providerCode}");
+
+        if ($providerCode == InsuranceProvidersEnum::AXA) {
+            info("Insurance Provider is GIG(AXA). Skipping AML status clearing for Quote Code: {$code}");
+
+            return false;
+        }
+
+        // Retrieve the quote details by quote type and code
+        $quoteDetails = $this->getQuoteObjectBy($quoteType, $code, 'code');
+
+        // Update the insurer AML status to null if it is not already null
+        if ($quoteDetails->insurer_aml_status !== null) {
+            $oldInsurerAmlStatus = $quoteDetails->insurer_aml_status;
+            $quoteDetails->insurer_aml_status = null;
+            $quoteDetails->save();
+
+            info("AML status change from {$oldInsurerAmlStatus} to null for Quote Code: {$code}");
+        }
+
+        return true;
     }
 }
