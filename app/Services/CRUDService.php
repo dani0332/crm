@@ -114,7 +114,8 @@ class CRUDService extends BaseService
             ->getGridData($model, $request);
 
         if ($request->has('debug') && $request->debug == 'true') {
-            dd($dataQuery->toRawSql());
+            echo $dataQuery->toRawSql();
+            exit;
         }
 
         return $dataQuery;
