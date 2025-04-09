@@ -110,11 +110,15 @@ trait Filterable
         });
     }
 
-    public function applyByFilters($query, string $filterName, string $operator, ?string $column = null, bool $ignoreAll = false, bool $isBool = false)
+    public function applyByFilters($query, string $filterName, string $operator, ?string $column = null, bool $ignoreAll = false, bool $isBool = false, string|int|array|null $value = null)
     {
-        $filterValue = request($filterName, ($operator === 'in' ? [] : ''));
-
-        $hasFilter = request()->filled($filterName);
+        if (! empty($value)) {
+            $filterValue = $value;
+            $hasFilter = true;
+        } else {
+            $filterValue = request($filterName, ($operator === 'in' ? [] : ''));
+            $hasFilter = request()->filled($filterName);
+        }
 
         if ($isBool) {
             $filterValue = filter_var($filterValue, FILTER_VALIDATE_BOOLEAN);
@@ -145,19 +149,19 @@ trait Filterable
         });
     }
 
-    public function scopeFilterBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false, bool $isBool = false)
+    public function scopeFilterBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false, bool $isBool = false, string|int|null $value = null)
     {
-        $this->applyByFilters($query, $filterName, '=', $column, $ignoreAll, $isBool);
+        $this->applyByFilters($query, $filterName, '=', $column, $ignoreAll, $isBool, $value);
     }
 
-    public function scopeFilterIn($query, string $filterName, ?string $column = null, bool $ignoreAll = false)
+    public function scopeFilterIn($query, string $filterName, ?string $column = null, bool $ignoreAll = false, ?array $value = null)
     {
-        $this->applyByFilters($query, $filterName, 'in', $column, $ignoreAll);
+        $this->applyByFilters($query, $filterName, 'in', $column, $ignoreAll, value: $value);
     }
 
-    public function scopeMatchBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false)
+    public function scopeMatchBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false, string|int|null $value = null)
     {
-        $this->applyByFilters($query, $filterName, 'like', $column, $ignoreAll);
+        $this->applyByFilters($query, $filterName, 'like', $column, $ignoreAll,value: $value);
     }
 
     public function scopeFilterByToday($query, $column = 'created_at')
@@ -165,11 +169,15 @@ trait Filterable
         $query->whereBetween($column, [$this->parseDate(now(), true), $this->parseDate(now(), false)]);
     }
 
-    public function scopeFilterByDateRange($query, $filterName, $column = null)
+    public function scopeFilterByDateRange($query, $filterName, $column = null, ?array $value = null)
     {
+        if (empty($value)) {
+            $value = request($filterName,[]);
+        }
+
         $column = $this->resolveColumn($filterName, $column);
-        $query->when(request()->filled($filterName), function ($subQuery) use ($column, $filterName) {
-            [$start, $end] = request($filterName);
+        $query->when(! empty($value), function ($subQuery) use ($column, $filterName,$value) {
+            [$start, $end] = $value;
 
             $start = $this->parseDate($start, true);
             $end = $this->parseDate($end, false);
@@ -178,11 +186,11 @@ trait Filterable
         });
     }
 
-    public function scopeFilterByDate($query, $filterName, $column = null, $isStartOfDay = true)
+    public function scopeFilterByDate($query, $filterName, $column = null, $isStartOfDay = true, string|int|null $value = null)
     {
         $column = $this->resolveColumn($filterName, $column);
-        $query->when(request()->filled($filterName), function ($subQuery) use ($column, $filterName, $isStartOfDay) {
-            $subQuery->where($column, $isStartOfDay ? '>=' : '<=', $this->parseDate(request($filterName), $isStartOfDay));
+        $query->when(! empty($value), function ($subQuery) use ($column, $filterName, $isStartOfDay,$value) {
+            $subQuery->where($column, $isStartOfDay ? '>=' : '<=', $this->parseDate($value, $isStartOfDay));
         });
     }
 }

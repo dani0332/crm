@@ -13,6 +13,7 @@ use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class LifeQuoteRepository extends BaseRepository
 {
@@ -187,12 +188,16 @@ class LifeQuoteRepository extends BaseRepository
         return $this->where('parent_duplicate_quote_id', $code)->first();
     }
 
-    public function fetchExportData()
+    public function fetchExportData($requestParams = [])
     {
+        Log::info('LifeQuoteRepository@fetchExportData', ['params' => $requestParams]);
+
         $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
-            ->filter(false)
+            ->filter(false, false, $requestParams)
             ->withFakeLeadCriteria();
         $this->adjustQueryByDateFilters($query, 'life_quote_request');
+
+        Log::info('LifeQuoteRepository@fetchExportData: query built');
 
         return $query->orderBy('life_quote_request.created_at', 'desc')
             ->get();

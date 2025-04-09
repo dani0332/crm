@@ -91,7 +91,7 @@ trait QuoteModelTrait
             $user = $request->get('user');
         }
 
-        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
+        if ($user && $user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
             $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()

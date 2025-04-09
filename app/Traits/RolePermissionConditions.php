@@ -33,7 +33,7 @@ trait RolePermissionConditions
             $query->where($prefix.'.'.'advisor_id', $user->id);
         }
         if ($isRenewalManager) {
-            $ids = $this->walkTree($user->id);
+            $ids = $this->walkTree($user->id,user: $user);
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
@@ -45,7 +45,7 @@ trait RolePermissionConditions
             $query->where($prefix.'.'.'advisor_id', $user->id);
         }
         if ($isNewManager) {
-            $ids = $this->walkTree($user->id);
+            $ids = $this->walkTree($user->id,user: $user);
             //    $query->whereIn($prefix.'.'.'advisor_id', $ids);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }

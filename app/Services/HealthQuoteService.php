@@ -335,11 +335,11 @@ class HealthQuoteService extends BaseService
         return $response;
     }
 
-    public function getGridData($model = null, $request = null)
+    public function getGridData($model = null, $requestParams = null)
     {
-        $query = $this->healthQuoteQueryBuilder->processGridData();
-        $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health);
-        $this->adjustQueryByDateFilters($query, 'health_quote_request');
+        $query = $this->healthQuoteQueryBuilder->processGridData($requestParams);
+        $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health,user: $requestParams['user']);
+        $this->adjustQueryByDateFilters($query, 'health_quote_request',requestParams: $requestParams);
 
         return $query;
     }

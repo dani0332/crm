@@ -98,93 +98,101 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
         ]);
     }
 
-    public function applyFilters(Builder $query)
+    public function applyFilters(Builder $query, $requestParams = [])
     {
+        $user = null;
+
+        if (Auth::check() && empty($requestParams['user'])) {
+            $user = Auth::user();
+            $requestParams = collect(request()->all());
+        } elseif (! empty($requestParams['user'])) {
+            /* For queue when session data isn't present */
+            $user = $requestParams['user'];
+            $requestParams = collect($requestParams);
+        }
+
         $query
-            ->filterBy('code')
-            ->matchBy('first_name')
-            ->matchBy('last_name')
-            ->filterBy('email')
-            ->filterBy('mobile_no')
-            ->filterBy('policy_number')
-            ->filterBy('previous_quote_policy_premium')
-            ->filterBy('sub_team', 'health_team_type')
-            ->filterIn('quote_status', 'quote_status_id')
-            ->filterIn('payment_status', 'payment_status_id')
-            ->filterIn('renewal_batches', 'renewal_batch_id')
-            ->filterBy('currently_insured_with')
+            ->filterBy('code', value: $requestParams['code'] ?? null)
+            ->matchBy('first_name', value: $requestParams['first_name'] ?? null)
+            ->matchBy('last_name', value: $requestParams['last_name'] ?? null)
+            ->filterBy('email', value: $requestParams['email'] ?? null)
+            ->filterBy('mobile_no', value: $requestParams['mobile_no'] ?? null)
+            ->filterBy('policy_number', value: $requestParams['policy_number'] ?? null)
+            ->filterBy('previous_quote_policy_premium', value: $requestParams['previous_quote_policy_premium'] ?? null)
+            ->filterBy('sub_team', 'health_team_type', value: $requestParams['sub_team'] ?? null)
+            ->filterIn('quote_status', 'quote_status_id', value: $requestParams['quote_status'] ?? null)
+            ->filterIn('payment_status', 'payment_status_id', value: $requestParams['payment_status'] ?? null)
+            ->filterIn('renewal_batches', 'renewal_batch_id', value: $requestParams['renewal_batches'] ?? null)
+            ->filterBy('currently_insured_with', value: $requestParams['currently_insured_with'] ?? null)
             ->filterBy('is_cold', 'is_cold', 1)
-            ->filterByDate('next_followup_date')
-            ->filterByDate('next_followup_date_end', 'next_followup_date', false)
-            ->filterByAdvisors(request('advisor_id'))
-            ->filterBy('assignment_type', ignoreAll: true)
-            ->filterBy('sic_advisor_requested', ignoreAll: true)
-            ->filterBy('is_ecommerce', isBool: true)
-            ->filterIn('insurer_aml_status')
-            ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
-            ->filterBySegment('segment_filter', QuoteTypeId::Health)
+            ->filterByDate('next_followup_date', value: $requestParams['next_followup_date'] ?? null)
+            ->filterByDate('next_followup_date_end', 'next_followup_date', false, value: $requestParams['next_followup_date_end'] ?? null)
+            ->filterByAdvisors($requestParams->get('advisor_id'))
+            ->filterBy('assignment_type', value: $requestParams['assignment_type'] ?? null, ignoreAll: true)
+            ->filterBy('sic_advisor_requested', value: $requestParams['sic_advisor_requested'] ?? null, ignoreAll: true)
+            ->filterBy('is_ecommerce', value: $requestParams['is_ecommerce'] ?? null, isBool: true)
+            ->filterIn('insurer_aml_status', value: $requestParams['insurer_aml_status'] ?? null)
+            ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', value: $requestParams['transaction_approved_dates'] ?? null)
+            ->filterBySegment('segment_filter', QuoteTypeId::Health, $requestParams)
             ->filterByPaymentDueDates('payment_due_date')
-            ->filterByDateRange('booking_date', 'policy_booking_date')
+            ->filterByDateRange('booking_date', 'policy_booking_date', value: $requestParams['booking_date'] ?? null)
             ->filterByAdvisorAssignedDates('healthQuoteRequestDetail', ['assigned_to_date_start', 'assigned_to_date_end'], verifyQuoteStatus: true)
-            ->filterByDateRange('last_modified_date', 'updated_at')
-            ->when(request()->filled('previous_quote_policy_number'), function ($query) {
+            ->filterByDateRange('last_modified_date', 'updated_at', value: $requestParams['last_modified_date'] ?? null)
+            ->when(!empty($requestParams->get('previous_quote_policy_number')), function ($query) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
-            ->when(request()->filled('policy_expiry_date') && request()->filled('policy_expiry_date_end'), function ($query) {
+            ->when(!empty($requestParams->get('policy_expiry_date')) && !empty($requestParams->get('policy_expiry_date_end')), function ($query) {
                 $query->where(fn ($q) => $q->filterByDate('policy_expiry_date')
                     ->filterByDate('previous_policy_expiry_date', 'policy_expiry_date_end', false));
             })
-            ->when(Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM'), function ($query) {
-                $query->filterBy('advisor_id', Auth::user()->id);
+            ->when($user->isSpecificTeamAdvisor('Health') || $user->isSpecificTeamAdvisor('EBP') || $user->isSpecificTeamAdvisor('RM'), function ($query) use ($user) {
+                $query->filterBy('advisor_id', $user->id);
             })
-            ->when(is_array(request('advisors')) && in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
+            ->when(is_array($requestParams->get('advisors')) && in_array(DefaultAdvisorEnum::UNASSIGNED, $requestParams->get('advisors')), function ($query) {
                 $query->whereNull('advisor_id');
             })
-            ->when(is_array(request('advisors')) && ! in_array(DefaultAdvisorEnum::UNASSIGNED, request('advisors')), function ($query) {
+            ->when(is_array($requestParams->get('advisors')) && ! in_array(DefaultAdvisorEnum::UNASSIGNED, $requestParams->get('advisors')), function ($query) {
                 $query->filterIn('advisors', 'advisor_id');
             })
-            ->when(request('is_renewal') == 'Yes', function ($query) {
+            ->when($requestParams->get('is_renewal') == 'Yes', function ($query) {
                 $query->whereNotNull('previous_quote_policy_number');
             })
-            ->when(request('stale_at'), function ($query) {
+            ->when($requestParams->get('stale_at'), function ($query) {
                 $query->whereNotNull('stale_at');
             })
-            ->when(request('is_renewal') != 'Yes', function ($query) {
+            ->when($requestParams->get('is_renewal') != 'Yes', function ($query) {
                 $query->whereNull('previous_quote_policy_number');
             })
-            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
-                $query->whereRelation('payments', 'insurer_tax_number', request('insurer_tax_invoice_number'));
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && !empty($requestParams->get('insurer_tax_invoice_number')), function ($query) use ($requestParams) {
+                $query->whereRelation('payments', 'insurer_tax_number', $requestParams->get('insurer_tax_invoice_number'));
             })
-            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
-                $query->whereRelation('payments', 'insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && !empty($requestParams->get('insurer_commission_tax_invoice_number')), function ($query) use ($requestParams) {
+                $query->whereRelation('payments', 'insurer_commmission_invoice_number', $requestParams->get('insurer_commission_tax_invoice_number'));
             })
             ->when(
-                ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
+                !empty($requestParams->get('email')) && empty($requestParams->get('code')) && empty($requestParams->get('first_name')) && empty($requestParams->get('last_name')) && empty($requestParams->get('quote_status_id')) && empty($requestParams->get('mobile_no')),
                 fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
-
             )
-            ->when(
-                request()->filled('email') && request()->filled('email') == '',
-                fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
-
-            )
-            ->when($this->shouldApplyDatesFilter() && ! request()->filled('last_modified_date') && ! request()->filled('created_at_start') && ! request()->filled('renewal_batches') && ! request()->filled('policy_expiry_date') && ! request()->filled('policy_expiry_date_end'), function ($query) {
+            ->when($this->shouldApplyDatesFilter() && empty($requestParams->get('last_modified_date')) && empty($requestParams->get('created_at_start')) && empty($requestParams->get('renewal_batches')) && empty($requestParams->get('policy_expiry_date')) && empty($requestParams->get('policy_expiry_date_end')), function ($query) {
                 $query->filterByToday();
             })
-            ->when($this->shouldApplyDatesFilter() && ! request()->filled('renewal_batches') && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
-                $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
+            ->when($this->shouldApplyDatesFilter() && empty($requestParams->get('renewal_batches')) && !empty($requestParams->get('created_at_start')) && !empty($requestParams->get('created_at_end')), function ($query) use ($requestParams) {
+                $query->whereBetween('created_at', [$this->parseDate($requestParams->get('created_at_start'), true), $this->parseDate($requestParams->get('created_at_end'), false)]);
+            })
+            ->when(!empty($requestParams->get('last_modified_date')), function ($query) {
+                $query->filterByDateRange('last_modified_date', 'updated_at');
             })
             ->when(
-                request()->filled('sortBy'),
-                fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
+                !empty($requestParams->get('sortBy')),
+                fn ($q) => $q->orderBy($requestParams->get('sortBy'), $requestParams->get('sortType')),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
             );
     }
 
-    public function processGridData(): Builder
+    public function processGridData($requestParams = []): Builder
     {
         $query = $this->buildGrid();
-        $this->applyFilters($query);
+        $this->applyFilters($query, $requestParams);
 
         return $query;
     }

@@ -624,9 +624,9 @@ trait GenericQueriesAllLobs
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 
-    public function adjustQueryByDateFilters($query, $tablePrefix)
+    public function adjustQueryByDateFilters($query, $tablePrefix,array $requestParams = [])
     {
-        $request = request();
+        $request = $requestParams?: request();
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $defaultDate = now()->endOfDay();
         if ($request->payment_due_date) {

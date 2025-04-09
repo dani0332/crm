@@ -22,7 +22,7 @@ trait ExcelExportable
         return new StreamedResponse(function () {
             $handle = fopen('php://output', 'w');
             fputcsv($handle, $this->headings());
-            $data = $this->collection();
+            $data = $this->collection([]);
             foreach ($data as $quote) {
                 fputcsv($handle, $this->map($quote));
             }
@@ -61,18 +61,8 @@ trait ExcelExportable
             $requestParams['recipientEmail'],
             $requestParams
         );
-        info('Dispatching ExportCsvAndSendEmailJob');
+        info('Dispatched ExportCsvAndSendEmailJob');
 
-        /**
-         *  string $exportClass,
-         * string $templateName,
-         * string $fileName,
-         * string $recipientEmail,
-         * array  $requestParams,
-         * string $emailSubject,
-         * array  $ccRecipients = [],
-         *
-         * */
         // Return response to the user that export is being processed
         return response()->json([
             'message' => 'Your export is being processed. You will receive an email with the CSV file shortly.',
