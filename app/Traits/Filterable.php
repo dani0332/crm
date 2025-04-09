@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Builders\QueryBuildable;
+use App\Enums\QuoteStatusEnum;
 
 trait Filterable
 {
@@ -45,7 +46,6 @@ trait Filterable
                 $this->applyFilter($query, 'advisor_id', $ids, $alias);
             }
         });
-
     }
 
     public function scopeFilterByBatches($query, $id, $alias = null)
@@ -81,7 +81,7 @@ trait Filterable
         });
     }
 
-    public function scopeFilterByAdvisorAssignedDates($query, string $relation, array $filterNames)
+    public function scopeFilterByAdvisorAssignedDates($query, string $relation, array $filterNames, bool $verifyQuoteStatus = false)
     {
         [$startDateFilterName, $endDateFilterName] = $filterNames;
 
@@ -93,7 +93,7 @@ trait Filterable
             $query->whereHas($relation, function ($query) use ($startDateFilterName, $endDateFilterName) {
                 $query->whereBetween('advisor_assigned_date', [$this->parseDate(request($startDateFilterName), true), $this->parseDate(request($endDateFilterName), false)]);
             });
-        });
+        })->when($verifyQuoteStatus, fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]));
     }
 
     public function scopeFilterByPaymentDueDates($query, $filterName)

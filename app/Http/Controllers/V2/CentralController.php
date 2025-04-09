@@ -144,9 +144,10 @@ class CentralController extends Controller
                 return app(TravelQuoteExport::class)->download('travel_leads');
 
             case QuoteTypes::CAR->value:
-                if($request['exportType'] == 'email'){
+                if ($request['exportType'] == 'email') {
                     return app(CarQuoteExport::class)->emailCSV('Car-List', $request->all());
                 }
+
                 return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:
@@ -701,6 +702,17 @@ class CentralController extends Controller
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
         $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
+
+        $logPayload = [
+            'paymentCode' => $request->paymentCode,
+            'uuid' => $request->uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'responseStatus' => isset($response['status']) ? $response['status'] : null,
+            'responseMessage' => isset($response['message']) ? $response['message'] : null,
+            'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
+        ];
+
+        info('paymentsCaptureValidation', $logPayload);
 
         return response()->json(['response' => $response]);
     }

@@ -236,11 +236,6 @@ class CarQuote extends BaseModel
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
-    public function payment()
-    {
-        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
-    }
-
     public function embeddedTransactions()
     {
         return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
@@ -354,10 +349,10 @@ class CarQuote extends BaseModel
         }
     }
 
-    public function scopeFilterBySegment($query,$segmentFilter,$quoteTypeId,$requestParams)
+    public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeId, $requestParams)
     {
         $segmentFilter = request()->input('segment_filter');
-        self::applySegmentFilter($query, $segmentFilter, 'car_quote_request', QuoteTypeId::Car,$requestParams);
+        self::applySegmentFilter($query, $segmentFilter, 'car_quote_request', QuoteTypeId::Car, $requestParams);
     }
 
     /*****  NewRelationships so old should not effect */

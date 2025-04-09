@@ -10,6 +10,7 @@ use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -873,13 +874,13 @@ class CarQuoteService extends BaseService
 
         if (auth()->check() && empty($requestParams['user'])) {
             $user = auth()->user();
-        } else if (!empty($requestParams['user'])){
+        } elseif (! empty($requestParams['user'])) {
             /* For queue when session data isn't present */
-             $user = $requestParams['user'];
+            $user = $requestParams['user'];
         }
 
         return $this->carQuoteQueryBuilder->processGridData($requestParams)
-            ->where(function ($query) use($user) {
+            ->where(function ($query) use ($user) {
                 if ($user->hasRole(RolesEnum::CarManager)) {
                     $this->walkTree($user->id);
                     $query->whereIn('advisor_id', $this->childUserIds);
@@ -1910,6 +1911,9 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
             ->whereNotNull('cqp.pua_premium')
+            ->whereNot(function ($q) {
+                $q->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD)->whereNotNull('cqp.pua_type');
+            })
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
             ->whereColumn('cqp.plan_id', 'cqr.plan_id');
