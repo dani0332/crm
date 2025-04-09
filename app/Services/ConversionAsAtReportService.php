@@ -223,6 +223,9 @@ class ConversionAsAtReportService extends BaseService
                 $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
             }
         }
+
+        $this->applyBaseQueryToGroupBy($query, $filters, $alias);
+
         if (isset($filters->displayBy)) {
             switch ($filters->displayBy) {
                 case DisplayByEnum::ADVISOR_NAME:
@@ -279,8 +282,6 @@ class ConversionAsAtReportService extends BaseService
      */
     public function getByAdvisorNameQuery($query, $filters, $alias)
     {
-        $this->applyBaseQueryToGroupBy($query, $filters, $alias);
-
         return $query
             ->addSelect(
                 'users.id as advisorId',
@@ -319,8 +320,6 @@ class ConversionAsAtReportService extends BaseService
      */
     public function getByLeadSourceQuery($query, $filters, $alias)
     {
-        $this->applyBaseQueryToGroupBy($query, $filters, $alias);
-
         return $query
             ->addSelect(
                 "{$alias}.source as lead_source"
@@ -386,8 +385,6 @@ class ConversionAsAtReportService extends BaseService
 
     public function getByTeamQuery($query, $filters, $alias)
     {
-        $this->applyBaseQueryToGroupBy($query, $filters, $alias);
-
         return $query
             ->addSelect(
                 'teams.id as team_id',
