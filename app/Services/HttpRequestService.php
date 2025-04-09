@@ -72,7 +72,7 @@ class HttpRequestService extends BaseService
             'url' => strval(url()->current()),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
-            'userId' => app('auth')->check() ? strval(app('auth')->id()) : '0',
+            'userId' => strval(auth()->id()),
             'filters' => [
                 [
                     'field' => 'isRenewalSort',
@@ -139,7 +139,6 @@ class HttpRequestService extends BaseService
             return $responseBodyAsString;
         }
 
-        return null; // Adding default return value for paths that don't return a value
     }
 
     public function getPlans($id, $getLatestRating, $isRenewalSort = false, $isDisabledEnabled = false, $quoteType = '', ?bool $allowUpdate = null)

@@ -114,10 +114,7 @@ class QuadrantService extends BaseService
         if (isset($request->quad_users)) {
             $this->addUserAgainstQuadAndTiers($request->quad_users, $quad->id);
         }
-        LoggerService::info('Quadrant updated successfully: ' . $quad->name, [
-            'quadrant_id' => $quad->id,
-            'user_id' => Auth::id()
-        ]);
+        LoggerService::info('------ Quadrant update is successfully done by user : '.auth()->user()->id.' for Quad : '.$quad->name.' ------');
 
         return $quad;
     }

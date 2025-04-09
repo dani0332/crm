@@ -281,7 +281,7 @@ class LeadAllocationService extends BaseService
         $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
         if ($leadDetail) {
             $leadDetail->advisor_assigned_date = now();
-            $leadDetail->advisor_assigned_by_id = app('auth')->check() ? app('auth')->id() : null;
+            $leadDetail->advisor_assigned_by_id = auth()->id();
             $leadDetail->save();
         }
         LoggerService::info('updateLeadDetailRecord -- completed for lead uuid: '.$leadUId);
@@ -721,7 +721,7 @@ class LeadAllocationService extends BaseService
             ['car_quote_request_id' => $leadId],
             [
                 'advisor_assigned_date' => now(),
-                'advisor_assigned_by_id' => app('auth')->check() ? app('auth')->id() : null,
+                'advisor_assigned_by_id' => auth()->id(),
             ]
         );
         LoggerService::info('---- updateCarLeadDetailRecord - updateOrCreate done for advisor data and by id - leadId : '.$leadId.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);

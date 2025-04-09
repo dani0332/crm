@@ -673,14 +673,13 @@ class RenewalsUploadService
             // create additional emails
             if (isset($customerData['additional_emails']) && count($customerData['additional_emails'])) {
                 foreach ($customerData['additional_emails'] as $additionalEmail) {
-                    $customer->additionalContactLoggerService::info( )->create(['key' => 'email', 'value' => $additionalEmail]);
-                }
+                    $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);                }
             }
 
             // create additional mobile nos
             if (isset($customerData['additional_mobiles']) && count($customerData['additional_mobiles'])) {
                 foreach ($customerData['additional_mobiles'] as $additionalMobile) {
-                    $customer->additionalContactLoggerService::info( )->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
+                    $customer->additionalContactInfo()->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
                 }
             }
         }
@@ -742,7 +741,7 @@ class RenewalsUploadService
             $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
 
             // advisor and previous advisors will be ignored when not exists
-            $advisorId = $this->renewalsAddonService->getUserLoggerService::info( $data['advisor']);
+            $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $previousAdvisor = $this->renewalsAddonService->getUser($data['previous_advisor']);
 
             $quoteUuid = $this->generateUUID($quoteType->code, $quoteType->id);
@@ -997,7 +996,7 @@ class RenewalsUploadService
 
             $carMake = $this->renewalsAddonService->getCarMake($data['make']);
             $carModel = $this->renewalsAddonService->getCarModel($data['model'], $carMake);
-            $newAdvisorId = $this->renewalsAddonService->getUserLoggerService::info( $data['advisor']);
+            $newAdvisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $advisorId = $quote->advisor_id == null ? $newAdvisorId : $quote->advisor_id;
             $previousAdvisor = $this->renewalsAddonService->getUser($data['previous_advisor']);
             $claimHistory = $this->getClaimHistory($data['claim_history']);
@@ -2157,7 +2156,7 @@ class RenewalsUploadService
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
             $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
             // advisor and previous advisors will be ignored when not exists
-            $advisorId = $this->renewalsAddonService->getUserLoggerService::info( $data['advisor']);
+            $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $quoteUuid = $this->generateUUID($quoteType->code, $quoteType->id);
             $payment_status_id = $this->getPaymentStatusIdByCode($data['payment_status']);
             $customer = $this->getCustomer($data, $searchByName);
