@@ -874,13 +874,13 @@ class CarQuoteService extends BaseService
 
         if (auth()->check() && empty($requestParams['user'])) {
             $user = auth()->user();
-        } else if (!empty($requestParams['user'])){
+        } elseif (! empty($requestParams['user'])) {
             /* For queue when session data isn't present */
-             $user = $requestParams['user'];
+            $user = $requestParams['user'];
         }
 
         return $this->carQuoteQueryBuilder->processGridData($requestParams)
-            ->where(function ($query) use($user) {
+            ->where(function ($query) use ($user) {
                 if ($user->hasRole(RolesEnum::CarManager)) {
                     $this->walkTree($user->id);
                     $query->whereIn('advisor_id', $this->childUserIds);

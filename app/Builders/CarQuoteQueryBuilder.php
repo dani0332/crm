@@ -7,7 +7,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 
 class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -87,7 +86,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
         ]);
     }
 
-    public function applyFilters(Builder $query,$requestParams)
+    public function applyFilters(Builder $query, $requestParams)
     {
 
         $request = collect($requestParams);
@@ -124,7 +123,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByTeams(request('teams'))
             ->filterByAdvisors(request('advisor_id'))
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
-            ->filterBySegment(request('segment_filter'), QuoteTypeId::Car,$requestParams)
+            ->filterBySegment(request('segment_filter'), QuoteTypeId::Car, $requestParams)
             ->filterBy('sic_advisor_requested', ignoreAll: true)
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByAdvisorAssignedDates('carQuoteRequestDetail', ['advisor_assigned_date', 'advisor_assigned_date_end'])
