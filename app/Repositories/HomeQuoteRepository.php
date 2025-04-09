@@ -658,7 +658,7 @@ class HomeQuoteRepository extends BaseRepository
                 $quote->lookUpData = $lookUpData;
             }
         } catch (\Exception $e) {
-            info('Error fetching home lookup data: ' . $e->getMessage());
+            info('Error fetching home lookup data: '.$e->getMessage());
             $quote->lookUpData = [];
         }
 
@@ -669,7 +669,7 @@ class HomeQuoteRepository extends BaseRepository
                 $quote->customerAddressData = $customerAddressData;
             }
         } catch (\Exception $e) {
-            info('Error fetching customer address data: ' . $e->getMessage());
+            info('Error fetching customer address data: '.$e->getMessage());
             $quote->customerAddressData = [];
         }
     }
