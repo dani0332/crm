@@ -193,9 +193,7 @@ function onSubmit(isValid) {
       onBefore: () => (loader.table = true),
       onFinish: () => (loader.table = false),
     });
-  } else {
-    console.log('Invalid');
-  }
+  } else {}
 }
 
 function onReset() {

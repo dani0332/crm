@@ -31,6 +31,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use PDF;
 
 class HomeQuoteService extends BaseService
@@ -1261,7 +1262,21 @@ class HomeQuoteService extends BaseService
         // Fetch quote plans using UUID
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
-            return ['error' => 'Quote plans not available'];
+            throw ValidationException::withMessages(['error' => 'Quote plans not available. Please try again.']);
+        }
+
+        // Filter plans by provided plan IDs
+        $filteredPlans = collect($quotePlans->quotes->plans)->filter(function ($plan) use ($planIds) {
+            return isset($plan->id) && in_array($plan->id, $planIds);
+        });
+
+        // Check if all filtered plans have empty or null discountPremium
+        $allPlansHaveNoPremium = $filteredPlans->every(function ($plan) {
+            return empty($plan->discountPremium) || is_null($plan->discountPremium) || $plan->discountPremium <= 0;
+        });
+
+        if ($allPlansHaveNoPremium || $filteredPlans->isEmpty()) {
+            throw ValidationException::withMessages(['error' => 'Cannot generate PDF as all selected plans have no premium values. Please select plans with valid premium values.']);
         }
 
         // Retrieve insurance providers by provider IDs
@@ -1307,7 +1322,7 @@ class HomeQuoteService extends BaseService
             return [
                 'contents_value_flag' => false,
                 'personal_belongings_flag' => false,
-                'building_value_flag' => false
+                'building_value_flag' => false,
             ];
         }
 
@@ -1324,7 +1339,7 @@ class HomeQuoteService extends BaseService
         $values = [
             'contents_value' => 'N/A',
             'personal_belongings_value' => 'N/A',
-            'building_value' => 'N/A'
+            'building_value' => 'N/A',
         ];
 
         if (isset($flags['contents_value_flag']) && $flags['contents_value_flag']) {
@@ -1358,6 +1373,7 @@ class HomeQuoteService extends BaseService
         if ($id === null) {
             return null;
         }
+
         return collect($values)->firstWhere('id', $id);
     }
 
