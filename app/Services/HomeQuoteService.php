@@ -1307,7 +1307,7 @@ class HomeQuoteService extends BaseService
             return [
                 'contents_value_flag' => false,
                 'personal_belongings_flag' => false,
-                'building_value_flag' => false
+                'building_value_flag' => false,
             ];
         }
 
@@ -1324,7 +1324,7 @@ class HomeQuoteService extends BaseService
         $values = [
             'contents_value' => 'N/A',
             'personal_belongings_value' => 'N/A',
-            'building_value' => 'N/A'
+            'building_value' => 'N/A',
         ];
 
         if (isset($flags['contents_value_flag']) && $flags['contents_value_flag']) {
@@ -1358,6 +1358,7 @@ class HomeQuoteService extends BaseService
         if ($id === null) {
             return null;
         }
+
         return collect($values)->firstWhere('id', $id);
     }
 
