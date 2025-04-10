@@ -99,6 +99,8 @@ class CentralController extends Controller
 
     public function exportLeads(ExportValidationRequest $request, $quoteType, $exportTye = null)
     {
+        $request->merge(['quoteType' => $quoteType]);
+
         // For Personal Quotes
         if (in_array(ucfirst($quoteType), [
             QuoteTypes::BIKE->value,
@@ -108,6 +110,9 @@ class CentralController extends Controller
             QuoteTypes::JETSKI->value,
             QuoteTypes::HOME->value,
         ])) {
+            if ($request['exportType'] == 'email') {
+                return app(PersonalQuotesExport::class)->emailCSV($quoteType.'-List',$request->all());
+            }
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
 
@@ -121,7 +126,7 @@ class CentralController extends Controller
             }
         }
 
-        $request->merge(['quoteType' => $quoteType]);
+
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
 

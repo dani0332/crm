@@ -42,6 +42,7 @@ use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -62,7 +63,7 @@ class HomeQuoteRepository extends BaseRepository
         )->orderBy('created_at', 'desc');
     }
 
-    public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false)
+    public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false, $requestParams = [])
     {
         $excludeCreatedAtFilters = [
             'email',
@@ -74,26 +75,39 @@ class HomeQuoteRepository extends BaseRepository
             'booking_date',
         ];
 
-        // Check if any of the exclude filters are active
-        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters);
+        $user = null;
+        if (auth()->check() && empty($requestParams)) {
+            $requestParams = collect(request()->all());
+            $user = auth()->user();
+        }elseif(!empty($requestParams)){
+            $requestParams = collect($requestParams);
+            $user = $requestParams['user'];
+        }
 
-        return $this->byQuoteTypeCode(QuoteTypes::HOME)
+        // Check if any of the exclude filters are active
+        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters,$requestParams);
+
+        $query = $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
-            ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', auth()->id()))
-            ->when(request()->filled('advisors'), fn ($query) => $query->whereIn('advisor_id', (array) request('advisors')))
-            ->when(request()->has('is_renewal'), fn ($query) => $this->applyRenewalFilter($query))
+            ->when($user->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', $user->id()))
+            ->when(!empty($requestParams->get('advisors')), fn ($query) => $query->whereIn('advisor_id', (array) $requestParams->get('advisors')))
+            ->when(!empty($requestParams->get('is_renewal')), fn ($query) => $this->applyRenewalFilter($query,$requestParams->get('is_renewal')))
             ->tap(fn ($query) => $this->applyFilters($query))
-            ->when(! $shouldExcludeCreatedAtFilters, function ($query) {
-                if (request()->filled('created_at_start') && request()->filled('created_at_end')) {
-                    $query->whereBetween('personal_quotes.created_at', [request('created_at_start'), request('created_at_end')]);
+            ->when(! $shouldExcludeCreatedAtFilters, function ($query) use ($requestParams) {
+                if (!empty($requestParams->get('created_at_start'))  && !empty($requestParams->get('created_at_end'))) {
+                    $query->whereBetween('personal_quotes.created_at', [
+                        Carbon::parse($requestParams->get('created_at_start'))->startOfDay(),
+                        Carbon::parse($requestParams->get('created_at_end'))->endOfDay()
+                    ]);
                 } else {
                     $query->whereBetween('personal_quotes.created_at', $this->getDateRange());
                 }
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy('personal_quotes.created_at', 'desc')
-            ->when(
+            ->orderBy('personal_quotes.created_at', 'desc');
+
+        return $query->when(
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
                 fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate())
@@ -103,10 +117,10 @@ class HomeQuoteRepository extends BaseRepository
     /**
      * Check if any of the specified filters are active.
      */
-    private function hasActiveFilters(array $fields): bool
+    private function hasActiveFilters(array $fields,$requestParams = []): bool
     {
         foreach ($fields as $field) {
-            if (request()->filled($field)) {
+            if (!empty($requestParams[$field])) {
                 return true;
             }
         }
@@ -150,11 +164,11 @@ class HomeQuoteRepository extends BaseRepository
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      */
-    private function applyRenewalFilter($query): void
+    private function applyRenewalFilter($query,$isRenewal): void
     {
-        if (request('is_renewal') === quoteTypeCode::yesText) {
+        if ($isRenewal === quoteTypeCode::yesText) {
             $query->whereNotNull('personal_quotes.previous_quote_policy_number');
-        } elseif (request('is_renewal') === quoteTypeCode::noText) {
+        } elseif ($isRenewal === quoteTypeCode::noText) {
             $query->whereNull('personal_quotes.previous_quote_policy_number');
         }
     }

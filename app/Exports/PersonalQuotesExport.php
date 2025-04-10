@@ -31,7 +31,7 @@ class PersonalQuotesExport
         ];
     }
 
-    public function collection()
+    public function collection($requestParams)
     {
         switch (ucfirst($this->quoteType)) {
             case QuoteTypes::BIKE->value:
@@ -50,7 +50,7 @@ class PersonalQuotesExport
                 return JetskiQuoteRepository::getData(true);
 
             case QuoteTypes::HOME->value:
-                return HomeQuoteRepository::getData(true);
+                return HomeQuoteRepository::getData(true,requestParams: $requestParams);
 
             default:
                 return abort(404);
