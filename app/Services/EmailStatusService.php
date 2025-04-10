@@ -50,7 +50,7 @@ class EmailStatusService extends BaseService
                 $quote = HealthQuote::where('uuid', $request->uuid)->first();
                 break;
             case QuoteTypeId::Home:
-                    $quote = HealthQuote::where('uuid', $request->uuid)->first();
+                $quote = PersonalQuote::where('uuid', $request->uuid)->first();
                     break;
             default:
                 $quote = null;
