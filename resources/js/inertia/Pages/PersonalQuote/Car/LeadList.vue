@@ -558,23 +558,25 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
     url: `${window.location.origin}${url}`,
   };
 
-  console.log("onexport", payload);
-  logAndExportQuotes(payload).then(result => {
-    notification.success({
-      title: result.data.message,
-      position: 'top',
+  console.log('onexport', payload);
+  logAndExportQuotes(payload)
+    .then(result => {
+      notification.success({
+        title: result.data.message,
+        position: 'top',
+      });
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: 'Unable to start an export',
+        position: 'top',
+      });
+      throw err;
     });
-    if (result)
-      setTimeout(() => {
-        exportLoader.value = false;
-      }, 1000);
-  }).catch(err => {
-    notification.error({
-      title: "Unable to start an export",
-      position: 'top',
-    });
-    throw err;
-  });
 };
 
 const insurerAMLStatusOption = computed(() => {
@@ -913,9 +915,15 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="() => {
-              onExport(`/car/leads-export?${objToUrl(filters)}`, true, 'download')
-            }"
+            @click="
+              () => {
+                onExport(
+                  `/car/leads-export?${objToUrl(filters)}`,
+                  true,
+                  'download',
+                );
+              }
+            "
             class="justify-self-start mr-3"
           >
             Export
@@ -925,9 +933,15 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="() => {
-              onExport(`/car/leads-export?${objToUrl(filters)}`, true, 'email')
-            }"
+            @click="
+              () => {
+                onExport(
+                  `/car/leads-export?${objToUrl(filters)}`,
+                  true,
+                  'email',
+                );
+              }
+            "
             class="justify-self-start mr-3"
           >
             Export via email
