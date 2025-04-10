@@ -74,4 +74,17 @@ class EmailStatusService extends BaseService
         }
     }
 
+    public function updateEmailStatus($emailData, $status)
+    {
+        $emailStatus = EmailStatus::where('id', $emailData->id)->first();
+        if (empty($emailStatus)) {
+            info(self::class.' - updateEmailStatus not found for msg_id: '.$emailData->message_id.' | Time: '.now());
+
+            return;
+        }
+        $emailStatus->email_status = $status;
+        $emailStatus->save();
+        info('EmailStatusService - EmailStatus updated for msg_id: '.$emailData->message_id.' email_status: '.$emailStatus->email_status.' | Time:'.now());
+    }
+
 }
