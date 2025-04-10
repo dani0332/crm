@@ -21,9 +21,9 @@ class RolePermissionSeeder extends Seeder
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
-        $this->addBridgerSkipPermission();
+        //$this->addBridgerSkipPermission();
         $this->sendUpdateCancelPermission();
-        $this->addLeadAllocationLobPermissions();
+        //$this->addLeadAllocationLobPermissions();
     }
 
     private function addReceiveNotificationsPermission()
