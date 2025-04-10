@@ -11,6 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Services\EmailStatusService;
 use App\Enums\QuoteTypes;
 use App\Enums\ProcessStatusCode;
+use Illuminate\Support\Facades\Cache;
 
 class EmailStatusEventJob implements ShouldQueue
 {
@@ -63,9 +64,18 @@ class EmailStatusEventJob implements ShouldQueue
             $emailStatusData = EmailStatus::where('msg_id', $this->emailData->message_id)->first();
             if (! empty($emailStatusData)) {
                 if (! empty($emailStatusData->quote_type_id) && ! empty($emailStatusData->quote_id)) {
+                    $newEmailStatus = new EmailStatus;
+                    $newEmailStatus->email_address = $this->emailData->customer_email ?? $emailStatusData->email_address;
+                    $newEmailStatus->msg_id = $this->emailData->message_id;
+                    $newEmailStatus->email_status = $this->emailData->status;
+                    $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
+                    $newEmailStatus->save();
+
+                    Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
+
+                    info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
                     $this->storeEmailStatusEvent($emailStatusData);
-                    return true;
                 } else {
                     info('EmailStatusEventJob - quote_type_id not found: msg_id: '.$this->emailData->message_id.' | Time: '.now());
                 }

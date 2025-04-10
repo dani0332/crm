@@ -1,9 +1,9 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -134,6 +134,7 @@ const {
   policy_start_date,
   isEmail,
   isMobileNo,
+  maxCharacters,
   emiratesNumber,
 } = useRules();
 const confirmDeleteData = reactive({
@@ -228,6 +229,7 @@ const modals = reactive({
   activityConfirm: false,
   planDetails: false,
   mixInquiryConfirm: false,
+  sendConfirm: false,
 });
 
 const travelFields = computed(() => {
@@ -1176,16 +1178,16 @@ const onCopyText = text => {
     });
 };
 
-const getAddonVat = item => {
+const totalPremiumWithVat = (discountPremium, vat, addons) => {
   let addonVat = 0;
-  item.addons.forEach(addon => {
-    addon.addonOptions.forEach(option => {
+  addons.forEach(item => {
+    item.addonOptions.forEach(option => {
       if (option.isSelected && option.price != 0) {
-        addonVat += parseInt(option.price) + option.vat;
+        addonVat += useRoundIt(option.price) + useRoundIt(option.vat);
       }
     });
   });
-  return addonVat;
+  return useRoundIt(discountPremium + addonVat + vat);
 };
 
 const isProfileUpdateAllow = computed(() => {
@@ -1347,6 +1349,59 @@ const selectedPlanIds = computed(() => {
     : [];
 });
 
+const confirmSendEmail = () => {
+  const first_name = page.props.quote.first_name || '';
+  const last_name = page.props.quote.last_name || '';
+
+  axios
+    .post(
+      `/quotes/travel/${page.props.quote.uuid}/send-email-one-click-buy`,
+      {
+        quote_type_id: page.props.quoteTypeId,
+        quote_id: page.props.quote.id,
+        quote_uuid: page.props.quote.uuid,
+        quote_cdb_id: page.props.quote.code,
+        quote_previous_expiry_date:
+          page.props.quote.previous_policy_expiry_date,
+        quote_currently_insured_with: page.props.quote.currently_insured_with,
+        quote_car_make: page.props.carMakeText,
+        quote_car_model: page.props.carModelText,
+        quote_car_year_of_manufacture: page.props.quote.year_of_manufacture,
+        quote_previous_policy_number:
+          page.props.quote.previous_quote_policy_number,
+        customer_name: `${first_name} ${last_name}`,
+        customer_email: page.props.quote.email,
+        advisor_name: page.props.quote.advisor
+          ? page.props.quote.advisor.name
+          : null,
+        advisor_email: page.props.quote.advisor
+          ? page.props.quote.advisor.email
+          : null,
+        advisor_mobile_no: page.props.quote.advisor
+          ? page.props.quote.advisor.mobile_no
+          : null,
+        advisor_landline_no: page.props.quote.advisor
+          ? page.props.quote.advisor.landline_no
+          : null,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+
+    .then(response => {
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      modals.sendConfirm = false;
+    });
+};
 const selectedProviderPlan = ref({
   id: page.props.quote.plan_id,
   planName: page.props.ecomDetails.planName,
@@ -1362,7 +1417,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails', 'quote'],
   });
 };
 
@@ -1535,6 +1590,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
+            quote.previous_quote_policy_number &&
             canAny([
               permissionsEnum.VIEW_LEGACY_DETAILS,
               permissionsEnum.VIEW_ALL_LEADS,
@@ -1561,6 +1617,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         >
           Send NB OCB To Customer
         </x-button>
+
         <x-button
           size="sm"
           color="#ff5e00"
@@ -1744,7 +1801,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">AML STATUS</dt>
+                <dt class="font-medium uppercase">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -2539,7 +2596,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             v-model="travelerForm.first_name"
             label="Member Name*"
             placeholder="Member Name"
-            :rules="[isRequired]"
+            :rules="[isRequired, maxCharacters(40)]"
             :hasError="travelerForm.errors.first_name"
           />
           <ComboBox
@@ -2602,6 +2659,25 @@ const applyEmiratesIdNumMasking = emiratesId =>
           >
             {{ travelerForm.id ? 'Update' : 'Save' }}
           </x-button>
+        </template>
+      </x-modal>
+
+      <x-modal v-model="modals.sendConfirm" show-close backdrop>
+        <template #header> Send Email </template>
+        <p>Are you sure send email to customer?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.sendConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button size="sm" color="error" @click.prevent="confirmSendEmail">
+              Send
+            </x-button>
+          </div>
         </template>
       </x-modal>
     </div>
@@ -3025,6 +3101,24 @@ const applyEmiratesIdNumMasking = emiratesId =>
               >
                 Download PDF
               </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="quote.advisor_id != $page.props.auth.user.id"
+                >
+                  Send OCB Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
             </div>
           </div>
 
@@ -3075,9 +3169,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
               <template #item-premiumWithVat="item">
                 {{
-                  parseFloat(
-                    item.discountPremium + item.vat + getAddonVat(item),
-                  ).toFixed(2)
+                  totalPremiumWithVat(
+                    item.discountPremium,
+                    item.vat,
+                    item.addons,
+                  )
                 }}
               </template>
               <template #item-action="item">
@@ -3168,9 +3264,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </template>
                 <template #item-premiumWithVat="item">
                   {{
-                    parseFloat(
-                      item.discountPremium + item.vat + getAddonVat(item),
-                    ).toFixed(2)
+                    totalPremiumWithVat(
+                      item.discountPremium,
+                      item.vat,
+                      item.addons,
+                    )
                   }}
                 </template>
                 <template #item-action="item">
@@ -3276,6 +3374,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <PaymentTable
@@ -3631,7 +3730,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
     <lead-raw-data
       :modelType="'Travel'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

@@ -38,7 +38,7 @@ class BikeAllocation implements Allocation
                 $response = $this->bikeAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 if ($lead->isAllocationInProgress()) {
-                    info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+                    info("Allocation is already started at {$lead->allocation_started_at}");
 
                     return $this->bikeAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
                 }
@@ -50,7 +50,7 @@ class BikeAllocation implements Allocation
 
                 // If a valid tier is found
                 if ($tier) {
-                    info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
+                    info('Tier finalized is : '.$tier->name);
                     // Find available users for the tier
                     $availableUsers = $this->findAvailableUsers($tier->id, $lead->bikeQuote->source);
 
@@ -77,7 +77,7 @@ class BikeAllocation implements Allocation
                     }
                 } else {
                     // Log that tier was not found for the lead and skip processing
-                    info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+                    info('Tier not found. Skipping for now.');
                     $lead->endAllocation();
                     $response = $this->bikeAllocationService->createResponse(0, 'Tier not found', Response::HTTP_UNPROCESSABLE_ENTITY);
                 }

@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\AssignmentTypeEnum;
 use App\Models\HealthQuote;
 use App\Services\HealthAllocationService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -48,10 +49,12 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         }
 
         foreach ($leads as $lead) {
-            info('-------- Reassignment of lead : '.$lead->uuid.' started ---------');
+            LoggerService::startQuoteLogging($lead->uuid);
+
+            info('-------- Reassignment started ---------');
 
             if ($lead->isAllocationInProgress()) {
-                info("Allocation is already started for lead: {$lead->uuid} at {$lead->allocation_started_at}");
+                info("Allocation is already started at {$lead->allocation_started_at}");
 
                 continue;
             }
@@ -61,7 +64,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
-                info('No health team found against lead : '.$lead->uuid);
+                info('No health team found');
 
                 $lead->endAllocation();
 
@@ -71,7 +74,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             $advisor = $this->fetchAvailableAdvisor($lead->health_team_type, $lead);
 
             if (! $advisor) {
-                info('No advisors found against lead : '.$lead->uuid);
+                info('No advisors found');
 
                 $lead->endAllocation();
 
@@ -81,8 +84,10 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
 
             $lead->endAllocation();
-            info('-------- Reassignment of lead : '.$lead->uuid.' ended ---------');
+            info('-------- Reassignment ended ---------');
         }
+
+        LoggerService::endLogging();
         info('-------- Reassignment health job ended at : '.now().' ---------');
     }
 

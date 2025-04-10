@@ -56,13 +56,6 @@ class HomeQuote extends Model implements AuditableContract
             }
         });
     }
-    public function getAuditables()
-    {
-        return [
-            'auditable_type' => self::class,
-        ];
-    }
-
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
@@ -80,7 +73,7 @@ class HomeQuote extends Model implements AuditableContract
 
     public function insuranceProvider()
     {
-        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code']);
     }
 
     public function nationality()
@@ -155,8 +148,29 @@ class HomeQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => HomeQuote::class, 'key' => 'personal_quote_id'],
+            ],
+        ];
+    }
+
     public function quoteDetail()
     {
         return $this->hasOne(HomeQuoteRequestDetail::class);
+    }
+
+    public function subArea()
+    {
+        return $this->belongsTo(SubArea::class, 'sub_area_id');
+    }
+
+    public function rangeLookup()
+    {
+        return $this->belongsTo(RangeLookup::class, 'owner_occupancy_type_id', 'id');
     }
 }

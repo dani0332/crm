@@ -1,11 +1,11 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import AvailablePlans from '@/inertia/Pages/BikeQuote/AvailablePlans.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -545,7 +545,7 @@ function capitalizeString(str) {
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -643,6 +643,10 @@ function capitalizeString(str) {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Seat Capacity</dt>
                 <dd>{{ quote?.bike_quote?.seat_capacity }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CHASSIS NUMBER</dt>
+                <dd>{{ quote?.bike_quote?.chassis_number }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Emirate Of Registration</dt>
@@ -1321,6 +1325,7 @@ function capitalizeString(str) {
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <QuotePayments
@@ -1408,7 +1413,7 @@ function capitalizeString(str) {
 
     <lead-raw-data
       :modelType="'Bike'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

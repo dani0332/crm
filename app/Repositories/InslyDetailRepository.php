@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
@@ -14,6 +15,7 @@ use App\Models\InslyDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\YachtQuote;
+use App\Services\ApplicationStorageService;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\InslyDataService;
@@ -108,14 +110,6 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
 
-        /* Temp Code - assign email for particular Policy id/number */
-        $tempEmail = 'vitara@inbox.ru';
-        $tempPolicyId = 66495910;
-        if ($tempPolicyId == $data['policy_oid']) {
-            $email = $tempEmail;
-        }
-        /* Temp Code - assign email for particular Policy id/number */
-
         if (empty($email)) {
             return [
                 'status' => 400,
@@ -134,8 +128,21 @@ class InslyDetailRepository extends BaseRepository
         if ($advisorName == null) {
             $advisorName = $policy['quote']['broker'] ?? null;
         }
+
         $appUrl = config('constants.APP_URL');
         $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
+
+        /* Start - Get Sales Person/Advisor ID from Application storage to update against Legacy lead where sales person is not assigned */
+
+        $tempSalesPersonId = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_SALES_PERSON_ID);
+        $tempPolicyId = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_POLICY_OID);
+
+        if ($tempSalesPersonId && $tempPolicyId && $tempPolicyId == $policyID) {
+            $advisorId = $tempSalesPersonId;
+        }
+
+        /* End - Get Sales Person/Advisor ID from Application storage to update against Legacy lead where sales person is not assigned */
+
         if ($advisorId == null) {
             return [
                 'status' => 400,
@@ -365,14 +372,6 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
-
-        /* Temp Code - assign email for particular Policy id/number */
-        $tempEmail = 'vitara@inbox.ru';
-        $tempPolicyId = 66495910;
-        if ($tempPolicyId == $policy['policy_oid']) {
-            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
-        }
-        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;

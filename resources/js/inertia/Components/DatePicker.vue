@@ -50,6 +50,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  range: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const selectedData = computed({
@@ -79,6 +83,7 @@ const iconPosition = computed(() => {
     class="w-full"
     auto-apply
     :clearable="!props.disabled"
+    :range="range"
     text-input
   >
     <template #dp-input="{ value, onEnter, onTab, onBlur, onInput }">

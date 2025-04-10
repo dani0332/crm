@@ -11,6 +11,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
@@ -25,9 +26,11 @@ use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\KycLog;
 use App\Models\LifeQuote;
+use App\Models\ManualAMLLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\QuoteStatusLog;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
@@ -62,6 +65,7 @@ class AMLService
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
 
         return Carbon::createFromFormat(
@@ -77,7 +81,8 @@ class AMLService
             QuoteTypes::CYCLE->id() => $quoteRequestId,
             QuoteTypes::JETSKI->id() => $quoteRequestId,
             QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id,
-            QuoteTypes::YACHT->id() => $quoteRequestId
+            QuoteTypes::YACHT->id() => $quoteRequestId,
+            QuoteTypes::HOME->id() => $quoteRequestId,
         };
     }
 
@@ -91,7 +96,8 @@ class AMLService
             QuoteTypes::CYCLE->id() => CycleQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
-            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData)
+            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
         };
     }
 
@@ -114,14 +120,16 @@ class AMLService
                 'carQuoteRequestDetail',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
-            $quoteRequestDetails = HomeQuote::with([
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::HOME->id())->with([
+                'quoteDetail',
+                'homeQuote',
+                'homeQuote.possessionType',
+                'homeQuote.accommodationType',
+                'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
-                'customer.detail',
-                'possessionType',
-                'accommodationType',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HEALTH->id()) {
             $quoteRequestDetails = HealthQuote::with([
@@ -181,6 +189,7 @@ class AMLService
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
+                'quoteDetail',
                 'bikeQuote',
                 'customer.detail',
                 'quoteStatus',
@@ -242,6 +251,7 @@ class AMLService
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
+            ->where('users.is_active', 1)
             ->whereIn('roles.name', $complianceRole)->get();
 
         foreach ($recipients as $recipient) {
@@ -372,7 +382,10 @@ class AMLService
                 $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $ryuFilter->orWhereNull('decision');
             })
-            ->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
+            ->where(function ($aml) {
+                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                $aml->orWhereNull('screening_type');
+            })
             ->whereNull('screenshot')
             ->orderBy('id', 'desc')
             ->value('splitted_customer_code');
@@ -402,8 +415,10 @@ class AMLService
         ])->where(function ($ryuFilter) {
             $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
             $ryuFilter->orWhereNull('decision');
-        })->whereNotIn('screening_type', [AMLDecisionStatusEnum::INSURER_AXA])
-            ->whereNull('screenshot')->pluck('decision');
+        })->where(function ($aml) {
+            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+            $aml->orWhereNull('screening_type');
+        })->whereNull('screenshot')->pluck('decision');
 
         if ($fetchAMLRecords->count() == 0) {
             return true;
@@ -597,7 +612,15 @@ class AMLService
                 'passportNumber' => $insuredDetails?->id_type == 'passport' ? $insuredDetails?->id_number : null,
                 'chassisNumber' => $request['chassis_number'] ?? '',
                 'gender' => $this->formatGender($insuredDetails?->gender),
+                'dateOfBirth' => $insuredDetails?->dob,
+                'getQuoteEmail' => $request['get_quote_email_gig'] ?? null,
+                'insuredFirstName' => $insuredDetails?->first_name,
+                'insuredLastName' => $insuredDetails?->last_name,
             ];
+
+            if ($quoteTypeId == QuoteTypes::HOME->id()) {
+                $insurerScreeningPayload['nationalityId'] = $request['nationality_id'] ?? null;
+            }
 
             info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
@@ -669,5 +692,75 @@ class AMLService
         }
 
         return $gender;
+    }
+
+    public function tempSkipBridgerAML($skipBridgerScreeningRequest)
+    {
+        $return = ['status' => false, 'response' => 'AML Screening skipped process failed'];
+
+        try {
+            DB::transaction(function () use ($skipBridgerScreeningRequest) {
+                $quoteDetails = $this->getQuoteObject($skipBridgerScreeningRequest->quote_type_code, $skipBridgerScreeningRequest->quote_request_id);
+                info('fn:tempSkipBridgerAML - AML Screening skip process start - Ref-ID:'.$quoteDetails->code);
+
+                QuoteStatusLog::create([
+                    'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
+                    'quote_request_id' => $skipBridgerScreeningRequest->quote_request_id,
+                    'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
+                    'previous_quote_status_id' => $quoteDetails->quote_status_id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
+                $quoteDetails->save();
+
+                ManualAMLLog::updateOrCreate([
+                    'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
+                    'quote_uuid' => $skipBridgerScreeningRequest->quote_uuid,
+                ], [
+                    'created_by' => auth()->id(),
+                ]);
+
+                info('fn:tempSkipBridgerAML - AML Screening skip process completed - Ref-ID:'.$quoteDetails->code);
+            });
+
+            $return = ['status' => true, 'response' => 'AML Screening skipped for this quote'];
+
+        } catch (\Exception $exception) {
+            info('fn:tempSkipBridgerAML - AML Screening skip process failed - error - '.$exception->getMessage());
+
+            $return = ['status' => true, 'response' => 'AML Screening skip process failed'];
+        }
+
+        return $return;
+    }
+
+    /**
+     * Clears the AML status for non-AXA insurance providers.
+     */
+    public function clearAmlStatusForNonGIG($quoteType, $code, $providerCode)
+    {
+        info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$providerCode}");
+
+        if ($providerCode == InsuranceProvidersEnum::AXA) {
+            info("Insurance Provider is GIG(AXA). Skipping AML status clearing for Quote Code: {$code}");
+
+            return false;
+        }
+
+        // Retrieve the quote details by quote type and code
+        $quoteDetails = $this->getQuoteObjectBy($quoteType, $code, 'code');
+
+        // Update the insurer AML status to null if it is not already null
+        if ($quoteDetails->insurer_aml_status !== null) {
+            $oldInsurerAmlStatus = $quoteDetails->insurer_aml_status;
+            $quoteDetails->insurer_aml_status = null;
+            $quoteDetails->save();
+
+            info("AML status change from {$oldInsurerAmlStatus} to null for Quote Code: {$code}");
+        }
+
+        return true;
     }
 }

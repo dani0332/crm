@@ -563,7 +563,7 @@ const allowStatusUpdate = computed(() => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1134,6 +1134,7 @@ const allowStatusUpdate = computed(() => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="true"
     />
 
     <PolicyDetail
@@ -1222,7 +1223,7 @@ const allowStatusUpdate = computed(() => {
 
     <lead-raw-data
       :modelType="'Business'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

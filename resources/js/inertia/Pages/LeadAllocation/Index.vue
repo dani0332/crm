@@ -35,6 +35,7 @@ const autoRefresh = ref(true);
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const lobSpecificLeadAllocation = page.props.lobSpecificLeadAllocation;
 const notification = useToast();
 
 const statusModal = getStatusModal();
@@ -79,7 +80,8 @@ const currentRow = id => {
 
 const editCap = id => {
   if (
-    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]) ||
+    lobSpecificLeadAllocation
   ) {
     const row = leadData?.value.find(item => item.id === id);
     row.capEdit = true;
@@ -229,7 +231,12 @@ watch(
 onMounted(() => {
   tableHeader.value = tableHeader.value.filter(column => {
     if (
-      !hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+      !hasAnyRole([
+        rolesEnum.Admin,
+        rolesEnum.LeadPool,
+        rolesEnum.Engineering,
+      ]) &&
+      !lobSpecificLeadAllocation
     ) {
       return column.value !== 'reset_cap';
     }
@@ -261,7 +268,7 @@ onMounted(() => {
             rolesEnum.Admin,
             rolesEnum.LeadPool,
             rolesEnum.Engineering,
-          ])
+          ]) || lobSpecificLeadAllocation
         "
       >
         <h2 class="text-lg font-semibold">Auto Refresh :</h2>
@@ -359,7 +366,7 @@ onMounted(() => {
                 rolesEnum.Admin,
                 rolesEnum.LeadPool,
                 rolesEnum.Engineering,
-              ])
+              ]) || lobSpecificLeadAllocation
             "
             :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
             :id="id"

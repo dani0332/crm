@@ -119,7 +119,7 @@ class SendEmailCustomerService extends BaseService
                     $to != null && info('Mail Request to details ----- '.json_encode($to));
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 90000)
+                // ->retry(3, 90000)
                 ->post($this->url, $body);
 
             $result = [
@@ -129,6 +129,7 @@ class SendEmailCustomerService extends BaseService
                 'object' => $response->object(),
                 'respBody' => $response->body(),
                 'response' => "{$response->status()} {$response->body()}",
+                'sent' => 0,
             ];
 
             if ($result['code'] == 201) {
@@ -1256,7 +1257,7 @@ class SendEmailCustomerService extends BaseService
 
             $response = Http::withHeaders($headers)
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 90000)
+                // ->retry(3, 90000)
                 ->post(config('constants.SIB_URL'), $body);
 
             info('SICFollowupEmail ---- Request Sent '.$lead->email);
@@ -1534,5 +1535,40 @@ class SendEmailCustomerService extends BaseService
         }
 
         return $bccAdditional;
+    }
+
+    public function sendIntroAndReassignEmail($quote, $quoteType = null, $oldAdvisorId = null, $shortenedBusinessType = null)
+    {
+        $advisor = User::where('id', $quote->advisor_id)->first();
+        $previousAdvisor = User::where('id', $oldAdvisorId)->first();
+        $logMessage = empty($oldAdvisorId) ? 'old Advisor is not available' : "old Advisor {$oldAdvisorId} is available";
+        info(self::class." - {$logMessage} for the quote: {$quote->uuid} | Time: ".now());
+        $payload = [
+            'customerEmail' => $quote->email,
+            'customerName' => $quote->first_name.' '.$quote->last_name,
+            'quoteUID' => $quote->uuid,
+            'refID' => $quote->code,
+            'quoteType' => $quoteType,
+            'advisor' => $advisor,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorProfilePath' => (! empty($advisor->profile_photo_path) ? $advisor->profile_photo_path : ''),
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
+            'businessTypeInsurance' => $shortenedBusinessType ?? null,
+            'workflowType' => empty($oldAdvisorId) ? workflowTypeEnum::INTRODUCTORY_EMAIL_TO_CUSTOMER : workflowTypeEnum::CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR,
+        ];
+
+        $customerNotificationWorkflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW);
+        if (! empty($customerNotificationWorkflow)) {
+            app(BirdService::class)->triggerWebHookRequest($customerNotificationWorkflow, (object) $payload);
+            info(self::class.' - sendIntroAndReassignEmail - Webhook request sent to: '.$customerNotificationWorkflow.' with Ref-ID: '.$quote->uuid.' | Time:'.now());
+        } else {
+            info(self::class.'- sendIntroAndReassignEmail - Webhook URL not found in storage');
+        }
+
     }
 }

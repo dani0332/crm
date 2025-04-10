@@ -15,61 +15,14 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        Permission::firstOrCreate([
-            'name' => PermissionsEnum::TAP_BETA_ACCESS,
-            'guard_name' => 'web',
-        ], [
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        try {
-            // permission for upload Health Rates and Coverages
-            // $uploadHealthRatesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_RATES)->first();
-            // if (! $uploadHealthRatesPermission) {
-            //     Permission::create([
-            //         'name' => PermissionsEnum::UPLOAD_HEALTH_RATES,
-            //         'guard_name' => 'web',
-            //         'created_at' => now(),
-            //         'updated_at' => now(),
-            //     ]);
-            // }
-            // $uploadHealthCoveragesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_COVERAGES)->first();
-            // if (! $uploadHealthCoveragesPermission) {
-            //     Permission::create([
-            //         'name' => PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
-            //         'guard_name' => 'web',
-            //         'created_at' => now(),
-            //         'updated_at' => now(),
-            //     ]);
-            // }
-            $viewAllLeadsPermission = Permission::where('name', PermissionsEnum::VIEW_ALL_LEADS)->first();
-            if (! $viewAllLeadsPermission) {
-                Permission::create([
-                    'name' => PermissionsEnum::VIEW_ALL_LEADS,
-                    'guard_name' => 'web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-            $viewAllReportsPermission = Permission::where('name', PermissionsEnum::VIEW_ALL_REPORTS)->first();
-            if (! $viewAllReportsPermission) {
-                Permission::create([
-                    'name' => PermissionsEnum::VIEW_ALL_REPORTS,
-                    'guard_name' => 'web',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        } catch (\Throwable $th) {
-            info('RolePermission Seeder issue Error:'.$th->getMessage().' Line:'.$th->getLine());
-            throw $th;
-        }
         // $this->addReceiveNotificationsPermission();
         // $this->searchModulePermissions();
-        $this->createBusinessIntelligenceUnitRole();
-        $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
-        $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
-        $this->paymentsVoid();
+        // $this->createBusinessIntelligenceUnitRole();
+        // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
+        // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
+        // $this->paymentsVoid();
+        $this->addBridgerSkipPermission();
+        $this->addLeadAllocationLobPermissions();
     }
 
     private function addReceiveNotificationsPermission()
@@ -178,6 +131,41 @@ class RolePermissionSeeder extends Seeder
         $role = Role::where('name', RolesEnum::Engineering)->first();
         if ($role && ! $role->hasPermissionTo($permission)) {
             $role->givePermissionTo($permission);
+        }
+    }
+
+    private function addBridgerSkipPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::SKIP_BRIDGER_AML,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addLeadAllocationLobPermissions()
+    {
+        $permissions = [
+            PermissionsEnum::HOME_LEADPOOL,
+            PermissionsEnum::LIFE_LEADPOOL,
+            PermissionsEnum::YACHT_LEADPOOL,
+            PermissionsEnum::PET_LEADPOOL,
+            PermissionsEnum::CYCLE_LEADPOOL,
+            PermissionsEnum::CORPLINE_LEADPOOL,
+            PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
+            PermissionsEnum::SAVINGS_LEADPOOL,
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Builders\HealthQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
@@ -56,9 +57,12 @@ class HealthQuoteService extends BaseService
     protected $leadAllocationService;
     protected $httpService;
 
+    const SELECT_TITLE_MULTIPLE = 'select|title|multiple';
+    const APPLICATION_JSON = 'application/json';
+
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -251,6 +255,7 @@ class HealthQuoteService extends BaseService
                             'documents',
                             'verifiedByUser',
                             'processJob',
+                            'paymentCharges',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },
@@ -335,6 +340,15 @@ class HealthQuoteService extends BaseService
 
     public function getGridData($model = null, $request = null)
     {
+        $query = $this->healthQuoteQueryBuilder->processGridData();
+        $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health);
+        $this->adjustQueryByDateFilters($query, 'health_quote_request');
+
+        return $query;
+    }
+
+    public function getGridDataOld($model = null, $request = null)
+    {
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
@@ -378,9 +392,11 @@ class HealthQuoteService extends BaseService
             $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
             $this->query->whereBetween('hqr.transaction_approved_at', [$startDate, $endDate]);
         }
-        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date)
-        && ! isset($request->booking_date) && ! isset($request->renewal_batches)
-    && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
+        if (
+            ! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date)
+            && ! isset($request->booking_date) && ! isset($request->renewal_batches)
+            && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)
+        ) {
             $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
@@ -776,8 +792,8 @@ class HealthQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'quote_status_id' => 'select|title|multiple',
-            'advisor_id' => 'select|title|multiple',
+            'quote_status_id' => self::SELECT_TITLE_MULTIPLE,
+            'advisor_id' => self::SELECT_TITLE_MULTIPLE,
             'wcu_id' => 'select|title',
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
@@ -807,7 +823,7 @@ class HealthQuoteService extends BaseService
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
             'gender' => '|static|'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
-            'renewal_batches' => 'select|title|multiple',
+            'renewal_batches' => self::SELECT_TITLE_MULTIPLE,
             'renewal_import_code' => 'input|text',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
@@ -1035,8 +1051,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
+                        'Content-Type' => self::APPLICATION_JSON,
+                        'Accept' => self::APPLICATION_JSON,
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1102,8 +1118,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
+                        'Content-Type' => self::APPLICATION_JSON,
+                        'Accept' => self::APPLICATION_JSON,
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],

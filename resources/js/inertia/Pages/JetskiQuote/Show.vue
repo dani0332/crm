@@ -154,7 +154,7 @@ const dateFormat = date =>
                 <dd class="break-words">{{ quote.advisor?.email }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -405,7 +405,7 @@ const dateFormat = date =>
 
     <lead-raw-data
       :modelType="'Jetski'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

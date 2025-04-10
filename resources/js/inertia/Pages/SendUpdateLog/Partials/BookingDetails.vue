@@ -416,12 +416,7 @@ const calculateCommission = () => {
         );
 
         // TAP PAYMENT FLAG.
-        if (
-          page.props.isTapEnabled &&
-          commissionPercentage > 0 &&
-          bookingDetailsForm.commission_vat_applicable &&
-          props.bookingDetails?.brokerCommission
-        ) {
+        if (page.props.isTapEnabled) {
           const brokerCommission = props.bookingDetails?.brokerCommission;
           const brokerCommMinPer = brokerCommission
             ? roundValue(brokerCommission.commission_percentage_min)
@@ -429,29 +424,35 @@ const calculateCommission = () => {
           const brokerCommMaxPer = brokerCommission
             ? roundValue(brokerCommission.commission_percentage_max)
             : null;
-
           if (
-            brokerCommMinPer != null &&
-            brokerCommMaxPer != null &&
-            !(
-              commissionPercentage >= brokerCommMinPer &&
-              commissionPercentage <= brokerCommMaxPer
-            )
+            commissionPercentage > 0 &&
+            bookingDetailsForm.commission_vat_applicable &&
+            brokerCommMinPer > 0 &&
+            brokerCommMaxPer > 0
           ) {
-            notification.error({
-              title:
-                'The commission amount you entered is outside the permitted range.',
-              position: 'top',
-            });
-            bookingDetailsForm.setError({
-              commission_vat_applicable:
-                'The commission amount you entered is outside the permitted range.',
-            });
-            bookingDetailsForm.commission_vat_applicable =
-              commissionPercentage = null;
-            return;
-          } else {
-            bookingDetailsForm.clearErrors('commission_vat_applicable');
+            if (
+              brokerCommMinPer != null &&
+              brokerCommMaxPer != null &&
+              !(
+                Number(commissionPercentage) >= Number(brokerCommMinPer) &&
+                Number(commissionPercentage) <= Number(brokerCommMaxPer)
+              )
+            ) {
+              notification.error({
+                title:
+                  'The commission amount you entered is outside the permitted range.',
+                position: 'top',
+              });
+              bookingDetailsForm.setError({
+                commission_vat_applicable:
+                  'The commission amount you entered is outside the permitted range.',
+              });
+              bookingDetailsForm.commission_vat_applicable =
+                commissionPercentage = null;
+              return;
+            } else {
+              bookingDetailsForm.clearErrors('commission_vat_applicable');
+            }
           }
         }
         bookingDetailsForm.commission_percentage = commissionPercentage;
@@ -970,6 +971,7 @@ const submitToCustomer = (withPartialPaymentCheck = true) => {
     reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
     inslyMigrated: props.realQuote.insly_migrated,
     isEmailSent: props.sendUpdateLog.is_email_sent,
+    quoteCode: props.realQuote.code,
   };
   axios
     .post(url, data)
@@ -2184,6 +2186,7 @@ watch(
                       placeholder="Enter Commission Amount"
                       size="xs"
                       :icon-left="isNegativeValue ? 'minus' : ''"
+                      @change="calculateCommission"
                     />
                     <template #tooltip>
                       {{

@@ -3,7 +3,7 @@
 namespace App\Exports;
 
 use App\Enums\AMLStatusCode;
-use App\Repositories\TravelQuoteRepository;
+use App\Services\TravelQuoteService;
 use App\Traits\ExcelExportable;
 
 class TravelQuoteExport
@@ -12,7 +12,7 @@ class TravelQuoteExport
 
     public function collection()
     {
-        return TravelQuoteRepository::getData(true);
+        return app(TravelQuoteService::class)->getGridData()->get();
     }
 
     public function headings(): array
@@ -30,6 +30,7 @@ class TravelQuoteExport
             'API ISSUANCE STATUS',
             'INSURER API STATUS',
             'CREATED DATE',
+            'TRAVEL START DATE',
             'LAST MODIFIED DATE',
             'DOB',
             'TRANSAPP CODE',
@@ -70,6 +71,7 @@ class TravelQuoteExport
             $quote->api_issuance_status ? $quote->api_issuance_status : '',
             $quote->insurer_api_status ? $quote->insurer_api_status : '',
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            $quote->start_date ?? '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             date(config('constants.datetime_format'), strtotime($quote->dob)),
             optional($quote->travelQuoteRequestDetail)->transapp_code,

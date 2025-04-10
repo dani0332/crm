@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\FollowupStartedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Models\CarQuote;
+use App\Models\QuoteStatus;
 use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;
 use App\Services\QuoteStatusService;
@@ -71,7 +72,7 @@ class CarQuoteController extends Controller
      */
     public function updateQuoteStatus(UpdateLeadStatusRequest $request)
     {
-        $quoteStatus = QuoteStatusEnum::getKey($request->quote_status_id);
+        $quoteStatus = QuoteStatus::find($request->quote_status_id)->code ?? null;
         $quoteTypeId = QuoteTypes::getIdFromValue($request->quote_type);
         app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $request->quote_uuid, $quoteStatus, [], $request->notes);
 

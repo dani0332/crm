@@ -24,6 +24,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 - [InertiaJS](https://inertiajs.com/)
 - [TailwindCSS](https://tailwindcss.com/)
 - [UI - indielayer](https://indielayer.com/)
+- Test
 
 ## Setting up Laravel
 

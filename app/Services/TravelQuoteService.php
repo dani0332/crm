@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
@@ -47,7 +48,7 @@ class TravelQuoteService extends BaseService
     use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(LeadAllocationService $leadAllocationService, protected TravelQuoteQueryBuilder $travelQuoteQueryBuilder)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->query = TravelQuote::as('tqr')->select([
@@ -336,7 +337,17 @@ class TravelQuoteService extends BaseService
         return TravelQuote::orderBy('created_at', 'desc')->get();
     }
 
-    public function getGridData($model, $request)
+    public function getGridData()
+    {
+        $query = $this->travelQuoteQueryBuilder->processGridData();
+        $this->whereBasedOnRole($query, 'travel_quote_request');
+        $this->adjustQueryByDateFilters($query, 'travel_quote_request');
+
+        return $query;
+
+    }
+
+    public function getGridDataOld($model, $request)
     {
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
@@ -384,6 +395,7 @@ class TravelQuoteService extends BaseService
         if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start)
         && ! isset($request->payment_due_date) && ! isset($request->booking_date)
     && ! isset($request->renewal_batches) && ! isset($request->previous_quote_policy_number) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number) && ! isset($request->policy_expiry_date) && ! isset($request->policy_expiry_date_end)) {
+
             $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if ($request->transaction_approved_dates) {
@@ -585,6 +597,11 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+
+        if (isset($request->travel_start_date) && $request->travel_start_date != '') {
+            $this->query->whereDate('tqr.start_date', Carbon::parse($request->travel_start_date));
+        }
+
         $this->query->filterBySegment();
         $this->adjustQueryByDateFilters($this->query, 'tqr');
 
@@ -642,6 +659,7 @@ class TravelQuoteService extends BaseService
         return TravelQuote::where('id', $id)->with([
             'child',
             'parent',
+            'plan',
             'payments' => function ($payment) {
                 $payment->with([
                     'paymentSplits' => function ($paymentSplit) {
@@ -651,6 +669,7 @@ class TravelQuoteService extends BaseService
                             'documents',
                             'verifiedByUser',
                             'processJob',
+                            'paymentCharges',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },

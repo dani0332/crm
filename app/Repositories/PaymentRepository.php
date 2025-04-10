@@ -18,7 +18,6 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\User;
 use App\Services\CentralService;
 use App\Services\PaymentLinkService;
 use App\Services\SageApiService;
@@ -205,6 +204,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'discount_value' => $masterPayment->discount_value,
                     'payment_methods_code' => $masterPayment->payment_methods,
                     'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                    'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
                     'updated_by' => $request->user()->id,
                 ];
 
@@ -942,32 +942,28 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     }
 
-    public function getAuthorisePaymentCount($userId = null)
+    public function getAuthorisePaymentCount($user = null, $teamIds = null)
     {
-        if (! Auth::check() && $userId == null) {
+        $user = $user ?: Auth::user();
+        if (! $user) {
             return 0;
         }
-        $userId = $userId != null ? $userId : Auth::user()->id;
-        $user = User::where('id', $userId)->first();
-        $userTeams = $user->getUserTeams($userId);
+
+        $userTeamIds = $teamIds ?: $user->getUserTeamIds();
 
         $personalCount = DB::table('payments')
             ->distinct()
             ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->join('users', 'users.id', 'pq.advisor_id')
-            ->join('user_team', 'user_team.user_id', 'users.id')
-            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->join('user_team', 'user_team.user_id', 'pq.advisor_id')
             ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
 
         if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
-            $personalCount = $personalCount->whereIn('teams.name', $userTeams)->count('payments.id');
-
+            $personalCount = $personalCount->whereIn('user_team.team_id', $userTeamIds);
         } else {
-            $personalCount = $personalCount->where('pq.advisor_id', $userId)->count('payments.id');
-
+            $personalCount = $personalCount->where('pq.advisor_id', $user->id);
         }
 
-        return $personalCount;
+        return $personalCount->count('payments.id');
     }
 
     public function fetchMainQuotePayment($quote)
