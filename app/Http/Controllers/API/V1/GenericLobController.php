@@ -33,12 +33,12 @@ class GenericLobController extends Controller
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => $e->getMessage() ?: 'Validation error occurred',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Failed to generate PDF. ' . $e->getMessage(),
-                'errors' => ['error' => [$e->getMessage()]]
+                'message' => 'Failed to generate PDF. '.$e->getMessage(),
+                'errors' => ['error' => [$e->getMessage()]],
             ], 500);
         }
     }

@@ -31,8 +31,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use PDF;
 use Illuminate\Validation\ValidationException;
+use PDF;
 
 class HomeQuoteService extends BaseService
 {
@@ -1266,12 +1266,12 @@ class HomeQuoteService extends BaseService
         }
 
         // Filter plans by provided plan IDs
-        $filteredPlans = collect($quotePlans->quotes->plans)->filter(function($plan) use ($planIds) {
+        $filteredPlans = collect($quotePlans->quotes->plans)->filter(function ($plan) use ($planIds) {
             return isset($plan->id) && in_array($plan->id, $planIds);
         });
 
         // Check if all filtered plans have empty or null discountPremium
-        $allPlansHaveNoPremium = $filteredPlans->every(function($plan) {
+        $allPlansHaveNoPremium = $filteredPlans->every(function ($plan) {
             return empty($plan->discountPremium) || is_null($plan->discountPremium) || $plan->discountPremium <= 0;
         });
 
