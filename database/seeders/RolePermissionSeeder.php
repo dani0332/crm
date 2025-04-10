@@ -23,6 +23,7 @@ class RolePermissionSeeder extends Seeder
         // $this->paymentsVoid();
         $this->addBridgerSkipPermission();
         $this->sendUpdateCancelPermission();
+        $this->addLeadAllocationLobPermissions();
     }
 
     private function addReceiveNotificationsPermission()
@@ -143,6 +144,30 @@ class RolePermissionSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+    }
+
+    private function addLeadAllocationLobPermissions()
+    {
+        $permissions = [
+            PermissionsEnum::HOME_LEADPOOL,
+            PermissionsEnum::LIFE_LEADPOOL,
+            PermissionsEnum::YACHT_LEADPOOL,
+            PermissionsEnum::PET_LEADPOOL,
+            PermissionsEnum::CYCLE_LEADPOOL,
+            PermissionsEnum::CORPLINE_LEADPOOL,
+            PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
+            PermissionsEnum::SAVINGS_LEADPOOL,
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ], [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     private function sendUpdateCancelPermission(): void

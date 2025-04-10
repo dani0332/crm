@@ -145,6 +145,10 @@ class SendUpdateLogController extends Controller
             $quote->load('plan.insuranceProvider');
         }
 
+        if ($quoteType == quoteTypeCode::Travel) {
+            $sendUpdateLog->load('travelPlan.insuranceProvider');
+        }
+
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code ?? null;
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode);

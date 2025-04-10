@@ -41,17 +41,17 @@ class HomeAllocation extends BaseAllocation
 
     private function isValueLead(): bool
     {
-        return ($this->lead->has_contents && $this->lead->contents_aed > 100000) ||
-        ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed > 100000) ||
-        ($this->lead->has_building && $this->lead->building_aed > 5000000) ||
+        return ($this->lead->has_contents && $this->lead->contents_aed > 50000) ||
+        ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed > 50000) ||
+        ($this->lead->has_building && $this->lead->building_aed > 3000000) ||
         $this->isValueLocation();
     }
 
     private function isVolumeLead(): bool
     {
-        return ($this->lead->has_contents && $this->lead->contents_aed < 100000) ||
-            ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed < 100000) ||
-            ($this->lead->has_building && $this->lead->building_aed < 5000000) ||
+        return ($this->lead->has_contents && $this->lead->contents_aed <= 50000) ||
+            ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed <= 50000) ||
+            ($this->lead->has_building && $this->lead->building_aed <= 3000000) ||
             ! $this->isValueLocation();
     }
 }
