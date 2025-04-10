@@ -51,7 +51,7 @@ class EmailStatusService extends BaseService
                 break;
             case QuoteTypeId::Home:
                 $quote = PersonalQuote::where('uuid', $request->uuid)->first();
-                    break;
+                break;
             default:
                 $quote = null;
                 break;
@@ -77,8 +77,9 @@ class EmailStatusService extends BaseService
     public function updateEmailStatus($emailData, $status)
     {
         $emailStatus = EmailStatus::where('id', $emailData->id)->first();
-        if(empty($emailStatus)) {
+        if (empty($emailStatus)) {
             info(self::class.' - updateEmailStatus not found for msg_id: '.$emailData->message_id.' | Time: '.now());
+
             return;
         }
         $emailStatus->email_status = $status;

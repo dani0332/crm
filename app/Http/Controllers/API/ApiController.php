@@ -11,6 +11,7 @@ use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\EmailEventsRequest;
@@ -32,6 +33,7 @@ use App\Services\Cache\CacheManager;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
+use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
@@ -40,8 +42,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use App\Services\OutboundEmailsHookService;
-use App\Http\Requests\BirdOutBoundWebhookRequest;
 
 class ApiController extends Controller
 {
