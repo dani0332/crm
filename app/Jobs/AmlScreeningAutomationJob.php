@@ -26,12 +26,9 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
     public $timeout = 60;
     public $tries = 1;
-    
     public $uniqueFor = 60 * 15; // 15 minutes
     public $uniqueKey = ''; // 15 minutes
-
     private $className = 'AmlScreeningAutomationJob';
-
     private mixed $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
@@ -51,14 +48,14 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     public function handle(): void
     {
         $amlAutomation = AmlAutomation::updateOrCreate(
-            [ 'code' => $this->quoteRefId ], 
-            [ 'status' => AmlAutomationStatus::QUEUE_STATUS ]
+            ['code' => $this->quoteRefId],
+            ['status' => AmlAutomationStatus::QUEUE_STATUS]
         );
 
         $quoteTypeCode = explode('-', $this->quoteRefId)[0] ?? '';
         $this->quoteType = QuoteTypes::getNameShortCode($quoteTypeCode);
 
-        if(empty($this->quoteType?->value)) {
+        if (empty($this->quoteType?->value)) {
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - quote type not found');
 
             return;
@@ -85,7 +82,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         }
 
         try {
-            $amlAutomation->update([ 'status' => AmlAutomationStatus::PROCESSING_STATUS ]);
+            $amlAutomation->update(['status' => AmlAutomationStatus::PROCESSING_STATUS]);
 
             $amlService = app(AMLService::class);
 
@@ -150,11 +147,11 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $amlResult = $result instanceof \Illuminate\Http\RedirectResponse ? 'success' : 'error';
 
             $this->quoteRequest->refresh();
-            $amlAutomation->update([ 'status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $this->quoteRequest->aml_status ]);
+            $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $this->quoteRequest->aml_status]);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - reqFn: quoteUpdate'.' - response: '.$amlResult);
 
         } catch (\Exception $e) {
-            $amlAutomation->update([ 'status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $e->getMessage() ]);
+            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $e->getMessage()]);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML screening failed'.' - Error: '.$e->getMessage().' - line: '.$e->getLine());
         }
     }
