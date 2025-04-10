@@ -6355,7 +6355,7 @@ onBeforeMount(() => {
                   </x-button>
                 </div>
                 <template v-if="paymentMethodsModels[insurerPaymentLinkIndex] === page.props.paymentMethodsEnum?.InsurerPaymentLink && can(permissionEnum.INSURER_PAYMENT_LINK)">
-                  <InsurerPaymentLink ref="insurerPaymentComponent" :insurerPaymentLinkIndex="insurerPaymentLinkIndex" :paymentForm="paymentMethodsForm" :payments="payments" @updateOnParent="(e,f,g) => updateFromInsurerPaymentLink(e, f, g)"/>
+                  <InsurerPaymentLink ref="insurerPaymentComponent" :modelType="props.quoteType" :insurerPaymentLinkIndex="insurerPaymentLinkIndex" :paymentForm="paymentMethodsForm" :payments="payments" @updateOnParent="(e,f,g) => updateFromInsurerPaymentLink(e, f, g)"/>
                 </template>
               </div>
             </template>
