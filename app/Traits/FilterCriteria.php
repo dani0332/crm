@@ -70,7 +70,7 @@ trait FilterCriteria
                                 $startDate = Carbon::parse($filters->get('policy_expiry_date'))->format('Y-m-d');
                                 $endDate = Carbon::parse($filters->get('policy_expiry_date_end'))->format('Y-m-d');
                                 $query->whereBetween('previous_policy_expiry_date', [$startDate, $endDate]);
-                            } elseif (!empty($filters->get('last_modified_date')) && $filters->get('last_modified_date') != '') {
+                            } elseif (! empty($filters->get('last_modified_date')) && $filters->get('last_modified_date') != '') {
                                 $dateArray = $filters->get('last_modified_date');
                                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();

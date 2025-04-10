@@ -629,11 +629,11 @@ trait GenericQueriesAllLobs
         $request = $requestParams ? collect($requestParams) : request();
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $defaultDate = now()->endOfDay();
-        if (!empty($request->get("payment_due_date"))) {
-            $query->join('payment_splits as pays', 'pays.code', '=', $tablePrefix . '.code');
+        if (! empty($request->get('payment_due_date'))) {
+            $query->join('payment_splits as pays', 'pays.code', '=', $tablePrefix.'.code');
             $columnName = 'pays.due_date';
-        } elseif (!empty($request->get("booking_date"))) {
-            $columnName = $tablePrefix . '.policy_booking_date';
+        } elseif (! empty($request->get('booking_date'))) {
+            $columnName = $tablePrefix.'.policy_booking_date';
         } else {
             return;
         }

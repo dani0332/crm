@@ -96,7 +96,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             $requestParams = collect(request()->all());
         } elseif (! empty($requestParams)) {
             /* For queue when session data isn't present */
-            $user = $requestParams['user'] ?? null ;
+            $user = $requestParams['user'] ?? null;
             $requestParams = collect($requestParams);
         }
 
@@ -133,39 +133,39 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByAdvisors($requestParams->get('advisor_id'))
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', value: $requestParams['transaction_approved_dates'] ?? null)
             ->filterByDateRange('advisor_assigned_date', value: $requestParams['advisor_assigned_date'] ?? null)
-            ->filterBySegment('travel_quote_request',$requestParams)
-            ->when(!empty($requestParams->get('previous_quote_policy_number')), function ($query) use ($requestParams) {
+            ->filterBySegment('travel_quote_request', $requestParams)
+            ->when(! empty($requestParams->get('previous_quote_policy_number')), function ($query) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
-            ->when($user->isSpecificTeamAdvisor('Travel'), function ($query) use($user) {
+            ->when($user->isSpecificTeamAdvisor('Travel'), function ($query) use ($user) {
                 $query->filterBy('advisor_id', $user->id);
             })
-            ->when(!empty($requestParams->get('is_renewal')) && $requestParams->get('is_renewal') == 'Yes', function ($query) {
+            ->when(! empty($requestParams->get('is_renewal')) && $requestParams->get('is_renewal') == 'Yes', function ($query) {
                 $query->whereNotNull('previous_quote_policy_number');
             })
-            ->when(!empty($requestParams->get('is_renewal')) && $requestParams->get('is_renewal') == 'No', function ($query) {
+            ->when(! empty($requestParams->get('is_renewal')) && $requestParams->get('is_renewal') == 'No', function ($query) {
                 $query->whereNull('previous_quote_policy_number');
             })
-            ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && !empty($requestParams->get('insurer_tax_invoice_number')), function ($query) use ($requestParams) {
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && ! empty($requestParams->get('insurer_tax_invoice_number')), function ($query) use ($requestParams) {
                 $query->whereRelation('payments', 'insurer_tax_number', $requestParams->get('insurer_tax_invoice_number'));
             })
-            ->when($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && !empty($requestParams->get('insurer_commission_tax_invoice_number')), function ($query) use ($requestParams) {
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && ! empty($requestParams->get('insurer_commission_tax_invoice_number')), function ($query) use ($requestParams) {
                 $query->whereRelation('payments', 'insurer_commmission_invoice_number', $requestParams->get('insurer_commission_tax_invoice_number'));
             })
             ->when(
-                !empty($requestParams->get('email')) && empty($requestParams->get('code')) && empty($requestParams->get('first_name')) && empty($requestParams->get('last_name')) && empty($requestParams->get('quote_status_id')) && empty($requestParams->get('mobile_no')),
+                ! empty($requestParams->get('email')) && empty($requestParams->get('code')) && empty($requestParams->get('first_name')) && empty($requestParams->get('last_name')) && empty($requestParams->get('quote_status_id')) && empty($requestParams->get('mobile_no')),
                 fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
             )
             ->when($this->shouldApplyDatesFilter() && empty($requestParams->get('last_modified_date')) && empty($requestParams->get('created_at_start')) && empty($requestParams->get('renewal_batches')) && empty($requestParams->get('policy_expiry_date')) && empty($requestParams->get('policy_expiry_date_end')), function ($query) {
                 $query->filterByToday();
             })
-            ->when($this->shouldApplyDatesFilter() && empty($requestParams->get('renewal_batches')) && !empty($requestParams->get('created_at_start')) && !empty($requestParams->get('created_at_end')), function ($query) use ($requestParams) {
+            ->when($this->shouldApplyDatesFilter() && empty($requestParams->get('renewal_batches')) && ! empty($requestParams->get('created_at_start')) && ! empty($requestParams->get('created_at_end')), function ($query) use ($requestParams) {
                 $query->whereBetween('created_at', [$this->parseDate($requestParams->get('created_at_start'), true), $this->parseDate($requestParams->get('created_at_end'), false)]);
             })
-            ->when(!empty($requestParams->get('last_modified_date')), function ($query) {
+            ->when(! empty($requestParams->get('last_modified_date')), function ($query) {
                 $query->filterByDateRange('last_modified_date', 'updated_at');
             })
-            ->when(!empty($requestParams->get('coverage_code')), function ($q) use ($requestParams) {
+            ->when(! empty($requestParams->get('coverage_code')), function ($q) use ($requestParams) {
                 $q->where(function ($q) use ($requestParams) {
                     $q->where('coverage_code', $requestParams->get('coverage_code'))
                         ->orWhere(function ($qInner) use ($requestParams) {
@@ -177,7 +177,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                         });
                 });
             })
-            ->when(!empty($requestParams->get('direction_code')), function ($q) use ($requestParams) {
+            ->when(! empty($requestParams->get('direction_code')), function ($q) use ($requestParams) {
                 $q->when($requestParams->get('direction_code') == TravelQuoteEnum::TRAVEL_UAE_OUTBOUND, function ($q) use ($requestParams) {
                     $q->where(function ($q) use ($requestParams) {
                         $q->where('direction_code', $requestParams->get('direction_code'))
@@ -210,7 +210,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 });
             })
             ->when(
-                !empty($requestParams->get('sortBy')),
+                ! empty($requestParams->get('sortBy')),
                 fn ($q) => $q->orderBy($requestParams->get('sortBy'), $requestParams->get('sortType')),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
             );

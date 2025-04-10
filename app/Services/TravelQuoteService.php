@@ -340,8 +340,8 @@ class TravelQuoteService extends BaseService
     public function getGridData($model = null, $requestParams = [])
     {
         $query = $this->travelQuoteQueryBuilder->processGridData($requestParams);
-        $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user']?? null );
-        $this->adjustQueryByDateFilters($query, 'travel_quote_request',requestParams: $requestParams);
+        $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user'] ?? null);
+        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams);
 
         return $query;
 

@@ -127,9 +127,10 @@ class CentralController extends Controller
                 return app(LifeQuotesExport::class)->download('life_leads');
 
             case QuoteTypes::HOME->value:
-                if($request['exportType'] == 'email'){
+                if ($request['exportType'] == 'email') {
                     return app(HomeQuoteExport::class)->emailCSV('Home-List', $request->all());
                 }
+
                 return app(HomeQuoteExport::class)->download('home_leads');
 
             case QuoteTypes::AMT->value:
@@ -139,9 +140,10 @@ class CentralController extends Controller
                 return app(BusinessQuoteExport::class)->download('business_leads');
 
             case QuoteTypes::TRAVEL->value:
-                if($request['exportType'] == 'email'){
+                if ($request['exportType'] == 'email') {
                     return app(TravelQuoteExport::class)->emailCSV('Travel-List', $request->all());
                 }
+
                 return app(TravelQuoteExport::class)->download('travel_leads');
 
             case QuoteTypes::CAR->value:

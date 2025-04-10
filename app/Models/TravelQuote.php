@@ -247,10 +247,10 @@ class TravelQuote extends Model implements AuditableContract
         return $this->coverage_code === TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP;
     }
 
-    public function scopeFilterBySegment($query, $alias = 'tqr',$requestParams=[])
+    public function scopeFilterBySegment($query, $alias = 'tqr', $requestParams = [])
     {
         $segmentFilter = request()->input('segment_filter');
-        self::applySegmentFilter($query, $segmentFilter, $alias, QuoteTypeId::Travel,$requestParams);
+        self::applySegmentFilter($query, $segmentFilter, $alias, QuoteTypeId::Travel, $requestParams);
     }
 
     public function travelQuotePlanDetails()

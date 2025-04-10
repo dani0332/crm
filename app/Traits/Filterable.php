@@ -161,7 +161,7 @@ trait Filterable
 
     public function scopeMatchBy($query, string $filterName, ?string $column = null, bool $ignoreAll = false, string|int|null $value = null)
     {
-        $this->applyByFilters($query, $filterName, 'like', $column, $ignoreAll,value: $value);
+        $this->applyByFilters($query, $filterName, 'like', $column, $ignoreAll, value: $value);
     }
 
     public function scopeFilterByToday($query, $column = 'created_at')
@@ -172,11 +172,11 @@ trait Filterable
     public function scopeFilterByDateRange($query, $filterName, $column = null, ?array $value = null)
     {
         if (empty($value)) {
-            $value = request($filterName,[]);
+            $value = request($filterName, []);
         }
 
         $column = $this->resolveColumn($filterName, $column);
-        $query->when(! empty($value), function ($subQuery) use ($column, $filterName,$value) {
+        $query->when(! empty($value), function ($subQuery) use ($column, $value) {
             [$start, $end] = $value;
 
             $start = $this->parseDate($start, true);
@@ -189,7 +189,7 @@ trait Filterable
     public function scopeFilterByDate($query, $filterName, $column = null, $isStartOfDay = true, string|int|null $value = null)
     {
         $column = $this->resolveColumn($filterName, $column);
-        $query->when(! empty($value), function ($subQuery) use ($column, $filterName, $isStartOfDay,$value) {
+        $query->when(! empty($value), function ($subQuery) use ($column, $isStartOfDay, $value) {
             $subQuery->where($column, $isStartOfDay ? '>=' : '<=', $this->parseDate($value, $isStartOfDay));
         });
     }
