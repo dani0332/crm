@@ -229,4 +229,9 @@ class LookupService extends BaseService
 
         return Lookup::whereIn('parent_id', $parentTypes)->get();
     }
+
+    public function getSendUpdateCancelOptions()
+    {
+        return Lookup::where('key', LookupsEnum::SEND_UPDATE_CANCEL_OPTIONS)->get();
+    }
 }

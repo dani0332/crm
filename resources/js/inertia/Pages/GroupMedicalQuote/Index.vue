@@ -63,6 +63,7 @@ const filters = reactive({
   company_name: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  advisor_assigned_date: [],
 });
 
 const leadStatusOptions = computed(() => {
@@ -523,6 +524,13 @@ const insurerAMLStatusOption = computed(() => {
         <x-field label="Created Date End">
           <DatePicker v-model="filters.created_at_end" name="created_at_end" />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.leadStatus"
