@@ -818,23 +818,23 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+
 const getBMITag = () => {
-    const bmi = page.props.quote.life_quote?.bmi;
-    
-    const bmiRanges = [
-      { min: 0, max: 15.99, text: "High Risk-Underweight", color: "red" },
-      { min: 16, max: 18.4, text: "Low Risk-Underweight", color: "yellow" },
-      { min: 18.41, max: 25, text: "Normal", color: "green" },
-      { min: 25.01, max: 30, text: "Low Risk-Overweight", color: "yellow" },
-      { min: 30.01, max: 40, text: "Low Risk-Obese", color: "yellow" },
-      { min: 40.01, max: Infinity, text: "High Risk-Obese", color: "red" },
-    ];
+  const bmi = page.props.quote.life_quote?.bmi;
 
-    const tag = bmiRanges.find(range => bmi >= range.min && bmi <= range.max);
+  const bmiRanges = [
+    { min: 0, max: 15.99, text: 'High Risk-Underweight', color: 'red', bgColor: 'red-200' },
+    { min: 16, max: 18.4, text: 'Low Risk-Underweight', color: 'yellow', bgColor: 'yellow-300' },
+    { min: 18.41, max: 25, text: 'Normal', color: 'green', bgColor: 'green-200' },
+    { min: 25.01, max: 30, text: 'Low Risk-Overweight', color: 'yellow', bgColor: 'yellow-300' },
+    { min: 30.01, max: 40, text: 'Low Risk-Obese', color: 'yellow', bgColor: 'yellow-300' },
+    { min: 40.01, max: Infinity, text: 'High Risk-Obese', color: 'red', bgColor: 'red-200' },
+  ];
 
-    return tag || { text: "Invalid BMI", color: "gray" };
-  }
+  const tag = bmiRanges.find(range => bmi >= range.min && bmi <= range.max);
 
+  return tag || { text: 'Invalid BMI', color: 'gray' };
+};
 
 </script>
 
@@ -1284,7 +1284,7 @@ const getBMITag = () => {
                   <dd>
                     {{quote.life_quote?.bmi}}
                     <span
-                      :class="`inline-block px-2 py-1 text-xs font-medium rounded-full bg-${getBMITag().color}-100 text-${getBMITag().color}-800`"
+                      :class="`inline-block px-2 py-1 text-xs font-medium rounded-full bg-${getBMITag().bgColor} text-${getBMITag().color}-800`"
                     >
                       {{ getBMITag().text }}
                     </span>
