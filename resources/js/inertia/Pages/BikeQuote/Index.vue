@@ -48,6 +48,7 @@ let availableFilters = {
   policy_expiry_date_end: '',
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  advisor_assigned_date: [],
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -434,6 +435,13 @@ const insurerAMLStatusOption = computed(() => {
             class="w-full"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
