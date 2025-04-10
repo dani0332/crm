@@ -118,7 +118,10 @@ class InstantAlfredService extends BaseService
                     'tqpd.plan_name',
                 ]);
             })
-            ->groupBy('pqr.id');
+            ->groupBy('pqr.id')
+            ->when(isset(request()->sortType), function ($query) {
+                $query->orderBy('pqrd.chat_initiated_at', request()->sortType);
+            });
         $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
 
         return $aliases;
@@ -317,6 +320,11 @@ class InstantAlfredService extends BaseService
                     'total_tokens' => '$response.usage.total_tokens',
                 ],
             ];
+            $pipeline[] = [
+                '$sort' => [
+                    'created_at' => $request->sortType == 'desc' ? -1 : 1,
+                ],
+            ];
         } elseif ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             $pipeline[] = [
                 '$group' => [
@@ -360,6 +368,11 @@ class InstantAlfredService extends BaseService
                     'fallbacks' => [
                         '$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0]],
                     ],
+                ],
+            ];
+            $pipeline[] = [
+                '$sort' => [
+                    'date_of_first_interaction' => $request->sortType == 'desc' ? -1 : 1,
                 ],
             ];
         }

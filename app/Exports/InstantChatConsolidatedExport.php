@@ -87,6 +87,8 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
             return is_string($item) && ! empty($item);
         });
 
+        sort($channels); // Sort channels alphabetically
+
         return implode(', ', $channels);
 
         return 'N/A';
