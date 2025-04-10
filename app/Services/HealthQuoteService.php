@@ -57,6 +57,9 @@ class HealthQuoteService extends BaseService
     protected $leadAllocationService;
     protected $httpService;
 
+    const SELECT_TITLE_MULTIPLE = 'select|title|multiple';
+    const APPLICATION_JSON = 'application/json';
+
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
@@ -799,8 +802,8 @@ class HealthQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'quote_status_id' => 'select|title|multiple',
-            'advisor_id' => 'select|title|multiple',
+            'quote_status_id' => self::SELECT_TITLE_MULTIPLE,
+            'advisor_id' => self::SELECT_TITLE_MULTIPLE,
             'wcu_id' => 'select|title',
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
@@ -830,7 +833,7 @@ class HealthQuoteService extends BaseService
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
             'gender' => '|static|'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
-            'renewal_batches' => 'select|title|multiple',
+            'renewal_batches' => self::SELECT_TITLE_MULTIPLE,
             'renewal_import_code' => 'input|text',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
@@ -1058,8 +1061,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
+                        'Content-Type' => self::APPLICATION_JSON,
+                        'Accept' => self::APPLICATION_JSON,
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1125,8 +1128,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
+                        'Content-Type' => self::APPLICATION_JSON,
+                        'Accept' => self::APPLICATION_JSON,
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],

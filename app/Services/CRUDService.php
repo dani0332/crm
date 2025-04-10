@@ -114,7 +114,8 @@ class CRUDService extends BaseService
             ->getGridData(model: $model,requestParams: $request);
 
         if ($request->has('debug') && $request->debug == 'true') {
-            dd($dataQuery->toRawSql());
+            echo $dataQuery->toRawSql();
+            exit;
         }
 
         return $dataQuery;
@@ -704,40 +705,45 @@ class CRUDService extends BaseService
                 $paymentMethod = '';
                 $paymentAuthorized = 0;
 
+                $paymentMethodMap = [
+                    PaymentMethodsEnum::Cash => 'Cash',
+                    PaymentMethodsEnum::BankTransfer => 'Bank Transfer',
+                    PaymentMethodsEnum::CreditCard => 'Credit Card',
+                    PaymentMethodsEnum::Cheque => 'Cheque',
+                    PaymentMethodsEnum::PostDatedCheque => 'PostDatedCheque',
+                    PaymentMethodsEnum::InsurerPayment => 'Insurer Payment',
+                    PaymentMethodsEnum::PartialPayment => 'Partial Payment',
+                    PaymentMethodsEnum::MultiplePayment => 'Multiple Payment',
+                    PaymentMethodsEnum::CreditApproval => 'Credit Approval',
+                    PaymentMethodsEnum::ProformaPaymentRequest => 'Proforma Payment Request',
+                ];
+
                 foreach ($quote->payments as $payment) {
-                    $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 :
-                        (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 :
-                            (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_ONE_RATING) ? 1 : 1));
+                    $paymentCode = strtolower($payment->payment_methods_code);
+
+                    // Determine the current score based on payment methods
+                    if (in_array($paymentCode, Kyc::PAYMENT_MODE_THREE_RATING)) {
+                        $currentScore = 3;
+                    } elseif (in_array($paymentCode, Kyc::PAYMENT_MODE_TWO_RATING)) {
+                        $currentScore = 2;
+                    } elseif (in_array($paymentCode, Kyc::PAYMENT_MODE_ONE_RATING)) {
+                        $currentScore = 1;
+                    } else {
+                        $currentScore = 1;
+                    }
+
+                    // Update the top score and corresponding payment method
                     if ($currentScore > $paymentTopScore) {
                         $paymentTopScore = $currentScore;
-                        if ($payment->payment_methods_code === PaymentMethodsEnum::Cash) {
-                            $paymentMethod = 'Cash';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::BankTransfer) {
-                            $paymentMethod = 'Bank Transfer';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::CreditCard) {
-                            $paymentMethod = 'Credit Card';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::Cheque) {
-                            $paymentMethod = 'Cheque';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::PostDatedCheque) {
-                            $paymentMethod = 'PostDatedCheque';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::InsurerPayment) {
-                            $paymentMethod = 'Insurer Payment';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::PartialPayment) {
-                            $paymentMethod = 'Partial Payment';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::MultiplePayment) {
-                            $paymentMethod = 'Multiple Payment';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::CreditApproval) {
-                            $paymentMethod = 'Credit Approval';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::ProformaPaymentRequest) {
-                            $paymentMethod = 'Proforma Payment Request';
-                        } else {
-                            $paymentMethod = 'Insure Now Pay Later';
-                        }
+                        $paymentMethod = $paymentMethodMap[$payment->payment_methods_code] ?? 'Insure Now Pay Later';
                     }
-                    if ($payment->premium_authorized != null) {
+
+                    // Accumulate the authorized premium
+                    if ($payment->premium_authorized !== null) {
                         $paymentAuthorized += $payment->premium_authorized;
                     }
                 }
+
                 $quoteType = QuoteType::where('code', ucfirst($type))->first();
                 $amlStatus = (AMLService::checkAMLStatusFailed($quoteType->id, $quote->id));
                 $amlLogsValue = ['score' => 1, 'value' => 'No'];
@@ -1045,9 +1051,7 @@ class CRUDService extends BaseService
         $paymentAuthorized = 0;
         $paymentMethod = '';
         foreach ($quote->payments as $payment) {
-            $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 :
-                (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 :
-                    (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_ONE_RATING) ? 1 : 1));
+            $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_ONE_RATING) ? 1 : 1));
             if ($currentScore > $paymentTopScore) {
                 $paymentTopScore = $currentScore;
                 if ($payment->payment_methods_code === PaymentMethodsEnum::Cash) {

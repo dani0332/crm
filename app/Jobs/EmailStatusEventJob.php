@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 
 class EmailStatusEventJob implements ShouldQueue
 {
@@ -52,6 +53,9 @@ class EmailStatusEventJob implements ShouldQueue
                     $newEmailStatus->email_status = $this->emailData->status;
                     $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
                     $newEmailStatus->save();
+
+                    Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
+
                     info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
                     return true;

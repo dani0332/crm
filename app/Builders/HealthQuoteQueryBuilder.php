@@ -160,7 +160,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when($requestParams->get('stale_at'), function ($query) {
                 $query->whereNotNull('stale_at');
             })
-            ->when($requestParams->get('is_renewal') != 'Yes', function ($query) {
+            ->when(!empty($requestParams->get('is_renewal')) && $requestParams->get('is_renewal') != 'Yes', function ($query) {
                 $query->whereNull('previous_quote_policy_number');
             })
             ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && !empty($requestParams->get('insurer_tax_invoice_number')), function ($query) use ($requestParams) {

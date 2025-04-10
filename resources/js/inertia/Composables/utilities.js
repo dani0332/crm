@@ -45,7 +45,7 @@ export const useGetShowPageRoute = (
 
   const routesObj = {
     1: route('car.show', uuid),
-    2: route('home.show', uuid),
+    2: route('home-quotes-show', uuid),
     3: route('health.show', uuid),
     4: route('life-quotes-show', uuid),
     5: business_route,
