@@ -31,7 +31,7 @@ use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-
+use App\Jobs\ScheduleHomeRenewalOcbEmails;
 class RenewalsUploadController extends Controller
 {
     private $renewalsUploadFileService;
@@ -382,7 +382,7 @@ class RenewalsUploadController extends Controller
             })
             ->where('renewal_status_processes.batch', $batch)
             ->with('createdby')
-            ->orderBy('renewal_status_processes.created_at', 'desc');
+            ->orderBy('renewal_status_processes.id', 'desc');
             
         $process = $process->simplePaginate();
         
@@ -417,6 +417,35 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
+    public function batchDetailNonMotor($batch, $quoteType)
+    {
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
+        }
+
+        $totalLeads = $this->renewalsUploadFileService->getProcessTotalLeads($batch, $quoteType);
+        $totalLeadsCompleted = $this->renewalsUploadFileService->getProcessTotalLeadsWithPlans($batch, $quoteType);
+        $hideSendEmailButton = $totalLeadsCompleted != $totalLeads ? 1 : 0;
+
+        $emailBatches = RenewalsBatchEmails::query()
+            ->leftJoin('personal_quotes', function($join) use ($quoteType) {
+                $join->on('renewals_batch_emails.batch', '=', 'personal_quotes.renewal_batch')
+                    ->where('personal_quotes.quote_type_id', '=', $quoteType);
+            })
+            ->where([
+                'batch' => $batch,
+                'personal_quotes.quote_type_id' => $quoteType,
+            ])->with('createdby');
+        $emailBatches = $emailBatches->simplePaginate();
+        
+        return inertia('Renewals/BatchDetailNonMotor', [
+            'emailBatches' => $emailBatches,
+            'hideSendEmailButton' => $hideSendEmailButton,
+            'batch' => $batch,
+            'quoteType' => $quoteType,
+        ]);
+    }
+
     /**
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
@@ -435,6 +464,28 @@ class RenewalsUploadController extends Controller
         ]);
 
         ScheduleRenewalOcbEmails::dispatch($batch, $renewalBatchEmail);
+
+        return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
+    }
+
+    public function scheduleRenewalsOcbNonMotor($batch, $quoteType)
+    {
+        $totalLeads = $this->renewalsUploadFileService->getPendingOcbLeadsTotalNonMotor($batch, $quoteType);
+        $renewalBatchEmail = RenewalsBatchEmails::create([
+            'batch' => $batch,
+            'status' => ProcessStatusCode::PENDING,
+            'total_leads' => $totalLeads,
+            'total_sent' => 0,
+            'total_bounced' => 0,
+            'total_failed' => 0,
+            'created_by_id' => auth()->id(),
+        ]);
+
+        switch ($quoteType) {
+            case QuoteTypeShortCode::HOM:
+                ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalBatchEmail);
+                break;
+        }
 
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
     }

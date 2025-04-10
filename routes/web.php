@@ -386,9 +386,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('batches/{id}/{quoteType}/plans-processes', [RenewalsUploadController::class, 'plansProcessesNonMotor'])->name('batch-plans-processes.non.motor');
         
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batch-renewal-detail');
+        Route::get('batches/{id}/{quoteType}', [RenewalsUploadController::class, 'batchDetailNonMotor'])->name('batch-renewal-detail.non.motor');
         Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans'])->name('batch-fetch-plans');
         Route::get('batches/{id}/{quoteType}/fetch-plans', [RenewalsUploadController::class, 'fetchPlansNonMotor'])->name('batch-fetch-plans.non.motor');
         Route::get('batches/{batch}/schedule-renewals-ocb', [RenewalsUploadController::class, 'scheduleRenewalsOcb'])->name('run-batch-process');
+        Route::get('batches/{batch}/{quoteType}/schedule-renewals-ocb', [RenewalsUploadController::class, 'scheduleRenewalsOcbNonMotor'])->name('run-batch-process.non.motor');
+        
         Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed'])->name('renewal-validation-failed');
         Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed'])->name('validation-failed-download');
         Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
