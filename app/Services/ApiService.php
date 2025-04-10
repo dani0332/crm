@@ -331,11 +331,40 @@ class ApiService
     {
         info('------ AIG workflow trigger request received for lead : '.($request->quoteUuid ?? '').' ------');
 
-        // Here you would implement the AIG workflow logic
-        // This is similar to SIC but with AIG specific processing
-
-        info("------ AIG workflow trigger request completed for lead : {$request->quoteUuid} ------");
-
-        return apiResponse(null, Response::HTTP_OK, 'AIG workflow triggered successfully!');
+        try {
+            $quoteTypeId = $request->quoteTypeId;
+            $quoteUuid = $request->quoteUuid;
+            
+            if (!$quoteUuid) {
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Quote UUID is required!');
+            }
+            
+            // Get the quote type if provided
+            if ($quoteTypeId) {
+                $quoteType = QuoteTypes::getName($quoteTypeId);
+                if (!$quoteType) {
+                    info("Invalid Quote Type ID {$quoteTypeId} for uuid : {$quoteUuid}");
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+                }
+                
+                // Verify the quote exists
+                $quote = $quoteType->model()->where('uuid', $quoteUuid)->first();
+                if (!$quote) {
+                    info("Quote not found with uuid: {$quoteUuid} for quoteTypeId: {$quoteTypeId}");
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+                }
+            }
+            
+            // Dispatch the AIG workflow job
+            info("------ Dispatching AIG workflow job for lead : {$quoteUuid} ------");
+            dispatch(new \App\Jobs\AIGWorkflowJob($quoteUuid, $quoteTypeId));
+            info("------ AIG workflow trigger request completed for lead : {$quoteUuid} ------");
+            
+            return apiResponse(null, Response::HTTP_OK, 'AIG workflow triggered successfully!');
+        } catch (\Exception $e) {
+            info("------ AIG workflow trigger failed: {$e->getMessage()} ------");
+            Log::error($e);
+            return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'AIG workflow trigger failed!');
+        }
     }
 }
