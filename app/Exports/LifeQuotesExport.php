@@ -9,9 +9,9 @@ class LifeQuotesExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams)
     {
-        return LifeQuoteRepository::exportData();
+        return LifeQuoteRepository::exportData($requestParams);
     }
 
     public function headings(): array

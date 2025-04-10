@@ -124,6 +124,11 @@ class CentralController extends Controller
         $request->merge(['quoteType' => $quoteType]);
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
+
+                if($request['exportType'] == 'email'){
+                    return app(LifeQuotesExport::class)->emailCSV('Life-List', $request->all());
+                }
+
                 return app(LifeQuotesExport::class)->download('life_leads');
 
             case QuoteTypes::HOME->value:

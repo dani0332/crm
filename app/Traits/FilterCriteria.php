@@ -11,6 +11,10 @@ trait FilterCriteria
     public function scopeFilter($query, $paginate = true, $forTotalLeadsCount = false, $requestParams = [])
     {
         $tableName = $this->getTable();
+
+        if(empty($requestParams)){
+            $requestParams = request()->all();
+        }
         $requestParams = collect($requestParams);
 
         $filters = $forTotalLeadsCount ?
@@ -59,8 +63,8 @@ trait FilterCriteria
                             break;
                         case FilterTypes::DATE_BETWEEN:
                             if (! empty($filters->get($key.'_start')) && ! empty($filters->get($key.'_end'))) {
-                                $startDate = date('Y-m-d 00:00:00', strtotime($filters->get($key.'_start')));
-                                $endDate = date('Y-m-d 23:59:59', strtotime($filters->get($key.'_end')));
+                                $startDate = Carbon::parse($filters->get($key.'_start'))->startOfDay();
+                                $endDate = Carbon::parse($filters->get($key.'_end'))->endOfDay();
                                 $query->whereBetween($tableName.'.'.$key, [$startDate, $endDate]);
                             } elseif (! empty($filters->get($key.'_time_start')) && ! empty($filters->get($key.'_time_end'))) {
                                 $startDate = date('Y-m-d H:i:s', strtotime($filters->get($key.'_time_start')));

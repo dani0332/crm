@@ -111,7 +111,7 @@ class CRUDService extends BaseService
         $lowerCaseModelType = strtolower($model->modelType);
 
         $dataQuery = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
-            ->getGridData(model: $model, requestParams: $request);
+            ->getGridData(model: $model);
 
         if ($request->has('debug') && $request->debug == 'true') {
             echo $dataQuery->toRawSql();
