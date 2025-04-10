@@ -47,6 +47,7 @@ let availableFilters = {
   policy_expiry_date_end: '',
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  advisor_assigned_date: [],
 };
 
 const filters = reactive(availableFilters);
@@ -397,6 +398,13 @@ const insurerAMLStatusOption = computed(() => {
             class="w-full"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Renewal Batch">
           <ComboBox
             v-model="filters.renewal_batch_id"
