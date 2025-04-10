@@ -1904,8 +1904,7 @@ class CarQuoteService extends BaseService
             ->whereNotNull('cqp.pua_premium')
             ->whereNot(function ($q) {
                 $q->where('cqp.is_renewal', true)
-                    ->whereNotNull('cqp.pua_type')
-                    ->whereColumn('cqp.plan_id', 'cqr.plan_id');
+                    ->whereNotNull('cqp.pua_type');
             })
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
