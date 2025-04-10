@@ -11,28 +11,27 @@ use App\Enums\QuoteTypes;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\QuoteBatches;
-use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
+use Auth;
 use Carbon\Carbon;
+use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\Logger\LoggerService;
 
 class LifeQuoteService extends BaseService
 {
     protected $query;
-    protected $leadAllocationService;
-    protected $loggerService;
 
     use AddPremiumAllLobs;
     use RolePermissionConditions;
 
-    public function __construct(LeadAllocationService $leadAllocationService, LoggerService $loggerService)
+    protected $leadAllocationService;
+
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
-        $this->loggerService = $loggerService;
         $this->query = DB::table('life_quote_request as lqr')
             ->select(
                 'lqr.id',
@@ -138,175 +137,100 @@ class LifeQuoteService extends BaseService
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
-        LoggerService::info('Creating Life Quote for: '.$request->email);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
 
-        try {
-            $response = CapiRequestService::sendCAPIRequest('/api/v1-save-life-quote', $dataArr);
-
-            if (isset($response->quoteUID)) {
-                $this->savePremium(quoteTypeCode::LifeQuote, $request, $response);
-                LoggerService::info('Successfully created Life Quote with UUID: '.$response->quoteUID);
-            } else {
-                LoggerService::warning('Life Quote creation response did not contain quoteUID');
-            }
-
-            return $response;
-        } catch (\Exception $e) {
-            LoggerService::error('Failed to create Life Quote: '.$e->getMessage());
-            throw $e;
+        if (isset($response->quoteUID)) {
+            $this->savePremium(quoteTypeCode::LifeQuote, $request, $response);
         }
+
+        return $response;
     }
 
     public function getEntity($id)
     {
-        try {
-            LoggerService::info('Fetching life quote entity with UUID: '.$id);
-
-            return $this->query->where('lqr.uuid', $id)->first();
-        } catch (\Exception $e) {
-            LoggerService::error('Error fetching life quote entity: '.$e->getMessage());
-            throw $e;
-        }
+        return $this->query->where('lqr.uuid', $id)->first();
     }
 
     public function getEntityPlain($id)
     {
-        try {
-            LoggerService::info('Fetching plain life quote entity with ID: '.$id);
-
-            return LifeQuote::where('id', $id)->first();
-        } catch (\Exception $e) {
-            LoggerService::error('Error fetching plain life quote entity: '.$e->getMessage());
-            throw $e;
-        }
+        return LifeQuote::where('id', $id)->first();
     }
 
     public function getSelectedLostReason($id)
     {
-        try {
-            $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
-            $lostId = 0;
-            if (! is_null($entity) && $entity->lost_reason_id) {
-                $lostId = $entity->lost_reason_id;
-                LoggerService::info('Found lost reason ID: '.$lostId.' for quote ID: '.$id);
-            } else {
-                LoggerService::info('No lost reason found for quote ID: '.$id);
-            }
-
-            return $lostId;
-        } catch (\Exception $e) {
-            LoggerService::error('Error fetching lost reason: '.$e->getMessage());
-
-            return 0;
+        $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
+        $lostId = 0;
+        if (! is_null($entity) && $entity->lost_reason_id) {
+            $lostId = $entity->lost_reason_id;
         }
+
+        return $lostId;
     }
 
     public function getDetailEntity($id)
     {
-        try {
-            LoggerService::info('Fetching or creating life quote detail for ID: '.$id);
-
-            return LifeQuoteRequestDetail::firstOrCreate(
-                ['life_quote_request_id' => $id]
-            );
-        } catch (\Exception $e) {
-            LoggerService::error('Error fetching or creating life quote detail: '.$e->getMessage());
-            throw $e;
-        }
+        return LifeQuoteRequestDetail::firstOrCreate(
+            ['life_quote_request_id' => $id]
+        );
     }
 
     public function getLeadsForAssignment()
     {
-        try {
-            LoggerService::info('Fetching all life quotes for assignment');
-
-            return LifeQuote::orderBy('created_at', 'desc')->get();
-        } catch (\Exception $e) {
-            LoggerService::error('Error fetching life quotes for assignment: '.$e->getMessage());
-            throw $e;
-        }
+        return LifeQuote::orderBy('created_at', 'desc')->get();
     }
 
     public function getGridData($model, $request)
     {
         $searchProperties = [];
-        try {
-            $isRenewalUser = Auth::user()->isRenewalUser();
-            $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
-            $isRenewalManager = Auth::user()->isRenewalManager();
-            $isNewManager = Auth::user()->isNewBusinessManager();
-            $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-            if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
-                $searchProperties = $model->renewalSearchProperties;
-                LoggerService::info('Using renewal search properties for user ID: '.Auth::user()->id);
-            } elseif ($isNewManager || $isNewAdvisor) {
-                $searchProperties = $model->newBusinessSearchProperties;
-                LoggerService::info('Using new business search properties for user ID: '.Auth::user()->id);
-            } else {
-                $searchProperties = $model->searchProperties;
-                LoggerService::info('Using standard search properties for user ID: '.Auth::user()->id);
-            }
-        } catch (\Exception $e) {
-            LoggerService::error('Error determining user role for search properties: '.$e->getMessage());
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
+        $isRenewalManager = Auth::user()->isRenewalManager();
+        $isNewManager = Auth::user()->isNewBusinessManager();
+        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
+        if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
+            $searchProperties = $model->renewalSearchProperties;
+        } elseif ($isNewManager || $isNewAdvisor) {
+            $searchProperties = $model->newBusinessSearchProperties;
+        } else {
             $searchProperties = $model->searchProperties;
         }
         // if ($request->ajax()) {
         if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
                 empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
-            LoggerService::info('Filtering out fake quotes as no specific filters provided');
             $this->query->where('lqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
-
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            LoggerService::info('Filtering by assigned date range: '.$dateFrom.' to '.$dateTo);
             $this->query->whereBetween('lqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
-
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-            LoggerService::info('Filtering by creation date range: '.$dateFrom.' to '.$dateTo);
             $this->query->whereBetween('lqr.created_at', [$dateFrom, $dateTo]);
         }
-
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            LoggerService::info('Filtering by next followup date range: '.$dateFrom.' to '.$dateTo);
             $this->query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-
         if (Auth::user()->isSpecificTeamAdvisor('Life')) {
-            LoggerService::info('Limiting results to leads assigned to current life advisor: '.Auth::user()->id);
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('lqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
-
-        // Log specific filter conditions
         if (isset($request->code) && $request->code != '') {
-            LoggerService::info('Filtering by code: '.$request->code);
             $this->query->where('lqr.code', $request->code);
         }
-
         if (isset($request->first_name) && $request->first_name != '') {
-            LoggerService::info('Filtering by first name: '.$request->first_name);
             $this->query->where('lqr.first_name', $request->first_name);
         }
-
         if (isset($request->last_name) && $request->last_name != '') {
-            LoggerService::info('Filtering by last name: '.$request->last_name);
             $this->query->where('lqr.last_name', $request->last_name);
         }
-
         if (isset($request->email) && $request->email != '') {
-            LoggerService::info('Filtering by email: '.$request->email);
             $this->query->where('lqr.email', $request->email);
         }
-
         if (isset($request->mobile_no) && $request->mobile_no != '') {
-            LoggerService::info('Filtering by mobile number: '.$request->mobile_no);
             $this->query->where('lqr.mobile_no', $request->mobile_no);
         }
         if (isset($request->policy_number) && $request->policy_number != '') {
@@ -683,23 +607,10 @@ class LifeQuoteService extends BaseService
         $quoteBatch = QuoteBatches::latest()->first();
         LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
+        foreach ($leadsIds as $leadId) {
+            $lead = $this->getEntityPlain($leadId);
 
-        try {
-            foreach ($leadsIds as $leadId) {
-                $lead = $this->getEntityPlain($leadId);
-                if (! $lead) {
-                    LoggerService::warning('Lead not found for ID: '.$leadId);
-
-                    continue;
-                }
-
-                $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::LIFE, LifeQuoteRequestDetail::class, 'life_quote_request_id');
-                LoggerService::info('Successfully assigned lead '.$lead->code.' to user ID: '.$userId);
-            }
-
-            LoggerService::info('Completed assignment process for '.count($leadsIds).' leads');
-        } catch (\Exception $e) {
-            LoggerService::error('Error during manual lead assignment: '.$e->getMessage());
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::LIFE, LifeQuoteRequestDetail::class, 'life_quote_request_id');
         }
 
         return $result;
@@ -707,58 +618,29 @@ class LifeQuoteService extends BaseService
 
     public function getEntityPlainByUUID($uuid)
     {
-        try {
-            LoggerService::info('Fetching life quote by UUID: '.$uuid);
-
-            return LifeQuote::where('uuid', $uuid)->first();
-        } catch (\Exception $e) {
-            LoggerService::error('Error fetching life quote by UUID: '.$e->getMessage());
-            throw $e;
-        }
+        return LifeQuote::where('uuid', $uuid)->first();
     }
 
     public function validateRequest($request)
     {
         $userId = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
-
-        LoggerService::info('Validating lead assignment request. User ID: '.$userId);
-
         if ($leadsIds == '' || $leadsIds == null) {
-            LoggerService::warning('No leads selected for assignment');
-
             return 'Please select lead(s) to assign';
         }
-
         if (substr($leadsIds, 0, 1) == ',') {
             $leadsIds = substr($leadsIds, 1);
         }
-
         $leadsIds = array_map('intval', explode(',', $leadsIds));
-        LoggerService::info('Validating '.count($leadsIds).' leads for assignment');
-
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if (! $entity) {
-                LoggerService::warning('Lead not found for ID: '.$leadId);
-
-                continue;
-            }
-
             if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-                LoggerService::warning('Transaction Approved lead selected for assignment without proper permissions. Lead ID: '.$leadId);
-
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }
-
         if ($userId == '' || $userId == null) {
-            LoggerService::warning('No user selected for lead assignment');
-
             return 'Please select user to assign leads';
         }
-
-        LoggerService::info('Lead assignment validation successful');
 
         return 'true';
     }

@@ -56,15 +56,13 @@ class HealthQuoteService extends BaseService
     protected $query;
     protected $leadAllocationService;
     protected $httpService;
-    protected $loggerService;
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, LoggerService $loggerService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
-        $this->loggerService = $loggerService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
             // 'hqr.prefill_plan_id',
