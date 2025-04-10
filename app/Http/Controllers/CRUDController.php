@@ -86,6 +86,7 @@ use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
@@ -2246,6 +2247,10 @@ class CRUDController extends Controller
         if ($quoteUuId) {
 
             $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
+            if (QuoteTypes::getIdFromValue($quoteType) === (int) QuoteTypes::HOME->id()) {
+                // only for home quote if email is manually triggered then update the home automated flow executed flag
+                app(HomeEmailService::class)->updateHomeAutomatedFlowExecuted($quoteUuId);
+            }
             if ($ocbEmailJob) {
                 Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
                 dispatch(new $ocbEmailJob($quoteUuId, null));

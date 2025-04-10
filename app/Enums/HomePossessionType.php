@@ -13,4 +13,5 @@ final class HomePossessionType extends Enum
 {
     const LANDLORD = 1;
     const TENANT = 2;
+    const OWNER_RENTING = 3;
 }
