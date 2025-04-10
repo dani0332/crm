@@ -136,6 +136,10 @@ export const useRules = () => {
       'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.'
     );
   };
+  // Add minValue rule
+  const minValue = min => v => {
+    return !v || Number(v) >= min || `The minimum value is ${min}.`;
+  };
 
   return {
     name,
@@ -160,5 +164,6 @@ export const useRules = () => {
     isRequiredNumber,
     maxCharacters,
     emiratesNumber,
+    minValue,
   };
 };

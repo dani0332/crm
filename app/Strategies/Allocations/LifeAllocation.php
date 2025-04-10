@@ -51,7 +51,15 @@ class LifeAllocation extends BaseAllocation
     private function getCountriesMapping()
     {
         $catACountryMapping = [
-            'South African', 'Australian', 'New Zealander', 'Canadian', 'United Kingdom', 'Lebanese', 'Filipino', 'American', 'Europe',
+            'South African',
+            'Australian',
+            'New Zealander',
+            'Canadian',
+            'United Kingdom',
+            'Lebanese',
+            'Filipino',
+            'American',
+            'Europe',
         ];
 
         $catBCountryMapping = cache()->remember('countries_category_mapping', now()->addHours(24), function () use ($catACountryMapping) {

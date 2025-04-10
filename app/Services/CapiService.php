@@ -9,6 +9,8 @@ class CapiService
     private $client = null;
     private $baseUrl = null;
 
+    private const CAPI_EXCEPTION_MESSAGE = 'CAPI Service Exception';
+
     /**
      * setup http client with credentials.
      */
@@ -36,11 +38,11 @@ class CapiService
     {
         $url = $this->baseUrl.$path;
         $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) use ($data, $url) {
-            info('CAPI Service Exception', ['data' => $data, 'url' => $url]);
+            info(self::CAPI_EXCEPTION_MESSAGE, ['data' => $data, 'url' => $url]);
             if (isset($response->json()['msg'])) {
                 vAbort($response->json()['msg']);
             } else {
-                vAbort('CAPI Service Exception');
+                vAbort(self::CAPI_EXCEPTION_MESSAGE);
             }
         });
 
