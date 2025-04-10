@@ -12,9 +12,9 @@ use Illuminate\Support\Str;
 
 class HomeAllocation extends BaseAllocation
 {
-    private const CONTENTS_VALUE_THRESHOLD = 100000;
-    private const PERSONAL_BELONGINGS_VALUE_THRESHOLD = 100000;
-    private const BUILDING_VALUE_THRESHOLD = 5000000;
+    private const CONTENTS_VALUE_THRESHOLD = 50000;
+    private const PERSONAL_BELONGINGS_VALUE_THRESHOLD = 50000;
+    private const BUILDING_VALUE_THRESHOLD = 3000000;
     private const SHORT_TERM_CODE = 'short_term';
 
     protected function fetchAdvisor(int $onlineStatus)
@@ -88,9 +88,9 @@ class HomeAllocation extends BaseAllocation
 
     private function hasLowValueAssets(): bool
     {
-        return ($this->lead->has_contents && $this->lead->contents_aed < self::CONTENTS_VALUE_THRESHOLD) ||
-            ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed < self::PERSONAL_BELONGINGS_VALUE_THRESHOLD) ||
-            ($this->lead->has_building && $this->lead->building_aed < self::BUILDING_VALUE_THRESHOLD);
+        return ($this->lead->has_contents && $this->lead->contents_aed <= self::CONTENTS_VALUE_THRESHOLD) ||
+            ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed <= self::PERSONAL_BELONGINGS_VALUE_THRESHOLD) ||
+            ($this->lead->has_building && $this->lead->building_aed <= self::BUILDING_VALUE_THRESHOLD);
     }
 
     /**
