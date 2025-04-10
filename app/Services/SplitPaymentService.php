@@ -1081,7 +1081,7 @@ class SplitPaymentService
         $maxRetries = 2;
         $paymentSplit = PaymentSplits::find($splitPaymentId);
         $masterPayment = $paymentSplit->payment;
-        $this->handleWithDeadlockRetries(function () use ($splitPaymentId, $paymentSplit, $masterPayment) {
+        $this->handleWithDeadlockRetries(function () use ($paymentSplit, $masterPayment) {
             $this->deletePaymentSplit($paymentSplit);
             $this->updateMasterPayment($masterPayment);
         }, $maxRetries);

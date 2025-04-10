@@ -1241,10 +1241,11 @@ class CentralService extends BaseService
             DB::transaction(function () use ($request) {
                 PaymentSplits::where('code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
-            }, $maxAttempts);   
+            }, $maxAttempts);
             info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);
         } catch (\Throwable $th) {
             info('fn:deletePayment - Payment deletion failed: '.$request->payment_id);
+
             return ['status' => false, 'message' => 'Payment deletion failed'];
         }
 
