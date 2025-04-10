@@ -1,10 +1,10 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -1552,6 +1552,7 @@ const isPlanDetailEnabled = computed(() => {
 if (isPlanDetailEnabled.value && page.props.record.insurer_name !== '') {
   selectedProviderPlan.value.premium = page.props.record.price_with_vat;
   selectedProviderPlan.value.providerName = page.props.record.insurer_name;
+  selectedProviderPlan.value.planName = 'N/A';
 }
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -4221,8 +4222,5 @@ const isCommercialVehicle = computed(() => {
     :logs="clientInquiryLogs"
   />
 
-  <lead-raw-data
-    :modelType="'Car'"
-    :code="$page.props.quote.code"
-  ></lead-raw-data>
+  <lead-raw-data :modelType="'Car'"></lead-raw-data>
 </template>

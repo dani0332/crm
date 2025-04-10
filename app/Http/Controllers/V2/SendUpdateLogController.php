@@ -84,7 +84,7 @@ class SendUpdateLogController extends Controller
         }
 
         if (! empty($childLeadResponse)) {
-            if ($childLeadResponse['childLeadsCount'] == 0) {
+            if ($childLeadResponse['childLeadsCount'] == 0 || ($quoteType->code == quoteTypeCode::Travel && $childLeadResponse['childLeadsCount'])) {
                 if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
                     return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
@@ -142,6 +142,10 @@ class SendUpdateLogController extends Controller
 
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
+        }
+
+        if ($quoteType == quoteTypeCode::Travel) {
+            $sendUpdateLog->load('travelPlan.insuranceProvider');
         }
 
         $categoryCode = $sendUpdateLog->category?->code;

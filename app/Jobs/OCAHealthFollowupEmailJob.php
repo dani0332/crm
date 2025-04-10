@@ -44,7 +44,7 @@ class OCAHealthFollowupEmailJob implements ShouldQueue
                 // Send the Health OCA email using the HealthEmailService
                 $healthEmailService->sendOCAHealthWorkFlow($healthLead);
                 if ($healthLead->quote_status_id != QuoteStatusEnum::ApplicationPending) {
-                    $healthLead->quote_status_id = QuoteStatusEnum::FollowedUp;
+                    $healthLead->quote_status_id = QuoteStatusEnum::Quoted;
                     $healthLead->save();
                 }
 
