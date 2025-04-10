@@ -2,13 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\PolicyIssuanceEnum;
-use App\Enums\PolicyIssuanceStatusEnum;
-use App\Enums\QuoteTypes;
-use App\Jobs\SendTravelAllianceFailedAllocationEmailJob;
-use App\Models\PolicyIssuance;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class PolicyIssuanceMarkFailedCommand extends Command
