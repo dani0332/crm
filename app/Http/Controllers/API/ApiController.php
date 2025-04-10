@@ -6,6 +6,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\ClearCacheRequest;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
@@ -19,6 +20,7 @@ use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
+use App\Jobs\HomeSyncSALJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -26,6 +28,7 @@ use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
+use App\Services\Cache\CacheManager;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
@@ -271,5 +274,47 @@ class ApiController extends Controller
         info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.',  Insurance Provider: '.$insuranceProvider?->code.' - Status update and allocation failed');
 
         return response()->json(['success' => false, 'message' => 'Failed to update Insurer and API Issuance statuses and lead allocation!']);
+    }
+
+    public function homeSyncSAL(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required|string', // Ensure quoteUID is present
+        ]);
+
+        Log::info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
+
+        try {
+            HomeSyncSALJob::dispatch($request->all());
+
+            Log::info('SAL sync job dispatched.', ['quoteUID' => $request->quoteUID]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'SAL sync job has been queued.',
+                'quoteUID' => $request->quoteUID,
+            ], 202);
+        } catch (\Exception $e) {
+            Log::error('SAL sync failed.', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'quoteUID' => $request->quoteUID,
+                'request' => $request->all(),
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while syncing SAL data.',
+                'error_details' => $e->getMessage(),
+                'quoteUID' => $request->quoteUID,
+            ], 500);
+        }
+    }
+
+    public function forgetCache(ClearCacheRequest $request)
+    {
+        CacheManager::forget($request->getKey());
+
+        return apiResponse(null, Response::HTTP_OK, 'Cache cleared successfully');
     }
 }

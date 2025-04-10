@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\InsurerProviderEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BrokerCommission;
+use Illuminate\Support\Facades\Log;
 
 class BrokerCommissionService
 {
@@ -15,7 +18,7 @@ class BrokerCommissionService
      * @param  int|null  $businessTypeId
      * @return BrokerCommission|null
      */
-    public function fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId = null, $planId = null)
+    public function fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId = null, $planId = null, $quote = null)
     {
         // Retrieve the insurance provider entity
         $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
@@ -41,7 +44,24 @@ class BrokerCommissionService
         $brokerCommission = $query->first();
         // todo: confirm from denber
         // $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
+
         $isCreditCardEnabled = $brokerCommission ? true : false;
+
+        $insurersWithoutCCRenewal = [
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+        ];
+
+        try {
+            if ($quote
+                && $quoteTypeId === QuoteTypeId::Home
+                && $quote->source === LeadSourceEnum::RENEWAL_UPLOAD
+                && in_array($insuranceProvider->code, $insurersWithoutCCRenewal)
+            ) {
+                $isCreditCardEnabled = false;
+            }
+        } catch (\Exception $e) {
+            Log::error('Quote code '.$quote->code.'Error in BrokerCommissionService::fetchBrokerCommission: '.$e->getMessage());
+        }
 
         return [$isCreditCardEnabled, $brokerCommission, false];
     }
@@ -54,9 +74,9 @@ class BrokerCommissionService
      * @param  int|null  $businessTypeOfInsuranceId
      * @return bool
      */
-    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $businessTypeId = null, $planId = null)
+    public function isCreditCardEnabled($quoteTypeId, $insuranceProviderId, $businessTypeId = null, $planId = null, $quote = null)
     {
-        [$isCreditCardEnabled] = $this->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+        [$isCreditCardEnabled] = $this->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote);
 
         return $isCreditCardEnabled;
     }

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
+            DocumentTypesSeeder::class,
         ]);
     }
 }
