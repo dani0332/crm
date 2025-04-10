@@ -62,19 +62,8 @@ class EmailStatusService extends BaseService
             $request->customerEmail = $request->customer_email;
             $this->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
 
-            LoggerService::info('Email event logged successfully', [
-                'uuid' => $request->uuid,
-                'message_id' => $request->message_id,
-                'quote_id' => $quote->id
-            ]);
-
             return (object) ['message' => 'Email event logged successfully', 'status' => true];
         } else {
-            LoggerService::info('Email event already logged', [
-                'uuid' => $request->uuid,
-                'message_id' => $request->message_id,
-                'quote_id' => $quote->id
-            ]);
 
             return (object) ['message' => 'Email event already logged', 'status' => true];
         }

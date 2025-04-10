@@ -16,7 +16,6 @@ use App\Models\LeadAllocation;
 use App\Models\Tier;
 use Carbon\Carbon;
 use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\Auth;
 
 class AllocationService extends BaseService
 {

@@ -412,7 +412,7 @@ class CRUDService extends BaseService
                     PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS
                 )
             ) {
-                $authUserTeamsId = $this->getUserTeams(app('auth')->id())->pluck('id')->toArray();
+                $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
                 $query->whereIn('ut.team_id', $authUserTeamsId);
                 $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
             } else {
