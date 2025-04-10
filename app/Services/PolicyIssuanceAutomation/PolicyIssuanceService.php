@@ -132,22 +132,26 @@ class PolicyIssuanceService
         $fifteenMinutesAgo = Carbon::now()->subMinutes(15);
 
         // Find all policy issuance entries stuck in processing status for more than 15 minutes
-        $stuckPolicyIssuanceAutomations = PolicyIssuance::where('status', PolicyIssuanceEnum::PROCESSING_STATUS)->where('updated_at', '<', $fifteenMinutesAgo)->get();
+        $stuckPolicyIssuanceAutomations = PolicyIssuance::where('status', PolicyIssuanceEnum::PROCESSING_STATUS)->where('updated_at', '<', $fifteenMinutesAgo);
 
         $count = $stuckPolicyIssuanceAutomations->count();
         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Found '.$count.' stuck policy issuance processes');
 
-        foreach ($stuckPolicyIssuanceAutomations as $policyIssuance) {
-            try {
-                info('cmd:'.$this->className.' fn:'.__FUNCTION__.' trigger for policy issuance ID: '.$policyIssuance->id);
+        $stuckPolicyIssuanceAutomations->chunk(1000, function ($policyIssuanceAutomations) {
+            foreach ($policyIssuanceAutomations as $policyIssuance) {
+                try {
+                    info('cmd:'.$this->className.' fn:'.__FUNCTION__.' trigger for policy issuance ID: '.$policyIssuance->id);
 
-                $this->markPolicyIssuanceFailed($policyIssuance);
+                    $this->markPolicyIssuanceFailed($policyIssuance);
 
-                info('cmd:'.$this->className.' fn:'.__FUNCTION__.' triggered for policy issuance ID: '.$policyIssuance->id);
-            } catch (\Exception $e) {
-                info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Exception occurred while processing policy issuance ID: '.$policyIssuance->id.'. Error: '.$e->getMessage());
+                    info('cmd:'.$this->className.' fn:'.__FUNCTION__.' triggered for policy issuance ID: '.$policyIssuance->id);
+                } catch (\Exception $e) {
+                    info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Exception occurred while processing policy issuance ID: '.$policyIssuance->id.'. Error: '.$e->getMessage());
+                }
             }
-        }
+        });
+
+
     }
 
     /**
