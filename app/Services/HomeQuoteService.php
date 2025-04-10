@@ -1304,35 +1304,44 @@ class HomeQuoteService extends BaseService
     private function getHomeQuoteFlags($homeQuote): array
     {
         if (! $homeQuote) {
-            return [];
+            return [
+                'contents_value_flag' => false,
+                'personal_belongings_flag' => false,
+                'building_value_flag' => false
+            ];
         }
 
         return [
-            'contents_value_flag' => (bool) $homeQuote->contents_value_id,
-            'personal_belongings_flag' => (bool) $homeQuote->personal_belongings_value_id,
-            'building_value_flag' => (bool) $homeQuote->building_value,
+            'contents_value_flag' => (bool) ($homeQuote->contents_value_id ?? false),
+            'personal_belongings_flag' => (bool) ($homeQuote->personal_belongings_value_id ?? false),
+            'building_value_flag' => (bool) ($homeQuote->building_value ?? false),
         ];
     }
 
     private function getFlagValues(array $flags, $homeQuote, array $contentValues, array $personalBelongingValues): array
     {
-        $values = [];
+        // Initialize values with defaults to ensure they always exist
+        $values = [
+            'contents_value' => 'N/A',
+            'personal_belongings_value' => 'N/A',
+            'building_value' => 'N/A'
+        ];
 
-        if ($flags['contents_value_flag']) {
+        if (isset($flags['contents_value_flag']) && $flags['contents_value_flag']) {
             $contentValue = $this->getValueById($contentValues, $homeQuote->contents_value_id);
             if ($contentValue) {
                 $values['contents_value'] = $this->formatCurrency($contentValue['maxValue']);
             }
         }
 
-        if ($flags['personal_belongings_flag']) {
+        if (isset($flags['personal_belongings_flag']) && $flags['personal_belongings_flag']) {
             $personalBelongingValue = $this->getValueById($personalBelongingValues, $homeQuote->personal_belongings_value_id);
             if ($personalBelongingValue) {
                 $values['personal_belongings_value'] = $this->formatCurrency($personalBelongingValue['maxValue']);
             }
         }
 
-        if ($flags['building_value_flag']) {
+        if (isset($flags['building_value_flag']) && $flags['building_value_flag']) {
             $values['building_value'] = $this->formatCurrency($homeQuote->building_value);
         }
 
@@ -1344,8 +1353,11 @@ class HomeQuoteService extends BaseService
         return 'AED '.number_format($value, 0, '', ',');
     }
 
-    private function getValueById(array $values, int $id): ?array
+    private function getValueById(array $values, ?int $id): ?array
     {
+        if ($id === null) {
+            return null;
+        }
         return collect($values)->firstWhere('id', $id);
     }
 
