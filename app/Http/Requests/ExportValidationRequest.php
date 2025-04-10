@@ -121,7 +121,7 @@ class ExportValidationRequest extends FormRequest
                     $diff = $start->diffInDays($end);
                     if ($diff > $diffInDays) {
                         $message = "Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.";
-                        logger()->error('ExportValidationRequest: '.$message);
+                        // logger()->error('ExportValidationRequest: '.$message);
                         $validator->errors()->add('flash', $message);
                     }
                 } else {
