@@ -10,6 +10,7 @@ use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -26,7 +27,6 @@ use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
-use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -35,7 +35,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use PDF;
+use App\Services\Logger\LoggerService;
 
 class CarQuoteService extends BaseService
 {
@@ -46,7 +48,6 @@ class CarQuoteService extends BaseService
     protected $sendEmailCustomerService;
     protected $applicationStorageService;
     protected $activityService;
-    protected $loggerService;
 
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
@@ -57,15 +58,13 @@ class CarQuoteService extends BaseService
         SendEmailCustomerService $sendEmailCustomerService,
         ApplicationStorageService $applicationStorageService,
         ActivitiesService $activityService,
-        protected CarQuoteQueryBuilder $carQuoteQueryBuilder,
-        LoggerService $loggerService
+        protected CarQuoteQueryBuilder $carQuoteQueryBuilder
     ) {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->activityService = $activityService;
-        $this->loggerService = $loggerService;
     }
 
     public function saveCarQuote(Request $request)
@@ -995,7 +994,7 @@ class CarQuoteService extends BaseService
 
             $pdf = $this->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
-                LoggerService::error('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
+                LoggerService::info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
             } else {
                 $carQuote->pdf = (object) [
                     'content' => base64_encode(($pdf['pdf'])->stream()),
@@ -1011,43 +1010,43 @@ class CarQuoteService extends BaseService
 
     public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false, $useKen2Endpoint = false)
     {
-        try {
-            $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
-            if ($useKen2Endpoint) {
-                $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
-            } else {
-                $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
-            }
-            $plansApiToken = config('constants.KEN_API_TOKEN');
-            $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
-            $plansApiUserName = config('constants.KEN_API_USER');
-            $plansApiPassword = config('constants.KEN_API_PWD');
-            $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+        $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
+        if ($useKen2Endpoint) {
+            $plansApiEndPoint = config('constants.KEN2_API_ENDPOINT').'/get-car-quote-plans';
+        } else {
+            $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        }
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
-            $plansDataArr = [
-                'quoteUID' => $quoteUuId,
-                'getLatestRating' => $getLatestRating,
-                'lang' => 'en',
-                'url' => strval(url()->current()),
-                'ipAddress' => request()->ip(),
-                'userAgent' => request()->header('User-Agent'),
-                'userId' => strval(auth()->id()),
-                'filters' => [[
-                    'field' => 'isRenewalSort',
-                    'value' => $isRenewalSort,
-                ]],
-                'callSource' => 'imcrm',
+        $plansDataArr = [
+            'quoteUID' => $quoteUuId,
+            'getLatestRating' => $getLatestRating,
+            'lang' => 'en',
+            'url' => strval(url()->current()),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval(auth()->id()),
+            'filters' => [[
+                'field' => 'isRenewalSort',
+                'value' => $isRenewalSort,
+            ]],
+            'callSource' => 'imcrm',
+        ];
+
+        if ($isDisabledEnabled) {
+            $plansDataArr['filters'][] = [
+                'field' => 'isDisabled',
+                'value' => false,
             ];
+        }
 
-            if ($isDisabledEnabled) {
-                $plansDataArr['filters'][] = [
-                    'field' => 'isDisabled',
-                    'value' => false,
-                ];
-            }
+        $client = new \GuzzleHttp\Client;
 
-            $client = new \GuzzleHttp\Client;
-
+        try {
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
@@ -1070,11 +1069,11 @@ class CarQuoteService extends BaseService
 
                 return $getdecodeContents;
             }
-        } catch (\Exception $e) {
-            $contents = '';
-            if (isset($response)) {
-                $contents = json_encode($response);
-            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
 
             LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
 
@@ -1210,10 +1209,6 @@ class CarQuoteService extends BaseService
      */
     public function isPlanModifyAllowed($data)
     {
-        $quote = CarQuote::where('uuid', $data['quoteUID'])->first();
-        $logPrefix = 'plan modification validation - ';
-
-        // Check application storage setting
         if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
             if (! $enablePlanValidation->value) {
                 LoggerService::info('plan modification validation is disabled from backend');
@@ -1222,44 +1217,60 @@ class CarQuoteService extends BaseService
             }
         }
 
-        // Define the statuses where modification is not allowed
+        $logPrefix = 'fn: isPlanModifyAllowed ';
+        $quote = CarQuote::where('uuid', $data['car_quote_uuid'])->with('paymentStatus')->first();
         $paymentStatuses = [
-            PaymentStatusEnum::PENDING_AUTHORIZATION,
-            PaymentStatusEnum::FAILED,
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DECLINED,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::OVERDUE,
+            PaymentStatusEnum::CREDIT_APPROVED,
             PaymentStatusEnum::CANCELLED,
-            PaymentStatusEnum::REJECTED,
-            PaymentStatusEnum::NO_PAYMENT,
+            PaymentStatusEnum::REFUNDED,
+            PaymentStatusEnum::DISPUTED,
+            PaymentStatusEnum::FAILED,
+            PaymentStatusEnum::DRAFT,
         ];
 
         $quoteStatuses = [
-            QuoteStatusEnum::Uncontactable,
-            QuoteStatusEnum::CarSold,
+            QuoteStatusEnum::NewLead,
+            QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+            QuoteStatusEnum::PaymentLinkInprogress,
+            QuoteStatusEnum::PaymentLinkSentToCustomer,
+            QuoteStatusEnum::Quoted,
+            QuoteStatusEnum::FollowedUp,
+            QuoteStatusEnum::PaymentPending,
+            QuoteStatusEnum::SentForTransactionApproval,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::Stale,
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
         ];
 
-        // Check if the quote has a captured payment status
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-                LoggerService::info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+                info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
 
                 return true;
             } elseif (auth()->user()->hasRole(RolesEnum::CarManager) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-                LoggerService::info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid);
+                info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid);
 
                 return true;
             }
         }
 
-        // Check for Car Manager or Advisor roles
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
             if (in_array($quote->payment_status_id, $paymentStatuses) || in_array($quote->quote_status_id, $quoteStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
-                LoggerService::info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+                info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
                 return true;
             }
         }
 
-        // If we reach here, modification is not allowed
-        LoggerService::warning($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
 
         return 'Plan Modification is not allowed';
     }
@@ -1349,16 +1360,17 @@ class CarQuoteService extends BaseService
 
     public function updateTierAndCost($lead)
     {
-        if ($lead->payment_status_id != PaymentStatusEnum::AUTHORISED && $lead->payment_status_id != PaymentStatusEnum::CAPTURED) {
+        if ($lead->tier_id == null) {
             $selectedTier = $this->leadAllocationService->getTierForValue($lead);
+
             if ($selectedTier) {
                 $lead->tier_id = $selectedTier->id;
                 $lead->cost_per_lead = $selectedTier->cost_per_lead;
             } else {
-                LoggerService::warning('Unable to find tier against lead : '.$lead->code);
+                LoggerService::info('Unable to find tier against lead : '.$lead->code);
             }
         } else {
-            // payment is already captured so tier should not be updated.
+            $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
         }
     }
 
@@ -1484,6 +1496,10 @@ class CarQuoteService extends BaseService
 
     private function deleteValuationAPI($oldValue, $currentValue, $quoteUuId)
     {
+        if ($oldValue == $currentValue) {
+            return true;
+        }
+
         try {
             $deleteValuationAPI = config('constants.KEN_API_ENDPOINT').'/delete-car-valuation';
             $kenCapiBasicAuthUsername = config('constants.KEN_API_USER');
@@ -1887,6 +1903,9 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
             ->whereNotNull('cqp.pua_premium')
+            ->whereNot(function ($q) {
+                $q->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD)->whereNotNull('cqp.pua_type');
+            })
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
             ->whereColumn('cqp.plan_id', 'cqr.plan_id');
@@ -1943,7 +1962,7 @@ class CarQuoteService extends BaseService
 
             Ken::request('/trigger-bird-courier-flow', 'post', $payload);
         } else {
-            LoggerService::warning('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
+            LoggerService::info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
         }
     }
 

@@ -215,7 +215,7 @@ class ApiService
 
         LoggerService::info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, true);
-        LoggerService::info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['tierId'].' ------');
+        LoggerService::info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['data']['tierId'].' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
