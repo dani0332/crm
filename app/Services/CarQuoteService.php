@@ -867,7 +867,7 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function getGridData($requestParams)
+    public function getGridData($model = null, $requestParams = [])
     {
         $user = null;
 

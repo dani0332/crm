@@ -12,7 +12,7 @@ class CarQuoteExport
 
     public function collection($requestParams = [])
     {
-        return app(CarQuoteService::class)->getGridData($requestParams)->get();
+        return app(CarQuoteService::class)->getGridData(requestParams: $requestParams)->get();
     }
 
     public function headings(): array
