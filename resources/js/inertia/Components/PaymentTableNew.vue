@@ -1863,7 +1863,9 @@ const editPaymentModal = async (
   if (
     capture_approval == 1 &&
     payment?.insurance_provider?.code == 'AXA' &&
-    (props.quoteType === 'Bike' || props.quoteType === 'Car' || props.quoteType === 'Home')
+    (props.quoteType === 'Bike' ||
+      props.quoteType === 'Car' ||
+      props.quoteType === 'Home')
   ) {
     await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
