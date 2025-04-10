@@ -50,11 +50,12 @@ class AMLScreeningCommand extends Command
             return;
         }
 
-        $quoteRequestQuery = $quoteModel::select('id', 'api_issuance_status_id', 'aml_status')
+        $date = now()->yesterday();
+        $quoteRequestQuery = $quoteModel::select('id', 'code', 'api_issuance_status_id', 'aml_status')
             ->where([
                 'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
-                'aml_status' => AMLStatusCode::AMLPending,
-            ]);
+                'aml_status' => AMLStatusCode::AMLPending
+            ])->where('created_at', '>', $date);
 
         $quoteRequestCount = $quoteRequestQuery->count();
 
@@ -62,7 +63,7 @@ class AMLScreeningCommand extends Command
         if ($quoteRequestCount > 0) {
             $quoteRequestQuery->chunk(100, function ($quoteRequests) {
                 foreach ($quoteRequests as $quoteRequest) {
-                    AmlScreeningAutomationJob::dispatch($quoteRequest->id, $this->quoteType)->onQueue('aml-screening-automation');
+                    AmlScreeningAutomationJob::dispatch($quoteRequest->code)->onQueue('aml-screening-automation');
                 }
             });
         }

@@ -346,7 +346,7 @@ class AMLService
         return CustomerMembersRepository::getBy($quoteRequestId, $quoteType->code, $membersFor);
     }
 
-    public function getCustomerTravelInfo($quoteRequestId, $quoteType)
+    public function getCustomerTravelInfo($quoteRefId, $quoteType)
     {
         $model = $this->getModelObject($quoteType);
 
@@ -360,8 +360,8 @@ class AMLService
                 $join->on('cm.quote_id', '=', 'tqr.id')
                     ->where('cm.quote_type', '=', ltrim($model, '\\'));
             })
-            ->select('tqr.id', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.gender', 'c.dob', 'c.nationality_id', 'cm.passport')
-            ->where('tqr.id', $quoteRequestId)
+            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.gender', 'c.dob', 'c.nationality_id', 'cm.passport')
+            ->where('tqr.code', $quoteRefId)
             ->first();
 
         return $customerTravelInfo;

@@ -2,10 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
+use App\Models\AmlAutomation;
 use App\Services\AMLService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -24,23 +26,23 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
     public $timeout = 60;
     public $tries = 1;
+    
+    public $uniqueFor = 60 * 15; // 15 minutes
+    public $uniqueKey = ''; // 15 minutes
+
     private $className = 'AmlScreeningAutomationJob';
-    private int $quoteRequestId;
+
     private mixed $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
-    public $uniqueFor = 60 * 15; // 15 minutes
-    public $uniqueKey = ''; // 15 minutes
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteRequestId, $quoteType)
+    public function __construct($quoteRefId)
     {
-        $this->quoteRequestId = $quoteRequestId;
-        $this->quoteType = $quoteType;
-        $this->quoteRefId = $this->quoteType->shortCode().' #'.$this->quoteRequestId;
-        $this->uniqueKey = strtolower($this->quoteRefId.'id-'.$this->quoteRequestId);
+        $this->quoteRefId = $quoteRefId;
+        $this->uniqueKey = strtolower($this->quoteRefId);
     }
 
     /**
@@ -48,14 +50,27 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
-        $this->quoteRequest = $this->getQuoteObject($this->quoteType->value, $this->quoteRequestId);
+        $amlAutomation = AmlAutomation::updateOrCreate(
+            [ 'code' => $this->quoteRefId ], 
+            [ 'status' => AmlAutomationStatus::QUEUE_STATUS ]
+        );
+
+        $quoteTypeCode = explode('-', $this->quoteRefId)[0] ?? '';
+        $this->quoteType = QuoteTypes::getNameShortCode($quoteTypeCode);
+
+        if(empty($this->quoteType?->value)) {
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - quote type not found');
+
+            return;
+        }
+
+        $this->quoteRequest = $this->getQuoteObjectBy($this->quoteType->value, $this->quoteRefId, 'code');
 
         if (! $this->quoteRequest) {
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - quote not found');
 
             return;
         }
-        $this->quoteRefId = $this->quoteRequest->code;
 
         if ($this->quoteRequest->api_issuance_status_id != PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID) {
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - quote is not eligible for AML-Automation, due to api issuance status is not yes');
@@ -70,14 +85,15 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         }
 
         try {
+            $amlAutomation->update([ 'status' => AmlAutomationStatus::PROCESSING_STATUS ]);
 
             $amlService = app(AMLService::class);
 
             // Get customer required travel info
-            $customerTravelInfo = (array) $amlService->getCustomerTravelInfo($this->quoteRequestId, $this->quoteType->value);
+            $customerTravelInfo = (array) $amlService->getCustomerTravelInfo($this->quoteRefId, $this->quoteType->value);
 
             if (empty($customerTravelInfo['id'])) {
-                info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' #'.$this->quoteRequestId.' - Record not found');
+                info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - Record not found');
             }
 
             // Check customer required travel info is-complete
@@ -130,11 +146,15 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
                 ->setRedirector(app()->make(\Illuminate\Routing\Redirector::class));
 
             // Call the AML quote update method
-            $result = $amlController->quoteUpdate($amlCheckRequest, $this->quoteType->id(), $this->quoteRequestId);
+            $result = $amlController->quoteUpdate($amlCheckRequest, $this->quoteType->id(), $this->quoteRequest->id);
             $amlResult = $result instanceof \Illuminate\Http\RedirectResponse ? 'success' : 'error';
+
+            $this->quoteRequest->refresh();
+            $amlAutomation->update([ 'status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $this->quoteRequest->aml_status ]);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - reqFn: quoteUpdate'.' - response: '.$amlResult);
 
         } catch (\Exception $e) {
+            $amlAutomation->update([ 'status' => AmlAutomationStatus::FAILED_STATUS, 'result' => $e->getMessage() ]);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML screening failed'.' - Error: '.$e->getMessage().' - line: '.$e->getLine());
         }
     }
