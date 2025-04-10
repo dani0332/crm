@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\CacheKeyEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
+use App\Facades\Capi;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -21,6 +23,8 @@ use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
+use App\Services\Cache\CacheManager;
+use Illuminate\Support\Facades\Cache;
 
 class LookupService extends BaseService
 {
@@ -197,12 +201,14 @@ class LookupService extends BaseService
 
     public function getSendUpdateOptions($quoteTypeId)
     {
-        return Lookup::where([
-            'code' => LookupsEnum::SEND_UPDATE_CODE,
-            'parent_id' => null,
-        ])
-            ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
-            ->get();
+        return Cache::remember("send_update_options_{$quoteTypeId}", now()->addHour(), function () use ($quoteTypeId) {
+            return Lookup::where([
+                'code' => LookupsEnum::SEND_UPDATE_CODE,
+                'parent_id' => null,
+            ])
+                ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
+                ->get();
+        });
     }
 
     public function getCompanyTypes()
@@ -210,10 +216,22 @@ class LookupService extends BaseService
         return Lookup::where('key', LookupsEnum::COMPANY_TYPE)->get();
     }
 
+    public function getHomeLookUpData()
+    {
+        return CacheManager::remember(CacheKeyEnum::HOME_LOOKUPS, function () {
+            return Capi::request('/api/v2-get-home-models', 'post');
+        });
+    }
+
     public function getSendUpdateCategories()
     {
         $parentTypes = Lookup::where('code', LookupsEnum::SEND_UPDATE_CODE)->pluck('id');
 
         return Lookup::whereIn('parent_id', $parentTypes)->get();
+    }
+
+    public function getSendUpdateCancelOptions()
+    {
+        return Lookup::where('key', LookupsEnum::SEND_UPDATE_CANCEL_OPTIONS)->get();
     }
 }

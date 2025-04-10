@@ -703,6 +703,13 @@ const insurerAMLStatusOption = computed(() => {
             "
           />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
@@ -800,14 +807,7 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-        <DatePicker
-          v-if="hasRole(rolesEnum.CorplineManager)"
-          v-model="filters.advisor_assigned_date"
-          name="created_at_start"
-          label="Advisor Assigned Date"
-          range
-          format="dd-MM-yyyy"
-        />
+
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_invoice_number"

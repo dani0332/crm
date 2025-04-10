@@ -223,16 +223,19 @@ class ConversionAsAtReportService extends BaseService
                 $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
             }
         }
+
+        $this->applyBaseQueryToGroupBy($query, $filters, $alias);
+
         if (isset($filters->displayBy)) {
             switch ($filters->displayBy) {
                 case DisplayByEnum::ADVISOR_NAME:
-                    $this->getByAdvisorNameQuery($query, $alias);
+                    $this->getByAdvisorNameQuery($query, $filters, $alias);
                     break;
                 case DisplayByEnum::SUBTEAM:
                     $this->getBySubTeamQuery($query, $alias);
                     break;
                 case DisplayByEnum::LEADSOURCE:
-                    $this->getByLeadSourceQuery($query, $alias);
+                    $this->getByLeadSourceQuery($query, $filters, $alias);
                     break;
                 case DisplayByEnum::EXTERNAL_LEADSOURCE:
                     $this->getByExternalLeadSourceQuery($query, $alias, $detailAlias, $foreignKey);
@@ -277,7 +280,7 @@ class ConversionAsAtReportService extends BaseService
      * @param [type] $query
      * @return void
      */
-    public function getByAdvisorNameQuery($query, $alias)
+    public function getByAdvisorNameQuery($query, $filters, $alias)
     {
         return $query
             ->addSelect(
@@ -315,7 +318,7 @@ class ConversionAsAtReportService extends BaseService
      * @param [type] $query
      * @return void
      */
-    public function getByLeadSourceQuery($query, $alias)
+    public function getByLeadSourceQuery($query, $filters, $alias)
     {
         return $query
             ->addSelect(
@@ -382,26 +385,63 @@ class ConversionAsAtReportService extends BaseService
 
     public function getByTeamQuery($query, $filters, $alias)
     {
-        $parentTeamIds = [];
-        if ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
-            $parentTeamIds = Team::where('name', TeamNameEnum::CAR)->where('type', TeamTypeEnum::PRODUCT)->pluck('id')->toArray();
-        } elseif ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health)) {
-            $parentTeamIds = Team::whereIn('name', [TeamNameEnum::HEALTH, TeamNameEnum::CAR])->where('type', TeamTypeEnum::PRODUCT)->pluck('id')->toArray();
-        }
-
         return $query
             ->addSelect(
                 'teams.id as team_id',
                 'teams.name as team'
             )
-            ->join('user_team', 'user_team.user_id', "{$alias}.advisor_id")
-            ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('teams.type', TeamTypeEnum::TEAM)
-            ->whereNot('teams.name', 'like', '%'.TeamNameEnum::RENEWALS.'%')
-            ->whereIn('teams.parent_team_id', $parentTeamIds)
             ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('team', 'asc')
             ->groupBy('team_id');
+    }
+
+    private function applyBaseQueryToGroupBy($query, $filters, $alias)
+    {
+        $parentTeamIds = $this->getParentTeamIds($filters);
+
+        $isHealth = $filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health);
+        $isCar = $filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car);
+        $isLife = $filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Life);
+
+        if (! ($isCar || $isHealth || $isLife)) {
+            return;
+        }
+
+        $query
+            ->when($isHealth,
+                function ($q) use ($alias) {
+                    $q->join('health_quote_request as hqr', 'hqr.uuid', "{$alias}.uuid");
+                    $q->join('teams', 'teams.name', '=', 'hqr.health_team_type');
+                },
+                function ($q) use ($alias) {
+                    $q->join('user_team', 'user_team.user_id', "{$alias}.advisor_id");
+                    $q->join('teams', 'teams.id', '=', 'user_team.team_id');
+                }
+            )
+            ->whereNot('teams.name', 'like', '%'.TeamNameEnum::RENEWALS.'%')
+            ->when(! empty($parentTeamIds), fn ($q) => $q->whereIn('teams.parent_team_id', $parentTeamIds));
+    }
+
+    private function getParentTeamIds($filters)
+    {
+        $parentTeam = null;
+
+        if ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+            $parentTeam = TeamNameEnum::CAR;
+        } elseif ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health)) {
+            $parentTeam = TeamNameEnum::HEALTH;
+        } elseif ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Life)) {
+            $parentTeam = TeamNameEnum::LIFE;
+        }
+
+        if (empty($parentTeam)) {
+            return null;
+        }
+
+        $parentTeamIds = Team::where('name', $parentTeam)->where('type', TeamTypeEnum::PRODUCT)->pluck('id')->toArray();
+
+        return $parentTeamIds;
     }
 
     /**
