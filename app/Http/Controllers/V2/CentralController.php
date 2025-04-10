@@ -71,6 +71,7 @@ use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
+use App\Services\QuoteStatusService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SplitPaymentService;
@@ -675,5 +676,15 @@ class CentralController extends Controller
         }
 
         return $response;
+    }
+
+    public function removeInsurerPaymentLink(Request $request)
+    {
+        $response = app(CentralService::class)->removeInsurerPaymentLink($request);
+        info('fn:removeInsurerPaymentLink - Response:'.$response['status'].' - '.$response['message']);
+        if($response['status']){
+            return redirect()->back()->with('success', $response['message']);
+        }
+        return redirect()->back()->with('error', $response['message']);
     }
 }

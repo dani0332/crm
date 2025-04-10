@@ -13,14 +13,10 @@ const page = usePage();
 
 const isLinkChanged = ref(false);
 const isCancelPaymentLink = ref(false);
-const leadStatusForm = useForm({
-  modelType: props.modelType,
-  leadId: page.props.quote.id,
-  quote_uuid: page.props.quote.uuid,
-  assigned_to_user_id: page.props.quote.advisor_id,
-  leadStatus: page.props.quoteStatusEnum.InNegotiation,
-  notes: page.props.quote.notes || null,
-  lostReason: page.props.quote.lost_reason_id || null,
+
+const paymentMethodsForm = useForm({
+    quoteId: page.props.quote.id,
+    quoteType: props.modelType,
 });
 
 const paymentLinkBtnDisabled = computed(() => {
@@ -48,25 +44,26 @@ const updatePaymentStatus = () => {
 }
 
 const cancelPaymentLink = () => {
-    leadStatusForm.post(
-        `/quotes/${props.modelType}/${page.props.quote.id}/update-lead-status`,
-        {
-        preserveScroll: true,
-        preserveState: true,
-        onError: errors => {
-            notification.error({ title: errors.value, position: 'top' });
-        },
-        onSuccess: response => {
-            isCancelPaymentLink.value = false;
-            const flash_messages = response.props.flash;
-            countDays.value = useDaysSinceStale(
-            response.props.quoteRequest?.stale_at,
-            );
-            isCancelPaymentLink.value = false;
-            router.reload({ only: ['quoteRequest'] });
-        },
-        },
-    );
+    try {
+        // First request - Lead Status Update
+        paymentMethodsForm
+        .post('/payments/' + props.modelType + '/remove-insurer-payment-link', {
+            preserveScroll: true,
+            onSuccess: (response) => {
+                const flash_messages = response.props.flash;
+                isCancelPaymentLink.value = false;
+                router.reload({ only: ['quoteRequest'] });
+            },
+            onError: (error) => {
+                notification.error({
+                    title: 'Payment Update Failed',
+                    position: 'top',
+                });
+            },
+        });
+    } catch (error) {
+        console.error('One or more requests failed:', error);
+    }
 }
 
 // Watch for changes in paymentForm.insurerPaymentLink
@@ -148,18 +145,16 @@ defineExpose({
             >
             Cancel
             </x-button>
+            <x-button
+                color="orange"
+                tabindex="0"
+                class="focus:outline-black ml-4"
+                @click="updatePaymentStatus()"
+                :loading="paymentMethodsForm.processing"
+            >
+                Cancel Payment Link Shared with Customer
+            </x-button>
         </div>
-    </div>
-    <div v-if="paymentForm.status == 'edit'">
-        <x-button
-            color="orange"
-            tabindex="0"
-            class="focus:outline-black mr-2"
-            @click="updatePaymentStatus()"
-            :loading="paymentForm.processing"
-        >
-            Cancel Payment Link Shared with Customer
-        </x-button>
     </div>
     <div
         v-if="

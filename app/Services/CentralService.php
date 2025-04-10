@@ -16,6 +16,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -1135,5 +1136,34 @@ class CentralService extends BaseService
         info('fn:voidPayment - Void authorized payment process completed');
 
         return ['status' => true, 'message' => 'Void payment processed'];
+    }
+
+    public function removeInsurerPaymentLink($request)
+    {
+        try {
+            info('fn:removeInsurerPaymentLink - Removing insurer payment link for quote id:'.$request->quoteId.' and quote type:'.$request->quoteType);
+
+            $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
+            if (! $quote) {
+                return ['status' => false, 'message' => 'Quote not found'];
+            }
+            
+            $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
+            $quote->save();
+
+            $paymentSplits = $quote->getAllInsurerPaymentLinkSplits();
+            info('fn:removeInsurerPaymentLink - Payment splits count: '.$paymentSplits->count());
+            foreach ($paymentSplits as $ps) {
+                info('fn:removeInsurerPaymentLink - Payment split id: '.$ps->id);
+                $ps->insurer_payment_link = null;
+                $ps->save();
+            }
+
+            return ['status' => true, 'message' => 'Insurer payment link removed'];
+        } catch (\Throwable $th) {
+            info('fn:removeInsurerPaymentLink - Error:'.$th->getMessage());
+
+            return ['status' => false, 'message' => 'Something went wrong'];
+        }
     }
 }
