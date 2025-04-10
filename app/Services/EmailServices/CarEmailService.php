@@ -448,17 +448,17 @@ class CarEmailService extends BaseService
                 $advisor = User::where('id', $lead->advisor_id)->first();
                 $emailData = $this->buildAIGWorkflowData($lead, $advisor);
                 $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_AIG_WORKFLOW)->first();
-                
+
                 if ($birdAIGEvent) {
                     $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent->value, $emailData);
                     info("AIGWorkflow event triggered for lead Ref-ID: {$lead->uuid} | Time: ".now());
                     info("AIGWorkflow response: {$response->status_code} | Ref-ID: {$lead->uuid} | Time: ".now());
-                    
+
                     $lead->aig_flow_executed_at = now();
                     info("AIGWorkflow lead ref-id: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
                     $lead->save();
 
-                    if (!empty($response->headers['Run-Id'])) {
+                    if (! empty($response->headers['Run-Id'])) {
                         $this->createQuoteFlowDetails($lead, $response);
                     }
                 } else {
@@ -489,15 +489,15 @@ class CarEmailService extends BaseService
             'refID' => $lead->code,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
-            'advisorName' => (!empty($advisor->name) ? $advisor->name : ''),
-            'advisorEmail' => (!empty($advisor->email) ? $advisor->email : ''),
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
-            'landLine' => (!empty($advisor->landline_no) ? $advisor->landline_no : ''),
-            'mobilePhone' => (!empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
-            'whatsAppNumber' => !empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
-            'mobileNoWithoutSpaces' => (!empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflowType' => WorkflowTypeEnum::AIG_WORKFLOW,
             'source' => $lead->source ?? '',
             'quote_status_id' => $lead->quote_status_id,

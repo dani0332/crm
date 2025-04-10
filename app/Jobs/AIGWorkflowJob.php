@@ -22,8 +22,8 @@ class AIGWorkflowJob implements ShouldQueue
      * Create a new job instance.
      */
     private $quoteUuid;
-    private $quoteTypeId;
 
+    private $quoteTypeId;
     public $tries = 3;
     public $timeout = 15;
     public $backoff = 60;
@@ -40,43 +40,46 @@ class AIGWorkflowJob implements ShouldQueue
     public function handle(CarEmailService $carEmailService): void
     {
         try {
-            info("AIGWorkflowJob - Starting workflow for Ref ID: {$this->quoteUuid} | Time: " . now());
-            
+            info("AIGWorkflowJob - Starting workflow for Ref ID: {$this->quoteUuid} | Time: ".now());
+
             LoggerService::startQuoteLogging($this->quoteUuid);
-            
+
             // Use provided quote type or default to Car if not specified
             $quoteTypeId = $this->quoteTypeId ?? QuoteTypeId::Car;
             $quoteType = QuoteTypes::getName($quoteTypeId);
-            
-            if (!$quoteType) {
-                info("AIGWorkflowJob - Invalid Quote Type ID: {$quoteTypeId} for Ref ID: {$this->quoteUuid} | Time: " . now());
+
+            if (! $quoteType) {
+                info("AIGWorkflowJob - Invalid Quote Type ID: {$quoteTypeId} for Ref ID: {$this->quoteUuid} | Time: ".now());
+
                 return;
             }
-            
+
             $quote = $quoteType->model()->where('uuid', $this->quoteUuid)->first();
-            
-            if (!$quote) {
-                info("AIGWorkflowJob - Quote not found - Ref ID: {$this->quoteUuid} | Time: " . now());
+
+            if (! $quote) {
+                info("AIGWorkflowJob - Quote not found - Ref ID: {$this->quoteUuid} | Time: ".now());
+
                 return;
             }
-            
+
             // Check for eligible statuses - can be customized based on requirements
             $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead, QuoteStatusEnum::InNegotiation];
-            
-            if (!in_array($quote->quote_status_id, $eligibleStatuses)) {
-                info("AIGWorkflowJob - Quote has ineligible status (Status ID: {$quote->quote_status_id}) - Ref ID: {$this->quoteUuid} | Time: " . now());
+
+            if (! in_array($quote->quote_status_id, $eligibleStatuses)) {
+                info("AIGWorkflowJob - Quote has ineligible status (Status ID: {$quote->quote_status_id}) - Ref ID: {$this->quoteUuid} | Time: ".now());
+
                 return;
             }
-            
+
             // Use the CarEmailService to send the AIG workflow
             $carEmailService->sendAIGWorkflow($quote);
-            
-            info("AIGWorkflowJob - Completed successfully for Ref ID: {$this->quoteUuid} | Time: " . now());
-            
+
+            info("AIGWorkflowJob - Completed successfully for Ref ID: {$this->quoteUuid} | Time: ".now());
+
         } catch (\Throwable $th) {
-            info("AIGWorkflowJob - Exception encountered: '{$th->getMessage()}' - Ref ID: {$this->quoteUuid} | Time: " . now());
+            info("AIGWorkflowJob - Exception encountered: '{$th->getMessage()}' - Ref ID: {$this->quoteUuid} | Time: ".now());
             Log::error($th);
             throw $th;
         }
     }
-} 
+}
