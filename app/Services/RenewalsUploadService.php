@@ -80,6 +80,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 
 class RenewalsUploadService
 {
@@ -1804,7 +1806,33 @@ class RenewalsUploadService
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
                                 $leadValidationErrors->push('Invalid Previous Advisor Email');
                             }
+                            if(empty($leadData->registration_type)){
+                                $leadValidationErrors->push('Registration Type is required');
+                            }
+                            if(!empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY ) {
+                                if(!empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL ){
 
+                                    if(empty($leadData->business_activity)) {
+                                        $leadValidationErrors->push('Business Activity Name is required');
+                                    }
+                                }
+                                if(empty($leadData->vehicle_use)) {
+                                    $leadValidationErrors->push('Vehicle Use is required');
+                                }
+                                if(!empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::PRIVATE ) {
+                                    if(empty($leadData->driver_name)) {
+                                        $leadValidationErrors->push('Driver Name is required');
+                                    }
+                                    if(empty($leadData->driver_nationality)) {
+                                        $leadValidationErrors->push('Driver Nationality is required');
+                                    }
+                                    if(empty($leadData->driver_dob)) {
+                                        $leadValidationErrors->push('Driver Date of Birth is required');
+                                    }
+                                }
+
+
+                            }
                             // Validation batch for car removed as per the discussion with the team
                             // click up: https://app.clickup.com/t/86eqmrdec
                             // if ($leadData->batch) {
