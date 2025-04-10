@@ -42,11 +42,13 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     wget \
     gnupg \
-    ghostscript
+    ghostscript \
+    libwebp-dev
 
-RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
-RUN pecl install mongodb-1.15.0 && docker-php-ext-enable mongodb
+RUN php -r 'var_dump(function_exists("imagecreatefromwebp"));'
+RUN pecl install mongodb-1.20.0 && docker-php-ext-enable mongodb
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 COPY . /app
@@ -80,7 +82,8 @@ libzip4 \
 zlib1g \
 libicu-dev \
 libmemcached11 \
-ghostscript
+ghostscript \
+libwebp-dev
 
 # Set working directory
 WORKDIR /var/www
