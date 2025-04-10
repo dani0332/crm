@@ -4241,7 +4241,7 @@ onBeforeMount(() => {
                           <template
                             v-if="
                               can(permissionEnum.ApprovePayments) &&
-                              (index > 1 || isChildPaymentDeletable)
+                              (!isChildPaymentDeletable || index > 0)
                             "
                           >
                             <x-button
