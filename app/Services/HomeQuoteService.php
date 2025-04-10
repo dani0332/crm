@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use Illuminate\Validation\ValidationException;
 
 class HomeQuoteService extends BaseService
 {
@@ -1261,7 +1262,21 @@ class HomeQuoteService extends BaseService
         // Fetch quote plans using UUID
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
-            return ['error' => 'Quote plans not available'];
+            throw ValidationException::withMessages(['error' => 'Quote plans not available. Please try again.']);
+        }
+
+        // Filter plans by provided plan IDs
+        $filteredPlans = collect($quotePlans->quotes->plans)->filter(function($plan) use ($planIds) {
+            return isset($plan->id) && in_array($plan->id, $planIds);
+        });
+
+        // Check if all filtered plans have empty or null discountPremium
+        $allPlansHaveNoPremium = $filteredPlans->every(function($plan) {
+            return empty($plan->discountPremium) || is_null($plan->discountPremium) || $plan->discountPremium <= 0;
+        });
+
+        if ($allPlansHaveNoPremium || $filteredPlans->isEmpty()) {
+            throw ValidationException::withMessages(['error' => 'Cannot generate PDF as all selected plans have no premium values. Please select plans with valid premium values.']);
         }
 
         // Retrieve insurance providers by provider IDs

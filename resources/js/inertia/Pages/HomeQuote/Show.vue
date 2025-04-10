@@ -458,9 +458,7 @@ const searchByTradeLicense = trigger => {
         });
       }
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => {});
 };
 
 const linkEntity = () => {
@@ -493,9 +491,7 @@ const linkEntity = () => {
         entityDetailsFound.value = false;
       }
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => {});
 };
 const readOnlyMode = reactive({
   isDisable: true,
@@ -823,7 +819,49 @@ const onExportPlans = () => {
       });
     })
     .catch(error => {
-      console.log(error);
+      // Display error message in a toast notification
+      if (error.response && error.response.data) {
+        // For validation errors (422)
+        if (error.response.status === 422 && error.response.data.errors) {
+          const errorMessages = error.response.data.errors;
+          // Display the first error message we find
+          if (errorMessages.error && errorMessages.error.length > 0) {
+            notification.error({
+              title: errorMessages.error[0],
+              position: 'top',
+            });
+          } else {
+            // Find first error message in the object
+            for (const key in errorMessages) {
+              if (errorMessages[key] && errorMessages[key].length) {
+                notification.error({
+                  title: errorMessages[key][0],
+                  position: 'top',
+                });
+                break;
+              }
+            }
+          }
+        } else if (error.response.data.message) {
+          // For other types of errors with a message
+          notification.error({
+            title: error.response.data.message,
+            position: 'top',
+          });
+        } else {
+          // Generic error if no specific message found
+          notification.error({
+            title: 'Failed to export PDF. Please try again.',
+            position: 'top',
+          });
+        }
+      } else {
+        // Fallback for network errors
+        notification.error({
+          title: 'Failed to export PDF. Please check your connection and try again.',
+          position: 'top',
+        });
+      }
     })
     .finally(() => {
       exportLoader.value = false;
@@ -872,11 +910,6 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
   const lookupArray = Array.isArray(lookUpData[lookupKey])
     ? lookUpData[lookupKey]
     : [];
-  if (!lookUpData[lookupKey]) {
-    console.log(
-      `Lookup key "${lookupKey}" not found in lookUpData or is not an array.`,
-    );
-  }
   const matchedValue = lookupArray.find(item => item.id === id);
   return matchedValue?.text || defaultValue;
 };
@@ -990,7 +1023,6 @@ const confirmSendEmail = () => {
     })
     .catch(error => {
       processingOCBEmailNB.value = false;
-      console.log(error);
     })
     .finally(() => {
       processingOCBEmailNB.value = false;
