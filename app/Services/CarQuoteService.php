@@ -1903,7 +1903,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
             ->whereNotNull('cqp.pua_premium')
             ->whereNot(function ($q) {
-                $q->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD)
+                $q->where('cqp.is_renewal', true)
                     ->whereNotNull('cqp.pua_type')
                     ->whereColumn('cqp.plan_id', 'cqr.plan_id');
             })
