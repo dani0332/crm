@@ -175,7 +175,7 @@ const capturePaymentValidationErrorMessage = ref('');
 const modal2Ref = ref(null);
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
-const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
+const quoteTypesToCheck = ['Car', 'Health', 'Travel', 'Home']; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
@@ -249,14 +249,12 @@ const approveProofDocument = props.paymentDocument.find(
 );
 
 let initalPlanDetails = [];
-if (
-  props.quoteType == 'Business' ||
-  props.quoteType == 'Home' ||
-  props.isPlanDetailEnabled
-) {
+if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
   initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (props.quoteType == 'Home') {
+  initalPlanDetails = props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Bike') {
@@ -1692,7 +1690,9 @@ const addPaymentModal = () => {
   discountError.value = '';
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
-
+  console.log('totalPrice.value', totalPrice.value);
+  console.log('planDetail.value', planDetail.value);
+  console.log('sendUpdate', props.sendUpdate);
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -1865,7 +1865,7 @@ const editPaymentModal = async (
     payment?.insurance_provider?.code == 'AXA' &&
     (props.quoteType === 'Bike' || props.quoteType === 'Car')
   ) {
-    await doCapturePaymentValidation(payment.total_amount);
+    await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
 
   resetPaymentForm();
@@ -1882,11 +1882,12 @@ const editPaymentModal = async (
   setFrequencyTypes();
 };
 
-const doCapturePaymentValidation = totalAmount => {
+const doCapturePaymentValidation = (totalAmount, paymentCode) => {
   const data = {
     modelType: props.quoteType,
     uuid: props.quoteRequest.uuid,
     captureAmount: totalAmount,
+    paymentCode: paymentCode,
   };
 
   capturePaymentValidationInProcess.value = true;
@@ -2020,6 +2021,7 @@ const initializePaymentForm = (
     paymentMethodsForm.isGIGProvider = payment.isGIGProvider;
     paymentMethodsForm.isMultiplePaymentsEnabled =
       payment.isMultiplePaymentsEnabled;
+    paymentMethodsForm.isCaptureButtonEnabled = payment.isCaptureButtonEnabled;
   }
 };
 
@@ -2145,10 +2147,15 @@ const finalizePaymentForm = (payment, capture_approval) => {
       props.quoteType === 'Travel' &&
       ['edit', 'view'].includes(paymentMethodsForm.status)
     ) {
-      planDetail.value = payment.travel_plan;
+      planDetail.value =
+        payment?.travel_plan ??
+        props.sendUpdate?.travel_plan ??
+        props.quoteRequest?.plan ??
+        null;
       if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
         planDetail.value['insurance_provider'] =
-          payment.travel_plan.insurance_provider;
+          payment?.travel_plan?.insurance_provider ??
+          props.sendUpdate?.insurance_provider;
       }
     }
   };
@@ -2814,19 +2821,15 @@ const uploadDocument = (doc, files, count) => {
           reject(errors);
         },
         onSuccess: data => {
-          let quoteDocuments = [];
-          if (
-            quoteTypesToCheck.includes(props.quoteType) ||
-            props.quoteType === 'Home' ||
+          let quoteTypes = quoteTypesToCheck.filter(
+            quoteType => quoteType !== 'Home',
+          );
+          let quoteDocuments =
+            quoteTypes.includes(props.quoteType) ||
             props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
-          ) {
-            quoteDocuments = data.props.quoteDocuments;
-          } else {
-            quoteDocuments = data.props.quote.documents;
-          }
-          //quoteDocuments = [...quoteDocuments].reverse();
-          // Sort the array by the "id" property in descending order
+              ? data.props.quoteDocuments
+              : data.props.quote.documents;
           quoteDocuments.sort((a, b) => b.id - a.id);
           if (count === 0) {
             isDiscountDocumentNotUploaded.value = false;
@@ -3027,7 +3030,7 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   ) {
     return true;
   }
-  return getValidStatuses(paymentRecord.payment_splits[0]);
+  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
 };
 
 const getCaptureValidation = computed(() => {
@@ -3073,9 +3076,29 @@ const alertCapture = payment => {
 
 const getCaptureOption = computed(() => {
   return payment => {
+    // Return early if there are no payments
     if (props.payments.length === 0) return;
+
+    let isCaptureButtonEnabled =
+      page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
+    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+      isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
+    }
+
     const paymentMethodCC = filterCCPayments(payment);
-    return paymentMethodCC.length > 0 ? 'capture' : 'approve';
+
+    // Check if the conditions for 'capture' are met
+    const isCreditCardPayment = paymentMethodCC.length > 0;
+    const isNotInsurerPayment = payment.collection_type !== 'insurer';
+
+    // Return 'capture' if all conditions are met, otherwise return 'approve'
+    if (
+      (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
+      (isCaptureButtonEnabled && hasAnyCCSplitPayment())
+    ) {
+      return 'capture';
+    }
+    return 'approve';
   };
 });
 
@@ -3123,6 +3146,21 @@ onMounted(() => {
   showLackingPayment();
 });
 
+const isChildPaymentDeletable = computed(() => {
+  if (props.payments.length !== 2) return false;
+  const childPaymentNotAuthorised = [
+    paymentStatusEnum.PENDING,
+    paymentStatusEnum.NEW,
+    paymentStatusEnum.DRAFT,
+    paymentStatusEnum.OVERDUE,
+  ].includes(props.payments[1].payment_status_id);
+  return (
+    props.quoteType == 'Travel' &&
+    page.props?.aboveAgeMembers &&
+    childPaymentNotAuthorised
+  );
+});
+
 const getPlanName = computed(() => {
   const plan = planDetail.value;
   if (props.quoteType === 'Bike') {
@@ -3158,6 +3196,7 @@ const providerId = computed(() => {
 
 const providerName = computed(() => {
   const plan = planDetail.value;
+  const ecomQuoteType = [...quoteTypesToCheck, 'Bike'];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
       provider => provider.id === providerId.value,
@@ -3165,7 +3204,7 @@ const providerName = computed(() => {
 
     return provider.text || 'Not Available';
   } else if (
-    quoteTypesToCheck.includes(props.quoteType) &&
+    ecomQuoteType.includes(props.quoteType) &&
     plan.insurance_provider
   ) {
     return plan ? plan.insurance_provider.text : 'Not Available';
@@ -3210,12 +3249,10 @@ const setPaymentInitialPrice = () => {
 };
 
 const setPlanDetail = () => {
-  if (
-    props.quoteType == 'Business' ||
-    props.quoteType == 'Home' ||
-    props.isPlanDetailEnabled
-  ) {
+  if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (props.quoteType == 'Home') {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == 'Bike') {
@@ -3669,6 +3706,14 @@ const voidPaymentModel = payment => {
   voidPaymentObject = payment;
 };
 
+let deletePaymentObject = {};
+const deletePaymentProcess = ref(false);
+const deletePaymentModelPopup = ref(false);
+const deletePaymentModel = payment => {
+  deletePaymentModelPopup.value = true;
+  deletePaymentObject = payment;
+};
+
 const isVoidPaymentEnabled = payment => {
   return (
     props.isFuncsEnabled.tapIntegration &&
@@ -3720,6 +3765,50 @@ const voidPayment = () => {
       } else {
         notification.error({
           title: 'Void authorized payment process failed',
+          position: 'top',
+        });
+      }
+    });
+};
+
+const deletePayment = () => {
+  deletePaymentProcess.value = true;
+  let data = {
+    payment_id: deletePaymentObject.id,
+    payment_code: deletePaymentObject.code,
+  };
+
+  axios
+    .post(`/payments/${props.quoteType}/delete-payment`, data)
+    .then(res => {
+      deletePaymentProcess.value = false;
+      deletePaymentModelPopup.value = false;
+      if (res.data.status === false) {
+        notification.error({
+          title: res.data.message,
+          position: 'top',
+        });
+        return;
+      }
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+
+      router.reload({
+        only: ['payments'],
+      });
+    })
+    .catch(err => {
+      deletePaymentProcess.value = false;
+      if (err.response.data) {
+        notification.error({
+          title: err.response.data?.message,
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Delete authorized payment process failed',
           position: 'top',
         });
       }
@@ -4130,7 +4219,24 @@ onBeforeMount(() => {
                               Edit
                             </x-button>
                           </template>
-                          <template v-if="can(permissionEnum.ApprovePayments)">
+                          <template
+                            v-if="index == 1 && isChildPaymentDeletable"
+                          >
+                            <x-button
+                              size="xs"
+                              color="orange"
+                              outlined
+                              @click="deletePaymentModel(item)"
+                            >
+                              Delete
+                            </x-button>
+                          </template>
+                          <template
+                            v-if="
+                              can(permissionEnum.ApprovePayments) &&
+                              !isChildPaymentDeletable
+                            "
+                          >
                             <x-button
                               v-if="
                                 getCaptureOption(item) === 'capture' &&
@@ -4216,7 +4322,9 @@ onBeforeMount(() => {
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td></td>
+                        <td>
+                          {{ splitPayment.code }}-{{ splitPayment.sr_no }}
+                        </td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ splitPayment.payment_method.name }}</td>
@@ -6759,6 +6867,30 @@ onBeforeMount(() => {
                 @click="voidPayment"
               >
                 <span>Confirm</span>
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+        <x-modal
+          v-model="deletePaymentModelPopup"
+          size="lg"
+          title="Delete Payment"
+          show-close
+          backdrop
+        >
+          <x-form :auto-focus="false">
+            <div class="text-lg text-center">
+              <span> Are you sure to Delete this payment?</span>
+            </div>
+            <div class="mt-2 text-center">
+              <x-button
+                size="sm"
+                color="orange"
+                class="mt-4 text-center"
+                :loading="deletePaymentProcess"
+                @click="deletePayment"
+              >
+                <span>Delete</span>
               </x-button>
             </div>
           </x-form>

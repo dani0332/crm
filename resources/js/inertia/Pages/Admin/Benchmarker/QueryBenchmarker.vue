@@ -12,7 +12,7 @@ const form = useForm({
 const loader = ref(false);
 const exectionTime = ref(null);
 const errorMessage = ref(null);
-
+console.log('Query Benchmarker');
 const onSubmit = isValid => {
   if (isValid) {
     exectionTime.value = null;

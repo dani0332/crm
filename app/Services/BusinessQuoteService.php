@@ -704,4 +704,34 @@ class BusinessQuoteService extends BaseService
 
         return 'true';
     }
+
+    public function formatInsuranceName(string $name): string
+    {
+        // Remove any extra whitespace
+        $trimmedName = trim($name);
+
+        // Split the name into words and filter out 'insurance'
+        $words = array_filter(
+            preg_split('/\s+/', $trimmedName),
+            fn ($word) => strtolower($word) !== 'insurance'
+        );
+        $words = array_values($words); // Re-index the array
+
+        // If the name is too short (3 words or less), return as is
+        if (count($words) <= 3) {
+            return implode(' ', $words);
+        }
+
+        // Handle special cases with & sign
+        if (str_contains($trimmedName, '&')) {
+            // For cases like "Kidnap & Ransom", return both parts
+            $parts = array_map('trim', explode('&', $trimmedName));
+            if (count($parts) === 2) {
+                return implode(' & ', $parts);
+            }
+        }
+
+        // Return first two words for lengthy names (more than 3 words)
+        return $words[0].' '.$words[1];
+    }
 }

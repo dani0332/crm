@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
+use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
@@ -26,6 +27,7 @@ class PersonalQuotesExport
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::HOME->value,
         ];
     }
 
@@ -46,6 +48,9 @@ class PersonalQuotesExport
 
             case QuoteTypes::JETSKI->value:
                 return JetskiQuoteRepository::getData(true);
+
+            case QuoteTypes::HOME->value:
+                return HomeQuoteRepository::getData(true);
 
             default:
                 return abort(404);
@@ -162,6 +167,22 @@ class PersonalQuotesExport
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
                 ];
+
+            case QuoteTypes::HOME->value:
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'TRANSAPP CODE',
+                    'SOURCE',
+                    'LOST REASON',
+                    'PREMIUM',
+                    'POLICY NUMBER',
+                ];
         }
     }
 
@@ -273,6 +294,22 @@ class PersonalQuotesExport
                     $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+                ];
+
+            case QuoteTypes::HOME->value:
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    $quote?->quoteStatus?->text,
+                    $quote?->advisor?->name,
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+                    $quote?->homeQuote?->homeQuoteRequestDetail?->transapp_code,
+                    $quote->source,
+                    $quote?->homeQuote?->homeQuoteRequestDetail?->lostReason?->text,
+                    $quote->premium,
+                    $quote->policy_number,
                 ];
         }
     }

@@ -12,6 +12,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
@@ -35,6 +36,7 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
@@ -174,7 +176,7 @@ class CentralService extends BaseService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::Home];
         $quoteBatch = QuoteBatches::latest()->first();
         Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
@@ -263,6 +265,8 @@ class CentralService extends BaseService
                 return $listQuotePlans;
             case quoteTypeCode::Bike:
                 return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
+            case quoteTypeCode::Home:
+                return app(HomeQuoteService::class)->getQuotePlans($id);
             default:
                 return [];
         }
@@ -306,34 +310,105 @@ class CentralService extends BaseService
      */
     public function savePlanDetails($quoteType, $code, $data)
     {
-        return DB::transaction(function () use ($quoteType, $code, $data) {
-            $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
-            $repository = getRepositoryObject($quoteType);
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $repository = getRepositoryObject($quoteType);
 
-            $priceVatApp = $data->price_vat_applicable ?? 0;
-            $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+        $priceVatApp = $data->price_vat_applicable ?? 0;
+        $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
 
-            if ($quoteType == QuoteTypes::BUSINESS->value) {
-                $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
-            } else {
-                $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
-            }
+        if ($quoteType == QuoteTypes::BUSINESS->value) {
+            $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
+        } else {
+            $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
+        }
 
-            $quote = $repository::where('code', $code)->firstOrFail();
+        $quote = $repository::where('code', $code)->firstOrFail();
 
+        $oldInsuranceProviderId = $quote->insurance_provider_id;
+        $newInsuranceProviderId = $data->insurance_provider_id;
+
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $businessTypeId = $quote->business_type_of_insurance_id ?? null;
+        $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId, null, $quote);
+
+        return DB::transaction(function () use ($quoteType, $data, $quote, $isCreditCardEnabled, $newInsuranceProviderId, $oldInsuranceProviderId) {
             $quote->update($data->toArray());
 
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $quote->carQuoteRequestDetail->update(['insurer_quote_number' => $data->insurer_quote_number]);
             }
 
-            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-            $businessTypeId = $quote->business_type_of_insurance_id ?? null;
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId);
-            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
+            $this->synchronizePaymentInformation($quote, null, $newInsuranceProviderId, $isCreditCardEnabled);
+
+            info("Checking conditions for updating payment method for quote code: {$quote->code}", [
+                'quote_type' => $quoteType,
+                'source' => $quote->source,
+                'old_provider' => $oldInsuranceProviderId,
+                'new_provider' => $newInsuranceProviderId,
+            ]);
+            if ($quoteType == QuoteTypes::HOME->value && $quote->source == LeadSourceEnum::RENEWAL_UPLOAD && $newInsuranceProviderId != $oldInsuranceProviderId) {
+                $this->updatePaymentMethodBasedOnInsurer($quote, $newInsuranceProviderId);
+            }
 
             return true;
         });
+    }
+
+    private function updatePaymentMethodBasedOnInsurer($quote, $insuranceProviderId)
+    {
+        $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
+
+        $insurersWithoutCCRenewal = [
+            InsurerProviderEnum::GIG_INSURANCE,
+            InsurerProviderEnum::EMIRATES_INSURANCE,
+            InsurerProviderEnum::LIVANA_INSURANCE,
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+        ];
+
+        info('Updating payment method for home renewal lead', [
+            'quote_code' => $quote->code,
+            'insurer' => $insuranceProvider->code,
+            'payment_gateway_id' => $insuranceProvider->payment_gateway_id,
+        ]);
+
+        // Define payment method based on payment gateway
+        $newPaymentMethod = in_array($insuranceProvider->code, $insurersWithoutCCRenewal) && $quote->source == LeadSourceEnum::RENEWAL_UPLOAD
+            ? PaymentMethodsEnum::InsurerPayment
+            : PaymentMethodsEnum::CreditCard;
+
+        $pendingStatuses = [
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DRAFT,
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::OVERDUE,
+        ];
+
+        // Update master payment and related splits
+        $payment = Payment::with('paymentSplits')
+            ->whereIn('payment_status_id', $pendingStatuses)
+            ->where('code', $quote->code)->first();
+
+        if ($payment) {
+            $payment->payment_methods_code = $newPaymentMethod;
+            $payment->save();
+
+            info('Updated master payment method', [
+                'quote_code' => $quote->code,
+                'new_method' => $newPaymentMethod,
+            ]);
+
+            // Update payment splits that are not in final status
+            $payment->paymentSplits()
+                ->whereIn('payment_status_id', $pendingStatuses)
+                ->update([
+                    'payment_method' => $newPaymentMethod,
+                ]);
+
+            info('Updated payment splits payment method', [
+                'quote_code' => $quote->code,
+                'new_method' => $newPaymentMethod,
+            ]);
+        }
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
@@ -389,6 +464,16 @@ class CentralService extends BaseService
                 $data = [
                     'planId' => intval($data->plan_id),
                     'quoteTypeId' => QuoteTypeId::Bike,
+                    'quoteUID' => $uuid,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
+                break;
+            case QuoteTypes::HOME->value:
+                $endpoint = '/process-home-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteTypeId' => QuoteTypeId::Home,
                     'quoteUID' => $uuid,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
@@ -880,7 +965,8 @@ class CentralService extends BaseService
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyCancelledReissued,
-            QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
         ];
 
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
@@ -937,12 +1023,12 @@ class CentralService extends BaseService
     {
         if (
             ($quoteType == quoteTypeCode::Business &&
-            in_array($businessTypeOfInsuranceId, [
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoIndividual),
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineHull),
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoOpenCover),
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupLife),
-            ])) ||
+                in_array($businessTypeOfInsuranceId, [
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoIndividual),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineHull),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoOpenCover),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupLife),
+                ])) ||
             $quoteType == quoteTypeCode::Life
         ) {
             return true;
@@ -967,7 +1053,7 @@ class CentralService extends BaseService
         }
     }
 
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true)
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true, $isHomeRenewalLead = false)
     {
         info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {
@@ -1062,7 +1148,12 @@ class CentralService extends BaseService
         $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
 
         // Get broker commission details
-        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote);
+
+        $isCaptureButtonEnabled = false;
+        if ($insuranceProvider) {
+            $isCaptureButtonEnabled = $this->isCaptureButtonEnabledForProvider($insuranceProvider->code, $quoteTypeId);
+        }
 
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
@@ -1087,6 +1178,7 @@ class CentralService extends BaseService
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'commissionInPayments' => $commissionInPayments,
             'isADNICProvider' => $isADNICProvider,
+            'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
         ];
 
         // If payment object is provided, check commission status and merge with TAP configuration
@@ -1170,9 +1262,9 @@ class CentralService extends BaseService
             $enabledProviders[] = InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE;
         }
 
-        if ($quoteTypeId == QuoteTypeId::Car) {
-            $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
-        }
+        // if ($quoteTypeId == QuoteTypeId::Car) {
+        //     $enabledProviders[] = InsurerProviderEnum::WATANIA_TAKAFUL;
+        // }
 
         if ($quoteTypeId == QuoteTypeId::Travel) {
             $enabledProviders[] = InsurerProviderEnum::ORIENT_INSURANCE;
@@ -1195,5 +1287,43 @@ class CentralService extends BaseService
         } catch (\Throwable $th) {
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
+    }
+
+    public function deletePayment($request): array
+    {
+        info('fn:deletePayment - process started: '.$request->payment_id);
+
+        $payment = Payment::where(
+            [
+                'id' => $request->payment_id,
+                'code' => $request->payment_code,
+                'paymentable_type' => TravelQuote::class,
+            ])
+            ->whereIn('payment_status_id', [
+                PaymentStatusEnum::PENDING,
+                PaymentStatusEnum::NEW,
+                PaymentStatusEnum::DRAFT,
+                PaymentStatusEnum::OVERDUE,
+            ])
+            ->first();
+        if (! $payment) {
+            info('fn:deletePayment - Payment not found: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment not found'];
+        }
+
+        $quote = $payment->paymentable;
+        $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
+        if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
+            info('fn:deletePayment - Payment cannot be deleted: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment cannot be deleted'];
+        }
+
+        // Delete Payment and Payment Splits
+        PaymentSplits::where('code', $request->payment_code)->delete();
+        Payment::where('id', $request->payment_id)->delete();
+
+        return ['status' => true, 'message' => 'Delete payment processed'];
     }
 }
