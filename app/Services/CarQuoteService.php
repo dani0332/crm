@@ -10,7 +10,6 @@ use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -1912,7 +1911,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
             ->whereNotNull('cqp.pua_premium')
             ->whereNot(function ($q) {
-                $q->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD)->whereNotNull('cqp.pua_type');
+                $q->where('cqp.is_renewal', true)
+                    ->whereNotNull('cqp.pua_type');
             })
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
