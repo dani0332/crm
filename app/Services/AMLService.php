@@ -65,6 +65,7 @@ class AMLService
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
 
         return Carbon::createFromFormat(
@@ -80,7 +81,8 @@ class AMLService
             QuoteTypes::CYCLE->id() => $quoteRequestId,
             QuoteTypes::JETSKI->id() => $quoteRequestId,
             QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id,
-            QuoteTypes::YACHT->id() => $quoteRequestId
+            QuoteTypes::YACHT->id() => $quoteRequestId,
+            QuoteTypes::HOME->id() => $quoteRequestId,
         };
     }
 
@@ -94,7 +96,8 @@ class AMLService
             QuoteTypes::CYCLE->id() => CycleQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
-            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData)
+            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
         };
     }
 
@@ -117,14 +120,16 @@ class AMLService
                 'carQuoteRequestDetail',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
-            $quoteRequestDetails = HomeQuote::with([
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::HOME->id())->with([
+                'quoteDetail',
+                'homeQuote',
+                'homeQuote.possessionType',
+                'homeQuote.accommodationType',
+                'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
-                'customer.detail',
-                'possessionType',
-                'accommodationType',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HEALTH->id()) {
             $quoteRequestDetails = HealthQuote::with([
@@ -612,6 +617,10 @@ class AMLService
                 'insuredFirstName' => $insuredDetails?->first_name,
                 'insuredLastName' => $insuredDetails?->last_name,
             ];
+
+            if ($quoteTypeId == QuoteTypes::HOME->id()) {
+                $insurerScreeningPayload['nationalityId'] = $request['nationality_id'] ?? null;
+            }
 
             info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);

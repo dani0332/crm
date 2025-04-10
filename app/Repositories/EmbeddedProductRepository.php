@@ -297,7 +297,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $resendEmail = false)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
             return false;
         }
 
@@ -337,7 +337,7 @@ class EmbeddedProductRepository extends BaseRepository
                     ProcessSyncAlfredProtect::dispatch($quoteObject);
 
                 } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                && ucwords($modelType) == quoteTypeCode::Car) {
+                && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home])) {
 
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
                     SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
@@ -690,7 +690,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCancelEmbeddedProducts($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
             return false;
         }
 
@@ -786,7 +786,7 @@ class EmbeddedProductRepository extends BaseRepository
 
                     if (
                         $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                        && $type->code == quoteTypeCode::Car
+                        && in_array($type->code, [quoteTypeCode::Car, quoteTypeCode::Home])
                     ) {
                         CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
                     }
@@ -864,7 +864,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCapturePayment($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
             return false;
         }
 

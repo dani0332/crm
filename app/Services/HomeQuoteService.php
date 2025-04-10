@@ -5,15 +5,24 @@ namespace App\Services;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\Customer;
+use App\Models\DocumentType;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
+use App\Models\InsuranceProvider;
+use App\Models\Payment;
+use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
+use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -22,10 +31,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class HomeQuoteService extends BaseService
 {
     protected $query;
+    protected $httpService;
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
@@ -33,9 +44,10 @@ class HomeQuoteService extends BaseService
 
     protected $leadAllocationService;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(LeadAllocationService $leadAllocationService, HttpRequestService $httpService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->httpService = $httpService;
 
         $this->query = DB::table('home_quote_request as hqr')->select(
             'hqr.id',
@@ -72,6 +84,7 @@ class HomeQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
             DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+            DB::raw('DATE_FORMAT(hqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
             DB::raw('DATE_FORMAT(hqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
             'hqr.premium',
             'hqr.advisor_id',
@@ -185,8 +198,8 @@ class HomeQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        return HomeQuoteRequestDetail::firstOrCreate(
-            ['home_quote_request_id' => $id],
+        return PersonalQuoteDetail::firstOrCreate(
+            ['personal_quote_id' => $id],
         );
     }
 
@@ -214,7 +227,7 @@ class HomeQuoteService extends BaseService
             'hasBuilding' => $request->has_building == 'on' ? true : false,
             'hasPersonalBelongings' => $request->has_personal_belongings == 'on' ? true : false,
             'source' => $sourceName,
-            'isPropertyRentedHolidayHome' => $request->is_property_rented_holiday_home == 'on' ? true : false,
+            'isPropertyRentedHolidayHome' => $request->owner_occupancy_type_id == 'on' ? true : false,
             'referenceUrl' => $appUrl,
             'dob' => $request->dob ?? null,
             'gender' => $request->gender ?? null,
@@ -283,14 +296,6 @@ class HomeQuoteService extends BaseService
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-
-        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
-            $dateArray = $request['last_modified_date'];
-
-            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
-            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('hqr.updated_at', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->code) && $request->code != '') {
@@ -604,7 +609,7 @@ class HomeQuoteService extends BaseService
             case 'previous_policy_expiry_date':
                 $title = 'Previous Policy Expiry Date';
                 break;
-            case 'is_property_rented_holiday_home':
+            case 'owner_occupancy_type_id':
                 $title = 'Is Property Rented Holiday Home ?';
                 break;
             case 'previous_quote_policy_premium':
@@ -709,8 +714,8 @@ class HomeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HomeQuote::where('id', $id)->with([
-            'insuranceProviderDetails',
+        return PersonalQuote::where('id', $id)->with([
+            'insuranceProvider',
             'payments' => function ($payment) {
                 $payment->with([
                     'paymentSplits' => function ($paymentSplit) {
@@ -744,13 +749,15 @@ class HomeQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
+            LoggerService::startQuoteLogging($leadId);
             $lead = $this->getEntityPlain($leadId);
 
-            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::HOME, HomeQuoteRequestDetail::class, 'home_quote_request_id');
+            $this->handleAssignment($lead, $userId, $quoteBatch, QuoteTypes::PERSONAL, PersonalQuoteDetail::class, 'personal_quote_id');
         }
+        LoggerService::endLogging();
 
         return $result;
     }
@@ -784,5 +791,580 @@ class HomeQuoteService extends BaseService
         return 'true';
     }
 
-    public function sendHomeOCB() {}
+    public function getQuotePlans($id, $extraData = [])
+    {
+        $quoteUuId = PersonalQuote::where('uuid', '=', $id)->value('uuid');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-home-quote-plans';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+
+        $plansDataArr = [
+            'quoteUID' => $quoteUuId,
+            'lang' => 'en',
+            'callSource' => 'imcrm',
+            ...$extraData,
+        ];
+
+        $client = new \GuzzleHttp\Client;
+
+        try {
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'body' => json_encode($plansDataArr),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } elseif (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } elseif (isset($response->msg)) {
+                $responseBodyAsString = $response->msg;
+            } else {
+                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+            }
+
+            return $responseBodyAsString;
+        }
+    }
+
+    public function planDetails($quoteId, $id)
+    {
+        $quotePlans = $this->getQuotePlans($quoteId);
+
+        // Check for error message
+        if (is_string($quotePlans)) {
+            return response()->json(['message' => $quotePlans], 404);
+        }
+
+        // Extract plans
+        $plans = $quotePlans->quotes->plans ?? [];
+        if (empty($plans)) {
+            return response()->json(['message' => 'No plans found.'], 404);
+        }
+
+        // Find the specific plan by $id
+        $selectedPlan = collect($plans)->firstWhere('id', $id);
+
+        if (! $selectedPlan) {
+            return response()->json(['message' => 'Plan not found.'], 404);
+        }
+
+        // Prepare response data
+        $data = [
+            'listQuotePlanName' => $selectedPlan->name ?? '',
+            'providerCode' => $selectedPlan->providerCode ?? '',
+            'providerName' => $selectedPlan->providerName ?? '',
+            'actualPremium' => $selectedPlan->actualPremium ?? '',
+            'discountPremium' => $selectedPlan->discountPremium ?? '',
+            'listQuotePlanBenefitsInclusions' => [
+                'buildings' => $selectedPlan->benefits->building ?? '',
+                'contents' => $selectedPlan->benefits->content ?? '',
+                'personalBelongings' => $selectedPlan->benefits->personalBelonging ?? '',
+                'contentAndPersonalBelonging' => $selectedPlan->benefits->contentAndPersonalBelonging ?? '',
+                'fineArtAndCollectible' => $selectedPlan->benefits->fineArtAndCollectible ?? '',
+                'jewelleryAndValuable' => $selectedPlan->benefits->jewelleryAndValuable ?? '',
+            ],
+            'listQuotePlanBenefitsExclusions' => $selectedPlan->benefits->exclusion ?? [],
+            'listQuotePlanBenefitsAditionalCovers' => $selectedPlan->benefits->additionalCover ?? [],
+            'is_disabled' => $selectedPlan->isDisabled ?? false,
+            'is_manual_update' => $selectedPlan->isManualPlan ?? false,
+            'vat' => $selectedPlan->vat ?? '',
+            'insurer_quote_no' => $selectedPlan->insurerQuoteNo ?? '',
+            'isRatingAvailable' => $selectedPlan->isRatingAvailable ?? false,
+            'excess' => $selectedPlan->excess ?? '',
+            'id' => $selectedPlan->id ?? '',
+            'listQuotePlanBenefitsPolicyDetails' => $selectedPlan->policyWordings ?? [],
+            'listQuotePlanBenefitsPolicyDetailLink' => collect($selectedPlan->policyWordings)->first()?->link ?? '',
+            'permissionsEnum' => PermissionsEnum::class,
+        ];
+
+        return response()->json($data, 200);
+    }
+
+    public function updateManualPlansBulk($request)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-home-quote-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+        if ($request->planIds) {
+            $data = $request->planIds;
+            $isDisabled = $request->toggle;
+            $plansArray = [];
+            for ($i = 0; $i < count($data); $i++) {
+                $apiArray = [
+                    'planId' => (int) $data[$i],
+                    'isDisabled' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
+                ];
+                array_push($plansArray, $apiArray);
+            }
+
+            $dataArray = [
+                'quoteUID' => $request->personal_quote_uuid,
+                'update' => true,
+                'plans' => $plansArray,
+            ];
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            return $this->httpService->processRequest($dataArray, $apiCreds);
+        }
+    }
+
+    public function homePlanModify($request)
+    {
+        if (($response = $this->isPlanModifyAllowed($request->all())) === true) {
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-home-quote-plan';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
+
+            $discountedPremium = $request->plan['actual_premium'];
+
+            if (isset($request->plan['is_create'])) {
+                if ($request->plan['is_create'] == 1) {
+                    $discountedPremium = $request->plan['actual_premium'];
+                    $isUpdate = false;
+                } else {
+                    $discountedPremium = $request->plan['discounted_premium'];
+                    $isUpdate = true;
+                }
+            } else {
+                $discountedPremium = $request->plan['actual_premium'];
+            }
+
+            $homePlanData = [
+                'quoteUID' => $request->plan['quote_uuid'],
+                'update' => $isUpdate,
+                'url' => strval($request->plan['current_url']),
+                'ipAddress' => request()->ip(),
+                'userAgent' => request()->header('User-Agent'),
+                'userId' => strval(auth()->id()),
+                'plans' => [
+                    [
+                        'planId' => (int) $request->plan['home_plan_id'],
+                        'actualPremium' => (float) $request->plan['actual_premium'],
+                        'buildingsValue' => isset($request->plan['listQuotePlanBenefitsInclusions'])
+                            && ! empty($request->plan['listQuotePlanBenefitsInclusions'])
+                            ? $this->getParsedValue($request->plan['listQuotePlanBenefitsInclusions'], 'buildings')
+                            : null,
+                        'contentsValue' => isset($request->plan['listQuotePlanBenefitsInclusions'])
+                            && ! empty($request->plan['listQuotePlanBenefitsInclusions'])
+                            ? $this->getParsedValue($request->plan['listQuotePlanBenefitsInclusions'], 'contents')
+                            : null,
+                        'personalBelongingsValue' => isset($request->plan['listQuotePlanBenefitsInclusions'])
+                            && ! empty($request->plan['listQuotePlanBenefitsInclusions'])
+                            ? $this->getParsedValue($request->plan['listQuotePlanBenefitsInclusions'], 'personalBelongings')
+                            : null,
+                        'excess' => (float) $request->plan['excess'],
+                        'discountPremium' => (float) $discountedPremium,
+                        'isDisabled' => isset($request->plan['is_disabled']) ? (bool) $request->plan['is_disabled'] : (bool) false,
+                        'insurerQuoteNo' => strval($request->plan['insurer_quote_no']),
+                        'isManualUpdate' => $request->plan['is_manual_update'],
+                    ],
+                ],
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            return $this->httpService->processRequest($homePlanData, $apiCreds);
+        }
+
+        return $response;
+    }
+
+    public function isPlanModifyAllowed($data)
+    {
+        $logPrefix = self::class.' fn: isPlanModifyAllowed ';
+        $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
+        LoggerService::startQuoteLogging($quote->uuid);
+
+        $isAllowed = false;
+
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            $homePayment = Payment::where('code', '=', $quote->code)->first();
+            if (! empty($homePayment->captured_at)) {
+                $paymentCapturedAt = $homePayment->captured_at;
+                $today = Carbon::today();
+
+                $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
+                $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
+
+                if (Auth::user()->hasRole(RolesEnum::HomeAdvisor) && $today->lte($dateLimitForAdvisor)) {
+                    info($logPrefix.' plan modify allowed to advisor and captured days diff is '.$paymentCapturedAt);
+                    $isAllowed = true;
+                } elseif (Auth::user()->hasRole(RolesEnum::HomeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
+                    info($logPrefix.' plan modify allowed to home manager and captured days diff is '.$paymentCapturedAt);
+                    $isAllowed = true;
+                }
+            }
+        }
+
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager])) {
+            info($logPrefix.' plan modify allowed to advisor');
+            $isAllowed = true;
+        }
+
+        if (
+            empty($quote->payment_status_id) ||
+            (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT]) &&
+                Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager]))
+        ) {
+            info($logPrefix.' plan modify allowed');
+            $isAllowed = true;
+        }
+
+        if (! $isAllowed) {
+            info($logPrefix.' plan modification is not allowed');
+
+            return 'Plan Modification is not allowed';
+        }
+        LoggerService::endLogging();
+
+        return true;
+    }
+
+    public function getParsedValue(array $planData, string $key): ?float
+    {
+        if (isset($planData[$key][0]['value'])) {
+            // Extract the raw value (e.g., "AED 40,000")
+            $rawValue = $planData[$key][0]['value'];
+
+            // Remove the "AED" prefix and commas, leaving only the numeric part
+            $cleanedValue = preg_replace('/[^\d.-]/', '', $rawValue);
+
+            return (float) $cleanedValue;
+        }
+
+        return null;
+    }
+
+    public function getQuoteData(string $quoteUID): ?PersonalQuote
+    {
+        return PersonalQuote::select('id', 'customer_id')
+            ->with([
+                'homeQuote:personal_quote_id,sub_area_id',
+                'homeQuote.subArea:id,text,emirates_id',
+                'homeQuote.subArea.emirate:id,text',
+            ])
+            ->where('uuid', $quoteUID)
+            ->first();
+    }
+
+    public function formatAddress($customerId, $subArea, $quoteUID, $address): array
+    {
+        return [
+            'customer_id' => $customerId,
+            'type' => 'Home',
+            'quote_type_id' => QuoteTypeId::Home,
+            'quote_uuid' => $quoteUID,
+            'office_number' => $address['villa_apartment_office_no'],
+            'floor_number' => $address['villa_apartment_office_no'],
+            'building_name' => $address['villa_building_name'],
+            'street' => $address['street_name'],
+            'area' => $subArea->text,
+            'city' => $subArea->emirate->text,
+            'is_courier_address' => 0,
+            'is_default' => 1,
+        ];
+    }
+
+    public function syncSAL($request)
+    {
+        try {
+            $quote = $this->getQuoteObject(QuoteTypes::HOME->value, $request->quoteUID);
+            if (! $quote) {
+                throw new \Exception('Quote not found for UID: '.$request->quoteUID);
+            }
+
+            $quote->load(['advisor']);
+
+            $data = $this->prepareHomeSALData($quote);
+            if (empty($data)) {
+                throw new \Exception('Failed to prepare SAL data for quote: '.$quote->uuid);
+            }
+
+            $documentType = $this->getDocumentType(DocumentTypeCode::HOME_SAL);
+            if (! $documentType) {
+                throw new \Exception('Document type not found for code: '.DocumentTypeCode::HOME_SAL);
+            }
+            $data['document_type_code'] = $documentType->code;
+
+            $items = $this->getSALItems($quote->uuid);
+            if ($items->isEmpty()) {
+                throw new \Exception('No items found for SAL for quote: '.$quote->uuid);
+            }
+            $data['items'] = $items;
+
+            $pdfFile = $this->generateHomeSALPdf($data);
+
+            $document = app(QuoteDocumentService::class)->uploadQuoteDocument(
+                $pdfFile,
+                $data,
+                $quote,
+                false,
+                false,
+                true
+            );
+
+            if (! $document) {
+                throw new \Exception('Failed to upload SAL document for quote: '.$quote->uuid);
+            }
+
+            return $document;
+        } catch (\Exception $e) {
+            Log::error('Error in syncSAL: '.$e->getMessage(), [
+                'quoteUID' => $request->quoteUID ?? 'N/A',
+                'exception' => $e,
+            ]);
+
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Fetch the document type by code.
+     *
+     * @return \App\Models\DocumentType|null
+     */
+    private function getDocumentType(string $code)
+    {
+        return DocumentType::where('code', $code)->first();
+    }
+
+    /**
+     * Generate the Home SAL PDF.
+     */
+    private function generateHomeSALPdf(array $data): string
+    {
+        // Convert all strings in the $data array to UTF-8
+        array_walk_recursive($data, function (&$value) {
+            if (is_string($value)) {
+                $value = mb_convert_encoding($value, 'UTF-8', 'auto');
+            }
+        });
+
+        return PDF::loadView('pdf.home-sal', compact('data'))
+            ->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'dpi' => 150,
+                'defaultFont' => 'DejaVu Sans',
+                'isRemoteEnabled' => true,
+                'defaultTimeout' => 60,
+            ])
+            ->setPaper('A4')
+            ->output();
+    }
+
+    private function prepareHomeSALData($quote)
+    {
+        $data = [];
+
+        // Ensure the advisor relationship is loaded
+        if ($quote->relationLoaded('advisor') && $quote->advisor) {
+            $advisor = optional($quote->advisor);
+
+            $data['advisor_name'] = $advisor->name ?? '';
+            $data['advisor_email'] = $advisor->email ?? '';
+            $data['advisor_mobile_no'] = $advisor->mobile_no ?? '';
+            $data['advisor_landline_no'] = $advisor->landline_no ?? '';
+            $data['profile_photo_path'] = $advisor->profile_photo_path ?? '';
+            $data['mobile_no_without_spaces'] = ! empty($advisor->mobile_no)
+                ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no))
+                : '';
+
+            $data['quote_declaration_link'] = '';
+            $data['quote_sal_link'] = '';
+        } else {
+            // Handle case where advisor is not loaded or null
+            $data['advisor_name'] = '';
+            $data['advisor_email'] = '';
+            $data['advisor_mobile_no'] = '';
+            $data['advisor_landline_no'] = '';
+            $data['profile_photo_path'] = '';
+            $data['mobile_no_without_spaces'] = '';
+            $data['quote_declaration_link'] = '';
+            $data['quote_sal_link'] = '';
+        }
+
+        $data['pdf_filename'] = $quote->code.'-SAL-DECLARATION';
+        $data['quote_uuid'] = $quote->uuid;
+        $data['customer_name'] = $quote->first_name.' '.$quote->last_name;
+
+        return $data;
+    }
+
+    private function getSALItems($uuid)
+    {
+        try {
+            if (empty($uuid)) {
+                throw new \Exception('Invalid UUID provided');
+            }
+
+            return DB::table('home_quote_declared_items')
+                ->select('value', 'description', 'purchase_date', 'invoice_number')
+                ->where('quote_uuid', $uuid)
+                ->get();
+        } catch (\Exception $e) {
+            Log::error('Error fetching SAL items: '.$e->getMessage().' for quote '.$uuid);
+
+            return collect();
+        }
+    }
+
+    public function exportPlansPdf($quoteType, array $data, $quotePlans = null)
+    {
+        // Retrieve home lookup data for content and personal belongings values
+        $lookUpData = app(LookupService::class)->getHomeLookUpData();
+
+        $planIds = $data['plan_ids'] ?? [];
+        $addons = $data['addons'] ?? null;
+
+        // Fetch quote plans using UUID
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        // Retrieve insurance providers by provider IDs
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('insuranceProviderId')->toArray();
+        $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
+
+        // Get quote details with relations
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }, 'customer', 'homeQuote']);
+
+        // Get accommodation_type_id and coverage_type_id with null safety
+        $accommodationTypeId = $quote->homeQuote->accommodation_type_id ?? null;
+        $coverageTypeId = $quote->homeQuote->coverage_type_id ?? null;
+
+        // Use Laravel Collection's `firstWhere` to find the matching text efficiently
+        $accommodationText = collect($lookUpData->accommodationType)
+            ->firstWhere('id', $accommodationTypeId)['text'] ?? 'N/A';
+
+        $coverageText = collect($lookUpData->coverages)
+            ->firstWhere('id', $coverageTypeId)['text'] ?? 'N/A';
+
+        // Retrieve home quote flags and values
+        $homeQuoteFlags = $this->getHomeQuoteFlags($quote->homeQuote);
+        $flagValues = $this->getFlagValues($homeQuoteFlags, $quote->homeQuote, $lookUpData->contentValues, $lookUpData->personalBelongingValues);
+
+        // Generate the PDF with relevant data
+        $pdf = $this->generatePdf($quote, $quotePlans, $planIds, $addons, $providers, $homeQuoteFlags, $flagValues, $accommodationText, $coverageText);
+
+        // Generate the PDF filename
+        $pdfName = $this->generatePdfFilename($quote);
+
+        // Log PDF generation
+        info('Home Quote Plans PDF generated for quote: '.$data['quote_uuid']);
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
+    }
+
+    private function getHomeQuoteFlags($homeQuote): array
+    {
+        if (! $homeQuote) {
+            return [];
+        }
+
+        return [
+            'contents_value_flag' => (bool) $homeQuote->contents_value_id,
+            'personal_belongings_flag' => (bool) $homeQuote->personal_belongings_value_id,
+            'building_value_flag' => (bool) $homeQuote->building_value,
+        ];
+    }
+
+    private function getFlagValues(array $flags, $homeQuote, array $contentValues, array $personalBelongingValues): array
+    {
+        $values = [];
+
+        if ($flags['contents_value_flag']) {
+            $contentValue = $this->getValueById($contentValues, $homeQuote->contents_value_id);
+            if ($contentValue) {
+                $values['contents_value'] = $this->formatCurrency($contentValue['maxValue']);
+            }
+        }
+
+        if ($flags['personal_belongings_flag']) {
+            $personalBelongingValue = $this->getValueById($personalBelongingValues, $homeQuote->personal_belongings_value_id);
+            if ($personalBelongingValue) {
+                $values['personal_belongings_value'] = $this->formatCurrency($personalBelongingValue['maxValue']);
+            }
+        }
+
+        if ($flags['building_value_flag']) {
+            $values['building_value'] = $this->formatCurrency($homeQuote->building_value);
+        }
+
+        return $values;
+    }
+
+    private function formatCurrency(float $value): string
+    {
+        return 'AED '.number_format($value, 0, '', ',');
+    }
+
+    private function getValueById(array $values, int $id): ?array
+    {
+        return collect($values)->firstWhere('id', $id);
+    }
+
+    private function generatePdf($quote, $quotePlans, array $planIds, $addons, array $providers, array $homeQuoteFlags, array $flagValues, $accommodationText, $coverageText)
+    {
+        return PDF::setOption([
+            'isHtml5ParserEnabled' => true,
+            'dpi' => 150,
+            'isRemoteEnabled' => true,
+        ])
+            ->loadView('pdf.home_quote_plans', compact(
+                'quotePlans', 'planIds', 'quote', 'addons', 'providers',
+                'homeQuoteFlags', 'flagValues', 'accommodationText', 'coverageText'
+            ));
+    }
+
+    private function generatePdfFilename($quote): string
+    {
+        return 'InsuranceMarket.ae™ Home Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+    }
+
 }
