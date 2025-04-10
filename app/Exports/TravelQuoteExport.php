@@ -12,7 +12,7 @@ class TravelQuoteExport
 
     public function collection($requestParams = [])
     {
-        return app(TravelQuoteService::class)->getGridData($requestParams)->get();
+        return app(TravelQuoteService::class)->getGridData(requestParams: $requestParams)->get();
     }
 
     public function headings(): array

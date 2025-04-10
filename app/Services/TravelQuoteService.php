@@ -337,10 +337,10 @@ class TravelQuoteService extends BaseService
         return TravelQuote::orderBy('created_at', 'desc')->get();
     }
 
-    public function getGridData($requestParams = [])
+    public function getGridData($model = null, $requestParams = [])
     {
         $query = $this->travelQuoteQueryBuilder->processGridData($requestParams);
-        $this->whereBasedOnRole($query, 'travel_quote_request', null, $requestParams['user']);
+        $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user']?? null );
         $this->adjustQueryByDateFilters($query, 'travel_quote_request',requestParams: $requestParams);
 
         return $query;

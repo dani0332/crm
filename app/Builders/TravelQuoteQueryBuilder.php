@@ -91,12 +91,12 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
     {
         $user = null;
 
-        if (Auth::check() && empty($requestParams['user'])) {
+        if (Auth::check() && empty($requestParams)) {
             $user = Auth::user();
             $requestParams = collect(request()->all());
-        } elseif (! empty($requestParams['user'])) {
+        } elseif (! empty($requestParams)) {
             /* For queue when session data isn't present */
-            $user = $requestParams['user'];
+            $user = $requestParams['user'] ?? null ;
             $requestParams = collect($requestParams);
         }
 

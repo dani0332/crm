@@ -624,20 +624,20 @@ trait GenericQueriesAllLobs
         return in_array($quote_status_id, [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelledReissued]);
     }
 
-    public function adjustQueryByDateFilters($query, $tablePrefix,array $requestParams = [])
+    public function adjustQueryByDateFilters($query, $tablePrefix, $requestParams = [])
     {
-        $request = $requestParams?: request();
+        $request = $requestParams ? collect($requestParams) : request();
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $defaultDate = now()->endOfDay();
-        if ($request->payment_due_date) {
-            $query->join('payment_splits as pays', 'pays.code', '=', $tablePrefix.'.code');
+        if (!empty($request->get("payment_due_date"))) {
+            $query->join('payment_splits as pays', 'pays.code', '=', $tablePrefix . '.code');
             $columnName = 'pays.due_date';
-        } elseif ($request->booking_date) {
-            $columnName = $tablePrefix.'.policy_booking_date';
+        } elseif (!empty($request->get("booking_date"))) {
+            $columnName = $tablePrefix . '.policy_booking_date';
         } else {
             return;
         }
-        $dateType = $request->payment_due_date ? 'payment_due_date' : 'booking_date';
+        $dateType = $request['payment_due_date'] ? 'payment_due_date' : 'booking_date';
         $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultDate;
         $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultDate;
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
