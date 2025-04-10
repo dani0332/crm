@@ -131,16 +131,13 @@ class InslyDetailRepository extends BaseRepository
         $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
 
         /* Temp Code - assign email for particular Policy id/number */
-        $tempSalesPersonId = 399;
-        $tempPolicyId = 37673602;
+
+        $tempSalesPersonId = 984;
+        $tempPolicyId = 69269734;
         if ($tempPolicyId == $policyID) {
             $advisorId = $tempSalesPersonId;
         }
-        $tempSalesPersonId = 178;
-        $tempPolicyId = 69102576;
-        if ($tempPolicyId == $policyID) {
-            $advisorId = $tempSalesPersonId;
-        }
+
         /* Temp Code - assign email for particular Policy id/number */
 
         if ($advisorId == null) {
