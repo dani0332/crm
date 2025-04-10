@@ -82,7 +82,7 @@ const resetFilters = () => {
           option-text="name"
           option-value="id"
           placeholder="Search by permission"
-          clearable
+          filterable
         />
       </x-field>
     </div>
