@@ -228,6 +228,16 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::IM_ECOM_URL],
+            [
+                'value' => 'https://testing.alfred.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
         // TODO:: Need to confirm email addresses with Shahrukh
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS],

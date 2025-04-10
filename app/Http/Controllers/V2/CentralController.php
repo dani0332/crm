@@ -414,6 +414,10 @@ class CentralController extends Controller
         return (new SplitPaymentService)->generateSplitPaymentLink($request);
     }
 
+    public function generateInsurerPaymentLink(GeneratePaymentLinkRequest $request){
+        return (new SplitPaymentService)->generateInsurerPaymentLink($request);
+    }
+
     public function saveQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
     {
         $notes = new QuoteNote([
