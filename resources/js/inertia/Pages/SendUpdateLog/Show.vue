@@ -307,13 +307,11 @@ const isBookUpdate = computed(() => {
 });
 
 const disableCancelButton = computed(() => {
-  return (
-    [
-      props.sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER,
-      props.sendUpdateStatusEnum.UPDATE_BOOKED,
-      props.sendUpdateStatusEnum.REQUEST_CANCELLED,
-    ].includes(props.sendUpdateLog.status)
-  );
+  return [
+    props.sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER,
+    props.sendUpdateStatusEnum.UPDATE_BOOKED,
+    props.sendUpdateStatusEnum.REQUEST_CANCELLED,
+  ].includes(props.sendUpdateLog.status);
 });
 
 const cancelModal = ref(false);
@@ -324,42 +322,41 @@ const cancelForm = useForm({
   cancel_reason: props.sendUpdateLog.cancel_reason,
 });
 
-
 const cancelSendUpdate = () => {
   isLoading.value = true;
   cancelReasonError.value = false;
-  
+
   axios
-  .post('send-update-cancel', {
-    cancel_reason: cancelForm.cancel_reason,
-    send_update_log_id: props.sendUpdateLog.id,
-  })
-  .then(response => {
-    if (response.status === 200) {
-      notification.success({
-        title: response.data.message,
-        position: 'top',
-      });
-      cancelModal.value = false;
-      window.location.reload();
-    }
-  })
-  .catch(error => {
-    const flash_messages = error.response.data.errors;
-    Object.keys(flash_messages).forEach(function (key) {
-      notification.error({
-        title: flash_messages[key],
-        position: 'top',
-      });
-      
-      if (key === 'cancel_reason') {
-        cancelReasonError.value = true;
+    .post('send-update-cancel', {
+      cancel_reason: cancelForm.cancel_reason,
+      send_update_log_id: props.sendUpdateLog.id,
+    })
+    .then(response => {
+      if (response.status === 200) {
+        notification.success({
+          title: response.data.message,
+          position: 'top',
+        });
+        cancelModal.value = false;
+        window.location.reload();
       }
+    })
+    .catch(error => {
+      const flash_messages = error.response.data.errors;
+      Object.keys(flash_messages).forEach(function (key) {
+        notification.error({
+          title: flash_messages[key],
+          position: 'top',
+        });
+
+        if (key === 'cancel_reason') {
+          cancelReasonError.value = true;
+        }
+      });
+    })
+    .finally(() => {
+      isLoading.value = false;
     });
-  })
-  .finally(() => {
-    isLoading.value = false;
-  });
 };
 
 const cancelOptionsList = computed(() => {
