@@ -89,7 +89,7 @@ class HomeQuoteRepository extends BaseRepository
 
         $query = $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
-            ->when($user->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', $user->id()))
+            ->when($user->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', $user->id))
             ->when(! empty($requestParams->get('advisors')), fn ($query) => $query->whereIn('advisor_id', (array) $requestParams->get('advisors')))
             ->when(! empty($requestParams->get('is_renewal')), fn ($query) => $this->applyRenewalFilter($query, $requestParams->get('is_renewal')))
             ->tap(fn ($query) => $this->applyFilters($query))
@@ -103,7 +103,7 @@ class HomeQuoteRepository extends BaseRepository
                     $query->whereBetween('personal_quotes.created_at', $this->getDateRange());
                 }
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filter(! $forExport, $forTotalLeadsCount,requestParams: $requestParams)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('personal_quotes.created_at', 'desc');
 

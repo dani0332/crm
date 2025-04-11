@@ -113,8 +113,16 @@ class JetskiQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        $user = null;
+        if (auth()->check() && empty($requestParams)) {
+            $requestParams = collect(request()->all());
+            $user = auth()->user();
+        } elseif (! empty($requestParams)) {
+            $requestParams = collect($requestParams);
+            $user = $requestParams['user'];
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with([
             'quoteStatus',
@@ -123,19 +131,19 @@ class JetskiQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
-        ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
-            $query->where('advisor_id', auth()->user()->id);
+        ])->when($user && $user->hasRole(RolesEnum::JetskiAdvisor), function ($query) use ($user) {
+            $query->where('advisor_id', $user->id);
         })
-            ->when(! empty(request()->advisor_assigned_date), function ($query) {
-                $dateArray = request()->advisor_assigned_date;
+            ->when(! empty($requestParams->get('advisor_assigned_date')), function ($query) use ($requestParams) {
+                $dateArray = $requestParams->get('advisor_assigned_date');
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
+            ->filter(! $forExport, $forTotalLeadsCount, requestParams: $requestParams)
+            ->withFakeLeadCriteria($forTotalLeadsCount, requestParams: $requestParams)
             ->select([
                 '*',
                 DB::raw('
@@ -149,11 +157,11 @@ class JetskiQuoteRepository extends BaseRepository
                 '),
             ]);
 
-        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+        $this->adjustQueryByInsurerInvoiceFilters($query, requestParams: $requestParams);
 
-        $this->adjustQueryByInsurerInvoiceFilters($query);
+        $query->orderBy('personal_quotes.'.($requestParams->get('sortBy') ?? 'created_at'), $requestParams->get('sortType') ?? 'desc');
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query;
     }
 
 }

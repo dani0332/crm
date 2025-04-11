@@ -212,8 +212,16 @@ class BikeQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false,$requestParams = [])
     {
+        $user = null;
+        if (auth()->check() && empty($requestParams)) {
+            $requestParams = collect(request()->all());
+            $user = auth()->user();
+        } elseif (! empty($requestParams)) {
+            $requestParams = collect($requestParams);
+            $user = $requestParams['user'];
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
             'quoteStatus',
@@ -223,8 +231,8 @@ class BikeQuoteRepository extends BaseRepository
             'payments',
             'renewalBatchModel',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when($user && $user->hasRole(RolesEnum::BikeAdvisor), function ($query) use ($user) {
+                $query->where('advisor_id', $user->id);
             })
             ->filter(! $forExport)
             ->withFakeLeadCriteria()
@@ -241,12 +249,12 @@ class BikeQuoteRepository extends BaseRepository
                 '),
             ]);
 
-        $this->adjustQueryByInsurerInvoiceFilters($query);
-        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        $this->adjustQueryByInsurerInvoiceFilters($query, requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes', requestParams: $requestParams);
 
-        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+        $query->orderBy('personal_quotes.'.($requestParams->get('sortBy') ?? 'created_at'), $requestParams->get('sortType') ?? 'desc');
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchExport()

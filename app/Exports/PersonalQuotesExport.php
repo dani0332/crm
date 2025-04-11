@@ -35,19 +35,19 @@ class PersonalQuotesExport
     {
         switch (ucfirst($this->quoteType)) {
             case QuoteTypes::BIKE->value:
-                return BikeQuoteRepository::getData(true);
+                return BikeQuoteRepository::getData(true,requestParams: $requestParams);
 
             case QuoteTypes::YACHT->value:
-                return YachtQuoteRepository::getData(true);
+                return YachtQuoteRepository::getData(true,requestParams: $requestParams);
 
             case QuoteTypes::PET->value:
                 return PetQuoteRepository::getData(true,requestParams: $requestParams);
 
             case QuoteTypes::CYCLE->value:
-                return CycleQuoteRepository::getData(true);
+                return CycleQuoteRepository::getData(true,requestParams: $requestParams);
 
             case QuoteTypes::JETSKI->value:
-                return JetskiQuoteRepository::getData(true);
+                return JetskiQuoteRepository::getData(true,requestParams: $requestParams);
 
             case QuoteTypes::HOME->value:
                 return HomeQuoteRepository::getData(true, requestParams: $requestParams);

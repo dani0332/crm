@@ -32,9 +32,10 @@ trait QuoteModelTrait
     /**
      * @return mixed|void
      */
-    public function scopeWithFakeLeadCriteria($query, $totalLeadsCount = false)
+    public function scopeWithFakeLeadCriteria($query, $totalLeadsCount = false, $requestParams = [])
     {
-        if ((! empty(request()->quote_status_id) && request()->quote_status_id != QuoteStatusEnum::Fake)) {
+        $requestParams = $requestParams?: collect();
+        if ((! empty($requestParams->get('quote_status_id')) && $requestParams->get('quote_status_id') != QuoteStatusEnum::Fake)) {
 
             return;
         }
@@ -43,7 +44,7 @@ trait QuoteModelTrait
             return $query->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
 
-        if (! request()->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name', 'previous_quote_policy_number', 'renewal_batch', 'previous_quote_policy_number_text'])) {
+        if (! $requestParams->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name', 'previous_quote_policy_number', 'renewal_batch', 'previous_quote_policy_number_text'])) {
 
             return $query->where('quote_status_id', '<>', QuoteStatusEnum::Fake);
         }

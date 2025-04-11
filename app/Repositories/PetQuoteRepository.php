@@ -126,7 +126,7 @@ class PetQuoteRepository extends BaseRepository
             'quoteDetail',
         ])
             ->when($user && $user->hasRole(RolesEnum::PetAdvisor), function ($query) use ($user) {
-                $query->where('advisor_id', $user->id());
+                $query->where('advisor_id', $user->id);
             })
             ->when(! empty($requestParams->get('is_renewal')), function ($query) use ($requestParams) {
                 $isRenewal = $requestParams->get('is_renewal');
@@ -145,7 +145,7 @@ class PetQuoteRepository extends BaseRepository
                 });
             })
             ->filter(!$forExport, $forTotalLeadsCount, requestParams: $requestParams)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount, requestParams: $requestParams)
             ->select([
                 '*',
                 DB::raw('
