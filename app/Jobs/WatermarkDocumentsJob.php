@@ -124,7 +124,6 @@ class WatermarkDocumentsJob implements ShouldQueue
     private function fileExists($path)
     {
         try {
-            info("Checking if source file exists...");
             // For local storage
             if (Storage::disk('azureIM')->exists($path)) {
                 return true;
