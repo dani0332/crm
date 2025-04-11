@@ -205,4 +205,8 @@ final class ApplicationStorageEnums extends Enum
 
     public const MOTOR_PCP_FOLLOWUPS  = "MOTOR_PCP_FOLLOWUPS";
     public const PCP_FOLLOWUP_TEMPLATE_ID = 'PCP_FOLLOWUP_TEMPLATE_ID';
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
+    public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
+    public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
 }

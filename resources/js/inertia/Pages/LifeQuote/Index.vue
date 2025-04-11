@@ -261,6 +261,7 @@ watch(
     if (
       can(permissionsEnum.DATA_EXTRACTION) &&
       ((filters.created_at_start && filters.created_at_end) ||
+        (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
         filters.payment_due_date ||
         filters.booking_date)
     ) {
@@ -499,6 +500,13 @@ const insurerAMLStatusOption = computed(() => {
         <x-field label="Created Date End">
           <DatePicker v-model="filters.created_at_end" name="created_at_end" />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
@@ -588,14 +596,7 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-        <DatePicker
-          v-if="hasRole(rolesEnum.LifeManager)"
-          v-model="filters.advisor_assigned_date"
-          name="created_at_start"
-          label="Advisor Assigned Date"
-          range
-          format="dd-MM-yyyy"
-        />
+
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_number"
@@ -634,8 +635,8 @@ const insurerAMLStatusOption = computed(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

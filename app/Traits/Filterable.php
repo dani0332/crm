@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Builders\QueryBuildable;
+use App\Enums\QuoteStatusEnum;
 
 trait Filterable
 {
@@ -45,7 +46,6 @@ trait Filterable
                 $this->applyFilter($query, 'advisor_id', $ids, $alias);
             }
         });
-
     }
 
     public function scopeFilterByBatches($query, $id, $alias = null)
@@ -81,19 +81,31 @@ trait Filterable
         });
     }
 
-    public function scopeFilterByAdvisorAssignedDates($query, string $relation, array $filterNames)
+    public function scopeFilterByAdvisorAssignedDates($query, string $relation, array|string $filterNames, bool $verifyQuoteStatus = false)
     {
-        [$startDateFilterName, $endDateFilterName] = $filterNames;
+        $start = null;
+        $end = null;
 
-        $query->when(request()->filled($startDateFilterName) && ! request()->filled($endDateFilterName), function ($query) use ($relation, $startDateFilterName) {
-            $query->whereRelation($relation, 'advisor_assigned_date', '>=', $this->parseDate(request($startDateFilterName), true));
-        })->when(! request()->filled($startDateFilterName) && request()->filled($endDateFilterName), function ($query) use ($relation, $endDateFilterName) {
-            $query->whereRelation($relation, 'advisor_assigned_date', '<=', $this->parseDate(request($endDateFilterName), false));
-        })->when(request()->filled($startDateFilterName) && request()->filled($endDateFilterName), function ($query) use ($relation, $startDateFilterName, $endDateFilterName) {
-            $query->whereHas($relation, function ($query) use ($startDateFilterName, $endDateFilterName) {
-                $query->whereBetween('advisor_assigned_date', [$this->parseDate(request($startDateFilterName), true), $this->parseDate(request($endDateFilterName), false)]);
+        if (is_array($filterNames)) {
+            [$startDateFilterName, $endDateFilterName] = $filterNames;
+            $start = request($startDateFilterName, null);
+            $end = request($endDateFilterName, null);
+        } elseif (is_string($filterNames) && request()->filled($filterNames)) {
+            [$start, $end] = request($filterNames);
+        }
+
+        $start = $start ? $this->parseDate($start, true) : null;
+        $end = $end ? $this->parseDate($end, false) : null;
+
+        $query->when(! empty($start) && empty($end), function ($query) use ($relation, $start) {
+            $query->whereRelation($relation, 'advisor_assigned_date', '>=', $start);
+        })->when(empty($start) && ! empty($end), function ($query) use ($relation, $end) {
+            $query->whereRelation($relation, 'advisor_assigned_date', '<=', $end);
+        })->when(! empty($start) && ! empty($end), function ($query) use ($relation, $start, $end) {
+            $query->whereHas($relation, function ($query) use ($start, $end) {
+                $query->whereBetween('advisor_assigned_date', [$start, $end]);
             });
-        });
+        })->when($verifyQuoteStatus, fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]));
     }
 
     public function scopeFilterByPaymentDueDates($query, $filterName)
