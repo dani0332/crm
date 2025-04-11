@@ -1630,20 +1630,12 @@ class RenewalsUploadService
     public function renewalHomeBatchEmailProcess($batch, RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
     {
         try {
+            // Find Home Quote
             $homeQuote = HomeQuote::find($renewalQuoteProcess->quote_id);
-            Log::info('Home Renewals OCB Email started for uuid: '.$homeQuote->uuid);
+            
+            info('Home Renewals OCB Email started for uuid: '.$homeQuote->uuid);
 
             if ($homeQuote->previous_quote_policy_number != null) {
-
-                // $response = Ken::request('/send-motor-renewal-ocb-whatsapp', 'post', [
-                //     'quoteUID' => $carQuote->uuid,
-                //     'filters' => [[
-                //         'field' => 'isRenewalSort',
-                //         'value' => false,
-                //     ]],
-                //     'callSource' => 'imcrm',
-                // ]);
-                // info('fn: renewalBatchEmailProcess renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
 
                 // Get Plans for Home Lead
                 $listQuotePlans = $homeQuote->insurance_provider_id != null ? $this->homeQuoteService->getQuotePlans($homeQuote->uuid, true, true, false, true) : [];
@@ -1651,21 +1643,15 @@ class RenewalsUploadService
                 // Count Plans 
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 
-                // Get Email Template Id 
-                $emailTemplateId = $this->getEmailTemplateId($homeQuote, $quotePlansCount);
-
-                $previousAdvisor = $this->getPreviousAdvisor($carQuote);
-                $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-                $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
-                Log::info('fn: renewalBatchEmailProcess Renewals OCB Email email data created');
-
-                $this->attachPdfIfNeeded($carQuote, $listQuotePlans, $emailData);
-
-                $responseCode = $this->sendEmail($carQuote, $emailTemplateId, $emailData);
-                $this->handleResponse($responseCode, $carQuote, $renewalsBatchEmail, $renewalQuoteProcess);
+                // Get Previous Advisor
+                $previousAdvisor = $this->getPreviousAdvisor($homeQuote);
+                
+                // Email Code Goes Here
+                
             }
 
-            Log::info('Renewals OCB Email completed for uuid: '.$carQuote->uuid);
+            info('Renewals OCB Email completed for uuid: '.$homeQuote->uuid);
+            
         } catch (\Exception $exception) {
             Log::info('Renewals OCB Email failed error: '.$exception->getMessage());
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);

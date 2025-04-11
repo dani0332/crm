@@ -58,7 +58,7 @@ class HomeRenewalBatchEmailJob implements ShouldQueue, StackableJob
     {
         info('Renewals OCB email job started processId: '.$this->renewalQuoteProcess->id);
 
-        $renewalsUploadFileService->renewalBatchEmailProcess($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
+        $renewalsUploadFileService->renewalHomeBatchEmailProcess($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
 
         info('Renewals OCB email job completed ');
 
