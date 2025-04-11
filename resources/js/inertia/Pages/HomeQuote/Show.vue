@@ -632,11 +632,8 @@ const onLoadAvailablePlansData = async () => {
       availableAllPlans.value = homePlans.quotes.plans;
       homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
     } else {
-      console.error('Error: Unexpected status code', status);
     }
-  } catch (error) {
-    console.error('Failed to load available plans', error);
-  }
+  } catch (error) {}
 };
 
 const onTogglePlans = toggle => {
@@ -681,7 +678,6 @@ const planDetails = ref(null);
 
 const getPlanDetails = async item => {
   if (!item?.id) {
-    console.error('Invalid item provided: Missing ID');
     notification.error({
       title: 'Error',
       message: 'Invalid plan selected',
@@ -762,7 +758,6 @@ const getPlanDetails = async item => {
     planDetails.value = planDetailsData;
     modals.planDetails = true;
   } catch (error) {
-    console.error('Failed to fetch plan details:', error);
     notification.error({
       title: 'Error',
       message: error.message || 'Failed to fetch plan details',
@@ -1039,6 +1034,43 @@ const isPlanDetailEnabled = computed(() => {
   //   return true;
   // }
   return false;
+});
+
+// New computed property to check lead date
+const shouldShowPlanDetailsSection = computed(() => {
+  const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
+  const str = page.props.quote.created_at;
+
+  const match = str.match(/(\d+)-([A-Za-z]+)-(\d+)\s+(\d+):(\d+)(am|pm)/i);
+  if (!match) return false;
+
+  const [_, day, monthStr, year, hour, min, ampm] = match;
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+  let h = parseInt(hour, 10);
+  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
+  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
+
+  const createdDate = new Date(
+    parseInt(year),
+    months[monthStr.toLowerCase().slice(0, 3)],
+    parseInt(day),
+    h,
+    parseInt(min),
+  );
+  return createdDate < cutoffDate;
 });
 </script>
 
@@ -1857,7 +1889,7 @@ const isPlanDetailEnabled = computed(() => {
     />
 
     <PlanDetails
-      v-if="isPlanDetailEnabled"
+      v-if="shouldShowPlanDetailsSection"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
