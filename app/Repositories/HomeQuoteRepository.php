@@ -590,7 +590,7 @@ class HomeQuoteRepository extends BaseRepository
 
     private function getQuoteWithRelations($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::HOME->id())
+        $response = $this->byQuoteTypeId(QuoteTypes::HOME->id())
             ->where($column, $value)
             ->with([
                 'insuranceProvider',
@@ -610,6 +610,9 @@ class HomeQuoteRepository extends BaseRepository
                 'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+                'insured' => function ($q) {
+                    $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
                 },
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
@@ -644,6 +647,12 @@ class HomeQuoteRepository extends BaseRepository
             as customer_type'),
             ])
             ->firstOrFail();
+
+        if ($response?->insured) {
+            $response->emirates_id_number = $response?->insured?->id_type == 'emiratesId' ? $response?->insured?->id_number : null;
+        }
+
+        return $response;
     }
 
     private function setQuoteAdditionalData($quote)
