@@ -61,6 +61,7 @@ use App\Services\BridgerInsightService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Services\SIBService;
+use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -401,19 +402,19 @@ class AMLController extends Controller
 
     public function checkMissingTravelAmlRequirement(Request $request)
     {
-        $amlService = app(AMLService::class);
-        $customerTravelInfo = (array) $amlService->getCustomerTravelInfo($request->quoteRequestId, $request->quoteType);
+        $travelQuoteService = app(TravelQuoteService::class);
+        $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($request->quoteRequestId, $request->quoteType);
 
         if (empty($customerTravelInfo['id'])) {
             return ['status' => false, 'message' => 'Record not found'];
         }
 
-        return $amlService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
+        return $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
     }
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
-        $isAutomation = $AMLCheckRequest->is_automation;
+        $isAutomation = $AMLCheckRequest->is_automation ?? false;
         $systemUser = User::where('name', UserNameEnum::System)->first();
         $processbyUser = $isAutomation ? $systemUser : auth()->user();
 

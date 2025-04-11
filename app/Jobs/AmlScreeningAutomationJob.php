@@ -8,7 +8,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\AmlAutomation;
-use App\Services\AMLService;
+use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Error;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -80,17 +80,17 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
             $amlAutomation->update(['status' => AmlAutomationStatus::PROCESSING_STATUS]);
 
-            $amlService = app(AMLService::class);
+            $travelQuoteService = app(TravelQuoteService::class);
 
             // Get customer required travel info
-            $customerTravelInfo = (array) $amlService->getCustomerTravelInfo($this->quoteRefId, $this->quoteType->value);
+            $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRefId, $this->quoteType->value);
 
             if (empty($customerTravelInfo['id'])) {
                 throw new Error('Record not found');
             }
 
             // Check customer required travel info is complete
-            $checkCustomerTravelInfo = $amlService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
+            $checkCustomerTravelInfo = $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
 
             if (!$checkCustomerTravelInfo['status']) {
                 throw new Error($checkCustomerTravelInfo['message']);
