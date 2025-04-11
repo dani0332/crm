@@ -383,16 +383,28 @@ const customerProfileForm = useForm({
   insured_first_name: page.props.quote?.insured?.first_name || '',
   insured_last_name: page.props.quote?.insured?.last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
-  emirates_id_expiry_date: page.props.quote?.customer?.emirates_id_expiry_date || null,
+  emirates_id_expiry_date:
+    page.props.quote?.customer?.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
-  trade_license_no: page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ?? null,
-  company_name: page.props.quote?.quote_request_entity_mapping?.entity?.company_name ?? null,
-  company_address: page.props.quote?.quote_request_entity_mapping?.entity?.company_address ?? null,
-  entity_type_code: page.props.quote?.quote_request_entity_mapping?.entity_type_code ?? 'Parent',
-  industry_type_code: page.props.quote?.quote_request_entity_mapping?.entity?.industry_type_code ?? null,
+  trade_license_no:
+    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
+    null,
+  company_name:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
+    null,
+  company_address:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_address ??
+    null,
+  entity_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity_type_code ??
+    'Parent',
+  industry_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.industry_type_code ?? null,
   emirate_of_registration_id:
-    page.props.quote?.quote_request_entity_mapping?.entity?.emirate_of_registration_id ?? null,
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
