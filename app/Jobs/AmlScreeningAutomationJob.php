@@ -27,12 +27,9 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
     public $timeout = 60;
     public $tries = 1;
-
     public $uniqueFor = 60 * 15; // 15 minutes
     public $uniqueKey = ''; // 15 minutes
-
     private $className = 'AmlScreeningAutomationJob';
-
     private mixed $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
@@ -66,7 +63,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
             $this->quoteRequest = $this->getQuoteObjectBy($this->quoteType->value, $this->quoteRefId, 'code');
 
-            if (!$this->quoteRequest) {
+            if (! $this->quoteRequest) {
                 throw new Error('Quote not found');
             }
 
@@ -92,7 +89,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             // Check customer required travel info is complete
             $checkCustomerTravelInfo = $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
 
-            if (!$checkCustomerTravelInfo['status']) {
+            if (! $checkCustomerTravelInfo['status']) {
                 throw new Error($checkCustomerTravelInfo['message']);
             }
 
