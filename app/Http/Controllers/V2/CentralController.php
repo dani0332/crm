@@ -111,8 +111,9 @@ class CentralController extends Controller
             QuoteTypes::HOME->value,
         ])) {
             if ($request['exportType'] == 'email') {
-                return app(PersonalQuotesExport::class)->emailCSV($quoteType.'-List',$request->all());
+                return app(PersonalQuotesExport::class)->emailCSV($quoteType.'-List', $request->all());
             }
+
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
 
@@ -126,11 +127,10 @@ class CentralController extends Controller
             }
         }
 
-
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
 
-                if($request['exportType'] == 'email'){
+                if ($request['exportType'] == 'email') {
                     return app(LifeQuotesExport::class)->emailCSV('Life-List', $request->all());
                 }
 

@@ -82,7 +82,7 @@ trait ExcelExportable
      */
     public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
     {
-        if(!isset($this->quoteType)){
+        if (! isset($this->quoteType)) {
             $this->quoteType = $requestParams['quoteType'];
         }
         // Get environment variables for email configuration

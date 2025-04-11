@@ -50,7 +50,7 @@ class PersonalQuotesExport
                 return JetskiQuoteRepository::getData(true);
 
             case QuoteTypes::HOME->value:
-                return HomeQuoteRepository::getData(true,requestParams: $requestParams);
+                return HomeQuoteRepository::getData(true, requestParams: $requestParams);
 
             default:
                 return abort(404);

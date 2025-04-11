@@ -119,35 +119,35 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('renewal_batch', value: $requestParams['renewal_batch'] ?? null)
             ->filterBy('currently_insured_with', value: $requestParams['currently_insured_with'] ?? null)
 
-            ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date',value: $requestParams['policy_expiry_date'] ?? null)
-            ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false,value: $requestParams['policy_expiry_date_end'] ?? null)
+            ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date', value: $requestParams['policy_expiry_date'] ?? null)
+            ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false, value: $requestParams['policy_expiry_date_end'] ?? null)
 
-            ->filterBy('assignment_type', ignoreAll: true,value: $requestParams['assignment_type'] ?? null)
+            ->filterBy('assignment_type', ignoreAll: true, value: $requestParams['assignment_type'] ?? null)
             ->filterByTeams($requestParams['teams'] ?? null)
             ->filterByAdvisors($requestParams['advisor_id'] ?? null)
-            ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at',value: $requestParams['transaction_approved_dates'] ?? null)
+            ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', value: $requestParams['transaction_approved_dates'] ?? null)
             ->filterBySegment($requestParams['segment_filter'] ?? null, QuoteTypeId::Car, $requestParams)
-            ->filterBy('sic_advisor_requested', ignoreAll: true,value: $requestParams['sic_advisor_requested'] ?? null)
+            ->filterBy('sic_advisor_requested', ignoreAll: true, value: $requestParams['sic_advisor_requested'] ?? null)
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByAdvisorAssignedDates('carQuoteRequestDetail', ['advisor_assigned_date', 'advisor_assigned_date_end'])
-            ->when(!empty($requestParams['previous_quote_policy_number']), function ($query) use ($requestParams) {
-                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number',value: $requestParams['previous_quote_policy_number'] ?? null)->orWhere->filterBy('previous_quote_policy_number', 'policy_number',value: $requestParams['previous_quote_policy_number'] ?? null));
+            ->when(! empty($requestParams['previous_quote_policy_number']), function ($query) use ($requestParams) {
+                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number', value: $requestParams['previous_quote_policy_number'] ?? null)->orWhere->filterBy('previous_quote_policy_number', 'policy_number', value: $requestParams['previous_quote_policy_number'] ?? null));
             })
-            ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && !empty($requestParams['insurer_tax_invoice_number']), function ($query) use ($requestParams) {
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && ! empty($requestParams['insurer_tax_invoice_number']), function ($query) use ($requestParams) {
                 $query->whereRelation('payments', 'insurer_tax_number', $requestParams['insurer_tax_invoice_number']);
             })
-            ->when($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && !empty($requestParams['insurer_commission_tax_invoice_number']), function ($query) use ($requestParams) {
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && ! empty($requestParams['insurer_commission_tax_invoice_number']), function ($query) use ($requestParams) {
                 $query->whereRelation('payments', 'insurer_commmission_invoice_number', $requestParams['insurer_commission_tax_invoice_number']);
             })
-            ->filterByDateRange('booking_date', 'policy_booking_date',value: $requestParams['booking_date'] ?? null)
+            ->filterByDateRange('booking_date', 'policy_booking_date', value: $requestParams['booking_date'] ?? null)
             ->when($this->shouldApplyDatesFilter() && empty($requestParams['created_at_start']), function ($query) {
                 $query->filterByToday();
             })
-            ->when($this->shouldApplyDatesFilter() && !empty($requestParams['created_at_start']) && !empty($requestParams['created_at_end']), function ($query) use ($requestParams) {
+            ->when($this->shouldApplyDatesFilter() && ! empty($requestParams['created_at_start']) && ! empty($requestParams['created_at_end']), function ($query) use ($requestParams) {
                 $query->whereBetween('created_at', [$this->parseDate($requestParams['created_at_start'], true), $this->parseDate($requestParams['created_at_end'], false)]);
             })
             ->when(
-                !empty($requestParams['sortBy']),
+                ! empty($requestParams['sortBy']),
                 fn ($q) => $q->orderBy($requestParams['sortBy'], $requestParams['sortType']),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
             );

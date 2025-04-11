@@ -79,25 +79,25 @@ class HomeQuoteRepository extends BaseRepository
         if (auth()->check() && empty($requestParams)) {
             $requestParams = collect(request()->all());
             $user = auth()->user();
-        }elseif(!empty($requestParams)){
+        } elseif (! empty($requestParams)) {
             $requestParams = collect($requestParams);
             $user = $requestParams['user'];
         }
 
         // Check if any of the exclude filters are active
-        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters,$requestParams);
+        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters, $requestParams);
 
         $query = $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
             ->when($user->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', $user->id()))
-            ->when(!empty($requestParams->get('advisors')), fn ($query) => $query->whereIn('advisor_id', (array) $requestParams->get('advisors')))
-            ->when(!empty($requestParams->get('is_renewal')), fn ($query) => $this->applyRenewalFilter($query,$requestParams->get('is_renewal')))
+            ->when(! empty($requestParams->get('advisors')), fn ($query) => $query->whereIn('advisor_id', (array) $requestParams->get('advisors')))
+            ->when(! empty($requestParams->get('is_renewal')), fn ($query) => $this->applyRenewalFilter($query, $requestParams->get('is_renewal')))
             ->tap(fn ($query) => $this->applyFilters($query))
             ->when(! $shouldExcludeCreatedAtFilters, function ($query) use ($requestParams) {
-                if (!empty($requestParams->get('created_at_start'))  && !empty($requestParams->get('created_at_end'))) {
+                if (! empty($requestParams->get('created_at_start')) && ! empty($requestParams->get('created_at_end'))) {
                     $query->whereBetween('personal_quotes.created_at', [
                         Carbon::parse($requestParams->get('created_at_start'))->startOfDay(),
-                        Carbon::parse($requestParams->get('created_at_end'))->endOfDay()
+                        Carbon::parse($requestParams->get('created_at_end'))->endOfDay(),
                     ]);
                 } else {
                     $query->whereBetween('personal_quotes.created_at', $this->getDateRange());
@@ -108,19 +108,19 @@ class HomeQuoteRepository extends BaseRepository
             ->orderBy('personal_quotes.created_at', 'desc');
 
         return $query->when(
-                $forTotalLeadsCount,
-                fn ($query) => $query->count(),
-                fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate())
-            );
+            $forTotalLeadsCount,
+            fn ($query) => $query->count(),
+            fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate())
+        );
     }
 
     /**
      * Check if any of the specified filters are active.
      */
-    private function hasActiveFilters(array $fields,$requestParams = []): bool
+    private function hasActiveFilters(array $fields, $requestParams = []): bool
     {
         foreach ($fields as $field) {
-            if (!empty($requestParams[$field])) {
+            if (! empty($requestParams[$field])) {
                 return true;
             }
         }
@@ -164,7 +164,7 @@ class HomeQuoteRepository extends BaseRepository
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      */
-    private function applyRenewalFilter($query,$isRenewal): void
+    private function applyRenewalFilter($query, $isRenewal): void
     {
         if ($isRenewal === quoteTypeCode::yesText) {
             $query->whereNotNull('personal_quotes.previous_quote_policy_number');

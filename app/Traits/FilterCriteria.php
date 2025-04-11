@@ -12,7 +12,7 @@ trait FilterCriteria
     {
         $tableName = $this->getTable();
 
-        if(empty($requestParams)){
+        if (empty($requestParams)) {
             $requestParams = request()->all();
         }
         $requestParams = collect($requestParams);

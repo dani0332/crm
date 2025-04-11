@@ -108,7 +108,7 @@ class LifeQuoteRepository extends BaseRepository
 
         $this->adjustQueryByDateFilters($query, 'life_quote_request');
 
-        info("Life grid rawSql: ".$query->toRawSql());
+        info('Life grid rawSql: '.$query->toRawSql());
 
         return $query->simplePaginate()->withQueryString();
     }
@@ -201,7 +201,8 @@ class LifeQuoteRepository extends BaseRepository
 
         Log::info('LifeQuoteRepository@fetchExportData: query built');
 
-        info("Life export rawSql: ".$query->toRawSql());
+        info('Life export rawSql: '.$query->toRawSql());
+
         return $query->orderBy('life_quote_request.created_at', 'desc')
             ->get();
     }
