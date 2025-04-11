@@ -632,10 +632,8 @@ const onLoadAvailablePlansData = async () => {
       availableAllPlans.value = homePlans.quotes.plans;
       homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
     } else {
-      console.error('Error: Unexpected status code', status);
     }
   } catch (error) {
-    console.error('Failed to load available plans', error);
   }
 };
 
@@ -681,7 +679,6 @@ const planDetails = ref(null);
 
 const getPlanDetails = async item => {
   if (!item?.id) {
-    console.error('Invalid item provided: Missing ID');
     notification.error({
       title: 'Error',
       message: 'Invalid plan selected',
@@ -762,7 +759,6 @@ const getPlanDetails = async item => {
     planDetails.value = planDetailsData;
     modals.planDetails = true;
   } catch (error) {
-    console.error('Failed to fetch plan details:', error);
     notification.error({
       title: 'Error',
       message: error.message || 'Failed to fetch plan details',
@@ -1039,6 +1035,51 @@ const isPlanDetailEnabled = computed(() => {
   //   return true;
   // }
   return false;
+});
+
+// New computed property to check lead date
+const shouldShowPlanDetailsSection = computed(() => {
+  // April 10, 2023, 9:30 PM GST (UTC+4) as directed by business
+  const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
+  
+  try {
+    const dateStr = page.props.quote.created_at;
+    // Split the date string to get components
+    const dateMatch = dateStr.match(/(\d+)-([A-Za-z]+)-(\d+)\s+(\d+):(\d+)(am|pm)/i);
+    
+    let createdAtDate;
+    if (dateMatch) {
+      const [_, day, month, year, hour, minute, ampm] = dateMatch;
+      
+      // Convert month name to month number (0-11)
+      const months = {
+        'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+        'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+      };
+      
+      const monthNum = months[month.toLowerCase().substring(0, 3)];
+      
+      // Convert hour to 24-hour format
+      let hourNum = parseInt(hour, 10);
+      if (ampm.toLowerCase() === 'pm' && hourNum < 12) {
+        hourNum += 12;
+      } else if (ampm.toLowerCase() === 'am' && hourNum === 12) {
+        hourNum = 0;
+      }
+      
+      // Create date object - Note: months are 0-indexed in JavaScript
+      createdAtDate = new Date(parseInt(year), monthNum, parseInt(day), hourNum, parseInt(minute));
+    } else {
+      // Fallback to standard parsing if the format doesn't match
+      createdAtDate = new Date(dateStr);
+    }
+    
+    // Show PlanDetails if created before April 10 2025, 9:30 PM GST as directed by business
+    return createdAtDate < cutoffDate;
+  } catch (error) {
+    // Default to showing Available Plans on error
+    return false;
+  }
 });
 </script>
 
@@ -1857,7 +1898,7 @@ const isPlanDetailEnabled = computed(() => {
     />
 
     <PlanDetails
-      v-if="isPlanDetailEnabled"
+      v-if="shouldShowPlanDetailsSection"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
