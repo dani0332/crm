@@ -110,6 +110,7 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::HOME->value,
         ])) {
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
@@ -274,7 +275,6 @@ class CentralController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
-
     }
 
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
@@ -392,7 +392,6 @@ class CentralController extends Controller
     public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
     {
         return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
-
     }
 
     // Store new payment
@@ -592,7 +591,6 @@ class CentralController extends Controller
                     OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
                     info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
                 }
-
             }
             info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 

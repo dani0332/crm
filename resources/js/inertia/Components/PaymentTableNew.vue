@@ -175,7 +175,7 @@ const capturePaymentValidationErrorMessage = ref('');
 const modal2Ref = ref(null);
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
-const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
+const quoteTypesToCheck = ['Car', 'Health', 'Travel', 'Home']; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
@@ -249,14 +249,12 @@ const approveProofDocument = props.paymentDocument.find(
 );
 
 let initalPlanDetails = [];
-if (
-  props.quoteType == 'Business' ||
-  props.quoteType == 'Home' ||
-  props.isPlanDetailEnabled
-) {
+if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
   initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (props.quoteType == 'Home') {
+  initalPlanDetails = props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Bike') {
@@ -1692,7 +1690,9 @@ const addPaymentModal = () => {
   discountError.value = '';
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
-
+  console.log('totalPrice.value', totalPrice.value);
+  console.log('planDetail.value', planDetail.value);
+  console.log('sendUpdate', props.sendUpdate);
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -1863,7 +1863,9 @@ const editPaymentModal = async (
   if (
     capture_approval == 1 &&
     payment?.insurance_provider?.code == 'AXA' &&
-    (props.quoteType === 'Bike' || props.quoteType === 'Car')
+    (props.quoteType === 'Bike' ||
+      props.quoteType === 'Car' ||
+      props.quoteType === 'Home')
   ) {
     await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
@@ -2822,19 +2824,15 @@ const uploadDocument = (doc, files, count) => {
           reject(errors);
         },
         onSuccess: data => {
-          let quoteDocuments = [];
-          if (
-            quoteTypesToCheck.includes(props.quoteType) ||
-            props.quoteType === 'Home' ||
+          let quoteTypes = quoteTypesToCheck.filter(
+            quoteType => quoteType !== 'Home',
+          );
+          let quoteDocuments =
+            quoteTypes.includes(props.quoteType) ||
             props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
-          ) {
-            quoteDocuments = data.props.quoteDocuments;
-          } else {
-            quoteDocuments = data.props.quote.documents;
-          }
-          //quoteDocuments = [...quoteDocuments].reverse();
-          // Sort the array by the "id" property in descending order
+              ? data.props.quoteDocuments
+              : data.props.quote.documents;
           quoteDocuments.sort((a, b) => b.id - a.id);
           if (count === 0) {
             isDiscountDocumentNotUploaded.value = false;
@@ -3035,7 +3033,7 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   ) {
     return true;
   }
-  return getValidStatuses(paymentRecord.payment_splits[0]);
+  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
 };
 
 const getCaptureValidation = computed(() => {
@@ -3081,6 +3079,7 @@ const alertCapture = payment => {
 
 const getCaptureOption = computed(() => {
   return payment => {
+    // Return early if there are no payments
     if (props.payments.length === 0) return;
 
     let isCaptureButtonEnabled =
@@ -3103,8 +3102,6 @@ const getCaptureOption = computed(() => {
       return 'capture';
     }
     return 'approve';
-
-    // return paymentMethodCC.length > 0 ? 'capture' : 'approve';
   };
 });
 
@@ -3255,12 +3252,10 @@ const setPaymentInitialPrice = () => {
 };
 
 const setPlanDetail = () => {
-  if (
-    props.quoteType == 'Business' ||
-    props.quoteType == 'Home' ||
-    props.isPlanDetailEnabled
-  ) {
+  if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (props.quoteType == 'Home') {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == 'Bike') {
@@ -4308,7 +4303,7 @@ onBeforeMount(() => {
                           <template
                             v-if="
                               can(permissionEnum.ApprovePayments) &&
-                              !isChildPaymentDeletable
+                              (!isChildPaymentDeletable || index > 0)
                             "
                           >
                             <x-button
