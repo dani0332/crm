@@ -57,13 +57,10 @@ class AMLScreeningCommand extends Command
                 'aml_status' => AMLStatusCode::AMLPending,
             ])->where('created_at', '>', $date);
 
-        $quoteRequestCount = $quoteRequestQuery->count();
-
-        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' '.$quoteRequestCount.' Record Found');
-        if ($quoteRequestCount > 0) {
+        if ($quoteRequestQuery->exists()) {
             $quoteRequestQuery->chunk(100, function ($quoteRequests) {
                 foreach ($quoteRequests as $quoteRequest) {
-                    AmlScreeningAutomationJob::dispatch($quoteRequest->code)->onQueue('aml-screening-automation');
+                    AmlScreeningAutomationJob::dispatch($quoteRequest->code)->onQueue('renewals');
                 }
             });
         }
