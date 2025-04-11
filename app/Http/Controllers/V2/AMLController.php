@@ -412,6 +412,14 @@ class AMLController extends Controller
         return $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
     }
 
+    private function handleResponse(bool $status, string $message, bool $isAutomation = false)
+    {
+        return match($isAutomation) {
+            true => response()->json(['status' => $status, 'message' => $message]),
+            default => redirect()->back()->with($status ? 'success' : 'error', $message)
+        };
+    }
+
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
         $isAutomation = $AMLCheckRequest->is_automation ?? false;
@@ -439,7 +447,7 @@ class AMLController extends Controller
             info('AML Screening Bridger - Members found against Ref-ID: '.$quoteRequestId);
             $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
             if (in_array(null, $memberValidateCheck)) {
-                return redirect()->back()->with('error', 'First Name missing');
+                return $this->handleResponse(false, 'First Name missing', $isAutomation);
             }
 
             $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($value) use ($getLastScreening) {
@@ -568,9 +576,9 @@ class AMLController extends Controller
                 if (empty($getMemberOrUBODetails->toArray())) {
                     info('AML Screening Bridger - No Member Found, AML Screening Cleared - Ref-ID: '.$quoteRequestId);
 
-                    $response = redirect()->back()->with('success', 'AML Screening Completed');
+                    $response = $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
 
-                    if (! empty($insurerAMLScreeningResponse)) {
+                    if (! empty($insurerAMLScreeningResponse) && !$isAutomation) {
                         $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
                     }
 
@@ -639,7 +647,7 @@ class AMLController extends Controller
                 }
 
                 if (empty($entityDetailsForApi) && empty($getMemberOrUBODetails->toArray())) {
-                    return redirect()->back()->with('success', 'AML Screening Completed');
+                    return $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
                 }
 
                 // Job dispatch for all UBO members
@@ -647,15 +655,15 @@ class AMLController extends Controller
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
             }
 
-            $response = redirect()->back()->with('success', 'Quote is updated');
-            if (! empty($insurerAMLScreeningResponse)) {
+            $response = $this->handleResponse(true, 'Quote is updated', $isAutomation);
+            if (! empty($insurerAMLScreeningResponse) && !$isAutomation) {
                 $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
             }
 
             return $response;
         }
 
-        return redirect()->back()->with('error', 'Something went wrong');
+        return $this->handleResponse(false, 'Something went wrong', $isAutomation);
     }
 
     public function fetchEntity(Request $request)
