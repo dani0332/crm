@@ -193,7 +193,8 @@ function onSubmit(isValid) {
       onBefore: () => (loader.table = true),
       onFinish: () => (loader.table = false),
     });
-  } else {}
+  } else {
+  }
 }
 
 function onReset() {
