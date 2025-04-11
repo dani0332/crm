@@ -1045,12 +1045,31 @@ const shouldShowPlanDetailsSection = computed(() => {
   if (!match) return false;
 
   const [_, day, monthStr, year, hour, min, ampm] = match;
-  const months = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
   let h = parseInt(hour, 10);
   if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
   if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
 
-  const createdDate = new Date(parseInt(year), months[monthStr.toLowerCase().slice(0,3)], parseInt(day), h, parseInt(min));
+  const createdDate = new Date(
+    parseInt(year),
+    months[monthStr.toLowerCase().slice(0, 3)],
+    parseInt(day),
+    h,
+    parseInt(min),
+  );
   return createdDate < cutoffDate;
 });
 </script>
