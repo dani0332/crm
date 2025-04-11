@@ -858,7 +858,8 @@ const onExportPlans = () => {
       } else {
         // Fallback for network errors
         notification.error({
-          title: 'Failed to export PDF. Please check your connection and try again.',
+          title:
+            'Failed to export PDF. Please check your connection and try again.',
           position: 'top',
         });
       }
