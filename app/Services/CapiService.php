@@ -10,6 +10,8 @@ class CapiService
     private $client = null;
     private $baseUrl = null;
 
+    private const CAPI_EXCEPTION_MESSAGE = 'CAPI Service Exception';
+
     /**
      * setup http client with credentials.
      */
@@ -41,7 +43,7 @@ class CapiService
             if (isset($response->json()['msg'])) {
                 vAbort($response->json()['msg']);
             } else {
-                vAbort('CAPI Service Exception');
+                vAbort(self::CAPI_EXCEPTION_MESSAGE);
             }
         });
 

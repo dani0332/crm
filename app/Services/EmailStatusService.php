@@ -8,14 +8,18 @@ use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 use App\Services\Logger\LoggerService;
+use App\Models\PersonalQuote;
+use Illuminate\Support\Facades\Cache;
 
 class EmailStatusService extends BaseService
 {
     public function getEmailStatus($quoteTypeId, $quoteId)
     {
-        return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
-            ->orderBy('updated_at', 'desc')
-            ->get();
+        return Cache::remember("email_statuses_{$quoteTypeId}_{$quoteId}", now()->endOfDay(), function () use ($quoteTypeId, $quoteId) {
+            return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
+                ->orderBy('updated_at', 'desc')
+                ->get();
+        });
     }
 
     public function addEmailStatus($emailData, $messageId, $emailSubject, $status = ProcessStatusCode::IN_PROGRESS)
@@ -31,6 +35,8 @@ class EmailStatusService extends BaseService
         $newEmailStatus->email_subject = $emailSubject;
         $newEmailStatus->save();
 
+        Cache::forget("email_statuses_{$newEmailStatus->quote_type_id}_{$newEmailStatus->quote_id}");
+
         return $newEmailStatus->id;
     }
 
@@ -42,6 +48,9 @@ class EmailStatusService extends BaseService
                 break;
             case QuoteTypeId::Health:
                 $quote = HealthQuote::where('uuid', $request->uuid)->first();
+                break;
+            case QuoteTypeId::Home:
+                $quote = PersonalQuote::where('uuid', $request->uuid)->first();
                 break;
             default:
                 $quote = null;
@@ -68,4 +77,18 @@ class EmailStatusService extends BaseService
             return (object) ['message' => 'Email event already logged', 'status' => true];
         }
     }
+
+    public function updateEmailStatus($emailData, $status)
+    {
+        $emailStatus = EmailStatus::where('id', $emailData->id)->first();
+        if (empty($emailStatus)) {
+            info(self::class.' - updateEmailStatus not found for msg_id: '.$emailData->message_id.' | Time: '.now());
+
+            return;
+        }
+        $emailStatus->email_status = $status;
+        $emailStatus->save();
+        info('EmailStatusService - EmailStatus updated for msg_id: '.$emailData->message_id.' email_status: '.$emailStatus->email_status.' | Time:'.now());
+    }
+
 }

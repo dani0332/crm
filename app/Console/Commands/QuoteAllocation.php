@@ -69,10 +69,10 @@ class QuoteAllocation extends Command
 
             $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
 
             // Disabled Auto Allocation for now as this feature is not needed at the moment
             /*
-            $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::CYCLE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);

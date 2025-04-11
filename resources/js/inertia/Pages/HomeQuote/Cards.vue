@@ -108,7 +108,6 @@ const filters = reactive({
   status_filters: null,
   policy_expiry_date: '',
   policy_expiry_date_end: '',
-  last_modified_date: null,
   advisor_assigned_date: null,
 });
 
@@ -270,11 +269,11 @@ const validateDateRange = () => {
           @selected-filters="handleSelectedFilters"
           @toggleFilters="showFilters = !showFilters"
         />
-        <Link :href="route('home.index')">
+        <Link :href="route('home-quotes-list')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
-        <Link :href="route('home.create')">
+        <Link :href="route('home-quotes-create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </template>
@@ -400,13 +399,6 @@ const validateDateRange = () => {
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
-        />
-        <DatePicker
-          v-model="filters.last_modified_date"
-          name="created_at_start"
-          label="Last Modified Date"
-          range
-          format="dd-MM-yyyy"
         />
         <DatePicker
           v-if="hasRole(rolesEnum.HomeManager)"
