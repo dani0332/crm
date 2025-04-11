@@ -109,7 +109,7 @@ defineExpose({
     >
         <x-form :auto-focus="false">
             <div class="text-lg text-center">
-                <span>the lead status will change to "In Negotiation" and a new insurer payment link will need to be sent once the customer finalizes a plan</span>
+                <span>The lead status will change to <strong class="font-bold">"In Negotiation"</strong>, and a new insurer payment link will need to be sent once the customer finalises a plan.</span>
             </div>
             <div class="mt-2 text-center flex justify-center">
                 <div class="mr-4">

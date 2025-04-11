@@ -955,7 +955,7 @@ const calculateFinalPrice = (data, memberId) => {
                           class="whitespace-normal text-wrap normal-case text-[10px]"
                         >
                           <p>
-                            This price, adjusted either by adding or subtracting from the Base Price, aligns with updated rates from the insurer, accommodating changes that may affect the displayed price
+                            This price, adjusted either by adding or subtracting from the Base Price, aligns with updated rates from the insurer, accommodating changes that may affect the displayed price.
                           </p>
                         </div>
                       </template>
