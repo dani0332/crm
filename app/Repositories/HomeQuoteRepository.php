@@ -395,15 +395,23 @@ class HomeQuoteRepository extends BaseRepository
                     }
                 }
 
-                // Update or create the homeQuote relationship
-                $mappedData['uuid'] = $quote->uuid;
+                $mappedData['personal_quote_id'] = $quote->id;
 
-                if ($quote->homeQuote) {
-                    $quote->homeQuote()->update($mappedData);
+                $existingHomeQuote = HomeQuote::where('uuid', $uuid)->first();
+
+                if ($existingHomeQuote) {
+                    // If a record with this UUID exists, update it directly
+                    $existingHomeQuote->update($mappedData);
                 } else {
-                    $quote->homeQuote()->create($mappedData);
+                    // No record exists with this UUID, so it's safe to create a new one
+                    $mappedData['uuid'] = $uuid;
+                    HomeQuote::create($mappedData);
                 }
 
+                // Refresh the quote to load the updated or newly created homeQuote
+                $quote->refresh();
+
+                // Process address data if provided
                 if (! empty($data['addressObj']) || is_array($data['addressObj'])) {
                     // Update or create the customer address
                     SaveCustomerAddressJob::dispatch($uuid, $data['addressObj']);
@@ -412,9 +420,10 @@ class HomeQuoteRepository extends BaseRepository
                 // Return the updated quote
                 return $quote;
             } catch (\Exception $e) {
-                // Log error and rethrow for transaction rollback
+                // Log error details to help with debugging
                 info("Failed to update quote with UUID: {$uuid}", [
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                     'data' => $data,
                 ]);
                 throw $e; // Re-throw exception to trigger transaction rollback
