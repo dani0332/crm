@@ -84,7 +84,7 @@ class HomeQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
             DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
-            DB::raw('DATE_FORMAT(hqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
+            DB::raw('DATE_FORMAT(hqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
             DB::raw('DATE_FORMAT(hqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
             'hqr.premium',
             'hqr.advisor_id',

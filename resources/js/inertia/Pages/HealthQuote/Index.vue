@@ -759,6 +759,16 @@ const insurerAMLStatusOption = computed(() => {
           name="created_at_end"
           label="Created Date End"
         />
+        <DatePicker
+          v-model="filters.assigned_to_date_start"
+          name="assigned_to_date_start"
+          label="Advisor Assigned Date Start"
+        />
+        <DatePicker
+          v-model="filters.assigned_to_date_end"
+          name="assigned_to_date_end"
+          label="Advisor Assigned Date End"
+        />
         <ComboBox
           v-model="filters.sub_team"
           label="Sub Team"
@@ -855,18 +865,6 @@ const insurerAMLStatusOption = computed(() => {
           label="Renewal Batch"
           placeholder="Search by Renewal Batch"
           :options="renewalBatchOptions"
-        />
-        <DatePicker
-          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
-          v-model="filters.assigned_to_date_start"
-          name="assigned_to_date_start"
-          label="Advisor Assigned Date Start"
-        />
-        <DatePicker
-          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
-          v-model="filters.assigned_to_date_end"
-          name="assigned_to_date_end"
-          label="Advisor Assigned Date End"
         />
 
         <DatePicker
