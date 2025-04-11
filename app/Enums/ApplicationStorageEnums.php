@@ -204,7 +204,10 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW = 'BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW';
 
     public const MOTOR_PCP_FOLLOWUPS  = "MOTOR_PCP_FOLLOWUPS";
+    public const MOTOR_PCP_OCB = "MOTOR_PCP_OCB";
     public const PCP_FOLLOWUP_TEMPLATE_ID = 'PCP_FOLLOWUP_TEMPLATE_ID';
+    public const MOTOR_PCP_OCB_SWITCH = "MOTOR_PCP_OCB_SWITCH";
+    public const MOTOR_PCP_FOLLOWUP_SWITCH = "MOTOR_PCP_FOLLOWUP_SWITCH";
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
     public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
     public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
