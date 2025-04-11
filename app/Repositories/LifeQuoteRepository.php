@@ -197,7 +197,7 @@ class LifeQuoteRepository extends BaseRepository
         $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->filter(paginate: false, requestParams: $requestParams)
             ->withFakeLeadCriteria();
-        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+        $this->adjustQueryByDateFilters($query, 'life_quote_request', requestParams: $requestParams);
 
         Log::info('LifeQuoteRepository@fetchExportData: query built');
 

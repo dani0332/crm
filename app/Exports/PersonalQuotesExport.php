@@ -41,7 +41,7 @@ class PersonalQuotesExport
                 return YachtQuoteRepository::getData(true);
 
             case QuoteTypes::PET->value:
-                return PetQuoteRepository::getData(true);
+                return PetQuoteRepository::getData(true,requestParams: $requestParams);
 
             case QuoteTypes::CYCLE->value:
                 return CycleQuoteRepository::getData(true);

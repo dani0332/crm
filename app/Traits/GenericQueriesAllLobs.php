@@ -25,6 +25,7 @@ use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 trait GenericQueriesAllLobs
 {
@@ -643,19 +644,31 @@ trait GenericQueriesAllLobs
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
 
-    public function adjustQueryByInsurerInvoiceFilters($query)
+    public function adjustQueryByInsurerInvoiceFilters($query,$requestParams = [])
     {
-        $request = request();
+        if(is_array($requestParams)){
+            $requestParams = empty($requestParams) ? collect(request()->all()) : collect($requestParams);
+            info("requestParams array");
+        }else if($requestParams instanceof Collection) {
+            info("requestParams collection");
+            $requestParams = $requestParams->isEmpty() ? collect(request()->all()) : collect($requestParams);
+        }
 
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_number')) {
-            $value = $request->get('insurer_tax_number');
+        if (auth()->check() ) {
+            $user = auth()->user();
+        } elseif (! empty($requestParams)) {
+            $user = $requestParams['user'] ?? null;
+        }
+
+        if ($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $requestParams->has('insurer_tax_number')) {
+            $value = $requestParams->get('insurer_tax_number');
             $query->whereHas('payments', function ($query) use ($value) {
                 $query->where(DatabaseColumnsString::INSURER_TAX_INVOICE_NUMBER, $value);
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commmission_invoice_number')) {
-            $value = $request->get('insurer_commmission_invoice_number');
+        if ($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $requestParams->has('insurer_commmission_invoice_number')) {
+            $value = $requestParams->get('insurer_commmission_invoice_number');
             $query->whereHas('payments', function ($query) use ($value) {
                 $query->where(DatabaseColumnsString::INSURER_COMMISSION_TAX_INVOICE_NUMBER, $value);
             });
