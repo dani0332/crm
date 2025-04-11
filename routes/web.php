@@ -427,6 +427,49 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
+        
+        // Add route to trigger entity-insured migration
+        Route::get('/migrate-entities-insured', function () {
+            // Log the start of the migration process
+            info('MIGRATION PROCESS - Started by web request at ' . now());
+            
+            // Display process status
+            $message = "Entity Migration Process has been initiated with the following steps: \n";
+            $message .= "Step 1: Migrating entities table data to insured table \n";
+            $message .= "Step 2: Updating quote entities relation according to insured mapping \n";
+            $message .= "Step 3: Moving entities KYC details to insured_kyc_details table \n";
+            $message .= "\nPlease check the logs for detailed progress and completion status.";
+            
+            // Execute the command
+            Artisan::call('migrate:entities-insured');
+            
+            // Log the completion
+            info('MIGRATION PROCESS - Web request completed at ' . now());
+            
+            return redirect()->back()->with('success', $message);
+        })->name('admin.migrate-entities-insured');
+        
+        // Add route to trigger individual KYC details migration
+        Route::get('/migrate-individual-kyc-details', function () {
+            // Log the start of the migration process
+            info('INDIVIDUAL KYC MIGRATION PROCESS - Started by web request at ' . now());
+            
+            // Display process status
+            $message = "Individual KYC Migration Process has been initiated with the following steps: \n";
+            $message .= "Step 1: Identifying individual customers with KYC details \n";
+            $message .= "Step 2: Creating or finding corresponding insured records \n";
+            $message .= "Step 3: Migrating customer KYC details to insured_kyc_details table \n";
+            $message .= "\nPlease check the logs for detailed progress and completion status.";
+            
+            // Execute the command
+            Artisan::call('migrate:individual-kyc-details');
+            
+            // Log the completion
+            info('INDIVIDUAL KYC MIGRATION PROCESS - Web request completed at ' . now());
+            
+            return redirect()->back()->with('success', $message);
+        })->name('admin.migrate-individual-kyc-details');
+        
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
             Route::get('/view/{commercialKeyword}', [CommercialKeywordsController::class, 'show'])->name('admin.commercial.keywords.show');

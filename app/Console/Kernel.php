@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\EntitiesInsuredMigration;
 use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
@@ -36,6 +37,7 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
         Commands\TravelRenewalLeads::class,
+        Commands\EntitiesInsuredMigration::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
