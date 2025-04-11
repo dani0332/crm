@@ -164,7 +164,7 @@ class EndorsementReportService extends ManagementReport
                 'p.notes',
                 'p.code as payment_ref_id',
                 'p.reference',
-                'ps.sr_no as split_sr_no',
+                DB::raw("'' as split_sr_no"),
                 'send_update_logs.start_date as policy_start_date',
                 'personal_quotes.policy_start_date as main_lead_policy_start_date',
                 DB::raw('IFNULL(p.insurer_invoice_date, IFNULL(s2.invoice_date, "")) as payment_due_date'),
@@ -220,7 +220,6 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
             ->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
-            ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'quote_type.id', '=', 'personal_quotes.quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
