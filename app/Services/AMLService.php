@@ -15,6 +15,8 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
+use App\Http\Controllers\V2\AMLController;
+use App\Http\Requests\AMLCheckRequest;
 use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
@@ -38,14 +40,20 @@ use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\View;
 
 class AMLService
 {
     use GenericQueriesAllLobs;
+
+    protected AMLController $amlController;
+
+    public function __construct(AMLController $amlController)
+    {
+        $this->amlController = $amlController;
+    }
 
     public static function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = ''): bool
     {
@@ -343,6 +351,48 @@ class AMLService
     //            $responseDetail = 'sendAmlComplianceMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
     //        }
     //    }
+
+
+    /**
+     * Get insured person details.
+     *
+     * @param string $idType
+     * @param string $idNumber
+     * @return object containing properties:
+     *               - 'status' (bool)
+     *               - 'message' (string)
+     *               - 'response' (object|null) may not exists
+     */
+    public function getInsuredPersonDetails(string $idType, string $idNumber): object
+    {
+        // Prepare the request for insured person details
+        $insuredPersonRequest = new Request([
+            'id_type' => $idType,
+            'id_number' => $idNumber,
+        ]);
+
+            // Fetch the insured person details
+        return $this->amlController->getInsuredPersonDetails($insuredPersonRequest)->getData();
+    }
+
+    /**
+     * Get insured person details.
+     *
+     * @param array AMLCheckRequest $amlRequestData
+     * @param int $quoteTypeId
+     * @param int $quoteRequestId
+     * @return object containing properties:
+     *               - 'status' (bool)
+     *               - 'message' (string)
+     */
+    public function quoteAmlProcessCall(array $amlRequestData, int $quoteTypeId, int $quoteRequestId): object
+    {
+        // Create AML check request object
+        $amlCheckRequest = new AMLCheckRequest($amlRequestData);
+
+        // Call the AML quote update method
+        return $this->amlController->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
+    }
 
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
