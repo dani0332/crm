@@ -20,9 +20,9 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
     public function buildGrid(): Builder
     {
         return $this->baseQuery([
-            'health_quote_request.id',
+            'id',
             'uuid',
-            'health_quote_request.code',
+            'code',
             'first_name',
             'last_name',
             'source',
@@ -65,8 +65,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'dob',
             'nationality_id',
             'transaction_approved_at',
-            'health_quote_request.created_at',
-            'health_quote_request.updated_at',
+            'created_at',
+            'updated_at',
             'assignment_type',
             'gender',
         ], [
@@ -76,7 +76,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'emirate:id,text',
             'advisor:id,name,email,mobile_no,landline_no',
             'previousAdvisor:id,name',
-            'healthQuoteRequestDetail:id,health_quote_request_id,next_followup_date,transapp_code,notes,insly_id,lost_reason_id',
+            'healthQuoteRequestDetail:id,health_quote_request_id,next_followup_date,transapp_code,notes,insly_id,lost_reason_id,advisor_assigned_date',
             'healthLeadType:id,text',
             'healthQuoteRequestDetail.lostReason:id,text',
             'salaryBand:id,text',
