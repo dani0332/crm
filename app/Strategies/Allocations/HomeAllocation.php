@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Models\HomeQuote;
+use App\Models\RangeLookup;
 use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,8 +14,8 @@ use Illuminate\Support\Str;
 
 class HomeAllocation extends BaseAllocation
 {
-    private const CONTENTS_VALUE_THRESHOLD = 50000;
-    private const PERSONAL_BELONGINGS_VALUE_THRESHOLD = 50000;
+    private const CONTENTS_VALUE_THRESHOLD = 50001;
+    private const PERSONAL_BELONGINGS_VALUE_THRESHOLD = 50001;
     private const BUILDING_VALUE_THRESHOLD = 3000000;
     private const SHORT_TERM_CODE = 'short_term';
 
@@ -95,12 +96,11 @@ class HomeAllocation extends BaseAllocation
         return false;
     }
 
-    private function isValueLocation(): bool
+    private function isValueLocation(HomeQuote $lead): bool
     {
         Log::info('HomeAllocation: Checking if location is a value location', ['uuid' => $this->lead->uuid ?? null]);
-        $homeQuote = $this->getHomeQuoteData($this->lead->uuid);
 
-        $address = Str::lower($homeQuote?->subArea?->text ?? '');
+        $address = Str::lower($lead?->subArea?->text ?? '');
         Log::info('HomeAllocation: Processing address for value location check', ['address' => $address]);
 
         $isValueLocation = $this->matchesTargetLocations($address);
@@ -109,11 +109,11 @@ class HomeAllocation extends BaseAllocation
         return $isValueLocation;
     }
 
-    public function isValueLead(): bool
+    public function isValueLead(HomeQuote $lead): bool
     {
         Log::info('HomeAllocation: Checking if lead is a value lead', ['leadId' => $this->lead->id ?? null]);
-        $hasHighValueAssets = $this->hasHighValueAssets();
-        $isValueLocation = $this->isValueLocation();
+        $hasHighValueAssets = $this->hasHighValueAssets($lead);
+        $isValueLocation = $this->isValueLocation($lead);
         $result = $hasHighValueAssets || $isValueLocation;
 
         Log::info('HomeAllocation: Value lead check result', [
@@ -125,68 +125,43 @@ class HomeAllocation extends BaseAllocation
         return $result;
     }
 
-    public function isVolumeLead(): bool
+    public function isVolumeLead(HomeQuote $lead): bool
     {
-        Log::info('HomeAllocation: Checking if lead is a volume lead', ['leadId' => $this->lead->id ?? null]);
-        $hasLowValueAssets = $this->hasLowValueAssets();
-        $isNotValueLocation = ! $this->isValueLocation();
-        $result = $hasLowValueAssets || $isNotValueLocation;
-
-        Log::info('HomeAllocation: Volume lead check result', [
-            'isVolumeLead' => $result,
-            'hasLowValueAssets' => $hasLowValueAssets,
-            'isNotValueLocation' => $isNotValueLocation,
-        ]);
-
-        return $result;
+        return ! $this->isValueLead($lead);
     }
 
-    private function hasHighValueAssets(): bool
+    private function inRange($thresholdValue, ?RangeLookup $rangeLookup): bool
     {
-        Log::info('HomeAllocation: Checking for high value assets', [
-            'hasContents' => $this->lead->has_contents ?? false,
-            'contentsValue' => $this->lead->contents_aed ?? 0,
-            'hasPersonalBelongings' => $this->lead->has_personal_belongings ?? false,
-            'personalBelongingsValue' => $this->lead->personal_belongings_aed ?? 0,
-            'hasBuilding' => $this->lead->has_building ?? false,
-            'buildingValue' => $this->lead->building_aed ?? 0,
-            'thresholds' => [
-                'contents' => self::CONTENTS_VALUE_THRESHOLD,
-                'personalBelongings' => self::PERSONAL_BELONGINGS_VALUE_THRESHOLD,
-                'building' => self::BUILDING_VALUE_THRESHOLD,
-            ],
+        if (is_null($rangeLookup)) {
+            Log::info('HomeAllocation: Range lookup is null, returning false');
+
+            return false;
+        }
+
+        $min = $rangeLookup->min_value ?? 0;
+        $max = $rangeLookup->max_value ?? 0;
+
+        Log::info('HomeAllocation: Checking if value is in range', [
+            'thresholdValue' => $thresholdValue,
+            'min' => $min,
+            'max' => $max,
         ]);
 
-        $result = ($this->lead->has_contents && $this->lead->contents_aed > self::CONTENTS_VALUE_THRESHOLD) ||
-            ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed > self::PERSONAL_BELONGINGS_VALUE_THRESHOLD) ||
-            ($this->lead->has_building && $this->lead->building_aed > self::BUILDING_VALUE_THRESHOLD);
-
-        Log::info('HomeAllocation: High value assets check result', ['hasHighValueAssets' => $result]);
-
-        return $result;
+        return $thresholdValue >= $min && $thresholdValue <= $max;
     }
 
-    private function hasLowValueAssets(): bool
+    private function hasHighValueAssets(HomeQuote $lead): bool
     {
-        Log::info('HomeAllocation: Checking for low value assets', [
-            'hasContents' => $this->lead->has_contents ?? false,
-            'contentsValue' => $this->lead->contents_aed ?? 0,
-            'hasPersonalBelongings' => $this->lead->has_personal_belongings ?? false,
-            'personalBelongingsValue' => $this->lead->personal_belongings_aed ?? 0,
-            'hasBuilding' => $this->lead->has_building ?? false,
-            'buildingValue' => $this->lead->building_aed ?? 0,
-            'thresholds' => [
-                'contents' => self::CONTENTS_VALUE_THRESHOLD,
-                'personalBelongings' => self::PERSONAL_BELONGINGS_VALUE_THRESHOLD,
-                'building' => self::BUILDING_VALUE_THRESHOLD,
-            ],
+        $result = ($lead->hasContents() && $this->inRange(self::CONTENTS_VALUE_THRESHOLD, $lead->contents)) ||
+            ($lead->hasPersonalBelongings() && $this->inRange(self::PERSONAL_BELONGINGS_VALUE_THRESHOLD, $lead->personalBelongings)) ||
+            ($lead->hasBuilding() && $lead->building_value > self::BUILDING_VALUE_THRESHOLD);
+
+        Log::info('HomeAllocation: High value assets check result', [
+            'hasHighValueAssets' => $result,
+            'hasContents' => $lead->hasContents(),
+            'hasPersonalBelongings' => $lead->hasPersonalBelongings(),
+            'hasBuilding' => $lead->hasBuilding(),
         ]);
-
-        $result = ($this->lead->has_contents && $this->lead->contents_aed <= self::CONTENTS_VALUE_THRESHOLD) ||
-            ($this->lead->has_personal_belongings && $this->lead->personal_belongings_aed <= self::PERSONAL_BELONGINGS_VALUE_THRESHOLD) ||
-            ($this->lead->has_building && $this->lead->building_aed <= self::BUILDING_VALUE_THRESHOLD);
-
-        Log::info('HomeAllocation: Low value assets check result', ['hasLowValueAssets' => $result]);
 
         return $result;
     }
@@ -217,18 +192,6 @@ class HomeAllocation extends BaseAllocation
         return $emails;
     }
 
-    private function getHomePropertyRentedAttribute(string $uuid): HomeQuote
-    {
-        Log::info('HomeAllocation: Fetching home property rented attribute', ['uuid' => $uuid]);
-        $homeQuote = HomeQuote::where('uuid', $uuid)->select('owner_occupancy_type_id')->first();
-        Log::info('HomeAllocation: Home property rented attribute result', [
-            'found' => ! is_null($homeQuote),
-            'owner_occupancy_type_id' => $homeQuote->owner_occupancy_type_id ?? null,
-        ]);
-
-        return $homeQuote;
-    }
-
     /**
      * Fetch emails of advisors based on the lead type (value or volume).
      */
@@ -236,16 +199,16 @@ class HomeAllocation extends BaseAllocation
     {
         Log::info('HomeAllocation: Getting advisor emails based on lead type', ['leadId' => $this->lead->id ?? null]);
 
-        if ($this->isValueLead()) {
+        $homeQuote = $this->getHomeQuoteData($this->lead->uuid);
+
+        if ($this->isValueLead($homeQuote)) {
             Log::info('HomeAllocation: Lead is a value lead, fetching value advisors');
-            $advisors = $this->getValueAdvisors();
 
-            return $advisors;
-        } elseif ($this->isVolumeLead()) {
+            return $this->getValueAdvisors();
+        } elseif ($this->isVolumeLead($homeQuote)) {
             Log::info('HomeAllocation: Lead is a volume lead, fetching volume advisors');
-            $advisors = $this->getVolumeAdvisors();
 
-            return $advisors;
+            return $this->getVolumeAdvisors();
         }
 
         Log::warning('HomeAllocation: Lead is neither value nor volume, returning empty array');
