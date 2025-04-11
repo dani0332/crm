@@ -1478,6 +1478,7 @@ class SendUpdateLogService
         }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
             info('fn: getProviderDetails end for Send Update - code: '.$quote->code.', in case of creation legacy policy.');
+
             return [$quote?->insurance_provider_id, $plan_id];
         }
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
