@@ -283,7 +283,7 @@ class CRUDService extends BaseService
                 strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
             ) {
                 // Only allow if quote has payment link history and payment method is insurer payment link
-                if ($entity->hasInsurerPaymentLink() && !$entity->canUpdateToTransactionApproved() && !auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+                if (method_exists($entity, 'hasInsurerPaymentLink') && $entity->hasInsurerPaymentLink() && !$entity->canUpdateToTransactionApproved() && !auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
                     // throw new \Exception('Cannot update to Transaction Approved status. Quote must have payment link history.');
                     return ['entity' => $entity, 'error' => 'Cannot update to Transaction Approved status. Quote must have payment initiated and payment link sent to customer.'];
                 }

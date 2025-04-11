@@ -67,7 +67,9 @@ class PersonalQuoteController extends Controller
 
         if ($request->document_type_code === DocumentTypeCode::HPD) {
             $quote = $this->getQuoteObject($request->quote_type, $quoteId);
-            $quote->hasInsurerPaymentLink() && app(QuoteDocumentService::class)->updateQuoteAndPaymentStatusToPaymentPending($quote);
+            if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink()) {
+                app(QuoteDocumentService::class)->updateQuoteAndPaymentStatusToPaymentPending($quote);
+            }
         }
 
         app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);
