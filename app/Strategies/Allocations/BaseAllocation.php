@@ -90,7 +90,7 @@ abstract class BaseAllocation extends AllocationService
             'onlineStatus' => $onlineStatus,
             'roles' => $roles,
             'quoteTypeId' => $this->getQuoteTypeId(),
-            'teamId' => $this->teamId
+            'teamId' => $this->teamId,
         ]);
 
         $query = User::select('users.id as user_id')
@@ -108,14 +108,14 @@ abstract class BaseAllocation extends AllocationService
             ->where('la.quote_type_id', $this->getQuoteTypeId())
             ->activeUser()
             ->orderBy('la.last_allocated', 'asc');
-            
+
         Log::info('BaseAllocation: getAdvisorBaseQuery completed', [
             'onlineStatus' => $onlineStatus,
             'roles' => $roles,
             'sql' => $query->toSql(),
-            'bindings' => $query->getBindings()
+            'bindings' => $query->getBindings(),
         ]);
-        
+
         return $query;
     }
 
