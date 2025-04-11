@@ -27,7 +27,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
     public $timeout = 60;
     public $tries = 1;
-    
+
     public $uniqueFor = 60 * 15; // 15 minutes
     public $uniqueKey = ''; // 15 minutes
 
@@ -53,7 +53,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     {
         try {
             $amlAutomation = AmlAutomation::updateOrCreate(
-                ['code' => $this->quoteRefId], 
+                ['code' => $this->quoteRefId],
                 ['status' => AmlAutomationStatus::QUEUE_STATUS]
             );
 

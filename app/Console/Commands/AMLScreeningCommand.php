@@ -54,7 +54,7 @@ class AMLScreeningCommand extends Command
         $quoteRequestQuery = $quoteModel::select('id', 'code', 'api_issuance_status_id', 'aml_status')
             ->where([
                 'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
-                'aml_status' => AMLStatusCode::AMLPending
+                'aml_status' => AMLStatusCode::AMLPending,
             ])->where('created_at', '>', $date);
 
         $quoteRequestCount = $quoteRequestQuery->count();

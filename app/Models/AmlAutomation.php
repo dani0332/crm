@@ -12,10 +12,9 @@ class AmlAutomation extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'aml_automation';
-    
     protected $fillable = [
         'code',
         'status',
-        'result'
+        'result',
     ];
 }
