@@ -27,7 +27,7 @@ class RateCoverageUploadService
 
         $azureFilePath = request()->file('file_name')->storeAs($path, $azureFileName, 'azureIM');
         LoggerService::info('File saved in Azure storage', [
-            'file_path' => $azureFilePath
+            'file_path' => $azureFilePath,
         ]);
 
         return [

@@ -7,8 +7,8 @@ use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
-use App\Services\Logger\LoggerService;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Cache;
 
 class EmailStatusService extends BaseService
@@ -59,7 +59,7 @@ class EmailStatusService extends BaseService
         if (! $quote) {
             LoggerService::warning("Lead not found for uuid: {$request->uuid} time: ".now(), [
                 'uuid' => $request->uuid,
-                'quoteTypeId' => request('quoteTypeId')
+                'quoteTypeId' => request('quoteTypeId'),
             ]);
 
             return (object) ['message' => 'lead not found', 'status' => false];

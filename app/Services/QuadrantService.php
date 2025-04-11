@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Quadrant;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class QuadrantService extends BaseService

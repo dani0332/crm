@@ -42,7 +42,7 @@ class KenService
                     'data' => $data,
                     'url' => $url,
                     'status_code' => $response->status(),
-                    'response' => $response->json()
+                    'response' => $response->json(),
                 ]);
 
                 if (isset($response->json()['msg'])) {
@@ -64,7 +64,7 @@ class KenService
                     'data' => $data,
                     'url' => $url,
                     'status_code' => $response->status(),
-                    'response' => $response->json()
+                    'response' => $response->json(),
                 ]);
 
                 if (isset($response->json()['msg'])) {

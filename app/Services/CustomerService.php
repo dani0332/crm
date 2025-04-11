@@ -7,9 +7,8 @@ use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Models\CustomerMembers;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Arr;
 
 class CustomerService extends BaseService
 {

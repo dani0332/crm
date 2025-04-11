@@ -9,8 +9,8 @@ use App\Enums\TeamNameEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
-use App\Services\SendEmailCustomerService;
 use App\Services\Logger\LoggerService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
 

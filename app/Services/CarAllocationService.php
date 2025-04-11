@@ -33,9 +33,9 @@ use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
 use App\Models\UserTeams;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Services\Logger\LoggerService;
 
 class CarAllocationService extends AllocationService
 {

@@ -12,9 +12,9 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use Carbon\Carbon;
-use App\Services\Logger\LoggerService;
 
 class BikeEmailService extends BaseService
 {

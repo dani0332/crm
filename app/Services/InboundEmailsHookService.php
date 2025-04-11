@@ -21,7 +21,6 @@ use App\Services\Traits\Inboundable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 
 class InboundEmailsHookService extends BaseService
 {
@@ -214,7 +213,7 @@ class InboundEmailsHookService extends BaseService
             return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
         } catch (\Throwable $th) {
             LoggerService::error("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()}", [
-                'stack_trace' => $th->getTraceAsString()
+                'stack_trace' => $th->getTraceAsString(),
             ]);
             throw $th;
         }

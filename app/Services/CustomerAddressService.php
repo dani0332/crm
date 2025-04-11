@@ -5,10 +5,10 @@ namespace App\Services;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\CustomerAddressRequest;
 use App\Models\CustomerAddress;
+use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-use App\Services\Logger\LoggerService;
 
 class CustomerAddressService
 {

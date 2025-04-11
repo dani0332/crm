@@ -9,10 +9,10 @@ use App\Enums\CustomerTypeEnum;
 use App\Models\KycLog;
 use App\Models\ManualAMLLog;
 use App\Models\QuoteType;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
-use App\Services\Logger\LoggerService;
 
 class BridgerInsightService
 {

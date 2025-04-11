@@ -40,7 +40,6 @@ use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
@@ -95,8 +94,8 @@ class LeadAllocationService extends BaseService
 
             return $query->get();
         } catch (\Exception $e) {
-            LoggerService::error('Error getting grid data: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            LoggerService::error('Error getting grid data: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -124,9 +123,9 @@ class LeadAllocationService extends BaseService
             $leadAllocation->is_available = false;
             $leadAllocation->save();
         } catch (\Exception $e) {
-            LoggerService::error('Error creating lead allocation record: ' . $e->getMessage(), [
+            LoggerService::error('Error creating lead allocation record: '.$e->getMessage(), [
                 'user_id' => $userId,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -157,13 +156,13 @@ class LeadAllocationService extends BaseService
 
             $leadAllocation->save();
         } catch (\Exception $e) {
-            LoggerService::error('Error updating user allocation record: ' . $e->getMessage(), [
+            LoggerService::error('Error updating user allocation record: '.$e->getMessage(), [
                 'user_id' => $userId,
                 'allocation_count' => $allocationCount,
                 'max_capacity' => $maxCapacity,
                 'is_available' => $isAvailable,
                 'quote_type_id' => $quoteTypeId,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -189,8 +188,8 @@ class LeadAllocationService extends BaseService
 
             return $unAllocatedLeads;
         } catch (\Throwable $e) {
-            LoggerService::error('Error getting health unallocated leads: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            LoggerService::error('Error getting health unallocated leads: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -237,10 +236,10 @@ class LeadAllocationService extends BaseService
 
                 return true;
             } catch (\Exception $e) {
-                LoggerService::error('Error assigning lead: ' . $e->getMessage(), [
+                LoggerService::error('Error assigning lead: '.$e->getMessage(), [
                     'lead_uuid' => $lead->uuid,
                     'advisor_id' => $advisorId,
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
                 DB::rollback();
             }
@@ -305,10 +304,10 @@ class LeadAllocationService extends BaseService
 
             DB::commit();
         } catch (\Exception $e) {
-            LoggerService::error('Error removing lead allocation for old advisor: ' . $e->getMessage(), [
+            LoggerService::error('Error removing lead allocation for old advisor: '.$e->getMessage(), [
                 'lead_id' => $lead->id,
                 'advisor_id' => $lead->advisor_id,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             DB::rollback();
         }
@@ -349,9 +348,9 @@ class LeadAllocationService extends BaseService
                 return false;
             }
         } catch (\Exception $e) {
-            LoggerService::error('Error checking if advisor can take lead: ' . $e->getMessage(), [
+            LoggerService::error('Error checking if advisor can take lead: '.$e->getMessage(), [
                 'advisor_id' => $advisorId,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -374,10 +373,10 @@ class LeadAllocationService extends BaseService
             DB::commit();
             LoggerService::info('Lead allocation record for user '.$userId.' updated. Current allocation count is '.$leadAllocation->allocation_count);
         } catch (\Exception $e) {
-            LoggerService::error('Error updating lead allocation record: ' . $e->getMessage(), [
+            LoggerService::error('Error updating lead allocation record: '.$e->getMessage(), [
                 'user_id' => $userId,
                 'is_manual_assignment' => $isManualAssignment,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
             DB::rollback();
         }
@@ -402,9 +401,9 @@ class LeadAllocationService extends BaseService
                 return null;
             }
         } catch (\Exception $e) {
-            LoggerService::error('Error getting health user sub team name: ' . $e->getMessage(), [
+            LoggerService::error('Error getting health user sub team name: '.$e->getMessage(), [
                 'user_id' => $userId,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -436,8 +435,8 @@ class LeadAllocationService extends BaseService
             LoggerService::info('Advisors are now unavailable and allocation count is set to 0');
             DB::commit();
         } catch (\Exception $e) {
-            LoggerService::error('Error setting advisors to unavailable: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            LoggerService::error('Error setting advisors to unavailable: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
             ]);
             DB::rollback();
         }
@@ -498,10 +497,10 @@ class LeadAllocationService extends BaseService
 
             return $leadAllocation->first();
         } catch (\Exception $e) {
-            LoggerService::error('Error getting lead allocation record by user ID: ' . $e->getMessage(), [
+            LoggerService::error('Error getting lead allocation record by user ID: '.$e->getMessage(), [
                 'user_id' => $userId,
                 'quote_type_id' => $quoteTypeId,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -521,9 +520,9 @@ class LeadAllocationService extends BaseService
 
             return $availableUserId->first();
         } catch (\Exception $e) {
-            LoggerService::error('Error getting next assignable user ID: ' . $e->getMessage(), [
+            LoggerService::error('Error getting next assignable user ID: '.$e->getMessage(), [
                 'lead_uuid' => $lead->uuid,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -543,8 +542,8 @@ class LeadAllocationService extends BaseService
 
             return $availableAdvisors->get();
         } catch (\Exception $e) {
-            LoggerService::error('Error getting available advisors: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            LoggerService::error('Error getting available advisors: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -658,8 +657,8 @@ class LeadAllocationService extends BaseService
                             LoggerService::info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                             DB::commit();
                         } catch (\Throwable $th) {
-                            LoggerService::error('Error processing car lead: ' . $th->message, [
-                                'trace' => $th->getTraceAsString()
+                            LoggerService::error('Error processing car lead: '.$th->message, [
+                                'trace' => $th->getTraceAsString(),
                             ]);
                             DB::rollBack();
                         }
@@ -681,8 +680,8 @@ class LeadAllocationService extends BaseService
             }
             LoggerService::info('----------------------- CAR LEAD ALLOCATION ENDED AT '.$currentIterationTime.' -----------------------');
         } catch (\Exception $e) {
-            LoggerService::error('Error processing car leads: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+            LoggerService::error('Error processing car leads: '.$e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }
@@ -1102,9 +1101,9 @@ class LeadAllocationService extends BaseService
 
             return $query->simplePaginate(10)->withQueryString();
         } catch (\Exception $e) {
-            LoggerService::error('Error getting allocation leads: ' . $e->getMessage(), [
+            LoggerService::error('Error getting allocation leads: '.$e->getMessage(), [
                 'quote_type_ids' => $quoteTypeIds,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }

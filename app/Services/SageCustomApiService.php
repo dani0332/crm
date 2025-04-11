@@ -6,11 +6,11 @@ use App\Enums\PaymentFrequency;
 use App\Enums\SageEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\Payment;
+use App\Services\Logger\LoggerService;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use App\Services\Logger\LoggerService;
 use Throwable;
 
 class SageCustomApiService
@@ -434,8 +434,8 @@ class SageCustomApiService
             }
         } catch (Throwable $e) {
             echo $e->getMessage();
-            LoggerService::error('Exception in postOpenedAPInvoices: ' . $e->getMessage(), [
-                'stack_trace' => $e->getTraceAsString()
+            LoggerService::error('Exception in postOpenedAPInvoices: '.$e->getMessage(), [
+                'stack_trace' => $e->getTraceAsString(),
             ]);
         }
 

@@ -6,10 +6,10 @@ use App\Enums\RuleTypeEnum;
 use App\Models\Rule;
 use App\Models\RuleDetail;
 use App\Models\RuleUser;
+use App\Services\Logger\LoggerService;
 use DB;
 use Illuminate\Http\Request;
 use stdClass;
-use App\Services\Logger\LoggerService;
 
 class RuleService extends BaseService
 {

@@ -35,7 +35,7 @@ class MACRMService
         } catch (Exception $e) {
             LoggerService::error(self::class." - Exception occurred during API call: {$e->getMessage()}", [
                 'endpoint' => $endpoint,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return ['ok' => false, 'object' => null, 'message' => $e->getMessage()];
@@ -69,7 +69,7 @@ class MACRMService
             self::endSyncProcessing(self::getRefId($leadData));
             // Log the exception with a detailed message
             LoggerService::error(self::class." - An error occurred while syncing Courier Quote for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}. Error: {$e->getMessage()}", [
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return false;
@@ -109,7 +109,7 @@ class MACRMService
             return $ok;
         } catch (Exception $e) {
             LoggerService::error(self::class." - Exception occurred while canceling Courier Quote UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with error: {$e->getMessage()}", [
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return false;

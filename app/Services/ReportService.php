@@ -182,14 +182,14 @@ class ReportService extends BaseService
 
         if (isset($filters->tiers) && count($filters->tiers) > 0) {
             LoggerService::info('Applying tier filters', [
-                'tiers' => $filters->tiers
+                'tiers' => $filters->tiers,
             ]);
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
 
         if (isset($filters->teams) && count($filters->teams) > 0) {
             LoggerService::info('Applying team filters', [
-                'teams' => $filters->teams
+                'teams' => $filters->teams,
             ]);
             $value = $filters->teams;
             $query->whereIn('users.id', function ($query) use ($value) {
@@ -204,21 +204,21 @@ class ReportService extends BaseService
 
         if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
             LoggerService::info('Applying tier filters', [
-                'tiers' => $filters->tiersFilter
+                'tiers' => $filters->tiersFilter,
             ]);
             $query->whereIn('car_quote_request.tier_id', $filters->tiersFilter);
         }
 
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
             LoggerService::info('Applying lead source filters', [
-                'lead_sources' => $filters->leadSourceFilter
+                'lead_sources' => $filters->leadSourceFilter,
             ]);
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         }
 
         if (isset($filters->paymentStatus) && count($filters->paymentStatus) > 0) {
             LoggerService::info('Applying payment status filters', [
-                'payment_statuses' => $filters->paymentStatus
+                'payment_statuses' => $filters->paymentStatus,
             ]);
             $query->whereIn('car_quote_request.payment_status_id', $filters->paymentStatus);
         }
@@ -226,7 +226,7 @@ class ReportService extends BaseService
         if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
             LoggerService::info('Applying ecommerce filter', [
                 'filter' => $filters->ecommerceFilter,
-                'value' => $filters->ecommerceFilter == 'Yes' ? 1 : 0
+                'value' => $filters->ecommerceFilter == 'Yes' ? 1 : 0,
             ]);
             $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
         }

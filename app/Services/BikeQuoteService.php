@@ -10,10 +10,10 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\CarPlan;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\DB;
 use PDF;
-use App\Services\Logger\LoggerService;
 
 class BikeQuoteService extends BaseService
 {

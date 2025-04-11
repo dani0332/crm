@@ -11,10 +11,9 @@ use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\QuoteFlowDetails;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Log;
-use App\Services\Logger\LoggerService;
 use Illuminate\Support\Str;
 
 class HealthEmailService extends BaseService

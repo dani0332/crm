@@ -14,8 +14,8 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadAllocation;
 use App\Models\Tier;
-use Carbon\Carbon;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 
 class AllocationService extends BaseService
 {

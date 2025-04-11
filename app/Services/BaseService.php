@@ -9,11 +9,11 @@ use App\Enums\QuoteTypes;
 use App\Models\GenericModel;
 use App\Models\QuoteViewCount;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\Logger\LoggerService;
 
 class BaseService
 {

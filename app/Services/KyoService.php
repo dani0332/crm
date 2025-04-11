@@ -34,7 +34,7 @@ class KyoService
 
         LoggerService::info('KYO Service Request', [
             'url' => $url,
-            'method' => $method
+            'method' => $method,
         ]);
 
         $response = $this->client->withBody(json_encode($data))
@@ -45,7 +45,7 @@ class KyoService
                     'method' => $method,
                     'data' => $data,
                     'status_code' => $response->status(),
-                    'response' => $response->json()
+                    'response' => $response->json(),
                 ]);
             });
 

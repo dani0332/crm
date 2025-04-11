@@ -58,10 +58,10 @@ class MyAlfredService
 
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            LoggerService::error('Error sending Alfred follow-up email: ' . $ex->getMessage(), [
+            LoggerService::error('Error sending Alfred follow-up email: '.$ex->getMessage(), [
                 'customer_email' => $customer->email,
                 'response_code' => $responseCode,
-                'trace' => $ex->getTraceAsString()
+                'trace' => $ex->getTraceAsString(),
             ]);
         }
 
@@ -76,7 +76,7 @@ class MyAlfredService
             $basicAuth = base64_encode("$username:$password");
 
             LoggerService::info('Requesting eligible customers from Alfred API', [
-                'data' => $data
+                'data' => $data,
             ]);
 
             $response = Http::timeout(20)->retry(2, 3000)
@@ -90,18 +90,19 @@ class MyAlfredService
 
                 if ($response->data) {
                     LoggerService::info('Successfully retrieved eligible customers from Alfred API');
+
                     return $response;
                 }
             }
 
             LoggerService::warning('No eligible customers found in Alfred API response', [
                 'status_code' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
         } catch (Exception $e) {
             LoggerService::error('getAlfredEligibleCustomers Error: '.$e->getMessage(), [
                 'data' => $data,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
 

@@ -23,7 +23,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
-use App\Enums\UserNameEnum;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Facades\Marshall;
@@ -51,12 +50,12 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Services\Logger\LoggerService;
 
 class CentralService extends BaseService
 {
@@ -1287,11 +1286,12 @@ class CentralService extends BaseService
             return Ken::request('/capture-payment-validation', 'put', $data);
 
         } catch (\Throwable $th) {
-            LoggerService::error('capturePaymentValidation failed: ' . $th->getMessage(), [
+            LoggerService::error('capturePaymentValidation failed: '.$th->getMessage(), [
                 'uuid' => $uuid,
                 'quoteTypeId' => $quoteTypeId,
-                'captureAmount' => $captureAmount
+                'captureAmount' => $captureAmount,
             ]);
+
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
     }

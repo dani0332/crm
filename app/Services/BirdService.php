@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
-use Illuminate\Support\Facades\Http;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\Http;
 
 class BirdService extends BaseService
 {
