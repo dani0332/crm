@@ -94,7 +94,7 @@ class QuoteDocumentRequest extends FormRequest
                 }
             } else {
                 // validate if payment is authorized
-                if (request()->quoteType != strtolower(quoteTypeCode::Travel)) {
+                if (request()->quoteType != strtolower(quoteTypeCode::Travel) && isset($quote->insurance_provider_id)) {
                     if (! $this->isPlanBProviderSelected($quote)) {
                         if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
                             $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
