@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Services\EmailServices\CarEmailService;
