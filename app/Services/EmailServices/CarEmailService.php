@@ -504,7 +504,7 @@ class CarEmailService extends BaseService
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
             'createdAt' => $lead->created_at,
-            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid)
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
         ];
     }
 }
