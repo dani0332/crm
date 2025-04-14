@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\AmlAutomationStatus;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Models\AmlAutomation;
 use App\Models\TravelQuote;
 use App\Services\AMLService;
 use App\Services\TravelQuoteService;
@@ -51,8 +52,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         info('job:'.$this->className.' Started - Ref-ID: '.$this->quoteRefId);
 
         try {
-            $amlAutomation = $this->quoteRequest?->amlAutomation();
-            $amlAutomation->updateOrCreate(
+            $amlAutomation = AmlAutomation::updateOrCreate(
                 ['code' => $this->quoteRefId],
                 ['status' => AmlAutomationStatus::PROCESSING_STATUS]
             );
