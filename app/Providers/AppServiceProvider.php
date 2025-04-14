@@ -108,7 +108,7 @@ class AppServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             Log::withContext([
-                'request_id' => (string) Str::uuid(),
+                'trace_id' => (string) Str::uuid(),
                 'is_console_command' => true,
             ]);
         }
