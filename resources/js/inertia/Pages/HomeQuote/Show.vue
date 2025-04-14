@@ -380,19 +380,31 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote.insured_first_name || '',
-  insured_last_name: page.props.quote.insured_last_name || '',
+  insured_first_name: page.props.quote?.insured?.first_name || '',
+  insured_last_name: page.props.quote?.insured?.last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
-  emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+  emirates_id_expiry_date:
+    page.props.quote?.customer?.emirates_id_expiry_date || null,
 
-  entity_id: page.props.quote.entity_id ?? null,
-  trade_license_no: page.props.quote.trade_license_no ?? null,
-  company_name: page.props.quote.company_name ?? null,
-  company_address: page.props.quote.company_address ?? null,
-  entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
-  industry_type_code: page.props.quote.industry_type_code ?? null,
+  entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
+  trade_license_no:
+    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
+    null,
+  company_name:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
+    null,
+  company_address:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_address ??
+    null,
+  entity_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity_type_code ??
+    'Parent',
+  industry_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.industry_type_code ?? null,
   emirate_of_registration_id:
-    page.props.quote.emirate_of_registration_id ?? null,
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
@@ -458,9 +470,7 @@ const searchByTradeLicense = trigger => {
         });
       }
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => {});
 };
 
 const linkEntity = () => {
@@ -493,9 +503,7 @@ const linkEntity = () => {
         entityDetailsFound.value = false;
       }
     })
-    .catch(err => {
-      console.log(err);
-    });
+    .catch(err => {});
 };
 const readOnlyMode = reactive({
   isDisable: true,
@@ -636,11 +644,8 @@ const onLoadAvailablePlansData = async () => {
       availableAllPlans.value = homePlans.quotes.plans;
       homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
     } else {
-      console.error('Error: Unexpected status code', status);
     }
-  } catch (error) {
-    console.error('Failed to load available plans', error);
-  }
+  } catch (error) {}
 };
 
 const onTogglePlans = toggle => {
@@ -685,7 +690,6 @@ const planDetails = ref(null);
 
 const getPlanDetails = async item => {
   if (!item?.id) {
-    console.error('Invalid item provided: Missing ID');
     notification.error({
       title: 'Error',
       message: 'Invalid plan selected',
@@ -766,7 +770,6 @@ const getPlanDetails = async item => {
     planDetails.value = planDetailsData;
     modals.planDetails = true;
   } catch (error) {
-    console.error('Failed to fetch plan details:', error);
     notification.error({
       title: 'Error',
       message: error.message || 'Failed to fetch plan details',
@@ -823,7 +826,50 @@ const onExportPlans = () => {
       });
     })
     .catch(error => {
-      console.log(error);
+      // Display error message in a toast notification
+      if (error.response && error.response.data) {
+        // For validation errors (422)
+        if (error.response.status === 422 && error.response.data.errors) {
+          const errorMessages = error.response.data.errors;
+          // Display the first error message we find
+          if (errorMessages.error && errorMessages.error.length > 0) {
+            notification.error({
+              title: errorMessages.error[0],
+              position: 'top',
+            });
+          } else {
+            // Find first error message in the object
+            for (const key in errorMessages) {
+              if (errorMessages[key] && errorMessages[key].length) {
+                notification.error({
+                  title: errorMessages[key][0],
+                  position: 'top',
+                });
+                break;
+              }
+            }
+          }
+        } else if (error.response.data.message) {
+          // For other types of errors with a message
+          notification.error({
+            title: error.response.data.message,
+            position: 'top',
+          });
+        } else {
+          // Generic error if no specific message found
+          notification.error({
+            title: 'Failed to export PDF. Please try again.',
+            position: 'top',
+          });
+        }
+      } else {
+        // Fallback for network errors
+        notification.error({
+          title:
+            'Failed to export PDF. Please check your connection and try again.',
+          position: 'top',
+        });
+      }
     })
     .finally(() => {
       exportLoader.value = false;
@@ -872,11 +918,6 @@ const getLookupValueText = (lookupKey, id, defaultValue = '') => {
   const lookupArray = Array.isArray(lookUpData[lookupKey])
     ? lookUpData[lookupKey]
     : [];
-  if (!lookUpData[lookupKey]) {
-    console.log(
-      `Lookup key "${lookupKey}" not found in lookUpData or is not an array.`,
-    );
-  }
   const matchedValue = lookupArray.find(item => item.id === id);
   return matchedValue?.text || defaultValue;
 };
@@ -990,7 +1031,6 @@ const confirmSendEmail = () => {
     })
     .catch(error => {
       processingOCBEmailNB.value = false;
-      console.log(error);
     })
     .finally(() => {
       processingOCBEmailNB.value = false;
@@ -1006,6 +1046,43 @@ const isPlanDetailEnabled = computed(() => {
   //   return true;
   // }
   return false;
+});
+
+// New computed property to check lead date
+const shouldShowPlanDetailsSection = computed(() => {
+  const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
+  const str = page.props.quote.created_at;
+
+  const match = str.match(/(\d+)-([A-Za-z]+)-(\d+)\s+(\d+):(\d+)(am|pm)/i);
+  if (!match) return false;
+
+  const [_, day, monthStr, year, hour, min, ampm] = match;
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+  let h = parseInt(hour, 10);
+  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
+  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
+
+  const createdDate = new Date(
+    parseInt(year),
+    months[monthStr.toLowerCase().slice(0, 3)],
+    parseInt(day),
+    h,
+    parseInt(min),
+  );
+  return createdDate < cutoffDate;
 });
 </script>
 
@@ -1824,7 +1901,7 @@ const isPlanDetailEnabled = computed(() => {
     />
 
     <PlanDetails
-      v-if="isPlanDetailEnabled"
+      v-if="shouldShowPlanDetailsSection"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
