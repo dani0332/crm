@@ -648,9 +648,7 @@ trait GenericQueriesAllLobs
     {
         if (is_array($requestParams)) {
             $requestParams = empty($requestParams) ? collect(request()->all()) : collect($requestParams);
-            info('requestParams array');
         } elseif ($requestParams instanceof Collection) {
-            info('requestParams collection');
             $requestParams = $requestParams->isEmpty() ? collect(request()->all()) : collect($requestParams);
         }
 

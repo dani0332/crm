@@ -108,8 +108,6 @@ class LifeQuoteRepository extends BaseRepository
 
         $this->adjustQueryByDateFilters($query, 'life_quote_request');
 
-        info('Life grid rawSql: '.$query->toRawSql());
-
         return $query->simplePaginate()->withQueryString();
     }
 
@@ -192,16 +190,10 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchExportData($requestParams = [])
     {
-        Log::info('LifeQuoteRepository@fetchExportData', ['params' => $requestParams]);
-
         $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->filter(paginate: false, requestParams: $requestParams)
             ->withFakeLeadCriteria();
         $this->adjustQueryByDateFilters($query, 'life_quote_request', requestParams: $requestParams);
-
-        Log::info('LifeQuoteRepository@fetchExportData: query built');
-
-        info('Life export rawSql: '.$query->toRawSql());
 
         return $query->orderBy('life_quote_request.created_at', 'desc')
             ->get();
