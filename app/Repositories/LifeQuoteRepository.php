@@ -13,7 +13,6 @@ use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class LifeQuoteRepository extends BaseRepository
 {
