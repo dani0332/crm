@@ -206,7 +206,7 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
-} else if (props.isPlanDetailSectionEnabled && props.quoteType === 'Home'){
+} else if (props.isPlanDetailSectionEnabled && props.quoteType === 'Home') {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
