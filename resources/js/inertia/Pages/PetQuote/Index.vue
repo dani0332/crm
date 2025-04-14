@@ -248,7 +248,6 @@ const quotesSelected = ref([]);
 
 const exportLoader = ref(false);
 const onDataExport = (exportType = 'download') => {
-
   filters.exportType = exportType;
 
   const data = useObjToUrl(filters);
