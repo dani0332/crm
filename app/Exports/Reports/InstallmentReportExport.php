@@ -51,7 +51,7 @@ class InstallmentReportExport extends BaseReportsExport
 
     public function map($quote): array
     {
-        $paymentRefId = $quote->code ? ($quote->code . ($quote->split_sr_no ? '-'.$quote->split_sr_no : '')) : 'N/A';
+        $paymentRefId = $quote->code ? ($quote->code.($quote->split_sr_no ? '-'.$quote->split_sr_no : '')) : 'N/A';
 
         return [
             $quote->code ?? 'N/A',
