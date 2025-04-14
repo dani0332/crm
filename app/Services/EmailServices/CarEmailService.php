@@ -447,7 +447,8 @@ class CarEmailService extends BaseService
             if (empty($lead->aig_flow_executed_at)) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
                 $emailData = $this->buildAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::AIG_WORKFLOW);
-                $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_AIG_WORKFLOW)->first();
+                // using the same event for AIG and NB Motor and have a AIG branch in that event workflow
+                $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
 
                 if ($birdAIGEvent) {
                     $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent->value, $emailData);
@@ -494,7 +495,6 @@ class CarEmailService extends BaseService
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
-            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans?'.$lead->uuid.'&lang=en&isModified=true',
             'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
@@ -504,6 +504,7 @@ class CarEmailService extends BaseService
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
             'createdAt' => $lead->created_at,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid)
         ];
     }
 }

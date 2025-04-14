@@ -11,6 +11,7 @@ use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\AIGWorkflowJob;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\Customer;
@@ -20,6 +21,7 @@ use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class ApiService
@@ -354,7 +356,7 @@ class ApiService
 
             // Dispatch the AIG workflow job
             info("------ Dispatching AIG workflow job for lead : {$quoteUuid} ------");
-            dispatch(new \App\Jobs\AIGWorkflowJob($quoteUuid, $quoteTypeId));
+            dispatch(new AIGWorkflowJob($quoteUuid, $quoteTypeId));
             info("------ AIG workflow trigger request completed for lead : {$quoteUuid} ------");
 
             return apiResponse(null, Response::HTTP_OK, 'AIG workflow triggered successfully!');
