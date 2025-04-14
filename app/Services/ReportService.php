@@ -16,6 +16,7 @@ use App\Models\QuoteType;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -180,12 +181,16 @@ class ReportService extends BaseService
         }
 
         if (isset($filters->tiers) && count($filters->tiers) > 0) {
-            info('tiersFilter are : '.json_encode($filters->tiers));
+            LoggerService::info('Applying tier filters', [
+                'tiers' => $filters->tiers,
+            ]);
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
 
         if (isset($filters->teams) && count($filters->teams) > 0) {
-            info('teamsFilter are : '.json_encode($filters->teams));
+            LoggerService::info('Applying team filters', [
+                'teams' => $filters->teams,
+            ]);
             $value = $filters->teams;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
@@ -198,22 +203,31 @@ class ReportService extends BaseService
         }
 
         if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
-            info('tiersFilter are : '.json_encode($filters->tiersFilter));
+            LoggerService::info('Applying tier filters', [
+                'tiers' => $filters->tiersFilter,
+            ]);
             $query->whereIn('car_quote_request.tier_id', $filters->tiersFilter);
         }
 
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
-            info('leadSourceFilter are : '.json_encode($filters->leadSourceFilter));
+            LoggerService::info('Applying lead source filters', [
+                'lead_sources' => $filters->leadSourceFilter,
+            ]);
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         }
 
         if (isset($filters->paymentStatus) && count($filters->paymentStatus) > 0) {
-            info('paymentStatus are : '.json_encode($filters->paymentStatus));
+            LoggerService::info('Applying payment status filters', [
+                'payment_statuses' => $filters->paymentStatus,
+            ]);
             $query->whereIn('car_quote_request.payment_status_id', $filters->paymentStatus);
         }
 
         if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
-            info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
+            LoggerService::info('Applying ecommerce filter', [
+                'filter' => $filters->ecommerceFilter,
+                'value' => $filters->ecommerceFilter == 'Yes' ? 1 : 0,
+            ]);
             $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
         }
 
