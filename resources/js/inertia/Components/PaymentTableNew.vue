@@ -3863,11 +3863,10 @@ const fetchInsurerAMLStatus = async () => {
 };
 
 const checkMissingTravelAmlRequirement = async () => {
-  // AML_PENDING, AML_SCREENING_FAILED  - AMLScreeningFailed
+  const unClearedAmlStatuses = [page.props.amlStatusEnum.AMLPending, page.props.amlStatusEnum.AMLScreeningFailed];
   if (
     page.props.quoteTypeId == 8 &&
-    props.quoteRequest?.aml_status ==
-      page.props.amlStatusEnum.AMLScreeningFailed
+    unClearedAmlStatuses.includes(props.quoteRequest?.aml_status)
   ) {
     NProgress.start();
     const response = await axios.get(
@@ -3881,7 +3880,7 @@ const checkMissingTravelAmlRequirement = async () => {
       },
     );
     NProgress.done();
-    if (!response.data?.status) {
+    if (response.data?.status == false) {
       notification.error({
         title: response.data?.message,
         position: 'top',

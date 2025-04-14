@@ -60,7 +60,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $travelQuoteService = app(TravelQuoteService::class);
 
             // Get customer required travel info
-            $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRefId, $this->quoteType->value);
+            $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRequest->id, $this->quoteType->value);
 
             if (empty($customerTravelInfo['id'])) {
                 throw new Error('Record not found');

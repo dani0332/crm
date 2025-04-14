@@ -216,7 +216,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
-    public function getCustomerTravelInfo($quoteRefId, $quoteType)
+    public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
     {
         $model = $this->getModelObject($quoteType);
 
@@ -231,7 +231,7 @@ class TravelQuoteService extends BaseService
                     ->where('cm.quote_type', '=', ltrim($model, '\\'));
             })
             ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.gender', 'c.dob', 'c.nationality_id', 'cm.passport')
-            ->where('tqr.code', $quoteRefId)
+            ->where('tqr.id', $quoteRequestId)
             ->first();
 
         return $customerTravelInfo;
