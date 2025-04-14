@@ -86,7 +86,14 @@ abstract class BaseAllocation extends AllocationService
 
     protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)
     {
-        return User::select('users.id as user_id')
+        Log::info('BaseAllocation: Starting getAdvisorBaseQuery', [
+            'onlineStatus' => $onlineStatus,
+            'roles' => $roles,
+            'quoteTypeId' => $this->getQuoteTypeId(),
+            'teamId' => $this->teamId,
+        ]);
+
+        $query = User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
@@ -101,6 +108,15 @@ abstract class BaseAllocation extends AllocationService
             ->where('la.quote_type_id', $this->getQuoteTypeId())
             ->activeUser()
             ->orderBy('la.last_allocated', 'asc');
+
+        Log::info('BaseAllocation: getAdvisorBaseQuery completed', [
+            'onlineStatus' => $onlineStatus,
+            'roles' => $roles,
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings(),
+        ]);
+
+        return $query;
     }
 
     public function fetchAvailableAdvisor()

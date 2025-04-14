@@ -194,7 +194,6 @@ function onSubmit(isValid) {
       onFinish: () => (loader.table = false),
     });
   } else {
-    console.log('Invalid');
   }
 }
 
