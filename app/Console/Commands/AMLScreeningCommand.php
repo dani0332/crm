@@ -41,13 +41,12 @@ class AMLScreeningCommand extends Command
      */
     public function handle()
     {
-        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Started');
+        info('cmd:'.$this->className.' Started');
 
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
         if (! $quoteModel || ! class_exists($quoteModel)) {
-            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote Model not found');
-
+            info('cmd:'.$this->className.' Quote Model not found');
             return;
         }
 
@@ -58,7 +57,12 @@ class AMLScreeningCommand extends Command
                 'aml_status' => AMLStatusCode::AMLPending,
             ])
             ->where('created_at', '>', $date)
-            ->whereNotIn('code', $quoteModel::from('aml_automation')->select('code'));
+            ->whereNotIn(
+                'code',
+                $quoteModel::from('aml_automation')
+                    ->whereNot('status', AmlAutomationStatus::FAILED_STATUS)
+                    ->select('code')
+            );
 
         if ($quoteRequestQuery->exists()) {
             $quoteRequestQuery->chunk(100, function ($quoteRequests) {
@@ -67,30 +71,32 @@ class AMLScreeningCommand extends Command
                     $quoteRequest = $this->getQuoteObject($this->quoteType->value, $quoteRequest->id);
 
                     if (! $quoteRequest) {
-                        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote not found');
-                        return;
+                        info('cmd:'.$this->className.' - ID: '.$quoteRequest->id.' Quote not found');
+                        continue;
                     }
 
                     if ($quoteRequest->api_issuance_status_id != PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID) {
-                        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote is not eligible for AML-Automation, due to API issuance status is not yes');
-                        return;
+                        info('cmd:'.$this->className.' - Ref-ID: '.$quoteRequest->code.' Quote is not eligible for AML, due to API issuance status is not yes');
+                        continue;
                     }
 
                     if ($quoteRequest->aml_status != AMLStatusCode::AMLPending) {
-                        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote is not eligible for AML-Automation, due to AML status is not pending');
-                        return;
+                        info('cmd:'.$this->className.' - Ref-ID: '.$quoteRequest->code.' Quote is not eligible for AML, due to AML status is not pending');
+                        continue;
                     }
 
-                    $amlAutomation = $quoteRequest->amlAutomation();
-                    if(!$amlAutomation->exists()){
-
-                        $amlAutomation->create(['code' => $quoteRequest->code, 'status' => AmlAutomationStatus::QUEUE_STATUS]);
-                        AmlScreeningAutomationJob::dispatch($this->quoteType, $quoteRequest)->onQueue('renewals');
+                    $amlAutomation = $quoteRequest->amlAutomation;
+                    if(isset($amlAutomation->status) && $amlAutomation->status != AmlAutomationStatus::FAILED_STATUS){
+                        info('cmd:'.$this->className.' - Ref-ID: '.$quoteRequest->code.' Quote is already '.($quoteRequest->amlAutomation->status ?? 'picked'));
+                        continue;
                     }
+
+                    $amlAutomation->updateOrCreate(['code' => $quoteRequest->code], ['status' => AmlAutomationStatus::QUEUE_STATUS]);
+                    AmlScreeningAutomationJob::dispatch($this->quoteType, $quoteRequest)->onQueue('renewals');
                 }
             });
         }
 
-        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Ended');
+        info('cmd:'.$this->className.' Ended');
     }
 }
