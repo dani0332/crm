@@ -662,7 +662,7 @@ class AMLService
             $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningCleared];
         } else {
             if ($screeningResponse['status'] == AMLStatusCode::AMLPending) {
-                LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Pending - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
+                LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Pending - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '',);
                 $kycLogDetails['match_found'] = 0;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::UNKNOWN;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningPending];
