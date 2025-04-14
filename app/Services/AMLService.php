@@ -354,7 +354,7 @@ class AMLService
     public static function updateAMLDecisionLexisNexis($request)
     {
         if (! $request->result_id) {
-            info('AML Screening Bridger - Bridger Decision update API Call - Result Id not found');
+            // info('AML Screening Bridger - Bridger Decision update API Call - Result Id not found');
 
             return false;
         }
@@ -579,20 +579,20 @@ class AMLService
         ])->first();
 
         if ($paymentDetails?->insuranceProvider?->code !== InsuranceProvidersEnum::AXA) {
-            info('fn:amlScreeningGIG - Insurance provider is not ('.InsuranceProvidersEnum::AXA.'). Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+            // info('fn:amlScreeningGIG - Insurance provider is not ('.InsuranceProvidersEnum::AXA.'). Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
 
             return false;
         }
 
-        info('fn:amlScreeningGIG - Ref-ID: '.$quoteDetails->code.' - Insurance Provider ID: '.$paymentDetails->insurance_provider_id);
+        // info('fn:amlScreeningGIG - Ref-ID: '.$quoteDetails->code.' - Insurance Provider ID: '.$paymentDetails->insurance_provider_id);
 
         if ($paymentDetails->payment_methods_code !== PaymentMethodsEnum::CreditCard || $paymentDetails->payment_status_id !== PaymentStatusEnum::AUTHORISED) {
-            info('fn:amlScreeningGIG - Payment Method is not CREDIT CARD or Payment Status is not AUTHORIZED. Ref-ID: '.$quoteDetails->code);
+            // info('fn:amlScreeningGIG - Payment Method is not CREDIT CARD or Payment Status is not AUTHORIZED. Ref-ID: '.$quoteDetails->code);
 
             return false;
         }
 
-        info('fn:amlScreeningGIG - Payment Method is CREDIT CARD and Payment Status is AUTHORIZED- Ref-ID: '.$quoteDetails->code);
+        // info('fn:amlScreeningGIG - Payment Method is CREDIT CARD and Payment Status is AUTHORIZED- Ref-ID: '.$quoteDetails->code);
         $insuredPersonDetails = CustomerInsured::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteDetails->id,
@@ -622,15 +622,15 @@ class AMLService
                 $insurerScreeningPayload['nationalityId'] = $request['nationality_id'] ?? null;
             }
 
-            info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
+            // info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
 
-            info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
+            // info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
             $screeningResponse['screening_type'] = $screeningType;
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
 
         } catch (Exception $exception) {
-            info('fn:amlScreeningGIG - GIG Screening failed - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Error: '.$exception->getMessage());
+            // info('fn:amlScreeningGIG - GIG Screening failed - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Error: '.$exception->getMessage());
             $screeningResponse = ['status' => AMLStatusCode::AMLPending, 'message' => $exception->getMessage(), 'screening_type' => $screeningType];
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
 
@@ -675,10 +675,10 @@ class AMLService
         }
 
         KycLog::insert($kycLogDetails);
-        info('fn:amlScreeningGIG - AML Screening GIG Potential Matches inserted into kyc_logs table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+        // info('fn:amlScreeningGIG - AML Screening GIG Potential Matches inserted into kyc_logs table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
 
         $quoteObject::where('id', $quoteDetails->id)->update($insurerAMLStatus);
-        info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+        // info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
 
     }
 
@@ -701,7 +701,7 @@ class AMLService
         try {
             DB::transaction(function () use ($skipBridgerScreeningRequest) {
                 $quoteDetails = $this->getQuoteObject($skipBridgerScreeningRequest->quote_type_code, $skipBridgerScreeningRequest->quote_request_id);
-                info('fn:tempSkipBridgerAML - AML Screening skip process start - Ref-ID:'.$quoteDetails->code);
+                // info('fn:tempSkipBridgerAML - AML Screening skip process start - Ref-ID:'.$quoteDetails->code);
 
                 QuoteStatusLog::create([
                     'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
@@ -722,13 +722,13 @@ class AMLService
                     'created_by' => auth()->id(),
                 ]);
 
-                info('fn:tempSkipBridgerAML - AML Screening skip process completed - Ref-ID:'.$quoteDetails->code);
+                // info('fn:tempSkipBridgerAML - AML Screening skip process completed - Ref-ID:'.$quoteDetails->code);
             });
 
             $return = ['status' => true, 'response' => 'AML Screening skipped for this quote'];
 
         } catch (\Exception $exception) {
-            info('fn:tempSkipBridgerAML - AML Screening skip process failed - error - '.$exception->getMessage());
+            // info('fn:tempSkipBridgerAML - AML Screening skip process failed - error - '.$exception->getMessage());
 
             $return = ['status' => true, 'response' => 'AML Screening skip process failed'];
         }
@@ -741,10 +741,10 @@ class AMLService
      */
     public function clearAmlStatusForNonGIG($quoteType, $code, $providerCode)
     {
-        info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$providerCode}");
+        // info("Clearing AML status called. Quote Type: {$quoteType}, Code: {$code}, Insurance Provider: {$providerCode}");
 
         if ($providerCode == InsuranceProvidersEnum::AXA) {
-            info("Insurance Provider is GIG(AXA). Skipping AML status clearing for Quote Code: {$code}");
+            // info("Insurance Provider is GIG(AXA). Skipping AML status clearing for Quote Code: {$code}");
 
             return false;
         }
@@ -758,7 +758,7 @@ class AMLService
             $quoteDetails->insurer_aml_status = null;
             $quoteDetails->save();
 
-            info("AML status change from {$oldInsurerAmlStatus} to null for Quote Code: {$code}");
+            // info("AML status change from {$oldInsurerAmlStatus} to null for Quote Code: {$code}");
         }
 
         return true;
