@@ -54,7 +54,7 @@ class EndorsementReportExport extends BaseReportsExport
 
     public function map($quote): array
     {
-        $paymentRefId = $quote->payment_ref_id ? ($quote->payment_ref_id.$quote->split_sr_no ? '-'.$quote->split_sr_no : '') : 'N/A';
+        $paymentRefId = $quote->payment_ref_id ? ($quote->payment_ref_id . ($quote->split_sr_no ? '-'.$quote->split_sr_no : '')) : 'N/A';
 
         return [
             $quote->main_lead_code ?? 'N/A',
