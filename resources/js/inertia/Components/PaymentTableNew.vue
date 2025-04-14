@@ -173,9 +173,19 @@ const premiumToCapture = ref(0);
 const capturePaymentValidationInProcess = ref(false);
 const capturePaymentValidationErrorMessage = ref('');
 const modal2Ref = ref(null);
-const familyEmployeDiscount = [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health, quoteTypeCodeEnum.Home, quoteTypeCodeEnum.Travel];
+const familyEmployeDiscount = [
+  quoteTypeCodeEnum.Car,
+  quoteTypeCodeEnum.Health,
+  quoteTypeCodeEnum.Home,
+  quoteTypeCodeEnum.Travel,
+];
 // Array of quote types to check against
-const quoteTypesToCheck = [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health, quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Home]; //Ecommerce LOBs
+const quoteTypesToCheck = [
+  quoteTypeCodeEnum.Car,
+  quoteTypeCodeEnum.Health,
+  quoteTypeCodeEnum.Travel,
+  quoteTypeCodeEnum.Home,
+]; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
@@ -206,7 +216,10 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
-} else if (props.isPlanDetailSectionEnabled && props.quoteType === quoteTypeCodeEnum.Home){
+} else if (
+  props.isPlanDetailSectionEnabled &&
+  props.quoteType === quoteTypeCodeEnum.Home
+) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
@@ -251,7 +264,10 @@ const approveProofDocument = props.paymentDocument.find(
 );
 
 let initalPlanDetails = [];
-if (props.quoteType == quoteTypeCodeEnum.Business || props.isPlanDetailEnabled) {
+if (
+  props.quoteType == quoteTypeCodeEnum.Business ||
+  props.isPlanDetailEnabled
+) {
   initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
@@ -1139,7 +1155,10 @@ const handleDiscountChange = (editDiscountValue = 0) => {
         initialTotalPriceWithoutVat.value *
         (5 / 100)
       ).toFixed(2);
-    } else if (props.quoteType === quoteTypeCodeEnum.Home || props.quoteType === quoteTypeCodeEnum.Travel) {
+    } else if (
+      props.quoteType === quoteTypeCodeEnum.Home ||
+      props.quoteType === quoteTypeCodeEnum.Travel
+    ) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (15 / 100)
@@ -1157,7 +1176,10 @@ const handleDiscountChange = (editDiscountValue = 0) => {
         initialTotalPriceWithoutVat.value *
         (2.5 / 100)
       ).toFixed(2);
-    } else if (props.quoteType === quoteTypeCodeEnum.Home || props.quoteType === quoteTypeCodeEnum.Travel) {
+    } else if (
+      props.quoteType === quoteTypeCodeEnum.Home ||
+      props.quoteType === quoteTypeCodeEnum.Travel
+    ) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (12.5 / 100)
@@ -1719,7 +1741,7 @@ const addPaymentModal = () => {
     quoteTypeCodeEnum.Marine,
     quoteTypeCodeEnum.Pet,
     quoteTypeCodeEnum.Cycle,
-    quoteTypeCodeEnum.Yacht
+    quoteTypeCodeEnum.Yacht,
   ];
 
   if (
