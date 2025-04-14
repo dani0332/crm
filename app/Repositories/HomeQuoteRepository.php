@@ -105,13 +105,12 @@ class HomeQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount,requestParams: $requestParams)
             ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy('personal_quotes.created_at', 'desc');
-
-        return $query->when(
-            $forTotalLeadsCount,
-            fn ($query) => $query->count(),
-            fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate())
-        );
+            ->orderBy('personal_quotes.created_at', 'desc')
+            ->when(
+                $forTotalLeadsCount,
+                fn ($query) => $query->count(),
+                fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate()->withQueryString())
+            );
     }
 
     /**
@@ -409,15 +408,23 @@ class HomeQuoteRepository extends BaseRepository
                     }
                 }
 
-                // Update or create the homeQuote relationship
-                $mappedData['uuid'] = $quote->uuid;
+                $mappedData['personal_quote_id'] = $quote->id;
 
-                if ($quote->homeQuote) {
-                    $quote->homeQuote()->update($mappedData);
+                $existingHomeQuote = HomeQuote::where('uuid', $uuid)->first();
+
+                if ($existingHomeQuote) {
+                    // If a record with this UUID exists, update it directly
+                    $existingHomeQuote->update($mappedData);
                 } else {
-                    $quote->homeQuote()->create($mappedData);
+                    // No record exists with this UUID, so it's safe to create a new one
+                    $mappedData['uuid'] = $uuid;
+                    HomeQuote::create($mappedData);
                 }
 
+                // Refresh the quote to load the updated or newly created homeQuote
+                $quote->refresh();
+
+                // Process address data if provided
                 if (! empty($data['addressObj']) || is_array($data['addressObj'])) {
                     // Update or create the customer address
                     SaveCustomerAddressJob::dispatch($uuid, $data['addressObj']);
@@ -426,9 +433,10 @@ class HomeQuoteRepository extends BaseRepository
                 // Return the updated quote
                 return $quote;
             } catch (\Exception $e) {
-                // Log error and rethrow for transaction rollback
+                // Log error details to help with debugging
                 info("Failed to update quote with UUID: {$uuid}", [
                     'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
                     'data' => $data,
                 ]);
                 throw $e; // Re-throw exception to trigger transaction rollback
@@ -595,7 +603,7 @@ class HomeQuoteRepository extends BaseRepository
 
     private function getQuoteWithRelations($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::HOME->id())
+        $response = $this->byQuoteTypeId(QuoteTypes::HOME->id())
             ->where($column, $value)
             ->with([
                 'insuranceProvider',
@@ -615,6 +623,9 @@ class HomeQuoteRepository extends BaseRepository
                 'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+                'insured' => function ($q) {
+                    $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
                 },
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
@@ -649,6 +660,12 @@ class HomeQuoteRepository extends BaseRepository
             as customer_type'),
             ])
             ->firstOrFail();
+
+        if ($response?->insured) {
+            $response->emirates_id_number = $response?->insured?->id_type == 'emiratesId' ? $response?->insured?->id_number : null;
+        }
+
+        return $response;
     }
 
     private function setQuoteAdditionalData($quote)
