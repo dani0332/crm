@@ -422,11 +422,11 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
+        // info('AML Screening Bridger - Process Started - Ref-ID: '.$quoteRequestId);
         $isAutomation = $AMLCheckRequest->is_automation ?? false;
         $systemUser = User::where('name', UserNameEnum::System)->first();
         $processbyUser = $isAutomation ? $systemUser : auth()->user();
 
-        info('AML Screening Bridger - Process Started - Ref-ID: '.$quoteRequestId);
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
@@ -444,7 +444,7 @@ class AMLController extends Controller
         })->whereNull('screenshot')->get()->last() ?? [];
 
         if ($getMemberOrUBODetails) {
-            info('AML Screening Bridger - Members found against Ref-ID: '.$quoteRequestId);
+            // info('AML Screening Bridger - Members found against Ref-ID: '.$quoteRequestId);
             $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
             if (in_array(null, $memberValidateCheck)) {
                 return $this->handleResponse(false, 'First Name missing', $isAutomation);
@@ -469,7 +469,7 @@ class AMLController extends Controller
             $insurerAMLScreeningResponse = [];
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
-                info('AML Screening Bridger - Customer Type: '.CustomerTypeEnum::Individual);
+                // info('AML Screening Bridger - Customer Type: '.CustomerTypeEnum::Individual);
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customer->nationality_id = $AMLCheckRequest->nationality_id;
                 $customer->dob = $AMLCheckRequest->dob;
@@ -502,7 +502,7 @@ class AMLController extends Controller
                     $customer->save();
                     $customer->refresh();
 
-                    info('AML Screening Bridger - Customer Details updated - Ref-ID: '.$quoteRequestId);
+                    // info('AML Screening Bridger - Customer Details updated - Ref-ID: '.$quoteRequestId);
                     $getMemberOrUBODetails[] = [
                         'first_name' => $insuredPersonDetails->first_name,
                         'last_name' => $insuredPersonDetails->last_name,
@@ -535,7 +535,7 @@ class AMLController extends Controller
                     }
 
                     if ($personalQuoteDetailBikeRequest->isDirty()) {
-                        info('AML Screening Bridger - Insurer Quote Email updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
+                        // info('AML Screening Bridger - Insurer Quote Email updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
                         $personalQuoteDetailBikeRequest->save();
                     }
                 }
@@ -550,7 +550,7 @@ class AMLController extends Controller
                 }
 
                 if (isTapEnabled()) {
-                    info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start - Ref-ID: '.$quoteRequestId);
+                    // info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start - Ref-ID: '.$quoteRequestId);
                     $enableInsurerScreening = [
                         QuoteTypes::CAR->id(),
                         QuoteTypes::HOME->id(),
@@ -570,11 +570,11 @@ class AMLController extends Controller
                         }
                         session()->forget('insurerAMLScreeningResponse');
                     }
-                    info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process completed - Ref-ID: '.$quoteRequestId);
+                    // info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process completed - Ref-ID: '.$quoteRequestId);
                 }
 
                 if (empty($getMemberOrUBODetails->toArray())) {
-                    info('AML Screening Bridger - No Member Found, AML Screening Cleared - Ref-ID: '.$quoteRequestId);
+                    // info('AML Screening Bridger - No Member Found, AML Screening Cleared - Ref-ID: '.$quoteRequestId);
 
                     $response = $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
 
@@ -589,12 +589,12 @@ class AMLController extends Controller
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
                 // Job dispatch for all members including customer
-                info('AML Screening Bridger - AML Screening Job Dispatched against Individual Customer - Ref-ID: '.$quoteRequestId);
+                // info('AML Screening Bridger - AML Screening Job Dispatched against Individual Customer - Ref-ID: '.$quoteRequestId);
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
-                info('AML Screening Bridger - Customer Type: '.CustomerTypeEnum::Entity);
+                // info('AML Screening Bridger - Customer Type: '.CustomerTypeEnum::Entity);
                 $entityDetailsForApi = [];
                 $bridgerInsightService = new BridgerInsightService;
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
@@ -617,7 +617,7 @@ class AMLController extends Controller
                     ], ['entity_id' => $entityId, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
 
                     $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
-                    info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
+                    // info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
                 } else {
                     $fetchEntity->trade_license_no = $AMLCheckRequest->trade_license_no;
@@ -651,7 +651,7 @@ class AMLController extends Controller
                 }
 
                 // Job dispatch for all UBO members
-                info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
+                // info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
             }
 
@@ -799,7 +799,7 @@ class AMLController extends Controller
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 $this->stopHapexReminder($quoteDetails);
             }
-            info('AML Screening Bridger - Potential Matches not Found, Quote Status changed to AML Screening Cleared');
+            // info('AML Screening Bridger - Potential Matches not Found, Quote Status changed to AML Screening Cleared');
         } else {
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
@@ -820,7 +820,7 @@ class AMLController extends Controller
                     info(self::class.' - Hapex reminder not sent as passport document exists. Quote UUID: '.$quoteDetails->uuid.', isPassportDocumentExist: '.$isPassportDocumentExist.', is_documents_valid: '.$quoteDetails->is_documents_valid);
                 }
             }
-            info('AML Screening Bridger - Potential Matches Found, Quote Status changed to AML Screening Failed');
+            // info('AML Screening Bridger - Potential Matches Found, Quote Status changed to AML Screening Failed');
         }
 
         session()->forget('amlResponseCheck');
