@@ -1050,6 +1050,7 @@ const isPlanDetailEnabled = computed(() => {
 
 // New computed property to check lead date
 const shouldShowPlanDetailsSection = computed(() => {
+  // First check if lead is created before the cutoff date
   const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
   const str = page.props.quote.created_at;
 
@@ -1082,7 +1083,19 @@ const shouldShowPlanDetailsSection = computed(() => {
     h,
     parseInt(min),
   );
-  return createdDate < cutoffDate;
+
+  // For new leads (after cutoff date), always show available plans section
+  if (createdDate >= cutoffDate) {
+    return false;
+  }
+
+  // For old leads (before cutoff date), show plan details section
+  // only if status matches one of the three specified statuses
+  return (
+    page.props.quote.quote_status_id === quoteStatusEnum.TransactionApproved ||
+    page.props.quote.quote_status_id === quoteStatusEnum.PolicyBooked ||
+    page.props.quote.quote_status_id === quoteStatusEnum.PaymentPending
+  );
 });
 </script>
 
