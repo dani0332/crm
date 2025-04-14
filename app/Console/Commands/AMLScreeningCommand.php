@@ -68,21 +68,24 @@ class AMLScreeningCommand extends Command
 
                     if (! $quoteRequest) {
                         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote not found');
+
                         return;
                     }
 
                     if ($quoteRequest->api_issuance_status_id != PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID) {
                         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote is not eligible for AML-Automation, due to API issuance status is not yes');
+
                         return;
                     }
 
                     if ($quoteRequest->aml_status != AMLStatusCode::AMLPending) {
                         info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote is not eligible for AML-Automation, due to AML status is not pending');
+
                         return;
                     }
 
                     $amlAutomation = $quoteRequest->amlAutomation();
-                    if(!$amlAutomation::exists()){
+                    if (! $amlAutomation::exists()) {
 
                         $amlAutomation->create(['status' => AmlAutomationStatus::QUEUE_STATUS]);
                         AmlScreeningAutomationJob::dispatch($quoteRequest)->onQueue('renewals');
