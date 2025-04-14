@@ -638,7 +638,7 @@ trait GenericQueriesAllLobs
         } else {
             return;
         }
-        $dateType = $request['payment_due_date'] ? 'payment_due_date' : 'booking_date';
+        $dateType = $request->get('payment_due_date') ? 'payment_due_date' : 'booking_date';
         $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultDate;
         $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultDate;
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
