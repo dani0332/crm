@@ -10,9 +10,9 @@ class AmtQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return BusinessQuoteRepository::getData(QuoteTypes::GROUP_MEDICAL->value, true);
+        return BusinessQuoteRepository::getData(QuoteTypes::GROUP_MEDICAL->value, true,requestParams: $requestParams);
     }
 
     public function headings(): array
