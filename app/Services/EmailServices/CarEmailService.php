@@ -446,7 +446,7 @@ class CarEmailService extends BaseService
             info('Sending AIGWorkflow for lead: '.$lead->uuid.' | Time: '.now());
             if (empty($lead->aig_flow_executed_at)) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->buildAIGWorkflowData($lead, $advisor);
+                $emailData = $this->buildAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::AIG_WORKFLOW);
                 $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_AIG_WORKFLOW)->first();
 
                 if ($birdAIGEvent) {
@@ -480,7 +480,7 @@ class CarEmailService extends BaseService
     /**
      * Build data for AIG workflow
      */
-    private function buildAIGWorkflowData($lead, $advisor)
+    private function buildAIGWorkflowData($lead, $advisor, $type, $templateType = null)
     {
         return (object) [
             'quoteUID' => $lead->uuid,
@@ -494,14 +494,14 @@ class CarEmailService extends BaseService
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans?'.$lead->uuid.'&lang=en&isModified=true',
             'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
-            'workflowType' => WorkflowTypeEnum::AIG_WORKFLOW,
-            'source' => $lead->source ?? '',
-            'quote_status_id' => $lead->quote_status_id,
-            'quote_status_name' => \App\Enums\QuoteStatusEnum::getDescription($lead->quote_status_id),
+            'workflowType' => $type,
+            'templateType' => $templateType ?? null,
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
             'createdAt' => $lead->created_at,
         ];

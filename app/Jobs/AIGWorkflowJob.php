@@ -62,15 +62,6 @@ class AIGWorkflowJob implements ShouldQueue
                 return;
             }
 
-            // Check for eligible statuses - can be customized based on requirements
-            $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead, QuoteStatusEnum::InNegotiation];
-
-            if (! in_array($quote->quote_status_id, $eligibleStatuses)) {
-                info("AIGWorkflowJob - Quote has ineligible status (Status ID: {$quote->quote_status_id}) - Ref ID: {$this->quoteUuid} | Time: ".now());
-
-                return;
-            }
-
             // Use the CarEmailService to send the AIG workflow
             $carEmailService->sendAIGWorkflow($quote);
 
