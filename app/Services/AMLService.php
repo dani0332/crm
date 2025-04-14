@@ -352,16 +352,13 @@ class AMLService
     //        }
     //    }
 
-
     /**
      * Get insured person details.
      *
-     * @param string $idType
-     * @param string $idNumber
      * @return object containing properties:
-     *               - 'status' (bool)
-     *               - 'message' (string)
-     *               - 'response' (object|null) may not exists
+     *                - 'status' (bool)
+     *                - 'message' (string)
+     *                - 'response' (object|null) may not exists
      */
     public function getInsuredPersonDetails(string $idType, string $idNumber): object
     {
@@ -371,7 +368,7 @@ class AMLService
             'id_number' => $idNumber,
         ]);
 
-            // Fetch the insured person details
+        // Fetch the insured person details
         return $this->amlController->getInsuredPersonDetails($insuredPersonRequest)->getData();
     }
 
@@ -379,11 +376,9 @@ class AMLService
      * Get insured person details.
      *
      * @param array AMLCheckRequest $amlRequestData
-     * @param int $quoteTypeId
-     * @param int $quoteRequestId
      * @return object containing properties:
-     *               - 'status' (bool)
-     *               - 'message' (string)
+     *                - 'status' (bool)
+     *                - 'message' (string)
      */
     public function quoteAmlProcessCall(array $amlRequestData, int $quoteTypeId, int $quoteRequestId): object
     {

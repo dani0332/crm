@@ -82,7 +82,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
             $customer = $customerTravelInfo;
             if ($insuredPersonData->status) {
-                $customer = [...$customerTravelInfo, ...(array)$insuredPersonData->response];
+                $customer = [...$customerTravelInfo, ...(array) $insuredPersonData->response];
             }
 
             // Prepare AML check request data
@@ -101,7 +101,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             ];
 
             $quoteAmlProcessCall = $amlService->quoteAmlProcessCall($amlRequestData, $this->quoteType->id(), $this->quoteRequest->id);
-            if(! $quoteAmlProcessCall->status) {
+            if (! $quoteAmlProcessCall->status) {
                 throw new Error($quoteAmlProcessCall->message);
             }
 
@@ -118,8 +118,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         } catch (\Throwable $e) { // Catch all other errors and exceptions
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Throwable: '.$e->getMessage()]);
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job failed - Throwable: '.$e->getMessage());
-        } 
-        finally {
+        } finally {
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job Ended');
         }
     }

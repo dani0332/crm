@@ -414,7 +414,7 @@ class AMLController extends Controller
 
     private function handleResponse(bool $status, string $message, bool $isAutomation = false)
     {
-        return match($isAutomation) {
+        return match ($isAutomation) {
             true => response()->json(['status' => $status, 'message' => $message]),
             default => redirect()->back()->with($status ? 'success' : 'error', $message)
         };
@@ -578,7 +578,7 @@ class AMLController extends Controller
 
                     $response = $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
 
-                    if (! empty($insurerAMLScreeningResponse) && !$isAutomation) {
+                    if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
                         $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
                     }
 
@@ -656,7 +656,7 @@ class AMLController extends Controller
             }
 
             $response = $this->handleResponse(true, 'Quote is updated', $isAutomation);
-            if (! empty($insurerAMLScreeningResponse) && !$isAutomation) {
+            if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
                 $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
             }
 
