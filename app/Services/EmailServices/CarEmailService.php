@@ -480,7 +480,7 @@ class CarEmailService extends BaseService
             info(self::class." - Sending sendPCPOCBIntroEmail followups email for lead: ".$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::MOTOR_PCP_OCB);
-            $birdMotorPCPEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_PCP_OCB)->first();
+            $birdMotorPCPEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_PCP_FOLLOWUPS)->first();
             if ($birdMotorPCPEvent) {
                 $response = app(BirdService::class)->triggerWebHookRequest($birdMotorPCPEvent->value, $emailData);
                 info(self::class." - sendPCPOCBIntroEmail event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
