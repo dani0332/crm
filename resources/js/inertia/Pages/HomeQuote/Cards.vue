@@ -60,7 +60,6 @@ const listen = () => {
   });
 
   worker.onerror = function (error) {
-    console.log(error.message);
     worker.port.close();
   };
 
@@ -180,8 +179,6 @@ function onSubmit(isValid) {
       onBefore: () => (loader.request = true),
       onFinish: () => (loader.request = false),
     });
-  } else {
-    console.log('Invalid');
   }
 }
 
