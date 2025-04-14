@@ -82,10 +82,10 @@ class AMLScreeningCommand extends Command
                     }
 
                     $amlAutomation = $quoteRequest->amlAutomation();
-                    if(!$amlAutomation::exists()){
+                    if(!$amlAutomation->exists()){
 
-                        $amlAutomation->create(['status' => AmlAutomationStatus::QUEUE_STATUS]);
-                        AmlScreeningAutomationJob::dispatch($quoteRequest)->onQueue('renewals');
+                        $amlAutomation->create(['code' => $quoteRequest->code, 'status' => AmlAutomationStatus::QUEUE_STATUS]);
+                        AmlScreeningAutomationJob::dispatch($this->quoteType, $quoteRequest)->onQueue('renewals');
                     }
                 }
             });

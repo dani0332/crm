@@ -35,8 +35,9 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(TravelQuote $quoteRequest)
+    public function __construct(QuoteTypes $quoteType, TravelQuote $quoteRequest)
     {
+        $this->quoteType = $quoteType;
         $this->quoteRequest = $quoteRequest;
         $this->quoteRefId = $this->quoteRequest?->code ?? '';
         $this->uniqueKey = strtolower($this->quoteRefId);
@@ -50,9 +51,11 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job Started');
 
         try {
-
             $amlAutomation = $this->quoteRequest?->amlAutomation();
-            $amlAutomation->update(['status' => AmlAutomationStatus::PROCESSING_STATUS]);
+            $amlAutomation->updateOrCreate(
+                ['code' => $this->quoteRefId], 
+                ['status' => AmlAutomationStatus::PROCESSING_STATUS]
+            );
 
             $travelQuoteService = app(TravelQuoteService::class);
 
@@ -75,7 +78,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
             $amlService = app(AMLService::class);
             $insuredPersonData = $amlService->getInsuredPersonDetails($idType, $idNumber);
-            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - reqFn: getInsuredPersonDetails'.' - response: '.($insuredPersonData->status ? 'success' : 'error'));
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - reqCall: getInsuredPersonDetails'.' - response: '.($insuredPersonData->status ? 'success' : 'error'));
 
             $customer = $customerTravelInfo;
             if ($insuredPersonData->status) {
@@ -104,7 +107,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
             $this->quoteRequest->refresh();
             $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $quoteAmlProcessCall->message]);
-            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - reqFn: quoteUpdate'.' - response: '.$quoteAmlProcessCall->message);
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - reqCall: quoteUpdate'.' - response: '.$quoteAmlProcessCall->message);
 
         } catch (Error $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Error: '.$e->getMessage()]);
