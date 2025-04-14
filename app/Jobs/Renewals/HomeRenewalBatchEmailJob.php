@@ -6,6 +6,7 @@ use App\Enums\ProcessStatusCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
+use App\Services\EmailServices\HomeEmailService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -54,11 +55,11 @@ class HomeRenewalBatchEmailJob implements ShouldQueue, StackableJob
      *
      * @return void
      */
-    public function handle(RenewalsUploadService $renewalsUploadFileService)
+    public function handle(HomeEmailService $homeEmailService)
     {
         info('Renewals OCB email job started processId: '.$this->renewalQuoteProcess->id);
 
-        $renewalsUploadFileService->renewalHomeBatchEmailProcess($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
+        $homeEmailService->sendRenewalOCBEmail($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
 
         info('Renewals OCB email job completed ');
 

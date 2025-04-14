@@ -15,7 +15,7 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-        // $this->seedBirdWorkflowUrls();
+        $this->seedBirdWorkflowUrls();
         // ApplicationStorage::firstOrCreate(
         //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
         //     [
@@ -81,7 +81,7 @@ class ApplicationStorageSeeder extends Seeder
         //         'updated_at' => now(),
         //     ],
         // );
-        $this->seedBenchmarking();
+        // $this->seedBenchmarking();
     }
 
     private function seedBirdWorkflowUrls()
@@ -159,6 +159,16 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::PUBLIC_HOLIDAY_END_DATE],
             [
                 'value' => '2024-12-03 23:59:59',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_RENEWAL_OCB],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/114f64e5-5a67-4110-bb66-7038f3f34c04/invoke-sync',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

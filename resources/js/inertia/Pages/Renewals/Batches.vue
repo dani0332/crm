@@ -197,7 +197,7 @@ filters.month = new Date().getMonth() + 1;
           class="text-primary-500 btn-passed mr-2"
           color="primary"
         >
-          Fetch Plans
+          Fetch Plans 
         </x-button>
         <x-button
           v-else

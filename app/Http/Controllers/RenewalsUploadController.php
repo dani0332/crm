@@ -116,6 +116,7 @@ class RenewalsUploadController extends Controller
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ])->count();
+
         
         if ($totalPending > 0) {
             $renewalStatusProcess = RenewalStatusProcess::create([
@@ -470,8 +471,9 @@ class RenewalsUploadController extends Controller
 
     public function scheduleRenewalsOcbNonMotor($batch, $quoteType)
     {
-        $totalLeads = $this->renewalsUploadFileService->getPendingOcbLeadsTotalNonMotor($batch, $quoteType);
-        $renewalBatchEmail = RenewalsBatchEmails::create([
+        $totalLeads = $this->renewalsUploadFileService->getPendingOcbLeadsTotalNonMotor($batch, QuoteTypeShortCode::HOM);
+        
+        $renewalsBatchEmail = RenewalsBatchEmails::create([
             'batch' => $batch,
             'status' => ProcessStatusCode::PENDING,
             'total_leads' => $totalLeads,
@@ -480,10 +482,9 @@ class RenewalsUploadController extends Controller
             'total_failed' => 0,
             'created_by_id' => auth()->id(),
         ]);
-
         switch ($quoteType) {
             case QuoteTypeShortCode::HOM:
-                ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalBatchEmail);
+                ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalsBatchEmail);
                 break;
         }
 

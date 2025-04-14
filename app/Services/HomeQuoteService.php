@@ -816,8 +816,8 @@ class HomeQuoteService extends BaseService
             ];
 
             // Trigger KEN API 
-            app(abstract: KenService::class)->request('/get-home-quote-plans', 'post', $data);
-
+            $response = app(abstract: KenService::class)->request('/get-home-quote-plans', 'post', $data);
+            info('Response: ', ['response' => $response]);
         } catch (\Throwable $th) {
             info('fn: getQuotePlans: error: '.$th->getMessage().' Line: '.$th->getLine());
             return false;
