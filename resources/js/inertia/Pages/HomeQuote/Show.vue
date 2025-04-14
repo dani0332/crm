@@ -1050,40 +1050,54 @@ const isPlanDetailEnabled = computed(() => {
 
 // New computed property to check lead date
 const shouldShowPlanDetailsSection = computed(() => {
-  const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
-  const str = page.props.quote.created_at;
+    // First check if lead is created before the cutoff date
+    const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
+    const str = page.props.quote.created_at;
 
-  const match = str.match(/(\d+)-([A-Za-z]+)-(\d+)\s+(\d+):(\d+)(am|pm)/i);
-  if (!match) return false;
+    const match = str.match(/(\d+)-([A-Za-z]+)-(\d+)\s+(\d+):(\d+)(am|pm)/i);
+    if (!match) return false;
 
-  const [_, day, monthStr, year, hour, min, ampm] = match;
-  const months = {
-    jan: 0,
-    feb: 1,
-    mar: 2,
-    apr: 3,
-    may: 4,
-    jun: 5,
-    jul: 6,
-    aug: 7,
-    sep: 8,
-    oct: 9,
-    nov: 10,
-    dec: 11,
-  };
-  let h = parseInt(hour, 10);
-  if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
-  if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
+    const [_, day, monthStr, year, hour, min, ampm] = match;
+    const months = {
+      jan: 0,
+      feb: 1,
+      mar: 2,
+      apr: 3,
+      may: 4,
+      jun: 5,
+      jul: 6,
+      aug: 7,
+      sep: 8,
+      oct: 9,
+      nov: 10,
+      dec: 11,
+    };
+    let h = parseInt(hour, 10);
+    if (ampm.toLowerCase() === 'pm' && h < 12) h += 12;
+    if (ampm.toLowerCase() === 'am' && h === 12) h = 0;
 
-  const createdDate = new Date(
-    parseInt(year),
-    months[monthStr.toLowerCase().slice(0, 3)],
-    parseInt(day),
-    h,
-    parseInt(min),
-  );
-  return createdDate < cutoffDate;
+    const createdDate = new Date(
+      parseInt(year),
+      months[monthStr.toLowerCase().slice(0, 3)],
+      parseInt(day),
+      h,
+      parseInt(min),
+    );
+    
+    // For new leads (after cutoff date), always show available plans section
+    if (createdDate >= cutoffDate) {
+      return false;
+    }
+    
+    // For old leads (before cutoff date), show plan details section 
+    // only if status matches one of the three specified statuses
+    return (
+      page.props.quote.quote_status_id === quoteStatusEnum.TransactionApproved ||
+      page.props.quote.quote_status_id === quoteStatusEnum.PolicyBooked ||
+      page.props.quote.quote_status_id === quoteStatusEnum.PaymentPending
+    );
 });
+
 </script>
 
 <template>
