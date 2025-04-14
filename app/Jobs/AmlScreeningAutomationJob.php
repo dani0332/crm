@@ -3,11 +3,9 @@
 namespace App\Jobs;
 
 use App\Enums\AmlAutomationStatus;
-use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
-use App\Models\AmlAutomation;
+use App\Models\TravelQuote;
 use App\Services\AMLService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -16,7 +14,6 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Http\Request;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
@@ -31,16 +28,17 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     public $uniqueFor = 60 * 15; // 15 minutes
     public $uniqueKey = ''; // 15 minutes
     private $className = 'AmlScreeningAutomationJob';
-    private mixed $quoteRequest;
+    private TravelQuote $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteRefId)
+    public function __construct(TravelQuote $quoteRequest)
     {
-        $this->quoteRefId = $quoteRefId;
+        $this->quoteRequest = $quoteRequest;
+        $this->quoteRefId = $this->quoteRequest?->code ?? '';
         $this->uniqueKey = strtolower($this->quoteRefId);
     }
 
@@ -49,33 +47,11 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
+        info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job Started');
+
         try {
-            $amlAutomation = AmlAutomation::updateOrCreate(
-                ['code' => $this->quoteRefId],
-                ['status' => AmlAutomationStatus::QUEUE_STATUS]
-            );
 
-            $quoteTypeCode = explode('-', $this->quoteRefId)[0] ?? '';
-            $this->quoteType = QuoteTypes::getNameShortCode($quoteTypeCode);
-
-            if (empty($this->quoteType?->value)) {
-                throw new Error('Quote type not found');
-            }
-
-            $this->quoteRequest = $this->getQuoteObjectBy($this->quoteType->value, $this->quoteRefId, 'code');
-
-            if (! $this->quoteRequest) {
-                throw new Error('Quote not found');
-            }
-
-            if ($this->quoteRequest->api_issuance_status_id != PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID) {
-                throw new Error('Quote is not eligible for AML-Automation, due to API issuance status is not yes');
-            }
-
-            if ($this->quoteRequest->aml_status != AMLStatusCode::AMLPending) {
-                throw new Error('Quote is not eligible for AML-Automation, due to AML status is not pending');
-            }
-
+            $amlAutomation = $this->quoteRequest?->amlAutomation();
             $amlAutomation->update(['status' => AmlAutomationStatus::PROCESSING_STATUS]);
 
             $travelQuoteService = app(TravelQuoteService::class);
@@ -135,10 +111,13 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job failed - Error: '.$e->getMessage());
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);
-            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job failed - Exception: '.$e->getMessage().' - line: '.$e->getLine());
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job failed - Exception: '.$e->getMessage());
         } catch (\Throwable $e) { // Catch all other errors and exceptions
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Throwable: '.$e->getMessage()]);
-            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job failed - Throwable: '.$e->getMessage().' - line: '.$e->getLine());
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job failed - Throwable: '.$e->getMessage());
+        } 
+        finally {
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' - Ref-ID: '.$this->quoteRefId.' - AML Automation Job Ended');
         }
     }
 

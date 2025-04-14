@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
@@ -55,12 +56,37 @@ class AMLScreeningCommand extends Command
             ->where([
                 'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
                 'aml_status' => AMLStatusCode::AMLPending,
-            ])->where('created_at', '>', $date);
+            ])
+            ->where('created_at', '>', $date)
+            ->whereNotIn('code', $quoteModel::from('aml_automation')->select('code'));
 
         if ($quoteRequestQuery->exists()) {
             $quoteRequestQuery->chunk(100, function ($quoteRequests) {
                 foreach ($quoteRequests as $quoteRequest) {
-                    AmlScreeningAutomationJob::dispatch($quoteRequest->code)->onQueue('renewals');
+
+                    $quoteRequest = $this->getQuoteObject($this->quoteType->value, $quoteRequest->id);
+
+                    if (! $quoteRequest) {
+                        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote not found');
+                        return;
+                    }
+
+                    if ($quoteRequest->api_issuance_status_id != PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID) {
+                        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote is not eligible for AML-Automation, due to API issuance status is not yes');
+                        return;
+                    }
+
+                    if ($quoteRequest->aml_status != AMLStatusCode::AMLPending) {
+                        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote is not eligible for AML-Automation, due to AML status is not pending');
+                        return;
+                    }
+
+                    $amlAutomation = $quoteRequest->amlAutomation();
+                    if(!$amlAutomation::exists()){
+
+                        $amlAutomation->create(['status' => AmlAutomationStatus::QUEUE_STATUS]);
+                        AmlScreeningAutomationJob::dispatch($quoteRequest)->onQueue('renewals');
+                    }
                 }
             });
         }
