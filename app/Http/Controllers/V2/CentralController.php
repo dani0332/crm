@@ -147,6 +147,7 @@ class CentralController extends Controller
                 if ($request['exportType'] == 'email') {
                     return app(AmtQuoteExport::class)->emailCSV('AMT-List', $request->all());
                 }
+
                 return app(AmtQuoteExport::class)->download('amt_leads');
 
             case QuoteTypes::BUSINESS->value:
