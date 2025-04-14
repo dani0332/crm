@@ -92,7 +92,7 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
-            info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' Triggered By: '.$loginCustomerEmail);
+            // info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' Triggered By: '.$loginCustomerEmail);
 
             try {
                 $bridgerRequest = $bridgerClient->post(
@@ -130,7 +130,7 @@ class BridgerInsightService
                         $amlDataForEmail .= '<pre>';
                     }
 
-                    info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Error Email Send to Engineering Team');
+                    // info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Error Email Send to Engineering Team');
                     AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
                 } else {
                     if ($getDecodeContents) {
@@ -167,7 +167,7 @@ class BridgerInsightService
                                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
                             }
                             KycLog::insert($kycLogDetails);
-                            info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Potential Matches inserted into kyc_logs table. Total Matches: '.$amlResultCount);
+                            // info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Potential Matches inserted into kyc_logs table. Total Matches: '.$amlResultCount);
 
                             // Notes:: This will update the manual AML Clearance lead to "done" as the AML screening has been executed for this quote.
                             ManualAMLLog::where([
@@ -177,7 +177,7 @@ class BridgerInsightService
 
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail);
-                                info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
+                                // info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
                             }
                         }
                     }
