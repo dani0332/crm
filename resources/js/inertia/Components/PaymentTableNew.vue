@@ -3265,6 +3265,8 @@ const setPaymentInitialPrice = () => {
       initialAmount.value = props.eCommercePrice;
     } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
       initialAmount.value = props.quoteRequest.premium;
+    } else if (props.isPlanDetailSectionEnabled && props.quoteType === quoteTypeCodeEnum.Home) {
+      initialAmount.value = props.quoteRequest.price_with_vat;
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
