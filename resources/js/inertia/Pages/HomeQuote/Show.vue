@@ -2181,7 +2181,7 @@ const shouldShowPlanDetailsSection = computed(() => {
       :expanded="sectionExpanded"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
-      :isPlanDetailSectionEnabled="isPlanDetailEnabled"
+      :isPlanDetailSectionEnabled="shouldShowPlanDetailsSection"
     />
 
     <QuotePayments

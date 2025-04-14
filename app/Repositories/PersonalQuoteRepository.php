@@ -147,8 +147,9 @@ class PersonalQuoteRepository extends BaseRepository
                     $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
                     if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
-                        info('Tax Invoice and Tax Invoice Raised Buyer documents not found for Send Update - code: '.$quote->code);
+                        info('Tax Invoice and Tax Invoice Raised Buyer documents found for Send Update - code: '.$quote->code);
                         if ($insuranceProviderId) {
+                            info('insuranceProviderId: '.$insuranceProviderId.' found for Send Update - code: '.$quote->code);
                             $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($quote->id, SendUpdateLogStatusEnum::UPDATE_ISSUED);
                             if ($checkTransactionApprovedInSUStatusLogs) {
                                 app(SendUpdateLogService::class)->generateBrokerInvoiceNumberForSU($quote);
