@@ -47,6 +47,7 @@ class AMLScreeningCommand extends Command
 
         if (! $quoteModel || ! class_exists($quoteModel)) {
             info('cmd:'.$this->className.' Quote Model not found');
+
             return;
         }
 
@@ -72,22 +73,26 @@ class AMLScreeningCommand extends Command
 
                     if (! $quoteRequest) {
                         info('cmd:'.$this->className.' - ID: '.$quoteRequest->id.' Quote not found');
+
                         continue;
                     }
 
                     if ($quoteRequest->api_issuance_status_id != PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID) {
                         info('cmd:'.$this->className.' - Ref-ID: '.$quoteRequest->code.' Quote is not eligible for AML, due to API issuance status is not yes');
+
                         continue;
                     }
 
                     if ($quoteRequest->aml_status != AMLStatusCode::AMLPending) {
                         info('cmd:'.$this->className.' - Ref-ID: '.$quoteRequest->code.' Quote is not eligible for AML, due to AML status is not pending');
+
                         continue;
                     }
 
                     $amlAutomation = $quoteRequest->amlAutomation;
-                    if(isset($amlAutomation->status) && $amlAutomation->status != AmlAutomationStatus::FAILED_STATUS){
+                    if (isset($amlAutomation->status) && $amlAutomation->status != AmlAutomationStatus::FAILED_STATUS) {
                         info('cmd:'.$this->className.' - Ref-ID: '.$quoteRequest->code.' Quote is already '.($quoteRequest->amlAutomation->status ?? 'picked'));
+
                         continue;
                     }
 

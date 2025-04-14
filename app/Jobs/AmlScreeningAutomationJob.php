@@ -53,7 +53,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         try {
             $amlAutomation = $this->quoteRequest?->amlAutomation();
             $amlAutomation->updateOrCreate(
-                ['code' => $this->quoteRefId], 
+                ['code' => $this->quoteRefId],
                 ['status' => AmlAutomationStatus::PROCESSING_STATUS]
             );
 
