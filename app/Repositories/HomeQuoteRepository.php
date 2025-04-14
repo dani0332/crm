@@ -87,7 +87,7 @@ class HomeQuoteRepository extends BaseRepository
         // Check if any of the exclude filters are active
         $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters, $requestParams);
 
-        $query = $this->byQuoteTypeCode(QuoteTypes::HOME)
+        return $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
             ->when($user->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', $user->id))
             ->when(! empty($requestParams->get('advisors')), fn ($query) => $query->whereIn('advisor_id', (array) $requestParams->get('advisors')))
