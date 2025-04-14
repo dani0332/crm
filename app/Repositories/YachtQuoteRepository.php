@@ -183,7 +183,6 @@ class YachtQuoteRepository extends BaseRepository
             $user = $requestParams['user'];
         }
 
-
         $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
             'quoteStatus',
             'currentlyInsuredWith',

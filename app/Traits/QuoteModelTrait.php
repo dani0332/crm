@@ -34,7 +34,7 @@ trait QuoteModelTrait
      */
     public function scopeWithFakeLeadCriteria($query, $totalLeadsCount = false, $requestParams = [])
     {
-        $requestParams = $requestParams?: collect();
+        $requestParams = $requestParams ?: collect();
         if ((! empty($requestParams->get('quote_status_id')) && $requestParams->get('quote_status_id') != QuoteStatusEnum::Fake)) {
 
             return;

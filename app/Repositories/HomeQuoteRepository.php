@@ -103,7 +103,7 @@ class HomeQuoteRepository extends BaseRepository
                     $query->whereBetween('personal_quotes.created_at', $this->getDateRange());
                 }
             })
-            ->filter(! $forExport, $forTotalLeadsCount,requestParams: $requestParams)
+            ->filter(! $forExport, $forTotalLeadsCount, requestParams: $requestParams)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('personal_quotes.created_at', 'desc')
             ->when(

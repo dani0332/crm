@@ -66,7 +66,7 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false,$requestParams = [])
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
         $user = null;
         if (auth()->check() && empty($requestParams)) {
@@ -85,14 +85,14 @@ class CycleQuoteRepository extends BaseRepository
             'quoteDetail',
             'renewalBatchModel',
         ])
-            ->when($user && $user->hasRole(RolesEnum::CycleAdvisor), function ($query) use($user) {
+            ->when($user && $user->hasRole(RolesEnum::CycleAdvisor), function ($query) use ($user) {
                 $query->where('advisor_id', $user->id);
             })
-            ->when(! empty($requestParams->get('advisors')), function ($query) use($requestParams) {
+            ->when(! empty($requestParams->get('advisors')), function ($query) use ($requestParams) {
                 $advisors = $requestParams->get('advisors');
                 $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             })
-            ->when(! empty($requestParams->get('advisor_assigned_date')), function ($query) use($requestParams) {
+            ->when(! empty($requestParams->get('advisor_assigned_date')), function ($query) use ($requestParams) {
                 $dateArray = $requestParams->get('advisor_assigned_date');
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
@@ -100,8 +100,8 @@ class CycleQuoteRepository extends BaseRepository
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
-            ->filter(! $forExport, $forTotalLeadsCount,requestParams: $requestParams)
-            ->withFakeLeadCriteria($forTotalLeadsCount,requestParams: $requestParams)
+            ->filter(! $forExport, $forTotalLeadsCount, requestParams: $requestParams)
+            ->withFakeLeadCriteria($forTotalLeadsCount, requestParams: $requestParams)
             ->select([
                 '*',
                 DB::raw('
@@ -115,8 +115,8 @@ class CycleQuoteRepository extends BaseRepository
                 '),
             ]);
 
-        $this->adjustQueryByInsurerInvoiceFilters($query,requestParams: $requestParams);
-        $this->adjustQueryByDateFilters($query, 'personal_quotes',requestParams: $requestParams);
+        $this->adjustQueryByInsurerInvoiceFilters($query, requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes', requestParams: $requestParams);
 
         $query->orderBy('personal_quotes.'.($requestParams->get('sortBy') ?? 'created_at'), $requestParams->get('sortType') ?? 'desc');
 

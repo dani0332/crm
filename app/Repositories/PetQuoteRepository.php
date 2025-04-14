@@ -98,7 +98,7 @@ class PetQuoteRepository extends BaseRepository
         });
     }
 
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false,$requestParams = [])
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
         $user = null;
         if (auth()->check() && empty($requestParams)) {
@@ -108,7 +108,6 @@ class PetQuoteRepository extends BaseRepository
             $requestParams = collect($requestParams);
             $user = $requestParams['user'];
         }
-
 
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
@@ -144,7 +143,7 @@ class PetQuoteRepository extends BaseRepository
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
-            ->filter(!$forExport, $forTotalLeadsCount, requestParams: $requestParams)
+            ->filter(! $forExport, $forTotalLeadsCount, requestParams: $requestParams)
             ->withFakeLeadCriteria($forTotalLeadsCount, requestParams: $requestParams)
             ->select([
                 '*',
@@ -159,9 +158,9 @@ class PetQuoteRepository extends BaseRepository
                 '),
             ]);
 
-        $this->adjustQueryByInsurerInvoiceFilters($query,requestParams: $requestParams);
+        $this->adjustQueryByInsurerInvoiceFilters($query, requestParams: $requestParams);
 
-        $this->adjustQueryByDateFilters($query, 'personal_quotes',requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes', requestParams: $requestParams);
         $query->orderBy('personal_quotes.'.($requestParams->get('sortBy') ?? 'created_at'), $requestParams->get('sortType') ?? 'desc');
 
         if ($forTotalLeadsCount) {

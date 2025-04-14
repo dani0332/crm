@@ -212,7 +212,7 @@ class BikeQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false,$requestParams = [])
+    public function fetchGetData($forExport = false, $requestParams = [])
     {
         $user = null;
         if (auth()->check() && empty($requestParams)) {

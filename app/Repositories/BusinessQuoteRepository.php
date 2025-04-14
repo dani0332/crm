@@ -30,7 +30,7 @@ class BusinessQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false,$requestParams = [])
+    public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
         $user = null;
         if (auth()->check() && empty($requestParams)) {
@@ -67,9 +67,9 @@ class BusinessQuoteRepository extends BaseRepository
         )), function ($query) use ($user) {
             $query->where('advisor_id', $user->id);
         })
-            ->filter(! $forExport, $forTotalLeadsCount,requestParams: $requestParams)
-            ->withFakeLeadCriteria($forTotalLeadsCount,requestParams: $requestParams);
-        $this->adjustQueryByDateFilters($query, 'business_quote_request',requestParams: $requestParams);
+            ->filter(! $forExport, $forTotalLeadsCount, requestParams: $requestParams)
+            ->withFakeLeadCriteria($forTotalLeadsCount, requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'business_quote_request', requestParams: $requestParams);
         $query->orderBy('business_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {

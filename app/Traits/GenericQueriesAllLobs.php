@@ -644,17 +644,17 @@ trait GenericQueriesAllLobs
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
     }
 
-    public function adjustQueryByInsurerInvoiceFilters($query,$requestParams = [])
+    public function adjustQueryByInsurerInvoiceFilters($query, $requestParams = [])
     {
-        if(is_array($requestParams)){
+        if (is_array($requestParams)) {
             $requestParams = empty($requestParams) ? collect(request()->all()) : collect($requestParams);
-            info("requestParams array");
-        }else if($requestParams instanceof Collection) {
-            info("requestParams collection");
+            info('requestParams array');
+        } elseif ($requestParams instanceof Collection) {
+            info('requestParams collection');
             $requestParams = $requestParams->isEmpty() ? collect(request()->all()) : collect($requestParams);
         }
 
-        if (auth()->check() ) {
+        if (auth()->check()) {
             $user = auth()->user();
         } elseif (! empty($requestParams)) {
             $user = $requestParams['user'] ?? null;
