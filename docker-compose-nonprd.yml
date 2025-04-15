@@ -18,17 +18,20 @@ services:
       - otel-collector
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib
-    container_name: otel-collector
-    volumes:
-      - ./docker/otel-collector-config.yaml:/etc/otel/config.yaml
-      - ./storage/logs:/var/www/html/storage/logs
-    environment:
-      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
-      - AXIOM_DATASET=${AXIOM_DATASET}
-    command: ["--config=/etc/otel/config.yaml"]
-    ports:
-      - "4317:4317"
+      image: otel/opentelemetry-collector-contrib
+      container_name: otel-collector
+      volumes:
+        - ./docker/otel-collector-config.yaml:/etc/otel/config.yaml
+        - ./storage/logs:/logs
+      environment:
+        - AXIOM_API_TOKEN=xaat-b0547456-9dce-4855-b2db-cea294313a65
+        - AXIOM_DATASET=insurancemarket_dev
+      command: ["--config=/etc/otel/config.yaml"]
+      ports:
+        - "4317:4317"
+      networks:
+        - blanka-app-network
+
 
 volumes:
   logs:

@@ -1,25 +1,13 @@
 receivers:
   filelog:
-    include: [ /var/www/html/storage/logs/laravel.log ]
+    include: [ "/logs/laravel-*.log" ]
     start_at: beginning
     operators:
       - type: regex_parser
-        regex: '^\[(?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] (?P<env>\w+)\.(?P<level>\w+): (?P<msg>.*?) ({.*})?$'
+        regex: '^\[(?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] (?P<env>\w+)\.(?P<level>\w+): (?P<message>.*)$'
         timestamp:
           parse_from: attributes.time
           layout: '%Y-%m-%d %H:%M:%S'
-        severity:
-          parse_from: attributes.level
-      - type: json_parser
-        parse_from: attributes.msg
-        if: 'attributes.msg matches ".*\{.*\}.*"'
-        id: json_parser
-        output: json_output
-      - type: move
-        from: attributes.msg
-        to: body
-        id: move_msg
-        output: move_output
 
 processors:
   batch:
