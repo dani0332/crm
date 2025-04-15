@@ -51,6 +51,12 @@ final class SageEnum extends Enum
     const SRT_RTP_PP_REC = 'RTP_PP_REC';
     const SRT_POST_PP_REC = 'POST_PP_REC';
 
+
+    // AR Commission Pre Payments Receipts
+    const CREATE_COM_PP_REC = 'CREATE_COM_PP_REC';
+    const RTP_COM_PP_REC = 'RTP_COM_PP_REC';
+    const POST_COM_PP_REC = 'POST_COM_PP_REC';
+
     // AR Invoices - Upfront
     const SRT_CREATE_AR_PREM_COMM_INV = 'CREATE_AR_PREM_COMM_INV';
     const SRT_RTP_AR_PREM_COMM_INV = 'RTP_AR_PREM_COMM_INV';
@@ -184,4 +190,8 @@ final class SageEnum extends Enum
     // Sage Payload
     const BANK_CODE = 'INSBANK';
     const PAYMENT_CODE = 'IP';
+
+
+    const BANK_CODE_TAP = 'TAP';
+    const PAYMENT_CODE_CREDIT_CARD = 'CC';
 }

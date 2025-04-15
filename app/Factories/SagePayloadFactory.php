@@ -672,26 +672,46 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createPremiumPrepaymentPayload($sageRequest)
+    public static function createPrepaymentReceiptPayload($sageRequest, $isCommissionReceipt = false)
     {
         $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
         $entryType = SageEnum::SCT_STRAIGHT;
+
+        $customerNumber = $sageRequest->sage_customer_number;
+        $bankCode = SageEnum::BANK_CODE;
+        $paymentCode = SageEnum::PAYMENT_CODE;
+        $bankReceiptAmount = roundNumber(floatval($sageRequest->collection_amount));
+        $checkReceiptNumber = $sageRequest->checkDetails;
+
+        if (in_array($sageRequest->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
+            $bankCode = SageEnum::BANK_CODE;
+            $paymentCode = SageEnum::PAYMENT_CODE;
+        }
+
+        if ($isCommissionReceipt) {
+            $bankCode = SageEnum::BANK_CODE_TAP;
+            $customerNumber = $sageRequest->sageInsurerCustomerId;
+            $paymentCode = SageEnum::PAYMENT_CODE_CREDIT_CARD;
+            $bankReceiptAmount = $sageRequest->commission;
+            $checkReceiptNumber = $sageRequest->commissionChargeId;
+        }
+
         $payLoad = [
             'BatchRecordType' => 'CA',
-            'BankCode' => SageEnum::BANK_CODE,
+            'BankCode' => $bankCode,
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
-                    'CustomerNumber' => $sageRequest->sage_customer_number,
-                    'BankCode' => SageEnum::BANK_CODE,
-                    'BankReceiptAmount' => roundNumber(floatval($sageRequest->collection_amount)),
-                    'CheckReceiptNumber' => $sageRequest->checkDetails,
-                    'PaymentCode' => SageEnum::PAYMENT_CODE,
+                    'CustomerNumber' => $customerNumber,
+                    'BankCode' => $bankCode,
+                    'BankReceiptAmount' => $bankReceiptAmount,
+                    'CheckReceiptNumber' => $checkReceiptNumber,
+                    'PaymentCode' => $paymentCode,
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [
                         [
                             'BatchType' => 'CA',
-                            'CustomerNumber' => $sageRequest->sage_customer_number,
+                            'CustomerNumber' => $customerNumber,
                             'ReceiptTransactionType' => 'Prepayment',
                         ],
                     ],
@@ -700,21 +720,15 @@ class SagePayloadFactory
             ],
         ];
 
-        if (in_array($sageRequest->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
-            $payLoad['BankCode'] = SageEnum::BANK_CODE;
-            $payLoad['ReceiptsAdjustments'][0]['BankCode'] = SageEnum::BANK_CODE;
-            $payLoad['ReceiptsAdjustments'][0]['PaymentCode'] = SageEnum::PAYMENT_CODE;
-        }
-
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_CREATE_PP_REC,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::CREATE_COM_PP_REC : SageEnum::SRT_CREATE_PP_REC,
             'entry_type' => $entryType,
         ];
     }
 
-    public static function readyToPostReceiptArPayment($batchNumber)
+    public static function readyToPostReceiptArPayment($batchNumber , $isCommissionReceipt = false)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -724,11 +738,11 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_RTP_PAY_REC_ONE_INV,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::RTP_COM_PP_REC : SageEnum::SRT_RTP_PAY_REC_ONE_INV,
             'entry_type' => $entryType,
         ];
     }
-    public static function aRPostReceiptsPayment($batchNumber)
+    public static function aRPostReceiptsPayment($batchNumber , $isCommissionReceipt = false)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -747,7 +761,7 @@ class SagePayloadFactory
         return [
             'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
-            'sage_request_type' => SageEnum::SRT_POST_PP_REC,
+            'sage_request_type' => $isCommissionReceipt ? SageEnum::POST_COM_PP_REC : SageEnum::SRT_POST_PP_REC,
             'entry_type' => $entryType,
         ];
     }
@@ -1097,7 +1111,7 @@ class SagePayloadFactory
         $optionalArray = [
             [
                 'OptionalField' => 'CHEQUENO',
-                'Value' => $sageRequest->checkNumber,
+                'Value' => $sageRequest->checkNumber ?? 'N/A',
             ],
             [
                 'OptionalField' => 'DEPARTMENT',
@@ -1117,7 +1131,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'PAYMENTGTWAY',
-                'Value' => $sageRequest->paymentGateway,
+                'Value' => $sageRequest->paymentGateway ?? 'N/A',
             ],
             [
                 'OptionalField' => 'PAYMENTMETHD',
@@ -1245,6 +1259,9 @@ class SagePayloadFactory
 
         $insuranceProvider = $sageRequest->insurerID ? InsuranceProvider::find($sageRequest->insurerID) : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
         $sageRequest->insurerName = $insuranceProvider?->text;
+        $sageRequest->insurerID = $insuranceProvider?->id;
+        $sageRequest->insurerPaymentGatewayId = $insuranceProvider?->payment_gateway_id;
+        $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
         if (! isset($sageRequest->mainClassInsurance)) {
             $sageRequest->mainClassInsurance = $sageRequest->quoteType;
         }
@@ -1307,6 +1324,7 @@ class SagePayloadFactory
         }
 
         $sageRequest->mainClassInsurance = $modelType;
+        $sageRequest->planId = $quote->plan_id ?? null;
         $sageRequest->policyNumber = mb_substr($quote->policy_number, 60);
         $sageRequest->originalPolicyNumber = $quote->policy_number;
         $sageRequest->policyIssuer = $policyIssuer;
@@ -1383,6 +1401,7 @@ class SagePayloadFactory
         $sageRequest->sageInsurerCustomerId = $sageInsurerCustomerId;
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;
+        $sageRequest->insurerPaymentGatewayId = $insuranceProvider?->payment_gateway_id;
 
         return $sageRequest;
     }

@@ -103,7 +103,8 @@ class SplitPaymentService
         return $childPaymentStatus;
     }
 
-    public function createSageRecipt($request, $splitPayment, $splitAmount = null)
+    /* Will be removed once Sage Enhancements are verified */
+    /*public function createSageRecipt($request, $splitPayment, $splitAmount = null)
     {
         if ($splitAmount != null) {
             $request->collection_amount = $splitAmount;
@@ -138,7 +139,7 @@ class SplitPaymentService
             $sageResponse = json_decode($sageLogArray[2]['response'], true);
         } else {
             $request->merge(['sage_payment_code' => $splitPayment->payment_method]);
-            $payLoadOptions = SagePayloadFactory::createPremiumPrepaymentPayload($request);
+            $payLoadOptions = SagePayloadFactory::createPrepaymentReceiptPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);
         }
@@ -236,7 +237,7 @@ class SplitPaymentService
         }
 
         return $returnMessage;
-    }
+    }*/
 
     // function to check if the payment structure is new
     public function isNewPaymentStructure($payments)

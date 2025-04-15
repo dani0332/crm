@@ -80,4 +80,52 @@ class BrokerCommissionService
 
         return $isCreditCardEnabled;
     }
+
+    public function getBrokerCommission($data)
+    {
+        [$insurerId, $quoteTypeId, $businessTypeOfInsurance, $planId] = $data;
+
+        // Define query conditions in priority order
+        $whereClauses = [
+            ['insurance_provider_id', $insurerId],
+        ];
+
+        // Add optional conditions only if they exist
+        if ($quoteTypeId) {
+            $whereClauses[] = ['quote_type_id', $quoteTypeId];
+        }
+
+        if ($businessTypeOfInsurance) {
+            $whereClauses[] = ['business_type_of_insurance_id', $businessTypeOfInsurance];
+        }
+
+        if ($planId) {
+            $whereClauses[] = ['plan_id', $planId];
+        }
+
+        // Start with most specific query
+        $query = BrokerCommission::query();
+
+        // Try progressively less specific queries until we find a match
+        while (! empty($whereClauses)) {
+            $brokerCommission = $query->where($whereClauses)->first();
+
+            if ($brokerCommission) {
+                return $brokerCommission;
+            }
+
+            // Remove the last condition and try again with a less specific query
+            array_pop($whereClauses);
+        }
+
+        // If we've tried all combinations and found nothing, return null
+        return null;
+    }
+
+    public function isAutomaticCommissionTransferEnabledForInsurer($data)
+    {
+        $brokerCommission = $this->getBrokerCommission($data);
+
+        return $brokerCommission?->automatic_commission_transfer;
+    }
 }
