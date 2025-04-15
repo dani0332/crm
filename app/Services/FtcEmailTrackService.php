@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\FTCEmailTrackEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\FtcEmailTrack;
 
 class FtcEmailTrackService
@@ -19,7 +21,9 @@ class FtcEmailTrackService
         if($trackEmail == null) {
             return null;
         }
-        $trackEmail->update($payload);
+        if($payload['status'] == FTCEmailTrackEnum::CLICKED) {
+            $trackEmail->quoteTrackable->update(['quote_status_id' => QuoteStatusEnum::PaymentInitiated]);
+        }
 
         return $trackEmail;
     }
