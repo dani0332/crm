@@ -49,7 +49,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         }
 
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead);
 
             info('-------- Reassignment started ---------');
 

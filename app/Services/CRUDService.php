@@ -34,13 +34,13 @@ use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use PDF;
 
 class CRUDService extends BaseService
@@ -407,7 +407,7 @@ class CRUDService extends BaseService
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
             if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
-                auth()->user()->hasAnyPermission(
+                app('auth')->user()->hasAnyPermission(
                     PermissionsEnum::HEALTH_QUOTES_ACCESS,
                     PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS
                 )
@@ -612,7 +612,7 @@ class CRUDService extends BaseService
                 $maxAttempts = 3;
                 for ($i = 0; $i < $maxAttempts; $i++) {
                     try {
-                        info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action with payment amount {$amount}.");
+                        LoggerService::info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action with payment amount {$amount}.");
                         PaymentAction::updateOrInsert(
                             ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
                             [
@@ -623,12 +623,12 @@ class CRUDService extends BaseService
                                 'is_manager_approved' => 1,
                             ]
                         );
-                        info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
+                        LoggerService::info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
                         break;
                     } catch (\Illuminate\Database\QueryException $e) {
-                        Log::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
+                        LoggerService::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
                         if ($i == $maxAttempts - 1) {
-                            Log::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');
+                            LoggerService::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');
                             vAbort('Capture failed please try again later.');
                         }
                         sleep(1); // Wait before retrying
@@ -673,7 +673,7 @@ class CRUDService extends BaseService
         ];
 
         $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
-        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        LoggerService::info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/capture', 'post', $planData);
 
         return $response;
