@@ -22,11 +22,12 @@ services:
       container_name: otel-collector
       volumes:
         - ./docker/config.yaml:/etc/otel/config.yaml
-        - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs
+        - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs:ro
+
       environment:
         - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
         - AXIOM_DATASET=${AXIOM_DATASET}
-      command: ["--config=/etc/otel/config.yaml"]
+      command: command: ["--config=/etc/otel/config.yaml", "--set=service.telemetry.level=debug"]
       ports:
         - "4317:4317"
 
