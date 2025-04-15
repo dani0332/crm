@@ -74,8 +74,6 @@ const modelClass = 'App\\Models\\PersonalQuote';
 const modelClassHome = 'App\\Models\\HomeQuote';
 const processingOCBEmailNB = ref(false);
 
-console.log('Home Show Page Props', page.props.quote);
-
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
 );
