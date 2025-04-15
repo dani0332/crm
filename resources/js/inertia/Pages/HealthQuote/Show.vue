@@ -3,7 +3,6 @@ import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 
 const props = defineProps({
