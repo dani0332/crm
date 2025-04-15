@@ -392,7 +392,7 @@ ${x}
 `),b=S.substring(0,S.length-A.length),v=k.substring(D.length,k.length),g=!0,f=x,m=-A.length-D.length}else{const S=o.value.substring(0,o.selectionStart);/\n$/.test(S)||S===""?(y=`${E}${t}`,g=!0):y=E}break}case"shiftTab":{const{tabWidth:x=2}=n,{prefixStr:E,prefixStrEndRow:S,subfixStrEndRow:k,prefixSupply:A,subfixSupply:D}=C0(o),O=new RegExp(`^\\s{${x}}`),R=(C=!1,P=!1)=>{const I=`${A}${t}${D}`;if(O.test(I)){const $=E.length-(P?0:x),N=C?$+t.length-x:$;return ep(o,$,N),`${S}${I.replace(O,"")}${k}`}else if(/^\s/.test(I)){const $=I.replace(/^\s/,""),N=I.length-$.length,j=o.selectionStart-(P?0:N),V=C?j+t.length-N:j;return ep(o,j,V),`${S}${$}${k}`}else y=t};if(t===""){const C=R();if(C)return C}else if(/\n/.test(t)){const C=`${A}${t}${D}`.split(`
 `);let[P,I]=[0,0];const $=C.map((N,j)=>{if(O.test(N))return j===0&&(P=x),I+=x,N.replace(O,"");if(/^\s/.test(N)){const V=N.replace(/^\s/,"");return I+=N.length-V.length,V}return N}).join(`
 `);return ep(o,o.selectionStart-P,o.selectionEnd-I),`${S}${$}${k}`}else{const C=R(!0,!0);if(C)return C}break}case"ctrlC":{const{prefixSupply:x,subfixSupply:E}=C0(o);return Yv(t===""?`${x}${E}`:t),o.value}case"ctrlX":{const{prefixStrEndRow:x,subfixStrEndRow:E,prefixStr:S,subfixStr:k,prefixSupply:A,subfixSupply:D}=C0(o);return t===""?(Yv(`${A}${D}`),ep(o,x.length),`${x}${E.replace(/^\n/,"")}`):(Yv(t),ep(o,S.length),`${S}${k}`)}case"ctrlD":{const{prefixStrEndRow:x,subfixStrEndRow:E}=C0(o);return ep(o,x.length),`${x}${E.replace(/^\n/,"")}`}case"flow":{y=`\`\`\`mermaid
-${(_==null?void 0:_.flow)||`flowchart TD 
+${(_==null?void 0:_.flow)||`flowchart TD
   Start --> Stop`}
 \`\`\`
 `,f=2;break}case"sequence":{y=`\`\`\`mermaid

@@ -3,7 +3,7 @@
 namespace App\Exports;
 
 use App\Enums\AMLStatusCode;
-use App\Repositories\TravelQuoteRepository;
+use App\Services\TravelQuoteService;
 use App\Traits\ExcelExportable;
 
 class TravelQuoteExport
@@ -12,7 +12,7 @@ class TravelQuoteExport
 
     public function collection()
     {
-        return TravelQuoteRepository::getData(true);
+        return app(TravelQuoteService::class)->getGridData()->get();
     }
 
     public function headings(): array
