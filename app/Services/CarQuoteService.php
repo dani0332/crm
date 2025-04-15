@@ -1999,9 +1999,7 @@ class CarQuoteService extends BaseService
     {
         try {
             // Cache the PCP team ID for 24 hours since it rarely changes
-            $pcpTeamId = Cache::remember('pcp_team_id',now()->addMinutes(), function () {
-                return Team::where('name', TeamNameEnum::PCP)->value('id');
-            });
+            $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->first()->id ?? null;
             // If $pcpTeamId is null or empty, the function will return false
             return !empty($pcpTeamId) && UserTeams::where('user_id', $user_id)->where('team_id', $pcpTeamId)->exists();
 
