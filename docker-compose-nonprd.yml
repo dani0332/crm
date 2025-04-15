@@ -21,8 +21,8 @@ services:
       image: otel/opentelemetry-collector-contrib
       container_name: otel-collector
       volumes:
-        - /home/azureuser/imcrm/pipline/imcrmuat/docker/config.yaml:/etc/otel/config.yaml
-        - ./storage/logs:/var/www/storage/logs
+        - ./docker/config.yaml:/etc/otel/config.yaml
+        - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs
       environment:
         - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
         - AXIOM_DATASET=${AXIOM_DATASET}
