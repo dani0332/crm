@@ -237,7 +237,7 @@ class TravelQuoteService extends BaseService
         return $customerTravelInfo;
     }
 
-    public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest)
+    public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
     {
         $message = '';
         $requiredProperty = collect(['first_name', 'last_name', 'gender', 'dob', 'nationality_id', 'passport']);

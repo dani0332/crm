@@ -57,6 +57,8 @@ const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeIdEnum = page.props.quoteBusinessTypeIdEnum;
+const policyIssuanceEnum = page.props.policyIssuanceEnum;
+
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -599,6 +601,44 @@ const isTravelQuoteAndAMLNotCleared = () => {
   }
 };
 
+const checkMissingTravelAmlRequirement = () => {
+  const unClearedAmlStatuses = [page.props.amlStatusEnum.AMLPending, page.props.amlStatusEnum.AMLScreeningFailed];
+  const isPolicyIssuanceStatusIsYes = page.props.quote.api_issuance_status_id == policyIssuanceEnum.POLICY_ISSUANCE_API_STATUS_YES_ID
+  const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
+
+  if (
+    isQuoteTypeTravel && isPolicyIssuanceStatusIsYes &&
+    unClearedAmlStatuses.includes(props.quote.aml_status)
+  ) {
+    const response = axios.get(
+        route('check-missing-travelAml-requirement'),
+        {
+          params: {
+            quoteRequestId: props.quote.id,
+            quoteType: props.quoteType
+          },
+        }
+      )
+      .then((response) => {
+        if (response.data?.status == false) {
+          notification.error({
+            title: response.data?.message,
+            position: 'top',
+            timeout: 5000,
+          });
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: err.response.data?.message ?? 'Something went wrong',
+          position: 'top',
+          timeout: 5000,
+        });
+      }
+    );
+  }
+};
+
 const showActionButtons = computed(() => {
   // Hide buttons only when policy is cancelled and have a chilrd lead
   return (
@@ -657,6 +697,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
 onBeforeMount(() => {
   showBookingFailedAlert();
   isTravelQuoteAndAMLNotCleared();
+  checkMissingTravelAmlRequirement();
 });
 const readOnlyMode = reactive({
   isDisable: true,

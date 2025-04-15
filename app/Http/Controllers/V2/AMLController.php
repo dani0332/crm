@@ -406,10 +406,10 @@ class AMLController extends Controller
         $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($request->quoteRequestId, $request->quoteType);
 
         if (empty($customerTravelInfo['id'])) {
-            return ['status' => false, 'message' => 'Record not found'];
+            return response()->json(['status' => false, 'message' => 'Record not found'], 404);
         }
 
-        return $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
+        return response()->json($travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo), 200);
     }
 
     private function handleResponse(bool $status, string $message, bool $isAutomation = false)
