@@ -313,7 +313,7 @@ const isIntegerColumn = key => {
       {{ payment_due_date ? payment_due_date : due_date ? due_date : 'N/A' }}
     </template>
     <template #item-payment_ref_id="{ payment_ref_id, split_sr_no }">
-      {{payment_ref_id}}{{ split_sr_no ? '-'+split_sr_no : '' }}
+      {{ payment_ref_id }}{{ split_sr_no ? '-' + split_sr_no : '' }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
       {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0.0 }}
