@@ -296,6 +296,12 @@ class HandleInertiaRequests extends Middleware
                         'Yacht',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::YACHT]),
                         fn ($s) => $s->attributes(['icon' => 'yacht'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD),
+                        'Group Medical',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::GROUP_MEDICAL]),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
@@ -385,23 +391,23 @@ class HandleInertiaRequests extends Middleware
                 )
                 ->addIf(
                     (auth()->user()->can(PermissionsEnum::TravelQuotesList)
-                     || (userHasProduct(quoteTypeCode::Travel) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
+                        || (userHasProduct(quoteTypeCode::Travel) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Travel Quotes',
                     route('travel.index'),
                     fn ($s) => $s->attributes(['icon' => 'travel'])
                 )
                 ->addIf(
                     (auth()->user()->can(PermissionsEnum::LifeQuotesList)
-                     || (userHasProduct(quoteTypeCode::Life) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
+                        || (userHasProduct(quoteTypeCode::Life) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Life Quotes',
                     route('life-quotes-list'),
                     fn ($s) => $s->attributes(['icon' => 'life'])
                 )
                 ->addIf(
                     (auth()->user()->can(PermissionsEnum::HomeQuotesList)
-                     || (userHasProduct(quoteTypeCode::Home) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
+                        || (userHasProduct(quoteTypeCode::Home) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))),
                     'Home Quotes',
-                    route('home.index'),
+                    route('home-quotes-list'),
                     fn ($s) => $s->attributes(['icon' => 'home'])
                 )
                 ->addIf((auth()->user()->can(PermissionsEnum::PetQuotesList) || (userHasProduct(quoteTypeCode::Pet) && auth()->user()->can(PermissionsEnum::VIEW_ALL_LEADS))), 'Pet Quotes', route('pet-quotes-list'), fn ($s) => $s->attributes(['icon' => 'pet']))
@@ -718,7 +724,6 @@ class HandleInertiaRequests extends Middleware
                             )
                     );
             });
-
         }
 
         if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
