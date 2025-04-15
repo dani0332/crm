@@ -3862,7 +3862,6 @@ const fetchInsurerAMLStatus = async () => {
   }
 };
 
-
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
 });

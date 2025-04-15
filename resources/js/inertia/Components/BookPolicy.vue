@@ -602,24 +602,28 @@ const isTravelQuoteAndAMLNotCleared = () => {
 };
 
 const checkMissingTravelAmlRequirement = () => {
-  const unClearedAmlStatuses = [page.props.amlStatusEnum.AMLPending, page.props.amlStatusEnum.AMLScreeningFailed];
-  const isPolicyIssuanceStatusIsYes = page.props.quote.api_issuance_status_id == policyIssuanceEnum.POLICY_ISSUANCE_API_STATUS_YES_ID
+  const unClearedAmlStatuses = [
+    page.props.amlStatusEnum.AMLPending,
+    page.props.amlStatusEnum.AMLScreeningFailed,
+  ];
+  const isPolicyIssuanceStatusIsYes =
+    page.props.quote.api_issuance_status_id ==
+    policyIssuanceEnum.POLICY_ISSUANCE_API_STATUS_YES_ID;
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
 
   if (
-    isQuoteTypeTravel && isPolicyIssuanceStatusIsYes &&
+    isQuoteTypeTravel &&
+    isPolicyIssuanceStatusIsYes &&
     unClearedAmlStatuses.includes(props.quote.aml_status)
   ) {
-    const response = axios.get(
-        route('check-missing-travelAml-requirement'),
-        {
-          params: {
-            quoteRequestId: props.quote.id,
-            quoteType: props.quoteType
-          },
-        }
-      )
-      .then((response) => {
+    const response = axios
+      .get(route('check-missing-travelAml-requirement'), {
+        params: {
+          quoteRequestId: props.quote.id,
+          quoteType: props.quoteType,
+        },
+      })
+      .then(response => {
         if (response.data?.status == false) {
           notification.error({
             title: response.data?.message,
@@ -634,8 +638,7 @@ const checkMissingTravelAmlRequirement = () => {
           position: 'top',
           timeout: 5000,
         });
-      }
-    );
+      });
   }
 };
 
