@@ -674,8 +674,12 @@ const formatDate = dateString =>
             Export via email
           </x-button>
           <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald" class="mr-3"> Export </x-button>
-            <x-button tag="div" size="sm" color="emerald" class="mr-3">Export via email</x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"
+              >Export via email</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Created dates or policy expiry dates or payment due date or

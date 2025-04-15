@@ -260,16 +260,17 @@ const onDataExport = (exportType = 'download') => {
   };
 
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-  notification.success({
-      title: result.data.message,
-      position: 'top',
-    });
-    if (result)
-      setTimeout(() => {
-        exportLoader.value = false;
-      }, 1000);
-  })
+  logAndExportQuotes(payload)
+    .then(result => {
+      notification.success({
+        title: result.data.message,
+        position: 'top',
+      });
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
     .catch(err => {
       notification.error({
         title: err.response.data.message
@@ -656,8 +657,12 @@ const insurerAMLStatusOption = computed(() => {
             Export via email
           </x-button>
           <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald" class="mr-3"> Export </x-button>
-            <x-button tag="div" size="sm" color="emerald" class="mr-3">Export via email</x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"
+              >Export via email</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Created dates or policy expiry dates or payment due date or
