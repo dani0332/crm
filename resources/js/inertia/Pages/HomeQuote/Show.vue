@@ -2089,6 +2089,16 @@ const shouldShowPlanDetailsSection = computed(() => {
                   >
                     Hidden
                   </x-tag>
+
+                  <x-tag
+                    v-if="item.isRenewal"
+                    size="xs"
+                    color="success"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Renewal Plan
+                  </x-tag>
+
                   <x-tooltip>
                     <x-tag
                       v-if="item.puaType"
