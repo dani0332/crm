@@ -22,7 +22,7 @@ services:
       container_name: otel-collector
       volumes:
         - ./docker/otel-collector-config.yaml:/etc/otel/config.yaml
-        - ./storage/logs:/logs
+        - ./storage/logs:/var/www/storage/logs
       environment:
         - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
         - AXIOM_DATASET=${AXIOM_DATASET}
