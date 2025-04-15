@@ -23,7 +23,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, HasFtcEmailTrack, QuoteModelTrait, HasPaymentsTrait, HasQuoteStatusLogsTrait;
+    use Auditable, FilterCriteria, HasFactory, HasFtcEmailTrack, HasPaymentsTrait, HasQuoteStatusLogsTrait, QuoteModelTrait;
 
     protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted'];
     protected $table = 'health_quote_request';

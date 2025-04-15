@@ -57,7 +57,7 @@ class PersonalQuoteController extends Controller
             $quote = $this->getQuoteObject(QuoteTypes::TRAVEL->value, $quoteId);
             $this->stopHapexReminder($quote);
         }
-        
+
         $hasErrors = $responses->where('status', false)->count();
         $errors = $responses->where('status', false)->pluck('message')->toArray();
 

@@ -17,7 +17,6 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
-use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -1256,7 +1255,7 @@ class CentralService extends BaseService
             if (! $quote) {
                 return ['status' => false, 'message' => 'Quote not found'];
             }
-            
+
             $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
             $quote->save();
 

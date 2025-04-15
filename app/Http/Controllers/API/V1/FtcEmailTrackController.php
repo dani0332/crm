@@ -48,6 +48,7 @@ class FtcEmailTrackController extends Controller
         if ($trackEmail == null) {
             return response()->json(['message' => 'Email track not found.'], Response::HTTP_NOT_FOUND);
         }
+
         return response()->json(['message' => 'Email track updated successfully.', 'data' => $trackEmail], Response::HTTP_OK);
     }
 }

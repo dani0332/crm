@@ -251,7 +251,7 @@ class Payment extends Model implements Auditable
 
     /**
      * Check if payment has any splits with IPL payment method
-     * 
+     *
      * @return bool
      */
     public function hasInsurerPaymentLink()
@@ -263,7 +263,7 @@ class Payment extends Model implements Auditable
 
     /**
      * Get all payment splits that have IPL payment method
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function getInsurerLinkPaymentSplits()

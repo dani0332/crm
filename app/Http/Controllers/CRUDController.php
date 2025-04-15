@@ -1833,10 +1833,10 @@ class CRUDController extends Controller
 
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
-        
+
         // Check for error in result
         if (isset($result['error'])) {
-            return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('error', $result['error']);
+            return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('error', $result['error']);
         }
 
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {

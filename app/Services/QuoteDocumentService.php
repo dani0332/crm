@@ -785,7 +785,7 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
-     * This function use update payment statuses on payments and payment_split table 
+     * This function use update payment statuses on payments and payment_split table
      *
      * @param [type] $quote
      * @return void

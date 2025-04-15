@@ -20,14 +20,12 @@ trait HasQuoteStatusLogsTrait
 
     /**
      * Check if quote has both payment link sent and initiated status in its history
-     *
-     * @return bool
      */
     public function hasPaymentLinkHistory(): bool
     {
         // Check for PaymentLinkSentToCustomer status
         $hasPaymentLinkSent = $this->quoteStatusLogs()
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('previous_quote_status_id', QuoteStatusEnum::PaymentLinkSentToCustomer)
                     ->orWhere('current_quote_status_id', QuoteStatusEnum::PaymentLinkSentToCustomer);
             })
@@ -35,7 +33,7 @@ trait HasQuoteStatusLogsTrait
 
         // Check for PaymentInitiated status
         $hasPaymentInitiated = $this->quoteStatusLogs()
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('previous_quote_status_id', QuoteStatusEnum::PaymentInitiated)
                     ->orWhere('current_quote_status_id', QuoteStatusEnum::PaymentInitiated);
             })
@@ -48,11 +46,9 @@ trait HasQuoteStatusLogsTrait
     /**
      * Check if quote can be updated to transaction approved status
      * Only allowed if quote has both payment link sent and initiated status in history
-     *
-     * @return bool
      */
     public function canUpdateToTransactionApproved(): bool
     {
         return $this->hasPaymentLinkHistory();
     }
-} 
+}

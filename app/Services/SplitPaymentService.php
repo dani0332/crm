@@ -602,7 +602,8 @@ class SplitPaymentService
         }
     }
 
-    public function generateInsurerPaymentLink($request){
+    public function generateInsurerPaymentLink($request)
+    {
         $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
         if (! $splitPayment) {
             return response()->json(['success' => false]);

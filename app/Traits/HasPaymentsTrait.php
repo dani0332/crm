@@ -10,8 +10,6 @@ trait HasPaymentsTrait
 {
     /**
      * Get all payments for this model
-     *
-     * @return MorphMany
      */
     public function payments(): MorphMany
     {
@@ -20,8 +18,6 @@ trait HasPaymentsTrait
 
     /**
      * Check if any payment has IPL in its splits
-     *
-     * @return bool
      */
     public function hasInsurerPaymentLink(): bool
     {
@@ -69,11 +65,11 @@ trait HasPaymentsTrait
     public function getAllInsurerPaymentLinkSplits()
     {
         $payments = $this->getPaymentsWithInsurerPaymentLink();
-        
+
         return $payments->flatMap(function ($payment) {
             return $payment->paymentSplits()
                 ->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink)
                 ->get();
         });
     }
-} 
+}
