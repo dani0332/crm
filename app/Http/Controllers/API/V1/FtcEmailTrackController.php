@@ -26,7 +26,7 @@ class FtcEmailTrackController extends Controller
             $payload = [
                 'email' => $request->email,
                 'subject' => $request->subject,
-                'status' => $request->status,
+                'status' => strtolower($request->status),
                 'link' => $request->link,
                 'quote_trackable_id' => $quote->id,
                 'quote_trackable_type' => get_class($quote),
@@ -42,7 +42,7 @@ class FtcEmailTrackController extends Controller
     public function update(Request $request)
     {
         $payload = [
-            'status' => $request->status,
+            'status' => strtolower($request->status),
         ];
         $trackEmail = $this->ftcEmailTrackService->updateTrackEmail($payload, '', $request->link);
         if ($trackEmail == null) {

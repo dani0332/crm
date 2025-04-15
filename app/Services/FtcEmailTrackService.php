@@ -24,6 +24,7 @@ class FtcEmailTrackService
         if ($payload['status'] == FTCEmailTrackEnum::CLICKED) {
             $trackEmail->quoteTrackable->update(['quote_status_id' => QuoteStatusEnum::PaymentInitiated]);
         }
+        $trackEmail->update($payload);
 
         return $trackEmail;
     }
