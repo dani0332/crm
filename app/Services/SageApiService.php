@@ -2284,7 +2284,7 @@ class SageApiService
         info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Scheduling Sage Process  for Prepayment Posting of Payment split.');
         $paymentSplit = $paymentSplit->refresh();
         $quote = $quote->refresh();
-        $sendUpdateLog = $sendUpdateLog->refresh();
+        $sendUpdateLog = $sendUpdateLog?->refresh();
         $preChecksForPostingPrepaymentOnSage = (new SageApiService)->preChecksForPostPrepaymentSchedule($quote, $sendUpdateLog, $paymentSplit);
 
         if (! $preChecksForPostingPrepaymentOnSage['status']) {
