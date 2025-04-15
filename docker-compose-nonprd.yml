@@ -27,7 +27,7 @@ services:
       environment:
         - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
         - AXIOM_DATASET=${AXIOM_DATASET}
-      command: command: ["--config=/etc/otel/config.yaml", "--set=service.telemetry.level=debug"]
+      command: ["--config=/etc/otel/config.yaml"]
       ports:
         - "4317:4317"
 
