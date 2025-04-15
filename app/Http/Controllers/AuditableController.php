@@ -90,6 +90,7 @@ class AuditableController extends Controller
                 'auditableId' => $auditableId,
             ]);
 
+
             $quoteUID = $auditableType::where('id', $auditableId)->value('uuid');
 
             if (! $quoteUID) {
@@ -111,6 +112,8 @@ class AuditableController extends Controller
             }
 
             $logs = $query->get();
+            dd($logs); 
+            
 
             info('API logs retrieved successfully', [
                 'auditableType' => $auditableType,
@@ -145,9 +148,9 @@ class AuditableController extends Controller
             case TravelQuote::class:
                 return TravelInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
-            case HomeQuote::class:
-                return HomeInsurerRequestResponses::with('insuranceProvider')
-                    ->whereNotIn('call_type', ['oAuth', 'login']);
+            // case HomeQuote::class:
+            //     return HomeInsurerRequestResponses::with('insuranceProvider')
+            //         ->whereNotIn('call_type', ['oAuth', 'login']);
             case LifeQuote::class:
                         return LifeInsurerRequestResponses::with('insuranceProvider')
                             ->whereNotIn('call_type', ['oAuth', 'login']);

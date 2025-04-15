@@ -61,7 +61,7 @@ defineProps({
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
-const modelClass = 'App\\Models\\PersonalQuote';
+const modelClass = 'App\\Models\\LifeQuote';
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const quoteStatusEnum = page.props.quoteStatuses;
@@ -1300,9 +1300,20 @@ const getBMITag = () => {
                   <dd>{{ quote.children?.text }}</dd>
                 </div> -->
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">HAVE YOU CONSUMED ANY PRODUCTS WITH NICOTINE FOR THE PAST 12 MONTHS?</dt>
-                  <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
-                </div>
+                  
+                <x-tooltip
+                  position="left"
+                >
+                  <dt class="font-medium">HAVE YOU CONSUMED ANY PRODUCTS WITH<br>NICOTINE FOR THE PAST 12 MONTHS?</dt>
+                  <template #tooltip>
+                    <div class="whitespace-normal text-xs">
+                      HAVE YOU CONSUMED ANY PRODUCTS WITH<br>NICOTINE FOR THE PAST 12 MONTHS?
+                    </div>
+                  </template>
+                </x-tooltip>
+                <dd>{{ quote.life_quote.is_smoker == 1  ? 'Yes' : 'No' }}</dd>
+              </div>
+              
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Life'" />
               </dl>
               <dl
@@ -2038,7 +2049,7 @@ const getBMITag = () => {
 
     <ApiLogs
       :type="modelClass"
-      :id="$page.props.quote.id"
+      :id="$page.props.quote.life_quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
