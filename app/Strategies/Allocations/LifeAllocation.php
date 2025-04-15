@@ -25,9 +25,13 @@ class LifeAllocation extends BaseAllocation
         $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
 
         $santosh = 'santhosh.ganesan@insurancemarket.ae';
+        $karuna = 'karuna.ramesh@insurancemarket.ae';
+        $christy = 'christy.thomas@insurancemarket.ae';
+        $katrina = 'katrina.guerrero@insurancemarket.ae';
+        $larry = 'larry.bascon@insurancemarket.ae';
+
         $gaurav = 'gaurav.sharma@insurancemarket.ae';
         $vivian = 'vivian.sandel@insurancemarket.ae';
-        $roshan = 'roshan.tekcham@insurancemarket.ae';
 
         $emails = [];
 
@@ -36,9 +40,9 @@ class LifeAllocation extends BaseAllocation
         } elseif ($amount >= 1000000 && $amount <= 2000000 && in_array($category, [self::CAT_A])) {
             $emails = [$vivian];
         } elseif ($amount <= 2000000 && in_array($category, [self::CAT_B])) {
-            $emails = [$gaurav, $roshan];
+            $emails = [$gaurav];
         } elseif ($amount > 2000000 && in_array($category, [self::CAT_A, self::CAT_B])) {
-            $emails = [$santosh];
+            $emails = [$santosh, $karuna, $christy, $katrina, $larry];
         }
 
         return $emails;
@@ -47,7 +51,15 @@ class LifeAllocation extends BaseAllocation
     private function getCountriesMapping()
     {
         $catACountryMapping = [
-            'South African', 'Australian', 'New Zealander', 'Canadian', 'United Kingdom', 'Lebanese', 'Filipino', 'American', 'Europe',
+            'South African',
+            'Australian',
+            'New Zealander',
+            'Canadian',
+            'United Kingdom',
+            'Lebanese',
+            'Filipino',
+            'American',
+            'Europe',
         ];
 
         $catBCountryMapping = cache()->remember('countries_category_mapping', now()->addHours(24), function () use ($catACountryMapping) {

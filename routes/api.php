@@ -36,6 +36,9 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('ftc/{quoteType}/{uuid}', [FtcEmailTrackController::class, 'store']);
     Route::post('ftc', [FtcEmailTrackController::class, 'update']);
     Route::get('/imcrm/quote/{quoteUuid}/{quoteType}/auto-capture-failed', [ApiController::class, 'markAutoCaptureFailed']);
+    Route::post('/imcrm/home-sync-sal', [ApiController::class, 'homeSyncSAL'])->name('home-sync-sal');
+    Route::post('duplicate-entires', [ApiController::class, 'duplicateEntries']);
+    Route::post('/cache/forget', [ApiController::class, 'forgetCache']);
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
@@ -43,6 +46,7 @@ Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuote
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
+Route::post('/bird-outbound-emails-status', [ApiController::class, 'birdOutboundEmailsHook']);
 Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
 Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::class, 'stopFollowUpEvent']);
 Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
@@ -73,3 +77,7 @@ Route::prefix('v1')->group(function () {
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
 Route::get('/ken2-connectivity', [ApiController::class, 'Ken2Connectivity']);
+
+Route::get('/heath-check', function () {
+    return response()->json(['success' => true]);
+});

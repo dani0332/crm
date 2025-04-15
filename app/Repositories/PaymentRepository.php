@@ -210,6 +210,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'discount_value' => $masterPayment->discount_value,
                     'payment_methods_code' => $masterPayment->payment_methods,
                     'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                    'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
                     'updated_by' => $request->user()->id,
                 ];
 

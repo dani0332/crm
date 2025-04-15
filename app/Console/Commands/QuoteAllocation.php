@@ -65,15 +65,17 @@ class QuoteAllocation extends Command
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeTravelAllocation(QuoteTypeId::Travel, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::GROUP_MEDICAL, $to, $chunkSize, $allocationStartDate);
+
+            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
 
             // Disabled Auto Allocation for now as this feature is not needed at the moment
             /*
-            $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::CYCLE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
             */
             LoggerService::endLogging();
         } else {
@@ -127,10 +129,9 @@ class QuoteAllocation extends Command
                 continue;
             }
 
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead);
 
             info('Processing record for Quote Allocation', [
-                'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
                 'source' => $lead->source,
                 'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
@@ -174,10 +175,9 @@ class QuoteAllocation extends Command
         info("For Health - leads fetch query is : {$leads->toRawSql()}");
 
         foreach ($leads->get() as $lead) {
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead);
 
             info('Processing Health record for Quote Allocation', [
-                'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
@@ -224,10 +224,9 @@ class QuoteAllocation extends Command
                 continue;
             }
 
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead);
 
             info('Processing Travel record for Quote Allocation', [
-                'uuid' => $lead->uuid,
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
@@ -280,7 +279,7 @@ class QuoteAllocation extends Command
                 continue;
             }
 
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead);
 
             info('Processing record for Bike Quote Allocation');
             QuoteTypes::BIKE->allocate(uuid: $lead->uuid);
@@ -301,10 +300,11 @@ class QuoteAllocation extends Command
                 $q->where('quote_type_id', $quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->leadAllocationFailed()
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead);
 
             info("Processing record for Quote Allocation Quote Type: {$quoteType->value}");
             $quoteType->allocate(uuid: $lead->uuid);
