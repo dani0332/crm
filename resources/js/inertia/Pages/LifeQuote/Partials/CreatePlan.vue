@@ -260,6 +260,7 @@ watch(
               placeholder="Enter Policy Term"
               :rules="[isRequired]"
               class="w-full"
+              type="number"
             />
         </div>
 
