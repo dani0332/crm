@@ -362,6 +362,11 @@ class SendUpdateLogService
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
 
         $countChildRecords = $quoteModel::where('parent_duplicate_quote_id', $quoteObject->code)->count();
+        // for travel mix.
+        if ($quoteTypeCode == quoteTypeCode::Travel && (! is_null($quoteObject->child))) {
+            $countChildRecords += 1;
+        }
+
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
             'parent_ref_id' => $quoteObject->code,
@@ -371,27 +376,34 @@ class SendUpdateLogService
             $childLeadDetails['businessTypeOfInsurance'] = $quoteObject->business_type_of_insurance_id;
         }
 
-        if ($countChildRecords == 0) {
-
+        if ($countChildRecords == 0 || $quoteTypeCode == quoteTypeCode::Travel) {
             $countChildRecords++;
             $explodeQuoteLink = explode('/', $quoteObject->quote_link);
             $explodeQuoteLink[array_key_last($explodeQuoteLink)] = $quoteObject->code.'-'.$countChildRecords;
 
             $getRelations = $quoteObject->getRelations();
             $replicateObject = $quoteObject->replicate($modelRelationDetails['skipParentColumns']);
-            $replicateObject->fill([
+            $updateReplicateDetails = [
                 'code' => $quoteObject->code.'-'.$countChildRecords,
                 'uuid' => $quoteObject->uuid.'-'.$countChildRecords,
                 'quote_status_id' => QuoteStatusEnum::NewLead,
                 'parent_duplicate_quote_id' => $quoteObject->code,
                 'quote_link' => implode('/', $explodeQuoteLink),
                 'renewal_batch' => $quoteObject->renewal_batch ?? null,
-            ])->save();
+            ];
+
+            if ($quoteTypeCode == quoteTypeCode::Travel) {
+                $updateReplicateDetails['parent_id'] = null;
+            }
+
+            $replicateObject->fill($updateReplicateDetails)->save();
 
             foreach ($getRelations as $relation => $relationObject) {
-                $className = $modelRelationDetails['parentClass'];
-                if (method_exists($className, $relation) && $relationObject != null && ! empty($relationObject->toArray())) {
-                    $this->_createChildRelations($className, $relation, $relationObject, $modelRelationDetails, $replicateObject);
+                if (! ($quoteTypeCode == quoteTypeCode::Travel && $relation == 'child')) {
+                    $className = $modelRelationDetails['parentClass'];
+                    if (method_exists($className, $relation) && $relationObject != null && ! empty($relationObject->toArray())) {
+                        $this->_createChildRelations($className, $relation, $relationObject, $modelRelationDetails, $replicateObject);
+                    }
                 }
             }
 
@@ -464,6 +476,7 @@ class SendUpdateLogService
 
     public function getEndorsementProviderDetails($sendUpdateLog): array
     {
+        info('fn: getEndorsementProviderDetails start for Send Update - code: '.$sendUpdateLog->code);
         $planId = null;
         $quoteType = QuoteTypes::getName($sendUpdateLog->quote_type_id)->value;
         $getQuoteDetails = $this->getQuoteObjectBy($quoteType, $sendUpdateLog->quote_uuid, 'uuid');
@@ -471,8 +484,10 @@ class SendUpdateLogService
 
         if ($sendUpdateLog?->category->code == SendUpdateLogStatusEnum::CPD || $payments->isEmpty()) {
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
+            info('insuranceProviderId: '.$insuranceProviderId.' found against CPD || null payments Send Update - code: '.$sendUpdateLog->code);
         } else {
             if ($getQuoteDetails->insly_id || $getQuoteDetails->insly_migrated) {
+                info('insly_id || insly_migrated found for Send Update - code: '.$sendUpdateLog->code);
                 if (empty($sendUpdateLog->insurance_provider_id)) {
                     if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                         $getQuoteDetails->load('plan.insuranceProvider');
@@ -482,14 +497,17 @@ class SendUpdateLogService
                     }
                 } else {
                     $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
+                    info('insuranceProviderId: '.$insuranceProviderId.' found from Send Update - code: '.$sendUpdateLog->code);
                 }
             } elseif (! $payments->isEmpty()) {
                 $insuranceProviderId = $payments[0]->insurance_provider_id ?? null;
+                info('insuranceProviderId: '.$insuranceProviderId.' found against payments Send Update - code: '.$sendUpdateLog->code.', payment code'.$payments[0]->code);
                 $planId = $payments[0]->plan_id ?? null;
             } else {
                 @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id);
             }
         }
+        info('fn: getEndorsementProviderDetails end for Send Update - code: '.$sendUpdateLog->code);
 
         return [$insuranceProviderId, $planId];
     }
@@ -775,6 +793,13 @@ class SendUpdateLogService
 
                 $payment = $quote->payments->first();
                 $splitPayments = $payment->paymentSplits;
+
+                if ($payment == null || $splitPayments->first() === null) {
+                    $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments);
+                    info('fn:preparedDetailsForEndorsement - '.($isNewPaymentStructure ? 'Payment structure migrated - Payment ' : 'Payment not migrated. Split payment ').' not found against main lead. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
+
+                    return ['status' => false, 'message' => 'Payment not found against Main Lead'];
+                }
             }
 
             $payment->fill([
@@ -847,6 +872,10 @@ class SendUpdateLogService
         $quoteModelObject = $this->getModelObject($sendUpdateRequest->quoteType);
         $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
         $preparedDetailsForEndorsement = $this->preparedDetailsForEndorsement($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
+
+        if (isset($preparedDetailsForEndorsement['status']) && ! $preparedDetailsForEndorsement['status']) {
+            return ['status' => false, 'message' => $preparedDetailsForEndorsement['message']];
+        }
 
         $paymentInsurerInvoiceNumber = ($preparedDetailsForEndorsement['payment']->insurer_tax_number ?? $preparedDetailsForEndorsement['payment']->insurer_commmission_invoice_number) ?? null;
         if (empty($paymentInsurerInvoiceNumber)) {
@@ -1441,12 +1470,14 @@ class SendUpdateLogService
 
     public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
     {
+        info('fn: getProviderDetails start for Send Update - code: '.$quote->code);
         $insuranceProviderId = $plan_id = null;
         $isCommercial = false;
         if ($quoteTypeId == QuoteTypeId::Car) {
             $isCommercial = app(LeadAllocationService::class)->isCommercialVehicles($quote);
         }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
+            info('fn: getProviderDetails end for Send Update - code: '.$quote->code.', in case of creation legacy policy.');
 
             return [$quote?->insurance_provider_id, $plan_id];
         }
@@ -1466,6 +1497,7 @@ class SendUpdateLogService
         } else {
             $insuranceProviderId = $quote->insurance_provider_id ?? null;
         }
+        info('fn: getProviderDetails end for Send Update - code: '.$quote->code);
 
         return [$insuranceProviderId, $plan_id];
     }
@@ -1603,5 +1635,10 @@ class SendUpdateLogService
         }
 
         return '';
+    }
+
+    public function isReversalInvoiceEndorsement($taxInvoiceNumber)
+    {
+        return SendUpdateLog::where('insurer_tax_invoice_number', $taxInvoiceNumber)->first();
     }
 }

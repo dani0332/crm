@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\CarPlan;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\DB;
 use PDF;
@@ -214,27 +215,42 @@ class BikeQuoteService extends BaseService
             PaymentStatusEnum::DRAFT,
         ];
 
+        $quoteStatuses = [
+            QuoteStatusEnum::NewLead,
+            QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+            QuoteStatusEnum::PaymentLinkInprogress,
+            QuoteStatusEnum::PaymentLinkSentToCustomer,
+            QuoteStatusEnum::Quoted,
+            QuoteStatusEnum::FollowedUp,
+            QuoteStatusEnum::PaymentPending,
+            QuoteStatusEnum::SentForTransactionApproval,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::Stale,
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+        ];
+
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (auth()->user()->hasRole(RolesEnum::BikeAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-                info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+                LoggerService::info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
 
                 return true;
             } elseif (auth()->user()->hasRole(RolesEnum::BikeManager) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-                info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid);
+                LoggerService::info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid);
 
                 return true;
             }
         }
 
         if (auth()->user()->hasAnyRole([RolesEnum::BikeManager, RolesEnum::BikeAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-            if (in_array($quote->payment_status_id, $paymentStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
-                info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+            if (in_array($quote->payment_status_id, $paymentStatuses) || in_array($quote->quote_status_id, $quoteStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
+                LoggerService::info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
                 return true;
             }
         }
 
-        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+        LoggerService::warning($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
 
         return 'Plan Modification is not allowed';
     }

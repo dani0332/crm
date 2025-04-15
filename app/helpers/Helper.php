@@ -3,6 +3,7 @@
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -515,6 +516,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::JETSKI->value,
             QuoteTypes::PET->value,
             QuoteTypes::YACHT->value,
+            QuoteTypes::HOME->value,
         ]);
     }
 }
@@ -690,9 +692,13 @@ if (! function_exists('addDaysExcludeWeekend')) {
 }
 
 if (! function_exists('getIMLogo')) {
-    function getIMLogo($isPDF = false)
+    function getIMLogo($isPDF = false, $latest = false)
     {
         $imLogo = 'images/logo-new.png';
+
+        if ($latest) {
+            $imLogo = 'images/im_logo_23k-hi.png';
+        }
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
@@ -1012,7 +1018,7 @@ if (! function_exists('getAppStorageValueByKey')) {
             return $query->value;
         };
 
-        if (! $useCache) {
+        if (! $useCache || config('constants.APP_ENV') !== EnvEnum::PRODUCTION) {
             return $getStorageValue();
         }
 
@@ -1532,7 +1538,7 @@ if (! function_exists('getInsuranceProvider')) {
     function getInsuranceProvider($payment, $quoteType, $quote = null)
     {
         $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value];
         $planRelationName = strtolower($quoteType).'Plan';
 
         //        Reminder:: Add Commercial vehicle logic for fetch correct provider

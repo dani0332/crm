@@ -9,6 +9,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 
 class CapiRequestService
 {
@@ -78,7 +79,7 @@ class CapiRequestService
                         ]
                     );
 
-                    info('handleCarResponse - leadId : '.$carQuote->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
+                    LoggerService::info('handleCarResponse - leadId : '.$carQuote->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                 }
             }
         }

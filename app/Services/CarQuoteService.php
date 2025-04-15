@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Builders\CarQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
@@ -9,7 +10,6 @@ use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -26,6 +26,7 @@ use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -34,13 +35,11 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use PDF;
 
 class CarQuoteService extends BaseService
 {
     private $query;
-    private $exportQuery;
     protected $httpService;
     protected $childUserIds = [];
     protected $leadAllocationService;
@@ -51,18 +50,211 @@ class CarQuoteService extends BaseService
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService,
+    public function __construct(
+        HttpRequestService $httpService,
         LeadAllocationService $leadAllocationService,
         SendEmailCustomerService $sendEmailCustomerService,
         ApplicationStorageService $applicationStorageService,
-        ActivitiesService $activityService)
-    {
+        ActivitiesService $activityService,
+        protected CarQuoteQueryBuilder $carQuoteQueryBuilder
+    ) {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->activityService = $activityService;
-        $this->query = DB::table('car_quote_request as cqr')
+    }
+
+    public function saveCarQuote(Request $request)
+    {
+        $dataArr = [
+            'firstName' => $request->first_name,
+            'lastName' => $request->last_name,
+            'email' => $request->email,
+            'address' => $request->address,
+            'mobileNo' => $request->mobile_no,
+            'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
+            'dob' => $request->dob,
+            'nationalityId' => $request->nationality_id,
+            'uaeLicenseHeldForId' => $request->uae_license_held_for_id,
+            'backHomeLicenseHeldForId' => $request->back_home_license_held_for_id,
+            'yearOfManufacture' => $request->year_of_manufacture,
+            'emirateOfRegistrationId' => $request->emirate_of_registration_id,
+            'carTypeInsuranceId' => $request->car_type_insurance_id,
+            'claimHistoryId' => $request->claim_history_id,
+            'hasNcdSupportingDocuments' => $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
+            'additionalNotes' => $request->additional_notes,
+            'carValue' => $request->car_value_tier,
+            'carValueTier' => $request->car_value_tier,
+            'seatCapacity' => $request->seat_capacity,
+            'cylinder' => $request->cylinder,
+            'vehicleTypeId' => $request->vehicle_type_id,
+            'trim' => $request->trim,
+            'premium' => $request->premium,
+            'carMakeId' => $request->car_make_id,
+            'carModelId' => $request->car_model_id, // ID
+            'currentlyInsuredWith' => $request->currently_insured_with,
+            'source' => config('constants.SOURCE_NAME'),
+            'referenceUrl' => config('constants.APP_URL'),
+            'gender' => $request->gender ?? null,
+            'chassisNumber' => $request->chassis_number,
+        ];
+
+        if (! Auth::user()->hasRole('ADMIN')) {
+            $dataArr['advisorId'] = Auth::user()->id;
+        }
+        LoggerService::info('Create triggered from IMCRM for Car Quote request with email : '.$request->email.' and sending request to CAPI');
+
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr, CarQuote::class);
+    }
+
+    public function updateCarQuote(Request $request, $id)
+    {
+        $carQuote = CarQuote::where('uuid', $id)->first();
+
+        $oldCarValue = $carQuote->car_value;
+        $oldDob = $carQuote->dob;
+        $oldBodyType = $carQuote->vehicle_type_id;
+        LoggerService::info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
+
+        if ($request->first_name) {
+            $carQuote->first_name = $request->first_name;
+        }
+        if ($request->last_name) {
+            $carQuote->last_name = $request->last_name;
+        }
+        if ($request->dob) {
+            $carQuote->dob = $request->dob;
+        }
+        if ($request->company_name) {
+            $carQuote->company_name = $request->company_name;
+        }
+        if ($request->company_address) {
+            $carQuote->company_address = $request->company_address;
+        }
+        if ($request->nationality_id) {
+            $carQuote->nationality_id = $request->nationality_id;
+        }
+        if ($request->uae_license_held_for_id) {
+            $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
+        }
+        if ($request->back_home_license_held_for_id) {
+            $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
+        }
+        if ($request->year_of_manufacture) {
+            $carQuote->year_of_manufacture = $request->year_of_manufacture;
+        }
+        if ($request->emirate_of_registration_id) {
+            $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
+        }
+        if ($request->car_type_insurance_id) {
+            $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
+        }
+        if ($request->claim_history_id) {
+            $carQuote->claim_history_id = $request->claim_history_id;
+        }
+        if ($request->has_ncd_supporting_documents) {
+            $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
+        }
+        if ($request->premium) {
+            $carQuote->premium = $request->premium;
+        }
+        if ($request->car_value) {
+            $carQuote->car_value = $request->car_value;
+        }
+        if ($request->seat_capacity) {
+            $carQuote->seat_capacity = $request->seat_capacity;
+        }
+        if ($request->cylinder) {
+            $carQuote->cylinder = $request->cylinder;
+        }
+        if ($request->vehicle_type_id) {
+            $carQuote->vehicle_type_id = $request->vehicle_type_id;
+        }
+        if ($request->additional_notes) {
+            $carQuote->additional_notes = $request->additional_notes;
+        }
+        if ($request->car_make_id) {
+            $carQuote->car_make_id = $request->car_make_id;
+        }
+        if ($request->car_model_id) {
+            $carQuote->car_model_id = $request->car_model_id;
+        }
+        if ($request->currently_insured_with) {
+            $carQuote->currently_insured_with = $request->currently_insured_with;
+        }
+        if ($request->gender) {
+            $carQuote->gender = $request->gender;
+        }
+        $carQuote->quote_updated_at = Carbon::now();
+        $carQuote->is_quote_locked = true;
+        if ($request->trim) {
+            $carQuote->car_model_detail_id = $request->trim;
+        }
+        if ($request->renewal_batch) {
+            $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
+        }
+        if ($request->previous_quote_policy_number) {
+            $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
+        }
+        if ($request->previous_policy_expiry_date) {
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
+        }
+
+        if ($request->car_value_tier) {
+            $carQuote->car_value_tier = $request->car_value_tier;
+
+            $originalValue = $carQuote->car_value; // taking backup of original car_value
+
+            $carQuote->car_value = $request->car_value_tier; // adding value tier because tier function uses car_value
+
+            $selectedTier = $this->leadAllocationService->getTierForValue($carQuote);
+
+            $carQuote->car_value = $originalValue; // adding back the original value since tier is now selected.
+
+            $carQuote->tier_id = $selectedTier->id;
+            $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+        }
+
+        $carQuote->updated_by = auth()->user()->email;
+        $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
+
+        if ($deleteValuationResponse) {
+            $carQuote->save();
+
+            $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
+            $carQuoteDetails->chassis_number = $request->chassis_number;
+            if ($carQuoteDetails->isDirty()) {
+                $carQuoteDetails->chassis_number = $request->chassis_number;
+                $carQuoteDetails->save();
+            }
+
+            if (isset($request->gender)) {
+                Customer::where('id', $carQuote->customer_id)->update(['gender' => $request->gender]);
+            }
+
+            $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';
+            // update embedded products list
+            if (
+                (isset($request->dob) && $oldFormattedDate != $request->dob) ||
+                (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)
+            ) {
+                Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
+            }
+
+            if (isset($request->return_to_view)) {
+                return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
+            }
+        } else {
+            return false;
+        }
+    }
+
+    public function getEntity($id)
+    {
+        return DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
                 'cqr.id',
@@ -218,7 +410,9 @@ class CarQuoteService extends BaseService
                         WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                         ELSE insurer_aml_status
                     END AS insurer_aml_status_display
-                ')
+                '),
+                'cqr.email',
+                'cqr.mobile_no'
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -264,262 +458,9 @@ class CarQuoteService extends BaseService
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
-            ->groupBy('cqr.id');
-
-        $this->exportQuery = DB::table('car_quote_request as cqr')
-            ->select(
-                'cqr.first_name',
-                'cqr.last_name',
-                'cqr.dob as dob',
-                'cqr.car_value',
-                'cqr.additional_notes',
-                'cqr.year_of_manufacture',
-                'cqr.code',
-                'cqr.is_ecommerce',
-                'cqr.premium',
-                'cqr.source',
-                'cqr.created_at as created_at',
-                'cqr.updated_at as updated_at',
-                'n.TEXT AS nationality_id_text',
-                'cqr.policy_number',
-                'cqr.policy_expiry_date',
-                'cqr.created_by',
-                'cqr.updated_by',
-                'ulhf.TEXT AS uae_license_held_for_id_text',
-                'cmake.TEXT AS car_make_id_text',
-                'cmodel.TEXT AS car_model_id_text',
-                'ch.TEXT AS claim_history_id_text',
-                'u.name AS advisor_id_text',
-                'ps.text AS payment_status_id_text',
-                'qs.text AS quote_status_id_text',
-                'cqrd.next_followup_date as next_followup_date',
-                'vt.text as vehicle_type_id_text',
-                'cqr.currently_insured_with as currently_insured_with_text',
-                'ls.text as lost_reason',
-                'cqr.is_modified',
-                'cqr.is_gcc_standard',
-                'cqr.current_insurance_status',
-                'cqr.year_of_first_registration',
-                'cqr.quote_link',
-                'cqrd.advisor_assigned_date as advisor_assigned_date',
-                'cqr.dob AS customer_age',
-                't.name as tier_id_text',
-                'qvc.visit_count as visit_count',
-                't.cost_per_lead as cost_per_lead',
-                'qb.name as quote_batch_id_text',
-                'cqr.car_value_tier',
-                'cqr.insly_migrated',
-            )
-            ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
-            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
-            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
-            ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
-            ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
-            ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
-            ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
-            ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
-            ->leftJoin('tiers as t', 't.id', '=', 'cqr.tier_id')
-            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
-            ->leftJoin('quote_view_count as qvc', function ($join) {
-                $join->on('qvc.quote_id', 'cqr.id');
-                $join->where('qvc.quote_type_id', QuoteTypeId::Car);
-                $join->on('qvc.user_id', 'cqr.advisor_id');
-            });
-    }
-
-    public function saveCarQuote(Request $request)
-    {
-        $dataArr = [
-            'firstName' => $request->first_name,
-            'lastName' => $request->last_name,
-            'email' => $request->email,
-            'address' => $request->address,
-            'mobileNo' => $request->mobile_no,
-            'companyName' => $request->company_name,
-            'companyAddress' => $request->company_address,
-            'dob' => $request->dob,
-            'nationalityId' => $request->nationality_id,
-            'uaeLicenseHeldForId' => $request->uae_license_held_for_id,
-            'backHomeLicenseHeldForId' => $request->back_home_license_held_for_id,
-            'yearOfManufacture' => $request->year_of_manufacture,
-            'emirateOfRegistrationId' => $request->emirate_of_registration_id,
-            'carTypeInsuranceId' => $request->car_type_insurance_id,
-            'claimHistoryId' => $request->claim_history_id,
-            'hasNcdSupportingDocuments' => $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
-            'additionalNotes' => $request->additional_notes,
-            'carValue' => $request->car_value_tier,
-            'carValueTier' => $request->car_value_tier,
-            'seatCapacity' => $request->seat_capacity,
-            'cylinder' => $request->cylinder,
-            'vehicleTypeId' => $request->vehicle_type_id,
-            'trim' => $request->trim,
-            'premium' => $request->premium,
-            'carMakeId' => $request->car_make_id,
-            'carModelId' => $request->car_model_id, // ID
-            'currentlyInsuredWith' => $request->currently_insured_with,
-            'source' => config('constants.SOURCE_NAME'),
-            'referenceUrl' => config('constants.APP_URL'),
-            'gender' => $request->gender ?? null,
-            'chassisNumber' => $request->chassis_number,
-        ];
-
-        if (! Auth::user()->hasRole('ADMIN')) {
-            $dataArr['advisorId'] = Auth::user()->id;
-        }
-        info('Create triggered from IMCRM for Car Quote request with email : '.$request->email.' and sending request to CAPI');
-
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr, CarQuote::class);
-    }
-
-    public function updateCarQuote(Request $request, $id)
-    {
-        $carQuote = CarQuote::where('uuid', $id)->first();
-
-        $oldCarValue = $carQuote->car_value;
-        $oldDob = $carQuote->dob;
-        $oldBodyType = $carQuote->vehicle_type_id;
-        info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
-
-        if ($request->first_name) {
-            $carQuote->first_name = $request->first_name;
-        }
-        if ($request->last_name) {
-            $carQuote->last_name = $request->last_name;
-        }
-        if ($request->dob) {
-            $carQuote->dob = $request->dob;
-        }
-        if ($request->company_name) {
-            $carQuote->company_name = $request->company_name;
-        }
-        if ($request->company_address) {
-            $carQuote->company_address = $request->company_address;
-        }
-        if ($request->nationality_id) {
-            $carQuote->nationality_id = $request->nationality_id;
-        }
-        if ($request->uae_license_held_for_id) {
-            $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
-        }
-        if ($request->back_home_license_held_for_id) {
-            $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
-        }
-        if ($request->year_of_manufacture) {
-            $carQuote->year_of_manufacture = $request->year_of_manufacture;
-        }
-        if ($request->emirate_of_registration_id) {
-            $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
-        }
-        if ($request->car_type_insurance_id) {
-            $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
-        }
-        if ($request->claim_history_id) {
-            $carQuote->claim_history_id = $request->claim_history_id;
-        }
-        if ($request->has_ncd_supporting_documents) {
-            $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
-        }
-        if ($request->premium) {
-            $carQuote->premium = $request->premium;
-        }
-        if ($request->car_value) {
-            $carQuote->car_value = $request->car_value;
-        }
-        if ($request->seat_capacity) {
-            $carQuote->seat_capacity = $request->seat_capacity;
-        }
-        if ($request->cylinder) {
-            $carQuote->cylinder = $request->cylinder;
-        }
-        if ($request->vehicle_type_id) {
-            $carQuote->vehicle_type_id = $request->vehicle_type_id;
-        }
-        if ($request->additional_notes) {
-            $carQuote->additional_notes = $request->additional_notes;
-        }
-        if ($request->car_make_id) {
-            $carQuote->car_make_id = $request->car_make_id;
-        }
-        if ($request->car_model_id) {
-            $carQuote->car_model_id = $request->car_model_id;
-        }
-        if ($request->currently_insured_with) {
-            $carQuote->currently_insured_with = $request->currently_insured_with;
-        }
-        if ($request->gender) {
-            $carQuote->gender = $request->gender;
-        }
-        $carQuote->quote_updated_at = Carbon::now();
-        $carQuote->is_quote_locked = true;
-        if ($request->trim) {
-            $carQuote->car_model_detail_id = $request->trim;
-        }
-        if ($request->renewal_batch) {
-            $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
-        }
-        if ($request->previous_quote_policy_number) {
-            $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
-        }
-        if ($request->previous_policy_expiry_date) {
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
-        }
-
-        if ($request->car_value_tier) {
-            $carQuote->car_value_tier = $request->car_value_tier;
-
-            $originalValue = $carQuote->car_value; // taking backup of original car_value
-
-            $carQuote->car_value = $request->car_value_tier; // adding value tier because tier function uses car_value
-
-            $selectedTier = $this->leadAllocationService->getTierForValue($carQuote);
-
-            $carQuote->car_value = $originalValue; // adding back the original value since tier is now selected.
-
-            $carQuote->tier_id = $selectedTier->id;
-            $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-        }
-
-        $carQuote->updated_by = auth()->user()->email;
-        $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
-
-        if ($deleteValuationResponse) {
-            $carQuote->save();
-
-            $carQuoteDetails = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
-            $carQuoteDetails->chassis_number = $request->chassis_number;
-            if ($carQuoteDetails->isDirty()) {
-                $carQuoteDetails->chassis_number = $request->chassis_number;
-                $carQuoteDetails->save();
-            }
-
-            if (isset($request->gender)) {
-                Customer::where('id', $carQuote->customer_id)->update(['gender' => $request->gender]);
-            }
-
-            $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';
-            // update embedded products list
-            if (
-                (isset($request->dob) && $oldFormattedDate != $request->dob) ||
-                (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)
-            ) {
-                Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
-            }
-
-            if (isset($request->return_to_view)) {
-                return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
-            }
-        } else {
-            return false;
-        }
-    }
-
-    public function getEntity($id)
-    {
-        return $this->query->addSelect(['cqr.email', 'cqr.mobile_no'])->where('cqr.uuid', $id)->first();
+            ->groupBy('cqr.id')
+            ->where('cqr.uuid', $id)
+            ->first();
     }
 
     public function updateChildRecord($id)
@@ -535,7 +476,7 @@ class CarQuoteService extends BaseService
             ]
         );
 
-        info('updateChildRecord - leadId : '.$id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
+        LoggerService::info('updateChildRecord - leadId : '.$id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
 
         return $oldAdvisorAssignedDate;
     }
@@ -557,6 +498,7 @@ class CarQuoteService extends BaseService
             PaymentStatusEnum::DISPUTED,
             PaymentStatusEnum::FAILED,
             PaymentStatusEnum::DRAFT,
+            PaymentStatusEnum::PAYMENT_LINK_REQUESTED,
         ];
 
         if ($paymentEntityModel->payments) {
@@ -899,17 +841,6 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
-    private function parseDate($date, $isStartOfDay)
-    {
-        if ($date && $date != '') {
-            if ($isStartOfDay) {
-                return Carbon::parse($date)->startOfDay()->toDateTimeString();
-            } else {
-                return Carbon::parse($date)->endOfDay()->toDateTimeString();
-            }
-        }
-    }
-
     public function walkTree($userId)
     {
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
@@ -938,219 +869,7 @@ class CarQuoteService extends BaseService
 
     public function getGridData()
     {
-        return CarQuote::select([
-            'id',
-            'uuid',
-            'code',
-            'first_name',
-            'last_name',
-            'dob',
-            'car_value',
-            'car_value_tier',
-            'additional_notes',
-            'nationality_id',
-            'year_of_manufacture',
-            'year_of_first_registration',
-            'is_ecommerce',
-            'sic_advisor_requested',
-            'premium',
-            'source',
-            'paid_at',
-            'payment_gateway',
-            'uae_license_held_for_id',
-            'quote_batch_id',
-            'car_make_id',
-            'car_model_id',
-            'vehicle_type_id',
-            'current_insurance_status',
-            'currently_insured_with',
-            'claim_history_id',
-            'previous_policy_expiry_date',
-            'quote_status_id',
-            'payment_status_id',
-            'advisor_id',
-            'policy_number',
-            'is_gcc_standard',
-            'is_modified',
-            'quote_link',
-            'previous_quote_policy_number',
-            'previous_quote_policy_premium',
-            'renewal_batch',
-            'assignment_type',
-            'car_type_insurance_id',
-            'tier_id',
-            'created_at',
-            'updated_at',
-            'updated_by',
-        ])->with([
-            'payment:id,paymentable_id,paymentable_type,authorized_at',
-            'batch:id,name',
-            'nationality:id,text',
-            'uae_license_held_for_id:id,text',
-            'claim_history_id:id,text',
-            'carMake:id,text',
-            'carModel:id,text',
-            'vehicleType:id,text',
-            'carQuoteRequestDetail',
-            'carQuoteRequestDetail.lostReason',
-            'tier:id,name,cost_per_lead',
-            'quote_status_id:id,text',
-            'paymentStatus:id,text',
-            'quoteViewCount:quote_id,quote_type_id,user_id,visit_count',
-            'advisor:id,name',
-            'carTypeInsurance:id,text',
-        ])
-            ->when(
-                ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
-                fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]),
-            )
-            ->when(request('code'), function ($query) {
-                $query->where('code', request('code'));
-            })
-            ->when(request('quote_batch_id'), function ($query) {
-                $query->where('quote_batch_id', request('quote_batch_id'));
-            })
-            ->when(request('first_name'), function ($query) {
-                $query->where('first_name', 'like', '%'.request('first_name').'%');
-            })
-            ->when(request('last_name'), function ($query) {
-                $query->where('last_name', 'like', '%'.request('last_name').'%');
-            })
-            ->when(! request()->filled('code') && ! request()->filled('email') && ! request()->filled('mobile_no') && ! request()->filled('created_at') && ! request()->filled('payment_due_date') && ! request()->filled('booking_date') && ! request()->filled('previous_quote_policy_number') && ! request()->filled('renewal_batch') && ! request()->filled('insurer_tax_invoice_number') && ! request()->filled('insurer_commission_tax_invoice_number') && ! request()->filled('created_at_start'), function ($query) {
-                $query->whereBetween('created_at', [$this->parseDate(now(), true), $this->parseDate(now(), false)]);
-            })
-            ->when(empty(request()->email) && empty(request()->code) && empty(request()->renewal_batch) && empty(request()->quote_batch_id) && empty(request()->payment_due_date) && empty(request()->booking_date) && ! isset(request()->previous_quote_policy_number) && ! isset(request()->insurer_tax_invoice_number) && ! isset(request()->insurer_commission_tax_invoice_number) && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
-                $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
-            })
-            ->when(request('email'), function ($query) {
-                $query->where('email', request('email'));
-            })
-            ->when(request('mobile_no'), function ($query) {
-                $query->where('mobile_no', request('mobile_no'));
-            })
-            ->when(request()->filled('advisor_assigned_date') && ! request()->filled('advisor_assigned_date_end'), function ($query) {
-                $query->whereIn('id', function ($query) {
-                    $query->select('car_quote_request_id')
-                        ->from('car_quote_request_detail')
-                        ->where('advisor_assigned_date', '>=', $this->parseDate(request('advisor_assigned_date'), true));
-                });
-            })
-            ->when(! request()->filled('advisor_assigned_date') && request()->filled('advisor_assigned_date_end'), function ($query) {
-                $query->whereIn('id', function ($query) {
-                    $query->select('car_quote_request_id')
-                        ->from('car_quote_request_detail')
-                        ->where('advisor_assigned_date', '<=', $this->parseDate(request('advisor_assigned_date_end'), false));
-                });
-            })
-            ->when(request()->filled('advisor_assigned_date') && request()->filled('advisor_assigned_date_end'), function ($query) {
-                $query->whereIn('id', function ($query) {
-                    $query->select('car_quote_request_id')
-                        ->from('car_quote_request_detail')
-                        ->whereBetween('advisor_assigned_date', [$this->parseDate(request('advisor_assigned_date'), true), $this->parseDate(request('advisor_assigned_date_end'), false)]);
-                });
-            })
-            ->when(request('payment_status_id'), function ($query) {
-                $query->where('payment_status_id', request('payment_status_id'));
-            })
-            ->when(request('is_ecommerce'), function ($query) {
-                $query->where('is_ecommerce', request('is_ecommerce'));
-            })
-            ->when(request('quote_status_id') && is_array(request('quote_status_id')), function ($query) {
-                $query->whereIn('quote_status_id', request('quote_status_id'));
-            })
-            ->when(request('insurer_aml_status') && is_array(request('insurer_aml_status')), function ($query) {
-                $query->whereIn('insurer_aml_status', request('insurer_aml_status'));
-            })
-            ->when(request('tier_id') && is_array(request('tier_id')), function ($query) {
-                $query->whereIn('tier_id', request('tier_id'));
-            })
-            ->when(request('vehicle_type_id'), function ($query) {
-                $query->where('vehicle_type_id', request('vehicle_type_id'));
-            })
-            ->when(request('car_type_insurance_id'), function ($query) {
-                $query->where('car_type_insurance_id', request('car_type_insurance_id'));
-            })
-            ->when(request('renewal_batch'), function ($query) {
-                $query->where('renewal_batch', request('renewal_batch'));
-            })
-            ->when(request('currently_insured_with'), function ($query) {
-                $query->where('currently_insured_with', request('currently_insured_with'));
-            })
-            ->when(request('previous_quote_policy_number'), function ($query) {
-                $query->where('previous_quote_policy_number', request('previous_quote_policy_number'));
-                $query->orWhere('policy_number', request('previous_quote_policy_number'));
-            })
-            ->when(request()->filled('policy_expiry_date'), function ($query) {
-                $query->where('previous_policy_expiry_date', '>=', $this->parseDate(request('policy_expiry_date'), true));
-            })
-            ->when(request()->filled('policy_expiry_date_end'), function ($query) {
-                $query->where('previous_policy_expiry_date', '<=', $this->parseDate(request('policy_expiry_date_end'), false));
-            })
-            ->when(request('assignment_type') && strtolower(request('assignment_type')) != 'all', function ($query) {
-                $query->where('assignment_type', request('assignment_type'));
-            })
-            ->when(request('teams') && is_array(request('teams')), function ($query) {
-                $query->whereIn('advisor_id', function ($query) {
-                    $query->select('user_id')
-                        ->from('user_team')
-                        ->whereIn('team_id', request('teams'));
-                });
-            })
-            ->when(request('advisor_id') && is_array(request('advisor_id')), function ($query) {
-                if (in_array('-1', request('advisor_id')) || in_array(-1, request('advisor_id'))) {
-                    $query->whereNull('advisor_id');
-                } else {
-                    $query->whereIn('advisor_id', request('advisor_id'));
-                }
-            })
-            ->when(request('transaction_approved_dates'), function ($query) {
-                [$start, $end] = request('transaction_approved_dates');
-
-                $start = $this->parseDate($start, true);
-                $end = $this->parseDate($end, false);
-
-                $query->whereBetween('transaction_approved_at', [$start, $end]);
-            })
-            ->filterBySegment(request('segment_filter'), QuoteTypeId::Car)
-            ->when(request('sic_advisor_requested') && strtolower(request('sic_advisor_requested')) != 'all', function ($query) {
-                $query->where('sic_advisor_requested', request('sic_advisor_requested'));
-            })
-            ->when(request('payment_due_date'), function ($query) {
-                [$start, $end] = request('payment_due_date');
-
-                $start = $this->parseDate($start, true);
-                $end = $this->parseDate($end, false);
-
-                $query->whereIn('id', function ($q) use ($start, $end) {
-                    $q->select('paymentable_id')
-                        ->from('payments')
-                        ->where('paymentable_type', CarQuote::class)
-                        ->whereBetween('payment_due_date', [$start, $end]);
-                });
-            })
-            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
-                $query->whereHas('payments', function ($q) {
-                    $q->where('insurer_tax_number', request('insurer_tax_invoice_number'));
-                });
-            })
-            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
-                $query->whereHas('payments', function ($q) {
-                    $q->where('insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
-                });
-            })
-            ->when(request('booking_date'), function ($query) {
-                [$start, $end] = request('booking_date');
-
-                $start = $this->parseDate($start, true);
-                $end = $this->parseDate($end, false);
-
-                $query->whereBetween('policy_booking_date', [$start, $end]);
-            })
-            ->when(
-                request()->filled('sortBy'),
-                fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
-                fn ($q) => $q->orderBy('created_at', 'DESC'),
-            )
+        return $this->carQuoteQueryBuilder->processGridData()
             ->where(function ($query) {
                 if (Auth::user()->hasRole(RolesEnum::CarManager)) {
                     $this->walkTree(Auth::id());
@@ -1162,267 +881,6 @@ class CarQuoteService extends BaseService
                     $query->where('advisor_id', Auth::id());
                 }
             });
-    }
-
-    public function getGridDataOld($model = null, $request = null)
-    {
-        if ($model == null && $request == null) {
-            $searchProperties = $this->fillModelSearchProperties();
-            $request = request();
-        } else {
-            $searchProperties = $model->searchProperties;
-        }
-
-        if (isset($request->created_at_start)) {
-            $request['created_at'] = $request->created_at_start;
-        }
-
-        $this->addLeadViewEligibilityCheck();
-
-        $this->applyFilters($request, $searchProperties);
-
-        return $this->applySortOrder($request);
-    }
-
-    public function applyFilters($request, $searchProperties)
-    {
-        if (
-            empty($request->email) && empty($request->code) && empty($request->first_name) &&
-            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
-        ) {
-            $this->query->whereNotIn('cqr.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-        }
-
-        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '' && isset($request->advisor_assigned_date_end) && $request->advisor_assigned_date_end != ''
-        ) {
-            $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
-            $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
-            $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
-            $dateFrom = $this->parseDate($request['policy_expiry_date'], true);
-            $dateTo = $this->parseDate($request['policy_expiry_date_end'], false);
-            $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-            $dateFrom = $this->parseDate($request['next_followup_date'], true);
-            $dateTo = $this->parseDate($request['next_followup_date_end'], false);
-            $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        if (! $request->code && ! $request->email && ! $request->mobile_no && ! $request->created_at && ! $request->payment_due_date && ! $request->booking_date && ! $request->previous_quote_policy_number && ! $request->renewal_batch && ! $request->insurer_tax_invoice_number && ! $request->insurer_commission_tax_invoice_number) {
-            $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
-        }
-        if (
-            in_array('created_at', $searchProperties)
-            && isset($request->created_at) && $request->created_at != ''
-            && empty($request->email)
-            && empty($request->code)
-            && empty($request->renewal_batch)
-            && empty($request->quote_batch_id)
-            && empty($request->payment_due_date)
-            && empty($request->booking_date)
-            && ! isset($request->previous_quote_policy_number)
-            && ! isset($request->insurer_tax_invoice_number)
-            && ! isset($request->insurer_commission_tax_invoice_number)
-        ) {
-            $dateFrom = $this->parseDate($request['created_at'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], false);
-            $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
-        }
-
-        if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
-            CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr', QuoteTypeId::Car);
-        }
-        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
-
-            $this->query->where('cqr.sic_advisor_requested', $request->sic_advisor_requested);
-        }
-
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
-            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
-        }
-
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
-            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
-        }
-
-        if ($request->transaction_approved_dates) {
-
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-            $freshLoad = ! isset($request->page);
-            $startDate = isset($request->transaction_approved_dates) ?
-                Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
-
-            $endDate = isset($request->transaction_approved_dates) ?
-                Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
-
-            $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
-        }
-        if (! empty($request->teams) && is_array($request->teams)) {
-            $this->query->whereIn('team.id', $request->teams);
-        }
-
-        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where(function ($query) use ($request) {
-                $query->where('cqr.policy_number', $request->previous_quote_policy_number)
-                    ->orWhere('cqr.previous_quote_policy_number', $request->previous_quote_policy_number);
-            });
-        }
-
-        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
-            $this->query->whereIn('cqr.insurer_aml_status', $request->insurer_aml_status);
-        }
-
-        $this->adjustQueryByDateFilters($this->query, 'cqr');
-
-        foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at' && $item != 'policy_expiry_date' && $item != 'advisor_assigned_date') {
-                if ($request[$item] == 'null') {
-                    $this->query->whereNull($item);
-                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if (in_array('-1', $request[$item]) || in_array(-1, $request[$item])) {
-                        $this->query->whereNull('cqr.advisor_id');
-                    } else {
-                        $this->query->whereIn('cqr.advisor_id', $request[$item]);
-                    }
-                } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->whereIn('cqr.quote_status_id', $request[$item]);
-                } elseif ($item == 'assignment_type' && ! empty($request[$item])) {
-                    if (is_array($request[$item])) {
-                        $this->query->whereIn('cqr.assignment_type', $request[$item]);
-                    } elseif ($request[$item] !== 'all') {
-                        $this->query->where('cqr.assignment_type', $request[$item]);
-                    }
-                } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->whereIn('cqr.tier_id', $request[$item]);
-                } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->whereIn('qb.id', $request[$item]);
-                } else {
-                    $searchedValue = preg_match("/\b".'Yes'."\b/i", $request[$item]) || preg_match("/\b".'No'."\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
-                    if ($item == 'policy_number') {
-                        $this->query->where('cqr.previous_quote_policy_number', $searchedValue);
-                    } elseif ($item == 'show_renewal_upload_leads') {
-                        if ($request[$item] == 'Yes') {
-                            $this->query->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD);
-                        } else {
-                            $this->query->where('cqr.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
-                        }
-                    } else {
-                        if ($item == 'email' && $searchedValue == '0') {
-                            continue;
-                        }
-                        $this->query->where($this->getQuerySuffix($item).'.'.$item, $searchedValue);
-                    }
-                }
-            }
-        }
-
-        $wheres = collect($this->query->wheres)->pluck('', 'column')->toArray();
-        if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch', 'insurer_tax_invoice_number', 'insurer_commission_tax_invoice_number'])) {
-            $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
-        }
-    }
-
-    public function applySortOrder($request)
-    {
-        if (isset($request->sortBy) && $request->sortBy != '') {
-            return $this->query->orderBy($request->sortBy, $request->sortType);
-        } else {
-            return $this->query->orderBy('cqr.created_at', 'DESC');
-        }
-    }
-
-    private function addLeadViewEligibilityCheck()
-    {
-        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
-            $this->walkTree(Auth::user()->id);
-            $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
-        } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
-            $this->walkTree(Auth::user()->id);
-            $this->query->where(function ($query) {
-                return $query->whereIn('cqr.advisor_id', $this->childUserIds)->OrWhereNull('cqr.advisor_id');
-            });
-        } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
-            $this->query->where('cqr.advisor_id', Auth::user()->id);
-        }
-    }
-
-    private function getSortingColumnNameWithPrefix($columnName)
-    {
-        switch ($columnName) {
-            case 'created_at':
-                return 'cqr.created_at';
-                break;
-            case 'updated_at':
-                return 'cqr.updated_at';
-                break;
-            case 'next_followup_date':
-                return 'cqrd.next_followup_date';
-                break;
-            default:
-                break;
-        }
-    }
-
-    private function getQuerySuffix($item)
-    {
-        switch ($item) {
-            case 'advisor_assigned_date':
-                return 'cqrd.advisor_assigned_date';
-                break;
-            case 'created_at':
-                return 'cqr.created_at';
-                break;
-            case 'updated_at':
-                return 'cqr.updated_at';
-                break;
-            case 'next_followup_date':
-                return 'cqrd.next_followup_date';
-                break;
-            case 'uae_license_held_for':
-                return 'ulhf';
-                break;
-            case 'car_make':
-                return 'cmake';
-                break;
-            case 'payment_status':
-                return 'ps';
-                break;
-            case 'car_model':
-                return 'cmodel';
-                break;
-            case 'nationality':
-                return 'n';
-                break;
-            case 'emirates':
-                return 'e';
-                break;
-            case 'insurance_provider':
-                return 'ip';
-                break;
-            case 'claim_history':
-                return 'ch';
-                break;
-            case 'car_type_insurance':
-                return 'cti';
-                break;
-            case 'advisor':
-                return 'u';
-                break;
-            case 'quote_status':
-                return 'qs';
-                break;
-            case 'plan':
-                return 'cp';
-                break;
-            case 'car_plan_provider':
-                return 'cpip';
-                break;
-            default:
-                return 'cqr';
-                break;
-        }
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
@@ -1534,7 +992,7 @@ class CarQuoteService extends BaseService
 
             $pdf = $this->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
-                info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
+                LoggerService::info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
             } else {
                 $carQuote->pdf = (object) [
                     'content' => base64_encode(($pdf['pdf'])->stream()),
@@ -1615,7 +1073,7 @@ class CarQuoteService extends BaseService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            Log::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
 
             if (isset($response->message)) {
                 $responseBodyAsString = $response->message;
@@ -1751,7 +1209,7 @@ class CarQuoteService extends BaseService
     {
         if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
             if (! $enablePlanValidation->value) {
-                info('plan modification validation is disabled from backend');
+                LoggerService::info('plan modification validation is disabled from backend');
 
                 return true;
             }
@@ -1775,6 +1233,21 @@ class CarQuoteService extends BaseService
             PaymentStatusEnum::DRAFT,
         ];
 
+        $quoteStatuses = [
+            QuoteStatusEnum::NewLead,
+            QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+            QuoteStatusEnum::PaymentLinkInprogress,
+            QuoteStatusEnum::PaymentLinkSentToCustomer,
+            QuoteStatusEnum::Quoted,
+            QuoteStatusEnum::FollowedUp,
+            QuoteStatusEnum::PaymentPending,
+            QuoteStatusEnum::SentForTransactionApproval,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::Stale,
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+        ];
+
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
                 info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
@@ -1788,7 +1261,7 @@ class CarQuoteService extends BaseService
         }
 
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-            if (in_array($quote->payment_status_id, $paymentStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
+            if (in_array($quote->payment_status_id, $paymentStatuses) || in_array($quote->quote_status_id, $quoteStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
                 info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
                 return true;
@@ -1862,7 +1335,7 @@ class CarQuoteService extends BaseService
 
             $quoteBatch = QuoteBatches::latest()->first();
 
-            info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
+            LoggerService::info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
 
             $lead->quote_batch_id = $quoteBatch->id;
 
@@ -1870,7 +1343,7 @@ class CarQuoteService extends BaseService
 
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
-            info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
+            LoggerService::info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType); // update new and previous (if applicable) advisor counts in lead allocation table
 
@@ -1892,7 +1365,7 @@ class CarQuoteService extends BaseService
                 $lead->tier_id = $selectedTier->id;
                 $lead->cost_per_lead = $selectedTier->cost_per_lead;
             } else {
-                info('Unable to find tier against lead : '.$lead->code);
+                LoggerService::info('Unable to find tier against lead : '.$lead->code);
             }
         } else {
             $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
@@ -2039,7 +1512,7 @@ class CarQuoteService extends BaseService
                 return true;
             }
         } catch (\Exception $exception) {
-            Log::info('Delete Valuation API Error: '.$exception->getMessage());
+            LoggerService::error('Delete Valuation API Error: '.$exception->getMessage());
 
             return false;
         }
@@ -2119,7 +1592,7 @@ class CarQuoteService extends BaseService
             return;
         }
 
-        info('Previous assignment type is : '.$previousAssignmentType);
+        LoggerService::info('Previous assignment type is : '.$previousAssignmentType);
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
 
@@ -2286,38 +1759,6 @@ class CarQuoteService extends BaseService
         return collect($results);
     }
 
-    public function getExportData()
-    {
-        $request = request();
-        if (isset($request->created_at_start)) {
-            $request['created_at'] = $request->created_at_start;
-        }
-
-        $this->addLeadViewEligibilityCheckExport();
-
-        $dateFrom = $this->parseDate($request['created_at'], true);
-        $dateTo = $this->parseDate($request['created_at_end'], false);
-        $this->exportQuery->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
-        $this->exportQuery->whereNotIn('cqr.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-
-        return $this->exportQuery->orderBy('cqr.created_at', 'DESC');
-    }
-
-    private function addLeadViewEligibilityCheckExport()
-    {
-        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
-            $this->walkTree(Auth::user()->id);
-            $this->exportQuery->whereIn('cqr.advisor_id', $this->childUserIds);
-        } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
-            $this->walkTree(Auth::user()->id);
-            $this->exportQuery->where(function ($query) {
-                return $query->whereIn('cqr.advisor_id', $this->childUserIds)->OrWhereNull('cqr.advisor_id');
-            });
-        } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
-            $this->exportQuery->where('cqr.advisor_id', Auth::user()->id);
-        }
-    }
-
     public function exportnonPUAAuthorized()
     {
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
@@ -2460,6 +1901,10 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
             ->whereNotNull('cqp.pua_premium')
+            ->whereNot(function ($q) {
+                $q->where('cqp.is_renewal', true)
+                    ->whereNotNull('cqp.pua_type');
+            })
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
             ->whereColumn('cqp.plan_id', 'cqr.plan_id');
@@ -2467,7 +1912,7 @@ class CarQuoteService extends BaseService
 
     public function sendAddressNotificationToCustomer($lead, $address)
     {
-        info('Checking for sending courier notification : '.$lead->uuid);
+        LoggerService::info('Checking for sending courier notification : '.$lead->uuid);
 
         // Use a different variable name for the result of the query
         $existingAddress = CustomerAddress::where([
@@ -2476,7 +1921,7 @@ class CarQuoteService extends BaseService
         ])->first();
 
         if (empty($existingAddress?->type)) {
-            info('Sending address notification to customer for lead : '.$lead->uuid);
+            LoggerService::info('Sending address notification to customer for lead : '.$lead->uuid);
             // only trigger bird flow if address is not already added
             $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);
         }
@@ -2485,7 +1930,7 @@ class CarQuoteService extends BaseService
     public function triggerBirdFlow($lead, $address, $actionType)
     {
         if ($lead->embeddedTransactions()->exists()) {
-            info('Checking for courier transaction for lead : '.$lead->uuid);
+            LoggerService::info('Checking for courier transaction for lead : '.$lead->uuid);
             $courierEmbeddedTransaction = $lead->embeddedTransactions
                 ->filter(function ($transaction) {
                     return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
@@ -2496,7 +1941,7 @@ class CarQuoteService extends BaseService
             ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
             in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
         ) {
-            info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
+            LoggerService::info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
             $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
             $address = app(CustomerAddressService::class)->fetchFormattedAddress($address);
             $customerAdditionalContact = CustomerAdditionalContact::select('value')
@@ -2512,11 +1957,11 @@ class CarQuoteService extends BaseService
                 'address' => $address,
                 'alternateNumber' => $customerAdditionalContact->value ?? '',
             ];
-            info('Payload for Bird Courier Flow : '.json_encode($payload));
+            LoggerService::info('Payload for Bird Courier Flow : '.json_encode($payload));
 
             Ken::request('/trigger-bird-courier-flow', 'post', $payload);
         } else {
-            info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
+            LoggerService::info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
         }
     }
 

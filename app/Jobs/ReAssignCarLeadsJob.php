@@ -47,7 +47,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
             return false; // when lead is not on criteria or not found
         }
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead);
 
             info('--------------- ReAssignment processing ---------------');
 

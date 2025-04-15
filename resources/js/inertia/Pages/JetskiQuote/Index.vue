@@ -47,6 +47,7 @@ let availableFilters = {
   policy_expiry_date_end: '',
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  advisor_assigned_date: [],
 };
 
 const filters = reactive(availableFilters);
@@ -225,7 +226,10 @@ const onDataExport = () => {
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end)
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -394,6 +398,13 @@ const insurerAMLStatusOption = computed(() => {
             class="w-full"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Renewal Batch">
           <ComboBox
             v-model="filters.renewal_batch_id"
@@ -510,7 +521,8 @@ const insurerAMLStatusOption = computed(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or policy expiry dates are required to export
+                data.
               </span>
             </template>
           </x-tooltip>

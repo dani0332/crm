@@ -533,19 +533,15 @@
                                 <div class="rounded-full">
                                     <p class="relative top-[40%] m-auto text-xs">
                                         @php
-                                            $providerLogoImage = public_path(
-                                                'images/insurance_providers/' .
-                                                    strtolower($plans[$planId]->providerCode) .
-                                                    '.png',
-                                            );
-
-                                            if (!file_exists($providerLogoImage)) {
-                                                $providerLogoImage = public_path(
-                                                    'images/insurance_providers/default.png',
-                                                );
-                                            }
-
-                                        @endphp
+                                        $providerCode = strtolower($plans[$planId]->providerCode);
+                                        $providerLogoImage = "https://cdn.alfred.ae/assets/logo/partners/{$providerCode}.png";
+    
+                                        // Check if the image exists
+                                        $headers = @get_headers($providerLogoImage);
+                                        if (!$headers || strpos($headers[0], '404') !== false) {
+                                            $providerLogoImage = public_path('images/insurance_providers/default.png');
+                                        }
+                                    @endphp
                                         <img class="provider-logo" alt="" src="{{ $providerLogoImage }}" />
                                     </p>
                                 </div>
