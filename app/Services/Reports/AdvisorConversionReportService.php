@@ -54,7 +54,6 @@ class AdvisorConversionReportService extends BaseService
             'excludeCreatedLeadsFilter' => $request->excludeCreatedLeadsFilter,
             'batchNumberFilter' => $request->batches,
             'tiersFilter' => $request->tiers,
-            'leadSourceFilter' => $request->leadSources,
             'teamsFilter' => $request->teams,
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
@@ -106,7 +105,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->where('users.is_active', true)
+            ->where(['users.is_active' => true, 'users.department_id' => auth()->user()->department_id, 'car_quote_request.source' => LeadSourceEnum::INSURANCE_MARKET])
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
@@ -243,7 +242,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
-            ->where('users.is_active', true)
+            ->where(['users.is_active' => true, 'users.department_id' => auth()->user()->department_id, 'personal_quotes.source' => LeadSourceEnum::INSURANCE_MARKET])
             ->groupBy(
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_batch_id'
@@ -437,16 +436,6 @@ class AdvisorConversionReportService extends BaseService
             ->map(fn ($users) => $users->name)
             ->toArray();
 
-        $leadSources = LeadSource::query()
-            ->select('name')
-            ->where('is_active', 1)
-            ->whereNotNull('name')
-            ->orderBy('name')
-            ->get()
-            ->keyBy('name')
-            ->map(fn ($users) => $users->name)
-            ->toArray();
-
         $lobs = $this->getLobByPermissions();
         $dropdownSourceService = new DropdownSourceService;
 
@@ -501,7 +490,6 @@ class AdvisorConversionReportService extends BaseService
             'maxDays' => $maxDays,
             'batches' => $batches,
             'tiers' => $tiers,
-            'leadSources' => $leadSources,
             'advisors' => $advisors,
             'teams' => $teams,
             'insurance_for' => $insuranceFor,
@@ -635,12 +623,6 @@ class AdvisorConversionReportService extends BaseService
             ->when(isset($filters->excludeCreatedLeadsFilter) && $filters->excludeCreatedLeadsFilter == 'yes', function ($q) {
                 $q->whereNotIn('personal_quotes.source', $this->getExcludedSources());
             })
-            ->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($q) use ($filters) {
-                $q->whereIn('personal_quotes.source', $filters->leadSourceFilter);
-            }, function ($q) use ($isPopup) {
-                $q->whereNotIn('personal_quotes.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
-                    ->when($isPopup === true, fn ($sq) => $sq->whereNull('personal_quotes.renewal_import_code'));
-            })
             ->when($lob === quoteTypeCode::Health, function ($q) use ($filters) {
                 $q->when(! empty($filters->insurance_for) && $filters->insurance_for != '', function ($sq) use ($filters) {
                     $sq->join('health_quote_request', function ($join) use ($filters) {
@@ -746,7 +728,10 @@ class AdvisorConversionReportService extends BaseService
             ->select(
                 DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
                 'car_quote_request.code as cdbId',
-                'quote_status.text as quoteStatusName'
+                'quote_status.text as quoteStatusName',
+                'car_quote_request_detail.advisor_assigned_date as assignedDate',
+                'car_quote_request.premium as premium'
+
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
@@ -767,7 +752,9 @@ class AdvisorConversionReportService extends BaseService
             ->select(
                 DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as fullName"),
                 'personal_quotes.code as cdbId',
-                'quote_status.text as quoteStatusName'
+                'quote_status.text as quoteStatusName',
+                'personal_quote_details.advisor_assigned_date as assignedDate',
+                'personal_quotes.premium as premium'
             )
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')

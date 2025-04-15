@@ -134,8 +134,17 @@ const totalLeads = reactive({
       value: 'fullName',
     },
     {
+      text: 'Assigned Date',
+      value: 'assignedDate',
+    },
+    {
       text: 'Lead Status',
       value: 'quoteStatusName',
+    },
+    {
+      text: 'Premium',
+      value: 'premium',
+      sortable: true
     },
   ],
 });
@@ -902,19 +911,6 @@ const getAdvisorLabel = () => {
             "
           />
         </x-tooltip>
-
-        <ComboBox
-          v-model="filters.leadSources"
-          label="Lead Source"
-          placeholder="Search by Lead Source"
-          :options="
-            Object.keys(filterOptions.leadSources).map(key => ({
-              value: key,
-              label: filterOptions.leadSources[key],
-            }))
-          "
-          :max-limit="3"
-        />
 
         <ComboBox
           v-if="canShow('teams')"
