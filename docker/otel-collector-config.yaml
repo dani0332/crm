@@ -1,0 +1,29 @@
+receivers:
+  filelog:
+    include: [ /var/www/storage/logs/laravel-*.log ]
+    start_at: beginning
+    operators:
+      - type: json_parser
+        id: parse_json
+        timestamp:
+          parse_from: attributes.timestamp
+        severity:
+          parse_from: attributes.level
+
+processors:
+  batch:
+
+exporters:
+  otlphttp:
+    endpoint: https://api.axiom.co
+    headers:
+      authorization: Bearer ${AXIOM_API_TOKEN}
+      x-axiom-dataset: ${AXIOM_DATASET}
+    compression: gzip
+
+service:
+  pipelines:
+    logs:
+      receivers: [filelog]
+      processors: [batch]
+      exporters: [otlphttp]
