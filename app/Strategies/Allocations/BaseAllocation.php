@@ -13,6 +13,7 @@ use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService
 {

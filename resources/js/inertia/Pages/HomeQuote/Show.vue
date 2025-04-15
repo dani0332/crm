@@ -1050,6 +1050,7 @@ const isPlanDetailEnabled = computed(() => {
 
 // New computed property to check lead date
 const shouldShowPlanDetailsSection = computed(() => {
+  // First check if lead is created before the cutoff date
   const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
   const str = page.props.quote.created_at;
 
@@ -1082,7 +1083,39 @@ const shouldShowPlanDetailsSection = computed(() => {
     h,
     parseInt(min),
   );
-  return createdDate < cutoffDate;
+
+  if (createdDate >= cutoffDate) {
+    return false;
+  }
+
+  const hasRequiredStatus =
+    page.props.quote.quote_status_id === quoteStatusEnum.TransactionApproved ||
+    page.props.quote.quote_status_id === quoteStatusEnum.PolicyBooked ||
+    page.props.quote.quote_status_id === quoteStatusEnum.PaymentPending;
+
+  if (!hasRequiredStatus) {
+    return true;
+  }
+
+  const homeQuote = page.props.quote.home_quote;
+  if (!homeQuote) {
+    return true;
+  }
+
+  const hasAccommodationTypeId = !!homeQuote.accommodation_type_id;
+
+  const hasCoverageTypeId = !!homeQuote.possession_type_id;
+
+  const hasRequiredValueFields =
+    !!homeQuote.building_value ||
+    !!homeQuote.contents_value_id ||
+    !!homeQuote.personal_belongings_value_id;
+
+  return !(
+    hasAccommodationTypeId &&
+    hasCoverageTypeId &&
+    hasRequiredValueFields
+  );
 });
 </script>
 
