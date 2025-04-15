@@ -24,8 +24,8 @@ services:
         - ./docker/otel-collector-config.yaml:/etc/otel/config.yaml
         - ./storage/logs:/logs
       environment:
-        - AXIOM_API_TOKEN=xaat-b0547456-9dce-4855-b2db-cea294313a65
-        - AXIOM_DATASET=insurancemarket_dev
+        - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+        - AXIOM_DATASET=${AXIOM_DATASET}
       command: ["--config=/etc/otel/config.yaml"]
       ports:
         - "4317:4317"
