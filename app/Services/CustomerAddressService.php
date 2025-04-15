@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\CustomerAddressRequest;
 use App\Models\CustomerAddress;
+use App\Services\Logger\LoggerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -34,7 +35,7 @@ class CustomerAddressService
 
     public function createOrUpdateAddress(array $address)
     {
-        info('Attempting to save CustomerAddress:', [
+        LoggerService::info('Attempting to save CustomerAddress:', [
             'customer_id' => $address['customer_id'],
             'quote_uuid' => $address['quote_uuid'],
         ]);
@@ -64,16 +65,14 @@ class CustomerAddressService
                 // Check if any fields are dirty (modified)
                 if ($customerAddress->isDirty()) {
                     $customerAddress->save(); // Save only if changes exist
-                    info(
+                    LoggerService::info(
                         'CustomerAddress updated successfully:',
-                        ['customer_address_id' => $customerAddress->id],
-                        ['quote_uuid' => $customerAddress->quote_uuid],
+                        ['customer_address_id' => $customerAddress->id, 'quote_uuid' => $customerAddress->quote_uuid]
                     );
                 } else {
-                    info(
+                    LoggerService::info(
                         'No changes detected in CustomerAddress:',
-                        ['customer_address_id' => $customerAddress->id],
-                        ['quote_uuid' => $customerAddress->quote_uuid],
+                        ['customer_address_id' => $customerAddress->id, 'quote_uuid' => $customerAddress->quote_uuid]
                     );
                 }
             } else {
@@ -92,15 +91,14 @@ class CustomerAddressService
                     'landmark' => $address['landmark'],
                     'is_default' => $address['is_default'],
                 ]);
-                info(
+                LoggerService::info(
                     'CustomerAddress created successfully:',
-                    ['customer_address_id' => $customerAddress->id],
-                    ['quote_uuid' => $customerAddress->quote_uuid],
+                    ['customer_address_id' => $customerAddress->id, 'quote_uuid' => $customerAddress->quote_uuid]
                 );
             }
         } catch (\Exception $e) {
             // Log the error if something goes wrong
-            info('Error saving CustomerAddress:', [
+            LoggerService::error('Error saving CustomerAddress:', [
                 'customer_id' => $address['customer_id'],
                 'quote_uuid' => $address['quote_uuid'],
                 'error' => $e->getMessage(),

@@ -5,6 +5,7 @@ namespace App\Strategies\Allocations;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 
 class PetAllocation extends BaseAllocation
 {
@@ -17,11 +18,11 @@ class PetAllocation extends BaseAllocation
     private function findEligibleAdvisor(array $statusOrder, $role)
     {
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get {$role} with current status: {$status}");
+            LoggerService::info(self::class." - trying to get {$role} with current status: {$status}");
             $eligibleUser = $this->getAdvisorBaseQuery($status, [$role])->first();
 
             if ($eligibleUser) {
-                info(self::class." - eligible {$role} found with status: {$status}, user id: {$eligibleUser->user_id}");
+                LoggerService::info(self::class." - eligible {$role} found with status: {$status}, user id: {$eligibleUser->user_id}");
 
                 return User::find($eligibleUser->user_id);
             }
@@ -32,7 +33,7 @@ class PetAllocation extends BaseAllocation
 
     public function fetchAvailableAdvisor($isReassignmentJob = false)
     {
-        info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$this->teamId}");
+        LoggerService::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$this->teamId}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
