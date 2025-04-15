@@ -1088,7 +1088,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     return false;
   }
 
-  const hasRequiredStatus = 
+  const hasRequiredStatus =
     page.props.quote.quote_status_id === quoteStatusEnum.TransactionApproved ||
     page.props.quote.quote_status_id === quoteStatusEnum.PolicyBooked ||
     page.props.quote.quote_status_id === quoteStatusEnum.PaymentPending;
@@ -1103,14 +1103,19 @@ const shouldShowPlanDetailsSection = computed(() => {
   }
 
   const hasAccommodationTypeId = !!homeQuote.accommodation_type_id;
-  
-  const hasCoverageTypeId = !!homeQuote.possession_type_id;
-  
-  const hasRequiredValueFields = !!homeQuote.building_value || 
-                               !!homeQuote.contents_value_id || 
-                               !!homeQuote.personal_belongings_value_id;
 
-  return !(hasAccommodationTypeId && hasCoverageTypeId && hasRequiredValueFields);
+  const hasCoverageTypeId = !!homeQuote.possession_type_id;
+
+  const hasRequiredValueFields =
+    !!homeQuote.building_value ||
+    !!homeQuote.contents_value_id ||
+    !!homeQuote.personal_belongings_value_id;
+
+  return !(
+    hasAccommodationTypeId &&
+    hasCoverageTypeId &&
+    hasRequiredValueFields
+  );
 });
 </script>
 
