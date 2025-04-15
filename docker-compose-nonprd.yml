@@ -29,8 +29,6 @@ services:
       command: ["--config=/etc/otel/config.yaml"]
       ports:
         - "4317:4317"
-      networks:
-        - blanka-app-network
 
 
 volumes:
