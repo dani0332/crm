@@ -1486,7 +1486,6 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
 };
 
 const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
-  debugger;
   if (paymentStatus == paymentStatusEnum.PAID) {
     notification.error({
       title: "Payment already 'Paid', button deactivated for this transaction",
