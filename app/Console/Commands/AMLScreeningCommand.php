@@ -8,14 +8,16 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\AmlScreeningAutomationJob;
 use App\Models\AmlAutomation;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class AMLScreeningCommand extends Command
 {
     use GenericQueriesAllLobs;
 
-    private $className = 'AMLScreeningCommand';
+    private $className = 'AML Screening Command';
     private $quoteType = QuoteTypes::TRAVEL;
 
     /**
@@ -42,13 +44,12 @@ class AMLScreeningCommand extends Command
      */
     public function handle()
     {
-        info('cmd:'.$this->className.' Started');
-
+        LoggerService::info($this->className.' - Started');
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
-        if (! $quoteModel || ! class_exists($quoteModel)) {
-            info('cmd:'.$this->className.' Quote Model not found');
-
+        if (! class_exists($quoteModel)) {
+            LoggerService::critical($this->className.' - Quote Model not found');
+            LoggerService::info($this->className.' - Ended');
             return;
         }
 
@@ -73,27 +74,24 @@ class AMLScreeningCommand extends Command
                     $quoteRequest = $this->getQuoteObject($this->quoteType->value, $quoteRequest->id);
 
                     if (! $quoteRequest) {
-                        info('cmd:'.$this->className.' - ID: '.$quoteRequest->id.' Quote not found');
-
+                        LoggerService::error($this->className.' - Quote not found');
                         continue;
                     }
 
+                    Log::withContext(['ref_id' => $quoteRequest->code]);
                     if ($quoteRequest->api_issuance_status_id != PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID) {
-                        info('cmd:'.$this->className.' - Ref-ID: '.$quoteRequest->code.' Quote is not eligible for AML, due to API issuance status is not yes');
-
+                        LoggerService::notice($this->className.' - Quote is not eligible for AML, due to API issuance status is not yes');
                         continue;
                     }
 
                     if ($quoteRequest->aml_status != AMLStatusCode::AMLPending) {
-                        info('cmd:'.$this->className.' - Ref-ID: '.$quoteRequest->code.' Quote is not eligible for AML, due to AML status is not pending');
-
+                        LoggerService::notice($this->className.' - Quote is not eligible for AML, due to AML status is not pending');
                         continue;
                     }
 
                     $amlAutomation = $quoteRequest->amlAutomation;
                     if (isset($amlAutomation->status) && $amlAutomation->status != AmlAutomationStatus::FAILED_STATUS) {
-                        info('cmd:'.$this->className.' - Ref-ID: '.$quoteRequest->code.' Quote is already '.($quoteRequest->amlAutomation->status ?? 'picked'));
-
+                        LoggerService::warning($this->className.' - Quote is already '.($quoteRequest->amlAutomation->status ?? 'picked'));
                         continue;
                     }
 
@@ -103,6 +101,6 @@ class AMLScreeningCommand extends Command
             });
         }
 
-        info('cmd:'.$this->className.' Ended');
+        LoggerService::info($this->className.' - Ended');
     }
 }

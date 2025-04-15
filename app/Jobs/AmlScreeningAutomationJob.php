@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Models\AmlAutomation;
 use App\Models\TravelQuote;
 use App\Services\AMLService;
+use App\Services\Logger\LoggerService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Error;
@@ -28,7 +29,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     public $tries = 1;
     public $uniqueFor = 60 * 15; // 15 minutes
     public $uniqueKey = ''; // 15 minutes
-    private $className = 'AmlScreeningAutomationJob';
+    private $className = 'Aml Screening Automation Job';
     private TravelQuote $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
@@ -49,7 +50,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
-        info('job:'.$this->className.' Started - Ref-ID: '.$this->quoteRefId);
+        LoggerService::info($this->className.' - Started');
 
         try {
             $amlAutomation = AmlAutomation::updateOrCreate(
@@ -78,7 +79,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
             $amlService = app(AMLService::class);
             $insuredPersonData = $amlService->getInsuredPersonDetails($idType, $idNumber);
-            info('job:'.$this->className.' - Ref-ID: '.$this->quoteRefId.' - reqCall: getInsuredPersonDetails'.' - response: '.($insuredPersonData->status ? 'success' : 'error'));
+            LoggerService::info($this->className.' - reqCall: getInsuredPersonDetails - response: '.($insuredPersonData->status ? 'success' : 'error'));
 
             $customer = $customerTravelInfo;
             if ($insuredPersonData->status) {
@@ -107,17 +108,19 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
             $this->quoteRequest->refresh();
             $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $quoteAmlProcessCall->message]);
-            info('job:'.$this->className.' Completed - Ref-ID: '.$this->quoteRefId.' - reqCall: quoteUpdate'.' - response: '.$quoteAmlProcessCall->message);
+            LoggerService::info($this->className.' - Completed - reqCall: quoteUpdate - response: '.$quoteAmlProcessCall->message);
 
         } catch (Error $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Error: '.$e->getMessage()]);
-            info('job:'.$this->className.' Failed - Ref-ID: '.$this->quoteRefId.' - Error: '.$e->getMessage());
+            LoggerService::error($this->className.' - Error: '.$e->getMessage());
+
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);
-            info('job:'.$this->className.' Failed - Ref-ID: '.$this->quoteRefId.' - Exception: '.$e->getMessage());
+            LoggerService::critical($this->className.' - Exception: '.$e->getMessage());
+
         } catch (\Throwable $e) { // Catch all other errors and exceptions
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Throwable: '.$e->getMessage()]);
-            info('job:'.$this->className.' Failed - Ref-ID: '.$this->quoteRefId.' - Throwable: '.$e->getMessage());
+            LoggerService::critical($this->className.' - Throwable: '.$e->getMessage());
         }
     }
 
