@@ -13,7 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\LifeQuote;
 use Illuminate\Support\Facades\Validator;
-
 class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
@@ -146,9 +145,12 @@ class AuditableController extends Controller
             case TravelQuote::class:
                 return TravelInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
-            case LifeQuote::class:
-                return LifeInsurerRequestResponses::with('insuranceProvider')
+            case HomeQuote::class:
+                return HomeInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
+            case LifeQuote::class:
+                        return LifeInsurerRequestResponses::with('insuranceProvider')
+                            ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');
         }
