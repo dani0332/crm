@@ -130,7 +130,6 @@ class AdvisorConversionReportService extends BaseService
                     })
                     ->pluck('user_id')
                     ->toArray();
-
                     $userIds = $this->getUsers($userIds);
             }
 
@@ -281,8 +280,8 @@ class AdvisorConversionReportService extends BaseService
                     })
                     ->pluck('user_id')
                     ->toArray();
+                $userIds = $this->getUsers($userIds);
             }
-            $userIds = $this->getUsers($userIds);
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
 
