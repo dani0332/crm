@@ -93,6 +93,8 @@ use App\Enums\WorkflowTypeEnum;
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\Bus;
 use Throwable;
+use App\Jobs\ScheduleHomeRenewalOcbEmails;
+
 class RenewalsUploadService
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
@@ -475,25 +477,13 @@ class RenewalsUploadService
     {
         info('fn: scheduleHomeRenewalsOcbEmails - Renewal OCB Email Send Started'); 
 
-        // get pending leads
-        $totalLeads = $this->getPendingOcbLeadsTotalNonMotor($batch, QuoteTypeShortCode::HOM);
         
-        // If there are not leads, return false
-        if ($totalLeads == 0) {
-            info('fn: scheduleHomeRenewalsOcbEmails - No leads found for sending OCB Emails'); 
-            return false;
-        }
+        ScheduleHomeRenewalOcbEmails::dispatch($batch, $userId);
+ 
+    }
 
-        $renewalsBatchEmail = RenewalsBatchEmails::create([
-            'batch' => $batch,
-            'status' => ProcessStatusCode::PENDING,
-            'total_leads' => $totalLeads,
-            'total_sent' => 0,
-            'total_bounced' => 0,
-            'total_failed' => 0,
-            'created_by_id' => $userId 
-        ]);
 
+    public function scheduleHomeOCB($batch, $renewalsBatchEmail){
         $logPrefix = 'Home Renewals OCB email ';        
 
         try {
@@ -536,9 +526,7 @@ class RenewalsUploadService
             info($logPrefix.' one of batch is failed. Exception : '.$exception->getMessage());
             $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
         }
-        
     }
-
 
     public function fetchRenewalPlansForNonMotor(RenewalStatusProcess $renewalStatusProcess, $batch, $quoteType)
     {
@@ -599,14 +587,17 @@ class RenewalsUploadService
                         info($logPrefix . ' all jobs completed successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
 
-                        $this->scheduleHomeRenewalsOcbEmails($batch, $userId);
+                        // Don't call scheduleHomeRenewalsOcbEmails directly, dispatch it as a separate job
+                        dispatch(function() use ($batch, $userId) {
+                            app(RenewalsUploadService::class)->scheduleHomeRenewalsOcbEmails($batch, $userId);
+                        })->onQueue('renewals');
                     })
                     ->catch(function () use ($logPrefix, $renewalStatusProcess) {
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix.' everything done');
+                    ->finally(function (\Illuminate\Bus\Batch $batch) use ($logPrefix) {
+                        info($logPrefix . ' everything done');
                     })
                     ->allowFailures()
                     ->withDelay(1)
