@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -95,29 +96,25 @@ class QuoteAllocation extends Command
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
         }
 
-        $leads = CarQuote::whereNull('advisor_id')
-            ->select('uuid', 'payment_status_id', 'source', 'is_renewal_tier_email_sent', 'lead_allocation_failed_at', 'sic_flow_enabled', 'sic_advisor_requested', 'quote_status_id')
-            ->where('created_at', '<=', $to)
-            ->orderBy('created_at', 'desc')
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', $exemptedLeadSources)
-            ->where(function ($query) {
-                $query->where(function ($q) {
-                    $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                })
-                    ->orWhere->leadAllocationFailed()
-                    ->orWhere(function ($query) {
-                        $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                            ->where(function ($sq) {
-                                $sq->where(function ($q) {
-                                    $q->sicFlowDisabled();
-                                })->orWhere(function ($query) {
-                                    $query->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                                });
-                            });
-                    });
-            })
-            ->take($chunkSize);
+        $leads = CarQuote::query()
+        ->whereNull('advisor_id')
+        ->select([
+            'uuid',
+            'payment_status_id',
+            'source',
+            'is_renewal_tier_email_sent',
+            'lead_allocation_failed_at',
+            'sic_flow_enabled',
+            'sic_advisor_requested',
+            'quote_status_id',
+        ])
+        ->where('created_at', '<=', $to)
+        ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+        ->whereNotIn('source', $exemptedLeadSources)
+        ->orderByDesc('created_at')
+        ->eligibleForAllocation()
+        ->filterAigLeads()
+        ->limit($chunkSize);
 
         info('leads fetch query is : '.$leads->toRawSql());
 
