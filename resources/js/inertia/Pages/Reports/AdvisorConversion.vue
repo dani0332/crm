@@ -1130,6 +1130,17 @@ const getAdvisorLabel = () => {
         </button>
       </template>
 
+      <template #item-manual_created="item">
+        <p v-if="item.manual_created == 0">{{ item.manual_created }}</p>
+        <button
+          v-else
+          @click="onFetchAdvisorAssignedLeads(item, 'manual_created')"
+          class="text-primary underline"
+        >
+          {{ item.manual_created }}
+        </button>
+      </template>
+
       <template #item-created_sale_leads="item">
         <p v-if="item.created_sale_leads == 0">{{ item.created_sale_leads }}</p>
         <button
@@ -1154,16 +1165,7 @@ const getAdvisorLabel = () => {
         </button>
       </template>
 
-      <template #item-manual_created="item">
-        <p v-if="item.manual_created == 0">{{ item.manual_created }}</p>
-        <button
-          v-else
-          @click="onFetchAdvisorAssignedLeads(item, 'manual_created')"
-          class="text-primary underline"
-        >
-          {{ item.manual_created }}
-        </button>
-      </template>
+
 
       <template #body-append>
         <tr v-if="reportData.length > 0" class="total-row">
