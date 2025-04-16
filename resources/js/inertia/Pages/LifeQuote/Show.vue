@@ -823,12 +823,12 @@ const getBMITag = () => {
   const bmi = page.props.quote.life_quote?.bmi;
 
   const bmiRanges = [
-    { min: 0, max: 15.99, text: 'High Risk-Underweight', color: 'red', bgColor: 'red-200' },
+    { min: 0, max: 15.99, text: 'High Risk-Underweight', color: 'red', bgColor: 'red-100' },
     { min: 16, max: 18.4, text: 'Low Risk-Underweight', color: 'yellow', bgColor: 'yellow-300' },
     { min: 18.41, max: 25, text: 'Normal', color: 'green', bgColor: 'green-200' },
     { min: 25.01, max: 30, text: 'Low Risk-Overweight', color: 'yellow', bgColor: 'yellow-300' },
     { min: 30.01, max: 40, text: 'Low Risk-Obese', color: 'yellow', bgColor: 'yellow-300' },
-    { min: 40.01, max: Infinity, text: 'High Risk-Obese', color: 'red', bgColor: 'red-200' },
+    { min: 40.01, max: Infinity, text: 'High Risk-Obese', color: 'red', bgColor: 'red-100' },
   ];
 
   const tag = bmiRanges.find(range => bmi >= range.min && bmi <= range.max);
