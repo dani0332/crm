@@ -183,7 +183,11 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === 'Bike') {
   initialAmount.value = props.quoteRequest.premium;
-} else if (props.isPlanDetailEnabled) {
+}
+else if (props.quoteType === 'Life') {
+  initialAmount.value = props.quoteRequest.premium;
+}
+else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
@@ -1609,6 +1613,7 @@ const addPaymentModal = () => {
       return;
     }
     if (isCPD.value && !props.sendUpdate?.price_with_vat) {
+    
       notification.error({
         title: 'Please update the Total Price in the Plan Details section.',
         position: 'top',
@@ -1648,6 +1653,9 @@ const addPaymentModal = () => {
   ) {
     totalAmount.value = totalPrice.value;
   } else {
+    
+    console.log(totalPrice.value, planDetail.value)
+
     let errorMsg = 'Please update the Total Price in the Plan Details section.';
     if (quoteTypesToCheck.includes(props.quoteType)) {
       errorMsg = 'Please select a plan.';
