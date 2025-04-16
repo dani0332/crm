@@ -53,7 +53,7 @@ class AMLScreeningCommand extends Command
             return;
         }
 
-        $date = now()->yesterday();
+        $date = now()->subWeek()->startOfDay();
         $quoteRequestQuery = $quoteModel::select('id', 'code', 'api_issuance_status_id', 'aml_status')
             ->where([
                 'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
