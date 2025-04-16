@@ -1088,16 +1088,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     return false;
   }
 
-  const hasRequiredStatus =
-    page.props.quote.quote_status_id === quoteStatusEnum.TransactionApproved ||
-    page.props.quote.quote_status_id === quoteStatusEnum.PolicyBooked ||
-    page.props.quote.quote_status_id === quoteStatusEnum.PaymentPending;
-
-  if (!hasRequiredStatus) {
-    return true;
-  }
-
-  const homeQuote = page.props.quote.home_quote;
+  const homeQuote = page.props.quote?.home_quote;
   if (!homeQuote) {
     return true;
   }
