@@ -6,12 +6,31 @@ services:
     container_name: imcrm${DOCKERENV}
     environment:
       - DOPPLER_TOKEN
+      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+      - AXIOM_DATASET=${AXIOM_DATASET}
     ports:
       - '${WEB_PORT}:443'
     volumes:
       - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs
       - .:/var/www/html
     restart: unless-stopped
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+      image: otel/opentelemetry-collector-contrib
+      container_name: otel-collector
+      volumes:
+        - ./docker/config.yaml:/etc/otel/config.yaml
+        - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs:ro
+
+      environment:
+        - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+        - AXIOM_DATASET=${AXIOM_DATASET}
+      command: ["--config=/etc/otel/config.yaml"]
+      ports:
+        - "4317:4317"
+
 
 volumes:
   logs:
