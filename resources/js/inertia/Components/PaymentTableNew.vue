@@ -896,7 +896,7 @@ const handleCollectionTypeChange = () => {
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
       page.props.paymentMethodsEnum?.Cash,
-      !isIPLPermission && page.props.paymentMethodsEnum?.InsurerPaymentLink
+      !isIPLPermission && props.quoteType === quoteTypeCodeEnum.Health && page.props.paymentMethodsEnum?.InsurerPaymentLink
     ];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item => !excludedPaymentMethods.includes(item.value),
@@ -1537,7 +1537,7 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
     });
   } else {
     try {
-      const response = await axios.post('/generate-insurer-payment-link-new', {
+      const response = await axios.post('/generate-payment-link-new', {
         quoteId: props.quoteRequest.id,
         modelType: props.quoteType,
         paymentCode: code,
