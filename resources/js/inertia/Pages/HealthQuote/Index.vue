@@ -438,10 +438,12 @@ const onDataExport = (exportType = 'download') => {
   exportLoader.value = true;
   logAndExportQuotes(payload)
     .then(result => {
-      notification.success({
-        title: result.data.message,
-        position: 'top',
-      });
+      if(result.data.message){
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
       if (result)
         setTimeout(() => {
           exportLoader.value = false;

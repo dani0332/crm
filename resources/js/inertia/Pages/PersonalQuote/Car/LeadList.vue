@@ -561,10 +561,12 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
   console.log('onexport', payload);
   logAndExportQuotes(payload)
     .then(result => {
-      notification.success({
-        title: result.data.message,
-        position: 'top',
-      });
+      if(result.data.message){
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
       if (result)
         setTimeout(() => {
           exportLoader.value = false;
