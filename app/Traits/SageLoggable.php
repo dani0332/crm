@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 trait SageLoggable
 {
-    public function logSageApiCall($payload, $response = [], $section = null,  $model = null, $step = null, $totalSteps = null, $status = 'success', $loggedInUserId = null)
+    public function logSageApiCall($payload, $response = [], $section = null, $model = null, $step = null, $totalSteps = null, $status = 'success', $loggedInUserId = null)
     {
         try {
             $userId = $section->userId ?? ($loggedInUserId ?? Auth::id());

@@ -728,7 +728,7 @@ class SagePayloadFactory
         ];
     }
 
-    public static function readyToPostReceiptArPayment($batchNumber , $isCommissionReceipt = false)
+    public static function readyToPostReceiptArPayment($batchNumber, $isCommissionReceipt = false)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -742,7 +742,7 @@ class SagePayloadFactory
             'entry_type' => $entryType,
         ];
     }
-    public static function aRPostReceiptsPayment($batchNumber , $isCommissionReceipt = false)
+    public static function aRPostReceiptsPayment($batchNumber, $isCommissionReceipt = false)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [

@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use Illuminate\Console\Command;
-use App\Services\Logger\LoggerService;
 
 class SageProcessesCommand extends Command
 {
