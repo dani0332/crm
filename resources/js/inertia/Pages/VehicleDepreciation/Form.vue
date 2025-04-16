@@ -109,7 +109,21 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form class="my-4" @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-3 gap-4">
-      <x-field label="Car Make">
+      <x-select
+        v-model="deprecationForm.car_make_id"
+        :options="
+          props.carmakes.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :rules="[isRequired]"
+        placeholder="Search by Car Make"
+        filterable
+        @update:modelValue="getCarModel($event)"
+        label="Car Make"
+      />
+      <!-- <x-field label="Car Make">
         <ComboBox
           :single="true"
           v-model="deprecationForm.car_make_id"
@@ -124,8 +138,24 @@ onMounted(() => {
           :hasError="makeCodeError"
           @update:modelValue="getCarModel($event)"
         />
-      </x-field>
-      <x-field label="Car Model">
+      </x-field> -->
+
+      <x-select
+        v-model="deprecationForm.car_model_id"
+        :options="
+          carModels.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :rules="[isRequired]"
+        placeholder="Search by Car Model"
+        filterable
+        label="Car Model"
+        :loading="loader.carModel"
+      />
+
+      <!-- <x-field label="Car Model">
         <ComboBox
           :single="true"
           v-model="deprecationForm.car_model_id"
@@ -140,8 +170,23 @@ onMounted(() => {
           :hasError="carIdError"
           :loading="loader.carModel"
         />
-      </x-field>
-      <x-field label="Insurance Provider">
+      </x-field> -->
+
+      <x-select
+        v-model="deprecationForm.insurance_provider_value"
+        :options="
+          props.insuranceProviders.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :rules="[isRequired]"
+        placeholder="Search by Insurance Provider"
+        filterable
+        label="Insurance Provider"
+      >
+      </x-select>
+      <!-- <x-field label="Insurance Provider">
         <ComboBox
           :single="true"
           v-model="deprecationForm.insurance_provider_value"
@@ -155,7 +200,7 @@ onMounted(() => {
           :hasError="providerNameError"
           class="w-full"
         />
-      </x-field>
+      </x-field> -->
     </div>
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="First Year" required>
