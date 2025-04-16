@@ -262,7 +262,7 @@ const onDataExport = (exportType = 'download') => {
   exportLoader.value = true;
   logAndExportQuotes(payload)
     .then(result => {
-      if(result.data.message){
+      if (result.data.message) {
         notification.success({
           title: result.data.message,
           position: 'top',

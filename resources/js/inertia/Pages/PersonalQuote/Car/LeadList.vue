@@ -561,7 +561,7 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
   console.log('onexport', payload);
   logAndExportQuotes(payload)
     .then(result => {
-      if(result.data.message){
+      if (result.data.message) {
         notification.success({
           title: result.data.message,
           position: 'top',
