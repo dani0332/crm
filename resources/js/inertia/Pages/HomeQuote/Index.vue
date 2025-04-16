@@ -164,7 +164,7 @@ const onDataExport = (exportType = 'download') => {
 
   logAndExportQuotes(payload)
     .then(result => {
-      if(result.data.message){
+      if (result.data.message) {
         notification.success({
           title: result.data.message,
           position: 'top',
