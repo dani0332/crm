@@ -499,7 +499,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('car', CRUDController::class);
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
-        Route::get('home/{id}', function($id) {
+        Route::get('home/{id}', function ($id) {
             return redirect("/personal-quotes/home/{$id}");
         })->where('id', '[A-Z0-9]+')->name('quotes.home.show');
 
