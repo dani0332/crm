@@ -91,7 +91,7 @@ class SageApiService
                 $sageCustomerNumber = $customerResponse['CustomerNumber'];
                 $this->logSageApiCall($payLoadOptions, $customerResponse, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $authUserId);
             } else {
-                LoggerService::error('Sage Customer verification - Error while creating customer on Sage - Payload: '.json_encode($payLoadOptions['payload']).' - Response: '.(json_encode($customerResponse)));
+                LoggerService::info('Sage Customer verification - Error while creating customer on Sage - Payload: '.json_encode($payLoadOptions['payload']).' - Response: '.(json_encode($customerResponse)));
                 $this->logSageApiCall($payLoadOptions, $customerResponse, $logModal, 1, $totalSteps, SageEnum::STATUS_FAIL, $authUserId);
             }
         }
@@ -127,7 +127,7 @@ class SageApiService
 
             if ($response->failed()) {
                 $responseBody = is_array($response->json()) ? $response->json() : json_decode($response->body());
-                LoggerService::error('Sage API : '.$endPoint.' : '.$responseBody['error']['message']['value'] ?? 'Something went wrong with Sage Server.');
+                LoggerService::info('Sage API : '.$endPoint.' : '.$responseBody['error']['message']['value'] ?? 'Something went wrong with Sage Server.');
             }
 
             return is_array($response->json()) ? json_encode($response->json()) : $response->body();
