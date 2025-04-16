@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -97,24 +96,24 @@ class QuoteAllocation extends Command
         }
 
         $leads = CarQuote::query()
-        ->whereNull('advisor_id')
-        ->select([
-            'uuid',
-            'payment_status_id',
-            'source',
-            'is_renewal_tier_email_sent',
-            'lead_allocation_failed_at',
-            'sic_flow_enabled',
-            'sic_advisor_requested',
-            'quote_status_id',
-        ])
-        ->where('created_at', '<=', $to)
-        ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-        ->whereNotIn('source', $exemptedLeadSources)
-        ->orderByDesc('created_at')
-        ->eligibleForAllocation()
-        ->filterAigLeads()
-        ->limit($chunkSize);
+            ->whereNull('advisor_id')
+            ->select([
+                'uuid',
+                'payment_status_id',
+                'source',
+                'is_renewal_tier_email_sent',
+                'lead_allocation_failed_at',
+                'sic_flow_enabled',
+                'sic_advisor_requested',
+                'quote_status_id',
+            ])
+            ->where('created_at', '<=', $to)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', $exemptedLeadSources)
+            ->orderByDesc('created_at')
+            ->eligibleForAllocation()
+            ->filterAigLeads()
+            ->limit($chunkSize);
 
         info('leads fetch query is : '.$leads->toRawSql());
 
