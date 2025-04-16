@@ -54,6 +54,7 @@ class quoteTypeCode extends Enum
     const Jetski = 'Jetski';
     const Aml = 'Aml';
     const TRA = 'TRA';
+    const Marine = 'Marine';
 
     public static function getName($value)
     {

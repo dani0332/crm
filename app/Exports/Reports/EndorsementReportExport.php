@@ -54,6 +54,8 @@ class EndorsementReportExport extends BaseReportsExport
 
     public function map($quote): array
     {
+        $paymentRefId = $quote->payment_ref_id ? ($quote->payment_ref_id.($quote->split_sr_no ? '-'.$quote->split_sr_no : '')) : 'N/A';
+
         return [
             $quote->main_lead_code ?? 'N/A',
             $quote->department ?? 'N/A',
@@ -61,7 +63,7 @@ class EndorsementReportExport extends BaseReportsExport
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ? $quote->policy_start_date : ($quote->main_lead_policy_start_date ?? 'N/A'),
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
-            $quote->payment_ref_id ?? 'N/A',
+            $paymentRefId,
             $this->resolveNumberFormat($quote->price_vat_applicable ?? 0),
             $this->resolveNumberFormat($quote->vat ?? 0),
             $this->resolveNumberFormat($quote->price_vat_not_applicable ?? 0),
