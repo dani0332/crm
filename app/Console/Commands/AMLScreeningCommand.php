@@ -49,6 +49,7 @@ class AMLScreeningCommand extends Command
 
         if (! class_exists($quoteModel)) {
             LoggerService::info($this->className.' - Ended - Quote Model not found');
+
             return;
         }
 
@@ -69,6 +70,7 @@ class AMLScreeningCommand extends Command
 
                     if (! $quoteRequest) {
                         LoggerService::error($this->className.' - Quote not found');
+
                         continue;
                     }
 
@@ -78,7 +80,7 @@ class AMLScreeningCommand extends Command
                     $isApiIssuanceStatusYes = $quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
                     $isAMLPending = $quoteRequest->aml_status == AMLStatusCode::AMLPending;
 
-                    if (!$isApiIssuanceStatusYes || !$isAMLPending || $quoteRequest->amlAutomation()->exists()) {
+                    if (! $isApiIssuanceStatusYes || ! $isAMLPending || $quoteRequest->amlAutomation()->exists()) {
                         continue;
                     }
 

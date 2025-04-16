@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\AmlAutomationStatus;
 use App\Models\AmlAutomation;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;

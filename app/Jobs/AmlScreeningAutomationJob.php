@@ -13,7 +13,6 @@ use App\Services\AMLService;
 use App\Services\Logger\LoggerService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
-use Error;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -56,7 +55,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $isAMLPending = $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
         $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
 
-        if (!$isApiIssuanceStatusYes || !$isAMLPending || !$isAutomationInQueue) {
+        if (! $isApiIssuanceStatusYes || ! $isAMLPending || ! $isAutomationInQueue) {
             return;
         }
 
@@ -111,6 +110,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             if (! $quoteAmlProcessCall->status) {
                 $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Error: '.$quoteAmlProcessCall->message]);
                 LoggerService::error($this->className.' - Completed - Error: '.$quoteAmlProcessCall->message);
+
                 return;
             }
 
