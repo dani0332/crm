@@ -9,8 +9,8 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use Carbon\Carbon;
 use App\Models\QuoteTag;
+use Carbon\Carbon;
 
 trait QuoteAllocatable
 {
