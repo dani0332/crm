@@ -597,13 +597,26 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Search by REF-ID"
         />
-        <ComboBox
+        <x-select
           v-model="filters.quote_batch_id"
           label="Batch"
           name="quote_batch_id"
-          placeholder="Please select batch"
           :options="batchOptions"
-        />
+          placeholder="Please select batch"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_batch_id = batchOptions.map(item => item.value)
+              "
+              @clear="filters.quote_batch_id = []"
+            />
+          </template>
+        </x-select>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -682,14 +695,14 @@ const insurerAMLStatusOption = computed(() => {
           name="advisor_assigned_date_end"
           label="Advisor Assigned Date End"
         />
-        <ComboBox
+        <x-select
           v-model="filters.payment_status_id"
           label="Payment Status"
           name="payment_status_id"
           :options="paymentStatusOptions"
           placeholder="Please select payment status"
           class="w-full"
-          :single="true"
+          filterable
         />
         <x-select
           v-model="filters.is_ecommerce"
@@ -699,42 +712,83 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Please select is ecommerce"
           class="w-full"
         />
-        <ComboBox
+        <x-select
           v-model="filters.quote_status_id"
           label="Lead Status"
           name="quote_status_id"
           :options="leadStatuses"
-        />
-        <ComboBox
+          placeholder="Please select lead status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = leadStatuses.map(item => item.value)
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.insurer_aml_status"
           label="Insurer AML Status"
           name="insurer_aml_status"
           :options="insurerAMLStatusOption"
-        />
-        <ComboBox
+          placeholder="Please select status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.tier_id"
           label="Tier Name"
           name="tier_id"
-          placeholder="Please select batch"
           :options="leadTiers"
-        />
-        <ComboBox
-          :single="true"
+          placeholder="Please select tier"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.tier_id = leadTiers.map(item => item.value)"
+              @clear="filters.tier_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.vehicle_type_id"
           label="Vehicle Type"
           name="vehicle_type_id"
           :options="vehicleTypes"
           placeholder="Please select an option"
           class="w-full"
+          filterable
         />
-        <ComboBox
-          :single="true"
+        <x-select
           v-model="filters.car_type_insurance_id"
           label="Type of Car Insurance"
           name="car_type_insurance_id"
           :options="carTypeInsurances"
           placeholder="Please select an option"
           class="w-full"
+          filterable
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -744,14 +798,14 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
-        <ComboBox
-          :single="true"
+        <x-select
           v-model="filters.currently_insured_with"
           label="Currently Insured with"
           name="currently_insured_with"
           :options="providers"
           placeholder="Please select an option"
           class="w-full"
+          filterable
         />
         <x-input
           v-model="filters.previous_quote_policy_number"
@@ -771,37 +825,61 @@ const insurerAMLStatusOption = computed(() => {
           name="policy_expiry_date_end"
           label="Policy Expiry End Date"
         />
-        <ComboBox
+        <x-select
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.advisor_id"
           label="Advisors (select teams first)"
           name="advisor_id"
-          placeholder="Please select Advisor"
           :options="
             teamUsers.map(user => ({
               value: user.id,
               label: user.name,
             }))
           "
+          placeholder="Please select Advisor"
           :loading="loader.advisorTeamOptions"
-        />
-        <ComboBox
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.advisor_id = teamUsers.map(user => user.id)"
+              @clear="filters.advisor_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.assignment_type"
           label="Assignment Type"
-          placeholder="Please select assignment type"
+          name="assignment_type"
           :options="assignmentTypes"
-          :single="true"
+          placeholder="Please select assignment type"
           class="w-full"
+          filterable
         />
-        <ComboBox
+        <x-select
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.teams"
           label="Teams"
-          placeholder="Search by Teams"
+          name="teams"
           :options="teamOptions"
+          placeholder="Search by Teams"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
           @update:modelValue="fetchTeamUsers"
-        />
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(item => item.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
         <DatePicker
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.transaction_approved_dates"
@@ -825,25 +903,28 @@ const insurerAMLStatusOption = computed(() => {
           label="Paid Date End"
         />
 
-        <ComboBox
+        <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
-          placeholder="Select Segment"
+          name="segment_filter"
           :options="quoteSegments"
-          :single="true"
+          placeholder="Select Segment"
+          class="w-full"
+          filterable
         />
-        <ComboBox
+        <x-select
           v-model="filters.sic_advisor_requested"
           label="Advisor Requested"
-          placeholder="Select any option"
+          name="sic_advisor_requested"
           :options="[
             { value: 'All', label: 'All' },
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
+          placeholder="Select any option"
           class="w-full"
-          :single="true"
+          filterable
         />
         <DatePicker
           v-model="filters.payment_due_date"

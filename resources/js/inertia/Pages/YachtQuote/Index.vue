@@ -562,24 +562,54 @@ const insurerAMLStatusOption = computed(() => {
           format="dd-MM-yyyy"
         />
         <x-field label="Lead Status">
-          <ComboBox
+          <x-select
             v-model="filters.quote_status_id"
             name="quote_status"
-            placeholder="Search by Lead Status"
+            placeholder="Please select lead status"
             :options="
               quoteStatuses.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
             "
-          />
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.quote_status_id = quoteStatuses.map(item => item.id)
+                "
+                @clear="filters.quote_status_id = []"
+              />
+            </template>
+          </x-select>
         </x-field>
-        <ComboBox
-          v-model="filters.insurer_aml_status"
-          label="Insurer AML Status"
-          name="insurer_aml_status"
-          :options="insurerAMLStatusOption"
-        />
+        <x-field label="Insurer AML Status">
+          <x-select
+            v-model="filters.insurer_aml_status"
+            name="insurer_aml_status"
+            placeholder="Please select status"
+            :options="insurerAMLStatusOption"
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.insurer_aml_status = insurerAMLStatusOption.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.insurer_aml_status = []"
+              />
+            </template>
+          </x-select>
+        </x-field>
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -602,10 +632,12 @@ const insurerAMLStatusOption = computed(() => {
             ])
           "
         >
-          <ComboBox
+          <x-select
             v-model="filters.advisor_id"
-            placeholder="Search by Advisor"
+            placeholder="Please select advisor"
             :options="advisorOptionsFilter"
+            class="w-full"
+            filterable
           />
         </x-field>
         <x-field label="Is E-Commerce">
@@ -621,11 +653,26 @@ const insurerAMLStatusOption = computed(() => {
           />
         </x-field>
         <x-field label="Renewal Batch">
-          <ComboBox
+          <x-select
             v-model="filters.renewal_batch_id"
-            placeholder="Search by Renewal Batch"
+            placeholder="Please select renewal batch"
             :options="renewalBatchOptions"
-          />
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.renewal_batch_id = renewalBatchOptions.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.renewal_batch_id = []"
+              />
+            </template>
+          </x-select>
         </x-field>
         <x-field label="Renewal">
           <x-select
