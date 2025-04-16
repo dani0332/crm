@@ -112,8 +112,6 @@ class AuditableController extends Controller
             }
 
             $logs = $query->get();
-            dd($logs); 
-            
 
             info('API logs retrieved successfully', [
                 'auditableType' => $auditableType,
