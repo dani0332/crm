@@ -44,6 +44,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
+use App\Strategies\EmbeddedProducts\COU;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -680,6 +681,8 @@ class EmbeddedProductRepository extends BaseRepository
             $strategy = new AlfredProtect;
         } elseif ($shortCode == EmbeddedProductEnum::RDX) {
             $strategy = new RDX;
+        } elseif ($shortCode == EmbeddedProductEnum::COURIER) {
+            $strategy = new COU;
         } else {
             $strategy = new EmbeddedProductStrategy;
         }
