@@ -68,11 +68,11 @@ class HomeQuoteController extends Controller
     public function show($uuid)
     {
         $quote = HomeQuoteRepository::getBy('uuid', $uuid);
-        
-        if (!$quote) {
+
+        if (! $quote) {
             abort(404, 'No Quote Found. Please check your details and try again.');
         }
-        
+
         $quoteWithData = HomeQuoteRepository::getShowFormOptions($quote);
 
         return inertia('HomeQuote/Show', $quoteWithData);

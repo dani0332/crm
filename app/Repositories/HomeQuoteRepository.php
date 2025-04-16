@@ -592,7 +592,7 @@ class HomeQuoteRepository extends BaseRepository
             throw $e; // Rethrow the exception so it propagates to the controller
         }
     }
-    
+
     private function getQuoteWithRelations($column, $value)
     {
         $response = $this->byQuoteTypeId(QuoteTypes::HOME->id())
