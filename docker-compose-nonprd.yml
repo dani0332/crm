@@ -8,28 +8,21 @@ services:
       - DOPPLER_TOKEN
       - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
       - AXIOM_DATASET=${AXIOM_DATASET}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://shared-otel-collector:2317
     ports:
       - '${WEB_PORT}:443'
     volumes:
       - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs
       - .:/var/www/html
     restart: unless-stopped
-    depends_on:
-      - otel-collector
+    networks:
+      - otel-network
+      - default
 
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib
-    container_name: otel-collector
-    volumes:
-      - ./docker/config.yaml:/etc/otel/config.yaml
-      - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs:ro
-
-    environment:
-      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
-      - AXIOM_DATASET=${AXIOM_DATASET}
-    command: ['--config=/etc/otel/config.yaml']
-    ports:
-      - '4317:4317'
+networks:
+  otel-network:
+    external: true
+  default:
 
 volumes:
   logs:
