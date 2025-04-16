@@ -90,7 +90,9 @@ use Sammyjo20\LaravelHaystack\Models\Haystack;
 use App\Jobs\Renewals\HomeRenewalBatchEmailJob;
 use App\Models\HomeQuote;
 use App\Enums\WorkflowTypeEnum;
-
+use Illuminate\Bus\Batch;
+use Illuminate\Support\Facades\Bus;
+use Throwable;
 class RenewalsUploadService
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
@@ -391,7 +393,9 @@ class RenewalsUploadService
 
     function getPlansNonMotor($id, $quoteType){
         info('fn: getPlansNonMotor: quoteType: '.$quoteType);   
-        return $this->homeQuoteService->getQuotePlans($id, true);   
+        return $this->homeQuoteService->getQuotePlans($id, [
+            'getLatestRating' => true
+        ]);   
     }
 
     /**
@@ -467,10 +471,84 @@ class RenewalsUploadService
         }
     }
 
+    public function scheduleHomeRenewalsOcbEmails($batch, $userId = null)
+    {
+        info('fn: scheduleHomeRenewalsOcbEmails - Renewal OCB Email Send Started'); 
+
+        // get pending leads
+        $totalLeads = $this->getPendingOcbLeadsTotalNonMotor($batch, QuoteTypeShortCode::HOM);
+        
+        // If there are not leads, return false
+        if ($totalLeads == 0) {
+            info('fn: scheduleHomeRenewalsOcbEmails - No leads found for sending OCB Emails'); 
+            return false;
+        }
+
+        $renewalsBatchEmail = RenewalsBatchEmails::create([
+            'batch' => $batch,
+            'status' => ProcessStatusCode::PENDING,
+            'total_leads' => $totalLeads,
+            'total_sent' => 0,
+            'total_bounced' => 0,
+            'total_failed' => 0,
+            'created_by_id' => $userId 
+        ]);
+
+        $logPrefix = 'Home Renewals OCB email ';        
+
+        try {
+            $jobs = null;
+
+            $quoteType = QuoteTypeShortCode::HOM; 
+
+            $this->getOcbLeadsQueryNonMotor($batch, $quoteType)
+                ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
+                    foreach ($leads as $lead) {
+                        $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead);
+                    }
+                });
+
+            if ($jobs != null && count($jobs)) {
+                info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
+                Haystack::build()
+                    ->onQueue('renewals')
+                    ->addJobs($jobs)
+                    ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
+
+                    })
+                    ->catch(function () use ($logPrefix, $renewalsBatchEmail) {
+                        info($logPrefix.' one of batch is failed. ');
+                        $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(1)
+                    ->dispatch();
+            } else {
+                info($logPrefix.' No leads to schedule OCB email');
+                $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
+            }
+        } catch (\Exception $exception) {
+            info($logPrefix.' one of batch is failed. Exception : '.$exception->getMessage());
+            $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
+        }
+        
+    }
+
+
     public function fetchRenewalPlansForNonMotor(RenewalStatusProcess $renewalStatusProcess, $batch, $quoteType)
     {
         $logPrefix ="FetchPlans FN: fetchRenewalPlans Batch: $batch";
         info($logPrefix.'  Fetch plans started');
+
+        $batchNumber = $batch; 
+
+        $userId = $renewalStatusProcess->user_id; 
+       
 
         try {
             $jobs = null;
@@ -485,7 +563,7 @@ class RenewalsUploadService
             ])->with(['renewalUploadLead', 'homeQuote']);
             
             
-            $query->chunkById(50, function ($leads) use ($batch, $quoteType, $renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
+            $query->chunkById(50, function ($leads) use ($batchNumber, $quoteType, $renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
                         switch ($quoteType) {
@@ -510,37 +588,35 @@ class RenewalsUploadService
             }
 
             
-            if ($jobs != null && count($jobs)) {
-                info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
-
-                Haystack::build()
+            if (!empty($jobs)) {
+                info($logPrefix . ' ' . count($jobs) . ' found to schedule for fetch plans');
+    
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
-                    ->then(function () use ($logPrefix, $renewalStatusProcess) {
-                        info($logPrefix.' all jobs completed successfully');
+                    ->then(function (Batch $batch) use ($logPrefix, $renewalStatusProcess, $userId, $batchNumber) {
+                        info($logPrefix . ' all jobs completed successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+    
+                        //  Schedule follow-up email job
+                        // \Auth::user()->leaveImpersonation();
+
+                        $this->scheduleHomeRenewalsOcbEmails($batchNumber, $userId);
                     })
-                    ->catch(function () use ($logPrefix, $renewalStatusProcess) {
-                        // Haystack failed
-                        info($logPrefix.' one of batch is failed. ');
+                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalStatusProcess) {
+                        info($logPrefix . ' one or more jobs failed.');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix, $batch) {
-                        info($logPrefix.' everything done');
-
-                        // info('fn: fetchRenewalPlansForNonMotor - Starting OCB Email Scheduling');
-                        $this->scheduleHomeRenewalsOcbEmails($batch);
-
+                    ->finally(function (Batch $batch) use ($logPrefix) {
+                        info($logPrefix . ' everything done');
                     })
                     ->allowFailures()
-                    ->withDelay(10)
                     ->dispatch();
-
-                info($logPrefix.' all jobs are scheduled');
+    
+                info($logPrefix . ' all jobs are scheduled');
             } else {
-                info($logPrefix.' no leads available for fetch plans, about to mark status as completed');
+                info($logPrefix . ' no leads available for fetch plans, about to mark status as completed');
                 $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
-                info($logPrefix.' fetch plans is completed');
+                info($logPrefix . ' fetch plans is completed');
             }
 
             return true;
@@ -617,7 +693,6 @@ class RenewalsUploadService
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
 
             $plansResponse = $this->getPlansNonMotor($quote->uuid, $quoteType->code);
-            info("fn: plansResponse $plansResponse");
             if ($plansResponse) {
                 info('Non Motor FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
                 // update status to plans fetched
@@ -2470,73 +2545,7 @@ class RenewalsUploadService
         //        }
     }
 
-    public function scheduleHomeRenewalsOcbEmails($batch)
-    {
-
-        // get pending leads
-        $totalLeads = $this->getPendingOcbLeadsTotalNonMotor($batch, QuoteTypeShortCode::HOM);
-        
-        // If there are not leads, return false
-        if ($totalLeads == 0) {
-            info('fn: scheduleHomeRenewalsOcbEmails - No leads found for sending OCB Emails'); 
-            return false;
-        }
-
-        $renewalsBatchEmail = RenewalsBatchEmails::create([
-            'batch' => $batch,
-            'status' => ProcessStatusCode::PENDING,
-            'total_leads' => $totalLeads,
-            'total_sent' => 0,
-            'total_bounced' => 0,
-            'total_failed' => 0,
-            'created_by_id' => auth()->id(),
-        ]);
-
-        $logPrefix = 'Home Renewals OCB email ';        
-
-        try {
-            $jobs = null;
-
-            $quoteType = QuoteTypeShortCode::HOM; 
-
-            $this->getOcbLeadsQueryNonMotor($batch, $quoteType)
-                ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
-                    foreach ($leads as $lead) {
-                        $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead);
-                    }
-                });
-
-            if ($jobs != null && count($jobs)) {
-                info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
-                Haystack::build()
-                    ->onQueue('renewals')
-                    ->addJobs($jobs)
-                    ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
-                        info($logPrefix.' all jobs completed successfully');
-                        $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
-
-                    })
-                    ->catch(function () use ($logPrefix, $renewalsBatchEmail) {
-                        info($logPrefix.' one of batch is failed. ');
-                        $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
-                    })
-                    ->finally(function () use ($logPrefix) {
-                        info($logPrefix.' everything done');
-                    })
-                    ->allowFailures()
-                    ->withDelay(1)
-                    ->dispatch();
-            } else {
-                info($logPrefix.' No leads to schedule OCB email');
-                $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
-            }
-        } catch (\Exception $exception) {
-            info($logPrefix.' one of batch is failed. Exception : '.$exception->getMessage());
-            $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
-        }
-        
-    }
-
+  
     // todo: remove this code
     //    public function updateRenewalQuoteEmailSent($batch, $quoteId)
     //    {

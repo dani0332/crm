@@ -117,7 +117,6 @@ class RenewalsUploadController extends Controller
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ])->count();
 
-        
         if ($totalPending > 0) {
             $renewalStatusProcess = RenewalStatusProcess::create([
                 'batch' => $batch,
@@ -386,6 +385,7 @@ class RenewalsUploadController extends Controller
             ->orderBy('renewal_status_processes.id', 'desc');
             
         $process = $process->simplePaginate();
+        
         
         return inertia('Renewals/PlanProcessesNonMotor', [
             'process' => $process,

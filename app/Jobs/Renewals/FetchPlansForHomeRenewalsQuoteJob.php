@@ -15,10 +15,11 @@ use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
+use Illuminate\Bus\Batchable;
 
 class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue, StackableJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable,Batchable;
 
     protected $renewalQuoteProcess;
     protected $renewalStatusProcess;
