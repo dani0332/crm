@@ -48,8 +48,7 @@ class AMLScreeningCommand extends Command
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
         if (! class_exists($quoteModel)) {
-            LoggerService::critical($this->className.' - Quote Model not found');
-            LoggerService::info($this->className.' - Ended');
+            LoggerService::info($this->className.' - Ended - Quote Model not found');
             return;
         }
 
@@ -60,12 +59,7 @@ class AMLScreeningCommand extends Command
                 'aml_status' => AMLStatusCode::AMLPending,
             ])
             ->where('created_at', '>', $date)
-            ->whereNotIn(
-                'code',
-                $quoteModel::from('aml_automation')
-                    ->whereNot('status', AmlAutomationStatus::FAILED_STATUS)
-                    ->select('code')
-            );
+            ->whereNotIn('code', $quoteModel::from('aml_automation')->select('code'));
 
         if ($quoteRequestQuery->exists()) {
             $quoteRequestQuery->chunk(100, function ($quoteRequests) {
@@ -79,19 +73,12 @@ class AMLScreeningCommand extends Command
                     }
 
                     Log::withContext(['ref_id' => $quoteRequest->code]);
-                    if ($quoteRequest->api_issuance_status_id != PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID) {
-                        LoggerService::notice($this->className.' - Quote is not eligible for AML, due to API issuance status is not yes');
-                        continue;
-                    }
 
-                    if ($quoteRequest->aml_status != AMLStatusCode::AMLPending) {
-                        LoggerService::notice($this->className.' - Quote is not eligible for AML, due to AML status is not pending');
-                        continue;
-                    }
+                    $quoteRequest->refresh();
+                    $isApiIssuanceStatusYes = $quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+                    $isAMLPending = $quoteRequest->aml_status == AMLStatusCode::AMLPending;
 
-                    $amlAutomation = $quoteRequest->amlAutomation;
-                    if (isset($amlAutomation->status) && $amlAutomation->status != AmlAutomationStatus::FAILED_STATUS) {
-                        LoggerService::warning($this->className.' - Quote is already '.($quoteRequest->amlAutomation->status ?? 'picked'));
+                    if (!$isApiIssuanceStatusYes || !$isAMLPending || $quoteRequest->amlAutomation()->exists()) {
                         continue;
                     }
 

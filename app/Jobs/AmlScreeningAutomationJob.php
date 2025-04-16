@@ -3,7 +3,9 @@
 namespace App\Jobs;
 
 use App\Enums\AmlAutomationStatus;
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\AmlAutomation;
 use App\Models\TravelQuote;
@@ -40,7 +42,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     public function __construct(QuoteTypes $quoteType, TravelQuote $quoteRequest)
     {
         $this->quoteType = $quoteType;
-        $this->quoteRequest = $quoteRequest;
+        $this->quoteRequest = $quoteRequest->refresh();
         $this->quoteRefId = $this->quoteRequest?->code ?? '';
         $this->uniqueKey = strtolower($this->quoteRefId);
     }
@@ -50,35 +52,39 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
+        $isApiIssuanceStatusYes = $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
+        $isAMLPending = $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
+        $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
+
+        if (!$isApiIssuanceStatusYes || !$isAMLPending || !$isAutomationInQueue) {
+            return;
+        }
+
         LoggerService::info($this->className.' - Started');
+        $travelQuoteService = app(TravelQuoteService::class);
+
+        // Get customer required travel info
+        $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRequest->id, $this->quoteType->value);
+        if (empty($customerTravelInfo['id'])) {
+            return;
+        }
+
+        // Check customer required travel info is complete
+        $checkCustomerTravelInfo = $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
+        if (! $checkCustomerTravelInfo['status']) {
+            return;
+        }
+
+        $idType = 'passport';
+        $idNumber = $customerTravelInfo['passport'] ?? null;
+
+        $amlAutomation = AmlAutomation::updateOrCreate(
+            ['code' => $this->quoteRefId],
+            ['status' => AmlAutomationStatus::PROCESSING_STATUS]
+        );
 
         try {
-            $amlAutomation = AmlAutomation::updateOrCreate(
-                ['code' => $this->quoteRefId],
-                ['status' => AmlAutomationStatus::PROCESSING_STATUS]
-            );
-
-            $travelQuoteService = app(TravelQuoteService::class);
-
-            // Get customer required travel info
-            $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($this->quoteRequest->id, $this->quoteType->value);
-
-            if (empty($customerTravelInfo['id'])) {
-                throw new Error('Record not found');
-            }
-
-            // Check customer required travel info is complete
-            $checkCustomerTravelInfo = $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
-
-            if (! $checkCustomerTravelInfo['status']) {
-                throw new Error($checkCustomerTravelInfo['message']);
-            }
-
-            $idType = 'passport';
-            $idNumber = $customerTravelInfo['passport'] ?? null;
-
-            $amlService = app(AMLService::class);
-            $insuredPersonData = $amlService->getInsuredPersonDetails($idType, $idNumber);
+            $insuredPersonData = app(AMLService::class)->getInsuredPersonDetails($idType, $idNumber);
             LoggerService::info($this->className.' - reqCall: getInsuredPersonDetails - response: '.($insuredPersonData->status ? 'success' : 'error'));
 
             $customer = $customerTravelInfo;
@@ -101,26 +107,20 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
                 'screening_gender' => $customer['gender'],
             ];
 
-            $quoteAmlProcessCall = $amlService->quoteAmlProcessCall($amlRequestData, $this->quoteType->id(), $this->quoteRequest->id);
+            $quoteAmlProcessCall = app(AMLService::class)->quoteAmlProcessCall($amlRequestData, $this->quoteType->id(), $this->quoteRequest->id);
             if (! $quoteAmlProcessCall->status) {
-                throw new Error($quoteAmlProcessCall->message);
+                $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Error: '.$quoteAmlProcessCall->message]);
+                LoggerService::error($this->className.' - Completed - Error: '.$quoteAmlProcessCall->message);
+                return;
             }
 
             $this->quoteRequest->refresh();
             $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $quoteAmlProcessCall->message]);
             LoggerService::info($this->className.' - Completed - reqCall: quoteUpdate - response: '.$quoteAmlProcessCall->message);
 
-        } catch (Error $e) {
-            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Error: '.$e->getMessage()]);
-            LoggerService::error($this->className.' - Error: '.$e->getMessage());
-
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);
-            LoggerService::critical($this->className.' - Exception: '.$e->getMessage());
-
-        } catch (\Throwable $e) { // Catch all other errors and exceptions
-            $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Throwable: '.$e->getMessage()]);
-            LoggerService::critical($this->className.' - Throwable: '.$e->getMessage());
+            LoggerService::error($this->className.' - Exception: '.$e->getMessage());
         }
     }
 

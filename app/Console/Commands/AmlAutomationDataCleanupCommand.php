@@ -31,9 +31,7 @@ class AmlAutomationDataCleanupCommand extends Command
     {
         $date = Carbon::now()->subDays(30);
 
-        AmlAutomation::where('status', AmlAutomationStatus::COMPLETE_STATUS)
-            ->where('created_at', '<', $date)
-            ->delete();
+        AmlAutomation::where('created_at', '<', $date)->delete();
 
         LoggerService::info('Aml Automation Data Clean Up Command executed successfully, data before date '.$date->format('Y-m-d H:i:s'));
     }
