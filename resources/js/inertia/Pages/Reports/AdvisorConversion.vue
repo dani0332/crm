@@ -92,16 +92,16 @@ const tableHeader = [
     value: 'sale_leads',
   },
   {
+    text: 'Manual Created',
+    value: 'manual_created',
+  },
+  {
     text: 'Created Sale Leads',
     value: 'created_sale_leads',
   },
   {
     text: 'IM Renewals',
     value: 'afia_renewals_count',
-  },
-  {
-    text: 'Manual Created',
-    value: 'manual_created',
   },
   {
     text: 'Gross Conversion',
@@ -1192,13 +1192,13 @@ const getAdvisorLabel = () => {
             {{ calculateTotalSum(reportData, 'sale_leads') }}
           </td>
           <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'manual_created') }}
+          </td>
+          <td class="direction-center">
             {{ calculateTotalSum(reportData, 'created_sale_leads') }}
           </td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData, 'afia_renewals_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'manual_created') }}
           </td>
           <td class="direction-center">
             {{ calculateTotalGrossConversion(reportData) }}
