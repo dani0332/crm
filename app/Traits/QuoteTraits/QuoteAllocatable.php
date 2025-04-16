@@ -9,8 +9,8 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Models\QuoteTag;
 use Carbon\Carbon;
+use App\Models\QuoteTag;
 
 trait QuoteAllocatable
 {
@@ -167,6 +167,8 @@ trait QuoteAllocatable
 
     /**
      * Filter AIG leads based on advisor request status - For Car quotes only
+     * Only includes AIG leads where sic_advisor_requested is true
+     * Excludes all other leads (both non-AIG and AIG without advisor requested)
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $q
      * @return \Illuminate\Database\Eloquent\Builder
@@ -175,25 +177,12 @@ trait QuoteAllocatable
     {
         $table = $q->getModel()->getTable();
 
-        return $q->where(function ($query) use ($table) {
-            // Either it's not an AIG lead
-            $query->whereNotExists(function ($subQuery) use ($table) {
-                $subQuery->from('quote_tags')
-                    ->whereRaw("quote_tags.quote_uuid = {$table}.uuid")
-                    ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                    ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
-            })
-            // Or it's an AIG lead with sic_advisor_requested = true
-                ->orWhere(function ($subQuery) use ($table) {
-                    $subQuery->whereExists(function ($tagQuery) use ($table) {
-                        $tagQuery->from('quote_tags')
-                            ->whereRaw("quote_tags.quote_uuid = {$table}.uuid")
-                            ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                            ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
-                    })
-                        ->where('sic_advisor_requested', true);
-                });
-        });
+        return $q->whereExists(function ($tagQuery) use ($table) {
+            $tagQuery->from('quote_tags')
+                ->whereRaw("quote_tags.quote_uuid = {$table}.uuid")
+                ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
+        })->where('sic_advisor_requested', true);
     }
 
     /**
