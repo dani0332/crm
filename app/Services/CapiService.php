@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Http;
 
 class CapiService
@@ -38,7 +39,7 @@ class CapiService
     {
         $url = $this->baseUrl.$path;
         $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) use ($data, $url) {
-            info(self::CAPI_EXCEPTION_MESSAGE, ['data' => $data, 'url' => $url]);
+            LoggerService::error('CAPI Service Exception', ['data' => $data, 'url' => $url]);
             if (isset($response->json()['msg'])) {
                 vAbort($response->json()['msg']);
             } else {
