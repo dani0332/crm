@@ -18,6 +18,8 @@ class SageApiLog extends Model
         'user_id',
         'section_id',
         'section_type',
+        'model_id',
+        'model_type',
         'step',
         'total_steps',
         'sage_request_type',

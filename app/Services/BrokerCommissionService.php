@@ -85,46 +85,73 @@ class BrokerCommissionService
     {
         [$insurerId, $quoteTypeId, $businessTypeOfInsurance, $planId] = $data;
 
-        // Define query conditions in priority order
-        $whereClauses = [
-            ['insurance_provider_id', $insurerId],
-        ];
+        // Try with all 4 parameters
+        $brokerCommission = BrokerCommission::select('automatic_commission_transfer')
+            ->where('insurance_provider_id', $insurerId)
+            ->when($quoteTypeId, function ($q) use ($quoteTypeId) {
+                $q->where('quote_type_id', $quoteTypeId);
+            })
+            ->when($businessTypeOfInsurance, function ($q) use ($businessTypeOfInsurance) {
+                $q->where('business_type_of_insurance_id', $businessTypeOfInsurance);
+            })
+            ->when($planId, function ($q) use ($planId) {
+                $q->where('plan_id', $planId);
+            })
+            ->first();
 
-        // Add optional conditions only if they exist
-        if ($quoteTypeId) {
-            $whereClauses[] = ['quote_type_id', $quoteTypeId];
+        if ($brokerCommission) {
+            return $brokerCommission;
         }
 
-        if ($businessTypeOfInsurance) {
-            $whereClauses[] = ['business_type_of_insurance_id', $businessTypeOfInsurance];
-        }
-
+        // Try with 3 parameters (without planId)
         if ($planId) {
-            $whereClauses[] = ['plan_id', $planId];
-        }
-
-        // Start with most specific query
-        $query = BrokerCommission::query();
-
-        // Try progressively less specific queries until we find a match
-        while (! empty($whereClauses)) {
-            $brokerCommission = $query->where($whereClauses)->first();
+            $brokerCommission = BrokerCommission::select('automatic_commission_transfer')
+                ->where('insurance_provider_id', $insurerId)
+                ->when($quoteTypeId, function ($q) use ($quoteTypeId) {
+                    $q->where('quote_type_id', $quoteTypeId);
+                })
+                ->when($businessTypeOfInsurance, function ($q) use ($businessTypeOfInsurance) {
+                    $q->where('business_type_of_insurance_id', $businessTypeOfInsurance);
+                })
+                ->whereNull('plan_id')
+                ->first();
 
             if ($brokerCommission) {
                 return $brokerCommission;
             }
-
-            // Remove the last condition and try again with a less specific query
-            array_pop($whereClauses);
         }
 
-        // If we've tried all combinations and found nothing, return null
-        return null;
+        // Try with 2 parameters (without businessTypeOfInsurance)
+        if ($businessTypeOfInsurance) {
+            $brokerCommission = BrokerCommission::select('automatic_commission_transfer')
+                ->where('insurance_provider_id', $insurerId)
+                ->when($quoteTypeId, function ($q) use ($quoteTypeId) {
+                    $q->where('quote_type_id', $quoteTypeId);
+                })
+                ->whereNull('business_type_of_insurance_id')
+                ->whereNull('plan_id')
+                ->first();
+
+            if ($brokerCommission) {
+                return $brokerCommission;
+            }
+        }
+
+        // Finally try with just insurer and quote type
+        return BrokerCommission::select('automatic_commission_transfer')
+            ->where('insurance_provider_id', $insurerId)
+            ->when($quoteTypeId, function ($q) use ($quoteTypeId) {
+                $q->where('quote_type_id', $quoteTypeId);
+            })
+            ->whereNull('business_type_of_insurance_id')
+            ->whereNull('plan_id')
+            ->first();
     }
 
     public function isAutomaticCommissionTransferEnabledForInsurer($data)
     {
         $brokerCommission = $this->getBrokerCommission($data);
+        info(self::class.' fn:'.__FUNCTION__.' Broker Commission Id : '.$brokerCommission?->id.', Automatic Commission Transfer : '.$brokerCommission?->automatic_commission_transfer, ['data' => json_encode($data)]);
 
         return $brokerCommission?->automatic_commission_transfer;
     }

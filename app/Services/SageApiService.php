@@ -637,6 +637,14 @@ class SageApiService
             return ['status' => true, 'message' => 'Policy has been already booked!'];
         }
 
+        $commissionChargeIds = $paymentSplits->flatMap(function ($paymentSplit) {
+            return $paymentSplit->paymentCharges()?->where('action_type', PaymentChargesEnum::ACTION_TYPE_CHARGE->value)
+                ->pluck('transaction_id')
+                ->toArray();
+        })->toArray();
+        $sageRequest->commissionChargeId = count($commissionChargeIds) > 0 ? implode(',', $commissionChargeIds) : '';
+        info(self::class .' fn:'. __FUNCTION__ . 'Commission Charge IDs ' . $sageRequest->commissionChargeId );
+
         $this->createSageProcess($quote, $sageRequest, $request);
 
         $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
@@ -693,12 +701,7 @@ class SageApiService
         }
 
         $paymentSplits = $payment->paymentSplits;
-        $commissionChargeIds = $paymentSplits->flatMap(function ($paymentSplit) {
-            return $paymentSplit->paymentCharges()?->where('action_type', PaymentChargesEnum::ACTION_TYPE_CHARGE->value)
-                ->pluck('transaction_id')
-                ->toArray();
-        })->toArray();
-        $sageRequest->commissionChargeId = count($commissionChargeIds) > 0 ? implode(',', $commissionChargeIds) : '';
+
         $quote->userId = $sageRequest->userId;
 
         $isPolicyBookedOnSage = QuoteTag::where([
@@ -2630,8 +2633,10 @@ class SageApiService
         $isAutomaticCommissionTransferEnabledForInsurer = (new BrokerCommissionService)->isAutomaticCommissionTransferEnabledForInsurer([
             $sageRequest->insurerID, $sageRequest->quoteTypeId, $sageRequest->subClass , $sageRequest->planId
         ]);
+        info(self::class . 'fn:' .__FUNCTION__. ' SAGE API : Quote Code : '.$quote->code . ' Broker Commission -  AutomaticCommissionTransfer ' , ['AutomaticCommissionTransfer'  => $isAutomaticCommissionTransferEnabledForInsurer] );
+
         if(!$isAutomaticCommissionTransferEnabledForInsurer){
-            info('fn:' .__FUNCTION__. ' SAGE API : Quote Code : '.$quote->code . ' Skip Creation of Commission prepayment as AutomaticCommissionTransfer is ' . $isAutomaticCommissionTransferEnabledForInsurer );
+            info(self::class . 'fn:' .__FUNCTION__. ' SAGE API : Quote Code : '.$quote->code . ' Skip Creation of Commission prepayment as AutomaticCommissionTransfer is ' . ($isAutomaticCommissionTransferEnabledForInsurer ? ' enabled.' :  ' disabled.') );
 
             $returnMessage['status'] = true;
             $returnMessage['message'] = 'Skip Creation of Commission prepayment as AutomaticCommissionTransfer is ' . $isAutomaticCommissionTransferEnabledForInsurer;
