@@ -704,14 +704,6 @@ class AdvisorConversionReportService extends BaseService
             })
             ->when(isset($filters->excludeCreatedLeadsFilter) && $filters->excludeCreatedLeadsFilter == 'yes', function ($q) {
                 $q->whereNotIn('car_quote_request.source', $this->getExcludedSources());
-            })
-            ->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($q) use ($filters) {
-                $q->whereIn('car_quote_request.source', $filters->leadSourceFilter);
-            }, function ($q) use ($isPopup) {
-                $q->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
-                    ->when($isPopup, function ($sq) {
-                        $sq->whereNull('car_quote_request.renewal_import_code');
-                    });
             });
 
         $this->applyLeadTypeFilter($query, 'car_quote_request', $filters);
