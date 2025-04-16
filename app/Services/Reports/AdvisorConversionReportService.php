@@ -20,6 +20,7 @@ use App\Models\LeadSource;
 use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
+use App\Models\User;
 use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
@@ -105,7 +106,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->where(['users.is_active' => true, 'users.department_id' => auth()->user()->department_id, 'car_quote_request.source' => LeadSourceEnum::INSURANCE_MARKET])
+            ->where(['users.is_active' => true, 'car_quote_request.source' => LeadSourceEnum::INSURANCE_MARKET])
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
@@ -128,6 +129,8 @@ class AdvisorConversionReportService extends BaseService
                     })
                     ->pluck('user_id')
                     ->toArray();
+
+                    $userIds = $this->getUsers($userIds);
             }
 
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
@@ -136,6 +139,14 @@ class AdvisorConversionReportService extends BaseService
         $this->addSelect($query, 'car_quote_request');
 
         return $query;
+    }
+
+    private function getUsers($userIds)
+    {
+        return User::whereIn('id', $userIds)
+        ->where('department_id', auth()->user()->department_id)
+        ->pluck('id')
+        ->toArray();
     }
 
     private function getAdvisorConversionQuoteStatusDate()
@@ -242,7 +253,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
-            ->where(['users.is_active' => true, 'users.department_id' => auth()->user()->department_id, 'personal_quotes.source' => LeadSourceEnum::INSURANCE_MARKET])
+            ->where(['users.is_active' => true, 'personal_quotes.source' => LeadSourceEnum::INSURANCE_MARKET])
             ->groupBy(
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_batch_id'
@@ -269,7 +280,7 @@ class AdvisorConversionReportService extends BaseService
                     ->pluck('user_id')
                     ->toArray();
             }
-
+            $userIds = $this->getUsers($userIds);
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
 
