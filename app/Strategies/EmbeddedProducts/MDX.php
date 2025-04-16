@@ -2,9 +2,9 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use Carbon\Carbon;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
+use Carbon\Carbon;
 
 class MDX extends EmbeddedProduct
 {
@@ -24,7 +24,7 @@ class MDX extends EmbeddedProduct
             $lastName = $quoteObject->last_name ?? '';
         } else {
             $customerInsured = CustomerInsured::where('customer_id', $quoteObject->customer_id)->where('quote_request_id', $quoteObject->id)->first();
-            if($customerInsured) {
+            if ($customerInsured) {
                 $insured = Insured::find($customerInsured->insured_id);
                 $firstName = $insured->first_name ?? '';
                 $lastName = $insured->last_name ?? '';

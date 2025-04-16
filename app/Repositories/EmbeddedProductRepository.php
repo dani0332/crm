@@ -32,6 +32,7 @@ use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Services\SendEmailCustomerService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
+use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Strategies\EmbeddedProducts\RDX;
@@ -44,7 +45,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
-use App\Strategies\EmbeddedProducts\COU;
 
 class EmbeddedProductRepository extends BaseRepository
 {

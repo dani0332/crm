@@ -12,7 +12,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
-use App\Enums\QuoteTypeId;
 
 class EmbeddedProduct
 {
