@@ -20,6 +20,7 @@ use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalQuoteProcess;
 use App\Services\HomeQuoteService;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class HomeEmailService extends BaseService
 {
@@ -177,6 +178,7 @@ class HomeEmailService extends BaseService
             'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflowType' => $workflowType,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'triggerDate' => $this->getOCBDurationInISO8601($lead->policy_expiry_date)
             // 'whatsappConsent' => getWhatsappConsent(QuoteTypes::HOME, uuid: $lead->uuid),
         ];
 
@@ -308,5 +310,38 @@ class HomeEmailService extends BaseService
                 'action' => 'updateHomeAutomatedFlowExecuted',
             ]);
         }
+    }
+
+    private function getOCBDurationInISO8601($expiryDate): string
+    {
+        // Ensure Carbon instance
+        $expiry = Carbon::parse($expiryDate);
+    
+        // Subtract 30 days to get the OCB trigger date
+        $ocbDate = $expiry->copy()->subDays(30);
+    
+        // Adjust for weekend rules
+        switch ($ocbDate->dayOfWeek) {
+            case Carbon::SATURDAY:
+                $ocbDate->subDay(); // Move to Friday
+                break;
+            case Carbon::SUNDAY:
+                $ocbDate->addDay(); // Move to Monday
+                break;
+        }
+    
+        // Get current time
+        $now = Carbon::now();
+    
+        // If OCB date is already in the past, return PT0M
+        if ($ocbDate->lessThanOrEqualTo($now)) {
+            return 'PT0M';
+        }
+    
+        // Calculate minutes difference
+        $minutes = $now->diffInMinutes($ocbDate);
+    
+        // Return in ISO 8601 format
+        return "PT{$minutes}M";
     }
 }

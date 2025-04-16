@@ -477,8 +477,26 @@ class RenewalsUploadService
     {
         info('fn: scheduleHomeRenewalsOcbEmails - Renewal OCB Email Send Started'); 
 
+        // get pending leads
+        $totalLeads = $this->getPendingOcbLeadsTotalNonMotor($batch, QuoteTypeShortCode::HOM);
         
-        ScheduleHomeRenewalOcbEmails::dispatch($batch, $userId);
+        // If there are not leads, return false
+        if ($totalLeads == 0) {
+            LoggerService::info('fn: scheduleHomeRenewalsOcbEmails - No leads found for sending OCB Emails'); 
+            return false;
+        }
+
+        $renewalsBatchEmail = RenewalsBatchEmails::create([
+            'batch' => $batch,
+            'status' => ProcessStatusCode::PENDING,
+            'total_leads' => $totalLeads,
+            'total_sent' => 0,
+            'total_bounced' => 0,
+            'total_failed' => 0,
+            'created_by_id' => $userId 
+        ]);
+
+        ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalsBatchEmail);
  
     }
 
@@ -596,7 +614,7 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function (\Illuminate\Bus\Batch $batch) use ($logPrefix) {
+                    ->finally(function () use ($logPrefix) {
                         info($logPrefix . ' everything done');
                     })
                     ->allowFailures()
@@ -2787,8 +2805,4 @@ class RenewalsUploadService
 
         return $fakeEmail;
     }
-
-    
-
-
-}
+    }
