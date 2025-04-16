@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\SageApiService;
 use Illuminate\Console\Command;
+use App\Services\Logger\LoggerService;
 
 class SageProcessesCommand extends Command
 {
@@ -31,15 +32,15 @@ class SageProcessesCommand extends Command
      */
     public function handle()
     {
-        info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Started');
+        LoggerService::info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Started');
 
         if ((new SageApiService)->isSageEnabled()) {
             (new SageApiService)->scheduleSageProcesses();
         } else {
-            info('cmd:SageProcessesCommand - Sage is not enabled');
+            LoggerService::info('cmd:SageProcessesCommand - Sage is not enabled');
         }
 
-        info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Ended');
+        LoggerService::info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Ended');
     }
 
 }

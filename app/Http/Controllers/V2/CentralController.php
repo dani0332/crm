@@ -74,6 +74,7 @@ use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -234,7 +235,7 @@ class CentralController extends Controller
     {
         try {
             $validatedData = $bookPolicyRequest->validated();
-            info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
             $paymentInformation = [
                 'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
@@ -263,13 +264,13 @@ class CentralController extends Controller
             }
 
             $payment->update($paymentInformation);
-            info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
             $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
             if (! $response['status']) {
                 return back()->with('error', $response['message']);
             }
-            info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
         } catch (\Exception $e) {
@@ -283,7 +284,7 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
-        info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
+        LoggerService::info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
@@ -294,7 +295,7 @@ class CentralController extends Controller
             ];
             $quote->update($quoteData);
 
-            info('Quote Code: '.$quote->code.' Policy send to customer');
+            LoggerService::info('Quote Code: '.$quote->code.' Policy send to customer');
 
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }

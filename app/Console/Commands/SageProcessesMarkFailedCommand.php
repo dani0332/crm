@@ -7,6 +7,7 @@ use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\QuoteStatusLog;
 use App\Models\SageProcess;
+use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -35,7 +36,7 @@ class SageProcessesMarkFailedCommand extends Command
      */
     public function handle()
     {
-        info('cmd:SageProcessesMarkFailedCommand : Started');
+        LoggerService::info('cmd:SageProcessesMarkFailedCommand : Started');
 
         $fiveMinutesAgo = Carbon::now()->subMinutes(5);
         $sageProcesses = SageProcess::where('updated_at', '<', $fiveMinutesAgo)->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS)->get();
@@ -65,16 +66,16 @@ class SageProcessesMarkFailedCommand extends Command
                     'current_quote_status_id' => $newQuoteStatusId,
                     'previous_quote_status_id' => $previousQuoteStatusId,
                 ]);
-                info('cmd:SageProcessesMarkFailedCommand : updated quote status to ', ['Quote Code' => $quote->code, 'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED]);
+                LoggerService::info('cmd:SageProcessesMarkFailedCommand : updated quote status to ', ['Quote Code' => $quote->code, 'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED]);
             } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
                 $model = $sageProcess->model;
                 $model->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
-                info('cmd:SageProcessesMarkFailedCommand : updated SendUpdate status to ', ['Send Update Code' => $model->code, 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
+                LoggerService::info('cmd:SageProcessesMarkFailedCommand : updated SendUpdate status to ', ['Send Update Code' => $model->code, 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
             }
         }
 
-        info('cmd:SageProcessesMarkFailedCommand : Sage processes to update to failed status.', ['updated before' => $fiveMinutesAgo, 'Sage Processes Count' => $sageProcesses->count()]);
+        LoggerService::info('cmd:SageProcessesMarkFailedCommand : Sage processes to update to failed status.', ['updated before' => $fiveMinutesAgo, 'Sage Processes Count' => $sageProcesses->count()]);
 
-        info('cmd:SageProcessesMarkFailedCommand : ended');
+        LoggerService::info('cmd:SageProcessesMarkFailedCommand : ended');
     }
 }
