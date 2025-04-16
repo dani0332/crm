@@ -225,8 +225,6 @@ class QuoteDocumentService extends BaseService
                 'created_by_id' => auth()->id(),
             ]);
 
-            $this->updateQuoteAndPaymentStatus($quote, $documentType, $isPaymentReceipt);
-
             if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
                 SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
                 LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
@@ -741,16 +739,6 @@ class QuoteDocumentService extends BaseService
         }
 
         return false;
-    }
-
-    private function updateQuoteAndPaymentStatus($quote, $documentType, $isPaymentReceipt)
-    {
-        $quote->payments->filter(function ($payment) use (&$quote) {
-            if ($payment->payment_methods_code == PaymentMethodsEnum::InsurerPaymentLink) {
-                $payment->update(['payment_status_id' => PaymentStatusEnum::PENDING]);
-                $quote->update(['quote_status_id' => QuoteStatusEnum::PaymentPending]);
-            }
-        });
     }
 
     /**
