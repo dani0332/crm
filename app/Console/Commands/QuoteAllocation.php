@@ -113,7 +113,7 @@ class QuoteAllocation extends Command
             ->orderByDesc('created_at')
             ->eligibleForAllocation()
             ->filterAigLeads()
-            ->limit($chunkSize);
+            ->take($chunkSize);
 
         info('leads fetch query is : '.$leads->toRawSql());
 
