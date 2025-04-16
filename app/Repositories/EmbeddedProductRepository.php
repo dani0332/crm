@@ -32,6 +32,7 @@ use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Services\SendEmailCustomerService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
+use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Strategies\EmbeddedProducts\RDX;
@@ -680,6 +681,8 @@ class EmbeddedProductRepository extends BaseRepository
             $strategy = new AlfredProtect;
         } elseif ($shortCode == EmbeddedProductEnum::RDX) {
             $strategy = new RDX;
+        } elseif ($shortCode == EmbeddedProductEnum::COURIER) {
+            $strategy = new COU;
         } else {
             $strategy = new EmbeddedProductStrategy;
         }
