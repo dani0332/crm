@@ -1366,17 +1366,10 @@ class RenewalsUploadService
             if($carQuote->quote_status_id == QuoteStatusEnum::NewLead){
                 SendPCPCarOCBEmailJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(1));
                 LoggerService::info(self::class." - SendPCPCarOCBEmailJob dispatched for CAR-".$carQuote->uuid." - Time: ".now());
-                $this->updateQuoteStatus($carQuote);
-                $this->recordOcbSentDate($carQuote);
-                RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
-                RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
             }
             else{
                 LoggerService::info(self::class.' -  SendPCPCarOCBEmailJob  already dispatched lead status  for CAR-'.$carQuote->uuid.' - Time: '.now());
             }
-
-
-
             if(empty($carQuote->pcp_flow_executed_at)){
             SendPCPFollowupsJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(2));
             LoggerService::info(self::class.' -  SendPCPFollowupsJob dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
@@ -1384,6 +1377,11 @@ class RenewalsUploadService
             else{
                 LoggerService::info(self::class.' -  SendPCPFollowupsJob already dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
             }
+
+            $this->updateQuoteStatus($carQuote);
+            $this->recordOcbSentDate($carQuote);
+            RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
+            RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
         } catch (\Throwable $th) {
             LoggerService::error('Renewals OCB Email failed for  CAR-'.$carQuote->uuid.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
         }
