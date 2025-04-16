@@ -107,7 +107,7 @@ class AdvisorConversionReportService extends BaseService
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->where('users.is_active' , true)
-            ->where('car_quote_request.source', 'LIKE', '%'.LeadSourceEnum::INSURANCE_MARKET.'%')
+            ->where('car_quote_request.source', 'LIKE', '%'.LeadSourceEnum::ALFRED_AE.'%')
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
@@ -254,7 +254,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active' , true)
-            ->where('personal_quotes.source', 'LIKE', '%'.LeadSourceEnum::INSURANCE_MARKET.'%')
+            ->where('personal_quotes.source', 'LIKE', '%'.LeadSourceEnum::ALFRED_AE.'%')
             ->groupBy(
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_batch_id'
