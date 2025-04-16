@@ -288,10 +288,4 @@ trait QuoteModelTrait
             }
         );
     }
-
-    public function isAIG(QuoteTypes $quoteType): bool
-    {
-        return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
-    }
-
 }

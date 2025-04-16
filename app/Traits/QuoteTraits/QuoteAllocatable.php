@@ -10,6 +10,7 @@ use App\Enums\QuoteTypes;
 use Carbon\Carbon;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
+use App\Models\QuoteTag;
 
 trait QuoteAllocatable
 {
@@ -221,5 +222,15 @@ trait QuoteAllocatable
                   });
             });
         });
+    }
+
+    public function isAdvisorRequested()
+    {
+        return $this->sic_advisor_requested == 1;
+    }
+
+    public function isAIG(QuoteTypes $quoteType): bool
+    {
+        return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
     }
 }

@@ -90,6 +90,9 @@ class CarAllocationService extends AllocationService
             $continueAssignment = true;
         } elseif ($lead->isRenewalUpload()) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead is Renewal Upload, skipping assignment');
+        } elseif ($lead->isAIG(QuoteTypes::CAR) && $lead->isAdvisorRequested()) {
+            LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and advisor requested, continuing assignment');
+            $continueAssignment = true;
         } else {
             LoggerService::info(self::class.'::verifyPreChecks - Lead does not meet any criteria, skipping assignment');
         }
