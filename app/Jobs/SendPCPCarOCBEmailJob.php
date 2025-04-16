@@ -12,6 +12,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Services\EmailServices\CarEmailService;
+use App\Enums\QuoteStatusEnum;
 
 class SendPCPCarOCBEmailJob implements ShouldQueue
 {
@@ -31,13 +32,15 @@ class SendPCPCarOCBEmailJob implements ShouldQueue
     public function handle(): void
     {
         LoggerService::startQuoteLogging($this->quoteUuid);
-        $homeOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_PCP_OCB_SWITCH)->first();
-        $personalQuote = CarQuote::where('uuid', $this->quoteUuid)->first();
-        if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
-            app(CarEmailService::class)->sendPCPOCBIntroEmail($personalQuote);
-            info(self::class.' - Car PCP OCB  Switch is on | Time: '.now());
+        $pcpOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_PCP_OCB_SWITCH)->first();
+        $carLead = CarQuote::where('uuid', $this->quoteUuid)->first();
+        if ($pcpOCBSwitch && $pcpOCBSwitch->value == 1) {
+            app(CarEmailService::class)->sendPCPOCBIntroEmail($carLead);
+            $carLead->quote_status_id = QuoteStatusEnum::Quoted;
+            $carLead->save();
+            LoggerService::info(self::class.' - Car PCP OCB  Switch is on | Time: '.now() . ' | Ref-ID: '.$carLead->uuid);
         } else {
-            info(self::class.' - Car OCB PDP  Switch is off | Time: '.now());
+            LoggerService::info(self::class.' - Car OCB PDP  Switch is off | Time: '.now() . ' | Ref-ID: '.$carLead->uuid);
         }
         LoggerService::endLogging();
     }

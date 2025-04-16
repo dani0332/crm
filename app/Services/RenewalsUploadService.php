@@ -1363,8 +1363,15 @@ class RenewalsUploadService
     private function sendPCPFollowups($carQuote,$renewalsBatchEmail,$renewalQuoteProcess){
         try {
             LoggerService::info(self::class." - Sending sendPCPFollowups followups email for lead: ".$carQuote->uuid.' | Time: '.now());
-            SendPCPCarOCBEmailJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(1));
-            LoggerService::info(self::class." - SendPCPCarOCBEmailJob dispatched for CAR-".$carQuote->uuid." - Time: ".now());
+            if($carQuote->status == QuoteStatusEnum::NewLead){
+                SendPCPCarOCBEmailJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(1));
+                LoggerService::info(self::class." - SendPCPCarOCBEmailJob dispatched for CAR-".$carQuote->uuid." - Time: ".now());
+            }
+            else{
+                LoggerService::info(self::class.' -  SendPCPFollowupsJob already dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
+            }
+
+
 
             $this->updateQuoteStatus($carQuote);
             $this->recordOcbSentDate($carQuote);
