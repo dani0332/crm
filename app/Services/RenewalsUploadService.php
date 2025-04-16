@@ -591,25 +591,25 @@ class RenewalsUploadService
             if (!empty($jobs)) {
                 info($logPrefix . ' ' . count($jobs) . ' found to schedule for fetch plans');
     
-                Bus::batch($jobs)
+
+                Haystack::build()
                     ->onQueue('renewals')
-                    ->then(function (Batch $batch) use ($logPrefix, $renewalStatusProcess, $userId, $batchNumber) {
+                    ->addJobs($jobs)
+                    ->then(function () use ($logPrefix, $renewalStatusProcess, $batch, $userId) {
                         info($logPrefix . ' all jobs completed successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
-    
-                        //  Schedule follow-up email job
-                        // \Auth::user()->leaveImpersonation();
 
-                        $this->scheduleHomeRenewalsOcbEmails($batchNumber, $userId);
+                        $this->scheduleHomeRenewalsOcbEmails($batch, $userId);
                     })
-                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalStatusProcess) {
-                        info($logPrefix . ' one or more jobs failed.');
+                    ->catch(function () use ($logPrefix, $renewalStatusProcess) {
+                        LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function (Batch $batch) use ($logPrefix) {
-                        info($logPrefix . ' everything done');
+                    ->finally(function () use ($logPrefix) {
+                        LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
+                    ->withDelay(1)
                     ->dispatch();
     
                 info($logPrefix . ' all jobs are scheduled');
