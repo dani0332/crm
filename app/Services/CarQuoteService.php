@@ -841,11 +841,13 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
-    public function walkTree($userId)
+    public function walkTree($userId,$requestParams = [])
     {
+        $user = $requestParams['user'] ?? auth()->user();
+
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
         array_push($this->childUserIds, $userId);
-        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::LeadPool])) {
+        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::LeadPool])) {
             $userAllTeams = DB::table('teams')
                 ->join('user_team', 'user_team.team_id', 'teams.id')
                 ->where('user_id', $userId)
@@ -879,12 +881,12 @@ class CarQuoteService extends BaseService
         }
 
         return $this->carQuoteQueryBuilder->processGridData($requestParams)
-            ->where(function ($query) use ($user) {
+            ->where(function ($query) use ($user,$requestParams) {
                 if ($user->hasRole(RolesEnum::CarManager)) {
-                    $this->walkTree($user->id);
+                    $this->walkTree($user->id,$requestParams);
                     $query->whereIn('advisor_id', $this->childUserIds);
                 } elseif ($user->hasRole(RolesEnum::LeadPool)) {
-                    $this->walkTree($user->id);
+                    $this->walkTree($user->id,$requestParams);
                     $query->whereIn('advisor_id', $this->childUserIds)->orWhereNull('advisor_id');
                 } elseif ($user->hasRole(RolesEnum::CarAdvisor)) {
                     $query->where('advisor_id', $user->id);
