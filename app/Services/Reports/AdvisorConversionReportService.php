@@ -735,7 +735,8 @@ class AdvisorConversionReportService extends BaseService
                 'car_quote_request.code as cdbId',
                 'quote_status.text as quoteStatusName',
                 'car_quote_request_detail.advisor_assigned_date as assignedDate',
-                'car_quote_request.premium as premium'
+                'car_quote_request.premium as premium',
+                'car_quote_request.uuid as uuid',
 
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
@@ -759,7 +760,8 @@ class AdvisorConversionReportService extends BaseService
                 'personal_quotes.code as cdbId',
                 'quote_status.text as quoteStatusName',
                 'personal_quote_details.advisor_assigned_date as assignedDate',
-                'personal_quotes.premium as premium'
+                'personal_quotes.premium as premium',
+                'personal_quotes.uuid as uuid',
             )
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')

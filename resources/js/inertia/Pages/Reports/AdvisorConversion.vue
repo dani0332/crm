@@ -823,6 +823,23 @@ const getAdvisorLabel = () => {
 
   return label;
 };
+
+const getRouteByLob = computed(() => {
+  const routeMap = {
+    [quoteTypeCodeEnum.Car]: 'car.show',
+    [quoteTypeCodeEnum.Travel]: 'travel.show',
+    [quoteTypeCodeEnum.Health]: 'health.show',
+    [quoteTypeCodeEnum.CORPLINE]: 'business.show',
+    [quoteTypeCodeEnum.GroupMedical]: 'amt.show',
+    [quoteTypeCodeEnum.Bike]: 'bike-quotes-show',
+    [quoteTypeCodeEnum.Home]: 'home-quotes-show',
+    [quoteTypeCodeEnum.Pet]: 'pet-quotes-show',
+    [quoteTypeCodeEnum.Cycle]: 'cycle-quotes-show',
+    [quoteTypeCodeEnum.Jetski]: 'jetski-quotes-show',
+    [quoteTypeCodeEnum.Yacht]: 'yacht-quotes-show',
+  };
+  return routeMap[filters.lob];
+});
 </script>
 
 <template>
@@ -1283,7 +1300,17 @@ const getAdvisorLabel = () => {
             border-cell
             hide-rows-per-page
             hide-footer
-          ></DataTable>
+          >
+            <template #item-cdbId="{ cdbId, uuid }">
+              <Link
+                :href="route(getRouteByLob, uuid)"
+                class="text-primary-500 hover:underline"
+              >
+                {{ cdbId }}
+              </Link>
+            </template>
+          </DataTable>
+          
         </div>
         <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
           <x-spinner size="lg" color="#1d83bc" />
