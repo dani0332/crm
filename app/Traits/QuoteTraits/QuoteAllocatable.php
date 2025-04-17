@@ -192,35 +192,30 @@ trait QuoteAllocatable
     {
         $table = $query->getModel()->getTable();
 
-        // AIG filter block
+        // === AIG Filter Block ===
         $query->where(function ($innerQuery) use ($table) {
             $innerQuery
                 // Include non-AIG leads
                 ->whereNotExists(function ($subQuery) use ($table) {
-                    $subQuery->from('quote_tags')
-                        ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
-                        ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                        ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
+                    $subQuery->isAigCarQuote($table);
                 })
+
                 // Or AIG leads with sic_advisor_requested = 1
                 ->orWhere(function ($subQuery) use ($table) {
                     $subQuery->whereExists(function ($tagQuery) use ($table) {
-                        $tagQuery->from('quote_tags')
-                            ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
-                            ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                            ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
+                        $tagQuery->isAigCarQuote($table);
                     })->where('sic_advisor_requested', 1);
                 });
         });
 
-        // Lead qualification logic
+        // === Lead Qualification Block ===
         return $query->where(function ($logic) {
             $logic
                 // Renewal leads with SIC + advisor/payment approved
                 ->where(function ($q) {
                     $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
-                    ->sicFlowEnabled()
-                    ->requestedAdvisorOrPaymentAuthorized();
+                        ->sicFlowEnabled()
+                        ->requestedAdvisorOrPaymentAuthorized();
                 })
 
                 // Leads that previously failed allocation
@@ -229,18 +224,21 @@ trait QuoteAllocatable
                 // Non-renewal leads with SIC logic
                 ->orWhere(function ($q) {
                     $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                    ->where(function ($inner) {
-                        $inner
-                            ->where(function ($x) {
-                                $x->sicFlowDisabled();
-                            })
-                            ->orWhere(function ($x) {
-                                $x->sicFlowEnabled()
-                                    ->requestedAdvisorOrPaymentAuthorized();
-                            });
-                    });
+                        ->where(function ($inner) {
+                            $inner
+                                ->where(fn ($x) => $x->sicFlowDisabled())
+                                ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized());
+                        });
                 });
         });
+    }
+
+    public function scopeIsAigCarQuote(Builder $query, string $table): Builder
+    {
+        return $query->from('quote_tags')
+            ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
+            ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+            ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
     }
 
 
