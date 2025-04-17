@@ -129,19 +129,26 @@ watch(
   },
 );
 
-const calculateVatAmount = () => {
+const calculateVatAmount = (isVatAmountRecalculated = false) => {
   let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
+
   // if price vat applicable and not applicable both are there
   if (priceVatApplicable > 0 && priceVatNotApplicable > 0) {
-    let vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
-    policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    let vat = policyDetailsForm.vat;
+    if (isVatAmountRecalculated) {
+      vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
+      policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    }
     policyDetailsForm.amount_with_vat = useRoundIt(
       Number(vat) + Number(priceVatApplicable) + Number(priceVatNotApplicable),
     ).toFixed(2);
   } else if (priceVatApplicable > 0) {
-    let vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
-    policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    let vat = policyDetailsForm.vat;
+    if (isVatAmountRecalculated) {
+      vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
+      policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    }
     policyDetailsForm.amount_with_vat = useRoundIt(
       Number(vat) + Number(priceVatApplicable),
     ).toFixed(2);
@@ -326,6 +333,7 @@ const onUpdatePolicyDetails = isValid => {
     },
   });
 };
+
 onBeforeMount(() => {
   calculateVatAmount();
 });
@@ -555,7 +563,7 @@ const calculateTotalPrice = () => {
                 </x-tooltip>
                 <x-input
                   v-model="policyDetailsForm.price_vat_notapplicable"
-                  @change="calculateVatAmount"
+                  @change="calculateVatAmount(true)"
                   :rules="[rules.price_vat_not_applicable]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
@@ -607,7 +615,7 @@ const calculateTotalPrice = () => {
                 </x-tooltip>
                 <x-input
                   v-model="policyDetailsForm.price_vat_applicable"
-                  @change="calculateVatAmount"
+                  @change="calculateVatAmount(true)"
                   :rules="[rules.price_vat_applicable]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"

@@ -1238,12 +1238,7 @@ class SagePayloadFactory
         $sageRequest->advisorName = $advisorName;
         $sageRequest->manager = $managerName;
         $sageRequest->advisorDepartment = $advisorDepartment;
-
-        // calculate vat
-        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
-        $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
-        //        $sageRequest->vatOnPremium = isset($quote->vat) ?: (isset($quote->price_with_vat) ? (floatval($quote->price_with_vat) - floatval($quote->price_vat_applicable ?? 0)) : 0); TODO:: This was added previous endorsement function, need to verify
-
+        $sageRequest->vatOnPremium = $quote->vat;
         $sageRequest->premiumWithoutTax = floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
         $sageRequest->vatOnCommission = floatval($payment->commission_vat);
