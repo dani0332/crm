@@ -10,15 +10,22 @@ class AxiomFormatter extends JsonFormatter implements FormatterInterface
 {
     public function format(LogRecord $record): string
     {
-        $formatted = [
-            'context' => $record->context,
-            'environment' => env('APP_ENV'),
-            'level' => $record->level->getName(),
-            'message' => $record->message,
-            'service' => 'IMCRM', // Assuming this is a constant for your use case
+        // Parse the Monolog format to extract the message and context
+        $message = $record->message;
+        $context = $record->context;
+        
+        // Create a clean event object
+        $event = [
             'timestamp' => $record->datetime->format('c'),
+            'level' => $record->level->getName(),
+            'message' => $message,
+            'context' => $context,
+            'environment' => env('APP_ENV'),
+            'service' => 'IMCRM',
+            'channel' => $record->channel
         ];
 
-        return json_encode($formatted);
+        // Use the parent's toJson method to ensure proper JSON encoding
+        return $this->toJson($event, true);
     }
 } 
