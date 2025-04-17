@@ -157,12 +157,32 @@ const fieldsToCheck = computed(() => ({
 // Function to store current field values to localStorage
 const storeToLocalStorage = (data) => {
   try {
-    localStorage.setItem(`quote_${page.props.quote.id}_fields`, JSON.stringify({
-      data,
-      timestamp: Date.now()
-    }));
+    // Add a null check to ensure data is valid before storing
+    if (data && typeof data === 'object') {
+      localStorage.setItem(`quote_${page.props.quote.id}_fields`, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+    }
   } catch (e) {
-    console.error('Error storing quote fields in localStorage:', e);
+    // Gracefully continue even if localStorage fails
+  }
+};
+
+// Function to safely retrieve stored data
+const getStoredData = () => {
+  try {
+    const storedDataString = localStorage.getItem(`quote_${page.props.quote.id}_fields`);
+    if (!storedDataString) return null;
+    
+    const parsedData = JSON.parse(storedDataString);
+    // Validate the expected structure exists
+    if (parsedData && parsedData.data && parsedData.timestamp) {
+      return parsedData;
+    }
+    return null;
+  } catch (e) {
+    return null;
   }
 };
 
@@ -535,51 +555,37 @@ onMounted(() => {
 
   // Get the current quote fields
   const currentData = fieldsToCheck.value;
-  console.log('Current quote fields:', currentData);
   
   // Initialize to true (default behavior is to get latest rating)
   let shouldGetLatestRating = true;
   
   try {
     // Try to retrieve stored field values from localStorage
-    const storedDataString = localStorage.getItem(`quote_${page.props.quote.id}_fields`);
+    const parsedData = getStoredData();
     
-    if (storedDataString) {
-      const { data: storedData, timestamp } = JSON.parse(storedDataString);
-      console.log('Stored quote fields:', storedData);
+    if (parsedData) {
+      const { data: storedData, timestamp } = parsedData;
       
-      // Check if stored data is less than 2 minutes old (for testing)
-      // For production, use a longer duration like 1 hour (60 * 60 * 1000)
-      const twoMinutesInMilliseconds = 2 * 60 * 1000; // 2 minutes
-      const isStoredDataFresh = timestamp > Date.now() - twoMinutesInMilliseconds;
+      const thirtyMinutesInMilliseconds = 30 * 60 * 1000; // 30 minutes
+      const isStoredDataFresh = timestamp > Date.now() - thirtyMinutesInMilliseconds;
       
       if (isStoredDataFresh) {
-        // Check if any relevant fields have changed
         const hasFieldsChanged = Object.keys(currentData).some(
           key => currentData[key] !== storedData[key]
         );
         
         if (!hasFieldsChanged) {
-          console.log('Fields unchanged, can use cached data');
           shouldGetLatestRating = false;
-        } else {
-          console.log('Fields changed, need fresh rating');
         }
-      } else {
-        console.log('Stored data is stale (> 2 minutes old)');
       }
-    } else {
-      console.log('No stored data found, will get latest rating');
     }
   } catch (e) {
-    console.error('Error comparing field values:', e);
+    shouldGetLatestRating = true;
   }
   
-  // Save current field values for next comparison
   if (shouldGetLatestRating) {
     storeToLocalStorage(currentData);
   }
-
 
   // Keep the existing conditional logic, but pass in our calculated shouldGetLatestRating value
   if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
@@ -613,12 +619,10 @@ onMounted(() => {
           page.props.quote.home_quote?.contents_value_id))
     ) {
       // Only run onLoadAvailablePlansData for RENEWAL_UPLOAD leads if all conditions are met
-      console.log('RENEWAL_UPLOAD lead with complete data, getting plans with shouldGetLatestRating:', shouldGetLatestRating);
       onLoadAvailablePlansData(shouldGetLatestRating);
     }
   } else {
     // For all non-renewal upload leads, always run onLoadAvailablePlansData
-    console.log('Non-RENEWAL_UPLOAD lead, getting plans with shouldGetLatestRating:', shouldGetLatestRating);
     onLoadAvailablePlansData(shouldGetLatestRating);
   }
 });
