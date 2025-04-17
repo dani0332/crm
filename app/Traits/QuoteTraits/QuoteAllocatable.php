@@ -11,6 +11,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\QuoteTag;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 trait QuoteAllocatable
 {
@@ -166,76 +167,82 @@ trait QuoteAllocatable
     }
 
     /**
-     * Filter AIG leads based on advisor request status - For Car quotes only
-     * Only includes AIG leads where sic_advisor_requested is true
-     * Excludes all other leads (both non-AIG and AIG without advisor requested)
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $q
-     * @return \Illuminate\Database\Eloquent\Builder
+     * Filters to include only AIG leads where sic_advisor_requested is true.
+     * Should be used after checking base eligibility.
      */
-    public function scopeFilterAigLeads($q)
+    public function scopeFilterAigLeads(Builder $query): Builder
     {
-        $table = $q->getModel()->getTable();
+        $table = $query->getModel()->getTable();
 
-        return $q->whereExists(function ($tagQuery) use ($table) {
-            $tagQuery->from('quote_tags')
-                ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
-                ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
-        })->where('sic_advisor_requested', 1);
-    }
-
-    /**
-     * Check lead eligibility based on source and flow status
-     *
-     * @param  \Illuminate\Database\Eloquent\Builder  $q
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function scopeEligibleForAllocation($q)
-    {
-        $tableName = $q->getModel()->getTable();
-        
-        // First, exclude AIG leads that don't have sic_advisor_requested=1
-        // This applies to ALL paths below, including leadAllocationFailed
-        $q->where(function($query) use ($tableName) {
-            // Either it's NOT an AIG lead
-            $query->whereNotExists(function ($subQuery) use ($tableName) {
+        return $query
+            ->whereExists(function ($subQuery) use ($table) {
                 $subQuery->from('quote_tags')
-                    ->whereColumn('quote_tags.quote_uuid', "{$tableName}.uuid")
+                    ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
                     ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
                     ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
             })
-            // OR it's an AIG lead WITH sic_advisor_requested=1
-            ->orWhere(function($aigQuery) use ($tableName) {
-                $aigQuery->whereExists(function ($subQuery) use ($tableName) {
+            ->where('sic_advisor_requested', 1);
+    }
+
+    /**
+     * Filters leads that are eligible for allocation.
+     * Includes both flow-based and AIG-specific filtering logic.
+     */
+    public function scopeEligibleForAllocation(Builder $query): Builder
+    {
+        $table = $query->getModel()->getTable();
+
+        // AIG filter block
+        $query->where(function ($innerQuery) use ($table) {
+            $innerQuery
+                // Include non-AIG leads
+                ->whereNotExists(function ($subQuery) use ($table) {
                     $subQuery->from('quote_tags')
-                        ->whereColumn('quote_tags.quote_uuid', "{$tableName}.uuid")
+                        ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
                         ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
                         ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
                 })
-                ->where('sic_advisor_requested', 1);
-            });
+                // Or AIG leads with sic_advisor_requested = 1
+                ->orWhere(function ($subQuery) use ($table) {
+                    $subQuery->whereExists(function ($tagQuery) use ($table) {
+                        $tagQuery->from('quote_tags')
+                            ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
+                            ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                            ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
+                    })->where('sic_advisor_requested', 1);
+                });
         });
-        
-        return $q->where(function ($query) {
-            $query->where(function ($q) {
-                $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
+
+        // Lead qualification logic
+        return $query->where(function ($logic) {
+            $logic
+                // Renewal leads with SIC + advisor/payment approved
+                ->where(function ($q) {
+                    $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                     ->sicFlowEnabled()
                     ->requestedAdvisorOrPaymentAuthorized();
-            })
+                })
+
+                // Leads that previously failed allocation
                 ->orWhere->leadAllocationFailed()
+
+                // Non-renewal leads with SIC logic
                 ->orWhere(function ($q) {
                     $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                        ->where(function ($inner) {
-                            $inner->where(function ($x) {
+                    ->where(function ($inner) {
+                        $inner
+                            ->where(function ($x) {
                                 $x->sicFlowDisabled();
-                            })->orWhere(function ($x) {
-                                $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                            })
+                            ->orWhere(function ($x) {
+                                $x->sicFlowEnabled()
+                                    ->requestedAdvisorOrPaymentAuthorized();
                             });
-                        });
+                    });
                 });
         });
     }
+
 
     public function isAdvisorRequested()
     {
