@@ -919,9 +919,9 @@ class SageApiService
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' trigger post prepayment schedule for PaymentSplitID : '.$paymentSplit->id);
                 $postPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $sageRequest->quoteType, $paymentSplit, $sendUpdateLog]);
                 if (! $postPrepayment['status']) {
-                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' failed to scheduled post prepayment for PaymentSplitID : '.$paymentSplit->id, $postPrepayment);
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' failed to scheduled post prepayment for PaymentSplitID : '.$paymentSplit->id, ['data' => json_encode($postPrepayment)]);
                 } else {
-                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' post prepayment scheduled for PaymentSplitID : '.$paymentSplit->id, $postPrepayment);
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' post prepayment scheduled for PaymentSplitID : '.$paymentSplit->id, ['data' => json_encode($postPrepayment)]);
                 }
             } else {
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' post prepayment for PaymentSplitID : '.$paymentSplit->id, ['BatchNumber' => $sageResponse['BatchNumber']]);
@@ -1524,7 +1524,7 @@ class SageApiService
                 $postedResponse['endPoint'] = $resp['url'] ?? $postedResponse['endPoint'] ?? null;
                 $postedResponse['payload'] = $aPInvoicePaymentsSchedule;
                 if (! $postedResponse['response']['status']) {
-                    LoggerService::info('SAGE API : '.$quote->code.' : AP Patch Request failed '.json_encode($postedResponse['response']));
+                    LoggerService::info('SAGE API : '.$quote->code.' : AP Patch Request failed ', ['data' => json_encode($postedResponse['response'])]);
                     $postedResponse['sage_request_type'] = SageEnum::SRT_AP_SPPAY_PAY_SCDULE_PATCH;
                     $postedResponse['entry_type'] = $sageEntryType == SageEnum::SCT_CORRECTION ? SageEnum::SCT_CORRECTION : SageEnum::SCT_STRAIGHT;
                     $errorMessage = 'Error while making AP split payments patch to sage';
@@ -2469,8 +2469,7 @@ class SageApiService
             $sageProcess = SageProcess::create(array_merge($sageProcessData, $sageProcessWhereClause));
         }
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Sage Process Scheduled for Prepayment Posting of Payment split.', [
-            'sageProcessId' => $sageProcess->id,
-            'sageProcessStatus' => $sageProcess->status,
+            'data' => json_encode(['sageProcessId' => $sageProcess->id,  'sageProcessStatus' => $sageProcess->status])
         ]);
 
         $this->scheduleSageProcesses($insurer?->id);
@@ -2503,8 +2502,7 @@ class SageApiService
 
         $prepaymentReceiptStatus = $paymentSplit->prepayment_receipt_status;
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy and prepayment receipt status', [
-            'quote' => $quote?->quote_status_id,
-            'prepayment_receipt_status' => $paymentSplit->prepayment_receipt_status,
+            'data' => json_encode(['quote' => $quote?->quote_status_id, 'prepayment_receipt_status' => $paymentSplit->prepayment_receipt_status])
         ]);
         if (! $prepaymentReceiptStatus['batchNumber']) {
             $response['errors']['prepayment'] = 'Prepayment for this Payment split is not generated on Sage.';
@@ -2638,7 +2636,11 @@ class SageApiService
         $isAutomaticCommissionTransferEnabledForInsurer = (new BrokerCommissionService)->isAutomaticCommissionTransferEnabledForInsurer([
             $sageRequest->insurerID, $sageRequest->quoteTypeId, $sageRequest->subClass, $sageRequest->planId,
         ]);
-        LoggerService::info(self::class.'fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Broker Commission -  AutomaticCommissionTransfer ', ['AutomaticCommissionTransfer' => $isAutomaticCommissionTransferEnabledForInsurer]);
+        LoggerService::info(self::class.'fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Broker Commission -  AutomaticCommissionTransfer ', ['data' =>
+            json_encode([
+                'AutomaticCommissionTransfer' => $isAutomaticCommissionTransferEnabledForInsurer
+            ])
+        ]);
 
         if (! $isAutomaticCommissionTransferEnabledForInsurer) {
             LoggerService::info(self::class.'fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Skip Creation of Commission prepayment as AutomaticCommissionTransfer is '.($isAutomaticCommissionTransferEnabledForInsurer ? ' enabled.' : ' disabled.'));
@@ -2677,7 +2679,11 @@ class SageApiService
                     ]);
                 }, 5);
             }
-            LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Updated Commission Prepayment Receipt Id ', ['paymentCode' => $payment->code, 'sageCommissionReceiptId' => $commissionDocumentNumber]);
+            LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Updated Commission Prepayment Receipt Id ', ['data' =>
+                json_encode([
+                    'paymentCode' => $payment->code, 'sageCommissionReceiptId' => $commissionDocumentNumber
+                ])
+            ]);
 
             LoggerService::info(self::class.'fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' :  Commission Prepayment Receipt Batch Number - '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep2) {
