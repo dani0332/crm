@@ -25,12 +25,14 @@ class PostPrepaymentToSageJob implements ShouldQueue
     private $sageProcess;
     private $paymentSplit;
     private $lockPostfix;
+    private $sageApiService;
 
     /**
      * Create a new job instance.
      */
     public function __construct($request, $paymentSplit, $sageRequest, $sageProcess)
     {
+        $this->sageApiService = new SageApiService;
         $this->paymentSplit = $paymentSplit;
         $this->sageRequest = $sageRequest;
         $this->request = $request;
@@ -48,9 +50,9 @@ class PostPrepaymentToSageJob implements ShouldQueue
         $this->sageProcess = $this->sageProcess->refresh();
 
         if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
-            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
+            $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
 
-            $response = (new SageApiService)->postPrepaymentToSage([$this->paymentSplit, $this->sageRequest,  $this->request]);
+            $response = $this->sageApiService->postPrepaymentToSage([$this->paymentSplit, $this->sageRequest,  $this->request]);
 
             if (! $response['status']) {
                 $message = $response['message'];
@@ -58,15 +60,15 @@ class PostPrepaymentToSageJob implements ShouldQueue
                     info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID :  '.$this->paymentSplit->id.' - sage conflict - updating status to pending', [
                         'sageProcessId' => $this->sageProcess->id,
                     ]);
-                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
+                    $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
                 } else {
                     info(self::class.' fn: '.__FUNCTION__.' paymentSplitID - '.$this->paymentSplit->id.' - posting failed - updating status to failed');
-                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
+                    $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
                 }
 
             } else {
                 info(self::class.' fn: '.__FUNCTION__.': paymentSplitID  - '.$this->paymentSplit->id.' - Prepayment posted - updating status to completed');
-                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
+                $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
             }
 
             info(self::class.' fn: '.__FUNCTION__.' PostPrepaymentToSage : paymentSplitID  - '.$this->paymentSplit->id.' - Finished . Response : ', $response);
@@ -74,7 +76,7 @@ class PostPrepaymentToSageJob implements ShouldQueue
             info(self::class.' fn: '.__FUNCTION__.'job:PostPrepaymentToSage - Process Skipped - Process ID: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
 
-        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+        $this->sageApiService->scheduleSageProcesses($this->sageRequest->insurerID);
         info(self::class.' fn: '.__FUNCTION__.' PostPrepaymentToSage : paymentSplitID  : scheduleSageProcesses triggered for  code -'.$this->paymentSplit->id.'Insurer - '.$this->sageRequest->insurerID);
     }
 
@@ -83,14 +85,14 @@ class PostPrepaymentToSageJob implements ShouldQueue
         $message = $exception->getMessage();
 
         if (str_contains($message, SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
-            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
+            $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
         } else {
-            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
+            $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
         }
 
         Log::error(self::class.' fn: '.__FUNCTION__.' : paymentSplitID  : '.$this->paymentSplit->id.' Error : '.$message);
 
-        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+        $this->sageApiService->scheduleSageProcesses($this->sageRequest->insurerID);
         info(self::class.' fn: '.__FUNCTION__.' : scheduleSageProcesses fn:failed triggered for paymentSplitID -'.$this->paymentSplit->id.' Insurer - '.$this->sageRequest->insurerID);
 
     }

@@ -149,7 +149,7 @@ class RolePermissionSeeder extends Seeder
     private function addPostPrepaymentButtonPermission(): void
     {
         Permission::firstOrCreate([
-            'name' => PermissionsEnum::SHOW_POST_PREPAYMENT_BUTTON,
+            'name' => PermissionsEnum::CAN_POST_PREMIUM_PREPAYMENT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

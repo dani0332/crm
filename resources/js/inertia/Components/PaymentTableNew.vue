@@ -3925,7 +3925,7 @@ const enablePostPrepaymentButton = splitPayment => {
     (isPolicyBooked && !props.sendUpdate) ||
     (props.sendUpdate && isSendUpdateBooked);
   if (
-    can(permissionEnum.SHOW_POST_PREPAYMENT_BUTTON) &&
+    can(permissionEnum.CAN_POST_PREMIUM_PREPAYMENT) &&
     isPolicyOrSendUpdateBooked &&
     splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
   ) {

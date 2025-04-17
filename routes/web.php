@@ -298,7 +298,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
-    Route::post('/payment-split/post-to-sage', [CentralController::class, 'postPrepaymentToSage'])->name('post.prepayment.to.sage')->middleware('check_route_access');
+    Route::post('/payment-split/post-to-sage', [CentralController::class, 'postPrepaymentToSage'])->name('post.prepayment.to.sage')->middleware('permission:'.PermissionsEnum::CAN_POST_PREMIUM_PREPAYMENT);
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::post('/payments/{quoteType}/split-update', [CentralController::class, 'splitPaymentUpdate'])->name('approve-payments')->middleware('check_route_access');
