@@ -626,10 +626,11 @@ const selectedPlanIds = computed(() => {
 
 const availableAllPlans = ref([]);
 
-const onLoadAvailablePlansData = async () => {
+const onLoadAvailablePlansData = async (getLatestRating = false) => {
   const url = `/quotes/home/available-plans/${page.props.quote.uuid}`;
   const data = {
     jsonData: true,
+    getLatestRating: getLatestRating
   };
 
   try {
@@ -1108,6 +1109,22 @@ const shouldShowPlanDetailsSection = computed(() => {
     hasRequiredValueFields
   );
 });
+
+watch(
+  () => [
+    page.props.quote?.home_quote?.accommodation_type_id,
+    page.props.quote?.home_quote?.possession_type_id,
+    page.props.quote?.home_quote?.coverage_type_id,
+    page.props.quote?.home_quote?.building_value,
+    page.props.quote?.home_quote?.contents_value_id,
+    page.props.quote?.home_quote?.personal_belongings_value_id
+  ],
+  () => {
+    onLoadAvailablePlansData(true);
+  },
+  { immediate: true }
+);
+
 </script>
 
 <template>
