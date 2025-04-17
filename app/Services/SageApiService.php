@@ -2469,7 +2469,7 @@ class SageApiService
             $sageProcess = SageProcess::create(array_merge($sageProcessData, $sageProcessWhereClause));
         }
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Sage Process Scheduled for Prepayment Posting of Payment split.', [
-            'data' => json_encode(['sageProcessId' => $sageProcess->id,  'sageProcessStatus' => $sageProcess->status])
+            'data' => json_encode(['sageProcessId' => $sageProcess->id,  'sageProcessStatus' => $sageProcess->status]),
         ]);
 
         $this->scheduleSageProcesses($insurer?->id);
@@ -2502,7 +2502,7 @@ class SageApiService
 
         $prepaymentReceiptStatus = $paymentSplit->prepayment_receipt_status;
         LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy and prepayment receipt status', [
-            'data' => json_encode(['quote' => $quote?->quote_status_id, 'prepayment_receipt_status' => $paymentSplit->prepayment_receipt_status])
+            'data' => json_encode(['quote' => $quote?->quote_status_id, 'prepayment_receipt_status' => $paymentSplit->prepayment_receipt_status]),
         ]);
         if (! $prepaymentReceiptStatus['batchNumber']) {
             $response['errors']['prepayment'] = 'Prepayment for this Payment split is not generated on Sage.';
@@ -2636,10 +2636,9 @@ class SageApiService
         $isAutomaticCommissionTransferEnabledForInsurer = (new BrokerCommissionService)->isAutomaticCommissionTransferEnabledForInsurer([
             $sageRequest->insurerID, $sageRequest->quoteTypeId, $sageRequest->subClass, $sageRequest->planId,
         ]);
-        LoggerService::info(self::class.'fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Broker Commission -  AutomaticCommissionTransfer ', ['data' =>
-            json_encode([
-                'AutomaticCommissionTransfer' => $isAutomaticCommissionTransferEnabledForInsurer
-            ])
+        LoggerService::info(self::class.'fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Broker Commission -  AutomaticCommissionTransfer ', ['data' => json_encode([
+            'AutomaticCommissionTransfer' => $isAutomaticCommissionTransferEnabledForInsurer,
+        ]),
         ]);
 
         if (! $isAutomaticCommissionTransferEnabledForInsurer) {
@@ -2679,10 +2678,9 @@ class SageApiService
                     ]);
                 }, 5);
             }
-            LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Updated Commission Prepayment Receipt Id ', ['data' =>
-                json_encode([
-                    'paymentCode' => $payment->code, 'sageCommissionReceiptId' => $commissionDocumentNumber
-                ])
+            LoggerService::info('fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' Updated Commission Prepayment Receipt Id ', ['data' => json_encode([
+                'paymentCode' => $payment->code, 'sageCommissionReceiptId' => $commissionDocumentNumber,
+            ]),
             ]);
 
             LoggerService::info(self::class.'fn:'.__FUNCTION__.' SAGE API : Quote Code : '.$quote->code.' :  Commission Prepayment Receipt Batch Number - '.$sageResponse['BatchNumber']);
