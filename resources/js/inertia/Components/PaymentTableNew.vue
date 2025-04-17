@@ -2651,7 +2651,17 @@ const addPayment = (isValid) => {
         onSuccess: () => {
           createPaymentModal.value = false;
         },
-        onError: () => {
+        onError: (errors) => {
+          Object.keys(errors).forEach(function (key) {
+            if(key === 'insurer_payment_link') {
+              paymentMethodsForm.errors.insurerPaymentLink = errors[key];
+            }
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
+          });
+
           notification.error({
             title: 'Payment Update Failed',
             position: 'top',
@@ -2671,7 +2681,16 @@ const addPayment = (isValid) => {
       onSuccess: () => {
         createPaymentModal.value = false;
       },
-      onError: () => {
+      onError: (errors) => {
+        Object.keys(errors).forEach(function (key) {
+          if(key === 'insurer_payment_link') {
+            paymentMethodsForm.errors.insurerPaymentLink = errors[key];
+          }
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
         notification.error({
           title: 'Payment Add Failed',
           position: 'top',
