@@ -45,7 +45,7 @@ trait PersonalQuoteObservable
         $this->handleStaleRemovalFromLeads($personalQuote);
     }
 
-    protected function handleAdvisorChange(PersonalQuote $personalQuote , $oldAdvisorId = null): void
+    protected function handleAdvisorChange(PersonalQuote $personalQuote, $oldAdvisorId = null): void
     {
         $personalQuote->markLeadAllocationPassed();
 
@@ -57,8 +57,7 @@ trait PersonalQuoteObservable
             info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
             if ($oldAdvisorId != $personalQuote->advisor_id) {
                 $this->IntroAndReassignEmail($personalQuote, $oldAdvisorId);
-            }
-            else {
+            } else {
                 info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
             }
         }
@@ -66,7 +65,6 @@ trait PersonalQuoteObservable
 
     protected function handleIntroEmails(PersonalQuote $personalQuote, $oldAdvisorId = null): void
     {
-
 
         if ($personalQuote->isHome()) {
             info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: ".now());
@@ -159,7 +157,7 @@ trait PersonalQuoteObservable
 
     private function IntroAndReassignEmail(PersonalQuote $personalQuote, $oldAdvisorId = null): void
     {
-        if ($personalQuote->source != LeadSourceEnum::IMCRM){
+        if ($personalQuote->source != LeadSourceEnum::IMCRM) {
             $quoteType = QuoteTypes::getName($personalQuote->quote_type_id);
             info(self::class." - Quote Type: {$quoteType->value} quote:  {$personalQuote->uuid} | Time: ".now());
             $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
