@@ -308,6 +308,11 @@ class SageApiService
             unset($extraDetails['paymentFrequency']);
         }
 
+        $createPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment']]);
+        if (! $createPrepayment['status']) {
+            return $createPrepayment;
+        }
+
         LoggerService::info('fn bookStraightEndorsementOnSage - Upfront Endorsement Booking Completed on Sage - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
 
         return ['status' => true, 'message' => 'Straight Forward Endorsement Booking Completed on Sage'];
