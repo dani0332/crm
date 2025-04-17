@@ -841,7 +841,7 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
-    public function walkTree($userId,$requestParams = [])
+    public function walkTree($userId, $requestParams = [])
     {
         $user = $requestParams['user'] ?? auth()->user();
 
@@ -881,12 +881,12 @@ class CarQuoteService extends BaseService
         }
 
         return $this->carQuoteQueryBuilder->processGridData($requestParams)
-            ->where(function ($query) use ($user,$requestParams) {
+            ->where(function ($query) use ($user, $requestParams) {
                 if ($user->hasRole(RolesEnum::CarManager)) {
-                    $this->walkTree($user->id,$requestParams);
+                    $this->walkTree($user->id, $requestParams);
                     $query->whereIn('advisor_id', $this->childUserIds);
                 } elseif ($user->hasRole(RolesEnum::LeadPool)) {
-                    $this->walkTree($user->id,$requestParams);
+                    $this->walkTree($user->id, $requestParams);
                     $query->whereIn('advisor_id', $this->childUserIds)->orWhereNull('advisor_id');
                 } elseif ($user->hasRole(RolesEnum::CarAdvisor)) {
                     $query->where('advisor_id', $user->id);
