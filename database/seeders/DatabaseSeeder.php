@@ -21,8 +21,6 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
-            LookupSeeder::class,
-            RolePermissionSeeder::class,
             DocumentTypesSeeder::class,
         ]);
     }

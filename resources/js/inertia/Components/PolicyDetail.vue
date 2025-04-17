@@ -437,6 +437,42 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+watch(
+  () => policyDetailsForm.vat,
+  (newValue) => {
+    if (Number(newValue) < 0) {
+      policyDetailsForm.vat = 0;
+    }
+  }
+);
+
+watch(
+  () => policyDetailsForm.price_vat_applicable,
+  (newValue) => {
+    if (Number(newValue) < 0) {
+      policyDetailsForm.price_vat_applicable = 0;
+    }
+  }
+);
+
+watch(
+  () => policyDetailsForm.price_vat_notapplicable,
+  (newValue) => {
+    if (Number(newValue) < 0) {
+      policyDetailsForm.price_vat_notapplicable = 0;
+    }
+  }
+);
+
+const calculateTotalPrice = () => {
+  const vat = useRoundIt(policyDetailsForm.vat).toFixed(2);
+  const priceVatApplicable = useRoundIt(policyDetailsForm.price_vat_applicable).toFixed(2);
+  const amountWithVat = useRoundIt(Number(vat) + Number(priceVatApplicable)).toFixed(2);
+  policyDetailsForm.amount_with_vat = amountWithVat;
+  policyDetailsForm.vat = vat;
+};
+
 </script>
 
 <template>
@@ -620,11 +656,11 @@ onMounted(() => {
                 </x-tooltip>
                 <x-input
                   v-model="policyDetailsForm.vat"
-                  type="text"
+                  type="number"
                   placeholder="Total VAT Amount"
                   class="w-full"
-                  :disabled="true"
-                  readonly
+                  :disabled="!can(permissionsEnum.POLICY_DETAILS_ADD_VAT) || !policyDetailsState.isEditing"
+                  @change="calculateTotalPrice"
                 />
               </div>
               <div class="w-full md:w-1/2">

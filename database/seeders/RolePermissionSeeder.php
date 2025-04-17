@@ -24,6 +24,8 @@ class RolePermissionSeeder extends Seeder
         // $this->addBridgerSkipPermission();
         $this->sendUpdateCancelPermission();
         // $this->addLeadAllocationLobPermissions();
+
+        $this->addPolicyDetailsAddVatPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -174,6 +176,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::CANCEL_SEND_UPDATE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPolicyDetailsAddVatPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::POLICY_DETAILS_ADD_VAT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
