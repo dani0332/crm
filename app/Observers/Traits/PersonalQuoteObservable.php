@@ -45,7 +45,7 @@ trait PersonalQuoteObservable
         $this->handleStaleRemovalFromLeads($personalQuote);
     }
 
-    protected function handleAdvisorChange(PersonalQuote $personalQuote): void
+    protected function handleAdvisorChange(PersonalQuote $personalQuote , $oldAdvisorId = null): void
     {
         $personalQuote->markLeadAllocationPassed();
 
@@ -53,11 +53,6 @@ trait PersonalQuoteObservable
             $oldAdvisorId = $personalQuote->getOriginal('advisor_id');
             event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
         }
-    }
-
-    protected function handleIntroEmails(PersonalQuote $personalQuote, $oldAdvisorId = null): void
-    {
-
         if ($personalQuote->isPet() || $personalQuote->isYacht() || $personalQuote->isCycle()) {
             info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
             if ($oldAdvisorId != $personalQuote->advisor_id) {
@@ -66,8 +61,13 @@ trait PersonalQuoteObservable
             else {
                 info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
             }
-            return;
         }
+    }
+
+    protected function handleIntroEmails(PersonalQuote $personalQuote, $oldAdvisorId = null): void
+    {
+
+
         if ($personalQuote->isHome()) {
             info(self::class." - sending home intro email for quote: {$personalQuote->uuid} | Time: ".now());
             SendHomeOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
