@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
@@ -14,6 +15,7 @@ use App\Models\InslyDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\YachtQuote;
+use App\Services\ApplicationStorageService;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\InslyDataService;
@@ -130,13 +132,16 @@ class InslyDetailRepository extends BaseRepository
         $appUrl = config('constants.APP_URL');
         $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
 
-        /* Temp Code - assign email for particular Policy id/number */
-        $tempSalesPersonId = 192;
-        $tempPolicyId = 62312605;
-        if ($tempPolicyId == $policyID) {
+        /* Start - Get Sales Person/Advisor ID from Application storage to update against Legacy lead where sales person is not assigned */
+
+        $tempSalesPersonId = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_SALES_PERSON_ID);
+        $tempPolicyId = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::INSLY_TEMP_POLICY_OID);
+
+        if ($tempSalesPersonId && $tempPolicyId && $tempPolicyId == $policyID) {
             $advisorId = $tempSalesPersonId;
         }
-        /* Temp Code - assign email for particular Policy id/number */
+
+        /* End - Get Sales Person/Advisor ID from Application storage to update against Legacy lead where sales person is not assigned */
 
         if ($advisorId == null) {
             return [
