@@ -511,21 +511,6 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
-  watch(
-    () => [
-      page.props.quote?.home_quote?.accommodation_type_id,
-      page.props.quote?.home_quote?.possession_type_id,
-      page.props.quote?.home_quote?.coverage_type_id,
-      page.props.quote?.home_quote?.building_value,
-      page.props.quote?.home_quote?.contents_value_id,
-      page.props.quote?.home_quote?.personal_belongings_value_id,
-    ],
-    (newValues, oldValues) => {
-      console.log('WATCHER TRIGGERED', newValues, oldValues);
-      // onLoadAvailablePlansData(true);
-    },
-  );
-
   if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
     // Only check all these conditions if it's a RENEWAL_UPLOAD lead
     if (
@@ -557,11 +542,11 @@ onMounted(() => {
           page.props.quote.home_quote?.contents_value_id))
     ) {
       // Only run onLoadAvailablePlansData for RENEWAL_UPLOAD leads if all conditions are met
-      onLoadAvailablePlansData();
+      onLoadAvailablePlansData(true);
     }
   } else {
     // For all non-renewal upload leads, always run onLoadAvailablePlansData
-    onLoadAvailablePlansData();
+    onLoadAvailablePlansData(true);
   }
 });
 
@@ -1124,21 +1109,6 @@ const shouldShowPlanDetailsSection = computed(() => {
     hasRequiredValueFields
   );
 });
-
-// watch(
-//   () => [
-//     page.props.quote?.home_quote?.accommodation_type_id,
-//     page.props.quote?.home_quote?.possession_type_id,
-//     page.props.quote?.home_quote?.coverage_type_id,
-//     page.props.quote?.home_quote?.building_value,
-//     page.props.quote?.home_quote?.contents_value_id,
-//     page.props.quote?.home_quote?.personal_belongings_value_id
-//   ],
-//   (newValues, oldValues) => {
-//     console.log('WATCHER TRIGGERED',newValues, oldValues);
-//     // onLoadAvailablePlansData(true);
-//   }
-// );
 </script>
 
 <template>
