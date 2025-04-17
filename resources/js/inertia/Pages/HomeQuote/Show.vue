@@ -564,19 +564,15 @@ onMounted(() => {
     const parsedData = getStoredData();
     
     if (parsedData) {
-      const { data: storedData, timestamp } = parsedData;
+      const { data: storedData } = parsedData;
       
-      const thirtyMinutesInMilliseconds = 30 * 60 * 1000; // 30 minutes
-      const isStoredDataFresh = timestamp > Date.now() - thirtyMinutesInMilliseconds;
+      // Check if fields have changed - if they haven't, don't get a new rating
+      const hasFieldsChanged = Object.keys(currentData).some(
+        key => currentData[key] !== storedData[key]
+      );
       
-      if (isStoredDataFresh) {
-        const hasFieldsChanged = Object.keys(currentData).some(
-          key => currentData[key] !== storedData[key]
-        );
-        
-        if (!hasFieldsChanged) {
-          shouldGetLatestRating = false;
-        }
+      if (!hasFieldsChanged) {
+        shouldGetLatestRating = false;
       }
     }
   } catch (e) {
