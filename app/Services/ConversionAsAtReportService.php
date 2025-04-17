@@ -392,8 +392,8 @@ class ConversionAsAtReportService extends BaseService
             )
             ->where('teams.type', TeamTypeEnum::TEAM)
             ->whereNotNull("{$alias}.advisor_id")
-            ->orderBy('team', 'asc')
-            ->groupBy('team_id');
+            ->orderBy('teams.name', 'asc')
+            ->groupBy('teams.id');
     }
 
     private function applyBaseQueryToGroupBy($query, $filters, $alias)
