@@ -3882,7 +3882,7 @@ const triggerPostPrepayment = async splitPayment => {
   }
   try {
     NProgress.start();
-    const response = await axios.post(route('post.prepayment.to.sage'), {
+    const response = await axios.post(route('can-post-premium-prepayment'), {
       paymentSplitId: splitPayment.id,
       quoteRequestId: props.quoteRequest.id,
       quoteType: page.props.quoteType,
