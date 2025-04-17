@@ -51,7 +51,9 @@ class OCRService
         $response = $this->sendRequest('/process-document', [
             'doc_url' => $docUrl,
             'doc_type' => $docType->value,
-            'image' => $this->isMimeTypeImage($fileMimeType),
+
+            // for now image would be false on the basis of Hamas Request
+            'image' => false,
 
             // Disabled for now
             // 'provider' => config('constants.OCR_API_AI_PROVIDER'),
