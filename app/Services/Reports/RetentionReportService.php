@@ -307,6 +307,9 @@ class RetentionReportService extends BaseService
                             });
                     });
                     break;
+                case RetentionReportEnum::TOTAL:
+                    $query->whereNot('quote_status_id', QuoteStatusEnum::PolicyCancelledReissued);
+                    break;
             }
         }
     }
