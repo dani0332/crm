@@ -233,7 +233,7 @@ class CentralService extends BaseService
         });
     }
 
-    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false)
+    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false, $getLatestRating = false)
     {
         $type = ucfirst($type);
         switch ($type) {
@@ -267,7 +267,7 @@ class CentralService extends BaseService
             case quoteTypeCode::Bike:
                 return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
             case quoteTypeCode::Home:
-                return app(HomeQuoteService::class)->getQuotePlans($id);
+                return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             default:
                 return [];
         }

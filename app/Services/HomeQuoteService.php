@@ -806,8 +806,19 @@ class HomeQuoteService extends BaseService
             'quoteUID' => $quoteUuId,
             'lang' => 'en',
             'callSource' => 'imcrm',
-            ...$extraData,
         ];
+
+        // Add getLatestRating flag if it exists in extraData
+        if (isset($extraData['getLatestRating'])) {
+            $plansDataArr['getLatestRating'] = $extraData['getLatestRating'];
+        }
+        
+        // Add any other extraData parameters
+        foreach ($extraData as $key => $value) {
+            if ($key !== 'getLatestRating') {
+                $plansDataArr[$key] = $value;
+            }
+        }
 
         $client = new \GuzzleHttp\Client;
 
