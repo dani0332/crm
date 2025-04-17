@@ -428,29 +428,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
         
-        // Add route to trigger entity-insured migration
+        // Add route to trigger entity-insured migration, this should remove when migration was done
         Route::get('/migrate-entities-insured', function () {
-            // Log the start of the migration process
-            info('MIGRATION PROCESS - Started by web request at ' . now());
-            
-            // Display process status
-            $message = "Entity Migration Process has been initiated with the following steps: \n";
-            $message .= "Step 1: Migrating entities table data to insured table \n";
-            $message .= "Step 2: Updating quote entities relation according to insured mapping \n";
-            $message .= "Step 3: Moving entities KYC details to insured_kyc_details table \n";
-            $message .= "\nPlease check the logs for detailed progress and completion status.";
-            
-            // Execute the command
             Artisan::call('migrate:entities-insured');
-            
-            // Log the completion
-            info('MIGRATION PROCESS - Web request completed at ' . now());
-            
-            return redirect()->back()->with('success', $message);
+            return '<h1>Entities and Entities KYC Details migration command has successfully been executed. Please check the logs for detailed progress and completion status.</h1>';
         })->name('admin.migrate-entities-insured');
         
         // Add route to trigger individual KYC details migration
         Route::get('/migrate-individual-kyc-details', function () {
+            return false;
             // Log the start of the migration process
             info('INDIVIDUAL KYC MIGRATION PROCESS - Started by web request at ' . now());
             

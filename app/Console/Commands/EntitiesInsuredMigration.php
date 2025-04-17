@@ -9,95 +9,73 @@ use App\Models\Insured;
 use App\Models\QuoteRequestEntityMapping;
 use Illuminate\Console\Command;
 use App\Enums\QuoteTypes;
-use App\Models\InsuredKycDetail;
+use App\Models\InsuredKyc;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Entities Insured Migration Command
- *
  * This command migrates data from the legacy Entity structure to the new Insured table structure.
  * It handles the migration of entities, their KYC details, and creates proper mappings to customers.
  * This command is deprecated and should be removed after the migration is completed.
- *
- * @package App\Console\Commands
  */
+
 class EntitiesInsuredMigration extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'migrate:entities-insured';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Migrate Entity data to the Insured table structure, this command is deprecated and should be removed after the migration is completed';
-    
-    /**
-     * Generic queries for all lines of business
-     */
     protected $genericQueriesAllLobs;
-    
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
+   
     public function __construct()
     {
         parent::__construct();
         $this->genericQueriesAllLobs = new class { use GenericQueriesAllLobs; };
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
     public function handle()
     {
         info('------------------- Entities Insured Migration Command Started At: '.now().' -------------------');
 
-        info('EntitiesMigrationCommand: Starting migration of Entity data to the Insured structure at ' . now());
-
-        info('Updating existing insured records to customer type Individual at ' . now());
-        Insured::where(function($query) {
+        info('Command:EntitiesInsuredMigration - Start updating the existing records in the insured table by setting the customer type to Individual at ' . now());
+        $insured = Insured::where(function($query) {
             $query->whereNull('customer_type')
                   ->orWhere('customer_type', '');
-        })->where('entity_id', null)->update(['customer_type' => CustomerTypeEnum::Individual]);
-        info('End updating existing insured records to customer type Individual at ' . now());
+        })->where('entity_id', null);
 
-        info('Creating new insured records for entities at ' . now());
+        if($insured->count() > 0) {
+            $insured->update(['customer_type' => CustomerTypeEnum::Individual]);
+        }
 
-        // Count metrics for reporting
-        $migratedCount = 0;
-        $skippedCount = 0;
-        $failedCount = 0;
+        info('Command:EntitiesInsuredMigration - Existing insured table records updated as Individual successfully at ' . now());
 
-        Entity::chunk(100, function ($entities) use (&$migratedCount, &$skippedCount, &$failedCount) {
+        $failedDetails = [];
+        $migratedCount = $skippedCount = $failedCount = 0;
+
+        Entity::chunk(500, function ($entities) use (&$migratedCount, &$skippedCount, &$failedCount, &$failedDetails) {
             foreach ($entities as $entity) {
-                info('Creating new insured record for entity ' . $entity->id);
                 $isEntityAlreadyCreated = Insured::where('entity_id', $entity->id)->first();
                 if ($isEntityAlreadyCreated) {
-                    info('Entity ' . $entity->id . ' already exists in the insured table');
+                    info('Command:EntitiesInsuredMigration - Entity ' . $entity->id . ' already exists in the insured table');
                     $skippedCount++;
                     continue;
                 }
-                
+
+                info('*********************** Migrating entity details against ID: ' . $entity->id .' **********************');
+                info('Creating new insured record for entity ' . $entity->id);
+
                 try {
                     DB::beginTransaction();
                     
                     $insured = Insured::create([
                         'customer_type' => CustomerTypeEnum::Entity,
+                        'first_name' => $entity->kyc_first_name ?? null,
+                        'last_name' => $entity->kyc_last_name ?? null,
+                        'id_type' => $entity->id_type ?? null,
+                        'id_number' => $entity->id_number ?? null,
                         'code' => $entity->code,
                         'trade_license_no' => $entity->trade_license_no,
                         'company_name' => $entity->company_name,
-                        'company_address' => $entity->address ?? null,
+                        'company_address' => $entity->company_address ?? null,
                         'industry_type_code' => $entity->industry_type_code ?? null,
                         'emirate_of_registration_id' => $entity->emirate_of_registration_id ?? null,
                         'sage_customer_number' => $entity->sage_customer_number ?? null,
@@ -108,32 +86,37 @@ class EntitiesInsuredMigration extends Command
                     
                     DB::commit();
                     $migratedCount++;
+                    info('*********************** Migrated entity details against ID: ' . $entity->id .' **********************');
                 } catch (\Exception $e) {
                     DB::rollBack();
                     $failedCount++;
-                    info("Failed to migrate entity {$entity->id}: {$e->getMessage()}", ['exception' => $e]);
+                    $failedDetails[]['entity_id'] = $entity->id;
+                    $failedDetails[]['message'] = 'failed to migrate entity. message: '.$e->getMessage();
+                    info("Failed to migrate entity {$entity->id}: {$e->getMessage()}");
+                    info('*********************** Failed to migrate entity details against ID: ' . $entity->id .' **********************');
                 }
             }
         });
+
+        $jsonEncodeFailedDetails = json_encode($failedDetails);
         
         info("Migration completed: {$migratedCount} entities migrated, {$skippedCount} entities skipped (already existed), {$failedCount} entities failed.");
+        info("Failed migration details: {$jsonEncodeFailedDetails}");
         info('End creating new insured records for entities at ' . now());
 
-        info('EntitiesMigrationCommand: End migration of Entity data to the new Insured structure at ' . now());
+        info('------------------- Entities Insured Migration Command Ended At: '.now().' -------------------');
         return Command::SUCCESS;
     }
 
-    /**
-     * Create customer-insured mappings for a given entity
-     *
-     * @param Insured $insured
-     * @param Entity $entity
-     * @return void
-     */
     private function createCustomerInsuredMappingsForEntity(Insured $insured, Entity $entity)
     {
         info('Creating customer-insured mappings for entity ' . $entity->id . ' and insured ' . $insured->id . ' at ' . now());
         $quoteRequestEntityMappings = QuoteRequestEntityMapping::where('entity_id', $entity->id)->get();
+
+        if(empty($quoteRequestEntityMappings->toArray())) {
+            info('##################### Entity ' . $entity->id . ' quote request mapping not found ##############################');
+        }
+        
         foreach ($quoteRequestEntityMappings as $quoteRequestEntityMapping) {
             $quoteObject = $this->genericQueriesAllLobs->getQuoteObject(
                 QuoteTypes::getName($quoteRequestEntityMapping->quote_type_id)?->value, 
@@ -141,10 +124,8 @@ class EntitiesInsuredMigration extends Command
             );
             
             if (!$quoteObject) {
-                info('Quote object not found for quote request entity mapping. Quote Type: ' . 
-                     QuoteTypes::getName($quoteRequestEntityMapping->quote_type_id)?->value . 
-                     ' Quote Request ID: ' . $quoteRequestEntityMapping->quote_request_id);
-                continue;
+                throw new \Exception('Quote object not found for quote request entity mapping. Quote Type ID: ' . 
+                    $quoteRequestEntityMapping->quote_type_id . ' Quote Request ID: ' . $quoteRequestEntityMapping->quote_request_id);
             }
 
             CustomerInsured::updateOrCreate([
@@ -153,33 +134,25 @@ class EntitiesInsuredMigration extends Command
                 'quote_type_id' => $quoteRequestEntityMapping->quote_type_id,
                 'quote_request_id' => $quoteRequestEntityMapping->quote_request_id,
             ], []);
-
-            $this->migrateEntityKycDetailsToInsuredKycDetails($insured, $entity, $quoteObject->customer_id);
         }
+
+        $this->migrateEntityKycDetailsToInsuredKyc($insured, $entity);
+
         info('End creating customer-insured mappings for entity ' . $entity->id . ' and insured ' . $insured->id . ' at ' . now());
     }
 
-    /**
-     * Migrate entity KYC details to insured KYC details
-     *
-     * @param Insured $insured
-     * @param Entity $entity
-     * @param int $customerId
-     * @return void
-     */
-    private function migrateEntityKycDetailsToInsuredKycDetails(Insured $insured, Entity $entity, int $customerId)
+    private function migrateEntityKycDetailsToInsuredKyc(Insured $insured, Entity $entity)
     {
-        info('Migrating Entity KYC details to insured KYC details for entity ' . $entity->id . ' and insured ' . $insured->id . ' at ' . now());
-        $insuredKycDetails = InsuredKycDetail::where('insured_id', $insured->id)->first();
-        if ($insuredKycDetails) {
-            info('Insured KYC details already exist for entity ' . $entity->id . ' and insured ' . $insured->id . ' at ' . now());
+        info('Migrating Entity KYC details to insured KYC for entity ' . $entity->id . ' and insured ' . $insured->id . ' at ' . now());
+        $insuredKyc = InsuredKyc::where('insured_id', $insured->id)->first();
+        if ($insuredKyc) {
+            info('Insured KYC already exist for entity ' . $entity->id . ' and insured ' . $insured->id . ' at ' . now());
             return;
         }
 
-        InsuredKycDetail::create([
+        InsuredKyc::create([
             // Contact info columns
             'insured_id' => $insured->id,
-            'customer_id' => $customerId,
             'first_name' => $entity->kyc_first_name ?? null,
             'last_name' => $entity->kyc_last_name ?? null,
             'mobile_no' => $entity->mobile_no ?? null,
@@ -225,6 +198,6 @@ class EntitiesInsuredMigration extends Command
             'entity_id' => $entity->id,
         ]);
 
-        info('End migrating Entity KYC details to insured KYC details for entity ' . $entity->id . ' and insured ' . $insured->id . ' at ' . now());
+        info('End migrating Entity KYC details to insured KYC for entity ' . $entity->id . ' and insured ' . $insured->id . ' at ' . now());
     }
 } 
