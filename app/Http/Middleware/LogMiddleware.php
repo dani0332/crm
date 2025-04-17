@@ -19,7 +19,7 @@ class LogMiddleware
     {
         $startTime = microtime(true);
 
-        $traceId = $request->header('x-Trace-Id', (string) Str::uuid());
+        $traceId = $request->header('X-Trace-Id', (string) Str::uuid()) ?: (string) Str::uuid();
 
         Log::withContext([
             'trace_id' => $traceId,
