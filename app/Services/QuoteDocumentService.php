@@ -510,7 +510,12 @@ class QuoteDocumentService extends BaseService
         file_put_contents($tempFilePath, $fileContent);
 
         // Convert the PDF to a version compatible with FPDI
-        shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+         shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dPreserveEPSInfo=true -sOutputFile=$outputFile $tempFilePath");
+
+          // For windows
+         // exec("gswin64 -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dPreserveEPSInfo=true -sOutputFile=$outputFile $tempFilePath");
+
+        // gswin64 -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dPreserveEPSInfo=true -sOutputFile=$outputFile $tempFilePath
 
         sleep(3);
 
