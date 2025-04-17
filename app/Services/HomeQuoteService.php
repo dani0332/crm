@@ -812,7 +812,7 @@ class HomeQuoteService extends BaseService
         if (isset($extraData['getLatestRating'])) {
             $plansDataArr['getLatestRating'] = $extraData['getLatestRating'];
         }
-        
+
         // Add any other extraData parameters
         foreach ($extraData as $key => $value) {
             if ($key !== 'getLatestRating') {

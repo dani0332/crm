@@ -310,6 +310,7 @@ class CentralController extends Controller
     public function loadAvailablePlans($type, $id)
     {
         $getLatestRating = request()->input('getLatestRating', false);
+
         return (new CentralService)->loadAvailablePlans($type, $id, false, false, $getLatestRating);
     }
 
