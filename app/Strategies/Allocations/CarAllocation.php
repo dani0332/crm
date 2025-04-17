@@ -78,7 +78,7 @@ class CarAllocation implements Allocation
 
             $tier = $this->determineTier($lead);
 
-            if ($tier->name == TiersEnum::TIER_R ) {
+            if ($tier->name == TiersEnum::TIER_R) {
                 info(self::class." - Lead is Tier R and from Company Webform. Skipping allocation for Ref-ID: {$lead->uuid} | Time: ".now());
 
                 $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
