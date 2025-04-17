@@ -179,7 +179,7 @@ trait QuoteAllocatable
 
         return $q->whereExists(function ($tagQuery) use ($table) {
             $tagQuery->from('quote_tags')
-                ->whereRaw("quote_tags.quote_uuid = {$table}.uuid")
+                ->whereColumn("quote_tags.quote_uuid = {$table}.uuid")
                 ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
                 ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
         })->where('sic_advisor_requested', 1);
