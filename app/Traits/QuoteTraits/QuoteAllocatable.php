@@ -182,7 +182,7 @@ trait QuoteAllocatable
                 ->whereRaw("quote_tags.quote_uuid = {$table}.uuid")
                 ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
                 ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
-        })->where('sic_advisor_requested', true);
+        })->where('sic_advisor_requested', 1);
     }
 
     /**
@@ -193,6 +193,30 @@ trait QuoteAllocatable
      */
     public function scopeEligibleForAllocation($q)
     {
+        $tableName = $q->getModel()->getTable();
+        
+        // First, exclude AIG leads that don't have sic_advisor_requested=1
+        // This applies to ALL paths below, including leadAllocationFailed
+        $q->where(function($query) use ($tableName) {
+            // Either it's NOT an AIG lead
+            $query->whereNotExists(function ($subQuery) use ($tableName) {
+                $subQuery->from('quote_tags')
+                    ->whereColumn('quote_tags.quote_uuid', "{$tableName}.uuid")
+                    ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                    ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
+            })
+            // OR it's an AIG lead WITH sic_advisor_requested=1
+            ->orWhere(function($aigQuery) use ($tableName) {
+                $aigQuery->whereExists(function ($subQuery) use ($tableName) {
+                    $subQuery->from('quote_tags')
+                        ->whereColumn('quote_tags.quote_uuid', "{$tableName}.uuid")
+                        ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                        ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
+                })
+                ->where('sic_advisor_requested', 1);
+            });
+        });
+        
         return $q->where(function ($query) {
             $query->where(function ($q) {
                 $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
