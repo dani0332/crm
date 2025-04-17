@@ -52,8 +52,10 @@ class OCRService
             'doc_url' => $docUrl,
             'doc_type' => $docType->value,
             'image' => $this->isMimeTypeImage($fileMimeType),
-            'provider' => config('constants.OCR_API_AI_PROVIDER'),
-            'model' => config('constants.OCR_API_AI_MODEL'),
+
+            // Disabled for now
+            // 'provider' => config('constants.OCR_API_AI_PROVIDER'),
+            // 'model' => config('constants.OCR_API_AI_MODEL'),
         ]);
 
         if ($response['ok']) {
