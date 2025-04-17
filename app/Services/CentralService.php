@@ -1133,8 +1133,7 @@ class CentralService extends BaseService
             'quoteTypeId' => (int) $request->quote_type_id,
             'payments' => [
                 [
-                    // Notes:: This case include for Travel Single plan and mix inquiry case
-                    'codeRef' => ($request->quote_type_id == QuoteTypeId::Travel) ? $request->payment_code.'-1' : $request->payment_code,
+                    'codeRef' => $request->payment_code,
                 ],
             ],
         ];
