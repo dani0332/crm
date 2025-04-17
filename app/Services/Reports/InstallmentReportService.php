@@ -70,6 +70,7 @@ class InstallmentReportService extends ManagementReport
                 'q.text as lead_status',
                 'p.insurer_commmission_invoice_number',
                 'l.text as transaction_type',
+                'ps.sr_no as split_sr_no',
                 DB::raw('CASE WHEN ps.sr_no=1 THEN p.commmission_percentage ELSE 0 END as commmission_percentage'),
                 'personal_quotes.source',
                 'ps.sage_reciept_id',

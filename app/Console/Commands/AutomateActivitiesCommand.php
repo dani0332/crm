@@ -121,7 +121,9 @@ class AutomateActivitiesCommand extends Command
 
                         if ($quoteClass != PersonalQuote::class) {
 
-                            $quotesCodes = $quoteClass::whereIn('id', $quoteIds)->select('code')->get()->toArray();
+                            $quotesCodes = $quoteClass::whereIn('id', $quoteIds)->select('code')->get()
+                                ->pluck('code')
+                                ->toArray();
                             PersonalQuote::whereIn('code', $quotesCodes)->update(['is_cold' => true]);
                         }
                     }

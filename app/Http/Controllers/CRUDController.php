@@ -47,6 +47,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -85,6 +86,7 @@ use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
@@ -1363,11 +1365,12 @@ class CRUDController extends Controller
         app(CustomerAddressService::class)->validateAddress($request);
 
         if ($modelType == quoteTypeCode::Car) {
-            $carQuoteRequest = CarQuote::with('carQuoteRequestDetail')->where('uuid', $id)->first();
-            $carQuoteRequestDetail = $carQuoteRequest->carQuoteRequestDetail;
-            $carQuoteRequestDetail->chassis_number = $request->chassis_number;
-            if ($carQuoteRequestDetail->isDirty()) {
-                $carQuoteRequestDetail->save();
+            $carQuoteRequest = CarQuote::where('uuid', $id)->first();
+            if ($carQuoteRequest && $request->has('chassis_number')) {
+                CarQuoteRequestDetail::updateOrCreate(
+                    ['car_quote_request_id' => $carQuoteRequest->id],
+                    ['chassis_number' => $request->chassis_number]
+                );
             }
         }
 
@@ -2244,6 +2247,10 @@ class CRUDController extends Controller
         if ($quoteUuId) {
 
             $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
+            if (QuoteTypes::getIdFromValue($quoteType) === (int) QuoteTypes::HOME->id()) {
+                // only for home quote if email is manually triggered then update the home automated flow executed flag
+                app(HomeEmailService::class)->updateHomeAutomatedFlowExecuted($quoteUuId);
+            }
             if ($ocbEmailJob) {
                 Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
                 dispatch(new $ocbEmailJob($quoteUuId, null));
