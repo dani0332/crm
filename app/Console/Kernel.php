@@ -36,6 +36,7 @@ class Kernel extends ConsoleKernel
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
         Commands\TravelRenewalLeads::class,
+        Commands\MigrateInsuredDataToPersonalQuotes::class,
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
