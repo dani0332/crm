@@ -613,6 +613,7 @@ class HomeQuoteRepository extends BaseRepository
             return $quote;
         } catch (\Exception $e) {
             info('Error fetching quote data: '.$e->getMessage());
+            throw $e; // Rethrow the exception so it propagates to the controller
         }
     }
 
