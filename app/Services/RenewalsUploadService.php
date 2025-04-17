@@ -70,6 +70,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Models\VehicleType;
 use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
@@ -426,8 +427,9 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix) {
+                    ->finally(function () use ($logPrefix, $batch) {
                         LoggerService::info($logPrefix.' everything done');
+                        EmbeddedProductRepository::generateEPRenewal($batch);
                     })
                     ->allowFailures()
                     ->withDelay(10)
