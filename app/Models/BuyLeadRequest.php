@@ -55,7 +55,7 @@ class BuyLeadRequest extends Model
 
     public function scopeNotExpired($q)
     {
-        $q->where('expires_at', '>=', now());
+        $q->where('expires_at', '>=', now())->orWhereNull('expires_at');
     }
 
     public function scopeActive($q)

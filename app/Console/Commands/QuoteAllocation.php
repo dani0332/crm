@@ -15,6 +15,7 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\ApplicationStorageService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 
 class QuoteAllocation extends Command
@@ -64,17 +65,20 @@ class QuoteAllocation extends Command
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeTravelAllocation(QuoteTypeId::Travel, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::GROUP_MEDICAL, $to, $chunkSize, $allocationStartDate);
+
+            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
 
             // Disabled Auto Allocation for now as this feature is not needed at the moment
             /*
-            $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::CYCLE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
-            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::SAVINGS, $to, $chunkSize, $allocationStartDate);
             */
+            LoggerService::endLogging();
         } else {
             info('Quote Allocation Command is turned Off');
         }
@@ -126,8 +130,9 @@ class QuoteAllocation extends Command
                 continue;
             }
 
-            info('Processing record for Quote Allocation with uuid: '.$lead->uuid, [
-                'uuid' => $lead->uuid,
+            LoggerService::startQuoteLogging($lead);
+
+            info('Processing record for Quote Allocation', [
                 'payment_status_id' => $lead->payment_status_id,
                 'source' => $lead->source,
                 'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
@@ -142,7 +147,7 @@ class QuoteAllocation extends Command
 
             QuoteTypes::CAR->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
-            info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
+            info('Processed record for Quote Allocation');
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -171,8 +176,9 @@ class QuoteAllocation extends Command
         info("For Health - leads fetch query is : {$leads->toRawSql()}");
 
         foreach ($leads->get() as $lead) {
-            info("Processing Health record for Quote Allocation with uuid: {$lead->uuid}", [
-                'uuid' => $lead->uuid,
+            LoggerService::startQuoteLogging($lead);
+
+            info('Processing Health record for Quote Allocation', [
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
@@ -182,7 +188,7 @@ class QuoteAllocation extends Command
             ]);
             QuoteTypes::HEALTH->allocate(uuid: $lead->uuid);
             $processedRecords++;
-            info('Processed Health record for Quote Allocation with uuid: '.$lead->uuid);
+            info('Processed Health record for Quote Allocation');
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -219,8 +225,9 @@ class QuoteAllocation extends Command
                 continue;
             }
 
-            info("Processing Travel record for Quote Allocation with uuid: {$lead->uuid}", [
-                'uuid' => $lead->uuid,
+            LoggerService::startQuoteLogging($lead);
+
+            info('Processing Travel record for Quote Allocation', [
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
@@ -234,7 +241,7 @@ class QuoteAllocation extends Command
 
             QuoteTypes::TRAVEL->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
-            info('Processed Travel record for Quote Allocation with uuid: '.$lead->uuid);
+            info('Processed Travel record for Quote Allocation');
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -272,10 +279,13 @@ class QuoteAllocation extends Command
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
-            info('Processing record for Bike Quote Allocation with uuid: '.$lead->uuid);
+
+            LoggerService::startQuoteLogging($lead);
+
+            info('Processing record for Bike Quote Allocation');
             QuoteTypes::BIKE->allocate(uuid: $lead->uuid);
             $processedRecords++;
-            info('Processed record for Bike Quote Allocation with uuid: '.$lead->uuid);
+            info('Processed record for Bike Quote Allocation');
         }
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
@@ -291,13 +301,16 @@ class QuoteAllocation extends Command
                 $q->where('quote_type_id', $quoteType->id());
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->leadAllocationFailed()
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
-            info("Processing record for Quote Allocation with uuid: {$lead->uuid} and Quote Type: {$quoteType->value}");
+            LoggerService::startQuoteLogging($lead);
+
+            info("Processing record for Quote Allocation Quote Type: {$quoteType->value}");
             $quoteType->allocate(uuid: $lead->uuid);
             $processedRecords++;
-            info("Processed record for Quote Allocation with uuid: {$lead->uuid} and Quote Type: {$quoteType->value}");
+            info("Processed record for Quote Allocation Quote Type: {$quoteType->value}");
         }
         $this->logProcessedRecords($processedRecords, $quoteType);
     }

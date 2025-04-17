@@ -467,43 +467,41 @@
 
             $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
-            foreach ($quotePlan->addons as &$addon) {
+$addonsPrice = 0;
+$addonsVat = 0;
 
-                $addon = (object) $addon;
-                //set default value to excluded
-                $addon->value = "Excluded";
+foreach ($quotePlan->addons as &$addon) {
+    $addon = (object) $addon;
+    
+    // Set default values
+    $addon->value = "Excluded";
+    $addon->price = 0;
+    $addon->vat = 0;
 
-                //set default values
-                $addon->price = 0;
-                $addon->vat = 0;
+    if (!empty($addon->addonOptions)) {
+        foreach ($addon->addonOptions as $travelAddonOption) {
+            $travelAddonOption = (object) $travelAddonOption;
 
-                if(sizeof($addon->addonOptions))
-                {
-                    //replace exclude with selected value if found
-
-                    foreach ($addon->addonOptions as $index =>  $travelAddonOption) {
-
-                        $travelAddonOption = (object) $travelAddonOption;
-
-                        if($travelAddonOption->isSelected) {
-                            $addon->value = 'Included';
-                            $addonsPrice += $travelAddonOption->price;
-                            $addonsVat += $travelAddonOption->vat;
-                            $addon->price = $travelAddonOption->price;
-                            $addon->vat   = $travelAddonOption->vat;
-                            break;//only one value will be selected
-                        }
-                    }
-                }
+            if (!empty($travelAddonOption->isSelected) && $travelAddonOption->isSelected) {
+                $addon->value = 'Included';
+                $addonsPrice += $travelAddonOption->price;
+                $addonsVat += $travelAddonOption->vat;
+                $addon->price = $travelAddonOption->price;
+                $addon->vat = $travelAddonOption->vat;
+                break; // Only one value will be selected
             }
+        }
+    }
+}
+
+            $totalPriceWithVAT = $addonsPrice;
 
             $discountPremium = $vat = [];
-
-            // Discount Premium and VAT new Implementation
-
+            
+            $quotePlan->actualPremium = $quotePlan->discountPremium  + $totalPriceWithVAT;
             $quotePlan->vat += $addonsVat;
             //$quotePlan->vat = 100;
-            $quotePlan->discountPremium += $addonsPrice;
+            $quotePlan->discountPremium += $totalPriceWithVAT;
             $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
 
             foreach ($quotePlan->benefits as &$benefit) {
@@ -532,6 +530,7 @@
             $quotePlan->discountPremium += $policyFee;
             // $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
             $quotePlan->total += $policyFee;
+
         }
 
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
@@ -760,6 +759,16 @@
                             <div class="rounded-full">
                                 <p class="relative top-[40%] m-auto text-xs">
                                     @php
+                                    $providerCode = strtolower($plans[$planId]->providerCode);
+                                    $providerLogoImage = "https://cdn.alfred.ae/assets/logo/partners/{$providerCode}.png";
+
+                                    // Check if the image exists
+                                    $headers = @get_headers($providerLogoImage);
+                                    if (!$headers || strpos($headers[0], '404') !== false) {
+                                        $providerLogoImage = public_path('images/insurance_providers/default.png');
+                                    }
+                                @endphp
+                                    {{-- @php
                                         $providerLogoImage = public_path(
                                             'images/insurance_providers/' .
                                                 strtolower($plans[$planId]->providerCode) .
@@ -768,7 +777,7 @@
                                         if (!file_exists($providerLogoImage)) {
                                             $providerLogoImage = public_path('images/insurance_providers/default.png');
                                         }
-                                    @endphp
+                                    @endphp --}}
                                     <img class="provider-logo" alt="" src="{{ $providerLogoImage }}" />
                                 </p>
                             </div>

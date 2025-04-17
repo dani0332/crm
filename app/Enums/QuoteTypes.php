@@ -7,6 +7,7 @@ use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
+use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
@@ -33,11 +34,13 @@ use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
+use App\Services\Logger\LoggerService;
 use App\Services\TravelAllocationService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CorplineAllocation;
 use App\Strategies\Allocations\CycleAllocation;
+use App\Strategies\Allocations\GroupMedicalAllocation;
 use App\Strategies\Allocations\HealthAllocation;
 use App\Strategies\Allocations\HomeAllocation;
 use App\Strategies\Allocations\LifeAllocation;
@@ -185,6 +188,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
+            self::HOME => SendHomeOCBIntroEmailJob::class,
             // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
@@ -270,6 +274,11 @@ enum QuoteTypes: string
 
     public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false)
     {
+        $lead = $this->model()->where('uuid', $uuid)->first();
+        if ($lead) {
+            LoggerService::startQuoteLogging($lead);
+        }
+
         $allocationService = match ($this) {
             self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
             self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
@@ -282,6 +291,7 @@ enum QuoteTypes: string
             self::CORPLINE => new CorplineAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::HOME => new HomeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             self::SAVINGS => new SavingsAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
+            self::GROUP_MEDICAL => new GroupMedicalAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId, isReAssignment: $isReAssignment),
             default => null,
         };
 
@@ -306,6 +316,7 @@ enum QuoteTypes: string
             self::CORPLINE => [RolesEnum::CorpLineAdvisor],
             self::HOME => [RolesEnum::HomeAdvisor],
             self::SAVINGS => [RolesEnum::SavingsAdvisor],
+            self::GROUP_MEDICAL => [RolesEnum::GMAdvisor],
             default => [],
         };
     }

@@ -784,12 +784,6 @@ class RenewalBatchReportService extends BaseService
                 )
             ),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
-                and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
-                and car_lost_quote_logs.status = "Approved"
-                and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
-                THEN 1 ELSE 0 END) as car_sold'),
-
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::EarlyRenewal.'
                 and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::EarlyRenewal.'
                 and car_lost_quote_logs.status = "Approved"
@@ -835,13 +829,6 @@ class RenewalBatchReportService extends BaseService
                     $this->getRetentionRenewedBindings($reportDateEnd, [':userIds' => $userIdsString])
                 )
             ),
-
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
-                    and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
-                    and car_lost_quote_logs.status = "Approved"
-                    and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
-                    and car_quote_request.advisor_id in ('.$advisors.')
-                    THEN 1 ELSE 0 END) as car_sold'),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                     and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -903,13 +890,6 @@ class RenewalBatchReportService extends BaseService
                     $this->getRetentionRenewedBindings($reportDateEnd, [':teamUsersIds' => $teamUsersIdsString])
                 )
             ),
-
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
-                and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
-                and car_lost_quote_logs.status = "Approved"
-                and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
-                and car_quote_request.advisor_id ='.$authUserId.'
-                THEN 1 ELSE 0 END) as car_sold'),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                 and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'

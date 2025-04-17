@@ -230,9 +230,8 @@ trait GenericQueriesAllLobs
      *
      * @return array
      */
-    public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
+    public function bookPolicyPayload($record, $quoteType, &$payments, $quoteDocuments)
     {
-
         info('Quote Code: '.$record->code.' fn: bookPolicyPayload called');
         $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
@@ -265,6 +264,17 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
+        if ($bookPolicyDetails['lineOfBusiness'] == quoteTypeCode::Travel) {
+            $payments = $payments->map(function ($payment) use ($quoteType, $record) {
+                $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $payment, true);
+                $payment->isCreditCardEnabled = $tapPaymentConfiguration['isCreditCardEnabled'];
+                $payment->isGIGProvider = $tapPaymentConfiguration['isGIGProvider'];
+                $payment->isMultiplePaymentsEnabled = $tapPaymentConfiguration['isMultiplePaymentsEnabled'];
+                $payment->isCaptureButtonEnabled = $tapPaymentConfiguration['isCaptureButtonEnabled'];
+
+                return $payment;
+            });
+        }
         $tapPaymentConfiguration = app(CentralService::class)->getTapConfiguration($quoteType, $record, $payment, true);
         $bookPolicyDetails = array_merge($bookPolicyDetails, $tapPaymentConfiguration);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
@@ -412,14 +422,6 @@ trait GenericQueriesAllLobs
      */
     private function isFilledPolicyDetails($type, $quote)
     {
-        info('Quote Code: '.$quote->code.' is Policy Details Filled ', [
-            'policy_number' => $quote->policy_number,
-            'policy_issuance_date' => $quote->policy_issuance_date,
-            'policy_start_date' => $quote->policy_start_date,
-            'policy_expiry_date' => $quote->policy_expiry_date,
-            'insurer_quote_number' => $quote->insurer_quote_number,
-        ]);
-
         $hasBasicPolicyDetails = ! empty($quote->policy_number) &&
                                 ! empty($quote->policy_issuance_date) &&
                                 ! empty($quote->policy_start_date) &&

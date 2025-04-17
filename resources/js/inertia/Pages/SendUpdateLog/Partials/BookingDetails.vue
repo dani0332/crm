@@ -971,6 +971,7 @@ const submitToCustomer = (withPartialPaymentCheck = true) => {
     reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
     inslyMigrated: props.realQuote.insly_migrated,
     isEmailSent: props.sendUpdateLog.is_email_sent,
+    quoteCode: props.realQuote.code,
   };
   axios
     .post(url, data)
@@ -2185,6 +2186,7 @@ watch(
                       placeholder="Enter Commission Amount"
                       size="xs"
                       :icon-left="isNegativeValue ? 'minus' : ''"
+                      @change="calculateCommission"
                     />
                     <template #tooltip>
                       {{

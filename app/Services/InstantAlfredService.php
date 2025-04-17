@@ -23,6 +23,11 @@ class InstantAlfredService extends BaseService
     {
         $aliases = [];
 
+        $subQuery = DB::table('quote_tags as qt1')
+            ->select('qt1.quote_uuid', 'qt1.id', 'qt1.name') // Selecting only needed fields
+            ->where('qt1.quote_type_id', $quoteTypeId)
+            ->whereRaw('qt1.updated_at = (SELECT MAX(qt2.updated_at) FROM quote_tags as qt2 WHERE qt2.quote_uuid = qt1.quote_uuid AND qt2.quote_type_id = ?)', [$quoteTypeId]);
+
         $this->personalQuery = DB::table('personal_quotes as pqr')
             ->select(
                 'pqr.uuid',
@@ -43,7 +48,22 @@ class InstantAlfredService extends BaseService
                 DB::raw('DATE_FORMAT(pqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                 DB::raw('DATE_FORMAT(pqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
                 DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
+                DB::raw("
+                    CASE 
+                    WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
+                        AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
+                    THEN 'SIC-REVIVAL'
 
+                    WHEN qt.name = '".QuoteSegmentEnum::SIC_REVIVAL->tag()."'
+                        AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
+                    THEN 'SIC-REVIVAL'
+
+                    WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
+                    
+                    WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
+                    ELSE 'N/A'
+                    END as segment
+            "),
             )
             ->where('pqr.quote_type_id', $quoteTypeId)
             ->leftJoin('payments as py', function ($join) {
@@ -51,9 +71,8 @@ class InstantAlfredService extends BaseService
                     ->where('py.paymentable_type', '=', PersonalQuote::class);
             })
             ->leftJoin('personal_quote_details as pqrd', 'pqrd.personal_quote_id', '=', 'pqr.id')
-            ->leftJoin('quote_tags as qt', function ($join) use ($quoteTypeId) {
-                $join->on('qt.quote_uuid', '=', 'pqr.uuid')
-                    ->where('qt.quote_type_id', '=', $quoteTypeId);
+            ->leftJoinSub($subQuery, 'qt', function ($join) {
+                $join->on('qt.quote_uuid', '=', 'pqr.uuid');
             })
             ->leftJoin('lookups as lu', 'lu.id', '=', 'pqr.transaction_type_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
@@ -99,28 +118,10 @@ class InstantAlfredService extends BaseService
                     'tqpd.plan_name',
                 ]);
             })
-            // ->when($quoteTypeId == QuoteTypeId::Bike, function ($query) {
-            //     $query->leftJoin('bike_quote_plan_details as bp', 'bp.id', '=', 'pqr.uuid');
-            //     $query->leftJoin('insurance_provider as bip', 'bip.id', '=', 'bp.insurance_provider_id');
-            //     $query->addSelect([
-            //         'bp.plan_name AS plan_name',
-            //         'bip.text AS provider_name',
-            //         'bp.repair_type as plan_type',
-            //     ]);
-            // })
-            ->addSelect([
-                DB::raw("
-                        CASE 
-                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
-                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
-                            AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
-                            THEN 'SIC-REVIVAL'
-                        WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
-                        ELSE 'N/A'
-                        END as segment
-                    "),
-            ])
-            ->groupBy('pqr.id');
+            ->groupBy('pqr.id')
+            ->when(isset(request()->sortType), function ($query) {
+                $query->orderBy('pqrd.chat_initiated_at', request()->sortType);
+            });
         $aliases = [PersonalQuote::class => ['query' => $this->personalQuery, 'alias' => 'pqr']];
 
         return $aliases;
@@ -319,6 +320,11 @@ class InstantAlfredService extends BaseService
                     'total_tokens' => '$response.usage.total_tokens',
                 ],
             ];
+            $pipeline[] = [
+                '$sort' => [
+                    'created_at' => $request->sortType == 'desc' ? -1 : 1,
+                ],
+            ];
         } elseif ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             $pipeline[] = [
                 '$group' => [
@@ -362,6 +368,11 @@ class InstantAlfredService extends BaseService
                     'fallbacks' => [
                         '$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0]],
                     ],
+                ],
+            ];
+            $pipeline[] = [
+                '$sort' => [
+                    'date_of_first_interaction' => $request->sortType == 'desc' ? -1 : 1,
                 ],
             ];
         }

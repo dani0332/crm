@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
+use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
@@ -28,6 +29,7 @@ class PersonalQuotesExport
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
             QuoteTypes::SAVINGS->value,
+            QuoteTypes::HOME->value,
         ];
     }
 
@@ -51,6 +53,9 @@ class PersonalQuotesExport
 
             case QuoteTypes::SAVINGS->value:
                 return app(SavingsQuoteService::class)->getData(forExport: true);
+
+            case QuoteTypes::HOME->value:
+                return HomeQuoteRepository::getData(true);
 
             default:
                 return abort(404);
@@ -79,6 +84,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
+                    'ADVISOR ASSIGNED DATE',
                     'LAST MODIFIED DATE',
                     'PREMIUM',
                     'POLICY NUMBER',
@@ -100,6 +106,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
+                    'ADVISOR ASSIGNED DATE',
                     'LAST MODIFIED DATE',
                     'PREMIUM',
                     'POLICY NUMBER',
@@ -122,6 +129,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
+                    'ADVISOR ASSIGNED DATE',
                     'LAST MODIFIED DATE',
                     'TRANSAPP CODE',
                     'SOURCE',
@@ -155,6 +163,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
+                    'ADVISOR ASSIGNED DATE',
                     'LAST MODIFIED DATE',
                     'PREMIUM',
                     'POLICY NUMBER',
@@ -188,6 +197,22 @@ class PersonalQuotesExport
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
                 ];
+
+            case QuoteTypes::HOME->value:
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'TRANSAPP CODE',
+                    'SOURCE',
+                    'LOST REASON',
+                    'PREMIUM',
+                    'POLICY NUMBER',
+                ];
         }
     }
 
@@ -212,6 +237,7 @@ class PersonalQuotesExport
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->premium ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
@@ -233,6 +259,7 @@ class PersonalQuotesExport
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->premium ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
@@ -255,6 +282,7 @@ class PersonalQuotesExport
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                     optional($quote->quoteDetail)->transapp_code,
                     $quote->source,
@@ -288,6 +316,7 @@ class PersonalQuotesExport
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->premium ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
@@ -320,6 +349,22 @@ class PersonalQuotesExport
                     $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+                ];
+
+            case QuoteTypes::HOME->value:
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    $quote?->quoteStatus?->text,
+                    $quote?->advisor?->name,
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+                    $quote?->homeQuote?->homeQuoteRequestDetail?->transapp_code,
+                    $quote->source,
+                    $quote?->homeQuote?->homeQuoteRequestDetail?->lostReason?->text,
+                    $quote->premium,
+                    $quote->policy_number,
                 ];
         }
     }

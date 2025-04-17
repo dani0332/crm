@@ -45,7 +45,7 @@ export const useGetShowPageRoute = (
 
   const routesObj = {
     1: route('car.show', uuid),
-    2: route('home.show', uuid),
+    2: route('home-quotes-show', uuid),
     3: route('health.show', uuid),
     4: route('life-quotes-show', uuid),
     5: business_route,
@@ -341,11 +341,11 @@ export function getQuoteType(id, returnType = 'code') {
   return types[id] ? types[id][returnType] : '';
 }
 
-export function buildCdbidLink(quote_uuid, quote_type_id) {
+export function buildCdbidLink(quote_uuid, quote_type_id, customLabel = null) {
   if (quote_uuid) {
     const url = `${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${quote_uuid}`;
     const CDBID = `${getQuoteType(quote_type_id, 'code')}-${quote_uuid.toUpperCase()}`;
-    return `<a target="_blank" class="text-primary-500 hover:underline flex items-center space-x-1" href="${url}">${CDBID}</a>`;
+    return `<a target="_blank" class="text-primary-500 hover:underline flex items-center space-x-1" href="${url}">${customLabel || CDBID}</a>`;
   } else {
     return '';
   }

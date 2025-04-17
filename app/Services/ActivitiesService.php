@@ -11,10 +11,12 @@ use App\Models\Activities;
 use App\Models\PersonalQuote;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
+use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ActivitiesService extends BaseService
@@ -226,13 +228,13 @@ class ActivitiesService extends BaseService
         $url = url('/')."/$path";
 
         if (strtoupper($activityType) === ActivityTypeEnum::CALL_BACK) {
-            info('InstantAlfred CallBack Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
+            LoggerService::info('InstantAlfred CallBack Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
             $title = 'InstantAlfred Callback Request';
             $message = 'Urgent callback request for ';
             event(new CallBackNotifications($record->uuid, $record->advisor_id, $url, $record->code, $title, $message));
 
         } else {
-            info('InstantAlfred Whatsapp Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
+            LoggerService::info('InstantAlfred Whatsapp Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
             $title = 'InstantAlfred WhatsApp Request';
             $message = 'Urgent Whatsapp request for ';
             event(new CallBackNotifications($record->uuid, $record->advisor_id, $url, $record->code, $title, $message));
@@ -297,18 +299,20 @@ class ActivitiesService extends BaseService
 
         $userId = auth()->user()->id;
 
-        $query = DB::table('activities')
-            ->selectRaw('
-            SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingCallback,
-            SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingWhatsapp
-        ', [ActivityTypeEnum::CALL_BACK, ActivityTypeEnum::WHATS_APP])
-            ->where('activities.status', 0)
-            ->where('activities.assignee_id', $userId)
-            ->first();
+        return Cache::remember("pending-activity-count-{$userId}", now()->addMinutes(5), function () use ($userId) {
+            $query = DB::table('activities')
+                ->selectRaw('
+                SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingCallback,
+                SUM(CASE WHEN activity_type = ? THEN reminders_sent ELSE 0 END) as pendingWhatsapp
+            ', [ActivityTypeEnum::CALL_BACK, ActivityTypeEnum::WHATS_APP])
+                ->where('activities.status', 0)
+                ->where('activities.assignee_id', $userId)
+                ->first();
 
-        return [
-            'pendingCallback' => $query->pendingCallback ?? 0,
-            'pendingWhatsapp' => $query->pendingWhatsapp ?? 0,
-        ];
+            return [
+                'pendingCallback' => $query->pendingCallback ?? 0,
+                'pendingWhatsapp' => $query->pendingWhatsapp ?? 0,
+            ];
+        });
     }
 }

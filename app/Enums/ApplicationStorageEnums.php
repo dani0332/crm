@@ -44,7 +44,6 @@ final class ApplicationStorageEnums extends Enum
     public const REASSIGNMENT_END_TIME = 'REASSIGNMENT_END_TIME';
     public const ENABLE_AUTO_FOLLOWUP = 'ENABLE_AUTO_FOLLOWUP';
     public const APPLY_DUBAI_NOW_EXCLUSION = 'APPLY_DUBAI_NOW_EXCLUSION';
-    public const ENABLE_CAMMY_FOLLOWUP = 'ENABLE_CAMMY_FOLLOWUP';
     public const OCB_NEW_BUSINESS_MULTIPLE_PLANS = 'OCB_NEW_BUSINESS_MULTIPLE_PLANS';
     public const OCB_NEW_BUSINESS_ZERO_PLAN = 'OCB_NEW_BUSINESS_ZERO_PLAN';
     public const OCB_NEW_BUSINESS_SINGLE_PLAN = 'OCB_NEW_BUSINESS_SINGLE_PLAN';
@@ -69,6 +68,7 @@ final class ApplicationStorageEnums extends Enum
     public const SAGE_ENABLED = 'SAGE_ENABLED';
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
     public const DTT_ENABLED = 'DTT_ENABLED';
+    public const DTT_FROM = 'DTT_FROM';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
     public const DTT_HEALTH_ENABLED = 'DTT_HEALTH_ENABLED';
@@ -194,4 +194,17 @@ final class ApplicationStorageEnums extends Enum
     /* Bike LMS Intro Email BCC */
     public const LMS_INTRO_BIKE_EMAIL_BCC = 'LMS_INTRO_BIKE_EMAIL_BCC';
     public const TAP_AUTHORIZED_EMAILS = 'TAP_AUTHORIZED_EMAILS';
+    public const BENCHMARKING_ENABLED = 'BENCHMARKING_ENABLED';
+    public const BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS = 'BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS';
+
+    // Group Medical Team Advisors
+    public const GROUP_MEDICAL_MICRO_ADVISORS = 'GROUP_MEDICAL_MICRO_ADVISORS';
+    public const GROUP_MEDICAL_NON_MICRO_ADVISORS = 'GROUP_MEDICAL_NON_MICRO_ADVISORS';
+    public const STOP_DE_DUPLICATION_JOB = 'STOP_DE_DUPLICATION_JOB';
+    public const BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW = 'BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW';
+
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
+    public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
+    public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
 }
