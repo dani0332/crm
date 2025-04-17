@@ -144,6 +144,28 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 
+// Add fieldsToCheck computed property to track quote fields for caching
+const fieldsToCheck = computed(() => ({
+  possessionTypeId: page.props.quote.home_quote?.possession_type_id,
+  accommodationTypeId: page.props.quote.home_quote?.accommodation_type_id,
+  coverageTypeId: page.props.quote.home_quote?.coverage_type_id,
+  buildingValue: page.props.quote.home_quote?.building_value,
+  contentValueId: page.props.quote.home_quote?.contents_value_id,
+  personalBelongingsValueId: page.props.quote.home_quote?.personal_belongings_value_id,
+}));
+
+// Function to store current field values to localStorage
+const storeToLocalStorage = (data) => {
+  try {
+    localStorage.setItem(`quote_${page.props.quote.id}_fields`, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    console.error('Error storing quote fields in localStorage:', e);
+  }
+};
+
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
     value: indType.code,
@@ -511,6 +533,55 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
+  // Get the current quote fields
+  const currentData = fieldsToCheck.value;
+  console.log('Current quote fields:', currentData);
+  
+  // Initialize to true (default behavior is to get latest rating)
+  let shouldGetLatestRating = true;
+  
+  try {
+    // Try to retrieve stored field values from localStorage
+    const storedDataString = localStorage.getItem(`quote_${page.props.quote.id}_fields`);
+    
+    if (storedDataString) {
+      const { data: storedData, timestamp } = JSON.parse(storedDataString);
+      console.log('Stored quote fields:', storedData);
+      
+      // Check if stored data is less than 2 minutes old (for testing)
+      // For production, use a longer duration like 1 hour (60 * 60 * 1000)
+      const twoMinutesInMilliseconds = 2 * 60 * 1000; // 2 minutes
+      const isStoredDataFresh = timestamp > Date.now() - twoMinutesInMilliseconds;
+      
+      if (isStoredDataFresh) {
+        // Check if any relevant fields have changed
+        const hasFieldsChanged = Object.keys(currentData).some(
+          key => currentData[key] !== storedData[key]
+        );
+        
+        if (!hasFieldsChanged) {
+          console.log('Fields unchanged, can use cached data');
+          shouldGetLatestRating = false;
+        } else {
+          console.log('Fields changed, need fresh rating');
+        }
+      } else {
+        console.log('Stored data is stale (> 2 minutes old)');
+      }
+    } else {
+      console.log('No stored data found, will get latest rating');
+    }
+  } catch (e) {
+    console.error('Error comparing field values:', e);
+  }
+  
+  // Save current field values for next comparison
+  if (shouldGetLatestRating) {
+    storeToLocalStorage(currentData);
+  }
+
+
+  // Keep the existing conditional logic, but pass in our calculated shouldGetLatestRating value
   if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
     // Only check all these conditions if it's a RENEWAL_UPLOAD lead
     if (
@@ -542,11 +613,13 @@ onMounted(() => {
           page.props.quote.home_quote?.contents_value_id))
     ) {
       // Only run onLoadAvailablePlansData for RENEWAL_UPLOAD leads if all conditions are met
-      onLoadAvailablePlansData(true);
+      console.log('RENEWAL_UPLOAD lead with complete data, getting plans with shouldGetLatestRating:', shouldGetLatestRating);
+      onLoadAvailablePlansData(shouldGetLatestRating);
     }
   } else {
     // For all non-renewal upload leads, always run onLoadAvailablePlansData
-    onLoadAvailablePlansData(true);
+    console.log('Non-RENEWAL_UPLOAD lead, getting plans with shouldGetLatestRating:', shouldGetLatestRating);
+    onLoadAvailablePlansData(shouldGetLatestRating);
   }
 });
 
