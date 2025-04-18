@@ -857,7 +857,24 @@ class RenewalsUploadService
                     $quoteData['business_type_of_insurance_id'] = $businessSubline->id;
                 }
             }
-
+            if(isset($data['registration_type'])){
+                $quoteData['registration_type'] = $data['registration_type'];
+            }
+            if(isset($data['vehicle_use'])){
+                $quoteData['vehicle_use'] = $data['vehicle_use'];
+            }
+            if(isset($data['business_activity'])){
+                $quoteData['business_activity'] = $data['business_activity'];
+            }
+            if(isset($data['driver_name'])){
+                $quoteData['driver_name'] = $data['driver_name'];
+            }
+            if(isset($data['driver_nationality'])){
+                $quoteData['driver_nationality'] = $data['driver_nationality'];
+            }
+            if(isset($data['driver_dob'])){
+                $quoteData['driver_dob'] = $data['driver_dob'];
+            }
             $quote = $quoteObject->create($quoteData);
             if (! $isQuotePersonal) {
                 $this->syncQuote($quote, $quoteData);
@@ -1811,9 +1828,11 @@ class RenewalsUploadService
                             if(empty($leadData->registration_type)){
                                 $leadValidationErrors->push('Registration Type is required');
                             }
+                            if(!empty($leadData->registration_type) && !CarRegistrationType::hasValue($leadData->registration_type)) {
+                                $leadValidationErrors->push('Invalid Registration Type ');
+                            }
                             if(!empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY ) {
                                 if(!empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL ){
-
                                     if(empty($leadData->business_activity)) {
                                         $leadValidationErrors->push('Business Activity Name is required');
                                     }

@@ -21,6 +21,8 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 
 class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
@@ -160,8 +162,20 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             'previous_advisor' => ['index' => 39, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
             'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:500'],
             'is_gcc' => ['index' => 41, 'title' => 'Is GCC', 'rules' => 'max:3'],
+            'registration_type' => ['index' => 42, 'title' => 'Registration Type', 'rules' => 'required|max:100|in:'.CarRegistrationType::getValues()],
         ];
 
+        if(isset($columns['registration_type']) && $columns['registration_type'] == CarRegistrationType::COMPANY){
+            $columns['vehicle_use'] = ['index' => 43, 'title' => 'Vehicle Use', 'rules' => 'required|max:100|in:'.CarVehicleUse::getValues()];
+        }
+        if(isset($columns['vehicle_use']) && $columns['vehicle_use'] == CarVehicleUse::COMMERCIAL){
+            $columns['business_activity'] = ['index' => 44, 'title' => 'Business Activity', 'rules' => 'required|max:100'];
+        }
+        if(isset($columns['vehicle_use']) && $columns['vehicle_use'] == CarVehicleUse::PRIVATE){
+            $columns['driver_name'] = ['index' => 45, 'title' => 'Driver Name', 'rules' => 'required|max:100'];
+            $columns['driver_nationality'] = ['index' => 46, 'title' => 'Driver Nationality', 'rules' => 'required|max:100'];
+            $columns['driver_dob'] = ['index' => 47, 'title' => 'Driver Date of Birth', 'rules' => 'required|max:100'];
+        }
         if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
             $columns['make']['rules'][] = 'required';
             $columns['model']['rules'][] = 'required';
