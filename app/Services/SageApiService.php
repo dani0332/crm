@@ -817,7 +817,7 @@ class SageApiService
 
                 continue;
             }
-            $createPrepaymentReceiptResponse = $this->createPrepaymentPremiumRecipt($sageRequest, $quote, $payment, $paymentSplit);
+            $createPrepaymentReceiptResponse = $this->createPrepaymentPremiumReceipt($sageRequest, $quote, $payment, $paymentSplit);
             $documentNumber = $createPrepaymentReceiptResponse['documentNumber'];
             if ($documentNumber) {
                 $this->handleWithDeadlockRetries(function () use ($paymentSplit, $documentNumber) {
@@ -840,7 +840,7 @@ class SageApiService
 
     }
 
-    public function createPrepaymentPremiumRecipt($sageRequest, $quote, $payment, $paymentSplit, $splitAmount = null)
+    public function createPrepaymentPremiumReceipt($sageRequest, $quote, $payment, $paymentSplit, $splitAmount = null)
     {
         $response = ['status' => false, 'message' => '', 'error' => '', 'documentNumber' => null];
         $sageRequest = SagePayloadFactory::globalSagePrepaymentReceiptPayloadData([$quote, $payment, $paymentSplit, $sageRequest, $splitAmount]);
