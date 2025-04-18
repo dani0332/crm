@@ -7,6 +7,9 @@ use GuzzleHttp\Client;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use Monolog\LogRecord;
+use Monolog\Handler\StreamHandler;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Formatter\LineFormatter;
 
 class AxiomBatchHandler extends AbstractProcessingHandler
 {
@@ -14,6 +17,8 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     protected $dataset;
     protected $batch = [];
     protected $batchSize;
+    protected $singleHandler;
+    protected $dailyHandler;
 
     public function __construct($level = Logger::DEBUG, bool $bubble = true)
     {
@@ -32,6 +37,31 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         parent::__construct($level, $bubble);
         $this->setFormatter(new AxiomFormatter);
 
+        // Initialize handlers for Laravel's default logging
+        $this->singleHandler = new StreamHandler(
+            storage_path('logs/laravel.log'),
+            $level,
+            $bubble
+        );
+        
+        $this->dailyHandler = new RotatingFileHandler(
+            storage_path('logs/laravel.log'),
+            14, // Keep logs for 14 days
+            $level,
+            $bubble
+        );
+
+        // Use Laravel's default log format for file handlers
+        $fileFormatter = new LineFormatter(
+            "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n",
+            'Y-m-d H:i:s',
+            true,
+            true
+        );
+        
+        $this->singleHandler->setFormatter($fileFormatter);
+        $this->dailyHandler->setFormatter($fileFormatter);
+
         // Ensure batch is sent on shutdown
         register_shutdown_function([$this, 'sendBatch']);
     }
@@ -39,8 +69,22 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     protected function write(LogRecord $record): void
     {
         try {
-            $data = $this->formatRecord($record);
-            $this->batch[] = $data;
+            // Create a new record for file logging to ensure clean format
+            $fileRecord = new LogRecord(
+                $record->datetime,
+                $record->channel,
+                $record->level,
+                $record->message,
+                $record->context,
+                $record->extra
+            );
+
+            // Write to Laravel's default log files with original format
+            $this->singleHandler->handle($fileRecord);
+            $this->dailyHandler->handle($fileRecord);
+            
+            // Add to Axiom batch with original Axiom format
+            $this->batch[] = $this->formatRecord($record);
 
             if (count($this->batch) >= $this->batchSize) {
                 $this->sendBatch();
