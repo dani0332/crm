@@ -142,6 +142,7 @@ class RenewalsUploadService
     public function generateUUID($quoteType, $quoteTypeId)
     {
         LoggerService::info('UAT FN: generateUUID QuoteTypeId: '.$quoteTypeId);
+
         if (checkPersonalQuotes($quoteType)) {
             $response = $this->capiRequestService->getPersonalQuoteUUID($quoteTypeId);
         } else {
@@ -566,7 +567,7 @@ class RenewalsUploadService
                 'batch' => $batch,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ])->with(['renewalUploadLead', 'homeQuote']);
+            ])->with(['renewalUploadLead', 'personalQuote']);
             
             
             $query->chunkById(50, function ($leads) use ($batchNumber, $quoteType, $renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
@@ -581,7 +582,7 @@ class RenewalsUploadService
                         }
                         
                     } else {
-                        info($logPrefix.' skipping fetch plans for uuid : '.$lead->homeQuote->uuid);
+                        info($logPrefix.' skipping fetch plans for uuid : '.$lead->personalQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                         $totalSkipped++;
                     }
@@ -614,7 +615,7 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix) {
+                    ->finally(function ($batch) use ($logPrefix) {
                         info($logPrefix . ' everything done');
                     })
                     ->allowFailures()
@@ -1077,13 +1078,19 @@ class RenewalsUploadService
             }
 
             $quote = $quoteObject->create($quoteData);
+
+
             if (! $isQuotePersonal) {
                 $this->syncQuote($quote, $quoteData);
             }
 
+            // Create Entry in Personal Quote Details Table
             if ($isQuotePersonal) {
                 $quote->quoteDetail()->create($detailData);
-            } else {
+            } 
+            
+            // Create entry in Lob Specific QUote Detail Table
+            else {
                 $quotType = strtolower($quoteType->code);
                 $class = $quotType.'QuoteRequestDetail';
                 $quote->{$class}()->create($detailData);
@@ -1099,6 +1106,19 @@ class RenewalsUploadService
 
                 LoggerService::info($logPrefix.'-insertion in mongo db for : UUID: '.$quote->uuid);
             }
+
+           
+            // As Home is a personal Quote, creating entry for HomeQuote and HomeQuoteDetail 
+            if ($quoteType->code == quoteTypeCode::Home) {
+
+                // unsetting fields as homeQuote table doesn't have them
+                unset($quoteData['quote_type_id'], $quoteData['currently_insured_with'], $quoteData['currently_insured_with_id']);
+                $homeQuote = $quote->homeQuote()->create($quoteData);
+
+                unset($detailData['additional_notes'], $quoteData['previous_advisor_id']);
+                $homeQuote->homeQuoteRequestDetail()->create($detailData);
+            }
+            
 
             // update advisor assign date/time
             if (! empty($advisorId)) {
@@ -1129,7 +1149,6 @@ class RenewalsUploadService
 
         return $quote;
     }
-
     /**
      * ignore fields having empty/null.
      *
@@ -1232,7 +1251,8 @@ class RenewalsUploadService
                 $nationality = Nationality::where('text', $data['nationality'])->first();
                 $emirate = Emirate::where('text', $data['registration_location'])->first();
                 $uaeLicenseHeldFor = UAELicenseHeldFor::where('text', $data['driving_experience'])->first();
-            } elseif ($isQuoteTypeHome) {
+            } 
+            elseif ($isQuoteTypeHome) {
                 $homeCurrentInsuranceProvider = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::where('code', $data['current_insurance_provider'])->first()->id : null;
                 $homePossessionTypeId = (! empty($data['you_are_a'])) ? RangeLookup::where('text', $data['you_are_a'])->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)->first()->id : null;
                 $homeIliveinAccommodationTypeId = (! empty($data['i_live_in_a'])) ? RangeLookup::where('text', $data['i_live_in_a'])->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)->first()->id : null;
@@ -1304,24 +1324,7 @@ class RenewalsUploadService
             $quoteData = $this->getNonEmptyValues($quoteData);
             $isQuoteTypeCar && $quoteData['is_gcc_standard'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
 
-            if ($isQuoteTypeHome) {
-                $quoteData['insurance_provider_id'] = $homeCurrentInsuranceProvider;
-                $quoteData['possession_type_id'] = $homePossessionTypeId;
-                $quoteData['accommodation_type_id'] = $homeIliveinAccommodationTypeId;
-                $quoteData['owner_occupancy_type_id'] = $homeOwnerOccupancyTypeId;
-                $quoteData['sub_area_id'] = $homeSubAreaId;
-                $quoteData['coverage_type_id'] = $homeCoverageTypeId;
-                $quoteData['contents_aed'] = $homeContents;
-                $quoteData['personal_belongings_aed'] = $homePersonalBelongings;
-                $quoteData['building_aed'] = $homeBuildingAed;
-                $quoteData['renewal_upload_insurance_provider_id'] = $homeInsuranceProvider;
-                $quoteData['renewal_upload_plan_code'] = $homePlanName;
-                $quoteData['has_claimed_losses'] = $homeClaimsHistory;
-                $quoteData['renewal_upload_renewal_premium'] = $homePremium;
-                $quoteData['insurer_quote_number'] = $homeInsurerQuoteNumber;
-                $quoteData['previous_advisor_id'] = $homePreviousAdvisorId;
-            }
-
+           
             /*
              * API refresh plans when quote_updated_at have latest date
              */
@@ -1362,6 +1365,43 @@ class RenewalsUploadService
             LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
 
             $quote->update($quoteData);
+ 
+            // create or update in lob specific table i.e home_quote_request, health_quote_request etc. 
+            if ($isQuoteTypeHome) {
+                $quoteData['personal_quote_id'] = $quote->id;
+                $quoteData['insurance_provider_id'] = $homeCurrentInsuranceProvider;
+                $quoteData['possession_type_id'] = $homePossessionTypeId;
+                $quoteData['accommodation_type_id'] = $homeIliveinAccommodationTypeId;
+                $quoteData['owner_occupancy_type_id'] = $homeOwnerOccupancyTypeId;
+                $quoteData['sub_area_id'] = $homeSubAreaId;
+                $quoteData['coverage_type_id'] = $homeCoverageTypeId;
+                $quoteData['contents_aed'] = $homeContents;
+                $quoteData['personal_belongings_aed'] = $homePersonalBelongings;
+                $quoteData['building_aed'] = $homeBuildingAed;
+                $quoteData['renewal_upload_insurance_provider_id'] = $homeInsuranceProvider;
+                $quoteData['renewal_upload_plan_code'] = $homePlanName;
+                $quoteData['has_claimed_losses'] = $homeClaimsHistory;
+                $quoteData['renewal_upload_renewal_premium'] = $homePremium;
+                $quoteData['insurer_quote_number'] = $homeInsurerQuoteNumber;
+                $quoteData['previous_advisor_id'] = $homePreviousAdvisorId;
+
+                
+                $homeQuote = HomeQuote::updateOrCreate(
+                    [
+                        'uuid' => $quote->uuid,
+                    ],
+                    $quoteData
+                );
+
+                if($homeQuote){
+                    LoggerSerice:info('Home Quote Created/Update', [
+                        'ref-id' => $quote->uuid
+                    ]); 
+                }
+            }
+
+            
+
 
             if (!checkPersonalQuotes($quoteType->code)) {
                 $this->syncQuote($quote, $quoteData);
@@ -2469,7 +2509,11 @@ class RenewalsUploadService
     // Non Motor
     public function getPendingOcbLeadsTotalNonMotor($batch, $quoteType)
     {
-        return $this->getOcbLeadsQueryNonMotor($batch, $quoteType)->get()->count();
+
+        $count = $this->getOcbLeadsQueryNonMotor($batch, $quoteType)->get()->count(); 
+        LoggerService::info("fn: getPendingOcbLeadsTotalNonMotor - $batch - $quoteType - $count"); 
+
+        return $count;
     }
 
     public function getOcbLeadsQueryNonMotor($batch, $quoteType)
@@ -2485,12 +2529,13 @@ class RenewalsUploadService
 
         switch ($quoteType) {
             case QuoteTypeShortCode::HOM:
-                $query->whereHas('homeQuote', function ($q) {
+                $query->whereHas('personalQuote', function ($q) {
                     $q->whereNull('paid_at');
                 });
                 break;
+            default:                
+                break;
         }
-
         return $query->groupBy('quote_id');
     }
     

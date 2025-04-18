@@ -21,6 +21,8 @@ use App\Models\RenewalQuoteProcess;
 use App\Services\HomeQuoteService;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Models\PersonalQuote; 
+use App\Services\Logger\LoggerService;
 
 class HomeEmailService extends BaseService
 {
@@ -93,7 +95,9 @@ class HomeEmailService extends BaseService
     {
         try {
             // Find Home Quote
-            $lead = HomeQuote::find($renewalQuoteProcess->quote_id);
+            $lead = PersonalQuote::find($renewalQuoteProcess->quote_id);
+            $homeQuote = $lead->homeQuote; 
+            
             
             info('Home Renewals OCB Email started for uuid: '.$lead->uuid);
 
@@ -101,7 +105,7 @@ class HomeEmailService extends BaseService
             $advisor = User::where('id', $lead->advisor_id)->first();
 
             // Map Data for Home OCB Email
-            $emailData = $this->mapDataForRenewalOCBEmail($lead, $advisor, WorkflowTypeEnum::HOME_RENEWAL_OCB);
+            $emailData = $this->mapDataForRenewalOCBEmail($homeQuote, $advisor, WorkflowTypeEnum::HOME_RENEWAL_OCB);
 
             $workflowUrl = ApplicationStorage::where('key_name', WorkflowTypeEnum::HOME_RENEWAL_OCB)->first()?->value;
             
@@ -117,7 +121,7 @@ class HomeEmailService extends BaseService
             }
             
         } catch (\Exception $exception) {
-            Log::info('Renewals OCB Email failed error: '.$exception->getMessage());
+            Log::info('Home Renewals OCB Email failed error: '.$exception->getMessage());
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
@@ -178,7 +182,7 @@ class HomeEmailService extends BaseService
             'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflowType' => $workflowType,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
-            'triggerDate' => $this->getOCBDurationInISO8601($lead->policy_expiry_date)
+            'triggerDate' => $this->getOCBDurationInISO8601($lead->previous_policy_expiry_date)
             // 'whatsappConsent' => getWhatsappConsent(QuoteTypes::HOME, uuid: $lead->uuid),
         ];
 
@@ -314,6 +318,8 @@ class HomeEmailService extends BaseService
 
     private function getOCBDurationInISO8601($expiryDate): string
     {
+
+       
         // Ensure Carbon instance
         $expiry = Carbon::parse($expiryDate);
     
@@ -333,15 +339,18 @@ class HomeEmailService extends BaseService
         // Get current time
         $now = Carbon::now();
     
+        LoggerService::info('fn: getOCBDurationInISO8601', [
+            'expiryDate' => $expiryDate,
+            'ocbDate' => $ocbDate,
+        ]);
+    
+
         // If OCB date is already in the past, return PT0M
         if ($ocbDate->lessThanOrEqualTo($now)) {
-            return 'PT0M';
+            return strtotime('+10 minutes'); 
         }
     
         // Calculate minutes difference
-        $minutes = $now->diffInMinutes($ocbDate);
-    
-        // Return in ISO 8601 format
-        return "PT{$minutes}M";
+        return strtotime($ocbDate);
     }
 }

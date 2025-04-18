@@ -36,6 +36,12 @@ class RenewalQuoteProcess extends Model
         return $this->belongsTo(HomeQuote::class, 'quote_id');
     }
 
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class, 'quote_id');
+    }
+
+    
     /**
      * json encode data.
      * todo: fix later as its not preserving order
