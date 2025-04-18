@@ -179,13 +179,13 @@ trait QuoteAllocatable
             $innerQuery
                 // Include non-AIG leads
                 ->whereNotExists(function ($subQuery) use ($table) {
-                    $subQuery->isAigCarQuote($table);
+                    $this->applyAigCarQuoteConditions($subQuery, $table);
                 })
 
                 // Or AIG leads with sic_advisor_requested = 1
                 ->orWhere(function ($subQuery) use ($table) {
                     $subQuery->whereExists(function ($tagQuery) use ($table) {
-                        $tagQuery->isAigCarQuote($table);
+                        $this->applyAigCarQuoteConditions($tagQuery, $table);
                     })->where('sic_advisor_requested', 1);
                 });
         });
@@ -215,14 +215,19 @@ trait QuoteAllocatable
         });
     }
 
-    public function scopeIsAigCarQuote(Builder $query, string $table): Builder
+    protected function applyAigCarQuoteConditions($query, string $table): void
     {
-        return $query->from('quote_tags')
+        $query->from('quote_tags')
             ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
             ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
             ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
     }
 
+    public function scopeIsAigCarQuote(Builder $query, string $table): Builder
+    {
+        $this->applyAigCarQuoteConditions($query, $table);
+        return $query;
+    }
 
     public function isAdvisorRequested()
     {
