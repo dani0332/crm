@@ -2,12 +2,11 @@
 
 namespace App\Logging;
 
+use App\Models\ApplicationStorage;
+use GuzzleHttp\Client;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
-use GuzzleHttp\Client;
 use Monolog\LogRecord;
-use App\Logging\AxiomFormatter;
-use App\Models\ApplicationStorage;
 
 class AxiomBatchHandler extends AbstractProcessingHandler
 {
@@ -22,6 +21,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         $this->dataset = env('AXIOM_DATASET');
         $this->batchSize = cache()->remember('axiom_batch_size', 3600, function () {
             $storage = ApplicationStorage::where('key_name', 'AXIOM_BATCH_SIZE')->first();
+
             return $storage ? (int) $storage->value : 100;
         });
 
@@ -30,8 +30,8 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         }
 
         parent::__construct($level, $bubble);
-        $this->setFormatter(new AxiomFormatter());
-        
+        $this->setFormatter(new AxiomFormatter);
+
         // Ensure batch is sent on shutdown
         register_shutdown_function([$this, 'sendBatch']);
     }
@@ -41,13 +41,12 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         try {
             $data = $this->formatRecord($record);
             $this->batch[] = $data;
-            
 
             if (count($this->batch) >= $this->batchSize) {
                 $this->sendBatch();
             }
         } catch (\Exception $e) {
-            error_log('Error writing to Axiom batch: ' . $e->getMessage());
+            error_log('Error writing to Axiom batch: '.$e->getMessage());
             // Don't throw to prevent breaking the application
         }
     }
@@ -72,10 +71,10 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         }
 
         try {
-            $client = new Client();
-            $response = $client->post('https://api.axiom.co/v1/datasets/' . $this->dataset . '/ingest', [
+            $client = new Client;
+            $response = $client->post('https://api.axiom.co/v1/datasets/'.$this->dataset.'/ingest', [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->apiToken,
+                    'Authorization' => 'Bearer '.$this->apiToken,
                     'Content-Type' => 'application/json',
                 ],
                 'json' => $this->batch,
@@ -96,7 +95,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
                 ));
             }
         } catch (\Exception $e) {
-            error_log('Error sending batch to Axiom: ' . $e->getMessage());
+            error_log('Error sending batch to Axiom: '.$e->getMessage());
         }
     }
-} 
+}

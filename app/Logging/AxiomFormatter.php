@@ -2,8 +2,8 @@
 
 namespace App\Logging;
 
-use Monolog\Formatter\JsonFormatter;
 use Monolog\Formatter\FormatterInterface;
+use Monolog\Formatter\JsonFormatter;
 use Monolog\LogRecord;
 
 class AxiomFormatter extends JsonFormatter implements FormatterInterface
@@ -13,7 +13,7 @@ class AxiomFormatter extends JsonFormatter implements FormatterInterface
         // Parse the Monolog format to extract the message and context
         $message = $record->message;
         $context = $record->context;
-        
+
         // Create a clean event object
         $event = [
             'timestamp' => $record->datetime->format('c'),
@@ -22,10 +22,10 @@ class AxiomFormatter extends JsonFormatter implements FormatterInterface
             'context' => $context,
             'environment' => env('APP_ENV'),
             'service' => 'IMCRM',
-            'channel' => $record->channel
+            'channel' => $record->channel,
         ];
 
         // Use the parent's toJson method to ensure proper JSON encoding
         return $this->toJson($event, true);
     }
-} 
+}
