@@ -12,6 +12,7 @@ use App\Enums\QuoteTypes;
 use App\Models\QuoteTag;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 trait QuoteAllocatable
 {
@@ -170,57 +171,52 @@ trait QuoteAllocatable
      * Filters leads that are eligible for allocation.
      * Includes both flow-based and AIG-specific filtering logic.
      */
-    public function scopeEligibleForAllocation(Builder $query): Builder
+    public function scopeEligibleForAllocation(Builder $query,QuoteTypes $quoteType): Builder
     {
-        $table = $query->getModel()->getTable();
 
-        // === AIG Filter Block ===
-        $query->where(function ($innerQuery) use ($table) {
-            $innerQuery
-                // Include non-AIG leads
-                ->whereNotExists(function ($subQuery) use ($table) {
-                    $this->applyAigCarQuoteConditions($subQuery, $table);
-                })
-
-                // Or AIG leads with sic_advisor_requested = 1
-                ->orWhere(function ($subQuery) use ($table) {
-                    $subQuery->whereExists(function ($tagQuery) use ($table) {
-                        $this->applyAigCarQuoteConditions($tagQuery, $table);
-                    })->where('sic_advisor_requested', 1);
-                });
-        });
-
-        // === Lead Qualification Block ===
-        return $query->where(function ($logic) {
-            $logic
-                // Renewal leads with SIC + advisor/payment approved
-                ->where(function ($q) {
-                    $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
-                        ->sicFlowEnabled()
+        return $query->where(function ($mainQuery) use ($quoteType) {
+            $mainQuery
+                // AIG leads with advisor requested or payment authorized
+                ->where(function ($aigQuery) use ($quoteType) {
+                    $aigQuery->isAIG($quoteType)
                         ->requestedAdvisorOrPaymentAuthorized();
                 })
+                
+                // OR Other lead types
+                ->orWhere(function ($otherLeads) {
+                    $otherLeads
+                        // Renewal leads with SIC + advisor/payment approved
+                        ->where(function ($q) {
+                            $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
+                                ->sicFlowEnabled()
+                                ->requestedAdvisorOrPaymentAuthorized();
+                        })
 
-                // Leads that previously failed allocation
-                ->orWhere->leadAllocationFailed()
+                        // Leads that previously failed allocation
+                        ->orWhere->leadAllocationFailed()
 
-                // Non-renewal leads with SIC logic
-                ->orWhere(function ($q) {
-                    $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                        ->where(function ($inner) {
-                            $inner
-                                ->where(fn ($x) => $x->sicFlowDisabled())
-                                ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized());
+                        // Non-renewal leads with SIC logic
+                        ->orWhere(function ($q) {
+                            $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                                ->where(function ($inner) {
+                                    $inner
+                                        ->where(fn ($x) => $x->sicFlowDisabled())
+                                        ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized());
+                                });
                         });
                 });
         });
     }
 
-    protected function applyAigCarQuoteConditions($query, string $table): void
+    protected function scopeIsAIG($query, QuoteTypes $quoteType): void
     {
-        $query->from('quote_tags')
-            ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
-            ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-            ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
+        $table = $query->getModel()->getTable();
+        $query->whereExists(function ($subQuery) use ($table, $quoteType) {
+            $subQuery->select(DB::raw(1))->from('quote_tags')
+                ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
+                ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
+        });
     }
 
     public function isAdvisorRequested()
