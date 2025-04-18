@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanType;
+use App\Enums\CarRegistrationType;
 use App\Enums\carTypeInsuranceCode;
+use App\Enums\CarVehicleUse;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
@@ -81,8 +83,6 @@ use DateTime;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 
 class RenewalsUploadService
 {
@@ -1825,7 +1825,7 @@ class RenewalsUploadService
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
                                 $leadValidationErrors->push('Invalid Previous Advisor Email');
                             }
-                            if(empty($leadData->registration_type)){
+                            if (empty($leadData->registration_type)) {
                                 $leadValidationErrors->push('Registration Type is required');
                             }
                             if(!empty($leadData->registration_type) && !CarRegistrationType::hasValue($leadData->registration_type)) {
@@ -1837,21 +1837,20 @@ class RenewalsUploadService
                                         $leadValidationErrors->push('Business Activity Name is required');
                                     }
                                 }
-                                if(empty($leadData->vehicle_use)) {
+                                if (empty($leadData->vehicle_use)) {
                                     $leadValidationErrors->push('Vehicle Use is required');
                                 }
-                                if(!empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::PRIVATE ) {
-                                    if(empty($leadData->driver_name)) {
+                                if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::PRIVATE) {
+                                    if (empty($leadData->driver_name)) {
                                         $leadValidationErrors->push('Driver Name is required');
                                     }
-                                    if(empty($leadData->driver_nationality)) {
+                                    if (empty($leadData->driver_nationality)) {
                                         $leadValidationErrors->push('Driver Nationality is required');
                                     }
-                                    if(empty($leadData->driver_dob)) {
+                                    if (empty($leadData->driver_dob)) {
                                         $leadValidationErrors->push('Driver Date of Birth is required');
                                     }
                                 }
-
 
                             }
                             // Validation batch for car removed as per the discussion with the team
