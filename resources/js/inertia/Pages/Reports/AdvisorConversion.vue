@@ -1073,6 +1073,105 @@ const getRouteByLob = computed(() => {
       :sort-by="'net_conversion'"
       :sort-type="'desc'"
     >
+      <template #header-total_leads>
+        <x-tooltip>
+          <span>Total Leads</span>
+          <template #tooltip>
+            All leads from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-gross_conversion>
+        <x-tooltip>
+          <span>Gross Conversion</span>
+          <template #tooltip>
+            Total leads from InsuranceMarket.ae source, without exclusions.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-net_conversion>
+        <x-tooltip>
+          <span>Net Conversion</span>
+          <template #tooltip>
+            Sale leads divided by net denominator, expressed as a percentage.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-new_leads>
+        <x-tooltip>
+          <span>New Leads</span>
+          <template #tooltip>
+            Lead status marked as 'Quoted' from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-not_interested>
+        <x-tooltip>
+          <span>Not Interested</span>
+          <template #tooltip>
+            Lead status marked as lost due to no response, already purchased insurance, comparing options, budget issues, invalid visa, or ineligibility due to medical conditions or age etc.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-in_progress>
+        <x-tooltip>
+          <span>In Progress</span>
+          <template #tooltip>
+            Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or 'Quoted,' from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-manual_created>
+        <x-tooltip>
+          <span>Manually Created</span>
+          <template #tooltip>
+            All leads from IMCRM.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-bad_leads>
+        <x-tooltip>
+          <span>Bad Leads</span>
+          <template #tooltip>
+            Quotes marked as 'Duplicate' or 'Fake,' from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-sale_leads>
+        <x-tooltip>
+          <span>Sale Leads</span>
+          <template #tooltip>
+            Quotes from InsuranceMarket.ae where payment is 'Captured' or status is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to customer,' and 'Policy Booked', Booking failed.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-created_sale_leads>
+        <x-tooltip>
+          <span>Created Sale Leads</span>
+          <template #tooltip>
+            Quotes from IMCRM source where payment is 'Captured' or status is 'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-afia_renewals_count>
+        <x-tooltip>
+          <span>IM Renewals</span>
+          <template #tooltip>
+            Quotes from InsuranceMarket.ae source with status 'IMRenewal' and source 'renewal upload.'
+          </template>
+        </x-tooltip>
+      </template>
+
       <template #item-gross_conversion="item">
         <p v-if="item.gross_conversion == 0">NaN</p>
         <p v-else>{{ item.gross_conversion }} %</p>
@@ -1181,8 +1280,6 @@ const getRouteByLob = computed(() => {
           {{ item.afia_renewals_count }}
         </button>
       </template>
-
-
 
       <template #body-append>
         <tr v-if="reportData.length > 0" class="total-row">
