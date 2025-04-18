@@ -2,7 +2,6 @@
 
 namespace App\Logging;
 
-use App\Models\ApplicationStorage;
 use GuzzleHttp\Client;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
@@ -16,7 +15,6 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     protected $apiToken;
     protected $dataset;
     protected $batch = [];
-    protected $batchSize;
     protected $singleHandler;
     protected $dailyHandler;
 
@@ -24,11 +22,6 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     {
         $this->apiToken = env('AXIOM_API_TOKEN');
         $this->dataset = env('AXIOM_DATASET');
-        $this->batchSize = cache()->remember('axiom_batch_size', 3600, function () {
-            $storage = ApplicationStorage::where('key_name', 'AXIOM_BATCH_SIZE')->first();
-
-            return $storage ? (int) $storage->value : 100;
-        });
 
         if (empty($this->apiToken) || empty($this->dataset)) {
             throw new \InvalidArgumentException('AXIOM_API_TOKEN and AXIOM_DATASET environment variables are required');
@@ -63,7 +56,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         $this->dailyHandler->setFormatter($fileFormatter);
 
         // Ensure batch is sent on shutdown
-        register_shutdown_function([$this, 'sendBatch']);
+        // register_shutdown_function([$this, 'sendBatch']);
     }
 
     protected function write(LogRecord $record): void
@@ -85,10 +78,6 @@ class AxiomBatchHandler extends AbstractProcessingHandler
 
             // Add to Axiom batch with original Axiom format
             $this->batch[] = $this->formatRecord($record);
-
-            if (count($this->batch) >= $this->batchSize) {
-                $this->sendBatch();
-            }
         } catch (\Exception $e) {
             error_log('Error writing to Axiom batch: '.$e->getMessage());
             // Don't throw to prevent breaking the application
@@ -102,13 +91,13 @@ class AxiomBatchHandler extends AbstractProcessingHandler
             'context' => $record->context,
             'level' => strtoupper($record->level->getName()),
             'extra' => $record->extra,
-            'timestamp' => $record->datetime->format('c'),
+            'timestamp' => $record->datetime->format('Y-m-d H:i:s'),
             'environment' => app()->environment(),
             'service' => 'IMCRM',
         ];
     }
 
-    protected function sendBatch()
+    public function sendBatch()
     {
         if (empty($this->batch)) {
             return;
