@@ -112,6 +112,5 @@ class AppServiceProvider extends ServiceProvider
                 'is_console_command' => true,
             ]);
         }
-
     }
 }
