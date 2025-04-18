@@ -18,6 +18,8 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     protected $singleHandler;
     protected $dailyHandler;
 
+    protected bool $batchSent = false;
+
     public function __construct($level = Logger::DEBUG, bool $bubble = true)
     {
         $this->apiToken = env('AXIOM_API_TOKEN');
@@ -61,6 +63,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
 
     protected function write(LogRecord $record): void
     {
+        $this->batchSent = false;
         try {
             // Create a new record for file logging to ensure clean format
             $fileRecord = new LogRecord(
@@ -99,9 +102,11 @@ class AxiomBatchHandler extends AbstractProcessingHandler
 
     public function sendBatch()
     {
-        if (empty($this->batch)) {
+        if (empty($this->batch) || $this->batchSent) {
             return;
         }
+
+        $this->batchSent = true;
 
         try {
             $client = new Client;
@@ -120,6 +125,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
                     count($this->batch)
                 ));
                 $this->batch = [];
+                $this->batchSent = true;
             } else {
                 error_log(sprintf(
                     'Failed to send logs to Axiom. Status code: %d, Response: %s',

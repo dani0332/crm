@@ -46,6 +46,9 @@ use App\Observers\YachtQuoteObserver;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use App\Services\LeadsCountService;
+use Illuminate\Console\Events\CommandFinished;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -113,14 +116,25 @@ class AppServiceProvider extends ServiceProvider
                 'is_console_command' => true,
             ]);
 
-            $logger = Log::getLogger();
+            // Listen for Artisan commands and queue jobs
+            Event::listen(CommandFinished::class, function () {
+                $this->flushAxiomBatch();
+            });
 
-            foreach ($logger->getHandlers() as $handler) {
-                if ($handler instanceof AxiomBatchHandler) {
-                    $handler->sendBatch();
-                }
+            Event::listen(JobProcessed::class, function () {
+                $this->flushAxiomBatch();
+            });
+        }
+    }
+
+    protected function flushAxiomBatch()
+    {
+        $logger = Log::getLogger();
+
+        foreach ($logger->getHandlers() as $handler) {
+            if ($handler instanceof AxiomBatchHandler) {
+                $handler->sendBatch();
             }
         }
-
     }
 }
