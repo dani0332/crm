@@ -98,6 +98,7 @@ class ApiService
         $assignAdvisor = $request->input('reAssignAdvisor', false);
         $triggerOCB = $request->input('triggerOCB', false);
         $teamId = $request->input('teamId', false);
+        $sicAdvisorRequested = $request->input('sicAdvisorRequested', false);
 
         $lead = QuoteTypes::getName($allocationType)?->model()?->where('uuid', $allocationId)?->first();
         if ($lead) {
@@ -114,7 +115,7 @@ class ApiService
         }
 
         if (! $assignAdvisor && ! $triggerOCB) {
-            return $this->performLeadAllocation($allocationType, $allocationId, $teamId);
+            return $this->performLeadAllocation($allocationType, $allocationId, $teamId, $sicAdvisorRequested);
         }
 
         return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid request');
@@ -149,10 +150,10 @@ class ApiService
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
-    private function performLeadAllocation($allocationType, $leadId, $teamId)
+    private function performLeadAllocation($allocationType, $leadId, $teamId, $sicAdvisorRequested = false)
     {
         LoggerService::info('------ Lead allocation started for lead : '.$leadId.' ------');
-        $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId);
+        $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId, false, false, $sicAdvisorRequested);
         LoggerService::info('------ Lead allocation ended for lead '.$leadId.' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
@@ -228,11 +229,20 @@ class ApiService
      * @param  string  $allocationType
      * @param  string  $allocationId
      * @param  bool  $teamId
+     * @param  bool  $tierOnly
+     * @param  bool  $overrideAdvisorId
+     * @param  bool  $sicAdvisorRequested
      * @return void
      */
-    private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false)
+    private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false, $sicAdvisorRequested = false)
     {
-        $responsePayload = QuoteTypes::getName($allocationType)->allocate(uuid: $allocationId, teamId: $teamId, overrideAdvisorId: $overrideAdvisorId, tierOnly: $tierOnly);
+        $responsePayload = QuoteTypes::getName($allocationType)->allocate(
+            uuid: $allocationId, 
+            teamId: $teamId, 
+            overrideAdvisorId: $overrideAdvisorId, 
+            tierOnly: $tierOnly,
+            sicAdvisorRequested: $sicAdvisorRequested
+        );
         if (is_null($responsePayload)) {
             LoggerService::error('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");

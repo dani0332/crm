@@ -112,7 +112,6 @@ class QuoteAllocation extends Command
             ->whereNotIn('source', $exemptedLeadSources)
             ->orderByDesc('created_at')
             ->eligibleForAllocation()
-            ->filterAigLeads()
             ->take($chunkSize);
 
         info('leads fetch query is : '.$leads->toRawSql());

@@ -167,24 +167,6 @@ trait QuoteAllocatable
     }
 
     /**
-     * Filters to include only AIG leads where sic_advisor_requested is true.
-     * Should be used after checking base eligibility.
-     */
-    public function scopeFilterAigLeads(Builder $query): Builder
-    {
-        $table = $query->getModel()->getTable();
-
-        return $query
-            ->whereExists(function ($subQuery) use ($table) {
-                $subQuery->from('quote_tags')
-                    ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
-                    ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                    ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
-            })
-            ->where('sic_advisor_requested', 1);
-    }
-
-    /**
      * Filters leads that are eligible for allocation.
      * Includes both flow-based and AIG-specific filtering logic.
      */

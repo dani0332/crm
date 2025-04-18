@@ -21,14 +21,16 @@ class CarAllocation implements Allocation
     private $teamId;
     private bool $evaluateTierOnly = false;
     private bool $overrideAdvisorId = false;
+    private bool $sicAdvisorRequested = false;
 
-    public function __construct(CarAllocationService $carAllocationService, $allocationId, $teamId, bool $evaluateTierOnly = false, bool $overrideAdvisorId = false)
+    public function __construct(CarAllocationService $carAllocationService, $allocationId, $teamId, bool $evaluateTierOnly = false, bool $overrideAdvisorId = false, bool $sicAdvisorRequested = false)
     {
         $this->carAllocationService = $carAllocationService;
         $this->allocationId = $allocationId;
         $this->teamId = $teamId;
         $this->evaluateTierOnly = $evaluateTierOnly;
         $this->overrideAdvisorId = $overrideAdvisorId;
+        $this->sicAdvisorRequested = $sicAdvisorRequested;
     }
 
     public function executeSteps()
@@ -116,6 +118,16 @@ class CarAllocation implements Allocation
             if ($sicTeamId == $this->teamId) {
                 $this->teamId = getTeamId(TeamNameEnum::ORGANIC);
             }
+        }
+        
+        $this->isAIGLeadEligibleForAllocation($lead);
+    }
+    
+    private function isAIGLeadEligibleForAllocation(CarQuote $lead): void
+    {
+        if ($lead->isAIG(QuoteTypes::CAR) && empty($this->teamId) && $this->sicAdvisorRequested) {
+            $this->teamId = getTeamId(TeamNameEnum::ORGANIC);
+            LoggerService::info('AIG lead detected with SIC advisor requested. Assigning to Organic team.');
         }
     }
 
