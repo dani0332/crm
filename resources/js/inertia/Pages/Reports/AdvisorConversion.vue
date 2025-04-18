@@ -1086,7 +1086,7 @@ const getRouteByLob = computed(() => {
         <x-tooltip>
           <span>Gross Conversion</span>
           <template #tooltip>
-            Total leads from InsuranceMarket.ae source, without exclusions.
+            Sale leads divided by gross denominator, expressed as a percentage.
           </template>
         </x-tooltip>
       </template>
