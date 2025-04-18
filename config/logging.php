@@ -116,8 +116,8 @@ return [
             'handler' => App\Logging\AxiomBatchHandler::class,
             'level' => env('LOG_LEVEL', 'debug'),
             'with' => [
-                'apiToken' => env('AXIOM_API_TOKEN', 'xaat-453f67be-7614-4156-a495-b45fd4e7252e'),
-                'dataset' => env('AXIOM_DATASET', 'insurancemarket_dev'),
+                'apiToken' => env('AXIOM_API_TOKEN'),
+                'dataset' => env('AXIOM_DATASET'),
             ],
         ],
     ],
