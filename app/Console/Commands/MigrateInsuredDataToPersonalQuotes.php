@@ -18,7 +18,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
      *
      * @var string
      */
-    protected $signature = 'quotes:update-insured-id';
+    protected $signature = 'personal-quotes:update-insured-and-quote-id';
 
     /**
      * The console command description.
@@ -34,7 +34,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
      */
     public function handle()
     {
-        $this->info('PersonalQuotes - Update Insured and Quote ID - Starting to update personal quotes with insured_id and quote_id...');
+        info('PersonalQuotes - Update Insured and Quote ID - Starting to update personal quotes with insured_id and quote_id...');
 
         $totalUpdated = 0;
 
