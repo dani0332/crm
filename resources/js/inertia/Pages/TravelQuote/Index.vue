@@ -11,7 +11,7 @@ defineProps({
   amlStatuses: Object,
   insuranceProviders: Array,
   travelPlans: Array,
-  insurerAMLStatus: Array,
+  insurerAMLStatus: Object,
 });
 
 let params = useUrlSearchParams('history');
@@ -919,7 +919,6 @@ const insurerAMLStatusOption = computed(() => {
         <x-select
           v-model="filters.amlStatus"
           name="source"
-          `
           class="w-full"
           placeholder="Search by AML Status"
           :options="computedAmlStatuses"
