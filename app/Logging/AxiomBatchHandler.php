@@ -56,7 +56,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         $this->dailyHandler->setFormatter($fileFormatter);
 
         // Ensure batch is sent on shutdown
-        // register_shutdown_function([$this, 'sendBatch']);
+        register_shutdown_function([$this, 'sendBatch']);
     }
 
     protected function write(LogRecord $record): void
