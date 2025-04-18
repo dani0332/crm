@@ -92,8 +92,6 @@ class WatermarkDocumentsJob implements ShouldQueue
                     'watermarked_doc_url' => $watermarkData['watermarked_doc_url'],
                 ]);
                 info('watermark job completed for '.$this->uuid);
-            } else {
-                Log::error("Watermark data is incomplete for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
             }
         } catch (\Exception $e) {
             Log::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage());
