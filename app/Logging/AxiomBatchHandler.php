@@ -17,7 +17,6 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     protected $batch = [];
     protected $singleHandler;
     protected $dailyHandler;
-
     protected bool $batchSent = false;
 
     public function __construct($level = Logger::DEBUG, bool $bubble = true)
