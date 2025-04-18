@@ -90,8 +90,8 @@ class EntitiesInsuredMigration extends Command
                 } catch (\Exception $e) {
                     DB::rollBack();
                     $failedCount++;
-                    $failedDetails[]['entity_id'] = $entity->id;
-                    $failedDetails[]['message'] = 'failed to migrate entity. message: '.$e->getMessage();
+                    $failedDetails['entity_id'][] = $entity->id;
+                    $failedDetails['message'][] = 'failed to migrate entity. message: '.$e->getMessage();
                     info("Failed to migrate entity {$entity->id}: {$e->getMessage()}");
                     info('*********************** Failed to migrate entity details against ID: ' . $entity->id .' **********************');
                 }

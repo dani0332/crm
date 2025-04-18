@@ -3,131 +3,95 @@
 namespace App\Console\Commands;
 
 use App\Enums\CustomerTypeEnum;
-use App\Models\Customer;
 use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
-use App\Models\InsuredKycDetail;
+use App\Models\InsuredKyc;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Individual KYC Details Migration Command
- *
  * This command migrates data from the CustomerDetail tables to the InsuredKycDetail table structure.
  * It handles the migration of individual customer KYC details to the new InsuredKycDetail structure.
  * This command is deprecated and should be removed after the migration is completed.
- *
- * @package App\Console\Commands
  */
+
 class IndividualKycDetailsMigration extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'migrate:individual-kyc-details';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+    protected $signature = 'migrate:individual-kyc-details';
     protected $description = 'Migrate Individual customer KYC details to the InsuredKycDetail table structure, this command is deprecated and should be removed after the migration is completed';
     
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         parent::__construct();
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
     public function handle()
     {
-        info('------------------- Individual KYC Details Migration Command Started At: '.now().' -------------------');
+        info('------------------- Individual customer KYC Details from Customer Details to Insured KYC Migration Command Started At: '.now().' -------------------');
 
-        info('IndividualKycDetailsMigration: Starting migration of Individual customer KYC details to the InsuredKycDetail structure at ' . now());
+        $migratedCount = $skippedCount = $failedCount = 0;
+        $failedDetails = [];
 
-        // Step 1: Get Customer details with customer 
-        // Step 2: Search customer details id type and id number in insured table
-        // Step 3: If found, insured kyc details mai insured id k 7 customer details ki entry with customer details id (quote type and quote request id would be null)
-        // Step 4: If not found, create a new insured record and insured kyc details mai customer details ki entry with customer details id (quote type and quote request id would be null)
-
-        // Count metrics for reporting
-        $migratedCount = 0;
-        $skippedCount = 0;
-        $failedCount = 0;
-
-        // Step 1: Get Customer details with customer
-        CustomerDetail::with('customer')->chunk(100, function ($customerDetails) use (&$migratedCount, &$skippedCount, &$failedCount) {
+        CustomerDetail::with('customer')->where('id', '>', 2200)->chunk(500, function ($customerDetails) use (&$migratedCount, &$skippedCount, &$failedCount) {
             foreach ($customerDetails as $customerDetail) {
-                info('Processing customer detail ' . $customerDetail->id);
-                
-                $customer = $customerDetail->customer;
-                if (!$customer) {
-                    info('No customer found for customer detail ' . $customerDetail->id);
+
+                $isIndividualCustomerDetailsAlreadyCreated = Insured::where('customer_details_id', $customerDetail->id)->first();
+                if ($isIndividualCustomerDetailsAlreadyCreated) {
+                    info('Command:IndividualKycDetailsMigration - Data against Customer Detail ID: ' . $customerDetail->id . ' already exists in the insured table');
                     $skippedCount++;
                     continue;
                 }
+
+                $customer = $customerDetail->customer;
+                if (!$customer) {
+                    info('Command:IndividualKycDetailsMigration - No customer found against customer detail ID:' . $customerDetail->id);
+                    $skippedCount++;
+                    continue;
+                }
+
+                info('*********************** Migrating Individual customer KYC details against customer detail ID:' . $customerDetail->id .' **********************');
                 
                 try {
-                    DB::beginTransaction();
-
-                    $formattedIdNumber = $customerDetail->id_number;
-                    if ($customerDetail->id_type === 'emiratesId' && strlen($customerDetail->id_number) === 15) {
-                        $formattedIdNumber = substr($customerDetail->id_number, 0, 3) . '-' . 
-                            substr($customerDetail->id_number, 3, 4) . '-' . 
-                            substr($customerDetail->id_number, 7, 7) . '-' . 
-                            substr($customerDetail->id_number, 14, 1);
-                        
-                        info('Emirates ID detected, formatted to: ' . $formattedIdNumber);
+                    $normalizedIdNumber = $customerDetail->id_number;
+                    if ($customerDetail->id_type === 'emiratesId' && strlen(str_replace('-', '', $normalizedIdNumber)) === 15) {
+                        $normalizedIdNumber = str_replace('-', '', $normalizedIdNumber);
+                        $normalizedIdNumber = substr($normalizedIdNumber, 0, 3) . '-' . 
+                            substr($normalizedIdNumber, 3, 4) . '-' . 
+                            substr($normalizedIdNumber, 7, 7) . '-' . 
+                            substr($normalizedIdNumber, 14, 1);
                     }
                     
-                    $insured = Insured::where('id_type', $customerDetail->id_type)
-                        ->when($customerDetail->id_type == 'passport', function ($query) use ($customerDetail) {
-                            $query->where('id_number', str_replace('-', '', $customerDetail->id_number));
-                        })
-                        ->when($customerDetail->id_type == 'emiratesId', function ($query) use ($formattedIdNumber) {
-                            $query->where('id_number', $formattedIdNumber);
-                        })
-                        ->first();
-                    
+                    $insured = Insured::where(['id_type' => $customerDetail->id_type, 'id_number' => $normalizedIdNumber])->first();
 
-                    info('Searching for ID type: ' . $customerDetail->id_type . ', original ID number: ' . $customerDetail->id_number . ', formatted: ' . $formattedIdNumber);
-                    
-                    if (!$insured) {
-                        info('No matching insured found, creating new insured record for customer ' . $customer->id);
+                    DB::beginTransaction();
+                    if (!$insured) {    
+                        info('Creating new insured record against Customer ID: ' . $customer->id. ' and Customer Detail ID: ' . $customerDetail->id);
                         $insured = Insured::create([
                             'customer_type' => CustomerTypeEnum::Individual,
                             'first_name' => $customer->insured_first_name ?? $customer->first_name,
                             'last_name' => $customer->insured_last_name ?? $customer->last_name,
                             'dob' => $customer->dob,
-                            'gender' => $customer->gender,
-                            'mobile_no' => $customer->mobile_no,
-                            'email' => $customer->email,
                             'nationality_id' => $customer->nationality_id,
+                            'gender' => $customer->gender,
                             'id_type' => $customerDetail->id_type,
-                            'id_number' => $formattedIdNumber,
-                            'code' => 'IND-' . $customer->id
+                            'id_number' => $normalizedIdNumber,
+                            'code' => 'IND-' . $customer->id,
+                            'customer_details_id' => $customerDetail->id,
                         ]);
-                        
+
+                        info('Creating customer-insured mappings for customer details ' . $customerDetail->id . ' and customer ' . $customer->id . ' and insured ' . $insured->id . ' at ' . now());
                         CustomerInsured::create([
                             'customer_id' => $customer->id,
                             'insured_id' => $insured->id
                         ]);
                     } else {
-                        info('Found matching insured record ID: ' . $insured->id . ' for customer ' . $customer->id);
+                        info('Insured found against Customer Detail ID: ' . $customerDetail->id . ' and Insured ID: ' . $insured->id);
                         $customerInsured = CustomerInsured::where('customer_id', $customer->id)->where('insured_id', $insured->id)->first();
                         if (!$customerInsured) {
+                            info('Creating customer-insured mappings for customer details ' . $customerDetail->id . ' and customer ' . $customer->id . ' and insured ' . $insured->id . ' at ' . now());
                             CustomerInsured::create([
                                 'customer_id' => $customer->id,
                                 'insured_id' => $insured->id
@@ -135,17 +99,17 @@ class IndividualKycDetailsMigration extends Command
                         }
                     }
                     
-                    $insuredKycDetail = InsuredKycDetail::where('insured_id', $insured->id)->where('customer_detail_id', $customerDetail->id)->first();
-                    if ($insuredKycDetail) {
-                        info('Insured KYC details already exist for customer detail ' . $customerDetail->id);
+                    $insuredKyc = InsuredKyc::where('insured_id', $insured->id)->where('customer_details_id', $customerDetail->id)->first();
+                    if ($insuredKyc) {
+                        info('Insured KYC details already exist against customer detail ID:' . $customerDetail->id . ' and insured ID:' . $insured->id);
                         $skippedCount++;
                         DB::commit();
                         continue;
                     }
-                    
-                    InsuredKycDetail::create([
+
+                    info('Creating Insured KYC against customer details ' . $customerDetail->id . ' and insured ' . $insured->id . ' at ' . now());
+                    InsuredKyc::create([
                         'insured_id' => $insured->id,
-                        'customer_id' => $customer->id,
                         'customer_details_id' => $customerDetail->id,
                         
                         'country_of_residence' => $customerDetail->country_of_residence,
@@ -183,22 +147,28 @@ class IndividualKycDetailsMigration extends Command
                         'is_partner' => $customerDetail->is_partner,
                     ]);
                     
-                    info('Migrated KYC details for customer detail ' . $customerDetail->id . ' to insured ' . $insured->id);
-                    $migratedCount++;
-                    
                     DB::commit();
+                    $migratedCount++;
+                    info('*********************** Migrated Individual customer KYC details against Customer Detail ID: ' . $customerDetail->id . ' and Insured ID: ' . $insured->id . ' **********************');
+
                 } catch (\Exception $e) {
                     DB::rollBack();
+                    $failedDetails['entity_id'][] = $customerDetail->id;
+                    $failedDetails['message'][$customerDetail->id] = 'Failed to migrate KYC details for customer detail. message: '.$e->getMessage();
                     $failedCount++;
-                    info("Failed to migrate KYC details for customer detail {$customerDetail->id}: {$e->getMessage()}", ['exception' => $e]);
+                    info("Failed to migrate individual customer KYC details against customer detail ID: {$customerDetail->id}: - message: {$e->getMessage()}");
+                    info('*********************** Failed to migrate individual customer KYC details against customer detail ID: ' . $customerDetail->id .' **********************');
                 }
             }
         });
-        
-        info("Migration completed: {$migratedCount} customer KYC details migrated, {$skippedCount} skipped (already existed), {$failedCount} failed.");
-        info('End migrating Individual customer KYC details at ' . now());
 
-        info('IndividualKycDetailsMigration: End migration of Individual customer KYC details to the InsuredKycDetail structure at ' . now());
+        $jsonEncodeFailedDetails = json_encode($failedDetails);
+
+        info("Migration completed: individual customer kyc details - Migrated:{$migratedCount}, Skipped: {$skippedCount} (already existed), Failed:{$failedCount}.");
+        info("Failed migration details: {$jsonEncodeFailedDetails}");
+        info('End migrating individual customer KYC details at ' . now());
+
+        info('------------------- Individual KYC Details from Customer Details to Insured KYC Migration Command Ended At: '.now().' -------------------');
         return Command::SUCCESS;
     }
 } 
