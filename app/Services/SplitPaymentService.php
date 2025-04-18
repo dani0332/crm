@@ -1089,31 +1089,31 @@ class SplitPaymentService
 
     private function updateMasterPayment($masterPayment)
     {
-        if ($masterPayment->total_payments == 2) {
-            $this->updateMasterPaymentForTwoSplits($masterPayment);
-        } else {
-            $this->updateMasterPaymentForMultipleSplits($masterPayment);
+        // Get active payment splits only
+        $activeSplits = $masterPayment->paymentSplits()->get();
+        $totalSplits = $activeSplits->count();
+        
+        if ($totalSplits === 1) {
+            $this->updateMasterPaymentForSingleSplit($masterPayment, $activeSplits->first());
+        } else if ($totalSplits > 1) {
+            $this->updateMasterPaymentForMultipleSplits($masterPayment, $totalSplits);
         }
 
-        // get the sum of all the split payments to update the total amount in master payment
-        $masterPayment->total_amount = $masterPayment->paymentSplits()->sum('payment_amount');
+        // Calculate total amount only from active splits
+        $masterPayment->total_amount = $activeSplits->sum('payment_amount');
         $masterPayment->saveQuietly();
 
         info('Updated Master Payment For Code: '.$masterPayment->code.' with new total payments: '.$masterPayment->total_payments.' and frequency: '.$masterPayment->frequency);
     }
 
-    private function updateMasterPaymentForTwoSplits($masterPayment)
+    private function updateMasterPaymentForSingleSplit($masterPayment, $remainingSplit)
     {
         $masterPayment->total_payments = 1;
         $masterPayment->frequency = PaymentFrequency::UPFRONT;
-
-        // if first split payment is authorized then update total price and total amount to first split payment
-        $firstSplitPayment = $masterPayment->paymentSplits()->where(['code' => $masterPayment->code, 'sr_no' => '1'])->first();
-        if (isset($firstSplitPayment)) {
-            $masterPayment->payment_methods_code = $firstSplitPayment->payment_method;
-            if ($firstSplitPayment->payment_status_id != PaymentStatusEnum::PAID) {
-                $masterPayment->payment_status_id = $firstSplitPayment->payment_status_id;
-            }
+        $masterPayment->payment_methods_code = $remainingSplit->payment_method;
+        
+        if ($remainingSplit->payment_status_id != PaymentStatusEnum::PAID) {
+            $masterPayment->payment_status_id = $remainingSplit->payment_status_id;
         }
     }
 
