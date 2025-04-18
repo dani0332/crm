@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Logging\AxiomBatchHandler;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
@@ -46,9 +45,6 @@ use App\Observers\YachtQuoteObserver;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use App\Services\LeadsCountService;
-use Illuminate\Console\Events\CommandFinished;
-use Illuminate\Queue\Events\JobProcessed;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -115,26 +111,6 @@ class AppServiceProvider extends ServiceProvider
                 'trace_id' => (string) Str::uuid(),
                 'is_console_command' => true,
             ]);
-
-            // Listen for Artisan commands and queue jobs
-            Event::listen(CommandFinished::class, function () {
-                $this->flushAxiomBatch();
-            });
-
-            Event::listen(JobProcessed::class, function () {
-                $this->flushAxiomBatch();
-            });
-        }
-    }
-
-    protected function flushAxiomBatch()
-    {
-        $logger = Log::getLogger();
-
-        foreach ($logger->getHandlers() as $handler) {
-            if ($handler instanceof AxiomBatchHandler) {
-                $handler->sendBatch();
-            }
         }
     }
 }
