@@ -4,12 +4,12 @@ namespace App\Logging;
 
 use App\Models\ApplicationStorage;
 use GuzzleHttp\Client;
+use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Monolog\LogRecord;
-use Monolog\Handler\StreamHandler;
-use Monolog\Handler\RotatingFileHandler;
-use Monolog\Formatter\LineFormatter;
 
 class AxiomBatchHandler extends AbstractProcessingHandler
 {
@@ -43,7 +43,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
             $level,
             $bubble
         );
-        
+
         $this->dailyHandler = new RotatingFileHandler(
             storage_path('logs/laravel.log'),
             14, // Keep logs for 14 days
@@ -58,7 +58,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
             true,
             true
         );
-        
+
         $this->singleHandler->setFormatter($fileFormatter);
         $this->dailyHandler->setFormatter($fileFormatter);
 
@@ -82,7 +82,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
             // Write to Laravel's default log files with original format
             $this->singleHandler->handle($fileRecord);
             $this->dailyHandler->handle($fileRecord);
-            
+
             // Add to Axiom batch with original Axiom format
             $this->batch[] = $this->formatRecord($record);
 
