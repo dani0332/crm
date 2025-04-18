@@ -70,6 +70,10 @@ class CarAllocationService extends AllocationService
         ]);
 
         $continueAssignment = false;
+        
+        $isSICFlowEnabled = $lead->isSICFlowEnabled();
+        $isAIG = $lead->isAIG(QuoteTypes::CAR);
+        $isSICFlowDisabled = $lead->isSICFlowDisabled();
 
         if (! $overrideAssignment && ! empty($lead->advisor_id)) {
             LoggerService::info(self::class."::verifyPreChecks - Lead is already assigned to advisor with ID: {$lead->advisor_id}, skipping assignment");
@@ -77,17 +81,17 @@ class CarAllocationService extends AllocationService
             LoggerService::info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead has exempted source {$lead->source}, skipping assignment");
-        } elseif (($lead->isSICFlowEnabled() || $lead->isAIG(QuoteTypes::CAR)) && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
-            if ($lead->isSICFlowEnabled()) {
+        } elseif (($isSICFlowEnabled || $isAIG) && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
+            if ($isSICFlowEnabled) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled and either requested for an advisor or payment authorized, continuing assignment');
             } else {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized, continuing assignment');
             }
             $continueAssignment = true;
-        } elseif (($lead->isSICFlowDisabled() || !$lead->isAIG(QuoteTypes::CAR)) && ! $lead->isRenewalUpload()) {
-            if ($lead->isSICFlowDisabled()) {
+        } elseif (($isSICFlowDisabled || !$isAIG) && ! $lead->isRenewalUpload()) {
+            if ($isSICFlowDisabled) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, continuing assignment');
-            } else if (!$lead->isAIG(QuoteTypes::CAR)) {
+            } else if (!$isAIG) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead is not AIG and not Renewal Upload, continuing assignment');
             } else {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead meets other criteria and not Renewal Upload, continuing assignment');
