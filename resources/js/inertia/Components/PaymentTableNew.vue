@@ -3140,7 +3140,7 @@ const fetchPlans = () => {
   axios
     .get(url)
     .then(res => {
-      planText.value = res.data.text;
+      planText.value = res.data?.text ?? res.data?.planName;
     })
     .catch(err => {});
 };
