@@ -2,12 +2,13 @@
 
 namespace App\Logging;
 
+use App\Enums\ApplicationStorageEnums;
 use GuzzleHttp\Client;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
+use Monolog\Level;
 use Monolog\LogRecord;
 
 class AxiomBatchHandler extends AbstractProcessingHandler
@@ -17,12 +18,15 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     protected $batch = [];
     protected $singleHandler;
     protected $dailyHandler;
+    protected $batchSize;
     protected bool $batchSent = false;
 
-    public function __construct($level = Logger::DEBUG, bool $bubble = true)
+    public function __construct($level = Level::Debug, bool $bubble = true)
     {
         $this->apiToken = env('AXIOM_API_TOKEN');
         $this->dataset = env('AXIOM_DATASET');
+
+        $this->batchSize = getAppStorageValueByKey(ApplicationStorageEnums::AXIOM_BATCH_SIZE, useCache: true);
 
         if (empty($this->apiToken) || empty($this->dataset)) {
             throw new \InvalidArgumentException('AXIOM_API_TOKEN and AXIOM_DATASET environment variables are required');
@@ -80,6 +84,10 @@ class AxiomBatchHandler extends AbstractProcessingHandler
 
             // Add to Axiom batch with original Axiom format
             $this->batch[] = $this->formatRecord($record);
+
+            if (count($this->batch) >= $this->batchSize) {
+                $this->sendBatch();
+            }
         } catch (\Exception $e) {
             error_log('Error writing to Axiom batch: '.$e->getMessage());
             // Don't throw to prevent breaking the application
@@ -101,7 +109,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
 
     public function sendBatch()
     {
-        if (empty($this->batch) || $this->batchSent) {
+        if (empty($this->batch) || $this->batchSent || app()->environment('local')) {
             return;
         }
 
