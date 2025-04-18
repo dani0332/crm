@@ -223,12 +223,6 @@ trait QuoteAllocatable
             ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
     }
 
-    public function scopeIsAigCarQuote(Builder $query, string $table): Builder
-    {
-        $this->applyAigCarQuoteConditions($query, $table);
-        return $query;
-    }
-
     public function isAdvisorRequested()
     {
         return $this->sic_advisor_requested == 1;
