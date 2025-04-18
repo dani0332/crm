@@ -25,6 +25,7 @@ final class SageEnum extends Enum
     /* Sage Process Request Type */
     const SAGE_PROCESS_BOOK_POLICY_REQUEST = 'book_policy';
     const SAGE_PROCESS_SEND_UPDATE_REQUEST = 'send_update';
+    const SAGE_PROCESS_POST_PREPAYMENT_REQUEST = 'post_prepayment';
 
     // Sage Custom API Enums
     const SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE = 'Invalid token';
