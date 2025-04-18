@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Logging\AxiomBatchHandler;
+use App\Events\Axiom\FlushAxiomBatch;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -44,13 +44,7 @@ class LogMiddleware
         $response->headers->set('X-Trace-Id', $traceId);
         $response->headers->set('X-Execution-Time', $executionTime);
 
-        $logger = Log::getLogger();
-
-        foreach ($logger->getHandlers() as $handler) {
-            if ($handler instanceof AxiomBatchHandler) {
-                $handler->sendBatch();
-            }
-        }
+        FlushAxiomBatch::dispatch();
 
         return $response;
     }

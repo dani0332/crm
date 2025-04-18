@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Events\Axiom\FlushAxiomBatch;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Events\Health\HealthTransactionApproved;
@@ -64,6 +65,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         TakeImpersonation::class => [
             HandleImpersonatedSession::class,
+        ],
+        FlushAxiomBatch::class => [
+            HandleAxiomBatchFlush::class,
         ],
         \Illuminate\Console\Events\CommandFinished::class => [
             HandleAxiomBatchFlush::class,
