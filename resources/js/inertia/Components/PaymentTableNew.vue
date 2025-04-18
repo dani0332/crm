@@ -3056,7 +3056,7 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   ) {
     return true;
   }
-  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
+  return getValidStatuses(paymentRecord.payment_splits[0]);
 };
 
 const getCaptureValidation = computed(() => {
