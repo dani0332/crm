@@ -182,7 +182,7 @@ class HomeEmailService extends BaseService
             'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflowType' => $workflowType,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
-            'triggerDate' => $this->getOCBDurationInISO8601($lead->previous_policy_expiry_date)
+            'triggerDate' => $this->getOCBTriggerTimestamp($lead->previous_policy_expiry_date)
             // 'whatsappConsent' => getWhatsappConsent(QuoteTypes::HOME, uuid: $lead->uuid),
         ];
 
@@ -316,10 +316,15 @@ class HomeEmailService extends BaseService
         }
     }
 
-    private function getOCBDurationInISO8601($expiryDate): string
+    /**
+     * Get timestamp for OCB trigger date based on policy expiry date
+     * OCB date is 30 days before expiry, adjusted for weekends
+     * 
+     * @param string|Carbon $expiryDate The policy expiry date
+     * @return int Timestamp for the OCB trigger date
+     */
+    private function getOCBTriggerTimestamp($expiryDate): int
     {
-
-       
         // Ensure Carbon instance
         $expiry = Carbon::parse($expiryDate);
     
@@ -339,18 +344,17 @@ class HomeEmailService extends BaseService
         // Get current time
         $now = Carbon::now();
     
-        LoggerService::info('fn: getOCBDurationInISO8601', [
+        LoggerService::info('fn: getOCBTriggerTimestamp', [
             'expiryDate' => $expiryDate,
             'ocbDate' => $ocbDate,
         ]);
     
-
-        // If OCB date is already in the past, return PT0M
+        // If OCB date is already in the past, return timestamp for 10 minutes from now
         if ($ocbDate->lessThanOrEqualTo($now)) {
             return strtotime('+10 minutes'); 
         }
     
-        // Calculate minutes difference
-        return strtotime($ocbDate);
+        // Return timestamp for the OCB date
+        return $ocbDate->timestamp;
     }
 }
