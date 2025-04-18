@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Logging\AxiomBatchHandler;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
@@ -111,6 +112,14 @@ class AppServiceProvider extends ServiceProvider
                 'trace_id' => (string) Str::uuid(),
                 'is_console_command' => true,
             ]);
+
+            $logger = Log::getLogger();
+
+            foreach ($logger->getHandlers() as $handler) {
+                if ($handler instanceof AxiomBatchHandler) {
+                    $handler->sendBatch();
+                }
+            }
         }
 
     }
