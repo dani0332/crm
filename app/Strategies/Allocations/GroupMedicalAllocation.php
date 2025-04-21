@@ -22,19 +22,10 @@ class GroupMedicalAllocation extends BaseAllocation
 
     protected function resolveLead(): void
     {
-        $this->lead = $this->getLeadBaseQuery()->first();
-    }
-    protected function getLeadBaseQuery()
-    {
-        return $this->quoteType->model()
-            ->where('uuid', $this->uuid)
-            ->when($this->quoteType->isPersonalQuote(), function ($q) {
-                $q->where('quote_type_id', $this->quoteType->id());
-            })
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->whereNotNull('health_plan_type_id')
-            ->whereNotNull('number_of_employees')
-            ->when(! $this->overrideAdvisorId, fn($q) => $q->whereNull('advisor_id'));
+        $this->lead = $this->getLeadBaseQuery()
+         ->whereNotNull('health_plan_type_id')
+         ->whereNotNull('number_of_employees')
+         ->first();
     }
     protected function fetchAdvisor(int $onlineStatus)
     {
