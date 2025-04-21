@@ -189,7 +189,6 @@ class AdvisorConversionReportService extends BaseService
             ':badLeadsStatuses' => implode(',', $this->getBadLeadStatuses()),
             ':imRenewal' => QuoteStatusEnum::IMRenewal,
             ':notInterestedStatuses' => implode(',', $this->getNotInterestedStatuses()),
-            ':notInterestedStatusesHealth' => implode(',', $this->getNotInterestedStatusesHealth()),
             ':newLead' => QuoteStatusEnum::NewLead,
             ':newLeadHealth' => QuoteStatusEnum::Quoted,
             ':inProgressStatuses' => implode(',', $this->getInProgressStatuses()),
@@ -211,7 +210,7 @@ class AdvisorConversionReportService extends BaseService
         // $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatuses) and :table.source NOT IN (:excludedSources)';
 
         if ($lob === quoteTypeCode::Health) {
-            $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatusesHealth)';
+            // $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatusesHealth)';
             $newLeadsRaw = 'SUM(CASE WHEN :table.quote_status_id = :newLeadHealth THEN 1 ELSE 0 END) as new_leads';
         }else{
             $newLeadsRaw = 'SUM(CASE WHEN :table.quote_status_id = :newLead and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads';
