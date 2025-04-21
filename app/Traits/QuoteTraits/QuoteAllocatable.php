@@ -183,9 +183,9 @@ trait QuoteAllocatable
 
                 // OR Other lead types
                 ->orWhere(function ($otherLeads) use ($quoteType) {
-                    $otherLeads->isNotAIG($quoteType) // Non-AIG leads
-                        // Renewal leads with SIC + advisor/payment approved
-                        ->where(function ($q) {
+                    $otherLeads->isNotAIG($quoteType)->requestedAdvisorOrPaymentAuthorized();
+                    $otherLeads->where(function($sq) {
+                        $sq->where(function ($q) {
                             $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                                 ->sicFlowEnabled()
                                 ->requestedAdvisorOrPaymentAuthorized();
@@ -199,18 +199,24 @@ trait QuoteAllocatable
                                         ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized());
                                 });
                         });
+                    });
                 });
         })->orWhere->leadAllocationFailed();
+    }
+
+    protected function aigSubQuery($subQuery, $table, QuoteTypes $quoteType)
+    {
+        $subQuery->select(DB::raw(1))->from('quote_tags')
+                ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
+                ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
     }
 
     protected function scopeIsAIG($query, QuoteTypes $quoteType): void
     {
         $table = $query->getModel()->getTable();
         $query->whereExists(function ($subQuery) use ($table, $quoteType) {
-            $subQuery->select(DB::raw(1))->from('quote_tags')
-                ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
-                ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                ->where('quote_tags.quote_type_id', $quoteType->id());
+            $this->aigSubQuery($subQuery, $table, $quoteType);
         });
     }
 
@@ -218,10 +224,7 @@ trait QuoteAllocatable
     {
         $table = $query->getModel()->getTable();
         $query->whereNotExists(function ($subQuery) use ($table, $quoteType) {
-            $subQuery->select(DB::raw(1))->from('quote_tags')
-                ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
-                ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                ->where('quote_tags.quote_type_id', $quoteType->id());
+            $this->aigSubQuery($subQuery, $table, $quoteType);
         });
     }
 
