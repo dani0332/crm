@@ -183,7 +183,7 @@ trait QuoteAllocatable
 
                 // OR Other lead types
                 ->orWhere(function ($otherLeads) use ($quoteType) {
-                    $otherLeads->isNotAIG($quoteType)->requestedAdvisorOrPaymentAuthorized();
+                    $otherLeads->isNotAIG($quoteType);
                     $otherLeads->where(function($sq) {
                         $sq->where(function ($q) {
                             $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
