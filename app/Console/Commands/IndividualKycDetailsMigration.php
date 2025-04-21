@@ -35,7 +35,7 @@ class IndividualKycDetailsMigration extends Command
         $migratedCount = $skippedCount = $failedCount = 0;
         $failedDetails = [];
 
-        CustomerDetail::with('customer')->where('id', '>', 2200)->chunk(500, function ($customerDetails) use (&$migratedCount, &$skippedCount, &$failedCount) {
+        CustomerDetail::with('customer')->chunk(500, function ($customerDetails) use (&$migratedCount, &$skippedCount, &$failedCount) {
             foreach ($customerDetails as $customerDetail) {
 
                 $isIndividualCustomerDetailsAlreadyCreated = Insured::where('customer_details_id', $customerDetail->id)->first();
