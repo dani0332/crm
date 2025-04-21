@@ -571,6 +571,7 @@ class SendUpdateLogRepository extends BaseRepository
         $quoteType = QuoteTypes::getName($sendUpdateLog->quote_type_id)->value;
 
         $modelClass = 'App\\Models\\'.$quoteType.'Quote';
+
         return $modelClass::where('uuid', $sendUpdateLog->quote_uuid)->first();
     }
 }
