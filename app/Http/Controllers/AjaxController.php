@@ -271,7 +271,7 @@ class AjaxController extends Controller
 
                 $customer = Customer::find($request->customer_id);
                 // TODO:: Need to update the insurer details when contact and insured person FR approved
-                $customer->insured_first_name = $data['first_name']; 
+                $customer->insured_first_name = $data['first_name'];
                 $customer->insured_last_name = $data['last_name'];
 
                 if ($data['id_type'] == Kyc::DOCUMENT_TYPE_EMIRATES) {
@@ -283,43 +283,43 @@ class AjaxController extends Controller
 
                 // Reminder:: this patch included because of new structure old structure will be remove soon.
                 $normalizedIdNumber = $customerDetail?->id_number;
-                    if ($customerDetail->id_type === 'emiratesId' && strlen(str_replace('-', '', $normalizedIdNumber)) === 15) {
-                        $normalizedIdNumber = str_replace('-', '', $normalizedIdNumber);
-                        $normalizedIdNumber = substr($normalizedIdNumber, 0, 3) . '-' . 
-                            substr($normalizedIdNumber, 3, 4) . '-' . 
-                            substr($normalizedIdNumber, 7, 7) . '-' . 
-                            substr($normalizedIdNumber, 14, 1);
-                    }
-                    
+                if ($customerDetail->id_type === 'emiratesId' && strlen(str_replace('-', '', $normalizedIdNumber)) === 15) {
+                    $normalizedIdNumber = str_replace('-', '', $normalizedIdNumber);
+                    $normalizedIdNumber = substr($normalizedIdNumber, 0, 3).'-'.
+                        substr($normalizedIdNumber, 3, 4).'-'.
+                        substr($normalizedIdNumber, 7, 7).'-'.
+                        substr($normalizedIdNumber, 14, 1);
+                }
+
                 $insured = Insured::where(['id_type' => $customerDetail->id_type, 'id_number' => $normalizedIdNumber, 'customer_type' => CustomerTypeEnum::Individual])->first();
                 InsuredKyc::updateOrCreate(['insured_id' => $insured->id], [
-                        'country_of_residence' => $customerDetail->country_of_residence,
-                        'place_of_birth' => $customerDetail->place_of_birth,
-                        'residential_status' => $customerDetail->residential_status,
-                        'residential_address' => $customerDetail->residential_address,
-                        'id_type' => $customerDetail->id_type,
-                        'id_number' => $customerDetail->id_number,
-                        'id_issuance_date' => $customerDetail->id_issuance_date,
-                        'id_expiry_date' => $customerDetail->id_expiry_date,
-                        'source_of_income' => $customerDetail->source_of_income,
-                        'employer_company_name' => $customerDetail->employer_company_name,
-                        'job_title' => $customerDetail->job_title,
-                        'employment_sector' => $customerDetail->employment_sector,
-                        'position_in_company' => $customerDetail->position_in_company,
-                        'trade_license_no' => $customerDetail->trade_license_no,
-                        'pep' => $customerDetail->pep,
-                        'financial_sanctions' => $customerDetail->financial_sanctions,
-                        'dual_nationality' => $customerDetail->dual_nationality,
-                        'customer_tenure' => $customerDetail->customer_tenure,
-                        'transaction_pattern' => $customerDetail->transaction_pattern,
-                        'premium_tenure' => $customerDetail->premium_tenure,
-                        'mode_of_contact' => $customerDetail->mode_of_contact,
-                        'mode_of_delivery' => $customerDetail->mode_of_delivery,
-                        'risk_score' => $customerDetail->risk_score,
-                        'in_sanction_list' => $customerDetail->in_sanction_list,
-                        'deal_sanction_list' => $customerDetail->deal_sanction_list,
-                        'is_operation_high_risk' => $customerDetail->is_operation_high_risk,
-                        'is_partner' => $customerDetail->is_partner,
+                    'country_of_residence' => $customerDetail->country_of_residence,
+                    'place_of_birth' => $customerDetail->place_of_birth,
+                    'residential_status' => $customerDetail->residential_status,
+                    'residential_address' => $customerDetail->residential_address,
+                    'id_type' => $customerDetail->id_type,
+                    'id_number' => $customerDetail->id_number,
+                    'id_issuance_date' => $customerDetail->id_issuance_date,
+                    'id_expiry_date' => $customerDetail->id_expiry_date,
+                    'source_of_income' => $customerDetail->source_of_income,
+                    'employer_company_name' => $customerDetail->employer_company_name,
+                    'job_title' => $customerDetail->job_title,
+                    'employment_sector' => $customerDetail->employment_sector,
+                    'position_in_company' => $customerDetail->position_in_company,
+                    'trade_license_no' => $customerDetail->trade_license_no,
+                    'pep' => $customerDetail->pep,
+                    'financial_sanctions' => $customerDetail->financial_sanctions,
+                    'dual_nationality' => $customerDetail->dual_nationality,
+                    'customer_tenure' => $customerDetail->customer_tenure,
+                    'transaction_pattern' => $customerDetail->transaction_pattern,
+                    'premium_tenure' => $customerDetail->premium_tenure,
+                    'mode_of_contact' => $customerDetail->mode_of_contact,
+                    'mode_of_delivery' => $customerDetail->mode_of_delivery,
+                    'risk_score' => $customerDetail->risk_score,
+                    'in_sanction_list' => $customerDetail->in_sanction_list,
+                    'deal_sanction_list' => $customerDetail->deal_sanction_list,
+                    'is_operation_high_risk' => $customerDetail->is_operation_high_risk,
+                    'is_partner' => $customerDetail->is_partner,
                 ]);
 
                 return response()->json(['success' => true]);
@@ -445,37 +445,37 @@ class AjaxController extends Controller
                 ]);
                 $insuredDetails->refresh();
                 InsuredKyc::updateOrCreate(['insured_id' => $insuredDetails->id], [
-                        'mobile_no' => $entityDetails->mobile_no ?? null,
-                        'email' => $entityDetails->email ?? null,
-                        'website' => $entityDetails->website ?? null,
-                        'legal_structure' => $entityDetails->legal_structure ?? null,
-                        'country_of_corporation' => $entityDetails->country_of_corporation ?? null,
-                        'registered_address' => $entityDetails->registered_address ?? null,
-                        'communication_address' => $entityDetails->communication_address ?? null,
-                        'id_type' => $entityDetails->id_type ?? null,
-                        'id_number' => $entityDetails->id_number ?? null,
-                        'id_issuance_date' => $entityDetails->id_issuance_date ?? null,
-                        'id_expiry_date' => $entityDetails->id_expiry_date ?? null,
-                        'issuance_place' => $entityDetails->issuance_place ?? null,
-                        'id_issuance_authority' => $entityDetails->id_issuance_authority ?? null,
-                        'pep' => $entityDetails->pep ?? null,
-                        'financial_sanctions' => $entityDetails->financial_sanctions ?? null,
-                        'dual_nationality' => $entityDetails->dual_nationality ?? null,
-                        'customer_tenure' => $entityDetails->customer_tenure ?? null,
-                        'transaction_volume' => $entityDetails->transaction_volume ?? null,
-                        'transaction_activities' => $entityDetails->transaction_activities ?? null,
-                        'transaction_pattern' => $entityDetails->transaction_pattern ?? null,
-                        'mode_of_contact' => $entityDetails->mode_of_contact ?? null,
-                        'mode_of_delivery' => $entityDetails->mode_of_delivery ?? null,
-                        'in_sanction_list' => $entityDetails->in_sanction_list ?? null,
-                        'is_sanction_match' => $entityDetails->is_sanction_match ?? null,
-                        'in_fatf' => $entityDetails->in_fatf ?? null,
-                        'is_owner_high_risk' => $entityDetails->is_owner_high_risk ?? null,
-                        'deal_sanction_list' => $entityDetails->deal_sanction_list ?? null,
-                        'is_operation_high_risk' => $entityDetails->is_operation_high_risk ?? null,
-                        'is_adverse_media' => $entityDetails->in_adverse_media ?? null,
-                        'is_owner_pep' => $entityDetails->is_owner_pep ?? null,
-                        'is_controlling_pep' => $entityDetails->is_controlling_pep ?? null,
+                    'mobile_no' => $entityDetails->mobile_no ?? null,
+                    'email' => $entityDetails->email ?? null,
+                    'website' => $entityDetails->website ?? null,
+                    'legal_structure' => $entityDetails->legal_structure ?? null,
+                    'country_of_corporation' => $entityDetails->country_of_corporation ?? null,
+                    'registered_address' => $entityDetails->registered_address ?? null,
+                    'communication_address' => $entityDetails->communication_address ?? null,
+                    'id_type' => $entityDetails->id_type ?? null,
+                    'id_number' => $entityDetails->id_number ?? null,
+                    'id_issuance_date' => $entityDetails->id_issuance_date ?? null,
+                    'id_expiry_date' => $entityDetails->id_expiry_date ?? null,
+                    'issuance_place' => $entityDetails->issuance_place ?? null,
+                    'id_issuance_authority' => $entityDetails->id_issuance_authority ?? null,
+                    'pep' => $entityDetails->pep ?? null,
+                    'financial_sanctions' => $entityDetails->financial_sanctions ?? null,
+                    'dual_nationality' => $entityDetails->dual_nationality ?? null,
+                    'customer_tenure' => $entityDetails->customer_tenure ?? null,
+                    'transaction_volume' => $entityDetails->transaction_volume ?? null,
+                    'transaction_activities' => $entityDetails->transaction_activities ?? null,
+                    'transaction_pattern' => $entityDetails->transaction_pattern ?? null,
+                    'mode_of_contact' => $entityDetails->mode_of_contact ?? null,
+                    'mode_of_delivery' => $entityDetails->mode_of_delivery ?? null,
+                    'in_sanction_list' => $entityDetails->in_sanction_list ?? null,
+                    'is_sanction_match' => $entityDetails->is_sanction_match ?? null,
+                    'in_fatf' => $entityDetails->in_fatf ?? null,
+                    'is_owner_high_risk' => $entityDetails->is_owner_high_risk ?? null,
+                    'deal_sanction_list' => $entityDetails->deal_sanction_list ?? null,
+                    'is_operation_high_risk' => $entityDetails->is_operation_high_risk ?? null,
+                    'is_adverse_media' => $entityDetails->in_adverse_media ?? null,
+                    'is_owner_pep' => $entityDetails->is_owner_pep ?? null,
+                    'is_controlling_pep' => $entityDetails->is_controlling_pep ?? null,
                 ]);
 
                 return response()->json(['success' => true]);
