@@ -630,7 +630,7 @@ class AMLController extends Controller
                     'quote_request_id' => $updateQuote->id,
                 ], [
                     'customer_id' => $AMLCheckRequest->customer_id,
-                    'insured_id' => $insuredPersonDetails->id,
+                    'insured_id' => $insuredEntityDetails->id,
                 ]);
 
                 if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
