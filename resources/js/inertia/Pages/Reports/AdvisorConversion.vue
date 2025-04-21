@@ -947,7 +947,7 @@ function sortPremium(order) {
         </x-tooltip>
 
         <ComboBox
-          v-if="filters.lob === quoteTypeCodeEnum.Health"
+          v-if="filters.lob !== quoteTypeCodeEnum.Health"
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
@@ -1105,12 +1105,13 @@ function sortPremium(order) {
       :sort-type="'desc'"
     >
       <template #header-total_leads>
-        <x-tooltip>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Total Leads</span>
           <template #tooltip>
             All leads from InsuranceMarket.ae.
           </template>
         </x-tooltip>
+        <span v-else>Total Leads</span>
       </template>
 
       <template #header-gross_conversion>
@@ -1132,75 +1133,83 @@ function sortPremium(order) {
       </template>
 
       <template #header-new_leads>
-        <x-tooltip>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>New Leads</span>
           <template #tooltip>
             Lead status marked as 'Quoted' from InsuranceMarket.ae.
           </template>
         </x-tooltip>
+        <span v-else>New Leads</span>
       </template>
 
       <template #header-not_interested>
-        <x-tooltip>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Not Interested</span>
           <template #tooltip>
             Lead status marked as lost due to no response, already purchased insurance, comparing options, budget issues, invalid visa, or ineligibility due to medical conditions or age etc.
           </template>
         </x-tooltip>
+        <span v-else>Not Interested</span>
       </template>
 
       <template #header-in_progress>
-        <x-tooltip>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>In Progress</span>
           <template #tooltip>
             Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or 'Quoted,' from InsuranceMarket.ae.
           </template>
         </x-tooltip>
+        <span v-else>In Progress</span>
       </template>
 
       <template #header-manual_created>
-        <x-tooltip>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Manually Created</span>
           <template #tooltip>
             All leads from IMCRM.
           </template>
         </x-tooltip>
+        <span v-else>Manually Created</span>
       </template>
 
       <template #header-bad_leads>
-        <x-tooltip>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Bad Leads</span>
           <template #tooltip>
             Quotes marked as 'Duplicate' or 'Fake,' from InsuranceMarket.ae.
           </template>
         </x-tooltip>
+        <span v-else>Bad Leads</span>
       </template>
 
       <template #header-sale_leads>
-        <x-tooltip>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Sale Leads</span>
           <template #tooltip>
             Quotes from InsuranceMarket.ae where payment is 'Captured' or status is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to customer,' and 'Policy Booked', Booking failed.
           </template>
         </x-tooltip>
+        <span v-else>Sale Leads</span>
       </template>
 
       <template #header-created_sale_leads>
-        <x-tooltip>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Created Sale Leads</span>
           <template #tooltip>
             Quotes from IMCRM source where payment is 'Captured' or status is 'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
           </template>
         </x-tooltip>
+        <span v-else>Created Sale Leads</span>
       </template>
 
       <template #header-afia_renewals_count>
-        <x-tooltip>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>IM Renewals</span>
           <template #tooltip>
             Quotes from InsuranceMarket.ae source with status 'IMRenewal' and source 'renewal upload.'
           </template>
         </x-tooltip>
+        <span v-else>IM Renewals</span>
       </template>
 
       <template #item-gross_conversion="item">

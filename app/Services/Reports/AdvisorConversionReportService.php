@@ -137,7 +137,7 @@ class AdvisorConversionReportService extends BaseService
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
-        $this->addSelect($query, 'car_quote_request');
+        $this->addSelect($query, 'car_quote_request', $lob);
 
         return $query;
     }
@@ -189,13 +189,15 @@ class AdvisorConversionReportService extends BaseService
             ':badLeadsStatuses' => implode(',', $this->getBadLeadStatuses()),
             ':imRenewal' => QuoteStatusEnum::IMRenewal,
             ':notInterestedStatuses' => implode(',', $this->getNotInterestedStatuses()),
+            ':notInterestedStatusesHealth' => implode(',', $this->getNotInterestedStatusesHealth()),
             ':newLead' => QuoteStatusEnum::NewLead,
+            ':newLeadHealth' => QuoteStatusEnum::Quoted,
             ':inProgressStatuses' => implode(',', $this->getInProgressStatuses()),
             ':paidStatuses' => implode(',', $this->getPaidStatuses()),
         ];
     }
 
-    private function addSelect($query, $table)
+    private function addSelect($query, $table, $lob)
     {
         $getSaleLeadsQuery = function ($sourceCondition, $as) use ($table) {
             return strtr('SUM(CASE WHEN (
@@ -206,12 +208,23 @@ class AdvisorConversionReportService extends BaseService
                     ) as '.$as, $this->getBindings($table));
         };
 
+        // $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatuses) and :table.source NOT IN (:excludedSources)';
+
+        if ($lob === quoteTypeCode::Health) {
+            $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatusesHealth)';
+            $newLeadsRaw = 'SUM(CASE WHEN :table.quote_status_id = :newLeadHealth THEN 1 ELSE 0 END) as new_leads';
+        }else{
+            $newLeadsRaw = 'SUM(CASE WHEN :table.quote_status_id = :newLead and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads';
+        }
+    
+        // $notInterestedRaw .= ' THEN 1 ELSE 0 END) as not_interested';
+
         $query->addSelect(
             DB::raw(
                 strtr('SUM(CASE WHEN :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings($table))
             ),
             DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id = :newLead and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings($table))
+                strtr($newLeadsRaw, $this->getBindings($table))
             ),
             DB::raw(
                 strtr('SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings($table))
@@ -288,7 +301,7 @@ class AdvisorConversionReportService extends BaseService
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
 
-        $this->addSelect($query, 'personal_quotes');
+        $this->addSelect($query, 'personal_quotes', $lob);
 
         return $query;
     }
@@ -725,8 +738,7 @@ class AdvisorConversionReportService extends BaseService
             })
             ->when(isset($filters->excludeCreatedLeadsFilter) && $filters->excludeCreatedLeadsFilter == 'yes', function ($q) {
                 $q->whereNotIn('car_quote_request.source', $this->getExcludedSources());
-            })
-            ->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($q) use ($filters) {
+            })->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($q) use ($filters) {
                 $q->whereIn('car_quote_request.source', $filters->leadSourceFilter);
             }, function ($q) use ($isPopup) {
                 $q->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
