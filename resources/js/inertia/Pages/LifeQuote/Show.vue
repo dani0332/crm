@@ -1307,11 +1307,11 @@ const getBMITag = () => {
                   <dt class="font-medium">HAVE YOU CONSUMED ANY PRODUCTS WITH<br>NICOTINE FOR THE PAST 12 MONTHS?</dt>
                   <template #tooltip>
                     <div class="whitespace-normal text-xs">
-                      HAVE YOU CONSUMED ANY PRODUCTS WITH<br>NICOTINE FOR THE PAST 12 MONTHS?
+                      Nicotine-containing products cover a range of items such as tobacco, sisha, vape, nicotine gums, and related products.
                     </div>
                   </template>
                 </x-tooltip>
-                <dd>{{ quote.life_quote.is_smoker == 1  ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote.life_quote?.is_smoker == 1  ? 'Yes' : 'No' }}</dd>
               </div>
               
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Life'" />
