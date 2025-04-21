@@ -195,8 +195,9 @@ class EmbeddedProductRepository extends BaseRepository
                 'prices' => function ($query) {
                     $query->where('is_active', 1);
                 },
-                'prices.transactions' => function ($query) use ($quoteRequestId) {
+                'prices.transactions' => function ($query) use ($quoteTypeId, $quoteRequestId) {
                     $query->where('quote_request_id', $quoteRequestId);
+                    $query->where('quote_type_id', $quoteTypeId);
                 },
                 'prices.transactions.payments',
                 'prices.transactions.travelAnnualPayments',
