@@ -113,6 +113,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use App\Services\Logger\LoggerService;
 
 class CRUDController extends Controller
 {
@@ -2247,19 +2248,16 @@ class CRUDController extends Controller
         if ($quoteUuId) {
 
             $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
-            if (QuoteTypes::getIdFromValue($quoteType) === (int) QuoteTypes::HOME->id()) {
-                // only for home quote if email is manually triggered then update the home automated flow executed flag
-                app(HomeEmailService::class)->updateHomeAutomatedFlowExecuted($quoteUuId);
-            }
+            LoggerService::info('Sending OCB email Manually for quote uuid: '.$quoteUuId);
             if ($ocbEmailJob) {
-                Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
+                LoggerService::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
                 dispatch(new $ocbEmailJob($quoteUuId, null));
-                info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
+                LoggerService::info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
             }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
         } else {
-            Log::info('sendOCBEmailNB OCB email quote uuid not found');
+            LoggerService::info('sendOCBEmailNB OCB email quote uuid not found');
 
             return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
         }
