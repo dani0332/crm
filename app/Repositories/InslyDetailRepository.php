@@ -39,11 +39,11 @@ class InslyDetailRepository extends BaseRepository
         $coverage = $this->getCoverageList(auth()->user());
 
         $query = InslyDetail::query()->select([
+            'policy_oid',
             'policy.coverage',
             'policy_no',
             'customer.name',
             'policy.policy_no',
-            'policy.start_date',
             'policy.end_date',
             'policy.insurer',
             'policy.issue_date',
