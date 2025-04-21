@@ -27,6 +27,7 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 const modals = reactive({
   apiLog: false,
 });
+const notification = useToast();
 
 const insuranceProviders = computed(() => {
   return page.props.insuranceProviders.map(item => ({
@@ -78,9 +79,22 @@ const onLoadAuditLogData = async () => {
     .post(url, data)
     .then(res => {
       apiLogs.data = res.data;
+      notification.success({
+        title: 'API Logs Loaded Successfully',
+        position: 'top',
+      });
     })
     .catch(err => {
-      console.log(err);
+      console.log('ERR', err);
+      let errorMessage = 'Something went wrong. Please try again later.';
+      if (err.response && err.response.data && err.response.data.error) {
+        errorMessage = err.response.data.error;
+      }
+
+      notification.error({
+        title: `Failed to load API logs: ${errorMessage}`,
+        position: 'top',
+      });
     })
     .finally(() => {
       apiLogs.loading = false;
