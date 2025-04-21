@@ -29,6 +29,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
     protected $description = 'Update personal quotes with insured_id from related entity mapping';
 
     protected $cacheKey = 'processed_personal_quote_ids';
+
     const className = 'migrateInsuredDataToPersonalQuotes';
     /**
      * Execute the console command.
@@ -60,14 +61,15 @@ class MigrateInsuredDataToPersonalQuotes extends Command
         PersonalQuote::whereNull('quote_id')
             ->whereNull('insured_id')
             ->whereNotIn('id', $processedIds)
-            ->chunk(100, function ($personalQuotes) use (&$totalUpdated, &$processedIds) {
+            ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$processedIds) {
                 foreach ($personalQuotes as $personalQuote) {
                     $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
-                    $quote = $this->getQuoteObject($quoteType, $personalQuote->uuid);
+                    $quote = $this->getQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
 
                     if (! $quote) {
                         info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code.' - Quote not found.');
                         $processedIds[] = $personalQuote->id;
+
                         continue;
                     }
 
@@ -79,6 +81,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                     if (! $entityMapping) {
                         info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$quote->code.' - Entity mapping not found.');
                         $processedIds[] = $personalQuote->id;
+
                         continue;
                     }
 
@@ -88,6 +91,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                     if (! $insured) {
                         info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.');
                         $processedIds[] = $personalQuote->id;
+
                         continue;
                     }
 
@@ -101,7 +105,6 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                     $totalUpdated++;
                     info(self::className.' fn:'.__FUNCTION__.' Updated Personal Quote ID: '.$personalQuote->id.' with Insured ID: '.$insured->id.' and Quote ID: '.$quote->id);
                 }
-
 
                 // Update the cache after each chunk to avoid losing progress
                 Cache::put($this->cacheKey, $processedIds, now()->addDays(30));
