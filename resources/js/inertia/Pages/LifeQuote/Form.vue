@@ -40,7 +40,27 @@ const editMode = computed(() => {
 });
 const { isRequired, isEmail, isMobileNo } = useRules();
 
+const validateHeight = (value) => {
+  if (!value) return true;
+  const height = parseFloat(value);
+  if (height < 55 || height > 273) {
+    return 'Height must be between 55 and 273 cm';
+  }
+  return true;
+};
+
+const validateWeight = (value) => {
+  if (!value) return true;
+  const weight = parseFloat(value);
+  if (weight < 20 || weight > 650) {
+    return 'Weight must be between 20 and 650 kg';
+  }
+  return true;
+};
+
 function onSubmit(isValid) {
+  
+
   if (isValid) {
     let method = editMode.value ? 'put' : 'post';
     let url = editMode.value
@@ -232,7 +252,7 @@ watch(
                   type="number"
                   step="0.01"
                   min="0"
-                  :rules="[isRequired]"
+                  :rules="[isRequired, validateHeight]"
                   class="w-full" 
                   :error="quoteForm.errors.height"
                   maxLength="20"
@@ -248,7 +268,7 @@ watch(
                   type="number"
                   step="0.01"
                   min="0"
-                  :rules="[isRequired]"
+                  :rules="[isRequired, validateWeight]"
                   class="w-full" 
                   :error="quoteForm.errors.weight"
                   maxLength="20"
