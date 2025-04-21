@@ -522,20 +522,50 @@ const formatDate = dateString =>
           range
           format="dd-MM-yyyy"
         />
-        <x-field label="Lead Status">
-          <ComboBox
-            v-model="filters.quote_status_id"
-            name="quote_status_id"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-          />
-        </x-field>
-        <ComboBox
+        <x-select
+          v-model="filters.quote_status_id"
+          name="quote_status_id"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
+          class="w-full"
+          filterable
+          label="Lead Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = leadStatusOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.insurer_aml_status"
-          label="Insurer AML Status"
           name="insurer_aml_status"
+          placeholder="Search by Insurer AML Status"
           :options="insurerAMLStatusOption"
-        />
+          class="w-full"
+          filterable
+          label="Insurer AML Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -548,18 +578,29 @@ const formatDate = dateString =>
             name="policy_expiry_date_end"
           />
         </x-field>
-        <x-field
-          label="Advisor"
+        <x-select
           v-if="
             !hasAnyRole([rolesEnum.HomeAdvisor, rolesEnum.HomeRenewalAdvisor])
           "
+          v-model="filters.advisors"
+          name="advisor_id"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          class="w-full"
+          filterable
+          label="Advisor"
+          multiple
+          truncate
         >
-          <ComboBox
-            v-model="filters.advisors"
-            placeholder="Search by Advisor"
-            :options="advisorOptions"
-          />
-        </x-field>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-field label="Renewal">
           <x-select
             v-model="filters.is_renewal"
@@ -580,12 +621,27 @@ const formatDate = dateString =>
           class="w-full"
           placeholder="Policy Number"
         />
-        <ComboBox
+        <x-select
           v-model="filters.renewal_batches"
-          label="Renewal Batch"
           placeholder="Search by Renewal Batch"
+          label="Renewal Batch"
           :options="renewalBatchOptions"
-        />
+          multiple
+          truncate
+          filterable
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.renewal_batches = renewalBatchOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.renewal_batches = []"
+            />
+          </template>
+        </x-select>
 
         <DatePicker
           v-model="filters.payment_due_date"
