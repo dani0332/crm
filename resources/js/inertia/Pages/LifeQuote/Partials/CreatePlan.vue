@@ -73,14 +73,6 @@ const createForm = reactive({
   initialPrice: 0
 });
 
-watch(
-  () => createForm.actualPremium,
-  (newActualPremium) => {
-    createForm.initialPrice = newActualPremium;
-    console.log('initial price', createForm.initialPrice);
-  }
-);
-
 const onSubmit = isValid => {
 
   if (!isValid) {
@@ -88,6 +80,7 @@ const onSubmit = isValid => {
   }
   createForm.loading = true;
   createForm.riders = ridersData.value;
+  createForm.initialPrice = createForm.actualPremium;
 
   // remove loading from createForm
   // const data  = createForm.filter((item) => item !== 'loading');
