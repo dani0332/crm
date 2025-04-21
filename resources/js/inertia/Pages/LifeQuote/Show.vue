@@ -2049,7 +2049,7 @@ const getBMITag = () => {
 
     <ApiLogs
       :type="modelClass"
-      :id="$page.props.quote.life_quote.id"
+      :id="$page.props.quote?.life_quote?.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
