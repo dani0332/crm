@@ -42,7 +42,7 @@ return [
         ],
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['single', 'papertrail'],
+            'channels' => ['single', 'axiom'],
             'ignore_exceptions' => false,
         ],
 
@@ -113,11 +113,11 @@ return [
 
         'axiom' => [
             'driver' => 'monolog',
-            'handler' => App\Logging\AxiomHandler::class,
+            'handler' => App\Logging\AxiomBatchHandler::class,
             'level' => env('LOG_LEVEL', 'debug'),
             'with' => [
-                'apiToken' => env('AXIOM_API_TOKEN', 'xaat-453f67be-7614-4156-a495-b45fd4e7252e'),
-                'dataset' => env('AXIOM_DATASET', 'insurancemarket_dev'),
+                'apiToken' => env('AXIOM_API_TOKEN'),
+                'dataset' => env('AXIOM_DATASET'),
             ],
         ],
     ],
