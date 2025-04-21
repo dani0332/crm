@@ -30,6 +30,8 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 
         $teamCounts = $this->nonPUALeads[1];
 
+        $countByStatus = $this->nonPUALeads[2];
+
         $exportData = collect();
 
         foreach ($leads as $lead) {
@@ -61,6 +63,19 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
                 'Total' => $team->Total ?: '0',
             ]);
         }
+
+        if ($countByStatus->isNotEmpty()) {
+            $exportData->push((object) [' ' => ' ']);
+            $exportData->push((object) [' ' => ' ']);
+        }
+
+        foreach ($countByStatus as $status) {
+            $exportData->push((object) [
+                'Quote Status' => $status->text,
+                'Count' => $status->count,
+            ]);
+        }
+        
 
         return $exportData;
     }
@@ -103,6 +118,11 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
             return [
                 $quote->Team,
                 $quote->Total ?? number_format(0),
+            ];
+        } elseif (isset($quote->{'Quote Status'})) {
+            return [
+                $quote->{'Quote Status'},
+                $quote->{'Count'},
             ];
         }
 

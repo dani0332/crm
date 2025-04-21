@@ -1825,7 +1825,33 @@ class CarQuoteService extends BaseService
             ->groupBy('t.name')
             ->get();
 
-        return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
+        $countByStatus = DB::table('car_quote_request as q')
+            ->join('quote_status as qst', 'q.quote_status_id', '=', 'qst.id')
+            ->select(
+                'qst.id as quote_status_id',
+                'qst.text',
+                DB::raw('COUNT(q.id) as count')
+            )
+            ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            ->whereNotIn('q.uuid', function ($query) {
+                $query->select('q.uuid')
+                    ->from('car_quote_plan_details as cqp')
+                    ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+                    ->whereNotNull('cqp.pua_premium')
+                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
+            })
+            ->whereIn('q.quote_status_id', [
+                QuoteStatusEnum::PaymentLinkInprogress,
+                QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+                QuoteStatusEnum::PaymentLinkSentToCustomer
+            ])
+            ->groupBy('qst.id', 'qst.text')
+            ->get();
+
+        return [$nonPUAAuthLead, $nonPUAAuthTeamCount, $countByStatus];
     }
 
     public function exportPUAAuthorized()
@@ -1881,8 +1907,33 @@ class CarQuoteService extends BaseService
             ->where('t.parent_team_id', '=', $carTeam->id)
             ->groupBy('t.name')
             ->get();
-
-        return [$puaAuthUpdate, $puaAuthTeamUpdate];
+        
+            $countByStatus = DB::table('car_quote_request as q')
+            ->join('quote_status as qst', 'q.quote_status_id', '=', 'qst.id')
+            ->join('car_quote_plan_details as cqp', 'q.uuid', '=', 'cqp.quote_uuid') // join to access PUA
+            ->select(
+                'qst.id as quote_status_id',
+                'qst.text',
+                DB::raw('COUNT(q.id) as count')
+            )
+            ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [
+                QuoteStatusEnum::PolicyBooked,
+                QuoteStatusEnum::PolicyIssued
+            ])
+            ->whereIn('q.quote_status_id', [
+                QuoteStatusEnum::PaymentLinkInprogress,
+                QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+                QuoteStatusEnum::PaymentLinkSentToCustomer
+            ])
+            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            ->whereNotNull('cqp.pua_premium')
+            ->whereColumn('cqp.plan_id', '=', 'q.plan_id')
+            ->groupBy('qst.id', 'qst.text')
+            ->get(); 
+                
+        return [$puaAuthUpdate, $puaAuthTeamUpdate, $countByStatus];
     }
 
     public function exportPUAUpdates()

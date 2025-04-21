@@ -24,6 +24,7 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
         $leads = $this->data[0];
 
         $teamCounts = $this->data[1];
+        $countByStatus = $this->data[2];
 
         $exportData = collect();
 
@@ -47,6 +48,18 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
             ]);
         }
 
+        if ($countByStatus->isNotEmpty()) {
+            $exportData->push((object) [' ' => ' ']);
+            $exportData->push((object) [' ' => ' ']);           
+        }
+
+        foreach ($countByStatus as $status) {
+            $exportData->push((object) [
+                'Quote Status' => $status->text,
+                'Count' => $status->count,
+            ]);
+        }
+        
         return $exportData;
     }
 
@@ -88,6 +101,11 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
             return [
                 'Teams',
                 'Total Count',
+            ];
+        } elseif (isset($quote->{'Quote Status'})) {
+            return [
+                $quote->{'Quote Status'},
+                $quote->{'Count'},
             ];
         }
 

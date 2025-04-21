@@ -624,13 +624,13 @@ class CentralController extends Controller
         }
 
         try {
-            $puaUpdateExport = app(PUAQuoteExport::class)->download('PUA-AUTHORIZED.xlsx');
-            $nonPuaUpdateExport = app(NonPUAQuoteExport::class)->download('NON-PUA-AUTHORIZED.xlsx');
+            $puaUpdateExport = app(PUAQuoteExport::class)->download('PUA (Payment Pending).xlsx');
+            $nonPuaUpdateExport = app(NonPUAQuoteExport::class)->download('Non-PUA (Payment Pending).xlsx');
             $puaUpdatesExport = app(PUAUpdatesExport::class)->download('PUA-UPDATES.xlsx');
 
             $files = [
-                ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => 'PUA-AUTHORIZED.xlsx'],
-                ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => 'NON-PUA-AUTHORIZED.xlsx'],
+                ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => 'PUA (Payment Pending).xlsx'],
+                ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => 'Non-PUA (Payment Pending).xlsx'],
                 ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => 'PUA-UPDATES.xlsx'],
             ];
 
