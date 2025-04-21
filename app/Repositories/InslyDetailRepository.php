@@ -47,26 +47,26 @@ class InslyDetailRepository extends BaseRepository
             'policy.end_date',
             'policy.insurer',
             'policy.issue_date',
-            '_id'
+            '_id',
         ]);
 
         if (! empty($coverage)) {
             $query->whereIn('policy.coverage', $coverage);
         }
 
-        if (!empty(request()->policy_number)) {
+        if (! empty(request()->policy_number)) {
             $query->where('policy_no', '=', request()->policy_number);
         }
 
-        if (!empty(request()->email)) {
+        if (! empty(request()->email)) {
             $query->where('customer.email', request()->email);
         }
 
-        if (!empty(request()->mobile_no)) {
+        if (! empty(request()->mobile_no)) {
             $mobileNo = trim(request()->mobile_no);
-            $query->where(function($q) use ($mobileNo) {
+            $query->where(function ($q) use ($mobileNo) {
                 $q->where('customer.mobile_phone', 'like', '%'.$mobileNo.'%')
-                  ->orWhere('customer.mobile_phone', 'regex', $this->searchPhoneNumberRegexPattern($mobileNo));
+                    ->orWhere('customer.mobile_phone', 'regex', $this->searchPhoneNumberRegexPattern($mobileNo));
             });
         }
 
