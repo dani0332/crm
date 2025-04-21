@@ -50,16 +50,16 @@ class InslyDetailRepository extends BaseRepository
             '_id',
         ]);
 
-        if (! empty($coverage)) {
-            $query->whereIn('policy.coverage', $coverage);
-        }
-
         if (! empty(request()->policy_number)) {
             $query->where('policy_no', '=', request()->policy_number);
         }
 
+        if (! empty($coverage)) {
+            $query->whereIn('policy.coverage', $coverage);
+        }       
+
         if (! empty(request()->email)) {
-            $query->where('customer.email', request()->email);
+            $query->where('customer.email', 'like', '%'.request()->email.'%');
         }
 
         if (! empty(request()->mobile_no)) {
