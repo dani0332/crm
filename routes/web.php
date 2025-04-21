@@ -426,8 +426,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
-        Route::get('/migrate-insured-and-quote-id-to-personal-quote', function () {
-            Artisan::call('personal-quotes:update-insured-and-quote-id');
+        Route::get('/migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
+            $options = [];
+            if ($force) {
+                $options['--force'] = true;
+            }
+            Artisan::call('personal-quotes:update-insured-and-quote-id', $options);
+
             return '<h3>Quote and Insured ID migration command has successfully been executed. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-insured-and-quote-id-to-personal-quote');
         Route::group(['prefix' => 'commerical-keywords'], function () {
