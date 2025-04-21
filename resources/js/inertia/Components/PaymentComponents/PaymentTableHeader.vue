@@ -2,9 +2,6 @@
 const page = usePage();
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 
-const props = defineProps({
-  paymentTooltipEnum: Object,
-});
 </script>
 
 <template>
@@ -130,20 +127,20 @@ const props = defineProps({
       </th>
       <th class="inner-th-class">
         <x-tooltip>
-          <span class="border-b border-dotted">Status</span>
+          <span class="border-b border-dotted">Payment Status</span>
           <template #tooltip>
             <span class="custom-tooltip-content">{{
-              paymentTooltipEnum.PAYMENT_MANAGEMENT_STATUS
+              paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_STATUS
             }}</span>
           </template>
         </x-tooltip>
       </th>
       <th class="inner-th-class">
         <x-tooltip>
-          <span class="border-b border-dotted">Reason</span>
+          <span class="border-b border-dotted">Payment Allocation Status</span>
           <template #tooltip>
             <span class="custom-tooltip-content">{{
-              paymentTooltipEnum.PAYMENT_MANAGEMENT_REASON
+              paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS
             }}</span>
           </template>
         </x-tooltip>

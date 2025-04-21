@@ -492,7 +492,7 @@ const preparedPayments = computed(() => {
           >
             <table>
               <!-- Payment Table Header Component -->
-              <PaymentTableHeader :paymentTooltipEnum="paymentTooltipEnum" />
+              <PaymentTableHeader />
               
               <tbody class="vue3-easy-data-table__body">
                 <!-- Empty State -->
