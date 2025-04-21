@@ -182,18 +182,14 @@ trait QuoteAllocatable
                 })
 
                 // OR Other lead types
-                ->orWhere(function ($otherLeads) {
-                    $otherLeads
+                ->orWhere(function ($otherLeads) use ($quoteType) {
+                    $otherLeads->isNotAIG($quoteType) // Non-AIG leads
                         // Renewal leads with SIC + advisor/payment approved
                         ->where(function ($q) {
                             $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                                 ->sicFlowEnabled()
                                 ->requestedAdvisorOrPaymentAuthorized();
                         })
-
-                        // Leads that previously failed allocation
-                        ->orWhere->leadAllocationFailed()
-
                         // Non-renewal leads with SIC logic
                         ->orWhere(function ($q) {
                             $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
@@ -204,13 +200,24 @@ trait QuoteAllocatable
                                 });
                         });
                 });
-        });
+        })->orWhere->leadAllocationFailed();
     }
 
     protected function scopeIsAIG($query, QuoteTypes $quoteType): void
     {
         $table = $query->getModel()->getTable();
         $query->whereExists(function ($subQuery) use ($table, $quoteType) {
+            $subQuery->select(DB::raw(1))->from('quote_tags')
+                ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
+                ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
+        });
+    }
+
+    protected function scopeIsNotAIG($query, QuoteTypes $quoteType): void
+    {
+        $table = $query->getModel()->getTable();
+        $query->whereNotExists(function ($subQuery) use ($table, $quoteType) {
             $subQuery->select(DB::raw(1))->from('quote_tags')
                 ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
                 ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
