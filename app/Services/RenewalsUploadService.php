@@ -1110,6 +1110,15 @@ class RenewalsUploadService
                 $quoteData['currently_insured_with'] = $insurer->text;
             }
 
+            if($data['registration_type'] == CarRegistrationType::COMPANY){
+                $quoteData['registration_type'] = $data['registration_type'];
+                $quoteData['vehicle_use'] = $data['vehicle_use'];
+                $quoteData['business_activity'] = $data['business_activity'] ?? null;
+                $quoteData['driver_name'] = $data['driver_name'] ?? null;
+                $quoteData['driver_nationality'] = $data['driver_nationality'] ?? null;
+                $quoteData['driver_dob'] = $data['driver_dob'] ?? null;
+            }
+
             LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
 
             $quote->update($quoteData);
