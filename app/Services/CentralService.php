@@ -50,6 +50,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +58,7 @@ use Illuminate\Support\Facades\Log;
 
 class CentralService extends BaseService
 {
-    use GenericQueriesAllLobs, TeamHierarchyTrait;
+    use GenericQueriesAllLobs, TeamHierarchyTrait, HandlesDeadlockRetries;
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
@@ -1238,7 +1239,7 @@ class CentralService extends BaseService
         // Delete Payment and Payment Splits
         try {
             $maxAttempts = 2;
-            DB::transaction(function () use ($request) {
+            $this->handleWithDeadlockRetries(function () use ($request) {
                 PaymentSplits::where('code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
