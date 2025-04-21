@@ -42,7 +42,7 @@ return [
         ],
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['single', 'axiom'],
+            'channels' => ['single', 'papertrail'],
             'ignore_exceptions' => false,
         ],
 
