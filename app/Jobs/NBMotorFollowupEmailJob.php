@@ -48,7 +48,7 @@ class NBMotorFollowupEmailJob implements ShouldQueue
             if (in_array($carLead->quote_status_id, $eligibleStatuses) && ! in_array($carLead->source, $leadSources)) {
                 info("Sending NB motor email follow-ups for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
                 $carEmailService->sendNBMotorWorkFlow($carLead);
-                $carLead->quote_status_id = QuoteStatusEnum::FollowedUp;
+                $carLead->quote_status_id = QuoteStatusEnum::Quoted;
                 $carLead->save();
             } else {
                 info("NBMotorFollowupEmailJob - Car Lead did not trigger NB motor WorkFlow due to ineligible source (Source: {$carLead->source}) - Ref ID: {$carLead->uuid} | Time: ".now());

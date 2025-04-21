@@ -110,6 +110,16 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+
+        'axiom' => [
+            'driver' => 'monolog',
+            'handler' => App\Logging\AxiomBatchHandler::class,
+            'level' => env('LOG_LEVEL', 'debug'),
+            'with' => [
+                'apiToken' => env('AXIOM_API_TOKEN'),
+                'dataset' => env('AXIOM_DATASET'),
+            ],
+        ],
     ],
 
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Http;
 
 class KyoService
@@ -31,11 +32,22 @@ class KyoService
     {
         $url = $this->baseUrl.$path;
 
-        info('KYO URL : '.$url);
+        LoggerService::info('KYO Service Request', [
+            'url' => $url,
+            'method' => $method,
+        ]);
 
         $response = $this->client->withBody(json_encode($data))
             ->send($method, $url)
-            ->onError(function ($response) {});
+            ->onError(function ($response) use ($url, $method, $data) {
+                LoggerService::error('KYO Service Error', [
+                    'url' => $url,
+                    'method' => $method,
+                    'data' => $data,
+                    'status_code' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+            });
 
         return $response->object();
     }
