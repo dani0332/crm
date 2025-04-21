@@ -12,6 +12,7 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
@@ -561,7 +562,7 @@ class AdvisorConversionReportService extends BaseService
     {
         $query->when(isset($filters->leadType), function ($subQuery) use ($filters, $table) {
             $quoteStatuses = match ($filters->leadType) {
-                ReportsLeadTypeEnum::NEW_LEADS => ($filters->lob == 'Health') ? [QuoteStatusEnum::Quoted] : [QuoteStatusEnum::NewLead],
+                ReportsLeadTypeEnum::NEW_LEADS => ($filters->lob == quoteTypeCode::Health) ? [QuoteStatusEnum::Quoted] : [QuoteStatusEnum::NewLead],
                 ReportsLeadTypeEnum::NOT_INTERESTED => $this->getNotInterestedStatuses(),
                 ReportsLeadTypeEnum::IN_PROGRESS => $this->getInProgressStatuses(),
                 ReportsLeadTypeEnum::BAD_LEAD => $this->getBadLeadStatuses(),
