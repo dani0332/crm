@@ -437,19 +437,21 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
-        
+
         // Add route to trigger entity-insured migration, this should remove when migration was done
         Route::get('/migrate-entities-insured', function () {
             Artisan::call('migrate:entities-insured');
+
             return '<h3>Entities and Entities KYC Details migration command has successfully been executed. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-entities-insured');
-        
+
         // Add route to trigger individual KYC details migration
         Route::get('/migrate-individual-kyc-details', function () {
             Artisan::call('migrate:individual-kyc-details');
+
             return '<h3>Individual KYC Details migration command has successfully been executed. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-individual-kyc-details');
-        
+
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
             Route::get('/view/{commercialKeyword}', [CommercialKeywordsController::class, 'show'])->name('admin.commercial.keywords.show');
