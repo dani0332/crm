@@ -501,7 +501,7 @@ const preparedPayments = computed(() => {
                     No payments found.
                   </td>
                 </tr>
-                
+
                 <!-- Payment Row Components -->
                 <template v-for="(payment, index) in preparedPayments" :key="payment.id">
                   <PaymentTableRow

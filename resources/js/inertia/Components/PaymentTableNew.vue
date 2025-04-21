@@ -4066,6 +4066,7 @@ onBeforeMount(() => {
             class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div"
           >
             <table>
+              <!-- Payment Table Header Component -->
               <PaymentTableHeader />
 
               <tbody class="vue3-easy-data-table__body">
@@ -4418,7 +4419,7 @@ onBeforeMount(() => {
               data-v-32683533=""
               class="vue3-easy-data-table__message"
             >
-              No Available Data
+              No payments found.
             </div>
           </div>
         </div>
