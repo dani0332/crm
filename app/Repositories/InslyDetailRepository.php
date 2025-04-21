@@ -38,11 +38,7 @@ class InslyDetailRepository extends BaseRepository
     {
         $coverage = $this->getCoverageList(auth()->user());
 
-        // Start building query
-        $query = InslyDetail::query();
-
-        // Add field selection to retrieve only necessary fields for the listing
-        $query->select([
+        $query = InslyDetail::query()->select([
             'policy.coverage',
             'policy_no',
             'customer.name',
