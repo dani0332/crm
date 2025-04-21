@@ -56,7 +56,7 @@ class InslyDetailRepository extends BaseRepository
 
         if (! empty($coverage)) {
             $query->whereIn('policy.coverage', $coverage);
-        }       
+        }
 
         if (! empty(request()->email)) {
             $query->where('customer.email', 'like', '%'.request()->email.'%');
