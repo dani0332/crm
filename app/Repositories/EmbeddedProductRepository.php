@@ -1049,11 +1049,11 @@ class EmbeddedProductRepository extends BaseRepository
                 $codes = $quoteBatch->pluck('c1_code')->map(function ($code) {
                     return 'MDX-'.$code;
                 })->toArray();
-                $EpsToUpdate = EmbeddedTransaction::whereIn('code', $codes)->get()->pluck('code')->toArray();
+                $epsToUpdate = EmbeddedTransaction::whereIn('code', $codes)->get()->pluck('code')->toArray();
 
-                if (! empty($EpsToUpdate)) {
-                    EmbeddedTransaction::whereIn('code', $EpsToUpdate)->update(['is_selected' => 1]);
-                    info('EP Renewals - Updated EPs for batch: '.$batchName.' - count: '.count($EpsToUpdate));
+                if (! empty($epsToUpdate)) {
+                    EmbeddedTransaction::whereIn('code', $epsToUpdate)->update(['is_selected' => 1]);
+                    info('EP Renewals - Updated EPs for batch: '.$batchName.' - count: '.count($epsToUpdate));
                 }
             });
         }
