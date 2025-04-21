@@ -493,7 +493,10 @@ class CentralService extends BaseService
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
 
         if ($plandId) {
-            return $planModel::find($plandId);
+            // Home Plans are fetching from home-quote-plan-details mongodb collection.
+            $key = $quoteType == QuoteTypes::HOME->value ? 'planId' : 'id';
+
+            return $planModel::where($key, (int) $plandId)->first();
         }
 
         return $planModel::where('provider_id', $providerId)->get();
