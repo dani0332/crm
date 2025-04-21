@@ -7,7 +7,6 @@ use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\QuoteTag;
 use Carbon\Carbon;
@@ -171,7 +170,7 @@ trait QuoteAllocatable
      * Filters leads that are eligible for allocation.
      * Includes both flow-based and AIG-specific filtering logic.
      */
-    public function scopeEligibleForAllocation(Builder $query,QuoteTypes $quoteType): Builder
+    public function scopeEligibleForAllocation(Builder $query, QuoteTypes $quoteType): Builder
     {
 
         return $query->where(function ($mainQuery) use ($quoteType) {
@@ -181,7 +180,7 @@ trait QuoteAllocatable
                     $aigQuery->isAIG($quoteType)
                         ->requestedAdvisorOrPaymentAuthorized();
                 })
-                
+
                 // OR Other lead types
                 ->orWhere(function ($otherLeads) {
                     $otherLeads

@@ -119,10 +119,10 @@ class CarAllocation implements Allocation
                 $this->teamId = getTeamId(TeamNameEnum::ORGANIC);
             }
         }
-        
+
         $this->isAIGLeadEligibleForAllocation($lead);
     }
-    
+
     private function isAIGLeadEligibleForAllocation(CarQuote $lead): void
     {
         if ($lead->isAIG(QuoteTypes::CAR) && empty($this->teamId) && $this->sicAdvisorRequested) {

@@ -70,7 +70,7 @@ class CarAllocationService extends AllocationService
         ]);
 
         $continueAssignment = false;
-        
+
         $isSICFlowEnabled = $lead->isSICFlowEnabled();
         $isAIG = $lead->isAIG(QuoteTypes::CAR);
         $isSICFlowDisabled = $lead->isSICFlowDisabled();
@@ -88,10 +88,10 @@ class CarAllocationService extends AllocationService
                 LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized, continuing assignment');
             }
             $continueAssignment = true;
-        } elseif (($isSICFlowDisabled || !$isAIG) && ! $lead->isRenewalUpload()) {
+        } elseif (($isSICFlowDisabled || ! $isAIG) && ! $lead->isRenewalUpload()) {
             if ($isSICFlowDisabled) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, continuing assignment');
-            } else if (!$isAIG) {
+            } elseif (! $isAIG) {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead is not AIG and not Renewal Upload, continuing assignment');
             } else {
                 LoggerService::info(self::class.'::verifyPreChecks - Lead meets other criteria and not Renewal Upload, continuing assignment');

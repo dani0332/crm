@@ -237,9 +237,9 @@ class ApiService
     private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false, $sicAdvisorRequested = false)
     {
         $responsePayload = QuoteTypes::getName($allocationType)->allocate(
-            uuid: $allocationId, 
-            teamId: $teamId, 
-            overrideAdvisorId: $overrideAdvisorId, 
+            uuid: $allocationId,
+            teamId: $teamId,
+            overrideAdvisorId: $overrideAdvisorId,
             tierOnly: $tierOnly,
             sicAdvisorRequested: $sicAdvisorRequested
         );
