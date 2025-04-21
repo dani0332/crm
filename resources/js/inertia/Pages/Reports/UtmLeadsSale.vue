@@ -52,12 +52,20 @@ const tableHeader = [
     value: 'captured',
   },
   {
+    text: 'Booked Policies',
+    value: 'captured',
+  },
+  {
     text: 'Authorized (AED)',
     value: 'authorized_sum',
   },
   {
     text: 'Captured (AED)',
     value: 'captured_sum',
+  },
+  {
+    text: 'Total Price',
+    value: 'total_sum',
   },
 ];
 
@@ -102,6 +110,14 @@ function setQueryStringFilters() {
 onMounted(() => {
   setQueryStringFilters();
 });
+
+
+const leadStatusOptions = computed(() => {
+  return page.props.leadStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
 </script>
 
 <template>
@@ -133,6 +149,8 @@ onMounted(() => {
           :single="true"
           :hasError="isQuoteTypeEmpty"
         />
+
+
         <x-select
           v-model="filters.group_by_one"
           label="Group by One"
@@ -154,7 +172,19 @@ onMounted(() => {
             { value: 'utm_campaign', label: 'UTM Campaign' },
           ]"
         />
+
+        
+        <ComboBox
+          v-model="filters.quote_status_id"
+          label="Lead Status"
+          name="quote_status_id"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
+          multiple
+        />
+        
       </div>
+
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
         <x-button size="sm" color="primary" @click.prevent="onReset">

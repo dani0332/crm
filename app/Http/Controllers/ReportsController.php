@@ -331,10 +331,12 @@ class ReportsController extends Controller
     public function utmLeadsSaleReport(Request $request, ReportService $reportService)
     {
         $resp = $reportService->utmReport($request);
-
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Cycle);
+        
         return inertia('Reports/UtmLeadsSale', [
             'quoteTypes' => $resp['lobs'],
-            'reportData' => $resp['records'],
+            'reportData' => $resp['records'],   
+            'leadStatuses' => $leadStatuses,
         ]);
     }
 

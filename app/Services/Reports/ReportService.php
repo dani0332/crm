@@ -90,13 +90,19 @@ class ReportService extends BaseService
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as captured'),
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN premium  ELSE 0 END) as authorized_sum'),
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN premium  ELSE 0 END) as captured_sum'),
+                DB::raw('CASE WHEN sum(premium) is not null THEN sum(premium) ELSE 0 END as total_sum'),
             )
                 ->join($quoteRequestTable.'_detail', $quoteRequestTable.'.id', $quoteRequestTable.'_detail.'.$quoteRequestTable.'_id')->groupBy($groupBy)
                 ->whereNotIn($quoteRequestTable.'.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
 
+            
+            if (isset($request->quote_status_id) && !empty($request->quote_status_id)) {
+                $query->whereIn('quote_status_id', $request->quote_status_id);
+            }
             if ($isGroupMedical) {
                 $query->where('business_type_of_insurance_id', QuoteTypeId::Business);
             }
+
             if (! empty($groupByOne)) {
                 $query->where($groupByOne, '<>', '');
             }
