@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\RolesEnum;
 use App\Services\Logger\LoggerService;
-use App\Enums\QuoteStatusEnum;
 
 class GroupMedicalAllocation extends BaseAllocation
 {
@@ -23,36 +22,37 @@ class GroupMedicalAllocation extends BaseAllocation
     protected function resolveLead(): void
     {
         $this->lead = $this->getLeadBaseQuery()
-         ->whereNotNull('health_plan_type_id')
-         ->whereNotNull('number_of_employees')
-         ->first();
+            ->whereNotNull('health_plan_type_id')
+            ->whereNotNull('number_of_employees')
+            ->first();
     }
     protected function fetchAdvisor(int $onlineStatus)
     {
         $emails = [];
         if (empty($this->lead->health_plan_type_id)) {
-            LoggerService::warning(self::class . " - PlanTypeId :{$this->lead->health_plan_type_id} is empty | quote Ref-ID: {$this->lead->uuid} | time: " . now());
+            LoggerService::warning(self::class." - PlanTypeId :{$this->lead->health_plan_type_id} is empty | quote Ref-ID: {$this->lead->uuid} | time: ".now());
 
             return null;
         }
         $planType = HealthPlanTypeEnum::typeName($this->lead->health_plan_type_id)?->label();
-        if(empty($this->lead->number_of_employees)){
-            LoggerService::warning(self::class . " - Number of employees is empty | quote Ref-ID: {$this->lead->uuid} | time: " . now());
+        if (empty($this->lead->number_of_employees)) {
+            LoggerService::warning(self::class." - Number of employees is empty | quote Ref-ID: {$this->lead->uuid} | time: ".now());
+
             return null;
         }
         $team = $this->getTeamByCriteria($planType, $this->lead->number_of_employees);
 
-        LoggerService::info(self::class . " - group medical team: {$team} | plan type: {$planType} | number of employees: {$this->lead->number_of_employees} | online status: $onlineStatus |
-         quote Ref-ID: {$this->lead->uuid} | time: " . now());
+        LoggerService::info(self::class." - group medical team: {$team} | plan type: {$planType} | number of employees: {$this->lead->number_of_employees} | online status: $onlineStatus |
+         quote Ref-ID: {$this->lead->uuid} | time: ".now());
 
         if ($team === self::TEAM_MICRO) {
             $emails = $this->getMicroAdvisors();
-            LoggerService::info(self::class . ' - Micro Advisors: ' . implode(',', $emails) . " | quote Ref-ID: {$this->lead->uuid} | time: " . now());
+            LoggerService::info(self::class.' - Micro Advisors: '.implode(',', $emails)." | quote Ref-ID: {$this->lead->uuid} | time: ".now());
         }
         if ($team === self::TEAM_NON_MICRO) {
 
             $emails = $this->getNonMicroAdvisors();
-            LoggerService::info(self::class . ' - Non-Micro Advisors: ' . implode(',', $emails) . " | quote Ref-ID: {$this->lead->uuid} | time: " . now());
+            LoggerService::info(self::class.' - Non-Micro Advisors: '.implode(',', $emails)." | quote Ref-ID: {$this->lead->uuid} | time: ".now());
         }
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::GMAdvisor])
@@ -78,11 +78,11 @@ class GroupMedicalAllocation extends BaseAllocation
     {
         $employeeRange = $this->getEmployeeRange($numberOfEmployees);
 
-        LoggerService::info(self::class . " - Employee Range: {$employeeRange} | Plan Type: {$planType} | Number of Employees: {$numberOfEmployees} | Quote Ref-ID: {$this->lead->uuid} | Time: " . now());
+        LoggerService::info(self::class." - Employee Range: {$employeeRange} | Plan Type: {$planType} | Number of Employees: {$numberOfEmployees} | Quote Ref-ID: {$this->lead->uuid} | Time: ".now());
         switch ($this->lead->health_plan_type_id) {
             case HealthPlanTypeEnum::ENTRY_LEVEL->value:
                 if ($employeeRange === self::EMPLOYEE_RANGE_0_5) {
-                    LoggerService::info(self::class . " - Entry Level Plan - Employee Range: {$employeeRange} | Plan Type: {$planType} | Number of Employees: {$numberOfEmployees} | Quote Ref-ID: {$this->lead->uuid} | Time: " . now());
+                    LoggerService::info(self::class." - Entry Level Plan - Employee Range: {$employeeRange} | Plan Type: {$planType} | Number of Employees: {$numberOfEmployees} | Quote Ref-ID: {$this->lead->uuid} | Time: ".now());
 
                     return self::TEAM_MICRO; //
                 } elseif ($employeeRange === self::EMPLOYEE_RANGE_6_50) {
