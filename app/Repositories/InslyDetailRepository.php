@@ -38,28 +38,45 @@ class InslyDetailRepository extends BaseRepository
     {
         $coverage = $this->getCoverageList(auth()->user());
 
+        // Start building query
         $query = InslyDetail::query();
+
+        // Add field selection to retrieve only necessary fields for the listing
+        $query->select([
+            'policy.coverage',
+            'policy_no',
+            'customer.name',
+            'policy.policy_no',
+            'policy.start_date',
+            'policy.end_date',
+            'policy.insurer',
+            'policy.issue_date',
+            '_id'
+        ]);
 
         if (! empty($coverage)) {
             $query->whereIn('policy.coverage', $coverage);
         }
 
-        if (! empty(request()->policy_number)) {
+        if (!empty(request()->policy_number)) {
             $query->where('policy_no', '=', request()->policy_number);
         }
 
-        if (! empty(request()->email)) {
-            $query->where('customer.email', 'like', '%'.request()->email.'%');
+        if (!empty(request()->email)) {
+            $query->where('customer.email', request()->email);
         }
 
-        if (! empty(request()->mobile_no)) {
-            $query->where('customer.mobile_phone', 'like', '%'.request()->mobile_no.'%')
-                ->orWhere('customer.mobile_phone', 'regex', $this->searchPhoneNumberRegexPattern(request()->mobile_no));
+        if (!empty(request()->mobile_no)) {
+            $mobileNo = trim(request()->mobile_no);
+            $query->where(function($q) use ($mobileNo) {
+                $q->where('customer.mobile_phone', 'like', '%'.$mobileNo.'%')
+                  ->orWhere('customer.mobile_phone', 'regex', $this->searchPhoneNumberRegexPattern($mobileNo));
+            });
         }
 
-        $data = $query->simplePaginate()->withQueryString()->toArray();
+        $perPage = request()->per_page ?? 15;
 
-        return $data;
+        return $query->simplePaginate($perPage)->withQueryString()->toArray();
     }
 
     public function fetchGetBy($column, $value)
