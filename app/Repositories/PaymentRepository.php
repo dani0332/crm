@@ -511,7 +511,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $successMessage = 'Payment Verified';
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
             $masterPayment = $splitPayment->payment;
-            $quote = $masterPayment->paymentable;
+            $quote = $masterPayment?->paymentable;
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 $paymentInformation = [
                     'collection_amount' => $request->collection_amount,

@@ -690,8 +690,8 @@ class SplitPaymentService
                 $sageRequest->quoteType = $modelType;
                 $sageRequest->modelType = $modelType;
                 $sageRequest->quote_id = $quoteId;
-                $sageRequest->customer_id = $quoteModel->customer_id;
-                $sageRequest->advisor_id = $quoteModel->advisor_id;
+                $sageRequest->customer_id = $quoteModel?->customer_id;
+                $sageRequest->advisor_id = $quoteModel?->advisor_id;
 
                 /* Handle NRA case where payment is approved after policy/send update is booked */
                 $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);

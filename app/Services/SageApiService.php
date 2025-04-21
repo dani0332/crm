@@ -977,12 +977,12 @@ class SageApiService
     public function shouldCreateAndSchedulePostPrepayment($quote, $paymentSplit, $sendUpdateLog = null)
     {
         if (! $sendUpdateLog) {
-            $sendUpdateLog = $paymentSplit->payment?->sendUpdateLog;
+            $sendUpdateLog = $paymentSplit?->payment?->sendUpdateLog;
         }
 
         $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
 
-        $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
+        $isPolicyBooked = $quote?->quote_status_id == QuoteStatusEnum::PolicyBooked;
 
         return ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
 
