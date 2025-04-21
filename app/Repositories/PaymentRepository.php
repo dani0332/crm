@@ -20,6 +20,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\PaymentLinkService;
 use App\Services\SageApiService;
@@ -138,7 +139,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->payments()->create($paymentInformation);
             info('Payment created with Code: '.$paymentInformation['code']);
             // Add split payments start
-            $this->addPaymentSplits($request, $paymentInformation['code'], $quoteModel->uuid);
+            $quoteUUID = $quoteModel instanceof SendUpdateLog ? $quoteModel->quote_uuid : $quoteModel->uuid;
+            $this->addPaymentSplits($request, $paymentInformation['code'], $quoteUUID);
             // Add split payments ends
             info('Payment splits added for Payment Code: '.$paymentInformation['code']);
 
