@@ -1353,7 +1353,7 @@ if (! function_exists('getCourierQuote')) {
                             default => "{$table}.emirate_of_registration_id"
                         });
                 })
-                ->when(in_array($quoteTypeId, [QuoteTypeId::Home]), function ($q) use ($table, $quoteTypeId) {
+                ->when(in_array($quoteTypeId, [QuoteTypeId::Home]), function ($q) use ($table) {
                     $q->addSelect([
                         'emirates.code as emirate_code',
                         'emirates.text as emirate_text',
@@ -1365,7 +1365,7 @@ if (! function_exists('getCourierQuote')) {
                                         $sub->on('emirates.id', '=', 'sub_areas.emirates_id');
                                     });
                             });
-                        });
+                    });
                 })
                 ->when(! empty($quoteStatuses) && is_array($quoteStatuses), function ($q) use ($table, $quoteStatuses) {
                     $q->whereIn("{$table}.quote_status_id", $quoteStatuses);
