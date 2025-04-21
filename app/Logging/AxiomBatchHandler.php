@@ -4,6 +4,7 @@ namespace App\Logging;
 
 use App\Enums\ApplicationStorageEnums;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Context;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Handler\RotatingFileHandler;
@@ -96,11 +97,13 @@ class AxiomBatchHandler extends AbstractProcessingHandler
 
     protected function formatRecord(LogRecord $record): array
     {
+        $extra = Context::pullHidden('__extra') ?? null;
+
         return [
             'message' => $record->message,
             'context' => $record->context,
             'level' => strtoupper($record->level->getName()),
-            'extra' => $record->extra,
+            'extra' => $extra,
             'timestamp' => $record->datetime->format('Y-m-d H:i:s'),
             'environment' => app()->environment(),
             'service' => 'IMCRM',
