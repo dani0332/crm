@@ -1343,7 +1343,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer_addresses.city as courier_address_city',
                 'customer_addresses.landmark as courier_address_landmark',
             ])
-                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel]), function ($q) use ($table, $quoteTypeId) {
+                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home]), function ($q) use ($table, $quoteTypeId) {
                     $q->addSelect([
                         'emirates.code as emirate_code',
                         'emirates.text as emirate_text',
@@ -1351,6 +1351,20 @@ if (! function_exists('getCourierQuote')) {
                         ->leftJoin('emirates', 'emirates.id', '=', match ($quoteTypeId) {
                             QuoteTypeId::Health => "{$table}.emirate_of_your_visa_id",
                             default => "{$table}.emirate_of_registration_id"
+                        });
+                })
+                ->when(in_array($quoteTypeId, [QuoteTypeId::Home]), function ($q) use ($table, $quoteTypeId) {
+                    $q->addSelect([
+                        'emirates.code as emirate_code',
+                        'emirates.text as emirate_text',
+                    ])->leftJoin('home_quote_request', function (JoinClause $join) use ($table) {
+                        $join->on('home_quote_request.personal_quote_id', '=', "{$table}.id")
+                            ->leftJoin('sub_areas', function (JoinClause $subJoin) {
+                                $subJoin->on('sub_areas.id', '=', 'home_quote_request.sub_area_id')
+                                    ->leftJoin('emirates', function (JoinClause $sub) {
+                                        $sub->on('emirates.id', '=', 'sub_areas.emirates_id');
+                                    });
+                            });
                         });
                 })
                 ->when(! empty($quoteStatuses) && is_array($quoteStatuses), function ($q) use ($table, $quoteStatuses) {
