@@ -144,6 +144,7 @@ const totalLeads = reactive({
     {
       text: 'Premium',
       value: 'premium',
+      sortable: true,
     },
   ],
 });
@@ -946,6 +947,20 @@ function sortPremium(order) {
         </x-tooltip>
 
         <ComboBox
+          v-if="filters.lob === quoteTypeCodeEnum.Health"
+          v-model="filters.leadSources"
+          label="Lead Source"
+          placeholder="Search by Lead Source"
+          :options="
+            Object.keys(filterOptions.leadSources).map(key => ({
+              value: key,
+              label: filterOptions.leadSources[key],
+            }))
+          "
+          :max-limit="3"
+        />
+        
+        <ComboBox
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
           :class="{
@@ -1414,16 +1429,6 @@ function sortPremium(order) {
             hide-rows-per-page
             hide-footer
           >
-          <template #header-premium>
-            <div class="flex items-center relative">
-              <span>Premium</span>
-              <button @click="togglePremiumSortOptions" class="ml-2">▼</button>
-              <div v-if="showPremiumSortOptions" class="dropdown">
-                <button @click="sortPremium('high')">Sort by price: low to high</button>
-                <button @click="sortPremium('low')">Sort by price: high to low</button>
-              </div>
-            </div>
-          </template>
             <template #item-cdbId="{ cdbId, uuid }">
               <Link
                 :href="route(getRouteByLob, uuid)"
@@ -1443,26 +1448,3 @@ function sortPremium(order) {
     </x-modal>
   </div>
 </template>
-
-<style>
-.dropdown {
-  position: absolute;
-  background-color: white;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  z-index: 9999;
-  margin-top: 101px;
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-  color: black;
-}
-
-.dropdown button {
-  padding: 5px 10px;
-}
-
-.dropdown button:hover {
-  background-color: #f0f0f0;
-}
-</style>

@@ -56,6 +56,7 @@ class AdvisorConversionReportService extends BaseService
             'excludeCreatedLeadsFilter' => $request->excludeCreatedLeadsFilter,
             'batchNumberFilter' => $request->batches,
             'tiersFilter' => $request->tiers,
+            'leadSourceFilter' => $request->leadSources,
             'teamsFilter' => $request->teams,
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
@@ -108,7 +109,6 @@ class AdvisorConversionReportService extends BaseService
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->where('users.is_active' , true)
-            ->where('car_quote_request.source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%')
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
@@ -255,7 +255,9 @@ class AdvisorConversionReportService extends BaseService
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active' , true)
-            ->where('personal_quotes.source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%')
+            ->when($lob == quoteTypeCode::Health, function ($query) {
+                return $query->where('personal_quotes.source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
+            })
             ->groupBy(
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_batch_id'
@@ -449,6 +451,16 @@ class AdvisorConversionReportService extends BaseService
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        $leadSources = LeadSource::query()
+            ->select('name')
+            ->where('is_active', 1)
+            ->whereNotNull('name')
+            ->orderBy('name')
+            ->get()
+            ->keyBy('name')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
         $lobs = $this->getLobByPermissions();
         $dropdownSourceService = new DropdownSourceService;
 
@@ -503,6 +515,7 @@ class AdvisorConversionReportService extends BaseService
             'maxDays' => $maxDays,
             'batches' => $batches,
             'tiers' => $tiers,
+            'leadSources' => $leadSources,
             'advisors' => $advisors,
             'teams' => $teams,
             'insurance_for' => $insuranceFor,
@@ -636,6 +649,12 @@ class AdvisorConversionReportService extends BaseService
             ->when(isset($filters->excludeCreatedLeadsFilter) && $filters->excludeCreatedLeadsFilter == 'yes', function ($q) {
                 $q->whereNotIn('personal_quotes.source', $this->getExcludedSources());
             })
+            ->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($q) use ($filters) {
+                $q->whereIn('personal_quotes.source', $filters->leadSourceFilter);
+            }, function ($q) use ($isPopup) {
+                $q->whereNotIn('personal_quotes.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
+                    ->when($isPopup === true, fn ($sq) => $sq->whereNull('personal_quotes.renewal_import_code'));
+            })
             ->when($lob === quoteTypeCode::Health, function ($q) use ($filters) {
                 $q->when(! empty($filters->insurance_for) && $filters->insurance_for != '', function ($sq) use ($filters) {
                     $sq->join('health_quote_request', function ($join) use ($filters) {
@@ -706,6 +725,14 @@ class AdvisorConversionReportService extends BaseService
             })
             ->when(isset($filters->excludeCreatedLeadsFilter) && $filters->excludeCreatedLeadsFilter == 'yes', function ($q) {
                 $q->whereNotIn('car_quote_request.source', $this->getExcludedSources());
+            })
+            ->when(isset($filters->leadSourceFilter) && ! empty($filters->leadSourceFilter), function ($q) use ($filters) {
+                $q->whereIn('car_quote_request.source', $filters->leadSourceFilter);
+            }, function ($q) use ($isPopup) {
+                $q->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
+                    ->when($isPopup, function ($sq) {
+                        $sq->whereNull('car_quote_request.renewal_import_code');
+                    });
             });
 
         $this->applyLeadTypeFilter($query, 'car_quote_request', $filters);
