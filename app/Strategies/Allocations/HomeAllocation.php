@@ -147,7 +147,7 @@ class HomeAllocation extends BaseAllocation
             'max' => $max,
         ]);
 
-        return $thresholdValue >= $min && $thresholdValue <= $max;
+        return $min >= $thresholdValue;
     }
 
     private function hasHighValueAssets(HomeQuote $lead): bool

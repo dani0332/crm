@@ -5,9 +5,13 @@ namespace App\Traits\QuoteTraits;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Models\QuoteTag;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 trait QuoteAllocatable
 {
@@ -160,5 +164,67 @@ trait QuoteAllocatable
             && $this->isSIC(QuoteTypes::CAR)
             && ! $this->sic_advisor_requested
             && $this->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer;
+    }
+
+    /**
+     * Filters leads that are eligible for allocation.
+     * Includes both flow-based and AIG-specific filtering logic.
+     */
+    public function scopeEligibleForAllocation(Builder $query, QuoteTypes $quoteType): Builder
+    {
+
+        return $query->where(function ($mainQuery) use ($quoteType) {
+            $mainQuery
+                // AIG leads with advisor requested or payment authorized
+                ->where(function ($aigQuery) use ($quoteType) {
+                    $aigQuery->isAIG($quoteType)
+                        ->requestedAdvisorOrPaymentAuthorized();
+                })
+
+                // OR Other lead types
+                ->orWhere(function ($otherLeads) {
+                    $otherLeads
+                        // Renewal leads with SIC + advisor/payment approved
+                        ->where(function ($q) {
+                            $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
+                                ->sicFlowEnabled()
+                                ->requestedAdvisorOrPaymentAuthorized();
+                        })
+
+                        // Leads that previously failed allocation
+                        ->orWhere->leadAllocationFailed()
+
+                        // Non-renewal leads with SIC logic
+                        ->orWhere(function ($q) {
+                            $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                                ->where(function ($inner) {
+                                    $inner
+                                        ->where(fn ($x) => $x->sicFlowDisabled())
+                                        ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized());
+                                });
+                        });
+                });
+        });
+    }
+
+    protected function scopeIsAIG($query, QuoteTypes $quoteType): void
+    {
+        $table = $query->getModel()->getTable();
+        $query->whereExists(function ($subQuery) use ($table, $quoteType) {
+            $subQuery->select(DB::raw(1))->from('quote_tags')
+                ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
+                ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
+        });
+    }
+
+    public function isAdvisorRequested()
+    {
+        return $this->sic_advisor_requested == 1;
+    }
+
+    public function isAIG(QuoteTypes $quoteType): bool
+    {
+        return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
     }
 }

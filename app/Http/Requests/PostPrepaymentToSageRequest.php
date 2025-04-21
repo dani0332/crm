@@ -34,11 +34,11 @@ class PostPrepaymentToSageRequest extends FormRequest
             if (! (new SageApiService)->isSageEnabled()) {
                 $validator->errors()->add('sage', 'Sage is not enabled.');
             }
-            $paymentSplit = PaymentSplits::whereId(request()->paymentSplitId)->first();
+            $paymentSplit = PaymentSplits::select(['id'])->whereId(request()->paymentSplitId)->first();
             if (! $paymentSplit) {
                 $validator->errors()->add('payment_split', 'Payment split not found.');
             }
-            $sendUpdateLog = SendUpdateLog::whereId(request()->sendUpdateId)->first();
+            $sendUpdateLog = SendUpdateLog::select(['id'])->whereId(request()->sendUpdateId)->first();
             if (request()->sendUpdateId && ! $sendUpdateLog) {
                 $validator->errors()->add('send_update', 'Send Update not found.');
             }

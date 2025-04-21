@@ -724,7 +724,7 @@ class CentralController extends Controller
                 $errors = count($schedulePostPrepayment['errors']) > 0 ? $schedulePostPrepayment['errors'] : ['message' => $schedulePostPrepayment['message']];
                 info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' -  Start Prepayment Posting of Payment split -  Error : ', $errors);
 
-                return response()->json(['errors' => $errors], 403);
+                return response()->json(['errors' => $errors], 422);
             }
 
             return response()->json([

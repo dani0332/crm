@@ -220,6 +220,13 @@ class EmbeddedProduct
             $dataset = $dataset->simplePaginate()->withQueryString();
         }
 
+        $dataset = $this->postFilterReportProcessing($dataset);
+
+        return $dataset;
+    }
+
+    protected function postFilterReportProcessing($dataset)
+    {
         return $dataset;
     }
 

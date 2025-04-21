@@ -3057,7 +3057,7 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   ) {
     return true;
   }
-  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
+  return getValidStatuses(paymentRecord.payment_splits[0]);
 };
 
 const getCaptureValidation = computed(() => {
@@ -3882,7 +3882,7 @@ const triggerPostPrepayment = async splitPayment => {
   }
   try {
     NProgress.start();
-    const response = await axios.post(route('post.prepayment.to.sage'), {
+    const response = await axios.post(route('can-post-premium-prepayment'), {
       paymentSplitId: splitPayment.id,
       quoteRequestId: props.quoteRequest.id,
       quoteType: page.props.quoteType,
@@ -3925,7 +3925,7 @@ const enablePostPrepaymentButton = splitPayment => {
     (isPolicyBooked && !props.sendUpdate) ||
     (props.sendUpdate && isSendUpdateBooked);
   if (
-    can(permissionEnum.SHOW_POST_PREPAYMENT_BUTTON) &&
+    can(permissionEnum.CAN_POST_PREMIUM_PREPAYMENT) &&
     isPolicyOrSendUpdateBooked &&
     splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
   ) {

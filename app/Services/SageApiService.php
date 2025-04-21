@@ -562,6 +562,7 @@ class SageApiService
         $quoteType = $request->model_type;
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
 
+        $quoteTypeId = QuoteTypes::getIdFromValue($request->model_type) ?? $quote->quote_type_id;
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
 

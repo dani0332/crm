@@ -2,11 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\QuoteTypeId;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class AssignLeadRequest extends FormRequest
+class AIGWorkflowRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,12 +22,15 @@ class AssignLeadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quoteUUID' => ['required'],
-            'quoteTypeId' => ['required', Rule::in(QuoteTypeId::asArray())],
-            'reAssignAdvisor' => ['sometimes', 'boolean'],
-            'triggerOCB' => ['sometimes', 'boolean'],
-            'teamId' => ['sometimes', 'nullable'],
-            'sicAdvisorRequested' => ['sometimes', 'boolean'],
+            'quoteUuid' => 'required',
+            'quoteTypeId' => 'sometimes|nullable',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'quoteUuid.required' => 'Quote UUID is required',
         ];
     }
 }

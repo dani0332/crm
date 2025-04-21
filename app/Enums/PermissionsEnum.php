@@ -413,7 +413,7 @@ final class PermissionsEnum extends Enum
     public const CYCLE_LEADPOOL = 'cycle-leadpool';
     public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool';
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
-    public const SHOW_POST_PREPAYMENT_BUTTON = 'show-post-prepayment-button';
+    public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
 
     public static function getAdvisorConversionReportPermissions()
     {
