@@ -234,7 +234,7 @@ class CentralService extends BaseService
         });
     }
 
-    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false)
+    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false, $getLatestRating = false)
     {
         $type = ucfirst($type);
         switch ($type) {
@@ -268,7 +268,7 @@ class CentralService extends BaseService
             case quoteTypeCode::Bike:
                 return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
             case quoteTypeCode::Home:
-                return app(HomeQuoteService::class)->getQuotePlans($id);
+                return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             default:
                 return [];
         }
@@ -494,7 +494,10 @@ class CentralService extends BaseService
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
 
         if ($plandId) {
-            return $planModel::find($plandId);
+            // Home Plans are fetching from home-quote-plan-details mongodb collection.
+            $key = $quoteType == QuoteTypes::HOME->value ? 'planId' : 'id';
+
+            return $planModel::where($key, (int) $plandId)->first();
         }
 
         return $planModel::where('provider_id', $providerId)->get();
@@ -1331,6 +1334,10 @@ class CentralService extends BaseService
         try {
             $maxAttempts = 2;
             $this->handleWithDeadlockRetries(function () use ($request) {
+                $paymentSplits = PaymentSplits::where('code', $request->payment_code)->get();
+                foreach ($paymentSplits as $paymentSplit) {
+                    $paymentSplit->documents()->forceDelete();
+                }
                 PaymentSplits::where('code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
