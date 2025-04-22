@@ -11,13 +11,13 @@ class LoggerService
     {
         $refID = null;
 
-        if ($lead instanceof string) {
+        if (is_string($lead)) {
             $refID = $lead;
         } elseif ($lead instanceof Model) {
             $refID = $lead->code;
         }
-
-        self::endLogging();
+       
+        self::endLogging();        
         Log::withContext(['ref_id' => $refID, ...$extra]);
     }
 

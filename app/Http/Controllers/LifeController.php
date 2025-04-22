@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
 use App\Http\Requests\LifeCardLoadMoreRequest;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Services\Life\LifeQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Inertia\ResponseFactory;
 use Illuminate\Support\Facades\DB;
@@ -141,16 +142,28 @@ class LifeController extends Controller
 
     public function lifePlanCreateQuote(Request $request)
     {
+      
+        LoggerService::startQuoteLogging($request->quoteUID);
+        
+        LoggerService::info('fn: lifePlanCreateQuoteLife - creating plan for life quote');
+        
         $request->validate([
             'quoteUID' => 'required',
             'formData' => 'required|array',
         ]);
 
-        return $this->lifeQuoteService->lifePlanCreateQuote($request->quoteUID, $request->formData);
+        $model = $this->lifeQuoteService->lifePlanCreateQuote($request->quoteUID, $request->formData);
+        
+        LoggerService::info('fn: lifePlanCreateQuoteLife - plan created for life', [
+            'trace_id' => $request->quoteUID,
+        ]);
+        
+        return $model; 
     }
 
     public function lifePlanUpdate(Request $request): void
     {
+        
         $request->validate([
             'quoteUID' => 'required',
             'formData' => 'required|array',
@@ -161,13 +174,21 @@ class LifeController extends Controller
 
     public function lifePlanSelected(Request $request)
     {
+        LoggerService::startQuoteLogging($request->quoteId);
+        
+        LoggerService::info('fn: lifePlanSelected - selecting plan for life quote');
+        
         $request->validate([
             'planId' => 'required',
             'quoteId' => 'required',
             'version' => 'required'
         ]);
 
-        return $this->lifeQuoteService->lifePlanSelected($request->quoteId, $request->planId, $request->version);
+        $model = $this->lifeQuoteService->lifePlanSelected($request->quoteId, $request->planId, $request->version);
+        
+        LoggerService::info('fn: lifePlanSelected -  Plan selected for life quote');
+        return $model; 
+
     }
 
     public function getLifeProviderPlan(Request $request)

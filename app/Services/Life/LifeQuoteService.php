@@ -43,6 +43,7 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
+use App\Services\Logger\LoggerService;
 
 class LifeQuoteService extends BaseService
 {
@@ -643,68 +644,23 @@ class LifeQuoteService extends BaseService
             'plans' => [$data]
         ];
        
-
+        LoggerService::info('fn: lifePlanCreateQuote', context: [
+            'data' => $reqData,
+            'url' => '/save-manual-life-quote-plan'
+        ]);
+        
         $response = app(abstract: KenService::class)->request('/save-manual-life-quote-plan', 'post', $reqData);
         return $response; 
     }
 
     public function getLifeProviderPlan($data)
     {
-       
+        LoggerService::info('fn: lifePlanCreateQuote', context: [
+            'data' => $data
+        ]);
+
         $response = app(abstract: KenService::class)->request('/fetch-life-provider-plan', 'post', $data);
         return $response; 
-        // dd($resposne); 
-
-        // $client = new \GuzzleHttp\Client;
-
-        // try {
-        //     $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/fetch-life-provider-plan';
-        //     $plansApiToken = config('constants.KEN_API_TOKEN');
-        //     $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
-        //     $plansApiUserName = config('constants.KEN_API_USER');
-        //     $plansApiPassword = config('constants.KEN_API_PWD');
-        //     $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
-        //     $kenRequest = $client->post(
-        //         $plansApiEndPoint,
-        //         [
-        //             'headers' => [
-        //                 'Content-Type' => 'application/json',
-        //                 'Accept' => 'application/json',
-        //                 'x-api-token' => $plansApiToken,
-        //                 'Authorization' => 'Basic '.$authBasic,
-        //             ],
-        //             'body' => json_encode($data),
-        //             'timeout' => $plansApiTimeout,
-        //         ]
-        //     );
-
-        //     $getStatusCode = $kenRequest->getStatusCode();
-
-        //     if ($getStatusCode == 200) {
-        //         $getContents = $kenRequest->getBody();
-        //         $getdecodeContents = json_decode($getContents);
-
-        //         return $getdecodeContents;
-        //     }
-        // } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-        //     $response = $e->getResponse();
-        //     $contents = (string) $response->getBody();
-        //     $response = json_decode($contents);
-
-        //     dd($response); 
-        //     if (isset($response->message)) {
-        //         $responseBodyAsString = $response->message;
-        //     } elseif (isset($response->error)) {
-        //         $responseBodyAsString = $response->error;
-        //     } elseif (isset($response->msg)) {
-        //         $responseBodyAsString = $response->msg;
-        //     } else {
-        //         $responseBodyAsString = 'Failedt to fetch provider plan.';
-        //     }
-        //     return $responseBodyAsString;
-        // }
-
-
     }
 
     /* This function will select the Plan details in the Quote */

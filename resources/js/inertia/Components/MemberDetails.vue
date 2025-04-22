@@ -189,6 +189,8 @@ const emitEvent = () => {
   emit('memberUpdated');
 };
 
+const members = ref([]);
+
 watch(
   () => props.membersDetails,
   newMembersDetails => {

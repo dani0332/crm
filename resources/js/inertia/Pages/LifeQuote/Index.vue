@@ -495,12 +495,6 @@ const manageFilterCount = () => {
   }
 }
 
-const insurerAMLStatusOption = computed(() => {
-  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
-    value: key,
-    label: value,
-  }));
-});
 </script>
 
 <template>
