@@ -230,7 +230,7 @@ class HomeQuoteRepository extends BaseRepository
         try {
             if (isset($response->quoteUID)) {
                 LoggerService::startQuoteLogging($response->quoteUID);
-                info('Dispatching SaveCustomerAddressJob');
+                LoggerService::info('Dispatching SaveCustomerAddressJob', ['quoteUID' => $response->quoteUID]);
                 // add Address fields to Customer Address table
                 $addressData = $data['addressObj'] ?? [];
                 if (! empty($addressData)) {
@@ -244,7 +244,7 @@ class HomeQuoteRepository extends BaseRepository
                 LoggerService::endLogging();
             }
         } catch (\Exception $e) {
-            info('Failed to dispatch SaveCustomerAddressJob', ['error' => $e->getMessage()]);
+            LoggerService::error('Failed to dispatch SaveCustomerAddressJob', ['error' => $e->getMessage()]);
         }
 
         return $response;
@@ -460,6 +460,7 @@ class HomeQuoteRepository extends BaseRepository
 
                 // If specific fields changed, call the getQuotePlans method with getLatestRating=true
                 if ($fieldsChanged) {
+                    LoggerService::info('Fields changed, Fetching quote plans for quote ID: '.$quote->id, ['getLatestRating' => true]);
                     app(\App\Services\HomeQuoteService::class)->getQuotePlans($quote->id, ['getLatestRating' => true]);
                 }
 
@@ -467,7 +468,7 @@ class HomeQuoteRepository extends BaseRepository
                 return $quote;
             } catch (\Exception $e) {
                 // Log error details to help with debugging
-                info("Failed to update quote with UUID: {$uuid}", [
+                LoggerService::error("Failed to update quote with UUID: {$uuid}", [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                     'data' => $data,
@@ -634,7 +635,7 @@ class HomeQuoteRepository extends BaseRepository
 
             return $quote;
         } catch (\Exception $e) {
-            info('Error fetching quote data: '.$e->getMessage());
+            LoggerService::error('Error fetching quote data: ', ['error' => $e->getMessage()]);
             throw $e; // Rethrow the exception so it propagates to the controller
         }
     }
@@ -727,7 +728,7 @@ class HomeQuoteRepository extends BaseRepository
                 $quote->lookUpData = $lookUpData;
             }
         } catch (\Exception $e) {
-            info('Error fetching home lookup data: '.$e->getMessage());
+            LoggerService::error('Error fetching home lookup data: ', ['error' => $e->getMessage()]);
             $quote->lookUpData = [];
         }
 
@@ -738,7 +739,7 @@ class HomeQuoteRepository extends BaseRepository
                 $quote->customerAddressData = $customerAddressData;
             }
         } catch (\Exception $e) {
-            info('Error fetching customer address data: '.$e->getMessage());
+            LoggerService::error('Error fetching customer address data: ', ['error' => $e->getMessage()]);
             $quote->customerAddressData = [];
         }
     }
