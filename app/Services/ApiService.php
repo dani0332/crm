@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Http\Requests\AIGWorkflowRequest;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\AIGWorkflowJob;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\Customer;
@@ -19,6 +21,7 @@ use App\Models\TravelQuote;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 class ApiService
@@ -95,6 +98,7 @@ class ApiService
         $assignAdvisor = $request->input('reAssignAdvisor', false);
         $triggerOCB = $request->input('triggerOCB', false);
         $teamId = $request->input('teamId', false);
+        $sicAdvisorRequested = $request->input('sicAdvisorRequested', false);
 
         $lead = QuoteTypes::getName($allocationType)?->model()?->where('uuid', $allocationId)?->first();
         if ($lead) {
@@ -111,7 +115,7 @@ class ApiService
         }
 
         if (! $assignAdvisor && ! $triggerOCB) {
-            return $this->performLeadAllocation($allocationType, $allocationId, $teamId);
+            return $this->performLeadAllocation($allocationType, $allocationId, $teamId, $sicAdvisorRequested);
         }
 
         return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid request');
@@ -146,10 +150,10 @@ class ApiService
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
-    private function performLeadAllocation($allocationType, $leadId, $teamId)
+    private function performLeadAllocation($allocationType, $leadId, $teamId, $sicAdvisorRequested = false)
     {
         LoggerService::info('------ Lead allocation started for lead : '.$leadId.' ------');
-        $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId);
+        $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId, false, false, $sicAdvisorRequested);
         LoggerService::info('------ Lead allocation ended for lead '.$leadId.' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
@@ -225,11 +229,20 @@ class ApiService
      * @param  string  $allocationType
      * @param  string  $allocationId
      * @param  bool  $teamId
+     * @param  bool  $tierOnly
+     * @param  bool  $overrideAdvisorId
+     * @param  bool  $sicAdvisorRequested
      * @return void
      */
-    private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false)
+    private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false, $sicAdvisorRequested = false)
     {
-        $responsePayload = QuoteTypes::getName($allocationType)->allocate(uuid: $allocationId, teamId: $teamId, overrideAdvisorId: $overrideAdvisorId, tierOnly: $tierOnly);
+        $responsePayload = QuoteTypes::getName($allocationType)->allocate(
+            uuid: $allocationId,
+            teamId: $teamId,
+            overrideAdvisorId: $overrideAdvisorId,
+            tierOnly: $tierOnly,
+            sicAdvisorRequested: $sicAdvisorRequested
+        );
         if (is_null($responsePayload)) {
             LoggerService::error('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
@@ -245,6 +258,7 @@ class ApiService
         return [
             'data' => [
                 'tierId' => $responsePayload['tierId'] ?? 0,
+                'tierName' => $responsePayload['tierName'] ?? null,
                 'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
                 'status' => $status,
             ],
@@ -318,5 +332,49 @@ class ApiService
         SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType?->id());
 
         return apiResponse(null, message: 'ok');
+    }
+
+    public function triggerAIGWorkflow(AIGWorkflowRequest $request)
+    {
+        info('------ AIG workflow trigger request received for lead : '.($request->quoteUuid ?? '').' ------');
+
+        try {
+            $quoteTypeId = $request->quoteTypeId;
+            $quoteUuid = $request->quoteUuid;
+
+            if (! $quoteUuid) {
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Quote UUID is required!');
+            }
+
+            // Get the quote type if provided
+            if ($quoteTypeId) {
+                $quoteType = QuoteTypes::getName($quoteTypeId);
+                if (! $quoteType) {
+                    info("Invalid Quote Type ID {$quoteTypeId} for uuid : {$quoteUuid}");
+
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+                }
+
+                // Verify the quote exists
+                $quote = $quoteType->model()->where('uuid', $quoteUuid)->first();
+                if (! $quote) {
+                    info("Quote not found with uuid: {$quoteUuid} for quoteTypeId: {$quoteTypeId}");
+
+                    return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+                }
+            }
+
+            // Dispatch the AIG workflow job
+            info("------ Dispatching AIG workflow job for lead : {$quoteUuid} ------");
+            dispatch(new AIGWorkflowJob($quoteUuid, $quoteTypeId));
+            info("------ AIG workflow trigger request completed for lead : {$quoteUuid} ------");
+
+            return apiResponse(null, Response::HTTP_OK, 'AIG workflow triggered successfully!');
+        } catch (\Exception $e) {
+            info("------ AIG workflow trigger failed: {$e->getMessage()} ------");
+            Log::error($e);
+
+            return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'AIG workflow trigger failed!');
+        }
     }
 }
