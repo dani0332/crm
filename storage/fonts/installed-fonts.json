@@ -32,5 +32,19 @@
         "normal": "\/var\/www\/html\/blanka\/storage\/fonts\/ubuntu_normal_de3bd9cac4dd30ea4cc4e73c24e9f8d8",
         "500": "\/var\/www\/html\/blanka\/storage\/fonts\/ubuntu_500_a2b721aa8b573ae4e993309d614d3d20",
         "bold": "ubuntu_bold_102fbdc70ebc97d5aacdcb5ef9ac8de3"
+    },
+    "prompt": {
+        "300": "C:\\myAlfred\\Projects\\blanka\\storage\\fonts\/prompt_300_20331ce750d7e40b0391388335e3b55e",
+        "normal": "C:\\myAlfred\\Projects\\blanka\\storage\\fonts\/prompt_normal_ee49727ae3bde5327837b74caaf65633",
+        "500": "C:\\myAlfred\\Projects\\blanka\\storage\\fonts\/prompt_500_bc1f268c593c541c22ac0034176c314b",
+        "600": "C:\\myAlfred\\Projects\\blanka\\storage\\fonts\/prompt_600_79d887dd47f892ee8b03b06c8dba0e7c",
+        "bold": "prompt_bold_74a611595b8928d9179ca1035b956fa5"
+    },
+    "raleway": {
+        "300": "C:\\myAlfred\\Projects\\blanka\\storage\\fonts\/raleway_300_5e0f4fe09b44e45595e1bc1c688f3418",
+        "normal": "C:\\myAlfred\\Projects\\blanka\\storage\\fonts\/raleway_normal_66266c4632471de398a14bdec8413bb7",
+        "500": "C:\\myAlfred\\Projects\\blanka\\storage\\fonts\/raleway_500_9d0390a84e9d510c63ef5ed2c1e4f1e1",
+        "600": "C:\\myAlfred\\Projects\\blanka\\storage\\fonts\/raleway_600_c293a0ca7a724a19cbad472069c4c05b",
+        "bold": "raleway_bold_5b9f5983585810045c0c5c7240f79ea2"
     }
 }
