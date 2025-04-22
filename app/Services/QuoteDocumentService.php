@@ -550,6 +550,16 @@ class QuoteDocumentService extends BaseService
             $fpdf->Image(public_path('images/watermark1.png'), 0, 0, $fpdf->GetPageWidth(), $fpdf->GetPageHeight());
             $fpdf->Output($watermarkPdf, 'F');
 
+            // Check if PDFtk is installed
+            $pdftk_check_output = [];
+            $pdftk_check_return = 0;
+            exec('which pdftk 2>&1', $pdftk_check_output, $pdftk_check_return);
+
+            LoggerService::info("PDFtk availability check for UUID: $uuid");
+            LoggerService::info("PDFtk path: " . (empty($pdftk_check_output) ? "Not found" : implode("\n", $pdftk_check_output)));
+            LoggerService::info("PDFtk check return code: $pdftk_check_return");
+            // end Check if PDFtk is installed
+
             // Use PDFtk's background operation to apply watermark behind content
             $pdftk_command = 'pdftk ' . escapeshellarg($sourceFilePath) .
                           ' background ' . escapeshellarg($watermarkPdf) .
