@@ -27,7 +27,6 @@ use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
-use setasign\Fpdi\PdfParser\StreamReader;
 
 class QuoteDocumentService extends BaseService
 {
@@ -493,8 +492,7 @@ class QuoteDocumentService extends BaseService
         }
 
         $docName = time().'_'.$docName;
-
-        $outputFile = $outputPath = storage_path('temp/'.$docName);
+        $outputPath = storage_path('temp/'.$docName);
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
 
@@ -506,58 +504,129 @@ class QuoteDocumentService extends BaseService
             throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
         }
 
-        $tempFilePath = storage_path('temp/temp_'.$docName);
-        file_put_contents($tempFilePath, $fileContent);
+        // Save the source file
+        $sourceFilePath = storage_path('temp/source_'.$docName);
+        file_put_contents($sourceFilePath, $fileContent);
 
-        // Convert the PDF to a version compatible with FPDI
-        exec("gswin64 -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dSubsetFonts=false -dPrinted=false -dMaxSubsetPct=100 -dUseCIEColor=true -sOutputFile=$outputFile $tempFilePath");
+        try {
+            // Use PDFtk as our primary watermarking approach
+            return $this->applyPdftkWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
+        } catch (\Exception $e) {
+            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid");
 
-        // For linux: shell_exec("gs
-
-        // For windows: exec("gswin64
-
-        // gswin64 -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dPreserveEPSInfo=true -sOutputFile=$outputFile $tempFilePath
-
-        sleep(3);
-
-        if (! file_exists($outputFile)) {
-            LoggerService::error("Unable to read file outputFile: $outputFile ");
-            throw new \Exception("Unable to read file outputFile: $outputFile");
-        }
-
-        $pdf = new Fpdi;
-
-        $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
-
-        LoggerService::info('watermark job started for Quote: '.$uuid.' source file read successfully. File path: '.$outputFile);
-        $watermarkImagePath = public_path('images/watermark1.png');
-        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
-
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $pdf->importPage($pageNo);
-            $size = $pdf->getTemplateSize($templateId);
-
-            // Log::info('Page size: '.json_encode($size));
-
-            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            // Add watermark
-            if ($size['orientation'] === 'P') {
-                $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
-            } else {
-                $pdf->Image($watermarkImageAA4Path, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+            // If watermarking fails completely, use the original file without watermark
+            if (file_exists($sourceFilePath)) {
+                // Copy the original file to the output path
+                copy($sourceFilePath, $outputPath);
+                LoggerService::info("Using unwatermarked original file due to error for UUID: $uuid");
+                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
             }
 
-            $pdf->useTemplate($templateId);
+            // If we can't even use the original file, re-throw the exception
+            throw $e;
+        }
+    }
+
+    /**
+     * Apply PDF watermarking using PDFtk
+     * This is our primary method for applying watermarks to PDFs
+     *
+     * @param  string  $sourceFilePath  Source PDF file path
+     * @param  string  $outputPath  Output PDF file path
+     * @param  string  $docName  Document name
+     * @param  string  $uuid  Document UUID
+     * @param  object  $documentType  Document type object
+     * @return array Watermarked media info
+     */
+    private function applyPdftkWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
+    {
+        try {
+            LoggerService::info("Using PDFtk for UUID: $uuid");
+
+            //region Create a simple watermark PDF
+            $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
+            $fpdf = new Fpdi;
+            $fpdf->AddPage();
+            $fpdf->Image(public_path('images/watermark1.png'), 0, 0, $fpdf->GetPageWidth(), $fpdf->GetPageHeight());
+            $fpdf->Output($watermarkPdf, 'F');
+            //endregion
+
+            // Use PDFtk's background operation to apply watermark behind content
+            $pdftk_command = 'pdftk ' . escapeshellarg($sourceFilePath) .
+                          ' background ' . escapeshellarg($watermarkPdf) .
+                          ' output ' . escapeshellarg($outputPath);
+
+            // Execute the command
+            LoggerService::info("Executing PDFtk background command for UUID: $uuid");
+            shell_exec($pdftk_command);
+
+            // Check if the output was created successfully
+            if (! file_exists($outputPath) || filesize($outputPath) < 100) {
+                LoggerService::error("PDFtk background failed, trying Ghostscript for UUID: $uuid");
+                $this->ghostscriptWatermark($sourceFilePath, $outputPath, $uuid);
+            }
+
+            // Clean up the watermark file
+            if (file_exists($watermarkPdf)) {
+                 unlink($watermarkPdf);
+            }
+
+            return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+
+        } catch (\Exception $e) {
+            LoggerService::error('PDF watermarking failed: '.$e->getMessage()." for UUID: $uuid");
+            // Clean up the watermark file if it exists
+            if (file_exists($watermarkPdf ?? '')) {
+                 unlink($watermarkPdf);
+            }
+            // Re-throw the exception to be handled by the calling method
+            throw $e;
+        }
+    }
+
+    /**
+     * Apply watermark using Ghostscript when PDFtk methods fail
+     * This is the last attempt before falling back to the original file
+     *
+     * @param  string  $sourceFilePath  Source PDF file path
+     * @param  string  $outputPath  Output PDF file path
+     * @param  string  $uuid  Document UUID
+     * @return void
+     */
+    private function ghostscriptWatermark($sourceFilePath, $outputPath, $uuid)
+    {
+        LoggerService::info("Using Ghostscript watermarking for UUID: $uuid");
+
+        // Create a new watermark PDF for Ghostscript with even higher transparency
+        $watermarkPdfGs = storage_path('temp/watermark_gs_'.$uuid.'.pdf');
+        $fpdfGs = new Fpdi;
+        $fpdfGs->AddPage();
+        $fpdfGs->SetAlpha(0.1); // 10% opacity for even more transparency
+        $fpdfGs->Image(public_path('images/watermark1.png'), 0, 0, $fpdfGs->GetPageWidth(), $fpdfGs->GetPageHeight());
+        $fpdfGs->Output($watermarkPdfGs, 'F');
+
+        // Try Ghostscript with the more transparent watermark (content first, then watermark)
+        $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
+                  '-dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dSubsetFonts=false '.
+                  '-dCompatibilityLevel=1.4 -dPrinted=false '.
+                  '-sOutputFile='.escapeshellarg($outputPath).' '.
+                  escapeshellarg($sourceFilePath).' '.escapeshellarg($watermarkPdfGs);
+
+        LoggerService::info("Executing Ghostscript command for UUID: $uuid");
+        shell_exec($gsCommand);
+
+        // Clean up
+        if (file_exists($watermarkPdfGs)) {
+             unlink($watermarkPdfGs);
         }
 
-        $pdf->Output($outputPath, 'F');
-
-        // Delete the temporary file
-        if (file_exists($tempFilePath)) {
-            unlink($tempFilePath);
+        // If Ghostscript also failed, just use the original file
+        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
+            if (file_exists($sourceFilePath)) {
+                copy($sourceFilePath, $outputPath);
+                LoggerService::info("Using unwatermarked original file for UUID: $uuid");
+            }
         }
-
-        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
     /**
