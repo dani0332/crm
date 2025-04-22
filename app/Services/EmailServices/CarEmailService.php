@@ -86,7 +86,7 @@ class CarEmailService extends BaseService
 
                 $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
                 $nbFollowupDelayDuration = ! empty($nbFollowupDelayDuration->value) ? $nbFollowupDelayDuration->value : 24;
-                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes((int) $nbFollowupDelayDuration));
+                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours((int) $nbFollowupDelayDuration));
                 info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
             } else {
                 info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
@@ -365,6 +365,7 @@ class CarEmailService extends BaseService
             throw $th;
         }
     }
+
     public function buildNBMotorFollowupEmailData($lead, $advisor, $type, $templateType = null)
     {
         return (object) [
@@ -437,5 +438,73 @@ class CarEmailService extends BaseService
             info("NBEventFollowup-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
             throw $th;
         }
+    }
+
+    public function sendAIGWorkflow($lead)
+    {
+        try {
+            info('Sending AIGWorkflow for lead: '.$lead->uuid.' | Time: '.now());
+            if (empty($lead->aig_flow_executed_at)) {
+                $advisor = User::where('id', $lead->advisor_id)->first();
+                $emailData = $this->buildAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::AIG_WORKFLOW);
+                // using the same event for AIG and NB Motor and have a AIG branch in that event workflow
+                $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+
+                if ($birdAIGEvent) {
+                    $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent->value, $emailData);
+                    info("AIGWorkflow event triggered for lead Ref-ID: {$lead->uuid} | Time: ".now());
+                    info("AIGWorkflow response: {$response->status_code} | Ref-ID: {$lead->uuid} | Time: ".now());
+
+                    $lead->aig_flow_executed_at = now();
+                    info("AIGWorkflow lead ref-id: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+                    $lead->save();
+
+                    if (! empty($response->headers['Run-Id'])) {
+                        $this->createQuoteFlowDetails($lead, $response);
+                    }
+                } else {
+                    info("AIGWorkflow key not found for lead: Ref-ID: {$lead->uuid} | Time: ".now());
+                }
+            } else {
+                info("AIGWorkflow already executed: {$lead->aig_flow_executed_at} for lead Ref-ID: {$lead->uuid} | Time: ".now());
+            }
+
+            return $response ?? null;
+        } catch (\Throwable $th) {
+            $errorMessage = "AIGWorkflow-Error: while sending workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            info($errorMessage);
+            info("AIGWorkflow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            throw $th;
+        }
+    }
+
+    /**
+     * Build data for AIG workflow
+     */
+    private function buildAIGWorkflowData($lead, $advisor, $type, $templateType = null)
+    {
+        return (object) [
+            'quoteUID' => $lead->uuid,
+            'customerEmail' => $lead->email,
+            'uuid' => $lead->uuid,
+            'refID' => $lead->code,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'advisorId' => $advisor->id ?? null,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorDetails' => $advisor ?? null,
+            'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflowType' => $type,
+            'templateType' => $templateType ?? null,
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+            'createdAt' => $lead->created_at,
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::CAR, $lead->uuid),
+        ];
     }
 }

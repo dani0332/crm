@@ -65,7 +65,6 @@ const updateSelectedPlan = () => {
       data.plan_id = props.plan.id;
     }
   }
-
   data.insurance_provider_id = props.insuranceProviderId;
   data.code = props.code;
   axios

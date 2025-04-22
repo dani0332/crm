@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
@@ -15,6 +16,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuotePlanDetail;
 use App\Models\Payment;
+use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use App\Traits\QuoteTraits\QuoteAllocatable;
@@ -81,7 +83,7 @@ trait QuoteModelTrait
     public static function applySegmentFilter($query, $segmentFilter, $alias, $quoteTypeId)
     {
         $user = auth()->user();
-        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
+        if ($user && $user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
             $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -108,6 +110,14 @@ trait QuoteModelTrait
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
                 ]);
+            })->when($segmentFilter === QuoteSegmentEnum::AIG->value, function ($query) use ($alias, $quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                });
             });
         }
     }
@@ -164,10 +174,10 @@ trait QuoteModelTrait
     {
         if ($isSIC) {
             return (! $this->isStale() && ! $this->isPaid()) &&
-            (request('isRequestedForAnAdvisor', false) ||
-            $this->sic_advisor_requested == 1 ||
-            $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
-            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD);
+                (request('isRequestedForAnAdvisor', false) ||
+                    $this->sic_advisor_requested == 1 ||
+                    $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
+                    $this->assignment_type == AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD);
         }
 
         // If lead is not stale and not paid, or previously lead is bought lead or reassigned as bought lead
@@ -259,5 +269,23 @@ trait QuoteModelTrait
             ->whereIn('pua_type', PuaEnum::TAGS)
             ->where('plan_id', $this->plan_id)
             ->exists();
+    }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
+    }
+
+    public function customerType(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $exists = QuoteRequestEntityMapping::where('quote_type_id', QuoteTypeId::Health)
+                    ->where('quote_request_id', $this->id)
+                    ->exists();
+
+                return $exists ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+            }
+        );
     }
 }
