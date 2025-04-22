@@ -1109,10 +1109,10 @@ class SplitPaymentService
         // Get active payment splits only
         $activeSplits = $masterPayment->paymentSplits()->get();
         $totalSplits = $activeSplits->count();
-        
+
         if ($totalSplits === 1) {
             $this->updateMasterPaymentForSingleSplit($masterPayment, $activeSplits->first());
-        } else if ($totalSplits > 1) {
+        } elseif ($totalSplits > 1) {
             $this->updateMasterPaymentForMultipleSplits($masterPayment, $totalSplits);
         }
 
@@ -1128,7 +1128,7 @@ class SplitPaymentService
         $masterPayment->total_payments = 1;
         $masterPayment->frequency = PaymentFrequency::UPFRONT;
         $masterPayment->payment_methods_code = $remainingSplit->payment_method;
-        
+
         if ($remainingSplit->payment_status_id != PaymentStatusEnum::PAID) {
             $masterPayment->payment_status_id = $remainingSplit->payment_status_id;
         }

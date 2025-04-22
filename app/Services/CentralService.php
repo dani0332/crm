@@ -60,7 +60,7 @@ use Illuminate\Support\Facades\Log;
 
 class CentralService extends BaseService
 {
-    use GenericQueriesAllLobs, TeamHierarchyTrait, HandlesDeadlockRetries;
+    use GenericQueriesAllLobs, HandlesDeadlockRetries, TeamHierarchyTrait;
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
