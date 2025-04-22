@@ -1027,7 +1027,7 @@ class HomeQuoteService extends BaseService
     {
         $logPrefix = self::class.' fn: isPlanModifyAllowed ';
         $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
-        LoggerService::startQuoteLogging($quote->uuid);
+        LoggerService::startQuoteLogging($quote);
 
         $isAllowed = false;
 
