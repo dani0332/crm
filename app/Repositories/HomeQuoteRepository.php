@@ -418,15 +418,35 @@ class HomeQuoteRepository extends BaseRepository
 
                 $mappedData['personal_quote_id'] = $quote->id;
 
+                // Track which fields were changed
+                $fieldsChanged = false;
                 $existingHomeQuote = HomeQuote::where('uuid', $uuid)->first();
 
                 if ($existingHomeQuote) {
+                    // Check if any of the fields that require a plan update have changed
+                    $fieldsThatTriggerPlanUpdate = [
+                        'possession_type_id',
+                        'accommodation_type_id',
+                        'coverage_type_id',
+                        'building_value',
+                        'contents_value_id',
+                        'personal_belongings_value_id',
+                    ];
+
+                    foreach ($fieldsThatTriggerPlanUpdate as $field) {
+                        if (isset($mappedData[$field]) && $mappedData[$field] != $existingHomeQuote->$field) {
+                            $fieldsChanged = true;
+                            break;
+                        }
+                    }
+
                     // If a record with this UUID exists, update it directly
                     $existingHomeQuote->update($mappedData);
                 } else {
                     // No record exists with this UUID, so it's safe to create a new one
                     $mappedData['uuid'] = $uuid;
                     HomeQuote::create($mappedData);
+                    $fieldsChanged = true; // New record, so treat as changed
                 }
 
                 // Refresh the quote to load the updated or newly created homeQuote
@@ -436,6 +456,11 @@ class HomeQuoteRepository extends BaseRepository
                 if (! empty($data['addressObj']) || is_array($data['addressObj'])) {
                     // Update or create the customer address
                     SaveCustomerAddressJob::dispatch($uuid, $data['addressObj']);
+                }
+
+                // If specific fields changed, call the getQuotePlans method with getLatestRating=true
+                if ($fieldsChanged) {
+                    app(\App\Services\HomeQuoteService::class)->getQuotePlans($quote->id, ['getLatestRating' => true]);
                 }
 
                 // Return the updated quote
