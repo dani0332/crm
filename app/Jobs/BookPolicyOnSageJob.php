@@ -74,7 +74,7 @@ class BookPolicyOnSageJob implements ShouldQueue
             info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));
             info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished');
         } else {
-            info('job:SendUpdateSageJob - Process Skipped - QuoteType: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
+            info('job:BookPolicyOnSageJob - Process Skipped - Sage Process ID : '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);

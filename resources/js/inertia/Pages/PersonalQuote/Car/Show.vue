@@ -1,10 +1,10 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -1535,7 +1535,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'paymentEntityModel', 'bookPolicyDetails'],
+    only: ['payments', 'paymentEntityModel', 'bookPolicyDetails', 'quote'],
   });
 };
 
@@ -1552,6 +1552,7 @@ const isPlanDetailEnabled = computed(() => {
 if (isPlanDetailEnabled.value && page.props.record.insurer_name !== '') {
   selectedProviderPlan.value.premium = page.props.record.price_with_vat;
   selectedProviderPlan.value.providerName = page.props.record.insurer_name;
+  selectedProviderPlan.value.planName = 'N/A';
 }
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -3489,27 +3490,6 @@ const isCommercialVehicle = computed(() => {
                     Copy
                   </x-button>
                 </div>
-                <!-- <template
-                  v-if="item.actualPremium > 0 && item.id != record.plan_id"
-                >
-                  <x-button
-                    v-if="
-                      access.carAdvisorCanEditPaymentCancelledRefund ||
-                      access.carAdvisorCanEditInsurer ||
-                      access.carManagerCanEditInsurer
-                    "
-                    size="xs"
-                    color="error"
-                    outlined
-                    @click="confirmChangeInsurer(item)"
-                    :disabled="
-                      page.props.linkedQuoteDetails.childLeadsCount > 0
-                    "
-                  >
-                    Change Insurer
-                  </x-button>
-                </template> -->
-
                 <span>
                   <SelectPlan
                     v-if="selectedProviderPlan.id != item.id"
@@ -4242,8 +4222,5 @@ const isCommercialVehicle = computed(() => {
     :logs="clientInquiryLogs"
   />
 
-  <lead-raw-data
-    :modelType="'Car'"
-    :code="$page.props.quote.code"
-  ></lead-raw-data>
+  <lead-raw-data :modelType="'Car'"></lead-raw-data>
 </template>

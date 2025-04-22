@@ -56,13 +56,6 @@ class HomeQuote extends Model implements AuditableContract
             }
         });
     }
-    public function getAuditables()
-    {
-        return [
-            'auditable_type' => self::class,
-        ];
-    }
-
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
@@ -155,8 +148,54 @@ class HomeQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => HomeQuote::class, 'key' => 'personal_quote_id'],
+            ],
+        ];
+    }
+
     public function quoteDetail()
     {
         return $this->hasOne(HomeQuoteRequestDetail::class);
+    }
+
+    public function subArea()
+    {
+        return $this->belongsTo(SubArea::class, 'sub_area_id');
+    }
+
+    public function rangeLookup()
+    {
+        return $this->belongsTo(RangeLookup::class, 'owner_occupancy_type_id', 'id');
+    }
+
+    public function hasContents(): bool
+    {
+        return ! empty($this->contents_value_id);
+    }
+
+    public function contents()
+    {
+        return $this->belongsTo(RangeLookup::class, 'contents_value_id', 'id');
+    }
+
+    public function hasPersonalBelongings(): bool
+    {
+        return ! empty($this->personal_belongings_value_id);
+    }
+
+    public function personalBelongings()
+    {
+        return $this->belongsTo(RangeLookup::class, 'personal_belongings_value_id', 'id');
+    }
+
+    public function hasBuilding(): bool
+    {
+        return ! empty($this->building_value);
     }
 }
