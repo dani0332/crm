@@ -619,12 +619,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
         Route::post('send-bridger-response', [AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
-        Route::get('aml-fetch-entity', [AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
-        Route::get('get-insured-person', [AMLController::class, 'getInsuredPersonDetails'])->name('get-insured-person');
+        Route::get('get-insured-details', [AMLController::class, 'getInsuredDetails'])->name('get-insured-details');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
-        Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
-        Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
-        Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
+        // Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
+        // Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
+        // Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
         Route::get('export', [AMLController::class, 'export'])->middleware(SetReadDbConnection::class);
         Route::post('temp-skip-bridger-aml', [AMLController::class, 'tempSkipBridgerAML'])->name('temp-skip-bridger-aml');
     });
@@ -689,8 +688,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/bike-model-by-id', [AjaxController::class, 'bikeModelBasedOnCarMakeId']);
     Route::get('/commercial-car-model-by-id', [AjaxController::class, 'commercialCarModelBasedOnCarMakeId']);
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
-    Route::post('/{quoteType}/upload-individual-kycdoc', [AjaxController::class, 'uploadKycIndividualDocument']);
-    Route::post('/{quoteType}/upload-entity-kycdoc', [AjaxController::class, 'uploadKycEntityDocument']);
+    // Route::post('/{quoteType}/upload-individual-kycdoc', [AjaxController::class, 'uploadKycIndividualDocument']);
+    // Route::post('/{quoteType}/upload-entity-kycdoc', [AjaxController::class, 'uploadKycEntityDocument']);
+    Route::post('update-insured-kyc', [AMLController::class, 'insuredKycDetailsUpdate'])->name('update-insured-kyc');
     Route::post('/{quoteType}/update-risk', [AjaxController::class, 'updateRisk']);
     Route::get('/{quoteType}/quote-detail/{quoteId}', [AjaxController::class, 'quoteDetail']);
     // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed

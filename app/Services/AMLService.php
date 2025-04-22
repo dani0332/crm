@@ -6,9 +6,11 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -25,16 +27,20 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\KycLog;
+use App\Models\Lookup;
+use App\Models\Nationality;
 use App\Models\LifeQuote;
 use App\Models\ManualAMLLog;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
+use App\Repositories\LookupRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -692,6 +698,85 @@ class AMLService
         }
 
         return $gender;
+    }
+
+    public function getKYCLogs($quoteTypeId, $quoteRequestId)
+    {
+        return AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
+            ->where(function ($aml) {
+                $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                $aml->orWhereNull('decision');
+            })->whereNull('screenshot')->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA])
+            ->orderBy('created_at', 'asc')->get();
+    }
+
+    public function getAMLLookups()
+    {
+        $lookupsForAML = [
+            LookupsEnum::RESIDENT_STATUS,
+            LookupsEnum::DOCUMENT_ID_TYPE,
+            LookupsEnum::ENTITY_DOCUMENT_TYPE,
+            LookupsEnum::MODE_OF_CONTACT,
+            LookupsEnum::MODE_OF_DELIVERY,
+            LookupsEnum::EMPLOYMENT_SECTOR,
+            LookupsEnum::LEGAL_STRUCTURE,
+            LookupsEnum::ISSUANCE_PLACE,
+            LookupsEnum::ISSUING_AUTHORITY,
+            LookupsEnum::COMPANY_POSITION,
+            LookupsEnum::PROFESSIONAL_TITLE,
+            LookupsEnum::UBO_RELATION,
+            LookupsEnum::COMPANY_TYPE,
+            LookupsEnum::MEMBER_RELATION,
+        ];
+
+        return Lookup::whereIn('key', $lookupsForAML)->get()->groupBy('key')
+            ->mapWithKeys(fn($item, $key) => [str_replace('-', '_', $key) => $item]);
+    }
+
+    public function getInsuredDetails($customerId, $quoteTypeId, $quoteRequestId)
+    {
+        return CustomerInsured::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+            'customer_id' => $customerId,
+        ])->with(['customer', 'insured', 'insured.insuredKyc'])->first();
+    }
+
+    // TODO:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data 
+    public function getEntityDetails($quoteTypeId, $quoteRequestId)
+    {
+        return QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
+            ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
+            ->first() ?? [];
+    }
+
+    public function prepareInsuredKycFormData($insuredKycRequest)
+    {
+        $responseData = $insuredKycRequest->toArray();
+
+        // TODO:: this need to be segerigate according to customer type
+        $responseData['nationality_text'] = Nationality::where('id', $responseData['nationality_id'])->value('text');
+        $responseData['country_name'] = Nationality::where('id', $responseData['country_of_residence'])->value('country_name');
+        $responseData['birth_place'] = Nationality::where('id', $responseData['place_of_birth'])->value('country_name');
+        $responseData['resident_status_text'] = LookupRepository::where('code', $responseData['resident_status'])->where('key', LookupsEnum::RESIDENT_STATUS)->value('text');
+        $responseData['id_type_text'] = LookupRepository::where('code', $responseData['id_type'])->where('key', LookupsEnum::DOCUMENT_ID_TYPE)->value('text');
+        $responseData['mode_of_contact_text'] = LookupRepository::where('code', $responseData['mode_of_contact'])->where('key', LookupsEnum::MODE_OF_CONTACT)->value('text');
+        $responseData['mode_of_delivery_text'] = LookupRepository::where('code', $responseData['mode_of_delivery'])->where('key', LookupsEnum::MODE_OF_DELIVERY)->value('text');
+        $responseData['employment_sector_text'] = LookupRepository::where('code', $responseData['employment_sector'])->where('key', LookupsEnum::EMPLOYMENT_SECTOR)->value('text');
+        $responseData['company_position_text'] = LookupRepository::where('code', $responseData['company_position'])->where('key', LookupsEnum::COMPANY_POSITION)->value('text');
+        $responseData['professional_title_text'] = LookupRepository::where('code', $responseData['professional_title'])->where('key', LookupsEnum::PROFESSIONAL_TITLE)->value('text');
+
+        $data['corporation_country'] = Nationality::where('id', $responseData['country_of_corporation'])->value('country_name');
+        $data['manager_country'] = Nationality::where('id', $responseData['manager_nationality'])->value('text');
+        $data['industry_type_text'] = LookupRepository::where('code', $responseData['industry_type'])->where('key', LookupsEnum::COMPANY_TYPE)->value('text');
+        $data['legal_structure_text'] = LookupRepository::where('code', $responseData['legal_structure'])->where('key', LookupsEnum::LEGAL_STRUCTURE)->value('text');
+        $data['issuance_place_text'] = LookupRepository::where('code', $responseData['place_of_issue'])->where('key', LookupsEnum::ISSUANCE_PLACE)->value('text');
+        $data['document_type_text'] = LookupRepository::where('code', $responseData['id_document_type'])->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
+        $data['issuing_authority_text'] = LookupRepository::where('code', $responseData['issuing_authority'])->where('key', LookupsEnum::ISSUING_AUTHORITY)->value('text');
+        $data['manager_position_text'] = LookupRepository::where('code', $responseData['manager_position'])->where('key', LookupsEnum::UBO_RELATION)->value('text');
+        $data['product_type'] = QuoteTypes::getName($insuredKycRequest->quote_type_id);
+
+        $data['document_type_code'] = DocumentTypeCode::KYCDOC;
     }
 
     public function tempSkipBridgerAML($skipBridgerScreeningRequest)
