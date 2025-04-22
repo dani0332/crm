@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
   isOpen: Boolean,
   title: String,
+  message: String,
   confirmText: {
     type: String,
     default: 'Confirm',
@@ -17,6 +18,7 @@ const props = defineProps({
     default: 'orange',
   },
   isLoading: Boolean,
+  isProcessing: Boolean,
   isCheckboxRequired: {
     type: Boolean,
     default: false,
@@ -26,15 +28,26 @@ const props = defineProps({
 });
 
 const isChecked = ref(false);
-const emit = defineEmits(['close', 'confirm']);
+const emit = defineEmits(['close', 'confirm', 'cancel']);
 
 const closeModal = () => {
+  if (emit('cancel')) {
+    // If the new cancel event is handled, use it
+    return;
+  }
+  // Otherwise, fallback to old close event
   emit('close');
 };
 
 const confirm = () => {
   emit('confirm');
 };
+
+// Computed property to determine if the modal is in a loading state
+const isModalLoading = computed(() => {
+  // Support both old isLoading and new isProcessing props
+  return props.isLoading || props.isProcessing;
+});
 </script>
 
 <template>
@@ -78,6 +91,7 @@ const confirm = () => {
         </div>
       </div>
       <div class="w-full h-full mt-2 flex flex-col items-center">
+        <!-- Checkbox section if required -->
         <div v-if="isCheckboxRequired" class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start">
           <div class="flex items-center text-center mr-2 mt-4">
             <input
@@ -91,9 +105,17 @@ const confirm = () => {
           </div>
         </div>
         
+        <!-- Message display (for new structure) -->
+        <div v-if="message" class="text-center p-6">
+          <p class="mb-4">{{ message }}</p>
+          <p class="font-semibold">This action cannot be undone.</p>
+        </div>
+        
+        <!-- Slot for custom content (for old structure) -->
         <slot></slot>
         
         <div class="flex gap-4 pb-6 pt-4">
+          <!-- Tooltip-wrapped disabled button for checkbox requirement -->
           <x-tooltip v-if="isCheckboxRequired && !isChecked">
             <x-button
               size="lg"
@@ -108,18 +130,20 @@ const confirm = () => {
             </template>
           </x-tooltip>
           
+          <!-- Confirm button (when checkbox not required or is checked) -->
           <x-button
             v-if="!isCheckboxRequired || isChecked"
             size="lg"
             type="button"
             :color="confirmColor"
             class="px-4 py-2"
-            :loading="isLoading"
+            :loading="isModalLoading"
             @click="confirm"
           >
             <span>{{ confirmText }}</span>
           </x-button>
           
+          <!-- Cancel button -->
           <x-button
             size="lg"
             type="button"

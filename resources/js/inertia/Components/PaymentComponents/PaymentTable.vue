@@ -2,7 +2,8 @@
 import { ref, computed, onMounted } from 'vue';
 import PaymentHeader from './PaymentHeader.vue';
 import PaymentTableHeader from './PaymentTableHeader.vue';
-import PaymentTableRow from './PaymentTableRow.vue';
+import PaymentRow from './PaymentRow.vue';
+import PaymentSplitRow from './PaymentSplitRow.vue';
 import DocumentGallery from './DocumentGallery.vue';
 import ConfirmationModal from './ConfirmationModal.vue';
 import ToolTip from './../../Components/ToolTip.vue';
@@ -71,6 +72,13 @@ const retryPaymentErrorMessage = ref('');
 // Stored payment objects for actions
 let voidPaymentObject = {};
 let deletePaymentObject = {};
+
+// Add state for expanded rows
+const expandedPaymentRows = ref({});
+
+const toggleExpand = (index) => {
+  expandedPaymentRows.value[index] = !expandedPaymentRows.value[index];
+};
 
 const isChildPaymentDeletable = computed(() => {
   if (props.payments.length !== 2) return false;
@@ -458,6 +466,7 @@ const preparedPayments = computed(() => {
     };
   });
 });
+
 </script>
 
 <template>
@@ -466,7 +475,7 @@ const preparedPayments = computed(() => {
       <template #header>
         <div class="flex justify-between items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
-            Manage Payments
+            Manage Payments Refactor Component
           </h3>
         </div>
       </template>
@@ -502,28 +511,47 @@ const preparedPayments = computed(() => {
                   </td>
                 </tr>
 
-                <!-- Payment Row Components -->
+                <!-- Payment Rows with Splits -->
                 <template v-for="(payment, index) in preparedPayments" :key="payment.id">
-                  <PaymentTableRow
+                  <!-- Main payment row -->
+                  <PaymentRow
                     :payment="payment"
                     :index="index"
-                    :storageUrl="storageUrl"
-                    :can="can"
-                    :paymentTooltipEnum="paymentTooltipEnum"
+                    :isExpanded="expandedPaymentRows[index]"
                     :isChildPaymentDeletable="isChildPaymentDeletable"
-                    :vatValue="vatValue"
-                    @void-payment-model="voidPaymentModel"
-                    @delete-payment-model="deletePaymentModel"
-                    @capture-payment="capturePayment"
-                    @alert-capture="alertCapture"
+                    :is_lacking_payment="false"
+                    :amlAndKycTooltip="''"
+                    :disableMainPaymentApproval="false"
+                    :isApproveConfirmed="false"
+                    :capturePaymentValidationInProcess="false"
+                    @toggle-expand="toggleExpand"
                     @edit-payment="editPayment"
-                    @copy-payment-link="copyPaymentLink"
-                    @open-inner-modal="openInnerModal"
-                    @retry-process="retryProcess"
-                    @trigger-post-prepayment="triggerPostPrepayment"
-                    @capture-transaction="captureTransaction"
-                    @download-offline-payment-url="downloadOfflinePaymentUrl"
+                    @delete-payment="deletePaymentModel"
+                    @capture-payment="capturePayment"
+                    @approve-payment="capturePayment"
+                    @void-payment="voidPaymentModel"
+                    @alert-capture="alertCapture"
+                    @open-aml-verification="() => {}"
                   />
+                  
+                  <!-- Payment split rows (visible when payment is expanded) -->
+                  <template v-if="expandedPaymentRows[index]">
+                    <PaymentSplitRow
+                      v-for="(splitPayment, splitIndex) in payment.payment_splits"
+                      :key="splitPayment.id"
+                      :splitPayment="splitPayment"
+                      :parentPayment="payment"
+                      :splitIndex="splitIndex"
+                      :linkedQuoteDetails="props.linkedQuoteDetails"
+                      :quoteRequest="quoteRequest"
+                      :paymentAllocationStatusTooltip="(status) => status"
+                      @view-payment="(parent, splitId, splitNo, action) => editPayment({...parent, split_id: splitId, split_sr_no: splitNo}, 'view')"
+                      @generate-cc-link="(code, srNo, statusId) => copyPaymentLink(splitPayment.payment_link, statusId)"
+                      @delete-split-payment="(id, statusId) => {}"
+                      @retry-split-payment="(jobId, message) => retryProcess(splitPayment.id, jobId)"
+                      @post-prepayment="triggerPostPrepayment"
+                    />
+                  </template>
                 </template>
               </tbody>
             </table>
@@ -547,53 +575,31 @@ const preparedPayments = computed(() => {
         <ConfirmationModal
           :isOpen="voidPaymentModelPopup"
           title="Void Payment"
-          confirmText="Confirm"
-          cancelText="Cancel"
-          confirmColor="red"
-          :isLoading="voidPaymentProcess"
-          @close="closeVoidModal"
+          message="Are you sure you want to void this payment?"
+          :isProcessing="voidPaymentProcess"
           @confirm="voidPayment"
-        >
-          <div class="text-center p-6">
-            <p class="mb-4">Are you sure you want to void this payment?</p>
-            <p class="font-semibold">This action cannot be undone.</p>
-          </div>
-        </ConfirmationModal>
+          @cancel="closeVoidModal"
+        />
         
         <!-- Delete Payment Confirmation Modal -->
         <ConfirmationModal
           :isOpen="deletePaymentModelPopup"
           title="Delete Payment"
-          confirmText="Confirm"
-          cancelText="Cancel"
-          confirmColor="red"
-          :isLoading="deletePaymentProcess"
-          @close="closeDeleteModal"
+          message="Are you sure you want to delete this payment?"
+          :isProcessing="deletePaymentProcess"
           @confirm="deletePayment"
-        >
-          <div class="text-center p-6">
-            <p class="mb-4">Are you sure you want to delete this payment?</p>
-            <p class="font-semibold">This action cannot be undone.</p>
-          </div>
-        </ConfirmationModal>
+          @cancel="closeDeleteModal"
+        />
         
-        <!-- Retry Process Confirmation Modal -->
+        <!-- Retry Payment Confirmation Modal -->
         <ConfirmationModal
           :isOpen="isRetryModalOpen"
-          title="Retry Process"
-          confirmText="Retry"
-          cancelText="Cancel"
-          confirmColor="emerald"
-          @close="closeRetryModal"
+          title="Retry Payment Process"
+          message="Are you sure you want to retry this payment process?"
+          :isProcessing="false"
           @confirm="confirmRetryProcess"
-        >
-          <div class="text-center p-6">
-            <p>Are you sure you want to retry this process?</p>
-            <p v-if="retryPaymentErrorMessage" class="text-red-500 mt-4">
-              {{ retryPaymentErrorMessage }}
-            </p>
-          </div>
-        </ConfirmationModal>
+          @cancel="closeRetryModal"
+        />
       </template>
     </Collapsible>
   </div>

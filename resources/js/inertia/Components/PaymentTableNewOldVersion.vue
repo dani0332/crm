@@ -3945,7 +3945,7 @@ onBeforeMount(() => {
       <template #header>
         <div class="flex justify-between items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
-            Manage Payments
+            Manage Payments Existing Structure
           </h3>
         </div>
       </template>

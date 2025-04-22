@@ -16,16 +16,20 @@ Displays the header section of the payment management interface with action butt
 ### PaymentTableHeader.vue
 Renders the table header with column names and tooltips for the payment management table.
 
-### PaymentTableRow.vue
-Displays a payment row with its associated split payments. Includes functionality for:
-- Viewing payment details
-- Editing payments
-- Copying payment links
-- Deleting payments
-- Voiding payments
-- Capturing/approving payments
-- Retrying failed payment processes
-- Viewing uploaded documents
+### PaymentRow.vue
+Dedicated component for rendering a payment row in the payment table. Features:
+- Expandable row to show/hide payment splits
+- Payment details display
+- Action buttons for Edit, Delete, Capture, Approve, and Void operations
+- Status indicators with appropriate styling
+- Permission-based button display
+
+### PaymentSplitRow.vue
+Dedicated component for rendering a payment split row that appears when a payment is expanded. Features:
+- Detailed view of individual payment splits
+- Action buttons for View, Copy Payment Link, Delete, Retry, and Post operations
+- Displays appropriate data for split payments
+- Handles specific split payment operations
 
 ### DocumentGallery.vue
 A modal component for viewing uploaded payment documents with features like:
@@ -49,18 +53,27 @@ Import components individually or use the index.js barrel file:
 import PaymentTable from './PaymentComponents/PaymentTable.vue';
 
 // Or import using the barrel file
-import { PaymentTable, PaymentHeader } from './PaymentComponents';
+import { PaymentTable, PaymentHeader, PaymentRow, PaymentSplitRow } from './PaymentComponents';
 ```
 
 The main entry point is the `PaymentTable` component which accepts properties for payments data and event handlers for payment actions.
 
-### Main Actions
+## Main Actions
 
 1. **Add Manual Payment**: Adds a new manual payment entry
 2. **Download Proforma Payment**: Downloads the proforma payment request document
 3. **Update Total Price**: Updates the total price of a payment (requires specific permissions)
 
-### Payment Status Management
+## PaymentRow and PaymentSplitRow Implementation
+
+The PaymentRow and PaymentSplitRow components separate the display logic for payments and their splits, which previously were combined in a single template:
+
+- **PaymentRow**: Handles the main payment display with expand/collapse functionality
+- **PaymentSplitRow**: Shows individual payment splits when a payment is expanded
+
+This separation allows for cleaner code and better organization, as each component focuses on a specific part of the UI.
+
+## Payment Status Management
 
 The components support various payment statuses:
 - Pending

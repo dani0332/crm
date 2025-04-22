@@ -7,6 +7,9 @@ const permissionEnum = page.props.permissionsEnum;
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
+const useCan = permission => props.can(permission);
+const emit = defineEmits(['add-payment-modal', 'download-proforma-payment']);
+
 const props = defineProps({
   payments: Array,
   can: Object,
@@ -25,10 +28,6 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['add-payment-modal', 'download-proforma-payment']);
-
-const useCan = permission => props.can(permission);
-
 const downloadProformaPayment = () => {
   emit('download-proforma-payment');
 };
@@ -36,6 +35,7 @@ const downloadProformaPayment = () => {
 const addPaymentModal = () => {
   emit('add-payment-modal');
 };
+
 </script>
 
 <template>

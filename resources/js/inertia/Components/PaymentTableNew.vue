@@ -11,6 +11,9 @@ import { time } from 'highcharts';
 // New Flow Implementation
 import PaymentTableHeader from './../Components/PaymentComponents/PaymentTableHeader.vue';
 import PaymentHeader from './../Components/PaymentComponents/PaymentHeader.vue';
+import PaymentRow from './PaymentComponents/PaymentRow.vue';
+import PaymentSplitRow from './PaymentComponents/PaymentSplitRow.vue';
+import { usePayment } from '../Composables/usePayment';
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -95,6 +98,8 @@ const props = defineProps({
     default: false,
   },
 });
+
+const { formatDate, formatAmount, formatString, filterCCPayments } = usePayment();
 
 // All reactive properties are defined here
 const createPaymentModal = ref(false);
@@ -432,6 +437,13 @@ const initialTotalPriceWithoutVat = computed(() => {
   return totalPrice.value / (1 + vatRate);
 });
 
+// Add state for expanded rows
+const expandedPaymentRows = ref({});
+
+const toggleExpand = (index) => {
+  expandedPaymentRows.value[index] = !expandedPaymentRows.value[index];
+};
+
 const closeInnerModal = () => {
   zoomLevel.value = 1;
   isGalleryModelOpen.value = false;
@@ -439,14 +451,17 @@ const closeInnerModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
 };
+
 const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
   isApproveConfirm.value = false;
 };
+
 const closeAmlConfirmModal = () => {
   isAmlApprovalRequired.value = false;
 };
+
 const hasNextFile = computed(() => {
   return currentFileIndex.value < filesTest.value.length - 1;
 });
@@ -1361,48 +1376,6 @@ const calculatePaymentBreakup = (changeMethod = true) => {
     }
   }
   calculateDueDates();
-};
-
-const formatDate = (date, timeFlag = false) => {
-  const parsedDate = new Date(date);
-  const day = parsedDate.getDate().toString().padStart(2, '0');
-  const month = (parsedDate.getMonth() + 1).toString().padStart(2, '0');
-  const year = parsedDate.getFullYear();
-  const formatedDate = `${day}-${month}-${year}`;
-  if (!timeFlag) {
-    return formatedDate;
-  }
-  const hours = parsedDate.getHours().toString().padStart(2, '0');
-  const minutes = parsedDate.getMinutes().toString().padStart(2, '0');
-  const seconds = parsedDate.getSeconds().toString().padStart(2, '0');
-  const formattedTime = `${hours}:${minutes}:${seconds}`;
-  return formatedDate.concat(' ', formattedTime);
-};
-
-function formatString(input) {
-  if (input === '' || input === undefined || input === null) {
-    return '';
-  }
-  const lowercaseString = input.toLowerCase();
-  const words = lowercaseString.replace(/_/g, ' ').split(' ');
-  for (let i = 0; i < words.length; i++) {
-    words[i] = words[i][0].toUpperCase() + words[i].slice(1);
-  }
-  const formattedString = words.join(' ');
-  return formattedString;
-}
-
-const formatAmount = amount => {
-  const parsedAmount = parseFloat(amount);
-  if (isNaN(parsedAmount)) {
-    return '0.00';
-  }
-  const formattedAmount = parsedAmount.toLocaleString('en-US', {
-    style: 'decimal',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return formattedAmount;
 };
 
 const resetTotalPayments = () => {
@@ -3002,12 +2975,6 @@ const validateUpfrontCapture = paymentRecord => {
   return isIPPending || isCAPayment || isPaidPayment;
 };
 
-const filterCCPayments = payment => {
-  return payment.payment_splits.filter(
-    item => item.payment_method.code === 'CC',
-  );
-};
-
 const filterCAPayments = payment => {
   return payment.payment_splits.filter(
     item => item.payment_status_id == paymentStatusEnum.CREDIT_APPROVED,
@@ -3289,6 +3256,7 @@ const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
+   
     initalPlanDetails = props.quoteRequest.insurance_provider;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
@@ -3751,15 +3719,6 @@ const deletePaymentModel = payment => {
   deletePaymentObject = payment;
 };
 
-const isVoidPaymentEnabled = payment => {
-  return (
-    props.isFuncsEnabled.tapIntegration &&
-    can(permissionEnum.PAYMENTS_VOID) &&
-    payment.payment_status_id === page.props.paymentStatusEnum.AUTHORISED &&
-    payment.payment_gateway_id === props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
-  );
-};
-
 const voidPayment = () => {
   voidPaymentProcess.value = true;
   let data = {
@@ -3973,362 +3932,64 @@ onBeforeMount(() => {
           <div
             class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div"
           >
+
             <table>
               <!-- Payment Table Header Component -->
               <PaymentTableHeader />
 
               <tbody class="vue3-easy-data-table__body">
-                <template v-for="(item, index) in payments" :key="item.code">
-                  <template v-if="item.total_payments > 0">
-                    <tr>
-                      <td class="text-center">
-                        <span
-                          class="expand-pointer"
-                          @click="
-                            isExpandedSplitPayments[index] =
-                              !isExpandedSplitPayments[index]
-                          "
-                          >{{
-                            isExpandedSplitPayments[index] ? '&and;' : '&or;'
-                          }}
-                        </span>
-                      </td>
-                      <td>{{ item.code }}</td>
-                      <td>{{ formatDate(item.collection_date) }}</td>
-                      <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
-                      <td>{{ item.payment_method.name }}</td>
-                      <td>{{ formatAmount(item.price_vat_applicable) }}</td>
-                      <td>{{ formatAmount(item.price_vat) }}</td>
-                      <td>{{ formatAmount(item.total_price) }}</td>
-                      <td>{{ formatAmount(item.discount_value) }}</td>
-                      <td>{{ formatAmount(item.total_amount) }}</td>
-                      <td>{{ formatAmount(item.captured_amount) }}</td>
-                      <td>{{ formatString(item.payment_status.text) }}</td>
-                      <td>
-                        <x-tooltip placement="left">
-                          <span class="border-b border-dotted border-black">
-                            {{
-                              item.payment_allocation_status !== null
-                                ? formatString(item.payment_allocation_status)
-                                : ''
-                            }}
-                          </span>
-                          <template #tooltip>
-                            <span class="custom-tooltip-content">
-                              {{
-                                paymentAllocationStatusTooltip(
-                                  item.payment_allocation_status,
-                                )
-                              }}
-                            </span>
-                          </template>
-                        </x-tooltip>
-                      </td>
-                      <td>
-                        <div class="flex gap-2">
-                          <template v-if="is_lacking_payment">
-                            <x-tooltip placement="left">
-                              <x-badge
-                                size="xs"
-                                color="error"
-                                outlined
-                                offset-x="-8"
-                                offset-y="-10"
-                              >
-                                <x-button
-                                  v-if="can(permissionEnum.PaymentsEdit)"
-                                  size="xs"
-                                  color="primary"
-                                  outlined
-                                  @click="editPaymentModal(item, 0, 0, 0)"
-                                >
-                                  Edit
-                                </x-button>
-                                <template #content>!</template>
-                              </x-badge>
-                              <template #tooltip>
-                                {{
-                                  isEditPaymentEnabled(item)
-                                    ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT
-                                    : paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED
-                                }}
-                              </template>
-                            </x-tooltip>
-                          </template>
-                          <template v-else>
-                            <x-button
-                              v-if="can(permissionEnum.PaymentsEdit)"
-                              size="xs"
-                              color="primary"
-                              outlined
-                              @click="editPaymentModal(item, 0, 0, 0)"
-                            >
-                              Edit
-                            </x-button>
-                          </template>
-                          <template
-                            v-if="index == 1 && isChildPaymentDeletable"
-                          >
-                            <x-button
-                              size="xs"
-                              color="orange"
-                              outlined
-                              @click="deletePaymentModel(item)"
-                            >
-                              Delete
-                            </x-button>
-                          </template>
-                          <template
-                            v-if="
-                              can(permissionEnum.ApprovePayments) &&
-                              (!isChildPaymentDeletable || index > 0)
-                            "
-                          >
-                            <x-button
-                              v-if="
-                                getCaptureOption(item) === 'capture' &&
-                                getCaptureValidation(item)
-                              "
-                              size="xs"
-                              color="orange"
-                              outlined
-                              @click="
-                                getCaptureValidation(item)
-                                  ? editPaymentModal(item, 0, 0, 1)
-                                  : alertCapture(item)
-                              "
-                              :disabled="isApproveConfirmed"
-                              :loading="capturePaymentValidationInProcess"
-                            >
-                              Capture
-                            </x-button>
+                <!-- Empty State -->
+                <tr v-if="payments.length === 0">
+                  <td colspan="14" class="text-center py-4">
+                    No payments found.
+                  </td>
+                </tr>
 
-                            <template v-if="disableMainPaymentApproval">
-                              <x-tooltip placement="right">
-                                <x-button
-                                  v-if="
-                                    getCaptureOption(item) === 'approve' &&
-                                    getCaptureValidation(item)
-                                  "
-                                  size="xs"
-                                  color="orange"
-                                  outlined
-                                  :disabled="
-                                    isApproveConfirmed ||
-                                    disableMainPaymentApproval
-                                  "
-                                >
-                                  Approve
-                                </x-button>
-                                <template #tooltip>
-                                  <span>{{ amlAndKycTooltip }}</span>
-                                </template>
-                              </x-tooltip>
-                            </template>
-                            <template v-else>
-                              <x-button
-                                v-if="
-                                  getCaptureOption(item) === 'approve' &&
-                                  getCaptureValidation(item)
-                                "
-                                size="xs"
-                                color="orange"
-                                outlined
-                                @click="
-                                  !props.sendUpdate &&
-                                  (!isAmlVerified() || !isKycVerified())
-                                    ? openAmlVerificationModal()
-                                    : getCaptureValidation(item)
-                                      ? editPaymentModal(item, 0, 0, 2)
-                                      : alertCapture(item)
-                                "
-                                :disabled="isApproveConfirmed"
-                              >
-                                Approve
-                              </x-button>
-                            </template>
-                          </template>
-                          <template v-if="isVoidPaymentEnabled(item)">
-                            <x-button
-                              size="xs"
-                              color="orange"
-                              outlined
-                              @click="voidPaymentModel(item)"
-                            >
-                              Void
-                            </x-button>
-                          </template>
-                        </div>
-                      </td>
-                    </tr>
-                    <template v-if="isExpandedSplitPayments[index]">
-                      <tr
-                        v-for="(
-                          splitPayment, splitIndex
-                        ) in item.payment_splits"
-                        :key="splitPayment.id"
-                      >
-                        <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td class="text-center">
-                          {{ splitPayment.code }}-{{ splitPayment.sr_no }}
-                        </td>
-                        <td>{{ formatDate(splitPayment.due_date) }}</td>
-                        <td>{{ formatDate(splitPayment.due_date) }}</td>
-                        <td>{{ splitPayment.payment_method.name }}</td>
-                        <td>
-                          {{ formatAmount(splitPayment.price_vat_applicable) }}
-                        </td>
-                        <td>{{ formatAmount(splitPayment.price_vat) }}</td>
-                        <td>
-                          {{
-                            splitPaymentTotalPrice(
-                              splitPayment.sr_no,
-                              splitPayment.payment_amount,
-                              item.discount_value,
-                            )
-                          }}
-                        </td>
-                        <td>
-                          {{
-                            splitPayment.sr_no == 1
-                              ? formatAmount(item.discount_value)
-                              : ''
-                          }}
-                        </td>
-                        <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
-                        <td>
-                          {{
-                            splitPayment.collection_amount > 0
-                              ? formatAmount(splitPayment.collection_amount)
-                              : ''
-                          }}
-                        </td>
-                        <td>
-                          {{ formatString(splitPayment.payment_status.text) }}
-                        </td>
-                        <td>
-                          <x-tooltip placement="top">
-                            <span class="border-b border-dotted border-black">
-                              {{
-                                splitPayment.payment_allocation_status !== null
-                                  ? formatString(
-                                      splitPayment.payment_allocation_status,
-                                    )
-                                  : ''
-                              }}
-                            </span>
-                            <template #tooltip>
-                              <span class="custom-tooltip-content">
-                                {{
-                                  paymentAllocationStatusTooltip(
-                                    splitPayment.payment_allocation_status,
-                                  )
-                                }}
-                              </span>
-                            </template>
-                          </x-tooltip>
-                        </td>
-                        <td>
-                          <div
-                            v-if="
-                              !page.props.linkedQuoteDetails ||
-                              props.quoteRequest.quote_status_id !=
-                                page.props.quoteStatusEnum.PolicyCancelled ||
-                              page.props.linkedQuoteDetails?.childLeadsCount ==
-                                0
-                            "
-                          >
-                            <x-button
-                              size="xs"
-                              color="primary"
-                              @click="
-                                editPaymentModal(
-                                  item,
-                                  splitPayment.id,
-                                  splitPayment.sr_no,
-                                  0,
-                                )
-                              "
-                              outlined
-                              >View</x-button
-                            >
-                            <x-button
-                              v-if="splitPayment.payment_method.code == 'CC'"
-                              class="ml-2"
-                              size="xs"
-                              color="emerald"
-                              @click.prevent="
-                                generateCCLink(
-                                  splitPayment.code,
-                                  splitPayment.sr_no,
-                                  splitPayment.payment_status_id,
-                                )
-                              "
-                              outlined
-                              >Copy Payment Link</x-button
-                            >
-                            <x-button
-                              v-if="
-                                canDeleteSplitPayment(
-                                  item,
-                                  splitIndex,
-                                  splitPayment,
-                                )
-                              "
-                              size="xs"
-                              color="red"
-                              class="ml-2"
-                              @click="
-                                deleteSplitPaymentModal(
-                                  splitPayment.id,
-                                  splitPayment.payment_status_id,
-                                )
-                              "
-                              outlined
-                              >Delete</x-button
-                            >
-                            <x-button
-                              v-if="
-                                can(permissionEnum.ReApprovePayments) &&
-                                splitPayment.process_job?.status === 'failed'
-                              "
-                              size="xs"
-                              color="red"
-                              class="ml-2"
-                              @click="
-                                retrySplitPaymentModal(
-                                  splitPayment.process_job?.id,
-                                  splitPayment.process_job?.message,
-                                )
-                              "
-                              outlined
-                              >Retry</x-button
-                            >
-
-                            <x-button
-                              v-if="enablePostPrepaymentButton(splitPayment)"
-                              size="xs"
-                              color="red"
-                              class="ml-2"
-                              @click="triggerPostPrepayment(splitPayment)"
-                              outlined
-                              >Post
-                            </x-button>
-                          </div>
-                        </td>
-                      </tr>
-                    </template>
+                <!-- Payment Rows with Splits -->
+                <template v-for="(payment, index) in payments" :key="payment.code">
+                  <!-- Main payment row -->
+                  <PaymentRow
+                    :payment="payment"
+                    :index="index"
+                    :isExpanded="expandedPaymentRows[index]"
+                    :isChildPaymentDeletable="isChildPaymentDeletable"
+                    :is_lacking_payment="false"
+                    :amlAndKycTooltip="''"
+                    :disableMainPaymentApproval="false"
+                    :isApproveConfirmed="false"
+                    :capturePaymentValidationInProcess="false"
+                    @toggle-expand="toggleExpand"
+                    @edit-payment="editPaymentModal"
+                    @delete-payment="deletePaymentModel"
+                    @capture-payment="capturePayment"
+                    @approve-payment="capturePayment"
+                    @void-payment="voidPaymentModel"
+                    @alert-capture="alertCapture"
+                    @open-aml-verification="() => {}"
+                  />
+                  
+                  <!-- Payment split rows (visible when payment is expanded) -->
+                  <template v-if="expandedPaymentRows[index]">
+                    <PaymentSplitRow
+                      v-for="(splitPayment, splitIndex) in payment.payment_splits"
+                      :key="splitPayment.id"
+                      :splitPayment="splitPayment"
+                      :parentPayment="payment"
+                      :splitIndex="splitIndex"
+                      :linkedQuoteDetails="props.linkedQuoteDetails"
+                      :quoteRequest="quoteRequest"
+                      :paymentAllocationStatusTooltip="(status) => status"
+                      @view-payment="(parent, splitId, splitNo, action) => editPayment({...parent, split_id: splitId, split_sr_no: splitNo}, 'view')"
+                      @generate-cc-link="(code, srNo, statusId) => copyPaymentLink(splitPayment.payment_link, statusId)"
+                      @delete-split-payment="(id, statusId) => {}"
+                      @retry-split-payment="(jobId, message) => retryProcess(splitPayment.id, jobId)"
+                      @post-prepayment="triggerPostPrepayment"
+                    />
                   </template>
                 </template>
               </tbody>
             </table>
-            <div
-              v-if="!payments.length > 0"
-              data-v-32683533=""
-              class="vue3-easy-data-table__message"
-            >
-              No payments found.
-            </div>
+            
           </div>
         </div>
 
