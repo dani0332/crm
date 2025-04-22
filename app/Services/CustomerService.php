@@ -343,6 +343,7 @@ class CustomerService extends BaseService
         if (! $customerId || ! $quoteUuid) {
             LoggerService::warning('Missing required data: customerId or quote UUID is not provided.', [
                 'customerId' => $customerId,
+                'quote_uuid' => $quoteUuid,
             ]);
 
             return null;
