@@ -46,12 +46,12 @@ class KenService
                         'status_code' => $response->status(),
                         'response' => $response->json(),
                     ]);
-                }
 
-                if (isset($response->json()['msg'])) {
-                    vAbort($response->json()['msg']);
-                } else {
-                    vAbort('KEN Service Exception');
+                    if (isset($response->json()['msg'])) {
+                        vAbort($response->json()['msg']);
+                    } else {
+                        vAbort('KEN Service Exception');
+                    }
                 }
             });
 
