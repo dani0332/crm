@@ -186,6 +186,10 @@ class PersonalQuotesExport
                     'LOST REASON',
                     'PREMIUM',
                     'POLICY NUMBER',
+                    'RENEWAL BATCH',
+                    'PREVIOUS POLICY EXPIRY DATE',
+                    'PREVIOUS POLICY PREMIUM',
+                    'PREVIOUS POLICY NUMBER',
                 ];
         }
     }
@@ -318,6 +322,10 @@ class PersonalQuotesExport
                     $quote?->homeQuote?->homeQuoteRequestDetail?->lostReason?->text,
                     $quote->premium,
                     $quote->policy_number,
+                    $quote->renewal_batch,
+                    $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+                    $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
+                    $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                 ];
         }
     }

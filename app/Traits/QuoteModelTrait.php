@@ -119,6 +119,14 @@ trait QuoteModelTrait
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
                 ]);
+            })->when($segmentFilter === QuoteSegmentEnum::AIG->value, function ($query) use ($alias, $quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                });
             });
         }
     }
@@ -289,5 +297,4 @@ trait QuoteModelTrait
             }
         );
     }
-
 }

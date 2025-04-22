@@ -2,13 +2,13 @@
 
 namespace App\Logging;
 
-use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
 use GuzzleHttp\Client;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
+use Monolog\Level;
 use Monolog\LogRecord;
 
 class AxiomBatchHandler extends AbstractProcessingHandler
@@ -16,19 +16,17 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     protected $apiToken;
     protected $dataset;
     protected $batch = [];
-    protected $batchSize;
     protected $singleHandler;
     protected $dailyHandler;
+    protected $batchSize;
+    protected bool $batchSent = false;
 
-    public function __construct($level = Logger::DEBUG, bool $bubble = true)
+    public function __construct($level = Level::Debug, bool $bubble = true)
     {
         $this->apiToken = env('AXIOM_API_TOKEN');
         $this->dataset = env('AXIOM_DATASET');
-        $this->batchSize = cache()->remember('axiom_batch_size', 3600, function () {
-            $storage = ApplicationStorage::where('key_name', 'AXIOM_BATCH_SIZE')->first();
 
-            return $storage ? (int) $storage->value : 100;
-        });
+        $this->batchSize = getAppStorageValueByKey(ApplicationStorageEnums::AXIOM_BATCH_SIZE, useCache: true);
 
         if (empty($this->apiToken) || empty($this->dataset)) {
             throw new \InvalidArgumentException('AXIOM_API_TOKEN and AXIOM_DATASET environment variables are required');
@@ -68,6 +66,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
 
     protected function write(LogRecord $record): void
     {
+        $this->batchSent = false;
         try {
             // Create a new record for file logging to ensure clean format
             $fileRecord = new LogRecord(
@@ -102,17 +101,19 @@ class AxiomBatchHandler extends AbstractProcessingHandler
             'context' => $record->context,
             'level' => strtoupper($record->level->getName()),
             'extra' => $record->extra,
-            'timestamp' => $record->datetime->format('c'),
+            'timestamp' => $record->datetime->format('Y-m-d H:i:s'),
             'environment' => app()->environment(),
             'service' => 'IMCRM',
         ];
     }
 
-    protected function sendBatch()
+    public function sendBatch()
     {
-        if (empty($this->batch)) {
+        if (empty($this->batch) || $this->batchSent || app()->environment('local')) {
             return;
         }
+
+        $this->batchSent = true;
 
         try {
             $client = new Client;
@@ -131,6 +132,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
                     count($this->batch)
                 ));
                 $this->batch = [];
+                $this->batchSent = true;
             } else {
                 error_log(sprintf(
                     'Failed to send logs to Axiom. Status code: %d, Response: %s',
