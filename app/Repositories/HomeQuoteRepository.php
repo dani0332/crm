@@ -470,7 +470,7 @@ class HomeQuoteRepository extends BaseRepository
                 return $quote;
             } catch (\Exception $e) {
                 // Log error details to help with debugging
-                LoggerService::error("Failed to update quote with UUID: {$uuid}",  extra: $data, exception: $e);
+                LoggerService::error("Failed to update quote with UUID: {$uuid}", exception: $e);
                 throw $e; // Re-throw exception to trigger transaction rollback
             }
         });
