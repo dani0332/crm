@@ -23,10 +23,10 @@ use App\Models\QuoteFlowDetails;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
-use App\Services\Logger\LoggerService;
 
 class CarEmailService extends BaseService
 {

@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -21,8 +23,6 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 
 class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
@@ -104,7 +104,6 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
         return $this->failedCount;
     }
 
-
     /**
      * create columns schema, with index, title and rules to be validated for each column.
      *
@@ -172,7 +171,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
         ];
 
         // Add conditional validation rules
-        $columns['vehicle_use']['rules'] = 'nullable|max:100|in:' . implode(',', CarVehicleUse::getValues());
+        $columns['vehicle_use']['rules'] = 'nullable|max:100|in:'.implode(',', CarVehicleUse::getValues());
 
         if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
             $columns['make']['rules'][] = 'required';
@@ -231,7 +230,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
     /**
      * Add custom validation rules with withValidator
      *
-     * @param \Illuminate\Validation\Validator $validator
+     * @param  \Illuminate\Validation\Validator  $validator
      */
     public function withValidator($validator)
     {
@@ -244,7 +243,9 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
 
             foreach ($data as $rowIndex => $row) {
                 // Skip header row if needed
-                if ($rowIndex == 0) continue;
+                if ($rowIndex == 0) {
+                    continue;
+                }
 
                 // Check registration_type and vehicle_use relationship
                 if (isset($row[42]) && $row[42] == CarRegistrationType::COMPANY) {
