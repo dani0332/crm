@@ -53,7 +53,7 @@ const tableHeader = [
   },
   {
     text: 'Booked Policies',
-    value: 'captured',
+    value: 'booked_policies',
   },
   {
     text: 'Authorized (AED)',
