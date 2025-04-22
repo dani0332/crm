@@ -35,6 +35,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PDF;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use App\Exports\UtmReportExport;
 
 class ReportsController extends Controller
 {
@@ -338,6 +342,17 @@ class ReportsController extends Controller
             'reportData' => $resp['records'],   
             'leadStatuses' => $leadStatuses,
         ]);
+    }
+
+    public function exportUtmReport(Request $request, ReportService $reportService)
+    {
+        $resp = $reportService->utmReport($request);
+        $data = $resp['records'];
+        
+        return Excel::download(
+            new UtmReportExport($data),
+            'UTM Report.xlsx'
+        );
     }
 
     public function renderPipelineReport(Request $request, ReportService $reportService)

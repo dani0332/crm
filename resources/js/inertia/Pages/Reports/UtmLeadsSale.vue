@@ -2,6 +2,7 @@
 defineProps({
   reportData: Object,
   quoteTypes: Array,
+  leadStatuses: Array,
 });
 const loader = reactive({
   table: false,
@@ -118,6 +119,14 @@ const leadStatusOptions = computed(() => {
     label: status.text,
   }));
 });
+
+function exportToExcel() {
+  Object.keys(filters).forEach(
+    key => filters[key] === '' && delete filters[key],
+  );
+  
+  window.location.href = route('utm-report-export', filters);
+}
 </script>
 
 <template>
@@ -185,11 +194,18 @@ const leadStatusOptions = computed(() => {
         
       </div>
 
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4">
+        <div>
+          <x-button size="sm" color="success" @click.prevent="exportToExcel" :disabled="!reportData || reportData.length === 0">
+            Export
+          </x-button>
+        </div>
+        <div class="flex gap-3">
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+        </div>
       </div>
     </x-form>
     <DataTable
