@@ -11,4 +11,4 @@ class InsuranceProviderPlan extends Model
 
     protected $table = 'insurance_provider_plans';
     protected $guarded = [];
-} 
+}
