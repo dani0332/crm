@@ -10,10 +10,10 @@ use App\Events\QuoteEmailUpdated;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use Auth;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
@@ -349,10 +349,10 @@ class CarQuote extends BaseModel
         }
     }
 
-    public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeId, $requestParams)
+    public function scopeFilterBySegment($query)
     {
         $segmentFilter = request()->input('segment_filter');
-        self::applySegmentFilter($query, $segmentFilter, 'car_quote_request', QuoteTypeId::Car, $requestParams);
+        self::applySegmentFilter($query, $segmentFilter, 'car_quote_request', QuoteTypeId::Car);
     }
 
     /*****  NewRelationships so old should not effect */
