@@ -49,11 +49,12 @@ class CapiService
                     'response_status' => $response ? $response->getStatusCode() : null,
                     'response_message' => $errorMessage,
                 ]);
-            }
-            if ($errorMessage) {
-                vAbort($errorMessage);
-            } else {
-                vAbort(self::CAPI_EXCEPTION_MESSAGE);
+
+                if ($errorMessage) {
+                    vAbort($errorMessage);
+                } else {
+                    vAbort(self::CAPI_EXCEPTION_MESSAGE);
+                }
             }
         });
 
