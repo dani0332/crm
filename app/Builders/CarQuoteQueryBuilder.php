@@ -89,13 +89,10 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
 
     public function applyFilters(Builder $query, $requestParams)
     {
-        $user = null;
-        if (Auth::check() && empty($requestParams)) {
-            $user = Auth::user();
-        } elseif (! empty($requestParams)) {
-            /* For queue when session data isn't present */
+        if (! Auth::check()) {
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
+            Auth::login($user);
             request()->merge($requestParams);
         }
 
@@ -131,10 +128,10 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
-            ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
+            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
                 $query->whereRelation('payments', 'insurer_tax_number', request('insurer_tax_invoice_number'));
             })
-            ->when($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
+            ->when(Auth::user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
                 $query->whereRelation('payments', 'insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
             })
             ->filterByDateRange('booking_date', 'policy_booking_date')
