@@ -95,6 +95,7 @@ class QuoteStatusService
 
                     return $updateQuote;
                 case QuoteStatusEnum::Quoted:
+                case QuoteStatusEnum::FollowedUp:
                     $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
                     break;
                 default:
