@@ -1331,6 +1331,10 @@ class CentralService extends BaseService
         try {
             $maxAttempts = 2;
             $this->handleWithDeadlockRetries(function () use ($request) {
+                $paymentSplits = PaymentSplits::where('code', $request->payment_code)->get();
+                foreach ($paymentSplits as $paymentSplit) {
+                    $paymentSplit->documents()->forceDelete();
+                }
                 PaymentSplits::where('code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
