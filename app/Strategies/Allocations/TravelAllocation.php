@@ -66,7 +66,7 @@ class TravelAllocation implements Allocation
                 if (! $advisor) {
                     $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
 
-                    LoggerService::warning(self::class.' - executeSteps: No advisor found');
+                    LoggerService::info(self::class.' - executeSteps: No advisor found');
 
                     $response = $this->travelAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
 
