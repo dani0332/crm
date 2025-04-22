@@ -71,20 +71,34 @@ class CarAllocationService extends AllocationService
 
         $continueAssignment = false;
 
+        $isSICFlowEnabled = $lead->isSICFlowEnabled();
+        $isAIG = $lead->isAIG(QuoteTypes::CAR);
+        $isSICFlowDisabled = $lead->isSICFlowDisabled();
+
         if (! $overrideAssignment && ! empty($lead->advisor_id)) {
             LoggerService::info(self::class."::verifyPreChecks - Lead is already assigned to advisor with ID: {$lead->advisor_id}, skipping assignment");
         } elseif ($lead->isFakeOrDuplicate()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead has exempted source {$lead->source}, skipping assignment");
-        } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
-            LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment');
+        } elseif (($isSICFlowEnabled || $isAIG) && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
+            if ($isSICFlowEnabled) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled and either requested for an advisor or payment authorized, continuing assignment');
+            } else {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized, continuing assignment');
+            }
+            $continueAssignment = true;
+        } elseif (($isSICFlowDisabled || ! $isAIG) && ! $lead->isRenewalUpload()) {
+            if ($isSICFlowDisabled) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, continuing assignment');
+            } elseif (! $isAIG) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead is not AIG and not Renewal Upload, continuing assignment');
+            } else {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead meets other criteria and not Renewal Upload, continuing assignment');
+            }
             $continueAssignment = true;
         } elseif ($lead->isRenewalTierEmailSent()) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead has renewal tier email sent, skipping assignment');
-        } elseif ($lead->isSICFlowDisabled() && ! $lead->isRenewalUpload()) {
-            LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, skipping assignment');
-            $continueAssignment = true;
         } elseif ($lead->isRevivalRepliedOrPaid()) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead is a Revival lead, continuing assignment');
             $continueAssignment = true;
@@ -97,7 +111,7 @@ class CarAllocationService extends AllocationService
         return $continueAssignment;
     }
 
-    public function fetchLead($quoteId, $overrideAdvisorId)
+    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false)
     {
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -111,6 +125,10 @@ class CarAllocationService extends AllocationService
         }
 
         $lead = CarQuote::where('uuid', $quoteId)->first();
+
+        if ($lead && $getLeadWithoutCriteria) {
+            return $lead;
+        }
 
         if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
             return null;
