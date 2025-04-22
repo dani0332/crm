@@ -43,7 +43,7 @@ class CapiService
             $errorMessage = $response->json()['msg'] ?? $response->json()['message'] ?? self::CAPI_EXCEPTION_MESSAGE;
             // Only log 5XX errors
             if ($response->status() >= 500) {
-                LoggerService::error(self::CAPI_EXCEPTION_MESSAGE, extra: [
+                LoggerService::error(self::CAPI_EXCEPTION_MESSAGE, [
                     'data' => $data,
                     'url' => $url,
                     'response_status' => $response ? $response->getStatusCode() : null,
