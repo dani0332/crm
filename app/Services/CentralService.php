@@ -52,6 +52,7 @@ use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +60,7 @@ use Illuminate\Support\Facades\Log;
 
 class CentralService extends BaseService
 {
-    use GenericQueriesAllLobs, TeamHierarchyTrait;
+    use GenericQueriesAllLobs, TeamHierarchyTrait, HandlesDeadlockRetries;
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
@@ -1327,8 +1328,18 @@ class CentralService extends BaseService
         }
 
         // Delete Payment and Payment Splits
-        PaymentSplits::where('code', $request->payment_code)->delete();
-        Payment::where('id', $request->payment_id)->delete();
+        try {
+            $maxAttempts = 2;
+            $this->handleWithDeadlockRetries(function () use ($request) {
+                PaymentSplits::where('code', $request->payment_code)->delete();
+                Payment::where('id', $request->payment_id)->delete();
+            }, $maxAttempts);
+            info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);
+        } catch (\Throwable $th) {
+            info('fn:deletePayment - Payment deletion failed: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment deletion failed'];
+        }
 
         return ['status' => true, 'message' => 'Delete payment processed'];
     }
