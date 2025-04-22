@@ -144,48 +144,6 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 
-// Add fieldsToCheck computed property to track quote fields for caching
-const fieldsToCheck = computed(() => ({
-  possessionTypeId: page.props.quote.home_quote?.possession_type_id,
-  accommodationTypeId: page.props.quote.home_quote?.accommodation_type_id,
-  coverageTypeId: page.props.quote.home_quote?.coverage_type_id,
-  buildingValue: page.props.quote.home_quote?.building_value,
-  contentValueId: page.props.quote.home_quote?.contents_value_id,
-  personalBelongingsValueId: page.props.quote.home_quote?.personal_belongings_value_id,
-}));
-
-// Function to store current field values to localStorage
-const storeToLocalStorage = (data) => {
-  try {
-    // Add a null check to ensure data is valid before storing
-    if (data && typeof data === 'object') {
-      localStorage.setItem(`quote_${page.props.quote.id}_fields`, JSON.stringify({
-        data,
-        timestamp: Date.now()
-      }));
-    }
-  } catch (e) {
-    // Gracefully continue even if localStorage fails
-  }
-};
-
-// Function to safely retrieve stored data
-const getStoredData = () => {
-  try {
-    const storedDataString = localStorage.getItem(`quote_${page.props.quote.id}_fields`);
-    if (!storedDataString) return null;
-    
-    const parsedData = JSON.parse(storedDataString);
-    // Validate the expected structure exists
-    if (parsedData && parsedData.data && parsedData.timestamp) {
-      return parsedData;
-    }
-    return null;
-  } catch (e) {
-    return null;
-  }
-};
-
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
     value: indType.code,
@@ -553,37 +511,6 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
-  // Get the current quote fields
-  const currentData = fieldsToCheck.value;
-  
-  // Initialize to true (default behavior is to get latest rating)
-  let shouldGetLatestRating = true;
-  
-  try {
-    // Try to retrieve stored field values from localStorage
-    const parsedData = getStoredData();
-    
-    if (parsedData) {
-      const { data: storedData } = parsedData;
-      
-      // Check if fields have changed - if they haven't, don't get a new rating
-      const hasFieldsChanged = Object.keys(currentData).some(
-        key => currentData[key] !== storedData[key]
-      );
-      
-      if (!hasFieldsChanged) {
-        shouldGetLatestRating = false;
-      }
-    }
-  } catch (e) {
-    shouldGetLatestRating = true;
-  }
-  
-  if (shouldGetLatestRating) {
-    storeToLocalStorage(currentData);
-  }
-
-  // Keep the existing conditional logic, but pass in our calculated shouldGetLatestRating value
   if (page.props.quote.source === page.props.leadSource.RENEWAL_UPLOAD) {
     // Only check all these conditions if it's a RENEWAL_UPLOAD lead
     if (
@@ -615,11 +542,11 @@ onMounted(() => {
           page.props.quote.home_quote?.contents_value_id))
     ) {
       // Only run onLoadAvailablePlansData for RENEWAL_UPLOAD leads if all conditions are met
-      onLoadAvailablePlansData(shouldGetLatestRating);
+      onLoadAvailablePlansData();
     }
   } else {
     // For all non-renewal upload leads, always run onLoadAvailablePlansData
-    onLoadAvailablePlansData(shouldGetLatestRating);
+    onLoadAvailablePlansData();
   }
 });
 
@@ -699,11 +626,10 @@ const selectedPlanIds = computed(() => {
 
 const availableAllPlans = ref([]);
 
-const onLoadAvailablePlansData = async (getLatestRating = false) => {
+const onLoadAvailablePlansData = async () => {
   const url = `/quotes/home/available-plans/${page.props.quote.uuid}`;
   const data = {
     jsonData: true,
-    getLatestRating: getLatestRating,
   };
 
   try {
