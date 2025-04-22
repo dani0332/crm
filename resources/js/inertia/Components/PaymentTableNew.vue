@@ -3132,6 +3132,7 @@ const getCaptureOption = computed(() => {
 });
 
 const planText = ref();
+const homePlanText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
@@ -3197,6 +3198,13 @@ const getPlanName = computed(() => {
   }
   if (props.sendUpdate) {
     return planText.value || 'Not Available';
+  }
+
+  if (props.quoteType === quoteTypeCodeEnum.Home) {
+    if(props.quoteRequest?.insurance_provider_plan?.text && plan) {
+      homePlanText.value = props.quoteRequest.insurance_provider_plan.text;
+    }
+    return homePlanText.value || 'Not Available';
   }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan

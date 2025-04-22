@@ -146,6 +146,7 @@ class HomeQuoteRepository extends BaseRepository
             'quoteStatus',
             'advisor',
             'nationality',
+            'insuranceProviderPlan',
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
             'homeQuote.homeQuoteRequestDetail.lostReason',
@@ -647,6 +648,7 @@ class HomeQuoteRepository extends BaseRepository
             ->where($column, $value)
             ->with([
                 'insuranceProvider',
+                'insuranceProviderPlan',
                 'quoteDetail.lostReason',
                 'quoteStatus',
                 'advisor',
