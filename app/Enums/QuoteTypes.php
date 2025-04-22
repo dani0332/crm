@@ -264,10 +264,7 @@ enum QuoteTypes: string
 
     public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false, bool $sicAdvisorRequested = false)
     {
-        $lead = $this->model()->where('uuid', $uuid)->first();
-        if ($lead) {
-            LoggerService::startQuoteLogging($lead);
-        }
+        LoggerService::startQuoteLogging($this->refId($uuid));
 
         $allocationService = match ($this) {
             self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId, sicAdvisorRequested: $sicAdvisorRequested),

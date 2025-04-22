@@ -13,7 +13,7 @@ class LoggerService
     {
         $refID = null;
 
-        if ($lead instanceof string) {
+        if ($lead instanceof string || is_string($lead)) {
             $refID = $lead;
         } elseif ($lead instanceof Model) {
             $refID = $lead->code;
