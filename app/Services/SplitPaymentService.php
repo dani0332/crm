@@ -812,15 +812,15 @@ class SplitPaymentService
         $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
         $totalPaymentsCount = $quoteModel->payments()->count();
 
-        $quoteModel->load(['payments' => function($query) use ($paymentCode, $sendUpdateId, $quoteModel) {
+        $quoteModel->load(['payments' => function ($query) use ($paymentCode, $sendUpdateId, $quoteModel) {
             $query->with(['paymentSplits', 'insuranceProvider', 'sendUpdateLog']);
-            
+
             if ($paymentCode != '') {
                 $query->where('code', $paymentCode);
             } else {
-                $query->when($sendUpdateId > 0, 
-                    fn($q) => $q->where('send_update_log_id', $sendUpdateId),
-                    fn($q) => $q->where('code', $quoteModel->code)
+                $query->when($sendUpdateId > 0,
+                    fn ($q) => $q->where('send_update_log_id', $sendUpdateId),
+                    fn ($q) => $q->where('code', $quoteModel->code)
                 );
             }
         }]);
@@ -834,18 +834,18 @@ class SplitPaymentService
             PaymentStatusEnum::PAID,
             PaymentStatusEnum::CAPTURED,
         ])->count();
-    
+
         $totalPartialPaidPayments = $masterPayment->paymentSplits->whereIn('payment_status_id', [
             PaymentStatusEnum::PARTIAL_CAPTURED,
             PaymentStatusEnum::PARTIALLY_PAID,
         ])->count();
-    
+
         if ($totalPaidPayments == $masterPayment->total_payments) {
             $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
         } elseif ($totalPartialPaidPayments > 0) {
             $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
         }
-            
+
         DB::beginTransaction();
         try {
 
@@ -860,7 +860,7 @@ class SplitPaymentService
             info("Master payment code: {$quoteModel->code} Master payment approved with Payment Status: {$masterPaymentStatus} and total approved payments: {$totalApproved} and total payments count: {$totalPaymentsCount}");
 
             $successMessage = 'Processing master payment approval completed';
-            
+
             if (($masterPayment->insuranceProvider->code == InsuranceProvidersEnum::ALNC && $isFromJob && $totalApproved > 0) || ($totalApproved == $totalPaymentsCount)) {
                 if ($sendUpdateId) {
                     app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
@@ -937,7 +937,7 @@ class SplitPaymentService
             $quoteModel->payment_status_id = $payment->payment_status_id;
             if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 $quoteModel->payment_paid_at = now();
-                info("Master payment code: {$payment->code} updating payment paid at for lead at " . now()->format('Y-m-d H:i:s'));
+                info("Master payment code: {$payment->code} updating payment paid at for lead at ".now()->format('Y-m-d H:i:s'));
 
                 // Update lead source for revival quotes after payment is paid
                 $isRevival = $quoteModel->source == LeadSourceEnum::REVIVAL || $quoteModel->source == LeadSourceEnum::REVIVAL_REPLIED;
