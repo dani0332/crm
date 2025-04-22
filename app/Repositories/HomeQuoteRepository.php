@@ -76,29 +76,30 @@ class HomeQuoteRepository extends BaseRepository
 
         // Check if any of the exclude filters are active
         $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters);
-        
+
         return $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', auth()->id()))
             ->when(request()->filled('advisors'), function ($query) {
                 $advisors = (array) request('advisors');
                 $hasUnassigned = in_array('-1', $advisors);
-                $hasOtherAdvisors = count(array_filter($advisors, fn($id) => $id !== '-1')) > 0;
+                $hasOtherAdvisors = count(array_filter($advisors, fn ($id) => $id !== '-1')) > 0;
 
                 // If both unassigned and specific advisors are selected
                 if ($hasUnassigned && $hasOtherAdvisors) {
-                    $filteredAdvisors = array_filter($advisors, fn($id) => $id !== '-1');
-                    return $query->where(function($q) use ($filteredAdvisors) {
+                    $filteredAdvisors = array_filter($advisors, fn ($id) => $id !== '-1');
+
+                    return $query->where(function ($q) use ($filteredAdvisors) {
                         $q->whereIn('advisor_id', $filteredAdvisors)
-                          ->orWhereNull('advisor_id');
+                            ->orWhereNull('advisor_id');
                     });
                 }
-                
+
                 // If only unassigned is selected
                 if ($hasUnassigned) {
                     return $query->whereNull('advisor_id');
                 }
-                
+
                 // If only specific advisors are selected
                 return $query->whereIn('advisor_id', $advisors);
             })

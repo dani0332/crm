@@ -86,12 +86,12 @@ use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
-use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
@@ -113,7 +113,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use App\Services\Logger\LoggerService;
 
 class CRUDController extends Controller
 {
@@ -2250,9 +2249,9 @@ class CRUDController extends Controller
             $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
             LoggerService::info('Sending OCB email Manually');
             if ($ocbEmailJob) {
-                LoggerService::info("sendOCBEmailNB OCB email sending started");
+                LoggerService::info('sendOCBEmailNB OCB email sending started');
                 dispatch(new $ocbEmailJob($quoteUuId, null));
-                LoggerService::info("sendOCBEmailNB OCB email Job dispatched");
+                LoggerService::info('sendOCBEmailNB OCB email Job dispatched');
             }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
