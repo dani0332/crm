@@ -21,14 +21,16 @@ class CarAllocation implements Allocation
     private $teamId;
     private bool $evaluateTierOnly = false;
     private bool $overrideAdvisorId = false;
+    private bool $sicAdvisorRequested = false;
 
-    public function __construct(CarAllocationService $carAllocationService, $allocationId, $teamId, bool $evaluateTierOnly = false, bool $overrideAdvisorId = false)
+    public function __construct(CarAllocationService $carAllocationService, $allocationId, $teamId, bool $evaluateTierOnly = false, bool $overrideAdvisorId = false, bool $sicAdvisorRequested = false)
     {
         $this->carAllocationService = $carAllocationService;
         $this->allocationId = $allocationId;
         $this->teamId = $teamId;
         $this->evaluateTierOnly = $evaluateTierOnly;
         $this->overrideAdvisorId = $overrideAdvisorId;
+        $this->sicAdvisorRequested = $sicAdvisorRequested;
     }
 
     public function executeSteps()
@@ -117,6 +119,16 @@ class CarAllocation implements Allocation
                 $this->teamId = getTeamId(TeamNameEnum::ORGANIC);
             }
         }
+
+        $this->isAIGLeadEligibleForAllocation($lead);
+    }
+
+    private function isAIGLeadEligibleForAllocation(CarQuote $lead): void
+    {
+        if ($lead->isAIG(QuoteTypes::CAR) && empty($this->teamId) && $this->sicAdvisorRequested) {
+            $this->teamId = getTeamId(TeamNameEnum::ORGANIC);
+            LoggerService::info('AIG lead detected with SIC advisor requested. Assigning to Organic team.');
+        }
     }
 
     private function processTier($lead, $tier)
@@ -130,7 +142,7 @@ class CarAllocation implements Allocation
 
             $lead->endAllocation();
 
-            return $this->carAllocationService->createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier->id);
+            return $this->carAllocationService->createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier);
         }
 
         $this->evaluateTeamId($lead);
@@ -170,7 +182,7 @@ class CarAllocation implements Allocation
 
     protected function fetchLead(): mixed
     {
-        return $this->carAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId);
+        return $this->carAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId, $this->evaluateTierOnly);
     }
 
     protected function getTier($tierId)
