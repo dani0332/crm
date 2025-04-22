@@ -2513,11 +2513,13 @@ const addPayment = isValid => {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
+          isApproveConfirmed.value = false;
           if (props.sendUpdate) {
             location.reload();
           }
         },
         onError: res => {
+          isApproveConfirmed.value = false;
           notification.error({
             title: res.error,
             position: 'top',
