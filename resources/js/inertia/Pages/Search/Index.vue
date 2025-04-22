@@ -748,7 +748,9 @@ onMounted(() => {
               :helper="
                 availableFilters.date_type
                   ? ''
-                  : 'Please select the date type first'
+                  : availableFilters.company_name
+                    ? ''
+                    : 'Please select the date type first'
               "
             />
           </x-field>

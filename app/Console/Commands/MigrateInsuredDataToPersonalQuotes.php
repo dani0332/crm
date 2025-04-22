@@ -59,7 +59,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
 
         // Use chunk to process records in batches to avoid memory issues
         PersonalQuote::whereNull('quote_id')
-            ->whereNull('insured_id')
+            ->orWhereNull('insured_id')
             ->whereNotIn('id', $processedIds)
             ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$processedIds) {
                 foreach ($personalQuotes as $personalQuote) {
@@ -72,6 +72,9 @@ class MigrateInsuredDataToPersonalQuotes extends Command
 
                         continue;
                     }
+
+                    // Update the personal quote with quote_id
+                    $personalQuote->update(['quote_id' => $quote->id]);
 
                     // Find the entity mapping for this quote
                     $entityMapping = QuoteRequestEntityMapping::where('quote_request_id', $quote->id)
@@ -96,10 +99,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                     }
 
                     // Update the personal quote with insured_id
-                    $personalQuote->update([
-                        'insured_id' => $insured->id,
-                        'quote_id' => $quote->id,
-                    ]);
+                    $personalQuote->update(['insured_id' => $insured->id]);
 
                     $processedIds[] = $personalQuote->id;
                     $totalUpdated++;
