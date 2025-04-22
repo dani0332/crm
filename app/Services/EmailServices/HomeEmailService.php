@@ -23,23 +23,23 @@ class HomeEmailService extends BaseService
     public function sendHomeOCBIntroEmail($lead)
     {
         if (! $lead) {
-            LoggerService::info('sendHomeOCBIntroEmail - Lead not found | Time: '.now());
+            LoggerService::info('sendHomeOCBIntroEmail - Lead not found');
 
             return false;
         }
 
-        LoggerService::info('sendHomeOCBIntroEmail - Initiating process | Time: '.now());
+        LoggerService::info('sendHomeOCBIntroEmail - Initiating process');
 
         // Fetch the advisor
         $advisor = User::find($lead->advisor_id);
         if (! $advisor) {
-            LoggerService::info('sendHomeOCBIntroEmail - Advisor not found | Time: '.now());
+            LoggerService::info('sendHomeOCBIntroEmail - Advisor not found');
         }
 
         // Fetch home quote
         $homeQuote = $this->getHomeQuoteData($lead->uuid);
         if (! $homeQuote) {
-            LoggerService::info('sendHomeOCBIntroEmail - HomeQuote not found | Time: '.now());
+            LoggerService::info('sendHomeOCBIntroEmail - HomeQuote not found');
 
             return false;
         }
@@ -67,11 +67,11 @@ class HomeEmailService extends BaseService
             if (empty($homeQuote->automated_flow_executed_at)) {
                 $homeQuote->automated_flow_executed_at = now();
                 $homeQuote->save();
-                LoggerService::info('sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote | Time: '.now());
-                LoggerService::info('sendHomeOCBIntroEmail - Successfully triggered event | Time: '.now());
+                LoggerService::info('sendHomeOCBIntroEmail - Automated flow timestamp updated for HomeQuote');
+                LoggerService::info('sendHomeOCBIntroEmail - Successfully triggered event');
                 if ($response && $response->status_code === 200) {
                     $this->createQuoteFlowDetails($lead, $response);
-                    LoggerService::info('sendHomeOCBIntroEmail - Quote flow details created for HomeQuote | Time: '.now());
+                    LoggerService::info('sendHomeOCBIntroEmail - Quote flow details created for HomeQuote');
                 } else {
                     LoggerService::info("sendHomeOCBIntroEmail - Error triggering event having response status code: {$response?->status_code}");
                 }
@@ -79,7 +79,7 @@ class HomeEmailService extends BaseService
 
             return $response ?? null;
         } catch (\Exception $e) {
-            LoggerService::info("sendHomeOCBIntroEmail - Error triggering event | Message: {$e->getMessage()} Line: {$e->getLine()} | Time: ".now());
+            LoggerService::info("sendHomeOCBIntroEmail - Error triggering event | Message: {$e->getMessage()} Line: {$e->getLine()}");
 
             return false;
         }
@@ -135,7 +135,7 @@ class HomeEmailService extends BaseService
     public function attachHomeOCBPDFToEmail($quoteUID)
     {
         try {
-            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Generating PDF | Time: '.now());
+            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Generating PDF');
 
             $quotePlans = app(HomeQuoteService::class)->getQuotePlans($quoteUID);
 
@@ -153,7 +153,7 @@ class HomeEmailService extends BaseService
             }
 
             if (empty($planIds)) {
-                LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - No plans found | Time: '.now());
+                LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - No plans found');
 
                 return '';
             }
@@ -161,7 +161,7 @@ class HomeEmailService extends BaseService
             $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
             $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
 
-            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Storing PDF temporarily | Time: '.now());
+            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Storing PDF temporarily');
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/'.uniqid().'.pdf';
@@ -175,12 +175,12 @@ class HomeEmailService extends BaseService
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Public URL generated | Time: '.now());
+            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Public URL generated');
 
             return $publicUrl;
         } catch (\Exception $e) {
             // Log the error details
-            LoggerService::info(self::class." - Error: attachHomeOCBPDFToEmail - Error attaching PDF | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()} | Time: ".now());
+            LoggerService::info(self::class." - Error: attachHomeOCBPDFToEmail - Error attaching PDF | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}");
 
             return false;
         }
@@ -202,14 +202,14 @@ class HomeEmailService extends BaseService
                     'flow_type' => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
                     'flow_id' => $runId,
                 ]);
-                LoggerService::info(self::class.' HomeAutomated | workflow run id created |Time: '.now());
+                LoggerService::info(self::class.' HomeAutomated | workflow run id created');
             } else {
-                LoggerService::info(self::class.' HomeAutomated | workflow run id not found |Time: '.now());
+                LoggerService::info(self::class.' HomeAutomated | workflow run id not found');
             }
         } catch (\Throwable $th) {
-            $errorMessage = self::class.' - Error while creating quote flow details | Time: '.now();
+            $errorMessage = self::class.' - Error while creating quote flow details';
             LoggerService::info($errorMessage);
-            LoggerService::info("Error: {$th->getMessage()} | Time: ".now());
+            LoggerService::info("Error: {$th->getMessage()}");
             throw $th;
         }
     }

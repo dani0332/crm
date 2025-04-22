@@ -2245,14 +2245,14 @@ class CRUDController extends Controller
 
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
+        LoggerService::startQuoteLogging($quoteUuId);
         if ($quoteUuId) {
-
             $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
-            LoggerService::info('Sending OCB email Manually for quote uuid: '.$quoteUuId);
+            LoggerService::info('Sending OCB email Manually');
             if ($ocbEmailJob) {
-                LoggerService::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
+                LoggerService::info("sendOCBEmailNB OCB email sending started");
                 dispatch(new $ocbEmailJob($quoteUuId, null));
-                LoggerService::info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
+                LoggerService::info("sendOCBEmailNB OCB email Job dispatched");
             }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
