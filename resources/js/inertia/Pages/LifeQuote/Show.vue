@@ -1250,6 +1250,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">AGE</dt>
                   <dd>{{ quote.life_quote?.age }}</dd>
+                </div>
+                
+                <div class="grid sm:grid-cols-2">
+                
                   <dt class="font-medium">GENDER</dt>
                   <dd>{{ quote.gender }}</dd>
                 </div>
