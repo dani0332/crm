@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -89,66 +90,63 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
     public function applyFilters(Builder $query, $requestParams)
     {
         $user = null;
-        if (auth()->check() && empty($requestParams)) {
-            $user = auth()->user();
-            $requestParams = collect(request()->all());
+        if (Auth::check() && empty($requestParams)) {
+            $user = Auth::user();
         } elseif (! empty($requestParams)) {
             /* For queue when session data isn't present */
             $user = $requestParams['user'] ?? null;
-            $requestParams = collect($requestParams);
+            unset($requestParams['user']);
+            request()->merge($requestParams);
         }
 
         $query->when(
-            empty($requestParams['email']) && empty($requestParams['code']) && empty($requestParams['first_name']) && empty($requestParams['last_name']) && empty($requestParams['quote_status_id']) && empty($requestParams['mobile_no']),
+            ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
             fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]),
         )
-
-            ->filterBy('code', value: $requestParams['code'] ?? null)
-            ->filterIn('quote_batch_id', value: $requestParams['quote_batch_id'] ?? null)
-            ->matchBy('first_name', value: $requestParams['first_name'] ?? null)
-            ->matchBy('last_name', value: $requestParams['last_name'] ?? null)
-            ->filterBy('email', value: $requestParams['email'] ?? null)
-            ->filterBy('mobile_no', value: $requestParams['mobile_no'] ?? null)
-            ->filterBy('payment_status_id', value: $requestParams['payment_status_id'] ?? null)
-            ->filterBy('is_ecommerce', isBool: true, value: $requestParams['is_ecommerce'] ?? null)
-            ->filterIn('quote_status_id', value: $requestParams['quote_status_id'] ?? null)
-            ->filterIn('insurer_aml_status', value: $requestParams['insurer_aml_status'] ?? null)
-            ->filterIn('tier_id', value: $requestParams['tier_id'] ?? null)
-            ->filterBy('vehicle_type_id', value: $requestParams['vehicle_type_id'] ?? null)
-            ->filterBy('car_type_insurance_id', value: $requestParams['car_type_insurance_id'] ?? null)
-            ->filterBy('renewal_batch', value: $requestParams['renewal_batch'] ?? null)
-            ->filterBy('currently_insured_with', value: $requestParams['currently_insured_with'] ?? null)
-
-            ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date', value: $requestParams['policy_expiry_date'] ?? null)
-            ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false, value: $requestParams['policy_expiry_date_end'] ?? null)
-
-            ->filterBy('assignment_type', ignoreAll: true, value: $requestParams['assignment_type'] ?? null)
-            ->filterByTeams($requestParams['teams'] ?? null)
-            ->filterByAdvisors($requestParams['advisor_id'] ?? null)
-            ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at', value: $requestParams['transaction_approved_dates'] ?? null)
-            ->filterBySegment($requestParams['segment_filter'] ?? null, QuoteTypeId::Car, $requestParams)
-            ->filterBy('sic_advisor_requested', ignoreAll: true, value: $requestParams['sic_advisor_requested'] ?? null)
+            ->filterBy('code')
+            ->filterIn('quote_batch_id')
+            ->matchBy('first_name')
+            ->matchBy('last_name')
+            ->filterBy('email')
+            ->filterBy('mobile_no')
+            ->filterBy('payment_status_id')
+            ->filterBy('is_ecommerce', isBool: true)
+            ->filterIn('quote_status_id')
+            ->filterIn('insurer_aml_status')
+            ->filterIn('tier_id')
+            ->filterBy('vehicle_type_id')
+            ->filterBy('car_type_insurance_id')
+            ->filterBy('renewal_batch')
+            ->filterBy('currently_insured_with')
+            ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
+            ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
+            ->filterBy('assignment_type', ignoreAll: true)
+            ->filterByTeams(request('teams'))
+            ->filterByAdvisors(request('advisor_id'))
+            ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
+            ->filterBySegment(request('segment_filter'), QuoteTypeId::Car)
+            ->filterBy('sic_advisor_requested', ignoreAll: true)
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByAdvisorAssignedDates('carQuoteRequestDetail', ['advisor_assigned_date', 'advisor_assigned_date_end'])
-            ->when(! empty($requestParams['previous_quote_policy_number']), function ($query) use ($requestParams) {
-                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number', value: $requestParams['previous_quote_policy_number'] ?? null)->orWhere->filterBy('previous_quote_policy_number', 'policy_number', value: $requestParams['previous_quote_policy_number'] ?? null));
+            ->when(request()->filled('previous_quote_policy_number'), function ($query) {
+                $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
-            ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && ! empty($requestParams['insurer_tax_invoice_number']), function ($query) use ($requestParams) {
-                $query->whereRelation('payments', 'insurer_tax_number', $requestParams['insurer_tax_invoice_number']);
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && request()->filled('insurer_tax_invoice_number'), function ($query) {
+                $query->whereRelation('payments', 'insurer_tax_number', request('insurer_tax_invoice_number'));
             })
-            ->when($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && ! empty($requestParams['insurer_commission_tax_invoice_number']), function ($query) use ($requestParams) {
-                $query->whereRelation('payments', 'insurer_commmission_invoice_number', $requestParams['insurer_commission_tax_invoice_number']);
+            ->when($user->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && request()->filled('insurer_commission_tax_invoice_number'), function ($query) {
+                $query->whereRelation('payments', 'insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
             })
-            ->filterByDateRange('booking_date', 'policy_booking_date', value: $requestParams['booking_date'] ?? null)
-            ->when($this->shouldApplyDatesFilter() && empty($requestParams['created_at_start']), function ($query) {
+            ->filterByDateRange('booking_date', 'policy_booking_date')
+            ->when($this->shouldApplyDatesFilter() && ! request()->filled('created_at_start'), function ($query) {
                 $query->filterByToday();
             })
-            ->when($this->shouldApplyDatesFilter() && ! empty($requestParams['created_at_start']) && ! empty($requestParams['created_at_end']), function ($query) use ($requestParams) {
-                $query->whereBetween('created_at', [$this->parseDate($requestParams['created_at_start'], true), $this->parseDate($requestParams['created_at_end'], false)]);
+            ->when($this->shouldApplyDatesFilter() && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
+                $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
             })
             ->when(
-                ! empty($requestParams['sortBy']),
-                fn ($q) => $q->orderBy($requestParams['sortBy'], $requestParams['sortType']),
+                request()->filled('sortBy'),
+                fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
             );
     }
