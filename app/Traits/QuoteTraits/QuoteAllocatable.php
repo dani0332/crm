@@ -184,21 +184,21 @@ trait QuoteAllocatable
                 // OR Other lead types
                 ->orWhere(function ($otherLeads) use ($quoteType) {
                     $otherLeads->isNotAIG($quoteType);
-                    $otherLeads->where(function($sq) {
+                    $otherLeads->where(function ($sq) {
                         $sq->where(function ($q) {
                             $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
                                 ->sicFlowEnabled()
                                 ->requestedAdvisorOrPaymentAuthorized();
                         })
                         // Non-renewal leads with SIC logic
-                        ->orWhere(function ($q) {
-                            $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                                ->where(function ($inner) {
-                                    $inner
-                                        ->where(fn ($x) => $x->sicFlowDisabled())
-                                        ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized());
-                                });
-                        });
+                            ->orWhere(function ($q) {
+                                $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                                    ->where(function ($inner) {
+                                        $inner
+                                            ->where(fn ($x) => $x->sicFlowDisabled())
+                                            ->orWhere(fn ($x) => $x->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized());
+                                    });
+                            });
                     });
                 });
         })->orWhere->leadAllocationFailed();
@@ -207,9 +207,9 @@ trait QuoteAllocatable
     protected function aigSubQuery($subQuery, $table, QuoteTypes $quoteType)
     {
         $subQuery->select(DB::raw(1))->from('quote_tags')
-                ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
-                ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                ->where('quote_tags.quote_type_id', $quoteType->id());
+            ->whereColumn('quote_tags.quote_uuid', "{$table}.uuid")
+            ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+            ->where('quote_tags.quote_type_id', $quoteType->id());
     }
 
     protected function scopeIsAIG($query, QuoteTypes $quoteType): void
