@@ -6,6 +6,7 @@ use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -13,6 +14,7 @@ use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -20,6 +22,7 @@ class HealthQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted'];
     protected $table = 'health_quote_request';
     protected $fillable = [];
     public $filterables = [
@@ -277,5 +280,71 @@ class HealthQuote extends Model implements AuditableContract
     public function isVolumeLead()
     {
         return $this->health_team_type === HealthTeamType::EBP;
+    }
+
+    public function previousAdvisor()
+    {
+        return $this->belongsTo(User::class, 'previous_advisor_id');
+    }
+
+    public function dependentMembers()
+    {
+        return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id', 'id')
+            ->where('is_primary', false);
+    }
+
+    public function renewalBatch()
+    {
+        return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
+    }
+
+    public function insured()
+    {
+        return $this->belongsTo(Customer::class, 'currently_insured_id');
+    }
+
+    public function entity()
+    {
+        return $this->belongsTo(Entity::class, 'entity_id');
+    }
+
+    public function planProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'plan_provider_id');
+    }
+
+    public function quotePlan()
+    {
+        return $this->hasOne(HealthQuotePlan::class, 'id', 'plan_id');
+    }
+
+    public function scopeFilterBySegment($query)
+    {
+        $segmentFilter = request()->input('segment_filter');
+        self::applySegmentFilter($query, $segmentFilter, 'health_quote_request', QuoteTypeId::Health);
+    }
+
+    public function getCarTeamsAttribute()
+    {
+        if ($this->advisor_id) {
+
+            $carTeam = $this->getProductByName(quoteTypeCode::Car);
+
+            $query = DB::table(DB::raw("(SELECT GROUP_CONCAT(DISTINCT t1.name SEPARATOR ', ') AS CarTeams
+                        FROM teams t1
+                            WHERE t1.parent_team_id = $carTeam->id
+                            AND t1.name IN (
+                                SELECT t2.name
+                                FROM teams t2
+                                JOIN user_team ut2 ON t2.id = ut2.team_id
+                                WHERE ut2.user_id = ".$this->advisor_id.')
+                        ) AS CarTeams'))
+                ->select(DB::raw('CarTeams'))
+                ->first();
+
+            return $query ? $query->CarTeams : null;
+        } else {
+            return 'N/A';
+        }
     }
 }

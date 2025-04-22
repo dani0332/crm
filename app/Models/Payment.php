@@ -255,4 +255,9 @@ class Payment extends Model implements Auditable
             get: fn () => $this->authorized_at ? Carbon::parse($this->authorized_at)->format('d-m-Y') : null,
         );
     }
+
+    public function homePlan()
+    {
+        return $this->belongsTo(PersonalPlan::class, 'plan_id');
+    }
 }

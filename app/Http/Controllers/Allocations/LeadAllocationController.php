@@ -34,6 +34,7 @@ class LeadAllocationController extends Controller
             QuoteTypes::YACHT => PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::LIFE => PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::HOME => PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::GROUP_MEDICAL => PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD,
         };
         $this->middleware("permission:{$permission}", ['only' => ['index']]);
     }
@@ -150,6 +151,23 @@ class LeadAllocationController extends Controller
             'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
             'quoteType' => $quoteType->value,
             'data' => $data,
+            'lobSpecificLeadAllocation' => $this->lobSpecificLeadAllocation(),
         ]);
+    }
+
+    private function lobSpecificLeadAllocation()
+    {
+        $permission = match ($this->quoteType) {
+            QuoteTypes::CORPLINE => PermissionsEnum::CORPLINE_LEADPOOL,
+            QuoteTypes::CYCLE => PermissionsEnum::CYCLE_LEADPOOL,
+            QuoteTypes::PET => PermissionsEnum::PET_LEADPOOL,
+            QuoteTypes::YACHT => PermissionsEnum::YACHT_LEADPOOL,
+            QuoteTypes::LIFE => PermissionsEnum::LIFE_LEADPOOL,
+            QuoteTypes::HOME => PermissionsEnum::HOME_LEADPOOL,
+            QuoteTypes::GROUP_MEDICAL => PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
+            // QuoteTypes::SAVINGS => PermissionsEnum::SAVINGS_LEADPOOL
+        };
+
+        return request()->user()->can($permission);
     }
 }

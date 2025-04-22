@@ -591,11 +591,14 @@ class AdvisorDistributionReportService extends BaseService
             }
 
             if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
-
-                $query->join('travel_quote_request', function ($join) use ($filters) {
-                    $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
-                        ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
-                });
+                if ($isTravelQuote) {
+                    $query->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                } else {
+                    $query->join('travel_quote_request', function ($join) use ($filters) {
+                        $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
+                            ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                    });
+                }
             }
         }
 
