@@ -3201,7 +3201,7 @@ const getPlanName = computed(() => {
   }
 
   if (props.quoteType === quoteTypeCodeEnum.Home) {
-    if(props.quoteRequest?.insurance_provider_plan?.text && plan) {
+    if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
       homePlanText.value = props.quoteRequest.insurance_provider_plan.text;
     }
     return homePlanText.value || 'Not Available';
