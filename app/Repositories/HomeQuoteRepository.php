@@ -82,25 +82,25 @@ class HomeQuoteRepository extends BaseRepository
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', auth()->id()))
             ->when(request()->filled('advisors'), function ($query) {
                 $advisors = (array) request('advisors');
+                $hasUnassigned = in_array('-1', $advisors);
+                $hasOtherAdvisors = count(array_filter($advisors, fn($id) => $id !== '-1')) > 0;
 
-                // Check if UnAssigned (-1) is among the selected advisors
-                if (in_array('-1', $advisors)) {
-                    // If UnAssigned is the only option selected
-                    if (count($advisors) === 1) {
-                        return $query->whereNull('advisor_id');
-                    } else {
-                        // If UnAssigned plus other advisors are selected
-                        $filteredAdvisors = array_filter($advisors, fn ($id) => $id !== '-1');
-
-                        return $query->where(function ($q) use ($filteredAdvisors) {
-                            $q->whereIn('advisor_id', $filteredAdvisors)
-                                ->orWhereNull('advisor_id');
-                        });
-                    }
-                } else {
-                    // Normal case - only specific advisors selected
-                    return $query->whereIn('advisor_id', $advisors);
+                // If both unassigned and specific advisors are selected
+                if ($hasUnassigned && $hasOtherAdvisors) {
+                    $filteredAdvisors = array_filter($advisors, fn($id) => $id !== '-1');
+                    return $query->where(function($q) use ($filteredAdvisors) {
+                        $q->whereIn('advisor_id', $filteredAdvisors)
+                          ->orWhereNull('advisor_id');
+                    });
                 }
+                
+                // If only unassigned is selected
+                if ($hasUnassigned) {
+                    return $query->whereNull('advisor_id');
+                }
+                
+                // If only specific advisors are selected
+                return $query->whereIn('advisor_id', $advisors);
             })
             ->when(request()->has('is_renewal'), fn ($query) => $this->applyRenewalFilter($query))
             ->tap(fn ($query) => $this->applyFilters($query))
