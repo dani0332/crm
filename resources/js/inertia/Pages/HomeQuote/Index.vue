@@ -136,11 +136,22 @@ const leadStatusOptions = computed(() => {
 });
 
 const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
-});
+    let options = [
+      {
+        value: '-1',
+        label: 'UnAssigned',
+      },
+    ];
+  
+    options.push(
+      ...page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+      })),
+    );
+  
+    return options;
+  });
 
 const renewalBatchOptions = computed(() => {
   return page.props?.renewalBatches?.map(batch => ({
