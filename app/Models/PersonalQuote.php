@@ -7,18 +7,31 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Traits\QuoteTraits\PersonalQuotable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Support\Facades\Config;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PersonalQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, PersonalQuotable, QuoteModelTrait;
 
     protected $guarded = [];
+    public $allowedColumns = [
+        'first_name',
+        'last_name',
+        'email',
+        'mobile_no',
+        'dob',
+        'nationality_id',
+        'gender',
+        'company_name',
+        'company_address',
+    ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::EXACT,
@@ -29,6 +42,7 @@ class PersonalQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
         'renewal_batch' => FilterTypes::EXACT,
         'quote_status_id' => FilterTypes::IN,
+        'insurer_aml_status' => FilterTypes::IN,
         'is_ecommerce' => FilterTypes::EXACT,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
         'previous_quote_policy_number_text' => FilterTypes::EXACT,
@@ -343,8 +357,27 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
+    public function insured(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id, relation between personal_quote and customer_insured.
+            'id', // insured.id
+            'id', // personal_quote_request.id
+            'insured_id' // customer_insured.insured_id
+        );
+    }
+
+    public function homeQuote()
+    {
+        return $this->hasOne(HomeQuote::class, 'personal_quote_id', 'id');
+    }
+
     public function allowedColumns()
     {
         return $this->allowedColumns;
     }
+
+    
 }

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\Logger\LoggerService;
+
 class HttpRequestService extends BaseService
 {
     public function processRequest($data, $creds)
@@ -39,7 +41,7 @@ class HttpRequestService extends BaseService
         }
     }
 
-    public function executeGetPlansApi($id, mixed $getLatestRating, mixed $isRenewalSort, mixed $isDisabledEnabled, $quoteType = ''): mixed
+    public function executeGetPlansApi($id, mixed $getLatestRating, mixed $isRenewalSort, mixed $isDisabledEnabled, $quoteType = '', ?bool $allowUpdate = null): mixed
     {
         // Set model name
         $modelName = 'CarQuote';
@@ -84,6 +86,10 @@ class HttpRequestService extends BaseService
             'callSource' => 'imcrm',
         ];
 
+        if (! is_null($allowUpdate)) {
+            $plansDataArr['allowUpdate'] = $allowUpdate;
+        }
+
         $client = new \GuzzleHttp\Client;
         try {
             // Make the API request
@@ -113,8 +119,8 @@ class HttpRequestService extends BaseService
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             // add info for error and exception along with stack trace
-            info('exception occurred in quote plans call with error : '.$e->getMessage());
-            info('exception occurred in quote plans call with error stack as  : '.$e->getTraceAsString());
+            LoggerService::error('Exception occurred in quote plans call with error: '.$e->getMessage());
+            LoggerService::error('Exception occurred in quote plans call with error stack as: '.$e->getTraceAsString());
             // Handle exceptions and errors
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
@@ -132,11 +138,12 @@ class HttpRequestService extends BaseService
 
             return $responseBodyAsString;
         }
+
     }
 
-    public function getPlans($id, $getLatestRating, $isRenewalSort = false, $isDisabledEnabled = false, $quoteType = '')
+    public function getPlans($id, $getLatestRating, $isRenewalSort = false, $isDisabledEnabled = false, $quoteType = '', ?bool $allowUpdate = null)
     {
-        $quotePlans = $this->executeGetPlansApi($id, $getLatestRating, $isRenewalSort, $isDisabledEnabled, $quoteType);
+        $quotePlans = $this->executeGetPlansApi($id, $getLatestRating, $isRenewalSort, $isDisabledEnabled, $quoteType, allowUpdate: $allowUpdate);
 
         // Check if the $quotePlans object has a message property
         if (isset($quotePlans->message) && $quotePlans->message != '') {

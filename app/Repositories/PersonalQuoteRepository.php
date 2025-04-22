@@ -15,6 +15,7 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -103,6 +104,7 @@ class PersonalQuoteRepository extends BaseRepository
 
             if (request()->is_send_update) {
                 $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+                info('fn: fetchUploadDocument start for Send Update - code: '.$quote->code);
                 [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
             } else {
                 $quote = $this->getQuoteObject($quoteType ?? '', $id);
@@ -145,7 +147,9 @@ class PersonalQuoteRepository extends BaseRepository
                     $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
                     if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
+                        info('Tax Invoice and Tax Invoice Raised Buyer documents found for Send Update - code: '.$quote->code);
                         if ($insuranceProviderId) {
+                            info('insuranceProviderId: '.$insuranceProviderId.' found for Send Update - code: '.$quote->code);
                             $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($quote->id, SendUpdateLogStatusEnum::UPDATE_ISSUED);
                             if ($checkTransactionApprovedInSUStatusLogs) {
                                 app(SendUpdateLogService::class)->generateBrokerInvoiceNumberForSU($quote);

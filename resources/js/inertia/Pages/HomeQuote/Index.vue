@@ -5,11 +5,8 @@ defineProps({
   advisors: Array,
   renewalBatches: Array,
   isManualAllocationAllowed: Boolean,
-  totalCount: {
-    type: Number,
-    default: 0,
-  },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -45,6 +42,11 @@ const tableHeader = ref([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   {
     text: 'CREATED DATE',
@@ -89,9 +91,10 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   quote_status_id: [],
+  insurer_aml_status: [],
   advisors: [],
   is_renewal: '',
   previous_quote_policy_number: '',
@@ -103,7 +106,6 @@ const filters = reactive({
   policy_expiry_date_end: '',
   payment_due_date: '',
   booking_date: '',
-  last_modified_date: null,
   advisor_assigned_date: null,
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
@@ -115,6 +117,7 @@ watch(
   () => {
     if (
       (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date
     ) {
@@ -140,7 +143,7 @@ const advisorOptions = computed(() => {
 });
 
 const renewalBatchOptions = computed(() => {
-  return page.props.renewalBatches.map(batch => ({
+  return page.props?.renewalBatches?.map(batch => ({
     value: batch.id,
     label: batch.name,
   }));
@@ -179,7 +182,7 @@ function onSubmit(isValid) {
 
     filtersCount.value = Object.keys(filtersCleaned).length;
 
-    router.visit(route('home.index'), {
+    router.visit(route('home-quotes-list'), {
       method: 'get',
       data: {
         ...filtersCleaned,
@@ -191,13 +194,12 @@ function onSubmit(isValid) {
       onFinish: () => (loader.table = false),
     });
   } else {
-    console.log('Invalid');
   }
 }
 
 function onReset() {
   removedSavedParams();
-  router.visit(route('home.index'), {
+  router.visit(route('home-quotes-list'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -360,6 +362,7 @@ const resetDateFilters = filterName => {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
     booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
     created_at: ['booking_date', 'payment_due_date'],
+    previous_quote_policy_number: ['created_at_start', 'created_at_end'],
   };
 
   const filtersToReset =
@@ -372,10 +375,15 @@ const resetDateFilters = filterName => {
 };
 
 [
-  'payment_due_date',
-  'booking_date',
+  'email',
+  'mobile_no',
+  'code',
   'created_at_start',
   'created_at_end',
+  'renewal_batch',
+  'previous_quote_policy_number',
+  'payment_due_date',
+  'booking_date',
 ].forEach(filterName => {
   watch(
     () => filters[filterName],
@@ -385,6 +393,13 @@ const resetDateFilters = filterName => {
       }
     },
   );
+});
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
 });
 
 const formatDate = dateString =>
@@ -397,11 +412,6 @@ const formatDate = dateString =>
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Home List</h2>
-        <!-- PD Revert
-          <LeadsCount
-          :leadsCount="$page.props.totalCount"
-          :key="$page.props.totalCount"
-        /> -->
       </template>
       <template #default>
         <ColumnSelection
@@ -417,7 +427,7 @@ const formatDate = dateString =>
           @toggleFilters="showFilters = !showFilters"
         />
 
-        <Link :href="route('home-cardView')">
+        <Link :href="route('home-quotes-card')">
           <x-button
             size="sm"
             color="#1d83bc"
@@ -428,7 +438,7 @@ const formatDate = dateString =>
           </x-button>
         </Link>
 
-        <Link :href="route('home.create')">
+        <Link :href="route('home-quotes-create')">
           <x-button
             size="sm"
             color="#ff5e00"
@@ -440,34 +450,6 @@ const formatDate = dateString =>
         </Link>
       </template>
     </StickyHeader>
-    <!-- <div class="flex justify-between items-center">
-      <div class="flex items-center gap-5">
-        <h2 class="text-xl font-semibold">Home List</h2>
-        <LeadsCount :leadsCount="$page.props.totalCount" />
-      </div>
-      <div class="flex space-x-2 items-center">
-        <ColumnSelection
-          v-model:columns="tableHeader"
-          storage-key="home-list"
-        />
-
-        <FiltersButton
-          :is-shown="showFilters"
-          :filters="filters"
-          :filters-count="filtersCount"
-          @selected-filters="handleSelectedFilters"
-          @toggleFilters="showFilters = !showFilters"
-        />
-
-        <Link :href="route('home-cardView')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
-        </Link>
-
-        <Link :href="route('home.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
-        </Link>
-      </div>
-    </div> -->
     <x-divider class="my-4" />
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -533,6 +515,13 @@ const formatDate = dateString =>
         <x-field label="Created Date End">
           <DatePicker v-model="filters.created_at_end" name="created_at_end" />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
@@ -541,6 +530,12 @@ const formatDate = dateString =>
             :options="leadStatusOptions"
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -609,13 +604,6 @@ const formatDate = dateString =>
           multi-calendars-solo
         />
         <DatePicker
-          v-model="filters.last_modified_date"
-          name="created_at_start"
-          label="Last Modified Date"
-          range
-          format="dd-MM-yyyy"
-        />
-        <DatePicker
           v-if="hasRole(rolesEnum.HomeManager)"
           v-model="filters.advisor_assigned_date"
           name="created_at_start"
@@ -660,8 +648,8 @@ const formatDate = dateString =>
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>
@@ -683,7 +671,10 @@ const formatDate = dateString =>
       </div>
     </x-form>
 
-    <section v-if="quotesSelected.length > 0" class="mb-4">
+    <section
+      v-if="quotesSelected.length > 0 && !can(permissionsEnum.VIEW_ALL_LEADS)"
+      class="mb-4"
+    >
       <div
         class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
         v-if="isManualAllocationAllowed == true"
@@ -730,7 +721,7 @@ const formatDate = dateString =>
     >
       <template #item-code="{ code, uuid, stale_at, price_with_vat }">
         <Link
-          :href="route('home.show', uuid)"
+          :href="route('home-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ code }}</span>
@@ -738,26 +729,27 @@ const formatDate = dateString =>
         </Link>
       </template>
       <template #item-authorized_at="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ item.authorized_at }}
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ item?.payments[0]?.authorized_at }}
         </p>
       </template>
       <template #item-expiry_date="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ daysAgoFromAuthorizedDate(item.payments[0].authorized_at) }}
         </p>
       </template>
-      <template
-        #item-previous_policy_expiry_date="{
-          previous_policy_expiry_date,
-          source,
-        }"
-      >
+      <template #item-previous_policy_expiry_date="item">
         {{
-          source === 'Renewal_upload'
-            ? formatDate(previous_policy_expiry_date)
+          item?.source === 'Renewal_upload'
+            ? formatDate(item?.previous_policy_expiry_date)
             : ''
         }}
+      </template>
+      <template #item-quote_status_id_text="item">
+        {{ item?.quote_status?.text }}
+      </template>
+      <template #item-advisor_id_text="item">
+        {{ item?.advisor?.name }}
       </template>
       <template #item-renewal_batch_text="item">
         <p>

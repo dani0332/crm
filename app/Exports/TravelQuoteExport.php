@@ -3,7 +3,7 @@
 namespace App\Exports;
 
 use App\Enums\AMLStatusCode;
-use App\Repositories\TravelQuoteRepository;
+use App\Services\TravelQuoteService;
 use App\Traits\ExcelExportable;
 
 class TravelQuoteExport
@@ -12,7 +12,7 @@ class TravelQuoteExport
 
     public function collection()
     {
-        return TravelQuoteRepository::getData(true);
+        return app(TravelQuoteService::class)->getGridData()->get();
     }
 
     public function headings(): array
@@ -23,12 +23,14 @@ class TravelQuoteExport
             'LAST NAME',
             'LEAD STATUS',
             'AML STATUS',
+            'INSURER AML STATUS',
             'ADVISOR REQUESTED',
             'ADVISOR',
             'ADVISOR ASSIGNED DATE AND TIME',
             'API ISSUANCE STATUS',
             'INSURER API STATUS',
             'CREATED DATE',
+            'TRAVEL START DATE',
             'LAST MODIFIED DATE',
             'DOB',
             'TRANSAPP CODE',
@@ -62,12 +64,14 @@ class TravelQuoteExport
             $quote->last_name,
             optional($quote->quoteStatus)->text,
             AMLStatusCode::getName($quote->aml_status) ?? '',
+            AMLStatusCode::getName($quote->insurer_aml_status, 'N/A') ?? '',
             $quote->sic_advisor_requested == '0' ? 'No' : 'Yes',
             optional($quote->advisor)->name,
             $quote->travelQuoteRequestDetail->advisor_assigned_date ?? '',
             $quote->api_issuance_status ? $quote->api_issuance_status : '',
             $quote->insurer_api_status ? $quote->insurer_api_status : '',
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            $quote->start_date ?? '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             date(config('constants.datetime_format'), strtotime($quote->dob)),
             optional($quote->travelQuoteRequestDetail)->transapp_code,

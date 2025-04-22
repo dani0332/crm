@@ -15,6 +15,25 @@ class ExportValidationRequest extends FormRequest
         return true;
     }
 
+    /**
+     * Prepare the data for validation by converting "null" strings to null.
+     */
+    protected function prepareForValidation()
+    {
+        $data = $this->all();
+
+        // Recursively replace "null" strings with null
+        array_walk_recursive($data, function (&$value) {
+            if ($value === 'null') {
+                $value = null;
+            }
+        });
+
+        // Merge the modified data back into the request
+        $this->merge($data);
+        request()->merge($data); // Sync with global request
+    }
+
     public function rules()
     {
         $rules = [];
@@ -42,8 +61,10 @@ class ExportValidationRequest extends FormRequest
                 $rules['transaction_approved_dates.*'] = 'required|date';
             } else {
                 $rules = [
-                    'created_at_start' => 'required|date',
-                    'created_at_end' => 'required|date',
+                    'created_at_start' => 'nullable|required_without:policy_expiry_date,policy_expiry_date_end|date',
+                    'created_at_end' => 'nullable|required_without:policy_expiry_date,policy_expiry_date_end|date',
+                    'policy_expiry_date' => 'nullable|required_without:created_at_start,created_at_end|date',
+                    'policy_expiry_date_end' => 'nullable|required_without:created_at_start,created_at_end|date',
                 ];
             }
         }
@@ -73,7 +94,7 @@ class ExportValidationRequest extends FormRequest
                         $start = Carbon::parse($this->input('payment_due_date')[0])->startOfDay();
                         $end = Carbon::parse($this->input('payment_due_date')[1])->endOfDay();
                         $error_fields = 'payment due date';
-                    } elseif (request()->has('booking_date')) {
+                    } elseif (request()->filled('booking_date')) {
                         $start = Carbon::parse($this->input('booking_date')[0])->startOfDay();
                         $end = Carbon::parse($this->input('booking_date')[1])->endOfDay();
                         $error_fields = 'booking date';
@@ -81,6 +102,10 @@ class ExportValidationRequest extends FormRequest
                         $start = Carbon::parse($this->input('created_at_start'));
                         $end = Carbon::parse($this->input('created_at_end'));
                         $error_fields = 'created date';
+                    } elseif ($this->filled('policy_expiry_date') && $this->filled('policy_expiry_date_end')) {
+                        $start = Carbon::parse($this->input('policy_expiry_date'));
+                        $end = Carbon::parse($this->input('policy_expiry_date_end'));
+                        $error_fields = 'policy expiry date';
                     } elseif ($quoteType == RetentionReportEnum::RETENTION) {
                         if ($this->input('policyExpiryDate')) {
                             $diffInDays = 92;
@@ -95,7 +120,9 @@ class ExportValidationRequest extends FormRequest
                     }
                     $diff = $start->diffInDays($end);
                     if ($diff > $diffInDays) {
-                        $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                        $message = "Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.";
+                        // logger()->error('ExportValidationRequest: '.$message);
+                        $validator->errors()->add('flash', $message);
                     }
                 } else {
                     $validator->errors()->add('flash', 'Valid dates are required to export.');

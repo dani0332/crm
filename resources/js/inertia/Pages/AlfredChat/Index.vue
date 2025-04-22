@@ -39,6 +39,11 @@ const filters = reactive({
   email: null,
 });
 
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
+});
+
 const params = useUrlSearchParams('history');
 
 const reportButtonCon = computed(() => {
@@ -107,11 +112,12 @@ const showChatLogs = ref(false);
 const chatMessages = ref({
   created_at: '',
   data: [],
+  id: null,
 });
 
 const tableHeader = reactive([
   { text: 'Ref-ID', value: 'code' },
-  { text: 'Created At', value: 'created_at' },
+  { text: 'Created At', value: 'created_at', sortable: true },
   { text: 'Actions', value: 'action' },
 ]);
 
@@ -128,6 +134,13 @@ const isQuoteTypeSelected = computed(() => {
   );
 });
 
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
+
 function onSubmit() {
   if (filters.quoteId || filters.email || filters.mobile_no) {
     filters.chat_initiated_at = [];
@@ -136,7 +149,7 @@ function onSubmit() {
   filters.page = 1;
   router.visit(route('instant-alfred.index'), {
     method: 'get',
-    data: useGenerateQueryString(filters),
+    data: { ...useGenerateQueryString(filters), ...serverOptions.value },
     preserveState: true,
     preserveScroll: true,
     onBefore: () => (loader.table = true),
@@ -155,11 +168,17 @@ function onReset() {
 }
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+  for (const [key, value] of Object.entries(params)) {
+    if (key.startsWith('chat_initiated_at[')) {
+      // Extract the index from 'chat_initiated_at[0]', 'chat_initiated_at[1]'
+      const index = parseInt(key.match(/\[(\d+)\]/)?.[1], 10);
+      if (!isNaN(index)) {
+        filters.chat_initiated_at[index] = value.split('T')[0]; // Remove time part
+      }
+    } else if (Array.isArray(value)) {
+      filters[key] = value;
     } else {
-      filters[key] = params[key];
+      filters[key] = isNaN(parseInt(value)) ? value : parseInt(value);
     }
   }
 }
@@ -177,8 +196,14 @@ const createQueryParams = item => {
   };
 };
 
+const resetChatMessageObject = () => {
+  chatMessages.value.created_at = '';
+  chatMessages.value.data = [];
+  chatMessages.value.id = null;
+};
 const showChat = item => {
   loader.view = true;
+  resetChatMessageObject();
   axios
     .post('/instant-alfred/chats', {
       ...createQueryParams(item),
@@ -197,10 +222,22 @@ const showChat = item => {
 
 onMounted(() => {
   setQueryStringFilters();
+
+  let filtersCleaned = cleanObj({ ...filters, ...serverOptions.value });
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
 });
 
 const downloadReport = () => {
-  const data = useObjToUrl(useCleanObj(filters));
+  const data = useObjToUrl(useCleanObj({ ...filters, ...serverOptions.value }));
   const url = route('exportChatData');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
@@ -238,22 +275,6 @@ const downloadReport = () => {
         >
         </combo-box>
       </x-field>
-      <!-- <ToolTip
-        :title="'Select Start & End Date'"
-        :tooltip="'Maximum 30 days are allowed'"
-      >
-      </ToolTip>
-      <DatePicker
-        class="py-1"
-        v-model="filters.chat_initiated_at"
-        placeholder="Select Start & End Date"
-        range
-        :max-range="31"
-        size="sm"
-        model-type="yyyy-MM-dd"
-        :rules="[isRequired]"
-        :onlySelect="true"
-      /> -->
       <div>
         <x-tooltip position="top">
           <label
@@ -279,27 +300,6 @@ const downloadReport = () => {
           :onlySelect="true"
         />
       </div>
-
-      <!-- <DatePicker
-        label="Start Date"
-        :rules="
-          filters.quoteId || filters.email || filters.mobile_no
-            ? []
-            : [isRequired]
-        "
-        v-model="filters.start_date"
-        class="w-full"
-      /> -->
-      <!-- <DatePicker
-        label="End Date"
-        :rules="
-          filters.quoteId || filters.email || filters.mobile_no
-            ? []
-            : [isRequired]
-        "
-        v-model="filters.end_date"
-        class="w-full"
-      /> -->
       <x-field label="Transaction Type">
         <combo-box
           v-model="filters.transaction_type_id"
@@ -347,31 +347,6 @@ const downloadReport = () => {
           class="w-full"
         />
       </x-field>
-      <!-- <x-field label="Fallback">
-        <x-select
-          v-model="filters.fallback"
-          :options="[
-            { value: null, label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          placeholder="Search by Fallback"
-          class="w-full"
-        />
-      </x-field> -->
-      <!-- <x-field label=" Message channel">
-        <x-select
-          v-model="filters.channel"
-          :options="[
-            { value: null, label: 'All' },
-            { value: 'WHATSAPP', label: 'Whatsapp' },
-            { value: 'EMAIL', label: 'Email' },
-            { value: 'WEBSITE', label: 'Website' },
-          ]"
-          placeholder="Search by Message channel"
-          class="w-full"
-        />
-      </x-field> -->
       <x-field label="Segment">
         <x-select
           v-model="filters.segment"
@@ -468,6 +443,7 @@ const downloadReport = () => {
   ></chat-logs-modal>
 
   <DataTable
+    v-model:server-options="serverOptions"
     table-class-name="tablefixed mt-3"
     :loading="loader.table"
     :headers="tableHeader"

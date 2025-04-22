@@ -1,4 +1,5 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import AvailablePlans from '@/inertia/Pages/BikeQuote/AvailablePlans.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
@@ -57,6 +58,8 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
 });
 
 const assumptionState = reactive({
@@ -64,7 +67,7 @@ const assumptionState = reactive({
 });
 
 const page = usePage();
-const { isRequired } = useRules();
+const { isRequired, emiratesNumber } = useRules();
 
 const modelClass = 'App\\Models\\PersonalQuote';
 
@@ -170,9 +173,9 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer?.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer?.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer?.emirates_id_number || null,
+  insured_first_name: page.props.quote?.insured?.first_name || '',
+  insured_last_name: page.props.quote?.insured?.last_name || '',
+  emirates_id_number: page.props.quote?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer?.emirates_id_expiry_date || null,
 
@@ -343,6 +346,15 @@ const fetchUpdatedQuote = async () => {
     });
   }
 };
+
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
+
+function capitalizeString(str) {
+  if (!str) return 'N/A';
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
 </script>
 
 <template>
@@ -369,7 +381,10 @@ const fetchUpdatedQuote = async () => {
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -402,7 +417,12 @@ const fetchUpdatedQuote = async () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.BikeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.BikeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -413,7 +433,12 @@ const fetchUpdatedQuote = async () => {
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.BikeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.BikeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
           />
         </template>
 
@@ -442,10 +467,6 @@ const fetchUpdatedQuote = async () => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
             <dd>{{ quote?.paid_at ?? '' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">AML STATUS</dt>
-            <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -524,11 +545,12 @@ const fetchUpdatedQuote = async () => {
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
-                <dd v-if="quote?.kyc_decision === 'Complete'">
-                  KYC - Complete
-                </dd>
-                <dd v-else>KYC - Pending</dd>
+                <dt class="font-medium">IM AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>{{ capitalizeString(quote?.insurer_aml_status) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER AGE</dt>
@@ -621,6 +643,10 @@ const fetchUpdatedQuote = async () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Seat Capacity</dt>
                 <dd>{{ quote?.bike_quote?.seat_capacity }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CHASSIS NUMBER</dt>
+                <dd>{{ quote?.bike_quote?.chassis_number }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Emirate Of Registration</dt>
@@ -798,6 +824,10 @@ const fetchUpdatedQuote = async () => {
               <dd>{{ quote?.dob }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">GENDER</dt>
+              <dd>{{ quote?.gender }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
               <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
               <dd>
                 {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
@@ -808,8 +838,13 @@ const fetchUpdatedQuote = async () => {
               <dd>
                 <x-input
                   v-model="customerProfileForm.emirates_id_number"
-                  :rules="[isRequired]"
-                  placeholder="EMIRATES ID NUMBER"
+                  :rules="[isRequired, emiratesNumber]"
+                  placeholder="xxx-xxxx-xxxxxxx-x"
+                  @input="
+                    applyEmiratesIdNumMasking(
+                      customerProfileForm.emirates_id_number,
+                    )
+                  "
                   class="w-full"
                   :disabled="!isProfileUpdateAllow"
                 />
@@ -1288,6 +1323,9 @@ const fetchUpdatedQuote = async () => {
       "
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <QuotePayments
@@ -1334,6 +1372,7 @@ const fetchUpdatedQuote = async () => {
         canAny([
           permissionEnum.VIEW_INSLY_BOOK_POLICY,
           permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"
@@ -1374,7 +1413,7 @@ const fetchUpdatedQuote = async () => {
 
     <lead-raw-data
       :modelType="'Bike'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

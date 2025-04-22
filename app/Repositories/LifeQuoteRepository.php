@@ -131,8 +131,21 @@ class LifeQuoteRepository extends BaseRepository
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount);
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->select([
+                '*',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                '),
+            ])
+            ->orderBy('life_quote_request.created_at', 'desc');
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
@@ -153,8 +166,15 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->byQuoteTypeCode(QuoteTypes::LIFE)
-            ->where($column, $value)
+        $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
+            'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
+            'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
+            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod',
+            'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob', 'insured',
+            'quoteRequestEntityMapping' => function ($entityMapping) {
+                $entityMapping->with('entity');
+            },
+        ])
             ->with([
                 'advisor',
                 'quoteStatus',
@@ -215,6 +235,9 @@ class LifeQuoteRepository extends BaseRepository
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
+        if (isset($data['insured'][0])) {
+            $quote->emirates_id_number = $data['insured'][0]['id_type'] == 'emiratesId' ? $data['insured'][0]['id_number'] : null;
+        }
 
         return $quote;
     }

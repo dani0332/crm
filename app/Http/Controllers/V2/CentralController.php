@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -37,7 +39,9 @@ use App\Http\Requests\ExportValidationRequest;
 use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
+use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
@@ -50,17 +54,23 @@ use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
 use App\Models\Customer;
+use App\Models\CustomerInsured;
 use App\Models\Entity;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\Insured;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\SendUpdateLog;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\NotificationService;
@@ -71,6 +81,7 @@ use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -99,6 +110,7 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
             QuoteTypes::LIFE->value,
+            QuoteTypes::HOME->value,
         ])) {
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
@@ -157,11 +169,31 @@ class CentralController extends Controller
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
+            $emiratesDetails = [
+                'emirates_id_number' => str_replace('-', '', $customerProfileRequest->emirates_id_number),
+                'emirates_id_expiry_date' => $customerProfileRequest->emirates_id_expiry_date,
+            ];
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
+            $customer->update($emiratesDetails);
 
-            $customer->update($customerProfileRequest->only([
-                'insured_first_name', 'insured_last_name', 'emirates_id_number', 'emirates_id_expiry_date',
-            ]));
+            $insuredPersonDetails = Insured::updateOrCreate([
+                'id_type' => 'emiratesId',
+                'id_number' => $customerProfileRequest->emirates_id_number,
+            ], [
+                'first_name' => $customerProfileRequest->insured_first_name,
+                'last_name' => $customerProfileRequest->insured_last_name,
+                'dob' => $customer->dob,
+                'nationality_id' => $customer->nationality_id,
+                'gender' => $customer->screening_gender,
+            ]);
+
+            CustomerInsured::updateOrCreate([
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id,
+            ], [
+                'customer_id' => $customerProfileRequest->customer_id,
+                'insured_id' => $insuredPersonDetails->id,
+            ]);
         }
 
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
@@ -240,7 +272,6 @@ class CentralController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
-
     }
 
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
@@ -289,6 +320,8 @@ class CentralController extends Controller
     {
         $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $code, $request->provider_code);
+
         return redirect()->back();
     }
 
@@ -296,6 +329,9 @@ class CentralController extends Controller
     {
        
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
+
+        app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
+
         return response()->json(['plan' => $response]);
     }
 
@@ -354,7 +390,6 @@ class CentralController extends Controller
     public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
     {
         return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
-
     }
 
     // Store new payment
@@ -554,7 +589,6 @@ class CentralController extends Controller
                     OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
                     info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
                 }
-
             }
             info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 
@@ -612,5 +646,107 @@ class CentralController extends Controller
         $zip->close();
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $response = app(CentralService::class)->voidPayment($request);
+
+        return response()->json(['status' => $response['status'], 'message' => $response['message']]);
+    }
+
+    public function getInsurerAMLResponse(Request $request)
+    {
+        $insurerAMLFailureStatus = [
+            AMLStatusCode::InsurerAMLScreeningPending,
+            AMLStatusCode::InsurerAMLScreeningFailed,
+        ];
+
+        $response = ['status' => false, 'message' => ''];
+        if (in_array($request->insurerAMLStatus, $insurerAMLFailureStatus)) {
+            $responseMessage = 'GIG server connection issue. Please check API logs for details of the error';
+
+            if ($request->insurerAMLStatus == AMLStatusCode::InsurerAMLScreeningFailed) {
+                $insurerAMLScreeningResponse = AML::where([
+                    'quote_type_id' => $request->quoteType,
+                    'quote_request_id' => $request->quoteRequestId,
+                    'screening_type' => 'INSURER_'.InsuranceProvidersEnum::AXA,
+                ])->latest()->first();
+
+                $amlResponse = ! empty($insurerAMLScreeningResponse) ? json_decode($insurerAMLScreeningResponse->results) : [];
+
+                return ['status' => true, 'message' => $amlResponse?->message ?? $responseMessage];
+            }
+            $response = ['status' => true, 'message' => $responseMessage];
+        }
+
+        return $response;
+    }
+
+    public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
+
+        $logPayload = [
+            'paymentCode' => $request->paymentCode,
+            'uuid' => $request->uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'responseStatus' => isset($response['status']) ? $response['status'] : null,
+            'responseMessage' => isset($response['message']) ? $response['message'] : null,
+            'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
+        ];
+
+        info('paymentsCaptureValidation', $logPayload);
+
+        return response()->json(['response' => $response]);
+    }
+
+    public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
+    {
+        try {
+            $request = $postPrepaymentToSageRequest->safe();
+            $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
+            $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
+            $sendUpdateLog = null;
+            if ($request->sendUpdateId) {
+                $sendUpdateLog = SendUpdateLog::whereId(request()->sendUpdateId)->first();
+            }
+
+            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Prepayment Posting of Payment split.');
+
+            $schedulePostPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->quoteType, $paymentSplit, $sendUpdateLog]);
+
+            if (! $schedulePostPrepayment['status']) {
+                $errors = count($schedulePostPrepayment['errors']) > 0 ? $schedulePostPrepayment['errors'] : ['message' => $schedulePostPrepayment['message']];
+                info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' -  Start Prepayment Posting of Payment split -  Error : ', $errors);
+
+                return response()->json(['errors' => $errors], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Prepayment posting to Sage has been scheduled and will be processed in the background.',
+            ], 200);
+        } catch (Exception $exception) {
+            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', $exception->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Prepayment posting is failed, please try again later.',
+            ], 500);
+        }
+    }
+
+    public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validatedRequest = (object) $request->validate([
+            'payment_id' => 'required',
+            'payment_code' => 'required',
+        ]);
+
+        $response = app(CentralService::class)->deletePayment($validatedRequest);
+
+        return response()->json($response);
     }
 }

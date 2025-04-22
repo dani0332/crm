@@ -8,6 +8,7 @@ defineProps({
   typesOfInsurance: Array,
   numberOfYears: Array,
   currency: Array,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -60,6 +61,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   quote_status_id: [],
+  insurer_aml_status: [],
   advisor_id: [],
   renewal_batch_id: [],
   is_ecommerce: '',
@@ -129,6 +131,11 @@ const tableHeader = ref([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   {
@@ -339,6 +346,7 @@ watch(
     if (
       can(permissionsEnum.DATA_EXTRACTION) &&
       ((filters.created_at_start && filters.created_at_end) ||
+        (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
         filters.payment_due_date ||
         filters.booking_date)
     ) {
@@ -487,6 +495,12 @@ const manageFilterCount = () => {
   }
 }
 
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -594,6 +608,13 @@ const manageFilterCount = () => {
         <x-field label="Created Date End">
           <DatePicker v-model="filters.created_at_end" name="created_at_end" />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
@@ -607,6 +628,12 @@ const manageFilterCount = () => {
             "
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -676,14 +703,7 @@ const manageFilterCount = () => {
           range
           format="dd-MM-yyyy"
         />
-        <DatePicker
-          v-if="hasRole(rolesEnum.LifeManager)"
-          v-model="filters.advisor_assigned_date"
-          name="created_at_start"
-          label="Advisor Assigned Date"
-          range
-          format="dd-MM-yyyy"
-        />
+
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_number"
@@ -773,8 +793,8 @@ const manageFilterCount = () => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

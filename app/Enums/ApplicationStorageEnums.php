@@ -28,7 +28,7 @@ final class ApplicationStorageEnums extends Enum
     public const TIER_ASSIGNMENT_PROCESS_START_DATE = 'TIER_ASSIGNMENT_PROCESS_START_DATE';
     public const CAR_LEAD_PICKUP_FIFO = 'CAR_LEAD_PICKUP_FIFO';
     public const CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS = 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS';
-    public const JOB_FAILED_EMAIL_RECIPIENTS = 'ahsan.ashfaq@insurancemarket.ae,hussain.fakhruddin@insurancemarket.ae,daniyal.shahid@insurancemarket.ae,faisal.abbas@insurancemarket.ae';
+    public const JOB_FAILED_EMAIL_RECIPIENTS = 'ahsan.ashfaq@myalfred.com,hussain.fakhruddin@insurancemarket.ae,daniyal.shahid@myalfred.com,faisal.abbas@myalfred.com,afzal.khan@myalfred.com';
     public const CAR_SOLD_STATUS_REJECTION_TEMPLATE = 'CAR_SOLD_STATUS_REJECTION_TEMPLATE';
     public const UNCONTACTABLE_STATUS_REJECTION_TEMPLATE = 'UNCONTACTABLE_STATUS_REJECTION_TEMPLATE';
     public const CAR_SOLD_RESUBMISSIONS_TEMPLATE = 'CAR_SOLD_RESUBMISSIONS_TEMPLATE';
@@ -44,7 +44,6 @@ final class ApplicationStorageEnums extends Enum
     public const REASSIGNMENT_END_TIME = 'REASSIGNMENT_END_TIME';
     public const ENABLE_AUTO_FOLLOWUP = 'ENABLE_AUTO_FOLLOWUP';
     public const APPLY_DUBAI_NOW_EXCLUSION = 'APPLY_DUBAI_NOW_EXCLUSION';
-    public const ENABLE_CAMMY_FOLLOWUP = 'ENABLE_CAMMY_FOLLOWUP';
     public const OCB_NEW_BUSINESS_MULTIPLE_PLANS = 'OCB_NEW_BUSINESS_MULTIPLE_PLANS';
     public const OCB_NEW_BUSINESS_ZERO_PLAN = 'OCB_NEW_BUSINESS_ZERO_PLAN';
     public const OCB_NEW_BUSINESS_SINGLE_PLAN = 'OCB_NEW_BUSINESS_SINGLE_PLAN';
@@ -67,7 +66,9 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_LEAD_REASSIGNMENT = 'ENABLE_LEAD_REASSIGNMENT';
     public const DUBAI_NOW_CC_GROUP = 'DUBAI_NOW_CC_GROUP';
     public const SAGE_ENABLED = 'SAGE_ENABLED';
+    public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
     public const DTT_ENABLED = 'DTT_ENABLED';
+    public const DTT_FROM = 'DTT_FROM';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
     public const DTT_HEALTH_ENABLED = 'DTT_HEALTH_ENABLED';
@@ -122,6 +123,7 @@ final class ApplicationStorageEnums extends Enum
     public const SUKOON_TEMPLATE_TAX_INVOICE = 'SUKOON_TEMPLATE_TAX_INVOICE';
     public const SUKOON_TEMPLATE_TAX_INVOICE_BUYER = 'SUKOON_TEMPLATE_TAX_INVOICE_BUYER';
     public const LEAD_SOURCE_ECOMMERCE = 'LEAD_SOURCE_ECOMMERCE';
+    public const FAKE_LEAD_DOMAINS = 'FAKE_LEAD_DOMAINS';
 
     // Travel SIC 2.0
     public const SIC_TRAVEL_WORKFLOW_ENABLE = 'SIC_TRAVEL_WORKFLOW_ENABLE';
@@ -186,4 +188,27 @@ final class ApplicationStorageEnums extends Enum
     public const PUBLIC_HOLIDAY_START_DATE = 'PUBLIC_HOLIDAY_START_DATE';
     public const PUBLIC_HOLIDAY_END_DATE = 'PUBLIC_HOLIDAY_END_DATE';
     public const TRAVEL_RENEWALS_DAYS_THRESHOLD = 'TRAVEL_RENEWALS_DAYS_THRESHOLD';
+    public const ENABLE_TAP_INTEGRATION = 'ENABLE_TAP_INTEGRATION';
+    public const USER_UNAVAILABLE_TIME_THRESHOLD = 'USER_UNAVAILABLE_TIME_THRESHOLD';
+
+    /* Bike LMS Intro Email BCC */
+    public const LMS_INTRO_BIKE_EMAIL_BCC = 'LMS_INTRO_BIKE_EMAIL_BCC';
+    public const TAP_AUTHORIZED_EMAILS = 'TAP_AUTHORIZED_EMAILS';
+    public const BENCHMARKING_ENABLED = 'BENCHMARKING_ENABLED';
+    public const BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS = 'BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS';
+
+    // Group Medical Team Advisors
+    public const GROUP_MEDICAL_MICRO_ADVISORS = 'GROUP_MEDICAL_MICRO_ADVISORS';
+    public const GROUP_MEDICAL_NON_MICRO_ADVISORS = 'GROUP_MEDICAL_NON_MICRO_ADVISORS';
+    public const STOP_DE_DUPLICATION_JOB = 'STOP_DE_DUPLICATION_JOB';
+    public const BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW = 'BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW';
+
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
+    public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
+    public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
+
+    /* AIG Workflow Integration */
+    public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
+    public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
 }

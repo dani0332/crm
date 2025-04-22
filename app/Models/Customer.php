@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -106,5 +107,17 @@ class Customer extends Model implements AuditableContract
     public function additionalContacts()
     {
         return $this->hasMany(CustomerAdditionalContact::class, 'customer_id', 'id');
+    }
+
+    public function insured(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'customer_id', // Foreign key on CustomerInsured table
+            'id', // Foreign key on Insured table
+            'id', // Local key on Customer table
+            'insured_id' // Local key on CustomerInsured table
+        );
     }
 }

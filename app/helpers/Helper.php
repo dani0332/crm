@@ -3,6 +3,7 @@
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -11,6 +12,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -28,6 +30,7 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -539,6 +542,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::PET->value,
             QuoteTypes::YACHT->value,
             QuoteTypes::LIFE->value,
+            QuoteTypes::HOME->value,
         ]);
     }
 }
@@ -714,9 +718,13 @@ if (! function_exists('addDaysExcludeWeekend')) {
 }
 
 if (! function_exists('getIMLogo')) {
-    function getIMLogo($isPDF = false)
+    function getIMLogo($isPDF = false, $latest = false)
     {
         $imLogo = 'images/logo-new.png';
+
+        if ($latest) {
+            $imLogo = 'images/im_logo_23k-hi.png';
+        }
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
@@ -1024,15 +1032,23 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName)
+    function getAppStorageValueByKey($keyName, $default = false, bool $useCache = false, $cacheTime = null)
     {
-        $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+        $getStorageValue = function () use ($keyName, $default) {
+            $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
-        if (! $query) {
-            return false;
+            if (! $query) {
+                return $default;
+            }
+
+            return $query->value;
+        };
+
+        if (! $useCache || config('constants.APP_ENV') !== EnvEnum::PRODUCTION) {
+            return $getStorageValue();
         }
 
-        return $query->value;
+        return Cache::remember("APP_STORAGE_{$keyName}", $cacheTime ?: now()->addHour(), $getStorageValue);
     }
 }
 
@@ -1309,9 +1325,9 @@ if (! function_exists('getManagersByUser')) {
 }
 
 if (! function_exists('roundNumber')) {
-    function roundNumber($number)
+    function roundNumber($number, $precision = 2)
     {
-        return round($number, 2);
+        return round($number, $precision);
     }
 }
 
@@ -1340,9 +1356,9 @@ if (! function_exists('getCourierQuote')) {
                 "{$table}.policy_number as insurance_policy_number",
                 'payments.code as ep_ref_id',
                 'payments.captured_at as payment_captured_at',
-                'customer.first_name as client_first_name',
-                'customer.last_name as client_last_name',
-                'customer.email as client_email',
+                "{$table}.first_name as client_first_name",
+                "{$table}.last_name as client_last_name",
+                "{$table}.email as client_email",
                 "{$table}.mobile_no as client_phone_number",
                 'customer_addresses.type as courier_address_type',
                 'customer_addresses.office_number as courier_address_office_number',
@@ -1548,12 +1564,13 @@ if (! function_exists('getInsuranceProvider')) {
     function getInsuranceProvider($payment, $quoteType, $quote = null)
     {
         $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value];
+        $planRelationName = strtolower($quoteType).'Plan';
 
         //        Reminder:: Add Commercial vehicle logic for fetch correct provider
         if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
 
-            $quoteDetails = $payment->paymentable; // For Main Lead
+            $quoteDetails = $payment?->paymentable; // For Main Lead
 
             if (empty($quoteDetails) && isset($quote->personal_quote_id) && $quote?->personal_quote_id) { // For Endorsements
                 $personalQuote = PersonalQuote::find($quote?->personal_quote_id);
@@ -1572,13 +1589,21 @@ if (! function_exists('getInsuranceProvider')) {
         }
 
         if (in_array(ucfirst($quoteType), $allowedQuoteTypes) && isset($payment)) {
-            $planRelationName = strtolower($quoteType).'Plan';
             $payment->load($planRelationName);
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
         }
 
         if (! $insuranceProvider) {
             $insuranceProvider = $payment?->insuranceProvider;
+            if (! $insuranceProvider) {
+                $genericQueriesAllLobs = new class
+                {
+                    use GenericQueriesAllLobs;
+                };
+                $model = $genericQueriesAllLobs->getModelObject($quoteType);
+
+                return $quote ? $model::where('code', $quote->code)->first()?->insuranceProvider : null;
+            }
         }
 
         return $insuranceProvider;
@@ -1591,5 +1616,21 @@ if (! function_exists('isCHSAdvisor')) {
         $user = User::select('id')->chs()->first();
 
         return $user?->id == $userId;
+    }
+}
+
+if (! function_exists('isTapEnabled')) {
+    function isTapEnabled($processType = []): bool
+    {
+        return getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION, useCache: true);
+    }
+}
+
+if (! function_exists('userHasProduct')) {
+    function userHasProduct($product)
+    {
+        $productIds = auth()->user()->products->pluck('product_id');
+
+        return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }

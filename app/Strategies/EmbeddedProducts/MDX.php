@@ -2,6 +2,8 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
+use App\Models\CustomerInsured;
+use App\Models\Insured;
 use Carbon\Carbon;
 
 class MDX extends EmbeddedProduct
@@ -21,8 +23,15 @@ class MDX extends EmbeddedProduct
             $firstName = $quoteObject->first_name ?? '';
             $lastName = $quoteObject->last_name ?? '';
         } else {
-            $firstName = $quoteObject->customer->insured_first_name ?? '';
-            $lastName = $quoteObject->customer->insured_last_name ?? '';
+            $customerInsured = CustomerInsured::where('customer_id', $quoteObject->customer_id)->where('quote_request_id', $quoteObject->id)->first();
+            if ($customerInsured) {
+                $insured = Insured::find($customerInsured->insured_id);
+                $firstName = $insured->first_name ?? '';
+                $lastName = $insured->last_name ?? '';
+            } else {
+                $firstName = $quoteObject->customer->insured_first_name ?? '';
+                $lastName = $quoteObject->customer->insured_last_name ?? '';
+            }
         }
 
         $data = [

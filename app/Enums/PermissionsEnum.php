@@ -386,6 +386,7 @@ final class PermissionsEnum extends Enum
     public const PET_LEAD_ALLOCATION_DASHBOARD = 'pet-lead-allocation-dashboard';
     public const LIFE_LEAD_ALLOCATION_DASHBOARD = 'life-lead-allocation-dashboard';
     public const HOME_LEAD_ALLOCATION_DASHBOARD = 'home-lead-allocation-dashboard';
+    public const GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD = 'group-medical-lead-allocation-dashboard';
     public const UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE = 'update-lead-status-to-fake-duplicate';
     public const SEARCH_INSURER_TAX_INVOICE_NUMBER = 'search-insurer-tax-invoice-number';
     public const SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER = 'search-insurer-commission-tax-invoice-number';
@@ -397,7 +398,22 @@ final class PermissionsEnum extends Enum
     public const RECEIVE_NOTIFICATIONS = 'receive-notifications';
     public const SEARCH_ALL_LEAD_LOB = 'search-all-lead-lob';
     public const DATA_EXTRACTION_SEARCH_ALL_LEADS = 'data-extraction-search-all-leads';
+    public const VIEW_ALL_LEADS = 'view-all-leads';
+    public const VIEW_ALL_REPORTS = 'view-all-reports';
     public const TAP_BETA_ACCESS = 'tap-beta-access';
+    public const ENABLE_IMPERSONATION = 'enable-impersonation';
+    public const PAYMENTS_VOID = 'payments-void';
+    public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
+    public const CANCEL_SEND_UPDATE = 'cancel-send-update';
+    public const LIFE_LEADPOOL = 'life-leadpool';
+    public const HOME_LEADPOOL = 'home-leadpool';
+    public const YACHT_LEADPOOL = 'yacht-leadpool';
+    public const PET_LEADPOOL = 'pet-leadpool';
+    public const CORPLINE_LEADPOOL = 'corpline-leadpool';
+    public const CYCLE_LEADPOOL = 'cycle-leadpool';
+    public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool';
+    public const SAVINGS_LEADPOOL = 'savings-leadpool';
+    public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
 
     public static function getAdvisorConversionReportPermissions()
     {

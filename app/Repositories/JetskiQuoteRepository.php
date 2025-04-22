@@ -2,12 +2,14 @@
 
 namespace App\Repositories;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -123,8 +125,29 @@ class JetskiQuoteRepository extends BaseRepository
             'renewalBatchModel',
         ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
-        })->filter(! $forExport)
-            ->withFakeLeadCriteria();
+        })
+            ->when(! empty(request()->advisor_assigned_date), function ($query) {
+                $dateArray = request()->advisor_assigned_date;
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+                $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
+                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+                });
+            })
+            ->filter(! $forExport)
+            ->withFakeLeadCriteria()
+            ->select([
+                '*',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                '),
+            ]);
 
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 

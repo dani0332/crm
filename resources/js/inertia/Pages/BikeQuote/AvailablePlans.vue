@@ -1,9 +1,9 @@
 <script setup>
+import LazyCreatePlan from '@/inertia/Pages/BikeQuote/CreatePlan.vue';
+import UpdateShowPlan from '@/inertia/Pages/BikeQuote/UpdateShowPlans.vue';
 import { defineEmits } from 'vue';
 // Define the emit function
 const emit = defineEmits(['plan-selected']);
-import LazyCreatePlan from '@/inertia/Pages/BikeQuote/CreatePlan.vue';
-import UpdateShowPlan from '@/inertia/Pages/BikeQuote/UpdateShowPlans.vue';
 
 defineProps({
   carPlanTypeEnum: Object,
@@ -77,6 +77,7 @@ const availablePlansItems = computed(() => {
   if (!Array.isArray(availablePlansTable.data)) {
     return [];
   }
+
   return typeof availablePlansTable.data !== 'string'
     ? availablePlansTable.data
     : [];
@@ -348,7 +349,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'paymentEntityModel'],
+    only: ['payments', 'paymentEntityModel', 'bookPolicyDetails'],
   });
   emit('plan-selected', plan);
   onLoadAvailablePlansData();
@@ -394,15 +395,24 @@ onMounted(() => {
         >
           Download PDF
         </x-button>
-        <x-button
-          @click.prevent="modals.sendConfirm = true"
-          size="sm"
-          color="orange"
-          class="mr-2"
-          :disabled="quote.advisor_id != $page.props.auth.user.id"
-        >
-          Send OCB Email to Customer
-        </x-button>
+        <x-tooltip placement="top" align="left">
+          <x-button
+            @click.prevent="modals.sendConfirm = true"
+            size="sm"
+            color="orange"
+            class="mr-2"
+            :disabled="quote.advisor_id != $page.props.auth.user.id"
+          >
+            Send OCB Email to Customer
+          </x-button>
+          <template #tooltip>
+            <div>
+              When clicked, this button sends the One Click Buy (OCB) email to
+              the customer with updated rates and coverage options, helping them
+              finalize their purchase with ease.
+            </div>
+          </template>
+        </x-tooltip>
 
         <x-button
           @click.prevent="modals.createPlan = true"
@@ -619,6 +629,8 @@ onMounted(() => {
               :plan="item"
               :quoteType="'Bike'"
               :uuid="quote.uuid"
+              :insuranceProviderId="item.id"
+              :code="quote.code"
             />
 
             <x-button v-else size="xs" color="orange" outlined :disabled="true">

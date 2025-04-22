@@ -38,11 +38,11 @@ class TravelAllocationService extends AllocationService
         $this->isMixEnquiryWithAutomation = false;
     }
 
-    private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, $quoteUUID, ProcessTrackerService $tracker)
+    private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, ProcessTrackerService $tracker)
     {
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
         if (getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE) == '1' && $travelQuote->isParent() && $travelQuote->isAdult()) {
-            info(self::class.":verifyFetchLeadPreChecks - {$quoteUUID} is parent lead so checking for Alliance Travel Automation");
+            info(self::class.':verifyFetchLeadPreChecks - it is parent lead so checking for Alliance Travel Automation');
             // Check if the lead is associated with the ALNC provider
             $payment = PaymentRepository::mainQuotePayment($travelQuote);
             $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
@@ -50,10 +50,10 @@ class TravelAllocationService extends AllocationService
 
             $isALNC = $insurerCode == InsuranceProvidersEnum::ALNC;
 
-            $isALNC && info(self::class.":verifyFetchLeadPreChecks - {$quoteUUID} is Alliance so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
+            $isALNC && info(self::class.":verifyFetchLeadPreChecks - it is Alliance so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
 
             $isAutomationEnabled = (new PolicyIssuanceService)->init(self::TYPE, $insurerCode)?->isPolicyIssuanceAutomationEnabled();
-            info(self::class." - verifyFetchLeadPreChecks: {$quoteUUID} - isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
+            info(self::class." - verifyFetchLeadPreChecks: isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
 
             if ($isALNC && $isAutomationEnabled && $travelQuote->isSingleTrip() && $travelQuote->isPaid()) {
                 $tracker->addStep(ProcessTrackerAllocationEnum::ALIANCE_PLAN_FOUND);
@@ -66,10 +66,10 @@ class TravelAllocationService extends AllocationService
                 } else {
                     if (! $travelQuote->isAutomationCompleted()) {
                         $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_NOT_COMPLETED);
-                        info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed so check fail cases");
+                        info(self::class.':fetchLead - it is Alliance and automation is not yet completed so check fail cases');
                         if ($travelQuote->isPolicyIssuanceFailed()) {
                             $tracker->addStep(ProcessTrackerAllocationEnum::POLICY_ISSUANCE_FAILED);
-                            info(self::class.":fetchLead - {$quoteUUID} is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation");
+                            info(self::class.':fetchLead - it is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation');
                             $this->isSICAdvisor = true;
                             $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
 
@@ -96,7 +96,18 @@ class TravelAllocationService extends AllocationService
             return null;
         }
 
-        if ($this->verifyFetchLeadPreChecks($travelQuote, $quoteId, $tracker) === false) {
+        info(self::class.'::fetchLead - Travel ILA', [
+            'uuid' => $travelQuote->uuid,
+            'payment_status_id' => $travelQuote->payment_status_id,
+            'sic_advisor_requested' => $travelQuote->sic_advisor_requested,
+            'quote_status_id' => $travelQuote->quote_status_id,
+            'lead_allocation_failed_at' => $travelQuote->lead_allocation_failed_at,
+            'sic_flow_enabled' => $travelQuote->sic_flow_enabled,
+            'parent_quote_id' => $travelQuote->parent_id,
+            'source' => $travelQuote->source,
+        ]);
+
+        if ($this->verifyFetchLeadPreChecks($travelQuote, $tracker) === false) {
             return null;
         }
 
@@ -122,21 +133,21 @@ class TravelAllocationService extends AllocationService
         $this->resetProps();
         $lead = TravelQuote::where('parent_id', $parentLead->id)->first();
         if ($lead) {
-            info(self::class.":assignAvailableAdvisorToChild - Finding Advisor for Child Lead: {$lead->uuid} of parent lead: {$parentLead->uuid}");
-            $advisor = $this->fetchAvailableAdvisor(false, getTeamId(TeamNameEnum::SIC_UNASSISTED), $lead->uuid, $lead);
+            info(self::class.":assignAvailableAdvisorToChild - Finding Advisor for Child Lead: {$lead->uuid}");
+            $advisor = $this->fetchAvailableAdvisor(teamId: getTeamId(TeamNameEnum::SIC_UNASSISTED), lead: $lead);
             if (! $advisor) {
-                info(self::class.":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid} of parent lead: {$parentLead->uuid}");
+                info(self::class.":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid}");
                 $this->leadAllocationFailed($lead->uuid, QuoteTypes::TRAVEL);
             } else {
-                info(self::class.":assignAvailableAdvisorToChild - Advisor found for Child Lead: {$lead->uuid} of parent lead: {$parentLead->uuid}");
+                info(self::class.":assignAvailableAdvisorToChild - Advisor found for Child Lead: {$lead->uuid}");
                 $this->assignLead($lead, $advisor, AssignmentTypeEnum::SYSTEM_ASSIGNED);
             }
         }
     }
 
-    public function fetchAvailableAdvisor($isReassignmentJob = false, $teamId = null, $quoteUUID = null, ?TravelQuote $lead = null, ?ProcessTrackerService $tracker = null)
+    public function fetchAvailableAdvisor($isReassignmentJob = false, $teamId = null, ?TravelQuote $lead = null, ?ProcessTrackerService $tracker = null)
     {
-        Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$lead->uuid}");
+        Log::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -156,11 +167,11 @@ class TravelAllocationService extends AllocationService
         }
 
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$quoteUUID}");
+            info(self::class." - trying to get advisors with current status as {$status}");
             $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $lead);
 
             if ($eligibleUser) {
-                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$lead->uuid}");
+                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 
                 $user = User::find($eligibleUser->user_id);
 
@@ -199,13 +210,13 @@ class TravelAllocationService extends AllocationService
     public function getAdvisorByStatus($status, $teamId = null, ?TravelQuote $lead = null)
     {
         if ($this->isCHSAdvisor) {
-            info(self::class." - getAdvisorByStatus: CHS Advisor is required for lead: {$lead->uuid}");
+            info(self::class.' - getAdvisorByStatus: CHS Advisor is required');
 
             return User::select('users.id as user_id')->chs()->first();
         }
 
         if ($this->isSICAdvisor) {
-            info(self::class." - getAdvisorByStatus: SIC Advisor is required for lead: {$lead->uuid}");
+            info(self::class.' - getAdvisorByStatus: SIC Advisor is required');
 
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
@@ -243,7 +254,7 @@ class TravelAllocationService extends AllocationService
 
     public function assignLead(TravelQuote $lead, User $advisor, $assignmentType, ?ProcessTrackerService $tracker = null)
     {
-        info(self::class." - assignLead: Going to Assign Advisor to Lead: {$lead->uuid}");
+        info(self::class.' - assignLead: Going to Assign Advisor');
         $previousAssignmentType = $lead->assignment_type;
         $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
@@ -254,7 +265,7 @@ class TravelAllocationService extends AllocationService
 
         $lead->endAllocation();
 
-        info(self::class." - Lead Id {$lead->uuid} assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
+        info(self::class." - Assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
 
@@ -284,7 +295,7 @@ class TravelAllocationService extends AllocationService
         }
 
         if ($this->isMixEnquiryWithAutomation) {
-            info(self::class.":assignLead - Mix Enquiry with Automation so going to assign advisor to child lead for parent lead: {$lead->uuid}");
+            info(self::class.':assignLead - Mix Enquiry with Automation so going to assign advisor to child lead');
             $this->assignAvailableAdvisorToChild(parentLead: $lead);
         }
         $this->resetProps();

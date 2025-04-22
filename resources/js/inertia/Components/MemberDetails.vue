@@ -138,6 +138,7 @@ const onMemberSubmit = isValid => {
         });
       },
       onFinish: () => {
+        emitEvent();
         modals.member = false;
       },
     });
@@ -162,6 +163,7 @@ const memberDeleteConfirmed = () => {
         });
       },
       onFinish: () => {
+        emitEvent();
         modals.memberConfirm = false;
       },
     },
@@ -181,6 +183,19 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+const emit = defineEmits(['memberUpdated']);
+
+const emitEvent = () => {
+  emit('memberUpdated');
+};
+
+watch(
+  () => props.membersDetails,
+  newMembersDetails => {
+    members.value = newMembersDetails;
+  },
+  { immediate: true },
+);
 </script>
 
 <template>

@@ -1,6 +1,8 @@
 <script setup>
 defineProps({
   embeddedProduct: Object,
+  ep_enums: Object,
+  sync_statuses: Object,
 });
 
 const dateFormat = date =>
@@ -11,6 +13,7 @@ const serverOptions = ref({
   sortBy: 'id',
   sortType: 'desc',
 });
+const notification = useToast();
 
 const loader = reactive({
   table: false,
@@ -22,15 +25,19 @@ const filters = reactive({
   email: '',
   name: '',
   date_of_purchase: '',
+  sync_status: 'all',
   months: '',
 });
+
+const getLink = (quote_uuid, quote_type_id, ref_id) =>
+  buildCdbidLink(quote_uuid, quote_type_id, ref_id);
 
 const page = usePage();
 
 const tableHeader = [
   { text: 'EP Ref-ID', value: 'ref_id' },
   { text: 'Advisor Name', value: 'advisor_name' },
-  { text: 'Payment Date', value: 'payment_date', sortable: true },
+  { text: 'Date of Issuance', value: 'payment_date', sortable: true },
   { text: 'Plan Commencement Date', value: 'plan_start_date' },
   { text: 'Plan End Date', value: 'plan_end_date' },
   { text: 'Full Name', value: 'name' },
@@ -38,6 +45,7 @@ const tableHeader = [
   { text: 'DOB', value: 'dob' },
   { text: 'AGE', value: 'age' },
   { text: 'PASSPORT', value: 'passport_number' },
+  { text: 'Sync Status', value: 'sync_status', sortable: true },
   { text: 'NATIONALITY', value: 'nationality' },
   { text: 'Vehicle', value: 'vehicle' },
   { text: 'Contact Number', value: 'contact_number' },
@@ -98,6 +106,7 @@ function filterTransactions(isValid) {
       preserveScroll: true,
       onFinish: () => {
         loader.table = false;
+        setQueryFilters();
       },
       onBefore: () => {
         loader.table = true;
@@ -107,11 +116,17 @@ function filterTransactions(isValid) {
 }
 
 function setQueryFilters() {
-  for (const [key] of Object.entries(params)) {
+  var currentParams = {
+    ...params,
+    ...serverOptions.value,
+  };
+  Object(currentParams).hasOwnProperty('rowsPerPage') &&
+    delete currentParams.rowsPerPage;
+  for (const [key] of Object.entries(currentParams)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+      filters[key.substring(0, key.length - 2)] = currentParams[key];
     } else {
-      filters[key] = params[key];
+      filters[key] = currentParams[key];
     }
   }
 }
@@ -126,6 +141,53 @@ function exportReport() {
     page.props.embeddedProduct.detail.id,
   );
   window.open(url + '?' + new URLSearchParams(data).toString());
+}
+
+const syncingRecords = ref([]);
+
+function reSync(code) {
+  if (confirm('Are you sure ?')) {
+    syncingRecords.value = [...syncingRecords.value, code];
+    axios
+      .post(route('embedded-products.courier.re-sync', code), {})
+      .then(res => {
+        if (syncingRecords.value.length <= 1 && res?.data?.ok) {
+          router.get(
+            route(
+              'embedded-products.reports.certificates',
+              page.props.embeddedProduct.detail.id,
+            ),
+            {
+              replace: true,
+              preserveScroll: true,
+              preserveState: true,
+            },
+          );
+        }
+        if (res?.data?.ok) {
+          notification.success({
+            title: res?.data?.message,
+            position: 'top',
+          });
+        } else {
+          notification.warning({
+            title: res?.data?.message,
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: err?.message,
+          position: 'top',
+        });
+      })
+      .finally(() => {
+        syncingRecords.value = syncingRecords.value.filter(
+          record => record !== code,
+        );
+      });
+  }
 }
 
 onMounted(() => {
@@ -216,26 +278,66 @@ watch(
             placeholder="Type here"
           />
         </x-field>
-        <x-field label="Date of issuance">
-          <DatePicker
-            v-model="filters.date_of_purchase"
-            name="date_of_purchase"
-            class="w-full"
-            model-type="yyyy-MM-dd"
-            range
-            max-range="30"
-          />
-        </x-field>
-        <x-field label="Months">
-          <DatePicker
-            v-model="filters.months"
-            name="months"
-            class="w-full"
-            month-picker
-            model-type="yyyy-MM"
-            format="MM-yyyy"
-          />
-        </x-field>
+        <div>
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Date of issuance
+            </label>
+            <template #tooltip>
+              This is the date on which the EP product was issued and sent to
+              the client by the system
+            </template>
+          </x-tooltip>
+          <x-field>
+            <DatePicker
+              v-model="filters.date_of_purchase"
+              name="date_of_purchase"
+              class="w-full"
+              model-type="yyyy-MM-dd"
+              range
+              max-range="30"
+            />
+          </x-field>
+        </div>
+        <div>
+          <x-tooltip placement="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Months
+            </label>
+            <template #tooltip>
+              This is the month in which the EP product was issued to the client
+            </template>
+          </x-tooltip>
+          <x-field>
+            <DatePicker
+              v-model="filters.months"
+              name="months"
+              placeholder="Select month"
+              class="w-full"
+              month-picker
+              model-type="yyyy-MM"
+              format="MM-yyyy"
+            />
+          </x-field>
+        </div>
+        <div>
+          <x-field
+            label="Sync Status"
+            v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
+          >
+            <ComboBox
+              v-model="filters.sync_status"
+              placeholder="Select Sync Status"
+              :options="sync_statuses"
+              class="w-full"
+              :single="true"
+            />
+          </x-field>
+        </div>
       </div>
       <div class="flex flex-row-reverse gap-3">
         <div class="flex justify-self-end gap-3">
@@ -252,7 +354,15 @@ watch(
     <DataTable
       v-model:server-options="serverOptions"
       table-class-name=""
-      :headers="tableHeader"
+      :headers="
+        tableHeader.filter(header => {
+          if (header.value === 'sync_status') {
+            return embeddedProduct.detail.short_code === ep_enums.COURIER;
+          }
+
+          return true;
+        })
+      "
       :loading="loader.table"
       :items="embeddedProduct.transactions.data || []"
       border-cell
@@ -266,6 +376,44 @@ watch(
         >
           {{ id }}
         </Link>
+      </template>
+
+      <template
+        #item-ref_id="item"
+        v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
+      >
+        <SanitizeHtml
+          v-if="item.quote_request"
+          :html="
+            getLink(item.quote_request?.uuid, item.quote_type_id, item.ref_id)
+          "
+          class="text-primary-500 hover:underline"
+          :key="item.ref_id"
+        />
+      </template>
+
+      <template #item-sync_status="item">
+        <x-tooltip>
+          <label class="border-b-2 border-dotted border-black uppercase">{{
+            item?.sync_status?.status
+          }}</label>
+          <template #tooltip>
+            <span class="custom-tooltip-content">{{
+              item?.sync_status?.message
+            }}</span>
+          </template>
+        </x-tooltip>
+        <button class="ml-3" title="Sync" @click="reSync(item.ref_id)">
+          <x-spinner
+            v-if="
+              syncingRecords.includes(item.ref_id) &&
+              item?.sync_status?.is_syncable
+            "
+            size="sm"
+            class="text-primary"
+          />
+          <x-icon v-else icon="reset" color="green" size="sm" />
+        </button>
       </template>
 
       <template #item-company_name="{ insurance_provider }">

@@ -98,6 +98,8 @@ class AdvisorDistributionReportService extends BaseService
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ])
+            &&
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
         ) {
             if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
                 $query = $query->where('users.id', auth()->user()->id);
@@ -171,6 +173,8 @@ class AdvisorDistributionReportService extends BaseService
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
             ])
+            &&
+            ! auth()->user()->can(PermissionsEnum::VIEW_ALL_REPORTS)
         ) {
             if (auth()->user()->isAdvisor()) {
                 $query = $query->where('users.id', auth()->user()->id);
@@ -288,9 +292,9 @@ class AdvisorDistributionReportService extends BaseService
             quoteTypeCode::Home => PermissionsEnum::HOME_DISTRIBUTION_REPORT,
         ];
 
-        $lobs = array_filter($lobs, function ($permission) {
-            return Auth::user()->can($permission);
-        });
+        $lobs = array_filter($lobs, function ($permission, $lob) {
+            return Auth::user()->can($permission) || (Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct($lob));
+        }, ARRAY_FILTER_USE_BOTH);
 
         $lobs = QuoteTypeRepository::GetList()
             ->filter(function ($lob) use ($lobs) {
@@ -299,11 +303,11 @@ class AdvisorDistributionReportService extends BaseService
             ->pluck('code', 'text')
             ->toArray();
 
-        if (Auth::user()->can(PermissionsEnum::CORPLINE_DISTRIBUTION_REPORT)) {
+        if (Auth::user()->can(PermissionsEnum::CORPLINE_DISTRIBUTION_REPORT) || (Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct(quoteTypeCode::CORPLINE))) {
             $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
         }
 
-        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT)) {
+        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT) || (Auth::user()->can(PermissionsEnum::VIEW_ALL_REPORTS) && userHasProduct(quoteTypeCode::GroupMedical))) {
             $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
         }
 
@@ -587,11 +591,14 @@ class AdvisorDistributionReportService extends BaseService
             }
 
             if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
-
-                $query->join('travel_quote_request', function ($join) use ($filters) {
-                    $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
-                        ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
-                });
+                if ($isTravelQuote) {
+                    $query->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                } else {
+                    $query->join('travel_quote_request', function ($join) use ($filters) {
+                        $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
+                            ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                    });
+                }
             }
         }
 

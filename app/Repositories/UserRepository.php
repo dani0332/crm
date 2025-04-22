@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\TeamHierarchyTrait;
@@ -79,7 +80,7 @@ class UserRepository extends BaseRepository
             $roles = [strtoupper($modelType).'_ADVISOR'];
         }
 
-        return $this->with(['roles' => fn ($q) => $q->whereIn('name', $roles)])
+        return $this->with(['roles'])
             ->whereHas('roles', function ($q) use ($roles) {
                 $q->whereIn('name', $roles);  // todo: add required roles here
             })->get();
@@ -106,37 +107,39 @@ class UserRepository extends BaseRepository
     {
         $roles = [
             RolesEnum::CarAdvisor,
-            RolesEnum::BusinessAdvisor,
-            RolesEnum::HealthAdvisor,
-            RolesEnum::HomeAdvisor,
-            RolesEnum::LifeAdvisor,
-            RolesEnum::TravelAdvisor,
-            RolesEnum::GMAdvisor,
-            RolesEnum::RMAdvisor,
-            RolesEnum::EBPAdvisor,
-            RolesEnum::CorpLineAdvisor,
-            RolesEnum::HealthRenewalAdvisor,
-            RolesEnum::LifeRenewalAdvisor,
-            RolesEnum::HomeRenewalAdvisor,
-            RolesEnum::GMRenewalAdvisor,
-            RolesEnum::CorpLineRenewalAdvisor,
-            RolesEnum::PetRenewalAdvisor,
             RolesEnum::CarRenewalAdvisor,
             RolesEnum::CarNewBusinessAdvisor,
-            RolesEnum::PetAdvisor,
-            RolesEnum::Advisor,
+            RolesEnum::CarRevivalAdvisor,
+            RolesEnum::HomeAdvisor,
+            RolesEnum::HomeRenewalAdvisor,
+            RolesEnum::HealthAdvisor,
+            RolesEnum::HealthRenewalAdvisor,
+            RolesEnum::LifeAdvisor,
+            RolesEnum::LifeRenewalAdvisor,
+            RolesEnum::BusinessAdvisor,
+            RolesEnum::GMAdvisor,
+            RolesEnum::GMRenewalAdvisor,
+            RolesEnum::CorpLineAdvisor,
+            RolesEnum::CorpLineRenewalAdvisor,
             RolesEnum::BikeAdvisor,
-            RolesEnum::CycleAdvisor,
-            RolesEnum::CycleNewBusinessAdvisor,
-            RolesEnum::CycleRenewalAdvisor,
             RolesEnum::YachtAdvisor,
             RolesEnum::YachtNewBusinessAdvisor,
             RolesEnum::YachtRenewalAdvisor,
+            RolesEnum::TravelAdvisor,
+            RolesEnum::PetRenewalAdvisor,
+            RolesEnum::PetAdvisor,
+            RolesEnum::CycleAdvisor,
+            RolesEnum::CycleNewBusinessAdvisor,
+            RolesEnum::CycleRenewalAdvisor,
             RolesEnum::JetskiAdvisor,
-            RolesEnum::CarRevivalAdvisor,
+            RolesEnum::RMAdvisor,
+            RolesEnum::EBPAdvisor,
+            RolesEnum::Advisor,
         ];
 
-        return User::role($roles)
+        $existingRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
+
+        return User::role($existingRoles)
             ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)

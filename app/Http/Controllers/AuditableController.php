@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HomeInsurerRequestResponses;
+use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeInsurerRequestResponses;
 use App\Models\TravelInsurerRequestResponses;
@@ -146,9 +148,9 @@ class AuditableController extends Controller
             case TravelQuote::class:
                 return TravelInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
-            // case HomeQuote::class:
-            //     return HomeInsurerRequestResponses::with('insuranceProvider')
-            //         ->whereNotIn('call_type', ['oAuth', 'login']);
+            case HomeQuote::class:
+                return HomeInsurerRequestResponses::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
             case LifeQuote::class:
                         return LifeInsurerRequestResponses::with('insuranceProvider')
                             ->whereNotIn('call_type', ['oAuth', 'login']);
@@ -156,5 +158,4 @@ class AuditableController extends Controller
                 return InsurerRequestResponse::with('insuranceProvider');
         }
     }
-
 }

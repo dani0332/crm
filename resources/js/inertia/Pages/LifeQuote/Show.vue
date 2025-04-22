@@ -1,4 +1,5 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
@@ -56,9 +57,12 @@ defineProps({
   ecomLifeInsuranceQuoteUrl: String,
   currencies: Array,
   lifeRiders: Array,
+  paymentGatewayEnum: Array,
+  isFuncsEnabled: Array,
+
 });
 
-const { isRequired } = useRules();
+const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
 const modelClass = 'App\\Models\\LifeQuote';
@@ -575,12 +579,6 @@ const onLeadStatus = () => {
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
-      },
     },
   );
 };
@@ -836,6 +834,9 @@ const getBMITag = () => {
   return tag || { text: 'Invalid BMI', color: 'gray' };
 };
 
+const applyEmiratesIdNumMasking = emiratesId =>
+  (customerProfileForm.emirates_id_number =
+    applyEmiratesNumberMasking(emiratesId));
 </script>
 
 <template>
@@ -857,7 +858,10 @@ const getBMITag = () => {
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            canAny([
+              permissionsEnum.VIEW_LEGACY_DETAILS,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
           "
           :href="
             route(
@@ -910,7 +914,12 @@ const getBMITag = () => {
           placement="bottom"
         >
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.LifeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
             :isDisabled="true"
           />
           <template #tooltip
@@ -921,7 +930,12 @@ const getBMITag = () => {
         </x-tooltip>
         <template v-else>
           <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            v-if="
+              canAny([
+                permissionsEnum.LifeQuotesEdit,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
           />
         </template>
       </div>
@@ -1012,8 +1026,12 @@ const getBMITag = () => {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
+                <dt class="font-medium">IM AML STATUS</dt>
                 <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">INSURER AML STATUS</dt>
+                <dd>N/A</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -1232,6 +1250,8 @@ const getBMITag = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">AGE</dt>
                   <dd>{{ quote.life_quote?.age }}</dd>
+                  <dt class="font-medium">GENDER</dt>
+                  <dd>{{ quote.gender }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
@@ -1244,8 +1264,13 @@ const getBMITag = () => {
                   <dd>
                     <x-input
                       v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
+                      :rules="[isRequired, emiratesNumber]"
+                      placeholder="xxx-xxxx-xxxxxxx-x"
+                      @input="
+                        applyEmiratesIdNumMasking(
+                          customerProfileForm.emirates_id_number,
+                        )
+                      "
                       class="w-full"
                       :disabled="!isProfileUpdateAllow"
                     />
@@ -1262,10 +1287,6 @@ const getBMITag = () => {
                       :min-date="new Date()"
                     />
                   </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">GENDER</dt>
-                  <dd>{{ quote.gender }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -1295,10 +1316,6 @@ const getBMITag = () => {
                   <dt class="font-medium">MARITAL STATUS</dt>
                   <dd>{{ quote.life_quote?.marital_status?.text }}</dd>
                 </div>
-                <!-- <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">CHILDREN</dt>
-                  <dd>{{ quote.children?.text }}</dd>
-                </div> -->
                 <div class="grid sm:grid-cols-2">
                   
                 <x-tooltip
@@ -1974,6 +1991,9 @@ const getBMITag = () => {
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
+      :paymentGatewayEnum="paymentGatewayEnum"
+      :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="true"
     />
 
     <EmbeddedProducts
@@ -2010,6 +2030,7 @@ const getBMITag = () => {
         canAny([
           permissionsEnum.VIEW_INSLY_BOOK_POLICY,
           permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_ALL_LEADS,
         ])
       "
       :quote="quote"
@@ -2056,7 +2077,7 @@ const getBMITag = () => {
 
     <lead-raw-data
       :modelType="'Life'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Services\AllocationService;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -75,7 +76,9 @@ class ReAssignLeads implements ShouldQueue
         }
 
         foreach ($leads as $lead) {
-            info(self::class."::handle - Reassignment of lead : {$lead->uuid} started ---------");
+            LoggerService::startQuoteLogging($lead);
+
+            info(self::class.'::handle - Reassignment started ---------');
 
             $this->quoteType->allocate(
                 uuid: $lead->uuid,
@@ -83,9 +86,10 @@ class ReAssignLeads implements ShouldQueue
                 isReAssignment: true
             );
 
-            info(self::class."::handle - Reassignment of lead : {$lead->uuid} ended ---------");
+            info(self::class.'::handle - Reassignment ended ---------');
         }
 
+        LoggerService::endLogging();
         info(self::class."::handle - Reassignment {$this->quoteType->value} job ended at : ".now());
     }
 

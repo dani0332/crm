@@ -11,6 +11,7 @@ defineProps({
     default: 'bike',
   },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 const notification = useNotifications('toast');
 const cleanObj = obj => useCleanObj(obj);
@@ -37,6 +38,7 @@ let availableFilters = {
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
+  insurer_aml_status: [],
   advisor_id: [],
   page: 1,
   previous_quote_policy_number_text: '',
@@ -46,6 +48,7 @@ let availableFilters = {
   policy_expiry_date_end: '',
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  advisor_assigned_date: [],
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -155,6 +158,7 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DOB', value: 'dob' },
   { text: 'LEAD STATUS', value: 'quote_status' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
@@ -178,6 +182,7 @@ const tableHeader = [
 ];
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -260,6 +265,7 @@ watch(
   () => {
     if (
       (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date
     ) {
@@ -330,6 +336,13 @@ watch(
   },
   { deep: true },
 );
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -422,6 +435,13 @@ watch(
             class="w-full"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
@@ -435,6 +455,12 @@ watch(
             "
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -546,8 +572,8 @@ watch(
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>
@@ -589,7 +615,12 @@ watch(
       <template #item-uuid="{ code, uuid }">
         <!-- :href="`/personal-quotes/bike/${uuid}`" -->
         <Link
-          v-if="can(permissionsEnum.BikeQuotesShow)"
+          v-if="
+            canAny([
+              permissionsEnum.BikeQuotesShow,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           class="text-primary-500 hover:underline"
           :href="route('bike-quotes-show', uuid)"
         >

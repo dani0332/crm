@@ -15,6 +15,7 @@ defineProps({
     default: 0,
   },
   authorizedDays: Number,
+  insurerAMLStatus: Array,
 });
 
 const page = usePage();
@@ -38,6 +39,7 @@ let availableFilters = {
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
+  insurer_aml_status: [],
   renewal_batch_id: [],
   page: 1,
   previous_quote_policy_number_text: '',
@@ -62,6 +64,7 @@ watch(
   () => {
     if (
       (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date
     ) {
@@ -90,6 +93,11 @@ const tableHeader = ref([
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  {
+    text: 'INSURER AML STATUS',
+    value: 'insurer_aml_status_display',
+    is_active: true,
+  },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
     text: 'CREATED DATE',
@@ -136,6 +144,7 @@ const quotesSelected = ref([]);
 const permissionAssignLeads = ref(false);
 
 const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
 
 function onSubmit(isValid) {
@@ -380,6 +389,13 @@ const validateDateRange = () => {
   }
   return false;
 };
+
+const insurerAMLStatusOption = computed(() => {
+  return Object.entries(page.props.insurerAMLStatus).map(([key, value]) => ({
+    value: key,
+    label: value,
+  }));
+});
 </script>
 
 <template>
@@ -538,6 +554,13 @@ const validateDateRange = () => {
             class="w-full"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
@@ -551,6 +574,12 @@ const validateDateRange = () => {
             "
           />
         </x-field>
+        <ComboBox
+          v-model="filters.insurer_aml_status"
+          label="Insurer AML Status"
+          name="insurer_aml_status"
+          :options="insurerAMLStatusOption"
+        />
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -641,14 +670,7 @@ const validateDateRange = () => {
           range
           format="dd-MM-yyyy"
         />
-        <DatePicker
-          v-if="hasRole(rolesEnum.YachtManager)"
-          v-model="filters.advisor_assigned_date"
-          name="created_at_start"
-          label="Advisor Assigned Date"
-          range
-          format="dd-MM-yyyy"
-        />
+
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
           v-model="filters.insurer_tax_number"
@@ -686,8 +708,8 @@ const validateDateRange = () => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>
@@ -736,7 +758,12 @@ const validateDateRange = () => {
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
-          v-if="can(permissionsEnum.YachtQuotesShow)"
+          v-if="
+            canAny([
+              permissionsEnum.YachtQuotesShow,
+              permissionsEnum.VIEW_ALL_LEADS,
+            ])
+          "
           :href="route('yacht-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >

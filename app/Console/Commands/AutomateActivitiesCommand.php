@@ -121,7 +121,9 @@ class AutomateActivitiesCommand extends Command
 
                         if ($quoteClass != PersonalQuote::class) {
 
-                            $quotesCodes = $quoteClass::whereIn('id', $quoteIds)->select('code')->get()->toArray();
+                            $quotesCodes = $quoteClass::whereIn('id', $quoteIds)->select('code')->get()
+                                ->pluck('code')
+                                ->toArray();
                             PersonalQuote::whereIn('code', $quotesCodes)->update(['is_cold' => true]);
                         }
                     }
@@ -207,7 +209,7 @@ class AutomateActivitiesCommand extends Command
                                         'updated_at' => now(),
                                         'assignee_id' => $quoteDetail->advisor_id,
                                         'uuid' => generateUuid(),
-                                        'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->created_at ?? now()),
+                                        'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->due_date ?? now()),
                                         'client_name' => $quoteDetail->first_name.' '.$quoteDetail->last_name,
                                         'client_email' => $quoteDetail->email,
                                         'quote_uuid' => $quoteDetail->uuid,

@@ -76,7 +76,7 @@ class UpdateUserStatus extends Command
             }
 
             if ($lastActivity < $inactiveThreshold) {
-                $unAvailableTime = now()->subHours(2);
+                $unAvailableTime = now()->subMinutes(getAppStorageValueByKey(ApplicationStorageEnums::USER_UNAVAILABLE_TIME_THRESHOLD, 120));
                 $subtime = now()->subMinutes(90);
 
                 $offlineTime = now()->subSeconds($userInactiveThreshold);
@@ -92,6 +92,8 @@ class UpdateUserStatus extends Command
                 if (($newStatus != $currentUserStatus && $currentUserStatus != UserStatusEnum::MANUAL_OFFLINE) || ($newStatus != $currentUserStatus && $currentUserStatus == UserStatusEnum::MANUAL_OFFLINE && $newStatus != UserStatusEnum::OFFLINE)) {
                     info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus.' for user : '.$session->user->name);
                     User::where('id', $userId)->update(['status' => $newStatus]);
+                    $this->generateStatusAuditLog($userId, $newStatus);
+
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
                         $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()?->id;
                         $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()?->id;
@@ -139,10 +141,21 @@ class UpdateUserStatus extends Command
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE && $currentUserStatus != UserStatusEnum::MANUAL_OFFLINE) {
                 info('System will now change the status to Active from status : '.$currentUserStatus.' for user : '.$session->user->name);
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
+
+                $this->generateStatusAuditLog($userId, UserStatusEnum::ONLINE);
             }
         }
 
         return 0;
+    }
+
+    private function generateStatusAuditLog($userId, $status)
+    {
+        UserStatusAuditLog::create([
+            'user_id' => $userId,
+            'status' => $status,
+            'status_changed_at' => now()->toDateTimeString(),
+        ]);
     }
 
     public function getSessions(): array|Collection
@@ -154,6 +167,7 @@ class UpdateUserStatus extends Command
             ->select('user_id', DB::raw('MAX(last_activity) AS last_activity'))
             ->orderBy('last_activity')
             ->groupBy('user_id')
+            ->whereNull('impersonated_at')
             ->get();
     }
 

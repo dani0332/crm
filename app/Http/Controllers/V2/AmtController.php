@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -33,6 +35,7 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -98,6 +101,15 @@ class AmtController extends Controller
                 'bqr.parent_duplicate_quote_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 'ps.text AS payment_status_id_text',
+                DB::raw('
+                    CASE
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                        WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                        WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                        ELSE insurer_aml_status
+                    END AS insurer_aml_status_display
+                ')
             );
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -113,6 +125,7 @@ class AmtController extends Controller
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
+        $insurerAMLStatus = AMLService::getInsurerAMLStatuses();
 
         if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
             $data->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
@@ -201,6 +214,17 @@ class AmtController extends Controller
             $data->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
         }
 
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $data->whereIn('bqr.insurer_aml_status', $request->insurer_aml_status);
+        }
+
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateArray = $request->advisor_assigned_date;
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $data->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+        }
+
         $this->adjustQueryByDateFilters($data, 'bqr');
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -224,7 +248,7 @@ class AmtController extends Controller
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays', 'insurerAMLStatus'));
     }
 
     /**
@@ -321,7 +345,13 @@ class AmtController extends Controller
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        $latestKycLog = KycLog::withTrashed()->where('quote_request_id', $record->id)->latest()->first();
+        $latestKycLog = KycLog::withTrashed()
+            ->where('quote_request_id', $record->id)
+            ->where('quote_type_id', QuoteTypes::BUSINESS->id())
+            ->where(function ($aml) {
+                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+                $aml->orWhereNull('screening_type');
+            })->latest()->first();
         @[$documentTypes, $paymentDocuments] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id(), $record?->business_type_of_insurance_id, $latestKycLog?->search_type, quoteTypeCode::GroupMedical);
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
@@ -407,6 +437,8 @@ class AmtController extends Controller
             'payments' => $record?->payments,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocuments,
+            'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
+            'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
         ]);
     }
 

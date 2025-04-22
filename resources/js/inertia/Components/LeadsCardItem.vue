@@ -35,7 +35,9 @@ const leadForm = useForm({
 const canDrag = computed(() => {
   return props.id == quoteStatusEnum?.Lost ||
     props.id == quoteStatusEnum?.TransactionApproved ||
-    props.id == quoteStatusEnum?.PolicyIssued
+    props.id == quoteStatusEnum?.PolicyBooked ||
+    props.id == quoteStatusEnum?.PolicyIssued ||
+    props.id == quoteStatusEnum?.PolicySentToCustomer
     ? false
     : true;
 });

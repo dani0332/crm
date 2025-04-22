@@ -4,8 +4,12 @@ namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\EpCategoryEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -27,8 +31,10 @@ use App\Models\GenericDocument;
 use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Services\SendEmailCustomerService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
+use App\Strategies\EmbeddedProducts\COU;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
 use App\Strategies\EmbeddedProducts\RDX;
@@ -227,6 +233,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             $item->can_cancel_payment = $this->canCancelPayment($transaction->first(), $quoteTypeId);
+            $item->can_void_payment = $this->canVoidPayment($transaction->first());
         });
 
         return $ep;
@@ -249,6 +256,18 @@ class EmbeddedProductRepository extends BaseRepository
 
                 return $paymentDate->diffInDays(Carbon::now()) <= 3;
             }
+        }
+
+        return false;
+    }
+
+    private function canVoidPayment($transaction)
+    {
+        if (
+            auth()->user()->can(PermissionsEnum::PAYMENTS_VOID)
+            && $transaction
+        ) {
+            return $transaction->payment_status_id == PaymentStatusEnum::AUTHORISED;
         }
 
         return false;
@@ -281,7 +300,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $resendEmail = false)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
             return false;
         }
 
@@ -321,7 +340,7 @@ class EmbeddedProductRepository extends BaseRepository
                     ProcessSyncAlfredProtect::dispatch($quoteObject);
 
                 } elseif ($item->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                && ucwords($modelType) == quoteTypeCode::Car) {
+                && in_array(ucwords($modelType), [quoteTypeCode::Car, quoteTypeCode::Home])) {
 
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
                     SyncCourierQuoteWithMacrm::dispatch($quoteObject, $quoteTypeId);
@@ -456,8 +475,8 @@ class EmbeddedProductRepository extends BaseRepository
         $attachmentsUrls[] = $strategy->getCertificateDocumentUrl($ep, $transaction[0], $quoteObject);
         $emailTemplateId = intval(ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_PROTECT_BOOK_POLICY_TEMPLATE)->value('value'));
 
-        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : $quoteObject->customer->insured_first_name ?? '';
-        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : $quoteObject->customer->insured_last_name ?? '';
+        $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : ($quoteObject->customer?->insured?->first_name ?? $quoteObject->customer->insured_first_name) ?? '';
+        $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : ($quoteObject->customer?->insured?->last_name ?? $quoteObject->customer->insured_first_name) ?? '';
 
         info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
         $emailData = (object) [
@@ -664,6 +683,8 @@ class EmbeddedProductRepository extends BaseRepository
             $strategy = new AlfredProtect;
         } elseif ($shortCode == EmbeddedProductEnum::RDX) {
             $strategy = new RDX;
+        } elseif ($shortCode == EmbeddedProductEnum::COURIER) {
+            $strategy = new COU;
         } else {
             $strategy = new EmbeddedProductStrategy;
         }
@@ -674,7 +695,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCancelEmbeddedProducts($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
             return false;
         }
 
@@ -687,6 +708,9 @@ class EmbeddedProductRepository extends BaseRepository
                 $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED);
             })
             ->with(['payments', 'quoteRequest'])
+            ->whereHas('product.embeddedProduct', function ($query) {
+                $query->where('product_type', EmbeddedProductTypeEnum::NON_INSURANCE);
+            })
             ->get();
 
         if ($epTransaction->isNotEmpty()) {
@@ -761,13 +785,13 @@ class EmbeddedProductRepository extends BaseRepository
                         'uuid' => $data['uuid'],
                         'type_id' => $type->id,
                         'code' => $transaction->code,
-
+                        'payment_gateway_id' => $paymentSplit->payment_gateway_id,
                     ];
                     $processResponse = $this->processCancelPayment($data);
 
                     if (
                         $transaction->product->embeddedProduct->short_code == EmbeddedProductEnum::COURIER
-                        && $type->code == quoteTypeCode::Car
+                        && in_array($type->code, [quoteTypeCode::Car, quoteTypeCode::Home])
                     ) {
                         CancelCourierQuoteOnMACRM::dispatch($transaction->quoteRequest, $type->id);
                     }
@@ -796,6 +820,34 @@ class EmbeddedProductRepository extends BaseRepository
         ];
     }
 
+    public function fetchVoidPayment($data)
+    {
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
+        $type = QuoteType::where('code', $data['modelType'])->first();
+
+        $embededTransaction = EmbeddedTransaction::with(['payments', 'quoteRequest'])
+            ->where('quote_request_id', $data['quote_id'])
+            ->where('quote_type_id', $type->id)
+            ->where('is_selected', true)
+            ->whereIn('product_id', $embeddedProductOptionsIds)
+            ->first();
+
+        if (! $embededTransaction) {
+            $response = ['data' => ['Transaction does not exist'], 'code' => 403];
+        } elseif ($embededTransaction->payment_status_id !== PaymentStatusEnum::AUTHORISED) {
+            $response = ['data' => ['Invalid payment status'], 'code' => 403];
+        } else {
+            $payment = $embededTransaction->payments->first();
+            $response = $this->fetchCancelPayment([
+                'amount' => $payment->premium_authorized,
+                'reason' => 'Payment void',
+                ...$data,
+            ]);
+        }
+
+        return $response;
+    }
+
     private function processCancelPayment($data)
     {
         $planData = [
@@ -807,8 +859,9 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
             ],
         ];
-
-        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+        $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
+        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/cancel', 'post', $planData);
 
         return $response;
     }
@@ -816,7 +869,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCapturePayment($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
             return false;
         }
 
@@ -831,16 +884,18 @@ class EmbeddedProductRepository extends BaseRepository
             ->get();
 
         $payload = [];
+        $paymentGatewayEndpoint = '';
         if ($epTransaction->isNotEmpty()) {
             foreach ($epTransaction as $item) {
+                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
                 if (empty($payload)) {
                     $payload = [
                         'quoteUID' => $item->quoteRequest->uuid,
                         'quoteTypeId' => $quoteTypeId,
                     ];
+                    $paymentGatewayEndpoint = PaymentGatewayEnum::getName($paymentSplit->payment_gateway_id);
                 }
 
-                $paymentSplit = PaymentSplits::where('code', $item->code)->orderBy('sr_no', 'desc')->first();
                 $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
                 $payload['payments'][] = [
                     'codeRef' => $item->code.'-'.$sr,
@@ -870,7 +925,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         try {
-            Marshall::request('/payment/checkout/capture', 'post', $payload);
+            Marshall::request("/payment/{$paymentGatewayEndpoint}/capture", 'post', $payload);
         } catch (Exception $e) {
             Log::error('Capture Payment Error: '.$e->getMessage());
         }
@@ -950,5 +1005,56 @@ class EmbeddedProductRepository extends BaseRepository
             'doc_uuid' => $docUuid,
             'created_by_id' => null,
         ];
+    }
+
+    public function fetchGenerateEPRenewal($batchName)
+    {
+        $batch = RenewalBatch::where('name', $batchName)->first();
+        $capturedStartDate = Carbon::createFromFormat('Y-m-d', $batch->start_date)->subMonths(16)->startOfMonth()->format('Y-m-d H:i:s');
+        $capturedEndDate = Carbon::createFromFormat('Y-m-d', $batch->end_date)->subMonths(10)->endOfMonth()->format('Y-m-d H:i:s');
+
+        $ep = EmbeddedProductRepository::where('short_code', EmbeddedProductEnum::MDX)->with('prices')->first();
+        $embeddedOptionIds = $ep->prices->pluck('id')->toArray();
+
+        $quotes = DB::table('car_quote_request as c1')
+            ->join('car_quote_request as c2', function ($join) {
+                $join->on('c1.email', '=', 'c2.email')
+                    ->on('c1.car_make_id', '=', 'c2.car_make_id')
+                    ->on('c1.car_model_id', '=', 'c2.car_model_id')
+                    ->on('c1.year_of_manufacture', '=', 'c2.year_of_manufacture')
+                    ->whereColumn('c1.code', '!=', 'c2.code');
+            })
+            ->join('embedded_transactions as e', function ($join) {
+                $join->on('e.quote_request_id', '=', 'c2.id')
+                    ->where('e.quote_request_type', '=', 'App\\Models\\CarQuote');
+            })
+            ->join('payments as p', function ($join) {
+                $join->on('p.paymentable_id', '=', 'e.id')
+                    ->where('p.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
+            })
+            ->where(function ($query) use ($batch) {
+                $query->where('c1.renewal_batch', $batch->name)
+                    ->orWhereBetween('c1.previous_policy_expiry_date', [$batch->start_date, $batch->end_date]);
+            })
+            ->where('c1.source', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->whereBetween('p.captured_at', [$capturedStartDate, $capturedEndDate])
+            ->where('e.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->whereIn('e.product_id', $embeddedOptionIds)
+            ->select('c1.id', 'c1.code as c1_code', 'e.product_id', 'e.price_without_vat', 'e.price_with_vat', 'e.vat')
+            ->orderBy('c1.id', 'asc');
+
+        if ($quotes->count() > 0) {
+            $quotes->chunk(1000, function ($quoteBatch) use ($batchName) {
+                $codes = $quoteBatch->pluck('c1_code')->map(function ($code) {
+                    return 'MDX-'.$code;
+                })->toArray();
+                $EpsToUpdate = EmbeddedTransaction::whereIn('code', $codes)->get()->pluck('code')->toArray();
+
+                if (! empty($EpsToUpdate)) {
+                    EmbeddedTransaction::whereIn('code', $EpsToUpdate)->update(['is_selected' => 1]);
+                    info('EP Renewals - Updated EPs for batch: '.$batchName.' - count: '.count($EpsToUpdate));
+                }
+            });
+        }
     }
 }

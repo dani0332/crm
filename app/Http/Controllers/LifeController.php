@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Builders\HealthQuoteQueryBuilder;
+use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
@@ -10,6 +12,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
+use App\Enums\PaymentGatewayEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -36,6 +39,7 @@ use App\Models\QuoteType;
 use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
@@ -54,9 +58,12 @@ class HealthQuoteService extends BaseService
     protected $leadAllocationService;
     protected $httpService;
 
+    const SELECT_TITLE_MULTIPLE = 'select|title|multiple';
+    const APPLICATION_JSON = 'application/json';
+
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, protected HealthQuoteQueryBuilder $healthQuoteQueryBuilder)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
@@ -148,9 +155,9 @@ class HealthQuoteService extends BaseService
                 WHERE quote_type_id = '.QuoteTypeId::Health.' AND quote_request_id = hqr.id),
                 "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
-            'c.insured_first_name',
-            'c.insured_last_name',
-            'c.emirates_id_number',
+            'insured.first_name as insured_first_name',
+            'insured.last_name as insured_last_name',
+            DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',
             'c.receive_marketing_updates',
             'qrem.entity_id',
@@ -188,7 +195,16 @@ class HealthQuoteService extends BaseService
             'hqr.insly_migrated',
             'hqr.sic_advisor_requested',
             'hqr.aml_status',
-            'hqr.insurance_provider_id'
+            'hqr.insurance_provider_id',
+            DB::raw('
+                CASE
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningCleared.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared).'"
+                    WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningFailed.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed).'"
+                    WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
+                    ELSE insurer_aml_status
+                END AS insurer_aml_status_display
+            ')
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -215,6 +231,11 @@ class HealthQuoteService extends BaseService
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
             })
+            ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
+                $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
+                $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
+            })
+            ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
@@ -235,6 +256,7 @@ class HealthQuoteService extends BaseService
                             'documents',
                             'verifiedByUser',
                             'processJob',
+                            'paymentCharges',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },
@@ -319,6 +341,15 @@ class HealthQuoteService extends BaseService
 
     public function getGridData($model = null, $request = null)
     {
+        $query = $this->healthQuoteQueryBuilder->processGridData();
+        $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health);
+        $this->adjustQueryByDateFilters($query, 'health_quote_request');
+
+        return $query;
+    }
+
+    public function getGridDataOld($model = null, $request = null)
+    {
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
@@ -362,9 +393,11 @@ class HealthQuoteService extends BaseService
             $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
             $this->query->whereBetween('hqr.transaction_approved_at', [$startDate, $endDate]);
         }
-        if (! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date)
-        && ! isset($request->booking_date) && ! isset($request->renewal_batches)
-    && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
+        if (
+            ! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date)
+            && ! isset($request->booking_date) && ! isset($request->renewal_batches)
+            && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)
+        ) {
             $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
@@ -567,6 +600,10 @@ class HealthQuoteService extends BaseService
             $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
         }
 
+        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
+            $this->query->whereIn('hqr.insurer_aml_status', $request->insurer_aml_status);
+        }
+
         $this->adjustQueryByDateFilters($this->query, 'hqr');
 
         foreach ($searchProperties as $item) {
@@ -756,8 +793,8 @@ class HealthQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'quote_status_id' => 'select|title|multiple',
-            'advisor_id' => 'select|title|multiple',
+            'quote_status_id' => self::SELECT_TITLE_MULTIPLE,
+            'advisor_id' => self::SELECT_TITLE_MULTIPLE,
             'wcu_id' => 'select|title',
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
@@ -787,7 +824,7 @@ class HealthQuoteService extends BaseService
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
             'gender' => '|static|'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
-            'renewal_batches' => 'select|title|multiple',
+            'renewal_batches' => self::SELECT_TITLE_MULTIPLE,
             'renewal_import_code' => 'input|text',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
@@ -1015,8 +1052,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
+                        'Content-Type' => self::APPLICATION_JSON,
+                        'Accept' => self::APPLICATION_JSON,
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1082,8 +1119,8 @@ class HealthQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
+                        'Content-Type' => self::APPLICATION_JSON,
+                        'Accept' => self::APPLICATION_JSON,
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1164,13 +1201,13 @@ class HealthQuoteService extends BaseService
     public function assignWCU($request): array
     {
         $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
-        info('Leads ids to assign: '.json_encode($leadsIds));
+        LoggerService::info('Leads ids to assign: '.json_encode($leadsIds));
         $userId = $request->assigned_to_id_new;
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-                info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
+                LoggerService::warning('Cannot assign WCU as lead is in Transaction Approved state, lead id: '.$leadId);
                 array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
 
                 continue;
@@ -1180,7 +1217,7 @@ class HealthQuoteService extends BaseService
                 $lead->wcu_id = $userId;
                 $lead->health_team_type = $request->assign_team;
                 $lead->save();
-                info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
+                LoggerService::info('WCU advisor: '.$userId.' assigned to lead: '.$leadId);
             }
         }
 
@@ -1190,21 +1227,21 @@ class HealthQuoteService extends BaseService
     public function assignHealthTeam($request, $lead): bool
     {
         if ($this->isLeadTransactionApproved($lead) && auth()->user()->cannot(PermissionsEnum::ASSIGN_PAID_LEADS)) {
-            info('Cannot assign Health Team as lead is in Transaction Approved state');
+            LoggerService::warning('Cannot assign Health Team as lead is in Transaction Approved state');
 
             return false;
         }
         if ($lead->health_team_type != null && $lead->advisor_id != null) {
-            info('Removing previous advisor as lead already assigned to a health team');
+            LoggerService::info('Removing previous advisor as lead already assigned to a health team');
             $this->removePreviousAdvisorAndUpdateStatus($lead, QuoteStatusEnum::Qualified);
         }
         $selectedTeam = $request->get('assign_team');
         if ($selectedTeam == quoteTypeCode::GM) {
-            info('Assigning lead to GM');
+            LoggerService::info("Assigning lead to GM Ref-ID: {$lead->uuid}");
             $this->convertLeadToGM($lead);
             $lead->health_team_type = quoteTypeCode::GM;
         } else {
-            info('Assigning lead to '.$selectedTeam.' team');
+            LoggerService::info("Assigning lead to {$selectedTeam} team");
             $lead->health_team_type = $selectedTeam;
             if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                 $lead->wcu_id = null;
@@ -1262,7 +1299,7 @@ class HealthQuoteService extends BaseService
             // will update the car quote request detail entity about assignment
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId);
 
-            info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+            LoggerService::info('Manual assignment done and details table updated for lead: '.$lead->uuid.' and old advisor assigned date is: '.$oldAdvisorAssignedDate.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
             // update new and previous (if applicable) advisor counts in lead allocation table
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quote_type);
             // update existing record of quote view count if exists and reset count to zero
@@ -1288,10 +1325,12 @@ class HealthQuoteService extends BaseService
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
+            LoggerService::error('Lead or new advisor ID is null, unable to update allocation counts');
+
             return;
         }
 
-        info('Previous assignment type is : '.$previousAssignmentType);
+        LoggerService::info('Previous assignment type is: '.$previousAssignmentType);
 
         // Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD, AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD];
@@ -1474,7 +1513,7 @@ class HealthQuoteService extends BaseService
                 'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
-            info('Health Plan Modify V2 Request Data: '.json_encode($dataArray));
+            LoggerService::info('Health Plan Modify V2 Request Data: ', $dataArray);
             $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
             return $response;
@@ -1729,7 +1768,7 @@ class HealthQuoteService extends BaseService
                     'uuid' => $request->uuid,
                     'type_id' => $type->id,
                     'code' => $payment->code,
-
+                    'payment_gateway_id' => $payment->payment_gateway_id,
                 ];
                 $processResponse = $this->processCancelPayment($data);
 
@@ -1771,7 +1810,9 @@ class HealthQuoteService extends BaseService
 
     public function processCancelPayment($data)
     {
-        $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
+        $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
+        LoggerService::info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/'.$paymentGatewayEndpoint.'/cancel';
         $apiToken = config('constants.MARSHALL_API_TOKEN');
         $apiTimeout = config('constants.MARSHALL_API_TIMEOUT');
         $apiUserName = config('constants.MARSHALL_API_USER');
@@ -1802,7 +1843,7 @@ class HealthQuoteService extends BaseService
 
     public function assignLeadDirectlyForQA(int $userId, $lead): void
     {
-        info('inside the check for manual assignment QA');
+        LoggerService::info('inside the check for manual assignment QA');
         $lead->advisor_id = $userId;
         $lead->save();
 

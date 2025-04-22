@@ -17,14 +17,18 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
             // HealthRevivalQuotesSeeder::class,
-            // QuoteStatusSeeder::class,
-            LookupSeeder::class,
+            QuoteStatusSeeder::class,
             SUAdditionalCRNSubTypesSeeder::class,
             //DocumentTypeSeeder::class,
             // SendUpdateAdditionalSubType::class,
             LifeInsuranceTenureSeeder::class,
             // SendUpdateAdditionalSubType::class,
-            TravelRenewalTeamSeeder::class,
+            // TravelRenewalTeamSeeder::class,
+            ILAGMPermissionSeeder::class,
+            // TravelRenewalTeamSeeder::class,
+            LookupSeeder::class,
+            RolePermissionSeeder::class,
+            DocumentTypesSeeder::class,
         ]);
     }
 }

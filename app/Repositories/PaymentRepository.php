@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
@@ -19,10 +18,9 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\User;
-use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\PaymentLinkService;
+use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
@@ -79,7 +77,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchCreateNewPayment($request)
     {
-        DB::beginTransaction();
         try {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             info('Starting payment creation process for Quote: '.$quoteModel->code);
@@ -134,10 +131,18 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($masterPayment->payment_methods != PaymentMethodsEnum::CreditCard && $masterPayment->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
                 $paymentInformation['authorized_at'] = now();
             }
-            $quoteModel->payments()->create($paymentInformation);
+        } catch (Exception $exception) {
+            info('Error occurred during payment creation pre-processing: '.$exception->getMessage());
+
+            return ['status' => 'error', 'message' => $exception->getMessage()];
+        }
+
+        DB::beginTransaction();
+        try {
+            $payment = $quoteModel->payments()->create($paymentInformation);
             info('Payment created with Code: '.$paymentInformation['code']);
             // Add split payments start
-            $this->addPaymentSplits($request, $paymentInformation['code']);
+            $this->addPaymentSplits($request, $payment);
             // Add split payments ends
             info('Payment splits added for Payment Code: '.$paymentInformation['code']);
 
@@ -166,58 +171,60 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdateNewPayment($request)
     {
+        $masterPayment = (object) $request->payment;
+        $payment = Payment::where('code', $request->paymentCode)->first();
+        if (! $payment) {
+            info('Payment does not exist for Payment Code: '.$request->paymentCode);
+
+            return ['status' => 'error', 'message' => 'Payment record not found'];
+        }
+
+        if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
+            $paymentInformation = [
+                'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                'credit_approval' => $masterPayment->credit_approval,
+                'updated_by' => $request->user()->id,
+            ];
+
+            if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)) {
+                $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
+            }
+        } else {
+
+            $paymentInformation = [
+                'total_price' => $masterPayment->total_price,
+                'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                'discount_reason' => $masterPayment->discount_reason,
+                'discount_custom_reason' => $masterPayment->discount_custom_reason,
+                'discount_type' => $masterPayment->discount,
+                'frequency' => $masterPayment->frequency,
+                'credit_approval' => $masterPayment->credit_approval,
+                'total_payments' => $masterPayment->payment_no,
+                'collection_type' => $masterPayment->collection_type,
+                'total_amount' => $masterPayment->total_amount, // amount after discount
+                'collection_date' => $masterPayment->collection_date,
+                'discount_value' => $masterPayment->discount_value,
+                'payment_methods_code' => $masterPayment->payment_methods,
+                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
+                'updated_by' => $request->user()->id,
+            ];
+
+            if ($masterPayment->reference) {
+                $paymentInformation['reference'] = $masterPayment->reference;
+            }
+            if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
+            } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
+            }
+        }
+
         $maxRetries = 2;
 
-        return $this->handleWithDeadlockRetries(function () use ($request) {
-            $masterPayment = (object) $request->payment;
-            $payment = Payment::where('code', $request->paymentCode)->first();
-            if (! $payment) {
-                info('Payment does not exist for Payment Code: '.$request->paymentCode);
-
-                return ['status' => 'error', 'message' => 'Payment record not found'];
-            }
-
-            if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
-                $paymentInformation = [
-                    'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
-                    'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
-                    'credit_approval' => $masterPayment->credit_approval,
-                    'updated_by' => $request->user()->id,
-                ];
-
-                if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)) {
-                    $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
-                }
-            } else {
-
-                $paymentInformation = [
-                    'total_price' => $masterPayment->total_price,
-                    'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
-                    'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
-                    'discount_reason' => $masterPayment->discount_reason,
-                    'discount_custom_reason' => $masterPayment->discount_custom_reason,
-                    'discount_type' => $masterPayment->discount,
-                    'frequency' => $masterPayment->frequency,
-                    'credit_approval' => $masterPayment->credit_approval,
-                    'total_payments' => $masterPayment->payment_no,
-                    'collection_type' => $masterPayment->collection_type,
-                    'total_amount' => $masterPayment->total_amount, // amount after discount
-                    'collection_date' => $masterPayment->collection_date,
-                    'discount_value' => $masterPayment->discount_value,
-                    'payment_methods_code' => $masterPayment->payment_methods,
-                    'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                    'updated_by' => $request->user()->id,
-                ];
-
-                if ($masterPayment->reference) {
-                    $paymentInformation['reference'] = $masterPayment->reference;
-                }
-                if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
-                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
-                } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
-                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
-                }
-            }
+        return $this->handleWithDeadlockRetries(function () use ($request, $payment, $paymentInformation) {
             $payment->update($paymentInformation);
             // Log payment update
             info('Payment updated successfully for Payment Code: '.$request->paymentCode);
@@ -226,7 +233,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if (! empty($request->trashedFilesModal)) {
                 QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
-            $this->updatePaymentSplits($request);
+            $this->updatePaymentSplits($request, $payment);
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
         }, $maxRetries);
@@ -246,14 +253,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     // Add split payments
-    public function addPaymentSplits($request, $quoteID)
+    public function addPaymentSplits($request, $payment)
     {
+        $quoteID = $payment->code;
         $masterPayment = (object) $request->payment;
         $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
         if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0) {
             $discount = app(SplitPaymentService::class)->calculateDiscount($totalSplitPayments, $masterPayment->discount_value);
         }
+
+        $firstPaymentSplit = null;
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
@@ -268,6 +278,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'discount_value' => $discount,
                 ];
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
+
+                if ($splitPayment['sr_no'] == 1) {
+                    $firstPaymentSplit = $paymentSplitRecord;
+                }
+
                 if ($paymentSplitRecord) {
                     // add document references
                     if (isset($splitPayment['document_detail']) && count($splitPayment['document_detail'])) {
@@ -285,12 +300,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
         }
         // Update parent payment status
-        $payment = Payment::where('code', $quoteID)->first();
         $this->setMasterPaymentStatus($payment);
-        app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $quoteID);
+        $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
+        if ($discountDocuments && count($discountDocuments)) {
+            $firstPaymentSplit = $firstPaymentSplit ?? PaymentSplits::where(['code' => $quoteID])->first();
+            app(SplitPaymentService::class)->uploadDiscountDocuments($discountDocuments, $firstPaymentSplit);
+        }
     }
 
-    public function updatePaymentSplits($request)
+    public function updatePaymentSplits($request, $payment)
     {
         $masterPayment = (object) $request->payment;
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
@@ -332,6 +350,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0 && count($paymentPaidSerialNo) == 0) {
             $discount = app(SplitPaymentService::class)->calculateDiscount($totalSplitPayments, $masterPayment->discount_value);
         }
+
+        $firstPaymentSplit = null;
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             $serialNo = $splitPayment['sr_no'];
@@ -392,11 +412,18 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($paymentSplitRecord);
                     $paymentSplitRecord->update(['payment_status_id' => $childPaymentStatus]);
                 }
+                if ($serialNo == 1) {
+                    $firstPaymentSplit = $paymentSplitRecord;
+                }
             }
         }
-        $payment = Payment::where('code', $request->paymentCode)->first();
+
         $this->setMasterPaymentStatus($payment);
-        app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $request->paymentCode);
+        $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
+        if ($discountDocuments && count($discountDocuments)) {
+            $firstPaymentSplit = $firstPaymentSplit ?? PaymentSplits::where(['code' => $request->paymentCode])->first();
+            app(SplitPaymentService::class)->uploadDiscountDocuments($discountDocuments, $firstPaymentSplit);
+        }
     }
 
     // Will move this code to helper or some where else later
@@ -444,7 +471,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      * @param  \Illuminate\Http\Request  $request  The request object containing payment details.
      * @return mixed The result of the master payment approval process.
      */
-    private function handlePaymentApprove($request)
+    public function handlePaymentApprove($request)
     {
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
@@ -543,9 +570,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
 
                 // create sage receipt
-                $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-
-                if ($isSageEnabled) {
+                if ((new SageApiService)->isSageEnabled()) {
                     $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
                     if ($sageResponse['status'] == 'success') {
                         $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
@@ -945,32 +970,28 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     }
 
-    public function getAuthorisePaymentCount($userId = null)
+    public function getAuthorisePaymentCount($user = null, $teamIds = null)
     {
-        if (! Auth::check() && $userId == null) {
+        $user = $user ?: Auth::user();
+        if (! $user) {
             return 0;
         }
-        $userId = $userId != null ? $userId : Auth::user()->id;
-        $user = User::where('id', $userId)->first();
-        $userTeams = $user->getUserTeams($userId);
+
+        $userTeamIds = $teamIds ?: $user->getUserTeamIds();
 
         $personalCount = DB::table('payments')
             ->distinct()
             ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
-            ->join('users', 'users.id', 'pq.advisor_id')
-            ->join('user_team', 'user_team.user_id', 'users.id')
-            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->join('user_team', 'user_team.user_id', 'pq.advisor_id')
             ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
 
         if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
-            $personalCount = $personalCount->whereIn('teams.name', $userTeams)->count('payments.id');
-
+            $personalCount = $personalCount->whereIn('user_team.team_id', $userTeamIds);
         } else {
-            $personalCount = $personalCount->where('pq.advisor_id', $userId)->count('payments.id');
-
+            $personalCount = $personalCount->where('pq.advisor_id', $user->id);
         }
 
-        return $personalCount;
+        return $personalCount->count('payments.id');
     }
 
     public function fetchMainQuotePayment($quote)

@@ -17,6 +17,7 @@ use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -88,6 +89,7 @@ class SendUpdateLogRepository extends BaseRepository
                     $model = 'App\\Models\\'.$quoteType.'Quote';
                     $personalQuote = $model::where('uuid', $data['quote_uuid'])->first();
                 }
+                $this->fetchUpdateQuoteStatusLog($data['quote_type_id'], $data['quote_uuid'], QuoteStatusEnum::CancellationPending);
                 $personalQuote->quote_status_id = QuoteStatusEnum::CancellationPending;
                 QuoteStatusLog::create([
                     'quote_type_id' => $data['quote_type_id'],
@@ -267,18 +269,12 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
                 $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement((object) $request);
-                if ($endorsementResponse['status'] && isset($endorsementResponse['skipSageCalls'])) {
-                    $response[] = ['status' => 200, 'message' => $endorsementResponse['message']];
-                }
-
-                if (! $endorsementResponse['status']) {
-                    $response[] = ['status' => 500, 'message' => $endorsementResponse['message']];
-                }
+                $response[] = ['status' => $endorsementResponse['status'] ? 200 : 500, 'message' => $endorsementResponse['message']];
 
                 if ($endorsementResponse['status'] && ! empty($endorsementResponse['sageRequestPayload'])) {
                     $request['dispatchSageCall'] = true;
                     $request['sageRequestPayload'] = $endorsementResponse['sageRequestPayload'];
-                    $response[] = ['status' => 200, 'message' => $endorsementResponse['message']];
+                    $request['ccPaymentProcess'] = $endorsementResponse['ccPaymentProcess'];
                 }
             }
 
@@ -483,5 +479,90 @@ class SendUpdateLogRepository extends BaseRepository
         }
 
         return true;
+    }
+
+    public function fetchCancelSendUpdate($sendUpdateLogId, $cancelReason)
+    {
+        $sendUpdate = SendUpdateLog::where('id', $sendUpdateLogId)->firstOrFail();
+        info('function fetchCancelSendUpdate started - send update code: '.$sendUpdate->code);
+
+        try {
+            $oldStatus = $sendUpdate->status;
+
+            $sendUpdate->update([
+                'cancel_reason' => $cancelReason,
+                'status' => SendUpdateLogStatusEnum::REQUEST_CANCELLED,
+            ]);
+            app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $oldStatus, SendUpdateLogStatusEnum::REQUEST_CANCELLED);
+
+            info('Send Update Log cancelled successfully - code: '.$sendUpdate->code.', Status changed from '.$oldStatus.' to '.SendUpdateLogStatusEnum::REQUEST_CANCELLED);
+
+            if (in_array($sendUpdate?->category?->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($sendUpdate?->option?->code == SendUpdateLogStatusEnum::MPC)) {
+                $quoteType = QuoteTypes::getName($sendUpdate->quote_type_id)->value;
+
+                $modelClass = 'App\\Models\\'.$quoteType.'Quote';
+                $quote = $modelClass::where('uuid', $sendUpdate->quote_uuid)->firstOrFail();
+                $previousStatusId = $quote->quote_status_id;
+
+                $leadHistoryLogs = app(CRUDService::class)->getLeadHistoryLogs($sendUpdate->quote_type_id, $quote->id);
+                $beforeEndorsementStatus = $leadHistoryLogs->skip(1)->first();
+
+                if (! $beforeEndorsementStatus) {
+                    $beforeEndorsementStatus = $leadHistoryLogs->first();
+                }
+
+                $beforeEndorsementStatusId = $beforeEndorsementStatus->currentQuoteStatus->id;
+
+                $quote->update(['quote_status_id' => $beforeEndorsementStatusId]);
+
+                QuoteStatusLog::create([
+                    'quote_type_id' => $sendUpdate->quote_type_id,
+                    'quote_request_id' => $quote->id,
+                    'current_quote_status_id' => $beforeEndorsementStatusId,
+                    'previous_quote_status_id' => $previousStatusId,
+                    'created_by' => auth()->user()->id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+                info('Quote status updated successfully - quote UUID: '.$quote->uuid.', Status changed from '.$previousStatusId.' to '.$beforeEndorsementStatusId);
+            }
+
+            $response = ['message' => 'Send Update Log cancelled successfully.', 'status' => 200];
+        } catch (\Exception $ex) {
+            info('Error while cancelling Send Update Log - code: '.$sendUpdate->code.' - Exception: '.$ex->getMessage());
+
+            $response = ['message' => 'Error while cancelling Send Update Log.', 'status' => 500];
+        }
+        info('function fetchCancelSendUpdate ended - send update code: '.$sendUpdate->code);
+
+        return $response;
+    }
+
+    public function fetchUpdateQuoteStatusLog($quoteTypeId, $quoteUuid, $quoteStatusId)
+    {
+        info('function fetchUpdateQuoteStatusLog started - quote UUID: '.$quoteUuid);
+
+        try {
+            $quoteType = QuoteTypes::getName($quoteTypeId)->value;
+            $modelClass = 'App\\Models\\'.$quoteType.'Quote';
+            $quote = $modelClass::where('uuid', $quoteUuid)->firstOrFail();
+            $previousStatusId = $quote->quote_status_id;
+
+            QuoteStatusLog::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+                'current_quote_status_id' => $quoteStatusId,
+                'previous_quote_status_id' => $previousStatusId,
+                'created_by' => auth()->user()->id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+
+            info('Quote status updated successfully - quote UUID: '.$quoteUuid.', Status changed from '.$previousStatusId.' to '.$quoteStatusId);
+        } catch (\Exception $ex) {
+            info('Error while updating Quote status - quote UUID: '.$quoteUuid.' - Exception: '.$ex->getMessage());
+        }
+        info('function fetchUpdateQuoteStatusLog ended - quote UUID: '.$quoteUuid);
     }
 }
