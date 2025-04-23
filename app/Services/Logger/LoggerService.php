@@ -75,36 +75,56 @@ class LoggerService
         Log::info($message, $context);
     }
 
-    public static function debug(string $message, array $context = [], array|string $extra = [])
+    public static function debug(string $message, array $context = [], array|string $extra = [], ?Exception $exception = null)
     {
+        if ($exception) {
+            $context['exception'] = self::getExceptionData($exception);
+        }
+
         self::addExtra($extra);
 
         Log::debug($message, $context);
     }
 
-    public static function notice(string $message, array $context = [], array|string $extra = [])
+    public static function notice(string $message, array $context = [], array|string $extra = [], ?Exception $exception = null)
     {
+        if ($exception) {
+            $context['exception'] = self::getExceptionData($exception);
+        }
+
         self::addExtra($extra);
 
         Log::notice($message, $context);
     }
 
-    public static function alert(string $message, array $context = [], array|string $extra = [])
+    public static function alert(string $message, array $context = [], array|string $extra = [], ?Exception $exception = null)
     {
+        if ($exception) {
+            $context['exception'] = self::getExceptionData($exception);
+        }
+
         self::addExtra($extra);
 
         Log::alert($message, $context);
     }
 
-    public static function critical(string $message, array $context = [], array|string $extra = [])
+    public static function critical(string $message, array $context = [], array|string $extra = [], ?Exception $exception = null)
     {
+        if ($exception) {
+            $context['exception'] = self::getExceptionData($exception);
+        }
+
         self::addExtra($extra);
 
         Log::critical($message, $context);
     }
 
-    public static function emergency(string $message, array $context = [], array|string $extra = [])
+    public static function emergency(string $message, array $context = [], array|string $extra = [], ?Exception $exception = null)
     {
+        if ($exception) {
+            $context['exception'] = self::getExceptionData($exception);
+        }
+
         self::addExtra($extra);
 
         Log::emergency($message, $context);
