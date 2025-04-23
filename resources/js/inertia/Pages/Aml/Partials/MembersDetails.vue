@@ -120,7 +120,13 @@ const createOrUpdateMember = async (memberForm, isMemberEditEnabled) => {
     : props.customerType == page.props.customerTypeEnum.Individual
       ? 'Member'
       : 'UBO';
-  const members = ref(page.props.membersDetails);
+  
+  const members = ref(
+    props.customerType == page.props.customerTypeEnum.Individual
+      ? page.props.membersDetails
+      : page.props.uboDetails
+  );
+  
   try {
     isLoading.value = true;
     const url = `/members${isMemberEditEnabled ? `/${memberForm.id}` : ''}`;
