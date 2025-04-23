@@ -466,7 +466,7 @@ class HomeQuoteRepository extends BaseRepository
                     LoggerService::info('Fields changed, Fetching quote plans', extra: [
                         'getLatestRating' => true
                     ]);
-                    app(\App\Services\HomeQuoteService::class)->getQuotePlans($quote->id, ['getLatestRating' => true]);
+                    app(\App\Services\HomeQuoteService::class)->getQuotePlans($uuid, ['getLatestRating' => true]);
                 }
 
                 // Return the updated quote
