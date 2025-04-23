@@ -6,6 +6,7 @@ use App\Enums\QuoteTypes;
 use App\Models\Insured;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -38,43 +39,54 @@ class MigrateInsuredDataToPersonalQuotes extends Command
      */
     public function handle()
     {
-        // TODO : not every quote have entity so in case of failure need to discuss
-
-        info(self::className.' fn:'.__FUNCTION__.' PersonalQuotes - Update Insured and Quote ID - Starting to update personal quotes with insured_id and quote_id...');
+        LoggerService::info(self::className.' fn:'.__FUNCTION__.' PersonalQuotes - Update Insured and Quote ID - Starting to update personal quotes with insured_id and quote_id...');
 
         $totalUpdated = 0;
         $forceProcess = $this->option('force');
 
         // Get already processed IDs from cache or initialize empty array
-        $processedIds = Cache::get($this->cacheKey, []);
+        $lastProcessedId = Cache::get($this->cacheKey, null);
 
         // Clear the cache if force option is used
         if ($forceProcess) {
-            $processedIds = [];
+            $lastProcessedId = null;
             Cache::forget($this->cacheKey);
-            info(self::className.' fn:'.__FUNCTION__.' Force option used. Clearing processed records cache.');
+            LoggerService::info(self::className.' fn:'.__FUNCTION__.' Force option used. Clearing processed records cache.');
         } else {
-            info(self::className.' fn:'.__FUNCTION__.' Found '.count($processedIds).' previously processed records in cache.');
+            LoggerService::info(self::className.' fn:'.__FUNCTION__.' previously processed record id :  '.$lastProcessedId.' in cache.');
         }
 
         // Use chunk to process records in batches to avoid memory issues
-        PersonalQuote::whereNull('quote_id')
-            ->orWhereNull('insured_id')
-            ->whereNotIn('id', $processedIds)
-            ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$processedIds) {
+        PersonalQuote::when($lastProcessedId, function ($q) use ($lastProcessedId) {
+            $q->where('id', '>', $lastProcessedId);
+        })
+            ->where(function ($q) {
+                $q->whereNull('quote_id')
+                    ->orWhereNull('insured_id');
+            })
+            ->orderBy('id')
+            ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$lastProcessedId) {
                 foreach ($personalQuotes as $personalQuote) {
+
+                    LoggerService::startQuoteLogging($personalQuote);
+
                     $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
                     $quote = $this->getQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
 
                     if (! $quote) {
-                        info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code.' - Quote not found.');
-                        $processedIds[] = $personalQuote->id;
+                        LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code.' - Quote not found.');
+                        $lastProcessedId = $personalQuote->id;
 
                         continue;
                     }
 
                     // Update the personal quote with quote_id
-                    $personalQuote->update(['quote_id' => $quote->id]);
+                    if ($quote->getMorphClass() != PersonalQuote::class) {
+                        $personalQuote->update(['quote_id' => $quote->id]);
+                        LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code.' updated.', ['quote_id' => $quote->id]);
+                    } else {
+                        LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code.' - Quote is of Personal QuoteTable.');
+                    }
 
                     // Find the entity mapping for this quote
                     $entityMapping = QuoteRequestEntityMapping::where('quote_request_id', $quote->id)
@@ -82,8 +94,8 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                         ->first();
 
                     if (! $entityMapping) {
-                        info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$quote->code.' - Entity mapping not found.');
-                        $processedIds[] = $personalQuote->id;
+                        LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$quote->code.' - Entity mapping not found.');
+                        $lastProcessedId = $personalQuote->id;
 
                         continue;
                     }
@@ -92,31 +104,32 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                     $insured = Insured::where('entity_id', $entityMapping->entity_id)->first();
 
                     if (! $insured) {
-                        info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.');
-                        $processedIds[] = $personalQuote->id;
+                        LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.');
+                        $lastProcessedId = $personalQuote->id;
 
                         continue;
                     }
 
                     // Update the personal quote with insured_id
                     $personalQuote->update(['insured_id' => $insured->id]);
+                    LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code.' updated.', ['insured_id' => $insured->id]);
 
-                    $processedIds[] = $personalQuote->id;
+                    $lastProcessedId = $personalQuote->id;
                     $totalUpdated++;
-                    info(self::className.' fn:'.__FUNCTION__.' Updated Personal Quote ID: '.$personalQuote->id.' with Insured ID: '.$insured->id.' and Quote ID: '.$quote->id);
+                    LoggerService::info(self::className.' fn:'.__FUNCTION__.' Updated Personal Quote ID: '.$personalQuote->id.' with Insured ID: '.$insured->id.' and Quote ID: '.$quote->id);
                 }
 
                 // Update the cache after each chunk to avoid losing progress
-                Cache::put($this->cacheKey, $processedIds, now()->addDays(30));
+                Cache::put($this->cacheKey, $lastProcessedId, now()->addDays(30));
 
                 // Report progress
-                info(self::className.' fn:'.__FUNCTION__.' Processed a chunk. Current total processed IDs in cache: '.count($processedIds));
+                LoggerService::info(self::className.' fn:'.__FUNCTION__.' Processed a chunk. Last processed ID in cache: '.$lastProcessedId);
             });
 
         // Get final count from cache for reporting
-        $finalProcessedIds = Cache::get($this->cacheKey, []);
+        $finalProcessedId = Cache::get($this->cacheKey, null);
 
-        info(self::className.' fn:'.__FUNCTION__.' PersonalQuotes - Update Insured and Quote ID - Command completed. Total cached IDs: '.count($finalProcessedIds));
+        LoggerService::info(self::className.' fn:'.__FUNCTION__.' PersonalQuotes - Update Insured and Quote ID - Command completed. Last cached IDs: '.$finalProcessedId);
 
         return 0;
     }
