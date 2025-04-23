@@ -50,29 +50,30 @@ const usersCount = computed(() => props.roleUsers?.length || 0);
 // Computed property for sorted and filtered users
 const sortedUsers = computed(() => {
   if (!props.roleUsers) return [];
-  
+
   let filteredUsers = props.roleUsers;
-  
+
   // Apply search filter
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
-    filteredUsers = filteredUsers.filter(user => 
-      user.name?.toLowerCase().includes(query) ||
-      user.email?.toLowerCase().includes(query) ||
-      user.id.toString().includes(query)
+    filteredUsers = filteredUsers.filter(
+      user =>
+        user.name?.toLowerCase().includes(query) ||
+        user.email?.toLowerCase().includes(query) ||
+        user.id.toString().includes(query),
     );
   }
-  
+
   return [...filteredUsers].sort((a, b) => {
     const modifier = sortType.value === 'desc' ? -1 : 1;
     const aValue = a[sortBy.value];
     const bValue = b[sortBy.value];
-    
+
     // Handle numeric sorting for ID
     if (sortBy.value === 'id') {
       return (Number(aValue) - Number(bValue)) * modifier;
     }
-    
+
     // Handle string sorting for name and email
     if (!aValue) return 1;
     if (!bValue) return -1;
@@ -103,7 +104,7 @@ const onSort = ({ sortBy: newSortBy, sortType: newSortType }) => {
     </div>
   </div>
   <x-divider class="my-4" />
-  
+
   <!-- Role Details Section -->
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="text-sm">
@@ -149,8 +150,13 @@ const onSort = ({ sortBy: newSortBy, sortType: newSortType }) => {
     <Collapsible :expanded="true">
       <template #header>
         <div class="flex items-center gap-2">
-          <h3 class="font-semibold text-primary-800 text-lg">Users with this Role</h3>
-          <span v-if="showUsers" class="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Users with this Role
+          </h3>
+          <span
+            v-if="showUsers"
+            class="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-600"
+          >
             {{ usersCount }} {{ usersCount === 1 ? 'user' : 'users' }}
           </span>
         </div>
@@ -194,7 +200,7 @@ const onSort = ({ sortBy: newSortBy, sortType: newSortType }) => {
             :rows-per-page="10"
           >
             <template #item-id="{ id }">
-              <Link 
+              <Link
                 :href="route('users.show', id)"
                 class="text-primary-500 hover:underline"
               >
@@ -205,7 +211,7 @@ const onSort = ({ sortBy: newSortBy, sortType: newSortType }) => {
               {{ name || 'N/A' }}
             </template>
             <template #item-email="{ email, id }">
-              <Link 
+              <Link
                 :href="route('users.show', id)"
                 class="text-primary-500 hover:underline"
               >
