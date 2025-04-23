@@ -1914,6 +1914,7 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
     uuid: props.quoteRequest.uuid,
     captureAmount: totalAmount,
     paymentCode: paymentCode,
+    quoteCode: props.quoteRequest?.code,
   };
 
   capturePaymentValidationInProcess.value = true;

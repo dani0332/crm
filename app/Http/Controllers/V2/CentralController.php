@@ -691,10 +691,10 @@ class CentralController extends Controller
     public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
-        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode);
 
         $logContext = [
-            'ref_id' => $request->uuid,
+            'ref_id' => $request->quoteCode
         ];
 
         $logExtra = [
