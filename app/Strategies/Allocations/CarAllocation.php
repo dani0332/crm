@@ -187,7 +187,7 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getTier($tierId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findTier($lead): ?Tier
     {
         if ($lead->tier_id == null) {
             return $this->carAllocationService->findTier($lead);
