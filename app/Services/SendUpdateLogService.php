@@ -940,6 +940,7 @@ class SendUpdateLogService
             $quoteDetails,
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
+        $sageRequestPayload->quoteTypeId =  $sendUpdateLog->quote_type_id;
 
         $checkRequiredSageValidations = app(SageApiService::class)->checkRequiredSageIds($sageRequestPayload);
         if (! $checkRequiredSageValidations['status']) {
