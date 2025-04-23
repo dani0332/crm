@@ -2,12 +2,10 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use App\Models\CustomerInsured;
-use App\Models\Insured;
-use App\Models\PersonalQuote;
-use Carbon\Carbon;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\PersonalQuote;
+use Carbon\Carbon;
 
 class MDX extends EmbeddedProduct
 {
@@ -23,7 +21,7 @@ class MDX extends EmbeddedProduct
     {
         $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
 
-        if($quoteObject::class == PersonalQuote::class) {
+        if ($quoteObject::class == PersonalQuote::class) {
             $quoteTypeId = $quoteObject->quote_type_id;
         } else {
             $quoteType = quoteTypeCode::getName($quoteObject::class);
@@ -31,9 +29,9 @@ class MDX extends EmbeddedProduct
         }
 
         $customerInsured = $quoteObject->customer?->customerInsured
-        ->where('quote_request_id', $quoteObject->id)
-        ->where('quote_type_id', $quoteTypeId)
-        ->first() ?? null;
+            ->where('quote_request_id', $quoteObject->id)
+            ->where('quote_type_id', $quoteTypeId)
+            ->first() ?? null;
 
         if (! empty($quoteObject->quoteRequestEntityMapping)) {
             $firstName = $quoteObject->first_name ?? '';
