@@ -62,11 +62,11 @@ class AMLScreeningCommand extends Command
             $quoteRequestQuery->chunk(100, function ($quoteRequests) {
                 foreach ($quoteRequests as $quoteRequest) {
 
-                    $quoteRequest = $this->getQuoteObject($this->quoteType->value, $quoteRequest->id);
+                    $quoteRequestId = $quoteRequest->id;
+                    $quoteRequest = $this->getQuoteObject($this->quoteType->value, $quoteRequestId);
 
                     if (! $quoteRequest) {
-                        LoggerService::error($this->className.' - '.$this->quoteType->value.' Quote #'.$quoteRequest->id.' not found');
-
+                        LoggerService::error($this->className.' - '.$this->quoteType->value.' Quote #'.$quoteRequestId.' not found');
                         continue;
                     }
 
