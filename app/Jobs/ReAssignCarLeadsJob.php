@@ -113,7 +113,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
         return $this->carAllocationService->fetchLeadsForReAssignment($this->advisorId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findTier($lead): ?Tier
     {
         if ($lead->tier_id == null) {
             return $this->carAllocationService->findTier($lead);
