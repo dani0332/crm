@@ -279,16 +279,28 @@ class CarAllocationService extends AllocationService
 
                 return $tiersQuery->first();
             } else {
-                // Check car value and age to determine the tier.
-                if ($carLead->car_value >= 300000) {
-                    return $tiersQuery->Where('name', TiersEnum::TIER_H)->first();
-                }
+                LoggerService::debug('findTier - Car Lead Info', extra: [
+                    'car_value' => $carLead->car_value,
+                    'car_value_tier' => $carLead->car_value_tier,
+                    'dob' => $carLead->dob,
+                ]);
 
-                $userDob = Carbon::createFromFormat('Y-m-d H:i:s', $carLead->dob);
-                $ageInYears = $userDob->age;
+                try {
+                    // Check car value and age to determine the tier.
+                    if ($carLead->car_value >= 300000) {
+                        return $tiersQuery->Where('name', TiersEnum::TIER_H)->first();
+                    }
 
-                if ($carLead->car_value < 300000 || $ageInYears >= 21) {
-                    return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->first();
+                    $userDob = Carbon::createFromFormat('Y-m-d H:i:s', $carLead->dob);
+                    $ageInYears = $userDob->age;
+
+                    if ($carLead->car_value < 300000 || $ageInYears >= 21) {
+                        return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->first();
+                    }
+                } catch (\Exception $e) {
+                    LoggerService::warning('Error calculating age from DOB', exception: $e);
+
+                    return null;
                 }
             }
         } else {
@@ -304,26 +316,28 @@ class CarAllocationService extends AllocationService
 
     public function findRenewalLeadTier($carLead): ?Tier
     {
+        LoggerService::debug('findRenewalLeadTier - Car Lead Info', extra: [
+            'car_value' => $carLead->car_value,
+            'car_value_tier' => $carLead->car_value_tier,
+            'sic_flow_enabled' => $carLead->sic_flow_enabled,
+        ]);
+
         $isSICFlowEnabled = $carLead->sic_flow_enabled;
-        $tiersQuery = Tier::where('is_active', 1)
-            ->where('min_price', '<=', $carLead->car_value_tier)
-            ->where('max_price', '>=', $carLead->car_value_tier)
-            ->where('can_handle_tpl', 0)
-            ->where('name', '!=', TiersEnum::TIER_R)
-            ->where(function ($query) use ($isSICFlowEnabled) {
-                if ($isSICFlowEnabled) {
-                    $query->where('name', '!=', TiersEnum::TIER_L);
-                }
-            });
+        $priceValue = $carLead->car_value_tier ?? $carLead->car_value;
 
-        $tier = $tiersQuery->first();
-
-        if ($tier) {
-            return $tier;
+        if (empty($priceValue)) {
+            return null;
         }
 
-        // Return null if no matching tier is found.
-        return null;
+        return Tier::where('is_active', 1)
+            ->where('min_price', '<=', $priceValue)
+            ->where('max_price', '>=', $priceValue)
+            ->where('can_handle_tpl', 0)
+            ->where('name', '!=', TiersEnum::TIER_R)
+            ->when($isSICFlowEnabled, function ($query) {
+                $query->where('name', '!=', TiersEnum::TIER_L);
+            })
+            ->first();
     }
 
     public function getEligibleUserForAllocation(Tier $tier, $advisorId, $isReassignmentJob, $leadSource, $teamId, CarQuote $lead)
