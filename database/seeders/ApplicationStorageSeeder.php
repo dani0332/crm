@@ -81,8 +81,8 @@ class ApplicationStorageSeeder extends Seeder
         //         'updated_at' => now(),
         //     ],
         // );
-        $this->seedBenchmarking();
-        $this->seedStopDeduplicateScript();
+        // $this->seedBenchmarking();
+        // $this->seedStopDeduplicateScript();
         $this->seedAmlAutomation();
     }
 
@@ -334,7 +334,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
             [
-                'value' => 1,
+                'value' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
