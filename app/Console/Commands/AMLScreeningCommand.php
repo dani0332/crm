@@ -4,10 +4,12 @@ namespace App\Console\Commands;
 
 use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\AmlScreeningAutomationJob;
 use App\Models\AmlAutomation;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -43,6 +45,12 @@ class AMLScreeningCommand extends Command
      */
     public function handle()
     {
+        $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
+        if (! $isAmlAutomationEnabled) {
+            LoggerService::info('Aml Automation is not enabled from cms');
+            return false;
+        }
+
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
         if (! class_exists($quoteModel)) {

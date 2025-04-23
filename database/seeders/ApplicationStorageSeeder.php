@@ -83,6 +83,7 @@ class ApplicationStorageSeeder extends Seeder
         // );
         $this->seedBenchmarking();
         $this->seedStopDeduplicateScript();
+        $this->seedAmlAutomation();
     }
 
     private function seedBirdWorkflowUrls()
@@ -321,6 +322,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::STOP_DE_DUPLICATION_JOB],
             [
                 'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+    
+    private function seedAmlAutomation()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
+            [
+                'value' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
