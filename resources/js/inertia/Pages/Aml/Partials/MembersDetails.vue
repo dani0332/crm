@@ -180,7 +180,9 @@ function onEditMember(member) {
   memberForm.nationality_id = member.nationality_id;
   memberForm.is_payer = member.is_payer;
 }
-function memberSubmit() {
+function memberSubmit(isValid) {
+  if (!isValid) return;
+
   createOrUpdateMember(memberForm, isMemberEditEnabled.value);
 }
 </script>
