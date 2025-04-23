@@ -5,6 +5,9 @@ import { usePayment } from '../../Composables/usePayment';
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
+const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
+
 const { formatDate, formatAmount, formatString } = usePayment();
 
 const props = defineProps({
@@ -57,14 +60,39 @@ const splitPaymentTotalPrice = (srNo, amount, discountValue) => {
   return formatAmount(amount);
 };
 
-const canDeleteSplitPayment = computed(() => {
-  // This is a mock implementation - in the real app, you'd need to implement the actual logic
-  return props.canDeleteSplitPayment && props.canDeleteSplitPayment(
-    props.parentPayment, 
-    props.splitIndex, 
-    props.splitPayment
-  );
+// verify if split payment deletion is enabled
+const isSplitDeleteEnabled = computed(() => {
+  const isNotUpfront =
+    paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
+  const hasEditPermission = can(permissionEnum.PaymentsEdit);
+  const isPolicyNotBooked =
+    props.quoteRequest.quote_status_id !==
+    page.props.quoteStatusEnum.PolicyBooked;
+
+  if (props.sendUpdate && isNotUpfront && hasEditPermission) {
+    return true;
+  }
+
+  return isNotUpfront && hasEditPermission && isPolicyNotBooked;
 });
+
+const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
+  const eligibleStatuses = [
+    paymentStatusEnum.PAID,
+    paymentStatusEnum.CAPTURED,
+    paymentStatusEnum.AUTHORISED,
+    paymentStatusEnum.REFUNDED,
+    paymentStatusEnum.PARTIAL_CAPTURED,
+    paymentStatusEnum.PARTIALLY_PAID,
+  ];
+
+  return (
+    isSplitDeleteEnabled &&
+    item.total_payments == splitIndex + 1 &&
+    !eligibleStatuses.includes(splitPayment.payment_status_id) &&
+    splitPayment.sr_no > 1
+  );
+};
 
 const enablePostPrepaymentButton = computed(() => {
   return props.enablePostPrepaymentButton && props.enablePostPrepaymentButton(props.splitPayment);
@@ -160,7 +188,9 @@ const enablePostPrepaymentButton = computed(() => {
         >Copy Payment Link</x-button>
         
         <x-button
-          v-if="canDeleteSplitPayment"
+          v-if="canDeleteSplitPayment( parentPayment,
+                                  splitIndex,
+                                  splitPayment)"
           size="xs"
           color="red"
           class="ml-2"

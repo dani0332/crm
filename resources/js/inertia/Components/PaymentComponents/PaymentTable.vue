@@ -525,6 +525,7 @@ const preparedPayments = computed(() => {
                     :disableMainPaymentApproval="false"
                     :isApproveConfirmed="false"
                     :capturePaymentValidationInProcess="false"
+                    :quoteRequest="quoteRequest"
                     @toggle-expand="toggleExpand"
                     @edit-payment="editPayment"
                     @delete-payment="deletePaymentModel"

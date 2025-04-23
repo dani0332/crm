@@ -3255,131 +3255,6 @@ const splitPaymentTotalPrice = (
   return formatAmount(total);
 };
 
-const amlAndKycTooltip = computed(() => {
-  if (!isAmlVerified()) {
-    return page.props.paymentTooltipEnum.PENDING_AML_CLEARANCE;
-  } else if (!isInsurerAmlVerified()) {
-    return page.props.paymentTooltipEnum.PENDING_INSURER_AML_CLEARANCE;
-  } else if (!isKycVerified()) {
-    return page.props.paymentTooltipEnum.PENDING_KYC_CLEARANCE;
-  } else if (!isTotalAmountMismatched()) {
-    return page.props.paymentTooltipEnum.TOTAL_AMOUNT_MISMATCHED;
-  }
-});
-
-const isTotalAmountMismatched = () => {
-  const totalPriceRounded =
-    Math.round(props.payments[0]?.total_price * 100) / 100;
-  const calculatedTotal =
-    Math.round(
-      (props.payments[0]?.total_amount + props.payments[0]?.discount_value) *
-        100,
-    ) / 100;
-
-  return totalPriceRounded === calculatedTotal;
-};
-
-const isKycVerified = () => {
-  //Bypass KYC if its travel and insurer is other than GIG and payment is non CC
-
-  let isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
-  let isGIGInsuranceProvider =
-    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
-    page.props?.bookingDetails?.isGIGInsuranceProvider ||
-    false;
-  let paymentMethodCC =
-    props.payments[0]?.payment_methods_code ===
-    page.props.paymentMethodsEnum.CreditCard;
-
-  if (isTravelQuote) {
-    if (isGIGInsuranceProvider && paymentMethodCC) {
-      return props.quoteRequest.kyc_decision === 'Complete';
-    }
-    return true;
-  }
-
-  return props.quoteRequest.kyc_decision === 'Complete';
-};
-
-const isAmlVerified = () => {
-  //Bypass AML if its travel and insurer is other than GIG and payment is non CC
-  let isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
-  let isGIGInsuranceProvider =
-    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
-    page.props?.bookingDetails?.isGIGInsuranceProvider ||
-    false;
-  let paymentMethodCC =
-    props.payments[0]?.payment_methods_code ===
-    page.props.paymentMethodsEnum.CreditCard;
-
-  if (isTravelQuote) {
-    if (isGIGInsuranceProvider && paymentMethodCC) {
-      return (
-        props.quoteRequest.aml_status ===
-        page.props.amlStatusEnum.AMLScreeningCleared
-      );
-    }
-    return true;
-  }
-
-  return (
-    props.quoteRequest.aml_status ===
-    page.props.amlStatusEnum.AMLScreeningCleared
-  );
-};
-
-const isInsurerAmlVerified = () => {
-  //Bypass Insurer AML if its travel and insurer is other than GIG and payment is non CC
-
-  let isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
-  let isGIGInsuranceProvider =
-    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
-    page.props?.bookingDetails?.isGIGInsuranceProvider ||
-    false;
-  let isPaymentMethodCC =
-    props.payments[0]?.payment_methods_code ===
-    page.props.paymentMethodsEnum.CreditCard;
-
-  let insurerAMLStatus = props.quoteRequest?.insurer_aml_status || 'N/A';
-  let insurerAmlClearedStatuses = [
-    page.props.amlStatusEnum.InsurerAMLScreeningNA,
-    page.props.amlStatusEnum.InsurerAMLScreeningCleared,
-  ];
-  let isInsurerAmlCleared =
-    insurerAmlClearedStatuses.includes(insurerAMLStatus);
-
-  if (isTravelQuote) {
-    if (isGIGInsuranceProvider && isPaymentMethodCC) {
-      // Insurer AML is required if its travel and insurer is GIG and payment is CC
-      return isInsurerAmlCleared;
-    }
-    //Bypass Insurer AML if its travel and insurer is other than GIG and payment is non CC
-    return true;
-  } else if (isPaymentMethodCC) {
-    // Insurer AML is required if its non travel and payment is CC
-    return isInsurerAmlCleared;
-  }
-
-  return true;
-};
-
-const disableMainPaymentApproval = computed(() => {
-  if (props.sendUpdate) {
-    return false;
-  }
-  let isAmlFailed =
-    props.quoteRequest.aml_status ===
-    page.props.amlStatusEnum.AMLScreeningFailed;
-  if (isAmlFailed) {
-    return true;
-  }
-
-  return (
-    isAmlVerified() &&
-    (!isKycVerified() || !isInsurerAmlVerified() || !isTotalAmountMismatched())
-  );
-});
-
 const openAmlVerificationModal = () => {
   isAmlApprovalRequired.value = true;
 };
@@ -3394,39 +3269,6 @@ const transactionActionText = computed(() => {
   }
 });
 
-// verify if split payment deletion is enabled
-const isSplitDeleteEnabled = computed(() => {
-  const isNotUpfront =
-    paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
-  const hasEditPermission = can(permissionEnum.PaymentsEdit);
-  const isPolicyNotBooked =
-    props.quoteRequest.quote_status_id !==
-    page.props.quoteStatusEnum.PolicyBooked;
-
-  if (props.sendUpdate && isNotUpfront && hasEditPermission) {
-    return true;
-  }
-
-  return isNotUpfront && hasEditPermission && isPolicyNotBooked;
-});
-
-const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
-  const eligibleStatuses = [
-    paymentStatusEnum.PAID,
-    paymentStatusEnum.CAPTURED,
-    paymentStatusEnum.AUTHORISED,
-    paymentStatusEnum.REFUNDED,
-    paymentStatusEnum.PARTIAL_CAPTURED,
-    paymentStatusEnum.PARTIALLY_PAID,
-  ];
-
-  return (
-    isSplitDeleteEnabled &&
-    item.total_payments == splitIndex + 1 &&
-    !eligibleStatuses.includes(splitPayment.payment_status_id) &&
-    splitPayment.sr_no > 1
-  );
-};
 
 const isCCEnabled = ref(
   page.props?.bookPolicyDetails?.isCreditCardEnabled || false,
@@ -3761,12 +3603,12 @@ onBeforeMount(() => {
                     :isExpanded="expandedPaymentRows[index]"
                     :isChildPaymentDeletable="isChildPaymentDeletable"
                     :is_lacking_payment="false"
-                    :amlAndKycTooltip="''"
                     :disableMainPaymentApproval="false"
                     :isApproveConfirmed="false"
                     :capturePaymentValidationInProcess="false"
                     :isFuncsEnabled="props.isFuncsEnabled"
                     :bookPolicyDetails="props.bookPolicyDetails"
+                    :quoteRequest="quoteRequest"
                     @toggle-expand="toggleExpand"
                     @edit-payment="editPaymentModal"
                     @delete-payment="deletePaymentModel"
@@ -3774,7 +3616,7 @@ onBeforeMount(() => {
                     @approve-payment="capturePayment"
                     @void-payment="voidPaymentModel"
                     @alert-capture="alertCapture"
-                    @open-aml-verification="() => {}"
+                    @open-aml-verification= "openAmlVerificationModal"
                     
                   />
                   
@@ -3791,7 +3633,7 @@ onBeforeMount(() => {
                       :paymentAllocationStatusTooltip="(status) => status"
                       @view-payment="(payment, splitId, splitNo, action) => editPaymentModal(payment, splitId, splitNo, action)"
                       @generate-cc-link="(code, srNo, statusId) => copyPaymentLink(splitPayment.payment_link, statusId)"
-                      @delete-split-payment="(id, statusId) => {}"
+                      @delete-split-payment="deleteSplitPaymentModal"
                       @retry-split-payment="(jobId, message) => retryProcess(splitPayment.id, jobId)"
                       @post-prepayment="triggerPostPrepayment"
                     />
