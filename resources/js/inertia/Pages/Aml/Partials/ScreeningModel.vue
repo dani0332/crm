@@ -257,8 +257,7 @@ function customerTypeConfirmation() {
 }
 const updateScreeningDetails = () => {
   setFieldsByCustomerType(screeningFormDetails.customer_type);
-  isScreeningIndividual.value =
-    screeningFormDetails.customer_type == customerTypeEnum.Individual;
+  isScreeningIndividual.value = screeningFormDetails.customer_type == customerTypeEnum.Individual;
   customerTypeConfirmationModel.value = false;
   modalHeaderMessage();
 };
