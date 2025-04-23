@@ -126,8 +126,8 @@ const chassisNumberValidate = eventType => {
   }
   if (eventType == 'blur') {
     const lengthValid =
-      screeningFormDetails.chassis_number.length >= 8 &&
-      screeningFormDetails.chassis_number.length <= 17;
+      screeningFormDetails.chassis_number?.length >= 8 &&
+      screeningFormDetails.chassis_number?.length <= 17;
     const isAlphanumeric = regex.test(screeningFormDetails.chassis_number);
     if (
       screeningFormDetails.chassis_number &&
