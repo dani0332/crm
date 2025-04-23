@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -83,11 +83,17 @@ class RoleController extends Controller
             ->where('role_has_permissions.role_id', $id)->get();
         $permission = Permission::get();
 
+        // Get users with this role, ordered by name by default
+        $users = \App\Models\User::role($role->name)
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
+
         return inertia('Admin/Roles/Show', [
             'permission' => $permission,
             'rolePermissions' => $rolePermissions,
             'role' => $role,
-
+            'roleUsers' => $users,
         ]);
     }
 

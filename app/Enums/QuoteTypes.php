@@ -119,7 +119,7 @@ enum QuoteTypes: string
 
     public static function getIdFromValue(string $value): ?int
     {
-        return self::getId(match (ucfirst($value)) {
+        $quoteTypeEnum = match (ucfirst($value)) {
             'Car' => QuoteTypes::CAR,
             'Home' => QuoteTypes::HOME,
             'Health' => QuoteTypes::HEALTH,
@@ -134,7 +134,9 @@ enum QuoteTypes: string
             'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             default => null,
-        });
+        };
+
+        return $quoteTypeEnum ? self::getId($quoteTypeEnum) : null;
     }
 
     public function model(): Model

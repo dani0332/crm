@@ -15,6 +15,8 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
+use App\Http\Controllers\V2\AMLController;
+use App\Http\Requests\AMLCheckRequest;
 use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
@@ -39,13 +41,20 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\View;
 
 class AMLService
 {
     use GenericQueriesAllLobs;
+
+    protected AMLController $amlController;
+
+    public function __construct(AMLController $amlController)
+    {
+        $this->amlController = $amlController;
+    }
 
     public static function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = ''): bool
     {
@@ -243,7 +252,7 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false, $isAutomation = false)
     {
         $emailRecipients = [];
         $emailSystem = config('constants.APP_ENV');
@@ -277,9 +286,9 @@ class AMLService
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,
             ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser) {
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser, $isAutomation) {
                 $message->to($emailRecipients);
-                if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
+                if (! $isAutomation && (in_array($loginUserEmail, $emailRecipients)) || ! $forComplianceSuperUser) {
                     $message->cc($loginUserEmail);
                 }
                 $message->subject($emailSubject);
@@ -343,6 +352,43 @@ class AMLService
     //            $responseDetail = 'sendAmlComplianceMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
     //        }
     //    }
+
+    /**
+     * Get insured person details.
+     *
+     * @return object containing properties:
+     *                - 'status' (bool)
+     *                - 'message' (string)
+     *                - 'response' (object|null) may not exists
+     */
+    public function getInsuredPersonDetails(string $idType, string $idNumber): object
+    {
+        // Prepare the request for insured person details
+        $insuredPersonRequest = new Request([
+            'id_type' => $idType,
+            'id_number' => $idNumber,
+        ]);
+
+        // Fetch the insured person details
+        return $this->amlController->getInsuredPersonDetails($insuredPersonRequest)->getData();
+    }
+
+    /**
+     * Get insured person details.
+     *
+     * @param array AMLCheckRequest $amlRequestData
+     * @return object containing properties:
+     *                - 'status' (bool)
+     *                - 'message' (string)
+     */
+    public function quoteAmlProcessCall(array $amlRequestData, int $quoteTypeId, int $quoteRequestId): object
+    {
+        // Create AML check request object
+        $amlCheckRequest = new AMLCheckRequest($amlRequestData);
+
+        // Call the AML quote update method
+        return $this->amlController->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
+    }
 
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
