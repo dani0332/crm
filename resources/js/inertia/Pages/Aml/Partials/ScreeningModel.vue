@@ -233,16 +233,26 @@ const clearErrors = () => {
   screeningFormDetails.errors.screening_gender = '';
 };
 
-const setFieldsByCustomerType = (customerType = '') => {
-  clearErrors();
+const oldCustomerType = ref(null);
+const newCustomerType = ref(null);
 
-  if (customerType == customerTypeEnum.Individual || customerType == '') {
-    clearInsurerDetails(customerTypeEnum.Individual);
-  } else {
+const setFieldsByCustomerType = (customerType = '') => {
+  if (customerType == customerTypeEnum.Entity && [undefined, customerTypeEnum.Individual].includes(oldCustomerType.value)) {
     validateNationality.value = false;
+    clearErrors();
     clearInsurerDetails(customerTypeEnum.Entity);
+  } else if (customerType == customerTypeEnum.Individual && oldCustomerType.value === customerTypeEnum.Entity) {
+    validateNationality.value = false;
+    clearErrors();
+    clearInsurerDetails(customerTypeEnum.Individual);
   }
 };
+
+watch(() => screeningFormDetails.customer_type, (newValue, oldValue) => {
+  oldCustomerType.value = oldValue;
+  newCustomerType.value = newValue;
+});
+
 function customerTypeConfirmation() {
   // Store the previous customer type before showing the confirmation modal
   // previousCustomerType.value = screeningFormDetails.customer_type;
