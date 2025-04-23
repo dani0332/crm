@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Console\Command;
-use Symfony\Component\HttpKernel\Log\Logger;
 
 class PolicyIssuanceMarkFailedCommand extends Command
 {

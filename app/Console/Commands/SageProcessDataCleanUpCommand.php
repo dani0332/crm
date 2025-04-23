@@ -6,7 +6,6 @@ use App\Enums\SageEnum;
 use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use DB;
 use Illuminate\Console\Command;
 
 class SageProcessDataCleanUpCommand extends Command
