@@ -212,8 +212,11 @@ const screeningFormDetails = useForm({
     page.props.insuredDetails?.insured?.emirate_of_registration_id,
 });
 const modalHeaderMessage = () => {
-  if (page.props.quoteType.code !== page.props.quoteTypeCodeEnum.Business &&
-      ([customerTypeEnum.Individual, null].includes(screeningFormDetails.customer_type))
+  if (
+    page.props.quoteType.code !== page.props.quoteTypeCodeEnum.Business &&
+    [customerTypeEnum.Individual, null].includes(
+      screeningFormDetails.customer_type,
+    )
   ) {
     headerMessage.value =
       'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
@@ -224,10 +227,7 @@ const modalHeaderMessage = () => {
 };
 const setFieldsByCustomerType = (customerType = '') => {
   screeningFormDetails.clearErrors();
-  if (
-    customerType == customerTypeEnum.Individual ||
-    customerType == ''
-  ) {
+  if (customerType == customerTypeEnum.Individual || customerType == '') {
     clearInsurerDetails(customerTypeEnum.Individual);
   } else {
     validateNationality.value = false;
@@ -238,9 +238,7 @@ function customerTypeConfirmation() {
   // Store the previous customer type before showing the confirmation modal
   // previousCustomerType.value = screeningFormDetails.customer_type;
   customerTypeConfirmationModel.value = true;
-  if (
-    screeningFormDetails.customer_type == customerTypeEnum.Individual
-  ) {
+  if (screeningFormDetails.customer_type == customerTypeEnum.Individual) {
     confirmationMessage.value =
       'Are you sure you want to run AML screen for this lead as Individual Customer?';
   } else {
@@ -250,7 +248,8 @@ function customerTypeConfirmation() {
 }
 const updateScreeningDetails = () => {
   setFieldsByCustomerType(screeningFormDetails.customer_type);
-  isScreeningIndividual.value = screeningFormDetails.customer_type == customerTypeEnum.Individual;
+  isScreeningIndividual.value =
+    screeningFormDetails.customer_type == customerTypeEnum.Individual;
   customerTypeConfirmationModel.value = false;
   modalHeaderMessage();
 };
@@ -367,9 +366,7 @@ const searchInsuredDetails = customerType => {
         if (res.data.status) {
           screeningFormDetails.clearErrors();
           let response = res.data.response;
-          if (
-            response.customer_type == customerTypeEnum.Individual
-          ) {
+          if (response.customer_type == customerTypeEnum.Individual) {
             IndividualDetailsFound.value = true;
             screeningFormDetails.insured_first_name = response.first_name;
             screeningFormDetails.insured_last_name = response?.last_name;
@@ -432,8 +429,7 @@ function screeningFormValidate() {
   }
   // Individual customer validation
   if (
-    screeningFormDetails.customer_type ==
-      customerTypeEnum.Individual ||
+    screeningFormDetails.customer_type == customerTypeEnum.Individual ||
     screeningFormDetails.customer_type == null
   ) {
     console.log(screeningFormDetails);
@@ -522,9 +518,7 @@ function screeningFormValidate() {
     // }
   }
   // Entity customer validation
-  else if (
-    screeningFormDetails.customer_type == customerTypeEnum.Entity
-  ) {
+  else if (screeningFormDetails.customer_type == customerTypeEnum.Entity) {
     if (!screeningFormDetails.entity_type) {
       screeningFormDetails.setError('entity_type', 'This field is required');
       isValid = false;
@@ -631,8 +625,7 @@ const updateScreeningType = () => {
     }
   } else {
     if (screeningFormDetails?.insured_first_name !== null) {
-      screeningFormDetails.customer_type =
-        customerTypeEnum.Individual;
+      screeningFormDetails.customer_type = customerTypeEnum.Individual;
     }
   }
 };
@@ -848,9 +841,7 @@ onMounted(() => {
           <template v-if="!EntityDetailsFound">
             <x-field>
               <x-button
-                @click.prevent="
-                  searchInsuredDetails(customerTypeEnum.Entity)
-                "
+                @click.prevent="searchInsuredDetails(customerTypeEnum.Entity)"
                 class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
                 size="sm"
                 color="primary"
@@ -865,9 +856,7 @@ onMounted(() => {
               <x-button
                 size="sm"
                 color="info"
-                @click.prevent="
-                  clearInsurerDetails(customerTypeEnum.Entity)
-                "
+                @click.prevent="clearInsurerDetails(customerTypeEnum.Entity)"
               >
                 Cancel
               </x-button>
