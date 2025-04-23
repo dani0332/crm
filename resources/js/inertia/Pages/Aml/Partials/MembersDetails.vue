@@ -357,8 +357,7 @@ function memberSubmit(isValid) {
         v-if="
           props.customerType == page.props.customerTypeEnum.Individual ||
           isPayerDetails ||
-          (props.customerType == page.props.customerTypeEnum.Entity &&
-            page.props.entityDetails?.entity !== undefined)
+          props.customerType == page.props.customerTypeEnum.Entity
         "
         size="sm"
         @click.prevent="memberFormEnableToggle"
