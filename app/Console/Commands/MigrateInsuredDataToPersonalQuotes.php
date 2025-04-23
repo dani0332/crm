@@ -61,12 +61,14 @@ class MigrateInsuredDataToPersonalQuotes extends Command
         // Use chunk to process records in batches to avoid memory issues
         PersonalQuote::whereNull('quote_id')
             ->orWhereNull('insured_id')
-            ->whereNotIn('id', $processedIds)
             ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$processedIds) {
                 foreach ($personalQuotes as $personalQuote) {
 
                     LoggerService::startQuoteLogging($personalQuote);
 
+                    if (in_array($personalQuote->id, $processedIds)) {
+                        LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code.' - Quote quote already processed.');
+                    }
                     $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
                     $quote = $this->getQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
 
