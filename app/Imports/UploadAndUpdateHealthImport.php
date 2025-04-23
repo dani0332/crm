@@ -42,26 +42,7 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
      */
     public function rules(): array
     {
-        return array_merge($this->getRules(), [
-            // check if the number of members is consistent across all member-related fields -- Cross field validations
-            '*.9' => ['required', function($attribute, $value, $onFailure) {
-                $memberCount = count(array_filter(explode('|', $value)));
-                
-                // Get values for all member-related columns
-                $dobCount = count(array_filter(explode('|', $this->row[10] ?? '')));
-                $nationalityCount = count(array_filter(explode('|', $this->row[11] ?? '')));
-                $genderCount = count(array_filter(explode('|', $this->row[12] ?? '')));
-                $emirateCount = count(array_filter(explode('|', $this->row[14] ?? '')));
-
-                // Check if all counts match
-                if (!($memberCount === $dobCount && 
-                    $memberCount === $nationalityCount && 
-                    $memberCount === $genderCount && 
-                    $memberCount === $emirateCount)) {
-                    $onFailure('The number of members must be consistent across all member-related fields (names, DOB, nationality, gender, and emirate of visa)');
-                }
-            }]
-        ]);
+        return $this->getRules();
     }
 
     /**
@@ -134,7 +115,26 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
             'advisor' => ['index' => 6, 'title' => 'Advisor Email', 'rules' => 'nullable|max:100'],
             'member_premium' => ['index' => 7, 'title' => 'Renewal Premium', 'rules' => 'nullable|max:150'],
             'copay' => ['index' => 8, 'title' => 'Renewal Co-Pay', 'rules' => 'required|max:300'],
-            'member_names' => ['index' => 9, 'title' => 'Member Names', 'rules' => 'nullable|max:500'],
+            'member_names' => ['index' => 9, 'title' => 'Member Names', 'rules' => ['nullable','max:500', function ($attribute, $value, $onFailure, $validator) {
+                $index = explode('.', $attribute)[0];
+                $data = $validator->getData();
+                $currentRow = $data[$index];
+                
+                $memberCount = count(array_filter(explode('|', $value)));
+                $premiumCount = count(array_filter(explode('|', $currentRow[7] ?? '')));
+                $dobCount = count(array_filter(explode('|', $currentRow[10] ?? '')));
+                $nationalityCount = count(array_filter(explode('|', $currentRow[11] ?? '')));
+                $genderCount = count(array_filter(explode('|', $currentRow[12] ?? '')));
+                $emirateCount = count(array_filter(explode('|', $currentRow[14] ?? '')));
+                
+                if (!($memberCount === $dobCount &&
+                    $memberCount === $premiumCount &&
+                    $memberCount === $nationalityCount && 
+                    $memberCount === $genderCount && 
+                    $memberCount === $emirateCount)) {
+                    $onFailure('The number of members must be consistent across all member-related fields (names, DOB, nationality, gender, and emirate of visa)');
+                }
+            }]],
             'member_dob' => ['index' => 10, 'title' => "Customer's DOB", 'rules' => ['required', 'max:100', function ($attribute, $value, $onFailure) {
                 $dobs = array_map('trim', explode('|', $value));
                 foreach ($dobs as $dob) {
