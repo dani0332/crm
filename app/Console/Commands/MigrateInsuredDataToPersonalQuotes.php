@@ -74,7 +74,11 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                     }
 
                     // Update the personal quote with quote_id
-                    $personalQuote->update(['quote_id' => $quote->id]);
+                    if ($quote->getMorphClass() != PersonalQuote::class) {
+                        $personalQuote->update(['quote_id' => $quote->id]);
+                    } else {
+                        info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code.' - Quote is of Personal QuoteTable.');
+                    }
 
                     // Find the entity mapping for this quote
                     $entityMapping = QuoteRequestEntityMapping::where('quote_request_id', $quote->id)
