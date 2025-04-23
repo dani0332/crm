@@ -91,9 +91,11 @@ class EmbeddedProduct
             if (! empty($quoteObject->quoteRequestEntityMapping)) {
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
+                $emiratesIdNumber = '';
             } else {
                 $firstName = ($customerInsured?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
                 $lastName = ($customerInsured?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
+                $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
             }
 
             $item->id = $item->id;
@@ -112,7 +114,7 @@ class EmbeddedProduct
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
-            $item->emirates_id_number = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
+            $item->emirates_id_number = $emiratesIdNumber;
 
             if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
                 $item->sync_status = $item->courier_sync_status_info;

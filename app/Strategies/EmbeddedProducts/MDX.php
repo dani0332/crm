@@ -38,15 +38,17 @@ class MDX extends EmbeddedProduct
         if (! empty($quoteObject->quoteRequestEntityMapping)) {
             $firstName = $quoteObject->first_name ?? '';
             $lastName = $quoteObject->last_name ?? '';
+            $emiratesIdNumber = '';
         } else {
             $firstName = ($customerInsured?->insured?->first_name ?? $quoteObject->customer?->insured_first_name) ?? '';
             $lastName = ($customerInsured?->insured?->last_name ?? $quoteObject->customer?->insured_last_name) ?? '';
+            $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $quoteObject->customer?->emirates_id_number) ?? '';
         }
 
         $data = [
             'name' => $firstName.' '.$lastName,
             'dob' => isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '',
-            'emirates_id' => ($customerInsured?->insured?->id_number ?? $quoteObject->customer?->emirates_id_number) ?? '',
+            'emirates_id' => $emiratesIdNumber,
             'plan_type' => 'Individual',
             'certificate_number' => $certificateNumber, // plan no
             'plan_currency' => 'AED',
