@@ -231,7 +231,7 @@ const clearErrors = () => {
 
   screeningFormDetails.errors.dob = '';
   screeningFormDetails.errors.screening_gender = '';
-}
+};
 
 const setFieldsByCustomerType = (customerType = '') => {
   clearErrors();
@@ -374,7 +374,7 @@ const searchInsuredDetails = customerType => {
       .then(res => {
         if (res.data.status) {
           clearErrors();
-          
+
           let response = res.data.response;
           if (response.customer_type == customerTypeEnum.Individual) {
             IndividualDetailsFound.value = true;
@@ -429,7 +429,7 @@ function clearInsurerDetails(customerType) {
 }
 function screeningFormValidate() {
   clearErrors();
-  
+
   let isValid = true;
   if (!screeningFormDetails.customer_type) {
     screeningFormDetails.setError(
