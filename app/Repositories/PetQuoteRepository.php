@@ -100,13 +100,11 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
-        $user = null;
-        if (auth()->check() && empty($requestParams)) {
-            $requestParams = collect(request()->all());
-            $user = auth()->user();
-        } elseif (! empty($requestParams)) {
-            $requestParams = collect($requestParams);
-            $user = $requestParams['user'];
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
         }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
@@ -124,27 +122,27 @@ class PetQuoteRepository extends BaseRepository
             'renewalBatchModel',
             'quoteDetail',
         ])
-            ->when($user && $user->hasRole(RolesEnum::PetAdvisor), function ($query) use ($user) {
-                $query->where('advisor_id', $user->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
-            ->when(! empty($requestParams->get('is_renewal')), function ($query) use ($requestParams) {
-                $isRenewal = $requestParams->get('is_renewal');
+            ->when(! empty(request()->is_renewal), function ($query) {
+                $isRenewal = request()->is_renewal;
                 if ($isRenewal == quoteTypeCode::yesText) {
                     $query->whereNotNull('previous_quote_policy_number');
                 } elseif ($isRenewal == quoteTypeCode::noText) {
                     $query->whereNull('previous_quote_policy_number');
                 }
             })
-            ->when(! empty($requestParams->get('advisor_assigned_date')), function ($query) use ($requestParams) {
-                $dateArray = $requestParams->get('advisor_assigned_date');
+            ->when(! empty(request()->advisor_assigned_date), function ($query) {
+                $dateArray = request()->advisor_assigned_date;
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
-            ->filter(! $forExport, $forTotalLeadsCount, requestParams: $requestParams)
-            ->withFakeLeadCriteria($forTotalLeadsCount, requestParams: $requestParams)
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',
                 DB::raw('
@@ -158,16 +156,18 @@ class PetQuoteRepository extends BaseRepository
                 '),
             ]);
 
-        $this->adjustQueryByInsurerInvoiceFilters($query, requestParams: $requestParams);
+        $this->adjustQueryByInsurerInvoiceFilters($query);
 
-        $this->adjustQueryByDateFilters($query, 'personal_quotes', requestParams: $requestParams);
-        $query->orderBy('personal_quotes.'.($requestParams->get('sortBy') ?? 'created_at'), $requestParams->get('sortType') ?? 'desc');
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
             // PD Revert
             return 0;
             // return $query->count();
         }
+
+        logger()->debug('getData toRawSql: '.$query->toRawSql());
 
         return ($forExport) ? $query->get() : $query;
     }

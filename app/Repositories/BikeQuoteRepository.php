@@ -212,15 +212,13 @@ class BikeQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false, $requestParams = [])
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
-        $user = null;
-        if (auth()->check() && empty($requestParams)) {
-            $requestParams = collect(request()->all());
-            $user = auth()->user();
-        } elseif (! empty($requestParams)) {
-            $requestParams = collect($requestParams);
-            $user = $requestParams['user'];
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
         }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
@@ -231,11 +229,11 @@ class BikeQuoteRepository extends BaseRepository
             'payments',
             'renewalBatchModel',
         ])
-            ->when($user && $user->hasRole(RolesEnum::BikeAdvisor), function ($query) use ($user) {
-                $query->where('advisor_id', $user->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
-            ->filter(! $forExport, requestParams: $requestParams)
-            ->withFakeLeadCriteria(requestParams: $requestParams)
+            ->filter(! $forExport)
+            ->withFakeLeadCriteria()
             ->select([
                 '*',
                 DB::raw('
@@ -249,10 +247,10 @@ class BikeQuoteRepository extends BaseRepository
                 '),
             ]);
 
-        $this->adjustQueryByInsurerInvoiceFilters($query, requestParams: $requestParams);
-        $this->adjustQueryByDateFilters($query, 'personal_quotes', requestParams: $requestParams);
+        $this->adjustQueryByInsurerInvoiceFilters($query);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        $query->orderBy('personal_quotes.'.($requestParams->get('sortBy') ?? 'created_at'), $requestParams->get('sortType') ?? 'desc');
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         return ($forExport) ? $query->get() : $query;
     }
