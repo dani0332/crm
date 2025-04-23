@@ -42,7 +42,7 @@ use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -75,17 +75,15 @@ class HomeQuoteRepository extends BaseRepository
             'booking_date',
         ];
 
-        $user = null;
-        if (auth()->check() && empty($requestParams)) {
-            $requestParams = collect(request()->all());
-            $user = auth()->user();
-        } elseif (! empty($requestParams)) {
-            $requestParams = collect($requestParams);
-            $user = $requestParams['user'];
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
         }
 
         // Check if any of the exclude filters are active
-        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters, $requestParams);
+        $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters);
 
         return $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
@@ -122,8 +120,11 @@ class HomeQuoteRepository extends BaseRepository
                     $query->whereBetween('personal_quotes.created_at', $this->getDateRange());
                 }
             })
-            ->filter(! $forExport, $forTotalLeadsCount, requestParams: $requestParams)
-            ->withFakeLeadCriteria($forTotalLeadsCount, requestParams: $requestParams)
+
+            ->filter(! $forExport, $forTotalLeadsCount)
+
+            ->withFakeLeadCriteria($forTotalLeadsCount)
+
             ->orderBy('personal_quotes.created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
@@ -135,10 +136,10 @@ class HomeQuoteRepository extends BaseRepository
     /**
      * Check if any of the specified filters are active.
      */
-    private function hasActiveFilters(array $fields, $requestParams = []): bool
+    private function hasActiveFilters(array $fields): bool
     {
         foreach ($fields as $field) {
-            if (! empty($requestParams[$field])) {
+            if (request()->filled($field)) {
                 return true;
             }
         }
@@ -183,11 +184,11 @@ class HomeQuoteRepository extends BaseRepository
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query
      */
-    private function applyRenewalFilter($query, $isRenewal): void
+    private function applyRenewalFilter($query): void
     {
-        if ($isRenewal === quoteTypeCode::yesText) {
+        if (request('is_renewal') === quoteTypeCode::yesText) {
             $query->whereNotNull('personal_quotes.previous_quote_policy_number');
-        } elseif ($isRenewal === quoteTypeCode::noText) {
+        } elseif (request('is_renewal') === quoteTypeCode::noText) {
             $query->whereNull('personal_quotes.previous_quote_policy_number');
         }
     }
@@ -560,30 +561,19 @@ class HomeQuoteRepository extends BaseRepository
     /**
      * Apply dynamic filters to the query.
      */
-    private function applyFilters($query, $requestParams = []): void
+    private function applyFilters($query): void
     {
-        $user = null;
-
-        if (auth()->check() && empty($requestParams)) {
-            $user = auth()->user();
-            $requestParams = collect(request()->all());
-        } elseif (! empty($requestParams)) {
-            /* For queue when session data isn't present */
-            $user = $requestParams['user'] ?? null;
-            $requestParams = collect($requestParams);
-        }
-
         $filters = $this->getFilterMappings();
 
         foreach ($filters as $field => $condition) {
-            if ($requestParams->has($field)) {
-                $condition($query, $requestParams->get($field));
+            if (request()->filled($field)) {
+                $condition($query, request($field));
             }
         }
 
         // Handle date range filters using adjustQueryByDateFilters
-        if ($requestParams->has('payment_due_date') || $requestParams->has('booking_date')) {
-            $this->adjustQueryByDateFilters($query, 'personal_quotes', requestParams: $requestParams->toArray());
+        if (request()->filled('payment_due_date') || request()->filled('booking_date')) {
+            $this->adjustQueryByDateFilters($query, 'personal_quotes');
         }
     }
 

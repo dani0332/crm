@@ -8,25 +8,18 @@ use Carbon\Carbon;
 
 trait FilterCriteria
 {
-    public function scopeFilter($query, $paginate = true, $forTotalLeadsCount = false, $requestParams = [])
+    public function scopeFilter($query, $paginate = true, $forTotalLeadsCount = false)
     {
         $tableName = $this->getTable();
-
-        if (empty($requestParams)) {
-            $requestParams = request()->all();
-        }
-        $requestParams = collect($requestParams);
-
-        $filters = $forTotalLeadsCount ?
-            $requestParams->merge([
+        $filters = $forTotalLeadsCount ? request()->merge([
                 'created_at_start' => date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')),
                 'created_at_end' => now()->format(config('constants.DATE_FORMAT_ONLY')),
-            ]) : $requestParams;
+        ])->all() : request()->all();
 
         if (count($filters) && isset($this->filterables) && count($this->filterables)) {
             foreach ($this->filterables as $key => $operator) {
-                if (! empty($filters->get($key)) || $operator == FilterTypes::DATE_BETWEEN) {
-                    $value = $filters->get($key);
+                if (isset(request()->{$key}) || $operator == FilterTypes::DATE_BETWEEN) {
+                    $value = request()->{$key};
 
                     switch ($operator) {
                         case FilterTypes::EXACT:
@@ -62,20 +55,20 @@ trait FilterCriteria
                             }
                             break;
                         case FilterTypes::DATE_BETWEEN:
-                            if (! empty($filters->get($key.'_start')) && ! empty($filters->get($key.'_end'))) {
-                                $startDate = Carbon::parse($filters->get($key.'_start'))->startOfDay();
-                                $endDate = Carbon::parse($filters->get($key.'_end'))->endOfDay();
+                            if (isset(request()->{$key.'_start'}) && isset(request()->{$key.'_end'})) {
+                                $startDate = Carbon::parse(request()->{$key.'_start'})->startOfDay();
+                                $endDate = Carbon::parse(request()->{$key.'_end'})->endOfDay();
                                 $query->whereBetween($tableName.'.'.$key, [$startDate, $endDate]);
-                            } elseif (! empty($filters->get($key.'_time_start')) && ! empty($filters->get($key.'_time_end'))) {
-                                $startDate = date('Y-m-d H:i:s', strtotime($filters->get($key.'_time_start')));
-                                $endDate = date('Y-m-d H:i:s', strtotime($filters->get($key.'_time_end')));
+                            } elseif (isset(request()->{$key.'_time_start'}) && isset(request()->{$key.'_time_end'})) {
+                                $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_start'}));
+                                $endDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_end'}));
                                 $query->whereBetween($key, [$startDate, $endDate]);
-                            } elseif (! empty($filters->get('policy_expiry_date')) && ! empty($filters->get('policy_expiry_date_end'))) {
-                                $startDate = Carbon::parse($filters->get('policy_expiry_date'))->format('Y-m-d');
-                                $endDate = Carbon::parse($filters->get('policy_expiry_date_end'))->format('Y-m-d');
+                            } elseif (isset(request()->{'policy_expiry_date'}) && isset(request()->{'policy_expiry_date_end'})) {
+                                $startDate = Carbon::parse(request()->{'policy_expiry_date'})->format('Y-m-d');
+                                $endDate = Carbon::parse(request()->{'policy_expiry_date_end'})->format('Y-m-d');
                                 $query->whereBetween('previous_policy_expiry_date', [$startDate, $endDate]);
-                            } elseif (! empty($filters->get('last_modified_date')) && $filters->get('last_modified_date') != '') {
-                                $dateArray = $filters->get('last_modified_date');
+                            } elseif (isset(request()->last_modified_date) && request()->last_modified_date != '') {
+                                $dateArray = request()->{'last_modified_date'};
                                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                                 $query->whereBetween('updated_at', [$dateFrom, $dateTo]);
