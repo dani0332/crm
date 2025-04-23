@@ -37,14 +37,19 @@ class LoggerService
         }
     }
 
+    private static function getExceptionData(?Exception $exception = null): array
+    {
+        return [
+            'message' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
+            'code' => $exception->getCode(),
+        ];
+    }
+
     public static function error(string $message, array $context = [], array|string $extra = [], ?Exception $exception = null)
     {
         if ($exception) {
-            $context['exception'] = [
-                'message' => $exception->getMessage(),
-                'trace' => $exception->getTraceAsString(),
-                'code' => $exception->getCode(),
-            ];
+            $context['exception'] = self::getExceptionData($exception);
         }
 
         self::addExtra($extra);
@@ -52,8 +57,12 @@ class LoggerService
         Log::error($message, $context);
     }
 
-    public static function warning(string $message, array $context = [], array|string $extra = [])
+    public static function warning(string $message, array $context = [], array|string $extra = [], ?Exception $exception = null)
     {
+        if ($exception) {
+            $context['exception'] = self::getExceptionData($exception);
+        }
+
         self::addExtra($extra);
 
         Log::warning($message, $context);
