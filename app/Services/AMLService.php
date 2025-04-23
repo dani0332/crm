@@ -27,10 +27,10 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\KycLog;
-use App\Models\Lookup;
-use App\Models\Nationality;
 use App\Models\LifeQuote;
+use App\Models\Lookup;
 use App\Models\ManualAMLLog;
+use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
@@ -730,7 +730,7 @@ class AMLService
         ];
 
         return Lookup::whereIn('key', $lookupsForAML)->get()->groupBy('key')
-            ->mapWithKeys(fn($item, $key) => [str_replace('-', '_', $key) => $item]);
+            ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item]);
     }
 
     public function getInsuredDetails($customerId, $quoteTypeId, $quoteRequestId)
@@ -742,7 +742,7 @@ class AMLService
         ])->with(['customer', 'insured', 'insured.insuredKyc'])->first();
     }
 
-    // TODO:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data 
+    // TODO:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data
     public function getEntityDetails($quoteTypeId, $quoteRequestId)
     {
         return QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])

@@ -63,11 +63,11 @@ class InsuredKycRequest extends FormRequest
             'in_sanction_list' => 'sometimes',
             'deal_sanction_list' => 'sometimes',
             'is_operation_high_risk' => 'sometimes',
-            'mode_of_contact' => 'sometimes', 
-            'mode_of_delivery' => 'sometimes', 
+            'mode_of_contact' => 'sometimes',
+            'mode_of_delivery' => 'sometimes',
             'customer_tenure' => 'sometimes',
             'residential_address' => 'required',
-            'id_type' => 'required', 
+            'id_type' => 'required',
         ];
 
         // If customer type is Individual, add Individual-specific rules

@@ -19,8 +19,8 @@ final class AMLDecisionStatusEnum extends Enum
     const TRUE_MATCH_REJECT_RISK = 'TrueMatchRejectRisk';
     const RYU = 'RYU';
     const INSURER_AXA = 'INSURER_AXA';
-    
-    private static $amlStatusEvaluation  = [
+
+    private static $amlStatusEvaluation = [
         'Pass' => 'Pass',
         'FalsePositive' => 'Pass',
         'TrueMatchAcceptRisk' => 'Pass',
