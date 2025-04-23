@@ -297,7 +297,7 @@ class AMLController extends Controller
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
-        ], $businessPayload));
+        ], $businessPayload ?? []));
     }
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
