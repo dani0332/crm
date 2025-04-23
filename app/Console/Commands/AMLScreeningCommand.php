@@ -66,6 +66,7 @@ class AMLScreeningCommand extends Command
 
                     if (! $quoteRequest) {
                         LoggerService::error($this->className.' - '.$this->quoteType->value.' Quote #'.$quoteRequest->id.' not found');
+
                         continue;
                     }
 
