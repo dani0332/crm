@@ -8,7 +8,9 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BusinessQuoteRepository extends BaseRepository
@@ -32,13 +34,11 @@ class BusinessQuoteRepository extends BaseRepository
      */
     public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
-        $user = null;
-        if (auth()->check() && empty($requestParams)) {
-            $requestParams = collect(request()->all());
-            $user = auth()->user();
-        } elseif (! empty($requestParams)) {
-            $requestParams = collect($requestParams);
-            $user = $requestParams['user'];
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
         }
 
         $query = $this->with([
@@ -54,22 +54,22 @@ class BusinessQuoteRepository extends BaseRepository
                 $corpline->where('text', '!=', quoteStatusCode::GROUP_MEDICAL);
             });
         })->when(($quoteType == quoteTypeCode::GroupMedical && (
-            $user->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
-            $user->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
-            $user->isSpecificTeamAdvisor(quoteTypeCode::GM)
-        )), function ($query) use ($user) {
-            $query->where('advisor_id', $user->id);
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
+        )), function ($query) {
+            $query->where('advisor_id', auth()->id());
         })->when(($quoteType == quoteTypeCode::CORPLINE && (
-            $user->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) ||
-            $user->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
-            $user->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
-            $user->isSpecificTeamAdvisor(quoteTypeCode::GM)
-        )), function ($query) use ($user) {
-            $query->where('advisor_id', $user->id);
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
+        )), function ($query) {
+            $query->where('advisor_id', auth()->id());
         })
-            ->filter(! $forExport, $forTotalLeadsCount, requestParams: $requestParams)
-            ->withFakeLeadCriteria($forTotalLeadsCount, requestParams: $requestParams);
-        $this->adjustQueryByDateFilters($query, 'business_quote_request', requestParams: $requestParams);
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+        $this->adjustQueryByDateFilters($query, 'business_quote_request');
         $query->orderBy('business_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
