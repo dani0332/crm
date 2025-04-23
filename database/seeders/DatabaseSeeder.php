@@ -19,8 +19,10 @@ class DatabaseSeeder extends Seeder
             // HealthRevivalQuotesSeeder::class,
             QuoteStatusSeeder::class,
             LookupSeeder::class,
-            ILAGMPermissionSeeder::class,
+            // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
+            LookupSeeder::class,
+            DocumentTypesSeeder::class,
         ]);
     }
 }

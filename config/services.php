@@ -34,4 +34,13 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sage API Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure your Sage API settings.
+    |
+    */
 ];

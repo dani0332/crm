@@ -202,4 +202,14 @@ final class ApplicationStorageEnums extends Enum
     public const GROUP_MEDICAL_NON_MICRO_ADVISORS = 'GROUP_MEDICAL_NON_MICRO_ADVISORS';
     public const STOP_DE_DUPLICATION_JOB = 'STOP_DE_DUPLICATION_JOB';
     public const BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW = 'BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW';
+
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
+    public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
+    public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
+
+    /* AIG Workflow Integration */
+    public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
+    public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
+    public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
 }
