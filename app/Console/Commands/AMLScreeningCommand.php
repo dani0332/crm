@@ -18,7 +18,7 @@ class AMLScreeningCommand extends Command
 {
     use GenericQueriesAllLobs;
 
-    private $className = 'AML Screening Command';
+    private $className = 'AMLScreeningCommand';
     private $quoteType = QuoteTypes::TRAVEL;
 
     /**
@@ -47,7 +47,7 @@ class AMLScreeningCommand extends Command
     {
         $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
         if (! $isAmlAutomationEnabled) {
-            LoggerService::info('Aml Automation is not enabled from cms');
+            LoggerService::info($this->className.' is not enabled from cms');
 
             return false;
         }
