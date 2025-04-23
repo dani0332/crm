@@ -72,6 +72,10 @@ class EmbeddedProduct
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
+            $customerInsured = $customer?->customerInsured
+            ->where('quote_request_id', $item->quote_request_id)
+            ->where('quote_type_id', $item->quote_type_id)
+            ->first() ?? null;
             $advisorName = $quoteObject->advisor->name ?? '';
             $nationality = $quoteObject->customer->nationality->text ?? '';
 
@@ -88,8 +92,8 @@ class EmbeddedProduct
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
             } else {
-                $firstName = ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? '';
-                $lastName = ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? '';
+                $firstName = ($customerInsured?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
+                $lastName = ($customerInsured?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
             }
 
             $item->id = $item->id;
@@ -108,7 +112,7 @@ class EmbeddedProduct
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
-            $item->emirates_id_number = $customer->emirates_id_number ?? '';
+            $item->emirates_id_number = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
 
             if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
                 $item->sync_status = $item->courier_sync_status_info;
@@ -148,6 +152,8 @@ class EmbeddedProduct
             'product.embeddedProduct',
             'quoteRequest.customer',
             'quoteRequest.customer.nationality',
+            'quoteRequest.customer.customerInsured',
+            'quoteRequest.customer.customerInsured.insured',
             'quoteRequest.carMake',
             'quoteRequest.carModel',
             'quoteRequest.quoteStatus',
