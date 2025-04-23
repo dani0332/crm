@@ -9,9 +9,11 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\LifeQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LifeQuoteRepository extends BaseRepository
@@ -189,10 +191,17 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchExportData($requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
+        }
+
         $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
-            ->filter(paginate: false, requestParams: $requestParams)
+            ->filter(paginate: false)
             ->withFakeLeadCriteria();
-        $this->adjustQueryByDateFilters($query, 'life_quote_request', requestParams: $requestParams);
+        $this->adjustQueryByDateFilters($query, 'life_quote_request');
 
         return $query->orderBy('life_quote_request.created_at', 'desc')
             ->get();
