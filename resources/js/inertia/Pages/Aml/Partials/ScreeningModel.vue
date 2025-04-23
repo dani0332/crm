@@ -225,8 +225,17 @@ const modalHeaderMessage = () => {
       'Please confirm the Company Name, and UBO details as per the Trade License';
   }
 };
-const setFieldsByCustomerType = (customerType = '') => {
+
+const clearErrors = () => {
   screeningFormDetails.clearErrors();
+
+  screeningFormDetails.errors.dob = '';
+  screeningFormDetails.errors.screening_gender = '';
+}
+
+const setFieldsByCustomerType = (customerType = '') => {
+  clearErrors();
+
   if (customerType == customerTypeEnum.Individual || customerType == '') {
     clearInsurerDetails(customerTypeEnum.Individual);
   } else {
@@ -364,7 +373,8 @@ const searchInsuredDetails = customerType => {
       .get(url)
       .then(res => {
         if (res.data.status) {
-          screeningFormDetails.clearErrors();
+          clearErrors();
+          
           let response = res.data.response;
           if (response.customer_type == customerTypeEnum.Individual) {
             IndividualDetailsFound.value = true;
@@ -418,7 +428,8 @@ function clearInsurerDetails(customerType) {
     : (EntityDetailsFound.value = false);
 }
 function screeningFormValidate() {
-  screeningFormDetails.clearErrors();
+  clearErrors();
+  
   let isValid = true;
   if (!screeningFormDetails.customer_type) {
     screeningFormDetails.setError(
@@ -507,15 +518,15 @@ function screeningFormValidate() {
       isValid = false;
     }
 
-    // if (!screeningFormDetails.dob) {
-    //     screeningFormDetails.setError('dob', 'Date of birth is required');
-    //     isValid = false;
-    // }
+    if (!screeningFormDetails.dob) {
+      screeningFormDetails.setError('dob', 'Date of birth is required');
+      isValid = false;
+    }
 
-    // if (!screeningFormDetails.screening_gender) {
-    //     screeningFormDetails.setError('screening_gender', 'Gender is required');
-    //     isValid = false;
-    // }
+    if (!screeningFormDetails.screening_gender) {
+      screeningFormDetails.setError('screening_gender', 'Gender is required');
+      isValid = false;
+    }
   }
   // Entity customer validation
   else if (screeningFormDetails.customer_type == customerTypeEnum.Entity) {
