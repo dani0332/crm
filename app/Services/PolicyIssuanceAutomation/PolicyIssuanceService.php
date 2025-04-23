@@ -7,6 +7,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\PolicyIssuance;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use Carbon\Carbon;
 
@@ -135,18 +136,18 @@ class PolicyIssuanceService
         $stuckPolicyIssuanceAutomations = PolicyIssuance::where('status', PolicyIssuanceEnum::PROCESSING_STATUS)->where('updated_at', '<', $fifteenMinutesAgo);
 
         $count = $stuckPolicyIssuanceAutomations->count();
-        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Found '.$count.' stuck policy issuance processes');
+        LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Found '.$count.' stuck policy issuance processes');
 
         $stuckPolicyIssuanceAutomations->chunk(1000, function ($policyIssuanceAutomations) {
             foreach ($policyIssuanceAutomations as $policyIssuance) {
                 try {
-                    info('cmd:'.$this->className.' fn:'.__FUNCTION__.' trigger for policy issuance ID: '.$policyIssuance->id);
+                    LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' trigger for policy issuance ID: '.$policyIssuance->id);
 
                     $this->markPolicyIssuanceFailed($policyIssuance);
 
-                    info('cmd:'.$this->className.' fn:'.__FUNCTION__.' triggered for policy issuance ID: '.$policyIssuance->id);
+                    LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' triggered for policy issuance ID: '.$policyIssuance->id);
                 } catch (\Exception $e) {
-                    info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Exception occurred while processing policy issuance ID: '.$policyIssuance->id.'. Error: '.$e->getMessage());
+                    LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Exception occurred while processing policy issuance ID: '.$policyIssuance->id.'. Error: '.$e->getMessage());
                 }
             }
         });
