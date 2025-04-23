@@ -89,16 +89,35 @@ class HomeQuoteRepository extends BaseRepository
 
         return $this->byQuoteTypeCode(QuoteTypes::HOME)
             ->with($this->getWithRelations())
-            ->when($user->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', $user->id))
-            ->when(! empty($requestParams->get('advisors')), fn ($query) => $query->whereIn('advisor_id', (array) $requestParams->get('advisors')))
-            ->when(! empty($requestParams->get('is_renewal')), fn ($query) => $this->applyRenewalFilter($query, $requestParams->get('is_renewal')))
-            ->tap(fn ($query) => $this->applyFilters($query, requestParams: $requestParams))
-            ->when(! $shouldExcludeCreatedAtFilters, function ($query) use ($requestParams) {
-                if (! empty($requestParams->get('created_at_start')) && ! empty($requestParams->get('created_at_end'))) {
-                    $query->whereBetween('personal_quotes.created_at', [
-                        Carbon::parse($requestParams->get('created_at_start'))->startOfDay(),
-                        Carbon::parse($requestParams->get('created_at_end'))->endOfDay(),
-                    ]);
+            ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), fn ($query) => $query->where('advisor_id', auth()->id()))
+            ->when(request()->filled('advisors'), function ($query) {
+                $advisors = (array) request('advisors');
+                $hasUnassigned = in_array('-1', $advisors);
+                $hasOtherAdvisors = count(array_filter($advisors, fn ($id) => $id !== '-1')) > 0;
+
+                // If both unassigned and specific advisors are selected
+                if ($hasUnassigned && $hasOtherAdvisors) {
+                    $filteredAdvisors = array_filter($advisors, fn ($id) => $id !== '-1');
+
+                    return $query->where(function ($q) use ($filteredAdvisors) {
+                        $q->whereIn('advisor_id', $filteredAdvisors)
+                            ->orWhereNull('advisor_id');
+                    });
+                }
+
+                // If only unassigned is selected
+                if ($hasUnassigned) {
+                    return $query->whereNull('advisor_id');
+                }
+
+                // If only specific advisors are selected
+                return $query->whereIn('advisor_id', $advisors);
+            })
+            ->when(request()->has('is_renewal'), fn ($query) => $this->applyRenewalFilter($query))
+            ->tap(fn ($query) => $this->applyFilters($query))
+            ->when(! $shouldExcludeCreatedAtFilters, function ($query) {
+                if (request()->filled('created_at_start') && request()->filled('created_at_end')) {
+                    $query->whereBetween('personal_quotes.created_at', [request('created_at_start'), request('created_at_end')]);
                 } else {
                     $query->whereBetween('personal_quotes.created_at', $this->getDateRange());
                 }
@@ -137,6 +156,7 @@ class HomeQuoteRepository extends BaseRepository
             'quoteStatus',
             'advisor',
             'nationality',
+            'insuranceProviderPlan',
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
             'homeQuote.homeQuoteRequestDetail.lostReason',
@@ -222,7 +242,7 @@ class HomeQuoteRepository extends BaseRepository
         try {
             if (isset($response->quoteUID)) {
                 LoggerService::startQuoteLogging($response->quoteUID);
-                info('Dispatching SaveCustomerAddressJob');
+                LoggerService::info('Dispatching SaveCustomerAddressJob', ['quoteUID' => $response->quoteUID]);
                 // add Address fields to Customer Address table
                 $addressData = $data['addressObj'] ?? [];
                 if (! empty($addressData)) {
@@ -236,7 +256,7 @@ class HomeQuoteRepository extends BaseRepository
                 LoggerService::endLogging();
             }
         } catch (\Exception $e) {
-            info('Failed to dispatch SaveCustomerAddressJob', ['error' => $e->getMessage()]);
+            LoggerService::error('Failed to dispatch SaveCustomerAddressJob', exception: $e);
         }
 
         return $response;
@@ -410,15 +430,35 @@ class HomeQuoteRepository extends BaseRepository
 
                 $mappedData['personal_quote_id'] = $quote->id;
 
+                // Track which fields were changed
+                $fieldsChanged = false;
                 $existingHomeQuote = HomeQuote::where('uuid', $uuid)->first();
 
                 if ($existingHomeQuote) {
+                    // Check if any of the fields that require a plan update have changed
+                    $fieldsThatTriggerPlanUpdate = [
+                        'possession_type_id',
+                        'accommodation_type_id',
+                        'coverage_type_id',
+                        'building_value',
+                        'contents_value_id',
+                        'personal_belongings_value_id',
+                    ];
+
+                    foreach ($fieldsThatTriggerPlanUpdate as $field) {
+                        if (isset($mappedData[$field]) && $mappedData[$field] != $existingHomeQuote->$field) {
+                            $fieldsChanged = true;
+                            break;
+                        }
+                    }
+
                     // If a record with this UUID exists, update it directly
                     $existingHomeQuote->update($mappedData);
                 } else {
                     // No record exists with this UUID, so it's safe to create a new one
                     $mappedData['uuid'] = $uuid;
                     HomeQuote::create($mappedData);
+                    $fieldsChanged = true; // New record, so treat as changed
                 }
 
                 // Refresh the quote to load the updated or newly created homeQuote
@@ -430,15 +470,17 @@ class HomeQuoteRepository extends BaseRepository
                     SaveCustomerAddressJob::dispatch($uuid, $data['addressObj']);
                 }
 
+                // If specific fields changed, call the getQuotePlans method with getLatestRating=true
+                if ($fieldsChanged) {
+                    LoggerService::info('Fields changed, Fetching quote plans for quote ID: '.$quote->id, ['getLatestRating' => true]);
+                    app(\App\Services\HomeQuoteService::class)->getQuotePlans($quote->id, ['getLatestRating' => true]);
+                }
+
                 // Return the updated quote
                 return $quote;
             } catch (\Exception $e) {
                 // Log error details to help with debugging
-                info("Failed to update quote with UUID: {$uuid}", [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                    'data' => $data,
-                ]);
+                LoggerService::error("Failed to update quote with UUID: {$uuid}", exception: $e);
                 throw $e; // Re-throw exception to trigger transaction rollback
             }
         });
@@ -612,7 +654,7 @@ class HomeQuoteRepository extends BaseRepository
 
             return $quote;
         } catch (\Exception $e) {
-            info('Error fetching quote data: '.$e->getMessage());
+            LoggerService::error('Error fetching quote data', exception: $e);
             throw $e; // Rethrow the exception so it propagates to the controller
         }
     }
@@ -623,6 +665,7 @@ class HomeQuoteRepository extends BaseRepository
             ->where($column, $value)
             ->with([
                 'insuranceProvider',
+                'insuranceProviderPlan',
                 'quoteDetail.lostReason',
                 'quoteStatus',
                 'advisor',
@@ -705,7 +748,7 @@ class HomeQuoteRepository extends BaseRepository
                 $quote->lookUpData = $lookUpData;
             }
         } catch (\Exception $e) {
-            info('Error fetching home lookup data: '.$e->getMessage());
+            LoggerService::error('Error fetching home lookup data', exception: $e);
             $quote->lookUpData = [];
         }
 
@@ -716,7 +759,7 @@ class HomeQuoteRepository extends BaseRepository
                 $quote->customerAddressData = $customerAddressData;
             }
         } catch (\Exception $e) {
-            info('Error fetching customer address data: '.$e->getMessage());
+            LoggerService::error('Error fetching customer address data', exception: $e);
             $quote->customerAddressData = [];
         }
     }

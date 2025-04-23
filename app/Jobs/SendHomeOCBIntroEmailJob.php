@@ -30,15 +30,13 @@ class SendHomeOCBIntroEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        LoggerService::startQuoteLogging($this->quoteUuid);
         $homeOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_OCB_AUTOMATED_FOLLOWUPS_SWITCH)->first();
         $personalQuote = PersonalQuote::where('uuid', $this->quoteUuid)->first();
         if ($homeOCBSwitch && $homeOCBSwitch->value == 1) {
             app(HomeEmailService::class)->sendHomeOCBIntroEmail($personalQuote);
-            info(self::class.' - Home OCB Automated Followups Switch is on | Time: '.now());
+            LoggerService::info(self::class.' - Home OCB Automated Followups Switch is on');
         } else {
-            info(self::class.' - Home OCB Automated Followups Switch is off | Time: '.now());
+            LoggerService::info(self::class.' - Home OCB Automated Followups Switch is off');
         }
-        LoggerService::endLogging();
     }
 }

@@ -366,4 +366,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->allowedColumns;
     }
+
+    public function insuranceProviderPlan()
+    {
+        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id']);
+    }
 }
