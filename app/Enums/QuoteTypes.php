@@ -262,15 +262,12 @@ enum QuoteTypes: string
         };
     }
 
-    public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false)
+    public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false, bool $sicAdvisorRequested = false)
     {
-        $lead = $this->model()->where('uuid', $uuid)->first();
-        if ($lead) {
-            LoggerService::startQuoteLogging($lead);
-        }
+        LoggerService::startQuoteLogging($this->refId($uuid));
 
         $allocationService = match ($this) {
-            self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
+            self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId, sicAdvisorRequested: $sicAdvisorRequested),
             self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
             self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
             self::TRAVEL => new TravelAllocation(new TravelAllocationService, $this->getTracker(ProcessTrackerTypeEnum::TRAVEL_ALLOCATION, $uuid, $teamId), $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
