@@ -162,10 +162,12 @@ const showModal = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val),
 });
-const customerType = computed(() => {
+const customerTypeEnum = page.props.customerTypeEnum;
+
+const customerTypeOptions = computed(() => {
   return [
-    { value: page.props.customerTypeEnum.Individual, label: 'Individual' },
-    { value: page.props.customerTypeEnum.Entity, label: 'Entity' },
+    { value: customerTypeEnum.Individual, label: 'Individual' },
+    { value: customerTypeEnum.Entity, label: 'Entity' },
   ];
 });
 console.log(page.props.entityDetails?.entity);
@@ -210,11 +212,8 @@ const screeningFormDetails = useForm({
     page.props.insuredDetails?.insured?.emirate_of_registration_id,
 });
 const modalHeaderMessage = () => {
-  if (
-    page.props.quoteType.code !== page.props.quoteTypeCodeEnum.Business &&
-    (screeningFormDetails.customer_type ==
-      page.props.customerTypeEnum.Individual ||
-      screeningFormDetails.customer_type == null)
+  if (page.props.quoteType.code !== page.props.quoteTypeCodeEnum.Business &&
+      ([customerTypeEnum.Individual, null].includes(screeningFormDetails.customer_type))
   ) {
     headerMessage.value =
       'Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID';
@@ -226,13 +225,13 @@ const modalHeaderMessage = () => {
 const setFieldsByCustomerType = (customerType = '') => {
   screeningFormDetails.clearErrors();
   if (
-    customerType == page.props.customerTypeEnum.Individual ||
+    customerType == customerTypeEnum.Individual ||
     customerType == ''
   ) {
-    clearInsurerDetails(page.props.customerTypeEnum.Individual);
+    clearInsurerDetails(customerTypeEnum.Individual);
   } else {
     validateNationality.value = false;
-    clearInsurerDetails(page.props.customerTypeEnum.Entity);
+    clearInsurerDetails(customerTypeEnum.Entity);
   }
 };
 function customerTypeConfirmation() {
@@ -240,7 +239,7 @@ function customerTypeConfirmation() {
   // previousCustomerType.value = screeningFormDetails.customer_type;
   customerTypeConfirmationModel.value = true;
   if (
-    screeningFormDetails.customer_type == page.props.customerTypeEnum.Individual
+    screeningFormDetails.customer_type == customerTypeEnum.Individual
   ) {
     confirmationMessage.value =
       'Are you sure you want to run AML screen for this lead as Individual Customer?';
@@ -253,7 +252,7 @@ const updateScreeningDetails = () => {
   setFieldsByCustomerType(screeningFormDetails.customer_type);
   isScreeningIndividual.value =
     screeningFormDetails.customer_type ==
-    page.props.customerTypeEnum.Individual;
+    customerTypeEnum.Individual;
   customerTypeConfirmationModel.value = false;
 };
 // Function to handle modal close without confirmation
@@ -357,7 +356,7 @@ const entitySearchValidation = computed(() => {
 });
 const searchInsuredDetails = customerType => {
   let searchInsuredValidation =
-    customerType == page.props.customerTypeEnum.Individual
+    customerType == customerTypeEnum.Individual
       ? individualSearchValidation.value
       : entitySearchValidation.value;
   if (searchInsuredValidation) {
@@ -370,7 +369,7 @@ const searchInsuredDetails = customerType => {
           screeningFormDetails.clearErrors();
           let response = res.data.response;
           if (
-            response.customer_type == page.props.customerTypeEnum.Individual
+            response.customer_type == customerTypeEnum.Individual
           ) {
             IndividualDetailsFound.value = true;
             screeningFormDetails.insured_first_name = response.first_name;
@@ -418,7 +417,7 @@ function clearInsurerDetails(customerType) {
   screeningFormDetails.company_address = null;
   screeningFormDetails.industry_type_code = null;
   screeningFormDetails.emirate_of_registration_id = null;
-  customerType == page.props.customerTypeEnum.Individual
+  customerType == customerTypeEnum.Individual
     ? (IndividualDetailsFound.value = false)
     : (EntityDetailsFound.value = false);
 }
@@ -435,7 +434,7 @@ function screeningFormValidate() {
   // Individual customer validation
   if (
     screeningFormDetails.customer_type ==
-      page.props.customerTypeEnum.Individual ||
+      customerTypeEnum.Individual ||
     screeningFormDetails.customer_type == null
   ) {
     console.log(screeningFormDetails);
@@ -525,7 +524,7 @@ function screeningFormValidate() {
   }
   // Entity customer validation
   else if (
-    screeningFormDetails.customer_type == page.props.customerTypeEnum.Entity
+    screeningFormDetails.customer_type == customerTypeEnum.Entity
   ) {
     if (!screeningFormDetails.entity_type) {
       screeningFormDetails.setError('entity_type', 'This field is required');
@@ -626,15 +625,15 @@ const submitScreeningForm = isValid => {
   }
 };
 const updateScreeningType = () => {
-  if (page.props.screeningType == page.props.customerTypeEnum.EntityShort) {
+  if (page.props.screeningType == customerTypeEnum.EntityShort) {
     isScreeningIndividual.value = false;
     if (page.props.insuredDetails?.insured?.id) {
-      screeningFormDetails.customer_type = page.props.customerTypeEnum.Entity;
+      screeningFormDetails.customer_type = customerTypeEnum.Entity;
     }
   } else {
     if (screeningFormDetails?.insured_first_name !== null) {
       screeningFormDetails.customer_type =
-        page.props.customerTypeEnum.Individual;
+        customerTypeEnum.Individual;
     }
   }
 };
@@ -683,7 +682,7 @@ onMounted(() => {
         <div class="grid md:grid-cols-3">
           <x-select
             v-model="screeningFormDetails.customer_type"
-            :options="customerType"
+            :options="customerTypeOptions"
             placeholder="Select Customer Type"
             :rules="[isRequired]"
             :error="screeningFormDetails.errors.customer_type"
@@ -736,7 +735,7 @@ onMounted(() => {
             <x-field>
               <x-button
                 @click.prevent="
-                  searchInsuredDetails(page.props.customerTypeEnum.Individual)
+                  searchInsuredDetails(customerTypeEnum.Individual)
                 "
                 class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
                 size="sm"
@@ -753,7 +752,7 @@ onMounted(() => {
                 size="sm"
                 color="info"
                 @click.prevent="
-                  clearInsurerDetails(page.props.customerTypeEnum.Individual)
+                  clearInsurerDetails(customerTypeEnum.Individual)
                 "
               >
                 Cancel
@@ -856,7 +855,7 @@ onMounted(() => {
             <x-field>
               <x-button
                 @click.prevent="
-                  searchInsuredDetails(page.props.customerTypeEnum.Entity)
+                  searchInsuredDetails(customerTypeEnum.Entity)
                 "
                 class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
                 size="sm"
@@ -873,7 +872,7 @@ onMounted(() => {
                 size="sm"
                 color="info"
                 @click.prevent="
-                  clearInsurerDetails(page.props.customerTypeEnum.Entity)
+                  clearInsurerDetails(customerTypeEnum.Entity)
                 "
               >
                 Cancel
@@ -984,8 +983,8 @@ onMounted(() => {
       <MembersDetails
         :customerType="
           isScreeningIndividual
-            ? page.props.customerTypeEnum.Individual
-            : page.props.customerTypeEnum.Entity
+            ? customerTypeEnum.Individual
+            : customerTypeEnum.Entity
         "
         :isPayerDetails="false"
       />
@@ -994,8 +993,8 @@ onMounted(() => {
       <MembersDetails
         :customerType="
           isScreeningIndividual
-            ? page.props.customerTypeEnum.Individual
-            : page.props.customerTypeEnum.Entity
+            ? customerTypeEnum.Individual
+            : customerTypeEnum.Entity
         "
         :isPayerDetails="true"
       />
