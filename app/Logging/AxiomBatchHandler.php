@@ -69,13 +69,21 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     {
         $this->batchSent = false;
         try {
+            $extra = Context::pullHidden('__extra') ?? null;
+
+            $logContext = [...$record->context];
+
+            if ($extra) {
+                $logContext['extra'] = $extra;
+            }
+
             // Create a new record for file logging to ensure clean format
             $fileRecord = new LogRecord(
                 $record->datetime,
                 $record->channel,
                 $record->level,
                 $record->message,
-                $record->context,
+                $logContext,
                 $record->extra
             );
 
@@ -84,7 +92,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
             $this->dailyHandler->handle($fileRecord);
 
             // Add to Axiom batch with original Axiom format
-            $this->batch[] = $this->formatRecord($record);
+            $this->batch[] = $this->formatRecord($record, $extra);
 
             if (count($this->batch) >= $this->batchSize) {
                 $this->sendBatch();
@@ -95,19 +103,22 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         }
     }
 
-    protected function formatRecord(LogRecord $record): array
+    protected function formatRecord(LogRecord $record, $extra = null): array
     {
-        $extra = Context::pullHidden('__extra') ?? null;
-
-        return [
+        $record = [
             'message' => $record->message,
             'context' => $record->context,
             'level' => strtoupper($record->level->getName()),
-            'extra' => $extra,
             'timestamp' => $record->datetime->format('Y-m-d H:i:s'),
             'environment' => app()->environment(),
             'service' => 'IMCRM',
         ];
+
+        if ($extra) {
+            $record['extra'] = $extra;
+        }
+
+        return $record;
     }
 
     public function sendBatch()
