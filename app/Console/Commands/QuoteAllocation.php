@@ -93,28 +93,23 @@ class QuoteAllocation extends Command
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
         }
 
-        $leads = CarQuote::whereNull('advisor_id')
-            ->select('uuid', 'payment_status_id', 'source', 'is_renewal_tier_email_sent', 'lead_allocation_failed_at', 'sic_flow_enabled', 'sic_advisor_requested', 'quote_status_id')
+        $leads = CarQuote::query()
+            ->whereNull('advisor_id')
+            ->select([
+                'uuid',
+                'payment_status_id',
+                'source',
+                'is_renewal_tier_email_sent',
+                'lead_allocation_failed_at',
+                'sic_flow_enabled',
+                'sic_advisor_requested',
+                'quote_status_id',
+            ])
             ->where('created_at', '<=', $to)
-            ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
-            ->where(function ($query) {
-                $query->where(function ($q) {
-                    $q->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                })
-                    ->orWhere->leadAllocationFailed()
-                    ->orWhere(function ($query) {
-                        $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                            ->where(function ($sq) {
-                                $sq->where(function ($q) {
-                                    $q->sicFlowDisabled();
-                                })->orWhere(function ($query) {
-                                    $query->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                                });
-                            });
-                    });
-            })
+            ->orderByDesc('created_at')
+            ->eligibleForAllocation(QuoteTypes::CAR)
             ->take($chunkSize);
 
         info('leads fetch query is : '.$leads->toRawSql());
@@ -129,7 +124,7 @@ class QuoteAllocation extends Command
 
             LoggerService::startQuoteLogging($lead);
 
-            info('Processing record for Quote Allocation', [
+            LoggerService::info('Processing record for Quote Allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,
                 'source' => $lead->source,
                 'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
@@ -175,7 +170,7 @@ class QuoteAllocation extends Command
         foreach ($leads->get() as $lead) {
             LoggerService::startQuoteLogging($lead);
 
-            info('Processing Health record for Quote Allocation', [
+            LoggerService::info('Processing Health record for Quote Allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
@@ -224,7 +219,7 @@ class QuoteAllocation extends Command
 
             LoggerService::startQuoteLogging($lead);
 
-            info('Processing Travel record for Quote Allocation', [
+            LoggerService::info('Processing Travel record for Quote Allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,

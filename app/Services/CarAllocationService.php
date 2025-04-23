@@ -58,7 +58,7 @@ class CarAllocationService extends AllocationService
 
     private function verifyPreChecks(CarQuote $lead, bool $overrideAssignment): bool
     {
-        LoggerService::info(self::class.' - Processing Car ILA', [
+        LoggerService::info(self::class.' - Processing Car ILA', extra: [
             'uuid' => $lead->uuid,
             'payment_status_id' => $lead->payment_status_id,
             'source' => $lead->source,
@@ -71,20 +71,34 @@ class CarAllocationService extends AllocationService
 
         $continueAssignment = false;
 
+        $isSICFlowEnabled = $lead->isSICFlowEnabled();
+        $isAIG = $lead->isAIG(QuoteTypes::CAR);
+        $isSICFlowDisabled = $lead->isSICFlowDisabled();
+
         if (! $overrideAssignment && ! empty($lead->advisor_id)) {
             LoggerService::info(self::class."::verifyPreChecks - Lead is already assigned to advisor with ID: {$lead->advisor_id}, skipping assignment");
         } elseif ($lead->isFakeOrDuplicate()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
             LoggerService::info(self::class."::verifyPreChecks - Lead has exempted source {$lead->source}, skipping assignment");
-        } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
-            LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment');
+        } elseif (($isSICFlowEnabled || $isAIG) && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
+            if ($isSICFlowEnabled) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled and either requested for an advisor or payment authorized, continuing assignment');
+            } else {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized, continuing assignment');
+            }
+            $continueAssignment = true;
+        } elseif (($isSICFlowDisabled || ! $isAIG) && ! $lead->isRenewalUpload()) {
+            if ($isSICFlowDisabled) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, continuing assignment');
+            } elseif (! $isAIG) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead is not AIG and not Renewal Upload, continuing assignment');
+            } else {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead meets other criteria and not Renewal Upload, continuing assignment');
+            }
             $continueAssignment = true;
         } elseif ($lead->isRenewalTierEmailSent()) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead has renewal tier email sent, skipping assignment');
-        } elseif ($lead->isSICFlowDisabled() && ! $lead->isRenewalUpload()) {
-            LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, skipping assignment');
-            $continueAssignment = true;
         } elseif ($lead->isRevivalRepliedOrPaid()) {
             LoggerService::info(self::class.'::verifyPreChecks - Lead is a Revival lead, continuing assignment');
             $continueAssignment = true;
@@ -97,7 +111,7 @@ class CarAllocationService extends AllocationService
         return $continueAssignment;
     }
 
-    public function fetchLead($quoteId, $overrideAdvisorId)
+    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false)
     {
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -111,6 +125,10 @@ class CarAllocationService extends AllocationService
         }
 
         $lead = CarQuote::where('uuid', $quoteId)->first();
+
+        if ($lead && $getLeadWithoutCriteria) {
+            return $lead;
+        }
 
         if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
             return null;
@@ -144,7 +162,7 @@ class CarAllocationService extends AllocationService
                 $carValue = $firstAxaValuation->carValue;
             }
 
-            LoggerService::info('car value as per valuation engine for GIG is '.$carValue);
+            LoggerService::info("car value as per valuation engine for GIG is {$carValue}");
             $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
         }
     }
@@ -163,9 +181,7 @@ class CarAllocationService extends AllocationService
         $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
 
         // Retrieve the user IDs associated with excluded teams.
-        $excludedUserIds = UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->get();
-
-        return $excludedUserIds;
+        return UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->get();
     }
 
     public function getTierUserIds($tierId, mixed $advisorId)
@@ -212,9 +228,8 @@ class CarAllocationService extends AllocationService
         $lead->sic_flow_enabled = 1;
         $lead->tier_id = $tier->id;
         $lead->save();
-        LoggerService::info('SIC flow is enabled , the updated field : '.$lead->sic_flow_enabled);
+        LoggerService::info('SIC flow is enabled , the updated field. Dispatching Car OCB Email');
         SendCarOCBIntroEmailJob::dispatch($lead->uuid, null, true);
-        LoggerService::info('SIC flow is email is dispatched');
     }
 
     /**
@@ -258,7 +273,7 @@ class CarAllocationService extends AllocationService
         if ($carLead->year_of_manufacture < $yearOfManufacture) {
             // Check if more than one plan is found against the car lead.
             if (count($plans) > 0) {
-                LoggerService::info('More than one plan found against');
+                LoggerService::info('More than one plan found');
                 // Determine the tier based on a value and return the first matching tier.
                 $this->getTierBasedOnValue($carLead, $tiersQuery);
 
@@ -681,7 +696,7 @@ class CarAllocationService extends AllocationService
 
     public function processLeadAssignment(CarQuote $lead, $userId, $tier, $assignmentType): void
     {
-        LoggerService::info('About to assign to user with ID: '.$userId);
+        LoggerService::info("About to assign to user with ID: {$userId}");
 
         if ($lead->advisor_id === $userId) {
             LoggerService::info('Advisor is same as current advisor so skipping assignment');
@@ -712,24 +727,24 @@ class CarAllocationService extends AllocationService
         // Assign the lead to the user and get the associated quote.
         $carQuote = $this->assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType);
 
-        LoggerService::info('Advisor and tier assignment completed to user with ID: '.$userId.' and tier name: '.$tier->name);
+        LoggerService::info("Advisor and tier assignment completed to user with ID: {$userId} and tier name: {$tier->name}");
 
         // Update the car lead detail record and store the previous advisor assigned date.
         $previousAdvisorAssignedDate = $this->updateCarLeadDetailRecord($carQuote->id);
 
-        LoggerService::info('Updating user record in lead allocation table with count increment for User ID: '.$userId);
+        LoggerService::info("Updating user record in lead allocation table with count increment for User ID: {$userId}");
 
         match ($assignmentType) {
             AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($userId, QuoteTypes::CAR->id(), $this->isBuyLeadAdvisor),
             default => $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::CAR->id(), $this->isBuyLeadAdvisor),
         };
 
-        LoggerService::info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
+        LoggerService::info('Completed assignment of lead, and lead count update is done for quote');
 
         // Reset Buy Lead Advisor flag and Buy Lead Request object.
         $this->resetProps();
 
-        LoggerService::info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
+        LoggerService::info('Completed assignment of lead, and lead count update is done for quote');
     }
 
     private function assignLeadToUserAndGetQuote(CarQuote $lead, $userId, $tier, $assignmentType): mixed
@@ -737,7 +752,7 @@ class CarAllocationService extends AllocationService
         // Assign the lead to the advisor and send an email
         // Check if the lead was previously assigned to an advisor and log the change.
         if (! empty($lead->advisor_id)) {
-            LoggerService::info('Was previously assigned to User ID: '.$lead->advisor_id.' and is now being assigned to User ID: '.$userId);
+            LoggerService::info("Was previously assigned to User ID: {$lead->advisor_id} and is now being assigned to User ID: {$userId}");
         }
 
         // Update lead properties.
@@ -760,9 +775,9 @@ class CarAllocationService extends AllocationService
 
         if ($this->isBuyLeadAdvisor) {
             $this->buyLeadRequest->buyLead($lead, QuoteTypes::CAR);
-            LoggerService::info('Assigned to advisor id : '.$userId.' as bought lead');
+            LoggerService::info("Assigned to advisor id : {$userId} as bought lead");
         } else {
-            LoggerService::info('Assigned to advisor id : '.$userId);
+            LoggerService::info("Assigned to advisor id : {$userId}");
         }
 
         $lead->endAllocation();
@@ -773,7 +788,7 @@ class CarAllocationService extends AllocationService
     public function updateCarLeadDetailRecord($leadId)
     {
         // Log information about the update operation.
-        LoggerService::info('About to update car quote detail record for lead ID: '.$leadId);
+        LoggerService::info('About to update car quote detail record');
 
         // Attempt to find an existing car quote detail record for the given lead.
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
@@ -788,7 +803,7 @@ class CarAllocationService extends AllocationService
     {
         // Calculate the start date for lead retrieval
         $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        LoggerService::info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
+        LoggerService::info("Leads will be picked up in reassignment from : {$from}");
 
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
