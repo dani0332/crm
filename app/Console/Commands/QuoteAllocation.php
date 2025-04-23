@@ -71,12 +71,10 @@ class QuoteAllocation extends Command
             $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
 
-            // Disabled Auto Allocation for now as this feature is not needed at the moment
-            /*
             $this->executeAllocation(QuoteTypes::CYCLE, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
             $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
-            */
+
             LoggerService::endLogging();
         } else {
             info('Quote Allocation Command is turned Off');
@@ -126,7 +124,7 @@ class QuoteAllocation extends Command
 
             LoggerService::startQuoteLogging($lead);
 
-            info('Processing record for Quote Allocation', [
+            LoggerService::info('Processing record for Quote Allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,
                 'source' => $lead->source,
                 'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
@@ -172,7 +170,7 @@ class QuoteAllocation extends Command
         foreach ($leads->get() as $lead) {
             LoggerService::startQuoteLogging($lead);
 
-            info('Processing Health record for Quote Allocation', [
+            LoggerService::info('Processing Health record for Quote Allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
@@ -221,7 +219,7 @@ class QuoteAllocation extends Command
 
             LoggerService::startQuoteLogging($lead);
 
-            info('Processing Travel record for Quote Allocation', [
+            LoggerService::info('Processing Travel record for Quote Allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
