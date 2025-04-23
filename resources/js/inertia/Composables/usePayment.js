@@ -1,4 +1,7 @@
 export const usePayment = () => {
+    const page = usePage();
+    const paymentStatusEnum = page.props.paymentStatusEnum;
+    
     const formatDate = (date, timeFlag = false) => {
         const parsedDate = new Date(date);
         const day = parsedDate.getDate().toString().padStart(2, '0');
@@ -48,9 +51,6 @@ export const usePayment = () => {
     };
 
     const hasAnyCCSplitPayment = (payments) => {
-        console.clear()
-        console.log('hasAnyCCSplitPayment');
-        console.log(payments);
         if (payments > 0) {
             const paymentSplits = payments[0].payment_splits;
             return paymentSplits.some(item => item.payment_method.code === 'CC');

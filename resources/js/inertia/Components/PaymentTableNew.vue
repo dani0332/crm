@@ -3789,7 +3789,7 @@ onBeforeMount(() => {
                       :linkedQuoteDetails="props.linkedQuoteDetails"
                       :quoteRequest="quoteRequest"
                       :paymentAllocationStatusTooltip="(status) => status"
-                      @view-payment="(parent, splitId, splitNo, action) => editPayment({...parent, split_id: splitId, split_sr_no: splitNo}, 'view')"
+                      @view-payment="(payment, splitId, splitNo, action) => editPaymentModal(payment, splitId, splitNo, action)"
                       @generate-cc-link="(code, srNo, statusId) => copyPaymentLink(splitPayment.payment_link, statusId)"
                       @delete-split-payment="(id, statusId) => {}"
                       @retry-split-payment="(jobId, message) => retryProcess(splitPayment.id, jobId)"

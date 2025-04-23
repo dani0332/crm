@@ -9,6 +9,7 @@ const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentGatewayEnum = page.props.paymentGatewayEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 
 const { formatDate,
    formatAmount,
@@ -111,35 +112,33 @@ const getCaptureOption = computed(() => {
     (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
     (isCaptureButtonEnabled && isCreditCardPayment)
   ) {
-    console.log('capture');
     return 'capture';
   }
-  console.log('approve');
   return 'approve';
 });
 
 
 const getCaptureValidation = computed(() => {
-  return payment => {
-    if (shouldProcessUpdate(payment)) {
-      if (payment.is_approved === 1) return false;
-      let paymentRecord = payment;
-      if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
-        return validateUpfrontCapture(paymentRecord);
-      } else if (
-        paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
-      ) {
-        return validateSplitPaymentsCapture(paymentRecord);
-      } else {
-        return validateNonUpfrontAndSplitCapture(paymentRecord);
-      }
+  const payment = props.payment;
+  if (shouldProcessUpdate) {
+    if (payment.is_approved === 1) return false;
+    let paymentRecord = payment;
+    if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
+      return validateUpfrontCapture(paymentRecord);
+    } else if (
+      paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
+    ) {
+      return validateSplitPaymentsCapture(paymentRecord);
+    } else {
+      return validateNonUpfrontAndSplitCapture(paymentRecord);
     }
-    return false;
-  };
+  }
+  return false;
 });
 
 // Will check if the payment is ready for capture
-const shouldProcessUpdate = payment => {
+const shouldProcessUpdate = () => {
+  const payment = props.payment;
   const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
   const calculatedTotal =
     Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
@@ -393,7 +392,11 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
             size="xs"
             color="orange"
             outlined
-            @click="capturePayment"
+            @click="
+              getCaptureValidation
+                ? $emit('edit-payment', payment, 0, 0, 1)
+                : $emit('alert-capture', payment)
+            "
             :disabled="isApproveConfirmed"
             :loading="capturePaymentValidationInProcess"
           >
