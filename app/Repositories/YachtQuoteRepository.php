@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -148,7 +149,6 @@ class YachtQuoteRepository extends BaseRepository
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
-                'dob AS unformatted_dob',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -174,13 +174,11 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
-        $user = null;
-        if (auth()->check() && empty($requestParams)) {
-            $requestParams = collect(request()->all());
-            $user = auth()->user();
-        } elseif (! empty($requestParams)) {
-            $requestParams = collect($requestParams);
-            $user = $requestParams['user'];
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
         }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
@@ -191,19 +189,19 @@ class YachtQuoteRepository extends BaseRepository
             'payments',
             'quoteDetail',
         ])
-            ->when($user && $user->hasRole(RolesEnum::YachtAdvisor), function ($query) use ($user) {
-                $query->where('advisor_id', $user->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
-            ->when(! empty($requestParams->get('advisor_assigned_date')), function ($query) use ($requestParams) {
-                $dateArray = $requestParams->get('advisor_assigned_date');
+            ->when(! empty(request()->advisor_assigned_date), function ($query) {
+                $dateArray = request()->advisor_assigned_date;
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
-            ->filter(! $forExport, $forTotalLeadsCount, requestParams: $requestParams)
-            ->withFakeLeadCriteria($forTotalLeadsCount, requestParams: $requestParams)
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',
                 DB::raw('
@@ -217,15 +215,15 @@ class YachtQuoteRepository extends BaseRepository
                 '),
             ]);
 
-        $this->adjustQueryByInsurerInvoiceFilters($query, requestParams: $requestParams);
-        $this->adjustQueryByDateFilters($query, 'personal_quotes', requestParams: $requestParams);
+        $this->adjustQueryByInsurerInvoiceFilters($query);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        $query->orderBy('personal_quotes.'.($requestParams->get('sortBy') ?? 'created_at'), $requestParams->get('sortType') ?? 'desc');
+        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
         if ($forTotalLeadsCount) {
             // PD Revert
-            return 0;
             // return $query->count();
+            return 0;
         }
 
         return ($forExport) ? $query->get() : $query;
