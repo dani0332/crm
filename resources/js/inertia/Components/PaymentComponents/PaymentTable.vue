@@ -515,6 +515,7 @@ const preparedPayments = computed(() => {
                 <template v-for="(payment, index) in preparedPayments" :key="payment.id">
                   <!-- Main payment row -->
                   <PaymentRow
+                    :payments="payments"
                     :payment="payment"
                     :index="index"
                     :isExpanded="expandedPaymentRows[index]"

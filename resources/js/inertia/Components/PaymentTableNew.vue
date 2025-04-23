@@ -99,7 +99,7 @@ const props = defineProps({
   },
 });
 
-const { formatDate, formatAmount, formatString, filterCCPayments } = usePayment();
+const { formatDate, formatAmount, formatString, filterCCPayments, filterCAPayments, verifyCreditApproved } = usePayment();
 
 // All reactive properties are defined here
 const createPaymentModal = ref(false);
@@ -2868,200 +2868,6 @@ const uploadDocument = (doc, files, count) => {
   });
 };
 
-// Will check if the payment is ready for capture
-const shouldProcessUpdate = payment => {
-  const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
-  const calculatedTotal =
-    Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
-  const hasPayments = props.payments.length > 0;
-  const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
-  const isAmlCleared =
-    props.quoteRequest.aml_status ===
-    page.props.amlStatusEnum.AMLScreeningCleared;
-  const isTransactionDeclined =
-    props.quoteRequest.quote_status_id ===
-    page.props.quoteStatusEnum.TransactionDeclined;
-  const isTransactionApproved =
-    props.quoteRequest.quote_status_id ===
-    page.props.quoteStatusEnum.TransactionApproved;
-  const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
-  const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
-  const shouldSendUpdate = props.sendUpdate;
-  const isAmlOrTransactionApproved =
-    isAmlCleared || isTransactionDeclined || isTransactionApproved;
-  const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
-  let isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
-  if (isTravelQuote && !props.sendUpdate) {
-    isGIGProvider = payment.isGIGProvider;
-  }
-  const isInsurer = payment?.collection_type == 'insurer';
-  const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
-  let isInsurerAmlCleared = true;
-  let isAMlAndKycTravelComplete =
-    isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
-  let enabledQuoteTypesForInsurer = [
-    quoteTypeCodeEnum.Car,
-    quoteTypeCodeEnum.Home,
-    quoteTypeCodeEnum.Bike,
-    quoteTypeCodeEnum.Travel,
-  ];
-
-  const captureOption = getCaptureOption.value(payment);
-  if (
-    isInsurer &&
-    isGIGProvider &&
-    enabledQuoteTypesForInsurer.includes(props.quoteType) &&
-    hasAnyCCSplitPayment() &&
-    !shouldSendUpdate
-  ) {
-    isInsurerAmlCleared =
-      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
-    if (isTravelQuote) {
-      isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
-    } else {
-      isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
-    }
-  }
-  const isRenewalUploadConditionMet = () => {
-    return (
-      props.isCapBtnEnabled &&
-      props.quoteType === quoteTypeCodeEnum.Car &&
-      isGIGProvider &&
-      isAmlCleared &&
-      isKycVerified() &&
-      isTotalPriceMatching &&
-      hasAnyCCSplitPayment() &&
-      !shouldSendUpdate &&
-      hasPayments &&
-      isInsurer
-    );
-  };
-  if (isRenewalUploadConditionMet()) {
-    return true;
-  }
-  if (captureOption === 'approve') {
-    return hasPayments;
-  }
-
-  return (
-    hasPayments &&
-    isTotalPriceMatching &&
-    isAMlAndKycTravelComplete &&
-    isInsurerAmlCleared
-  );
-};
-
-const getValidStatuses = paymentSplitRec => {
-  const validStatuses = [
-    paymentStatusEnum.AUTHORISED,
-    paymentStatusEnum.PAID,
-    paymentStatusEnum.PARTIALLY_PAID,
-  ];
-  return validStatuses.includes(paymentSplitRec.payment_status_id);
-};
-
-const validateUpfrontCapture = paymentRecord => {
-  let paymentSplitRec = paymentRecord.payment_splits[0];
-  if (paymentSplitRec.payment_method.code === 'CC')
-    return getValidStatuses(paymentSplitRec);
-  const isIPPending =
-    paymentSplitRec.payment_method.code === 'IP' &&
-    paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
-  const isCAPayment =
-    paymentSplitRec.payment_method.code === 'CA' &&
-    paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
-  const isPaidPayment =
-    paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
-  return isIPPending || isCAPayment || isPaidPayment;
-};
-
-const filterCAPayments = payment => {
-  return payment.payment_splits.filter(
-    item => item.payment_status_id == paymentStatusEnum.CREDIT_APPROVED,
-  );
-};
-
-const validateSplitPaymentsCapture = paymentRecord => {
-  const paymentMethodCC = filterCCPayments(paymentRecord);
-  const creditApprovedPayments = filterCAPayments(paymentRecord);
-  if (paymentMethodCC.length > 0 && creditApprovedPayments.length == 0) {
-    let totalSplitPayments = paymentRecord.payment_splits.length;
-    let paidPaymentStatus = paymentRecord.payment_splits.filter(
-      item =>
-        item.payment_status_id === paymentStatusEnum.PAID ||
-        item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID,
-    );
-    let ccPaymentStatus = paymentMethodCC.filter(
-      item => item.payment_status_id === paymentStatusEnum.AUTHORISED,
-    );
-    return (
-      totalSplitPayments == ccPaymentStatus.length + paidPaymentStatus.length
-    );
-  } else {
-    let ipPaymentStatus = paymentRecord.payment_splits.filter(
-      item => item.payment_method.code === 'IP',
-    );
-    if (ipPaymentStatus.length > 0) {
-      let ipPending = ipPaymentStatus.filter(
-        item =>
-          item.payment_status_id === paymentStatusEnum.PENDING ||
-          item.payment_status_id === paymentStatusEnum.PAID,
-      );
-      return ipPending.length === ipPaymentStatus.length;
-    } else {
-      if (verifyCreditApproved(paymentRecord)) return true;
-      let paidPaymentStatus = paymentRecord.payment_splits.filter(
-        item => item.payment_status_id === paymentStatusEnum.PAID,
-      );
-      return paidPaymentStatus.length === paymentRecord.payment_splits.length;
-    }
-  }
-};
-
-const validateNonUpfrontAndSplitCapture = paymentRecord => {
-  if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
-    if (verifyCreditApproved(paymentRecord)) return true;
-  } else if (
-    (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
-      paymentRecord.payment_splits[0].payment_method.code === 'PDC') &&
-    paymentRecord.payment_splits[0].payment_status_id ===
-      paymentStatusEnum.PENDING
-  ) {
-    return true;
-  }
-  return getValidStatuses(paymentRecord.payment_splits[0]);
-};
-
-const getCaptureValidation = computed(() => {
-  return payment => {
-    if (shouldProcessUpdate(payment)) {
-      if (payment.is_approved === 1) return false;
-      let paymentRecord = payment;
-      if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
-        return validateUpfrontCapture(paymentRecord);
-      } else if (
-        paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
-      ) {
-        return validateSplitPaymentsCapture(paymentRecord);
-      } else {
-        return validateNonUpfrontAndSplitCapture(paymentRecord);
-      }
-    }
-    return false;
-  };
-});
-
-// verify if all credit payments are approved for capture
-const verifyCreditApproved = paymentRecord => {
-  let caPaymentStatus = paymentRecord.payment_splits.filter(
-    item => item.payment_method.code === 'CA',
-  );
-  if (caPaymentStatus.length > 0) {
-    let caApproved = filterCAPayments(paymentRecord);
-    return caApproved.length === caPaymentStatus.length;
-  }
-  return false;
-};
 const alertCapture = payment => {
   let errorMsg = 'Pending payment';
   if (payment.is_approved === 1) {
@@ -3949,6 +3755,7 @@ onBeforeMount(() => {
                 <template v-for="(payment, index) in payments" :key="payment.code">
                   <!-- Main payment row -->
                   <PaymentRow
+                    :payments="payments"
                     :payment="payment"
                     :index="index"
                     :isExpanded="expandedPaymentRows[index]"
@@ -3958,6 +3765,8 @@ onBeforeMount(() => {
                     :disableMainPaymentApproval="false"
                     :isApproveConfirmed="false"
                     :capturePaymentValidationInProcess="false"
+                    :isFuncsEnabled="props.isFuncsEnabled"
+                    :bookPolicyDetails="props.bookPolicyDetails"
                     @toggle-expand="toggleExpand"
                     @edit-payment="editPaymentModal"
                     @delete-payment="deletePaymentModel"
@@ -3966,6 +3775,7 @@ onBeforeMount(() => {
                     @void-payment="voidPaymentModel"
                     @alert-capture="alertCapture"
                     @open-aml-verification="() => {}"
+                    
                   />
                   
                   <!-- Payment split rows (visible when payment is expanded) -->

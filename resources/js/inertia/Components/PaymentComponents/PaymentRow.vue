@@ -6,10 +6,22 @@ import { usePayment } from '../../Composables/usePayment';
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
+const paymentGatewayEnum = page.props.paymentGatewayEnum;
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
-const { formatDate, formatAmount, formatString, filterCCPayments } = usePayment();
+const { formatDate,
+   formatAmount,
+   formatString,
+   filterCCPayments,
+   getCaptureValidStatuses,
+   filterCAPayments,
+   verifyCreditApproved,
+   hasAnyCCSplitPayment
+  } = usePayment();
 
 const props = defineProps({
+  payments: Array,
   payment: Object,
   index: Number,
   isExpanded: Boolean,
@@ -18,7 +30,15 @@ const props = defineProps({
   amlAndKycTooltip: String,
   disableMainPaymentApproval: Boolean,
   isApproveConfirmed: Boolean,
-  capturePaymentValidationInProcess: Boolean
+  capturePaymentValidationInProcess: Boolean,
+  isFuncsEnabled: {
+    type: Array,
+    default: [],
+  },
+  bookPolicyDetails: {
+    type: Array,
+    default: [],
+  },
 });
 
 const emit = defineEmits([
@@ -70,46 +90,215 @@ const can = (permission) => {
 };
 
 const getCaptureOption = computed(() => {
-  return payment => {
-    // Return early if there are no payments
-    if (props.payments.length === 0) return;
+  const payment = props.payment;
+  if (props.payments.length === 0) return;
 
-    let isCaptureButtonEnabled =
-      page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
-    if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
-      isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
-    }
+  let isCaptureButtonEnabled =
+    page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
+  console.log("isCaptureButtonEnabled", isCaptureButtonEnabled);  
+  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
+    isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
+  }
 
-    const paymentMethodCC = filterCCPayments(payment);
+  const paymentMethodCC = filterCCPayments(payment);
 
-    // Check if the conditions for 'capture' are met
-    const isCreditCardPayment = paymentMethodCC.length > 0;
-    const isNotInsurerPayment = payment.collection_type !== 'insurer';
+  // Check if the conditions for 'capture' are met
+  const isCreditCardPayment = paymentMethodCC.length > 0;
+  const isNotInsurerPayment = payment.collection_type !== 'insurer';
 
-    // Return 'capture' if all conditions are met, otherwise return 'approve'
-    if (
-      (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
-      (isCaptureButtonEnabled && isCreditCardPayment)
-    ) {
-      return 'capture';
-    }
-    return 'approve';
-  };
+  // Return 'capture' if all conditions are met, otherwise return 'approve'
+  if (
+    (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
+    (isCaptureButtonEnabled && isCreditCardPayment)
+  ) {
+    console.log('capture');
+    return 'capture';
+  }
+  console.log('approve');
+  return 'approve';
 });
 
 
 const getCaptureValidation = computed(() => {
-  return props.payment.captureValidation || false;
+  return payment => {
+    if (shouldProcessUpdate(payment)) {
+      if (payment.is_approved === 1) return false;
+      let paymentRecord = payment;
+      if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
+        return validateUpfrontCapture(paymentRecord);
+      } else if (
+        paymentRecord.frequency === paymentFrequencyEnum.SPLIT_PAYMENTS
+      ) {
+        return validateSplitPaymentsCapture(paymentRecord);
+      } else {
+        return validateNonUpfrontAndSplitCapture(paymentRecord);
+      }
+    }
+    return false;
+  };
 });
+
+// Will check if the payment is ready for capture
+const shouldProcessUpdate = payment => {
+  const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
+  const calculatedTotal =
+    Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
+  const hasPayments = props.payments.length > 0;
+  const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
+  const isAmlCleared =
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningCleared;
+  const isTransactionDeclined =
+    props.quoteRequest.quote_status_id ===
+    page.props.quoteStatusEnum.TransactionDeclined;
+  const isTransactionApproved =
+    props.quoteRequest.quote_status_id ===
+    page.props.quoteStatusEnum.TransactionApproved;
+  const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
+  const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
+  const shouldSendUpdate = props.sendUpdate;
+  const isAmlOrTransactionApproved =
+    isAmlCleared || isTransactionDeclined || isTransactionApproved;
+  const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
+  let isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
+  if (isTravelQuote && !props.sendUpdate) {
+    isGIGProvider = payment.isGIGProvider;
+  }
+  const isInsurer = payment?.collection_type == 'insurer';
+  const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
+  let isInsurerAmlCleared = true;
+  let isAMlAndKycTravelComplete =
+    isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
+  let enabledQuoteTypesForInsurer = [
+    quoteTypeCodeEnum.Car,
+    quoteTypeCodeEnum.Home,
+    quoteTypeCodeEnum.Bike,
+    quoteTypeCodeEnum.Travel,
+  ];
+
+  const captureOption = getCaptureOption.value(payment);
+  if (
+    isInsurer &&
+    isGIGProvider &&
+    enabledQuoteTypesForInsurer.includes(props.quoteType) &&
+    hasAnyCCSplitPayment(payment) &&
+    !shouldSendUpdate
+  ) {
+    isInsurerAmlCleared =
+      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
+    if (isTravelQuote) {
+      isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
+    } else {
+      isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
+    }
+  }
+
+  const isRenewalUploadConditionMet = () => {
+    return (
+      props.isCapBtnEnabled &&
+      props.quoteType === quoteTypeCodeEnum.Car &&
+      isGIGProvider &&
+      isAmlCleared &&
+      isKycVerified() &&
+      isTotalPriceMatching &&
+      hasAnyCCSplitPayment(payment) &&
+      !shouldSendUpdate &&
+      hasPayments &&
+      isInsurer
+    );
+  };
+
+  if (isRenewalUploadConditionMet()) {
+    return true;
+  }
+  if (captureOption === 'approve') {
+    return hasPayments;
+  }
+
+  return (
+    hasPayments &&
+    isTotalPriceMatching &&
+    isAMlAndKycTravelComplete &&
+    isInsurerAmlCleared
+  );
+};
+
+const validateUpfrontCapture = paymentRecord => {
+  let paymentSplitRec = paymentRecord.payment_splits[0];
+  if (paymentSplitRec.payment_method.code === 'CC')
+    return getCaptureValidStatuses(paymentSplitRec);
+  const isIPPending =
+    paymentSplitRec.payment_method.code === 'IP' &&
+    paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
+  const isCAPayment =
+    paymentSplitRec.payment_method.code === 'CA' &&
+    paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
+  const isPaidPayment =
+    paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
+  return isIPPending || isCAPayment || isPaidPayment;
+};
+
 
 const isVoidPaymentEnabled = payment => {
   return (
     props.isFuncsEnabled.tapIntegration &&
     can(permissionEnum.PAYMENTS_VOID) &&
-    payment.payment_status_id === page.props.paymentStatusEnum.AUTHORISED &&
-    payment.payment_gateway_id === props.paymentGatewayEnum.PAYMENT_GATEWAY_TAP
+    payment.payment_status_id === paymentStatusEnum.AUTHORISED &&
+    payment.payment_gateway_id === paymentGatewayEnum.PAYMENT_GATEWAY_TAP
   );
 };
+
+const validateSplitPaymentsCapture = paymentRecord => {
+  const paymentMethodCC = filterCCPayments(paymentRecord);
+  const creditApprovedPayments = filterCAPayments(paymentRecord);
+  if (paymentMethodCC.length > 0 && creditApprovedPayments.length == 0) {
+    let totalSplitPayments = paymentRecord.payment_splits.length;
+    let paidPaymentStatus = paymentRecord.payment_splits.filter(
+      item =>
+        item.payment_status_id === paymentStatusEnum.PAID ||
+        item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID,
+    );
+    let ccPaymentStatus = paymentMethodCC.filter(
+      item => item.payment_status_id === paymentStatusEnum.AUTHORISED,
+    );
+    return (
+      totalSplitPayments == ccPaymentStatus.length + paidPaymentStatus.length
+    );
+  } else {
+    let ipPaymentStatus = paymentRecord.payment_splits.filter(
+      item => item.payment_method.code === 'IP',
+    );
+    if (ipPaymentStatus.length > 0) {
+      let ipPending = ipPaymentStatus.filter(
+        item =>
+          item.payment_status_id === paymentStatusEnum.PENDING ||
+          item.payment_status_id === paymentStatusEnum.PAID,
+      );
+      return ipPending.length === ipPaymentStatus.length;
+    } else {
+      if (verifyCreditApproved(paymentRecord)) return true;
+      let paidPaymentStatus = paymentRecord.payment_splits.filter(
+        item => item.payment_status_id === paymentStatusEnum.PAID,
+      );
+      return paidPaymentStatus.length === paymentRecord.payment_splits.length;
+    }
+  }
+};
+
+const validateNonUpfrontAndSplitCapture = paymentRecord => {
+  if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
+    if (verifyCreditApproved(paymentRecord)) return true;
+  } else if (
+    (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
+      paymentRecord.payment_splits[0].payment_method.code === 'PDC') &&
+    paymentRecord.payment_splits[0].payment_status_id ===
+      paymentStatusEnum.PENDING
+  ) {
+    return true;
+  }
+  return getCaptureValidStatuses(paymentRecord.payment_splits[0]);
+};
+
 
 </script>
 
@@ -240,7 +429,7 @@ const isVoidPaymentEnabled = payment => {
             </x-button>
           </template>
         </template>
-        <template v-if="isVoidPaymentEnabled">
+        <template v-if="isVoidPaymentEnabled(payment)">
           <x-button
             size="xs"
             color="orange"

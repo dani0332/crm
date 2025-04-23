@@ -47,10 +47,52 @@ export const usePayment = () => {
         );
     };
 
+    const hasAnyCCSplitPayment = (payments) => {
+        console.clear()
+        console.log('hasAnyCCSplitPayment');
+        console.log(payments);
+        if (payments > 0) {
+            const paymentSplits = payments[0].payment_splits;
+            return paymentSplits.some(item => item.payment_method.code === 'CC');
+        }
+        return false;
+    };
+
+    const getCaptureValidStatuses = paymentSplitRec => {
+        const validStatuses = [
+            paymentStatusEnum.AUTHORISED,
+            paymentStatusEnum.PAID,
+            paymentStatusEnum.PARTIALLY_PAID,
+        ];
+        return validStatuses.includes(paymentSplitRec.payment_status_id);
+    };
+
+    const filterCAPayments = payment => {
+        return payment.payment_splits.filter(
+          item => item.payment_status_id == paymentStatusEnum.CREDIT_APPROVED,
+        );
+    };
+
+    // verify if all credit payments are approved for capture
+    const verifyCreditApproved = paymentRecord => {
+        let caPaymentStatus = paymentRecord.payment_splits.filter(
+        item => item.payment_method.code === 'CA',
+        );
+        if (caPaymentStatus.length > 0) {
+        let caApproved = filterCAPayments(paymentRecord);
+        return caApproved.length === caPaymentStatus.length;
+        }
+        return false;
+    };
+
     return {
         formatDate,
         formatAmount,
         formatString,
-        filterCCPayments
+        filterCCPayments,
+        getCaptureValidStatuses,
+        filterCAPayments,
+        verifyCreditApproved,
+        hasAnyCCSplitPayment
     };
 };
