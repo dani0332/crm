@@ -49,13 +49,6 @@ class AMLService
 {
     use GenericQueriesAllLobs;
 
-    protected AMLController $amlController;
-
-    public function __construct(AMLController $amlController)
-    {
-        $this->amlController = $amlController;
-    }
-
     public static function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = ''): bool
     {
         $createdDate = $parseDate;
@@ -370,7 +363,7 @@ class AMLService
         ]);
 
         // Fetch the insured person details
-        return $this->amlController->getInsuredPersonDetails($insuredPersonRequest)->getData();
+        return app(AMLController::class)->getInsuredPersonDetails($insuredPersonRequest)->getData();
     }
 
     /**
@@ -387,7 +380,7 @@ class AMLService
         $amlCheckRequest = new AMLCheckRequest($amlRequestData);
 
         // Call the AML quote update method
-        return $this->amlController->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
+        return app(AMLController::class)->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
     }
 
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)

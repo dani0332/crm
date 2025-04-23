@@ -56,8 +56,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
         if (! $isAmlAutomationEnabled) {
             LoggerService::info($this->className.' is not enabled from cms');
-
-            return false;
+            return;
         }
 
         $this->quoteRequest->refresh();
