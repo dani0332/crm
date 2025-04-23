@@ -407,7 +407,7 @@ function memberSubmit(isValid) {
     </template>
     <template #item-is_payer="{ is_payer }">
       <div class="flex gap-2">
-        <x-checkbox :modelValue="is_payer !== 0" color="primary" />
+        <x-checkbox :modelValue="is_payer" color="primary" />
       </div>
     </template>
     <template #item-action="item">
