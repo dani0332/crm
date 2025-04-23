@@ -736,7 +736,21 @@
                     </th>
                     @foreach ($planIds as $planId)
                         <th class="provider" style="border: solid 1px #bfbfbf; position : relative">
-                            @php
+                                @php
+                                    $providerCode = strtolower($plans[$planId]->providerCode);
+                                    $providerLogoImage = "https://cdn.alfred.ae/assets/logo/partners/{$providerCode}.png";
+
+                                    // Check if the image exists
+                                    $headers = @get_headers($providerLogoImage);
+                                    if (!$headers || strpos($headers[0], '404') !== false) {
+                                        $providerLogoImage = public_path('images/insurance_providers/default.png');
+                                    }
+                                @endphp
+
+                                <div class="image-wrapper">
+                                    <img class="provider-logo" src="{{ $providerLogoImage }}" alt="Provider Logo" />
+                                </div>
+                            {{-- @php
                                 $providerLogoImage = public_path(
                                     'images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png',
                                 );
@@ -746,7 +760,7 @@
                             @endphp
                             <div class="image-wrapper">
                                 <img class="provider-logo" src="{{ $providerLogoImage }}" alt="Provider Logo" />
-                              </div>
+                              </div> --}}
                         </th>
                     @endforeach
                 </tr>

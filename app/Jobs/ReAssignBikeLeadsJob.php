@@ -52,7 +52,7 @@ class ReAssignBikeLeadsJob implements ShouldQueue
             return false; // when lead is not on criteria or not found
         }
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead);
 
             info('--------------- ReAssignment processing ---------------');
 
@@ -115,7 +115,7 @@ class ReAssignBikeLeadsJob implements ShouldQueue
         return $this->bikeAllocationService->fetchLeadsForReAssignment($this->advisorId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findTier($lead): ?Tier
     {
         if ($lead->tier_id == null) {
             return $this->bikeAllocationService->findTier($lead);

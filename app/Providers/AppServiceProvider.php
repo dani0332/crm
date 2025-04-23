@@ -45,7 +45,9 @@ use App\Observers\YachtQuoteObserver;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use App\Services\LeadsCountService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -103,5 +105,12 @@ class AppServiceProvider extends ServiceProvider
         //         $query->time
         //     );
         // });
+
+        if ($this->app->runningInConsole()) {
+            Log::withContext([
+                'trace_id' => (string) Str::uuid(),
+                'is_console_command' => true,
+            ]);
+        }
     }
 }

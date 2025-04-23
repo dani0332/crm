@@ -2,6 +2,9 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
+use App\Models\PersonalQuote;
 use Carbon\Carbon;
 
 class MDX extends EmbeddedProduct
@@ -17,18 +20,33 @@ class MDX extends EmbeddedProduct
     public function getPDFData($quoteObject, $certificateNumber, $premium)
     {
         $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+
+        if ($quoteObject::class == PersonalQuote::class) {
+            $quoteTypeId = $quoteObject->quote_type_id;
+        } else {
+            $quoteType = quoteTypeCode::getName($quoteObject::class);
+            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        }
+
+        $customerInsured = $quoteObject->customer?->customerInsured
+            ->where('quote_request_id', $quoteObject->id)
+            ->where('quote_type_id', $quoteTypeId)
+            ->first() ?? null;
+
         if (! empty($quoteObject->quoteRequestEntityMapping)) {
             $firstName = $quoteObject->first_name ?? '';
             $lastName = $quoteObject->last_name ?? '';
+            $emiratesIdNumber = '';
         } else {
-            $firstName = ($quoteObject->customer?->insured?->first_name ?? $quoteObject->customer->insured_first_name) ?? '';
-            $lastName = ($quoteObject->customer?->insured?->last_name ?? $quoteObject->customer->insured_last_name) ?? '';
+            $firstName = ($customerInsured?->insured?->first_name ?? $quoteObject->customer?->insured_first_name) ?? '';
+            $lastName = ($customerInsured?->insured?->last_name ?? $quoteObject->customer?->insured_last_name) ?? '';
+            $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $quoteObject->customer?->emirates_id_number) ?? '';
         }
 
         $data = [
             'name' => $firstName.' '.$lastName,
             'dob' => isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '',
-            'emirates_id' => $quoteObject->customer->emirates_id_number ?? '',
+            'emirates_id' => $emiratesIdNumber,
             'plan_type' => 'Individual',
             'certificate_number' => $certificateNumber, // plan no
             'plan_currency' => 'AED',

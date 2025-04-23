@@ -31,6 +31,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use PDF;
 
 class HomeQuoteService extends BaseService
@@ -749,7 +750,7 @@ class HomeQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             LoggerService::startQuoteLogging($leadId);
@@ -805,8 +806,19 @@ class HomeQuoteService extends BaseService
             'quoteUID' => $quoteUuId,
             'lang' => 'en',
             'callSource' => 'imcrm',
-            ...$extraData,
         ];
+
+        // Add getLatestRating flag if it exists in extraData
+        if (isset($extraData['getLatestRating'])) {
+            $plansDataArr['getLatestRating'] = $extraData['getLatestRating'];
+        }
+
+        // Add any other extraData parameters
+        foreach ($extraData as $key => $value) {
+            if ($key !== 'getLatestRating') {
+                $plansDataArr[$key] = $value;
+            }
+        }
 
         $client = new \GuzzleHttp\Client;
 
@@ -1015,7 +1027,7 @@ class HomeQuoteService extends BaseService
     {
         $logPrefix = self::class.' fn: isPlanModifyAllowed ';
         $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
-        LoggerService::startQuoteLogging($quote->uuid);
+        LoggerService::startQuoteLogging($quote);
 
         $isAllowed = false;
 
@@ -1261,7 +1273,21 @@ class HomeQuoteService extends BaseService
         // Fetch quote plans using UUID
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         if (! $quotePlans || ! isset($quotePlans->quotes) || ! isset($quotePlans->quotes->plans)) {
-            return ['error' => 'Quote plans not available'];
+            throw ValidationException::withMessages(['error' => 'Quote plans not available. Please try again.']);
+        }
+
+        // Filter plans by provided plan IDs
+        $filteredPlans = collect($quotePlans->quotes->plans)->filter(function ($plan) use ($planIds) {
+            return isset($plan->id) && in_array($plan->id, $planIds);
+        });
+
+        // Check if all filtered plans have empty or null discountPremium
+        $allPlansHaveNoPremium = $filteredPlans->every(function ($plan) {
+            return empty($plan->discountPremium) || is_null($plan->discountPremium) || $plan->discountPremium <= 0;
+        });
+
+        if ($allPlansHaveNoPremium || $filteredPlans->isEmpty()) {
+            throw ValidationException::withMessages(['error' => 'Cannot generate PDF as all selected plans have no premium values. Please select plans with valid premium values.']);
         }
 
         // Retrieve insurance providers by provider IDs
@@ -1304,35 +1330,44 @@ class HomeQuoteService extends BaseService
     private function getHomeQuoteFlags($homeQuote): array
     {
         if (! $homeQuote) {
-            return [];
+            return [
+                'contents_value_flag' => false,
+                'personal_belongings_flag' => false,
+                'building_value_flag' => false,
+            ];
         }
 
         return [
-            'contents_value_flag' => (bool) $homeQuote->contents_value_id,
-            'personal_belongings_flag' => (bool) $homeQuote->personal_belongings_value_id,
-            'building_value_flag' => (bool) $homeQuote->building_value,
+            'contents_value_flag' => (bool) ($homeQuote->contents_value_id ?? false),
+            'personal_belongings_flag' => (bool) ($homeQuote->personal_belongings_value_id ?? false),
+            'building_value_flag' => (bool) ($homeQuote->building_value ?? false),
         ];
     }
 
     private function getFlagValues(array $flags, $homeQuote, array $contentValues, array $personalBelongingValues): array
     {
-        $values = [];
+        // Initialize values with defaults to ensure they always exist
+        $values = [
+            'contents_value' => 'N/A',
+            'personal_belongings_value' => 'N/A',
+            'building_value' => 'N/A',
+        ];
 
-        if ($flags['contents_value_flag']) {
+        if (isset($flags['contents_value_flag']) && $flags['contents_value_flag']) {
             $contentValue = $this->getValueById($contentValues, $homeQuote->contents_value_id);
             if ($contentValue) {
                 $values['contents_value'] = $this->formatCurrency($contentValue['maxValue']);
             }
         }
 
-        if ($flags['personal_belongings_flag']) {
+        if (isset($flags['personal_belongings_flag']) && $flags['personal_belongings_flag']) {
             $personalBelongingValue = $this->getValueById($personalBelongingValues, $homeQuote->personal_belongings_value_id);
             if ($personalBelongingValue) {
                 $values['personal_belongings_value'] = $this->formatCurrency($personalBelongingValue['maxValue']);
             }
         }
 
-        if ($flags['building_value_flag']) {
+        if (isset($flags['building_value_flag']) && $flags['building_value_flag']) {
             $values['building_value'] = $this->formatCurrency($homeQuote->building_value);
         }
 
@@ -1344,8 +1379,12 @@ class HomeQuoteService extends BaseService
         return 'AED '.number_format($value, 0, '', ',');
     }
 
-    private function getValueById(array $values, int $id): ?array
+    private function getValueById(array $values, ?int $id): ?array
     {
+        if ($id === null) {
+            return null;
+        }
+
         return collect($values)->firstWhere('id', $id);
     }
 

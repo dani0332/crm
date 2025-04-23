@@ -47,7 +47,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
             return false; // when lead is not on criteria or not found
         }
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead->uuid);
+            LoggerService::startQuoteLogging($lead);
 
             info('--------------- ReAssignment processing ---------------');
 
@@ -113,7 +113,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
         return $this->carAllocationService->fetchLeadsForReAssignment($this->advisorId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findTier($lead): ?Tier
     {
         if ($lead->tier_id == null) {
             return $this->carAllocationService->findTier($lead);
