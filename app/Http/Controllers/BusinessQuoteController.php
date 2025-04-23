@@ -434,6 +434,7 @@ class BusinessQuoteController extends Controller
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
         $this->crudService->updateModelByType('business', $request, $id);
+        $this->businessQuoteService->updateBusinessQuote($request, $id);
 
         return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
     }

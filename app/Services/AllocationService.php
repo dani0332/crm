@@ -261,17 +261,17 @@ class AllocationService extends BaseService
         }
     }
 
-    public function createResponse(int $advisorId, string $message, int $status, ?int $tierId = null): array
+    public function createResponse(int $advisorId, string $message, int $status, ?Tier $tier = null): array
     {
         $resp = [
             'advisorId' => $advisorId,
             'message' => $message,
-            'tierId' => $tierId,
             'status' => $status,
         ];
 
-        if (! $tierId) {
-            unset($resp['tierId']);
+        if ($tier) {
+            $resp['tierId'] = $tier->id;
+            $resp['tierName'] = $tier->name;
         }
 
         return $resp;
