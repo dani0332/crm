@@ -279,7 +279,7 @@ class CarAllocationService extends AllocationService
 
                 return $tiersQuery->first();
             } else {
-                LoggerService::debug('findTier - Car Lead Info', extra: [
+                LoggerService::debug(self::class.'::findTier - Car Lead Info', extra: [
                     'car_value' => $carLead->car_value,
                     'car_value_tier' => $carLead->car_value_tier,
                     'dob' => $carLead->dob,
@@ -316,7 +316,7 @@ class CarAllocationService extends AllocationService
 
     public function findRenewalLeadTier($carLead): ?Tier
     {
-        LoggerService::debug('findRenewalLeadTier - Car Lead Info', extra: [
+        LoggerService::debug(self::class.'::findRenewalLeadTier - Car Lead Info', extra: [
             'car_value' => $carLead->car_value,
             'car_value_tier' => $carLead->car_value_tier,
             'sic_flow_enabled' => $carLead->sic_flow_enabled,
