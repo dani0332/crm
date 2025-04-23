@@ -135,6 +135,7 @@ enum QuoteTypes: string
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             default => null,
         };
+
         return $quoteTypeEnum ? self::getId($quoteTypeEnum) : null;
     }
 
