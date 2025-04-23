@@ -41,7 +41,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     public function __construct(QuoteTypes $quoteType, TravelQuote $quoteRequest)
     {
         $this->quoteType = $quoteType;
-        $this->quoteRequest = $quoteRequest->refresh();
+        $this->quoteRequest = $quoteRequest;
         $this->quoteRefId = $this->quoteRequest?->code ?? '';
         $this->uniqueKey = strtolower($this->quoteRefId);
     }
@@ -51,6 +51,9 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
+        $this->quoteRequest->refresh();
+        LoggerService::startQuoteLogging($this->quoteRequest);
+
         $isApiIssuanceStatusYes = $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
         $isAMLPending = $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
         $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
@@ -59,7 +62,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             return;
         }
 
-        LoggerService::info($this->className.' - Started');
         $travelQuoteService = app(TravelQuoteService::class);
 
         // Get customer required travel info
@@ -121,6 +123,9 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);
             LoggerService::error($this->className.' - Exception: '.$e->getMessage());
+
+        } finally {
+            LoggerService::endLogging();
         }
     }
 

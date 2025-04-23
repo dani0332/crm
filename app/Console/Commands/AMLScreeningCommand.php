@@ -11,7 +11,6 @@ use App\Models\AmlAutomation;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class AMLScreeningCommand extends Command
 {
@@ -44,12 +43,9 @@ class AMLScreeningCommand extends Command
      */
     public function handle()
     {
-        LoggerService::info($this->className.' - Started');
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
         if (! class_exists($quoteModel)) {
-            LoggerService::info($this->className.' - Ended - Quote Model not found');
-
             return;
         }
 
@@ -69,14 +65,10 @@ class AMLScreeningCommand extends Command
                     $quoteRequest = $this->getQuoteObject($this->quoteType->value, $quoteRequest->id);
 
                     if (! $quoteRequest) {
-                        LoggerService::error($this->className.' - Quote not found');
-
+                        LoggerService::error($this->className.' - '.$this->quoteType->value.' Quote #'.$quoteRequest->id.' not found');
                         continue;
                     }
 
-                    Log::withContext(['ref_id' => $quoteRequest->code]);
-
-                    $quoteRequest->refresh();
                     $isApiIssuanceStatusYes = $quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
                     $isAMLPending = $quoteRequest->aml_status == AMLStatusCode::AMLPending;
 
@@ -89,7 +81,5 @@ class AMLScreeningCommand extends Command
                 }
             });
         }
-
-        LoggerService::info($this->className.' - Ended');
     }
 }
