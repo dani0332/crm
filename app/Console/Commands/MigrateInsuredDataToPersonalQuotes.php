@@ -58,7 +58,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
         }
 
         // Use chunk to process records in batches to avoid memory issues
-        PersonalQuote::when($lastProcessedId, function ($q) use ($lastProcessedId , $funName) {
+        PersonalQuote::when($lastProcessedId, function ($q) use ($lastProcessedId) {
             $q->where('id', '>', $lastProcessedId);
         })
             ->where(function ($q) {
@@ -66,7 +66,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                     ->orWhereNull('insured_id');
             })
             ->orderBy('id')
-            ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$lastProcessedId , $funName) {
+            ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$lastProcessedId, $funName) {
                 foreach ($personalQuotes as $personalQuote) {
 
                     LoggerService::startQuoteLogging($personalQuote);

@@ -173,9 +173,9 @@ class SearchService extends BaseService
 
     private function getFilteredCompanyCases($request, $selectColumns): array
     {
-        if ($request->has('company_name')/* && $request->has('line_of_business')*/) {
+        if ($request->has('company_name')/* && $request->has('line_of_business') */) {
             $selectColumns[] = 'insured.company_name';
-            /*$selectColumns[] = 'entities.company_name';*/
+            /* $selectColumns[] = 'entities.company_name'; */
         } else {
             $selectColumns[] = DB::raw('"N/A" as company_name');
         }
