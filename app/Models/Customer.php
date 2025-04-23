@@ -126,8 +126,6 @@ class Customer extends Model implements AuditableContract
      * Get all customer insured records associated with this customer.
      *
      * @todo Review this relationship after customer insured process is updated
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function customerInsured(): HasMany
     {
