@@ -4,12 +4,14 @@ namespace App\Jobs;
 
 use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Models\AmlAutomation;
 use App\Models\TravelQuote;
 use App\Services\AMLService;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -30,7 +32,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     public $tries = 1;
     public $uniqueFor = 60 * 15; // 15 minutes
     public $uniqueKey = ''; // 15 minutes
-    private $className = 'Aml Screening Automation Job';
+    private $className = 'AmlScreeningAutomationJob';
     private TravelQuote $quoteRequest;
     private QuoteTypes $quoteType;
     private string $quoteRefId;
@@ -51,6 +53,13 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(): void
     {
+        $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
+        if (! $isAmlAutomationEnabled) {
+            LoggerService::info($this->className.' is not enabled from cms');
+
+            return false;
+        }
+
         $this->quoteRequest->refresh();
         LoggerService::startQuoteLogging($this->quoteRequest);
 
