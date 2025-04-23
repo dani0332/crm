@@ -694,7 +694,7 @@ class CentralController extends Controller
         $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
 
         $logContext = [
-            'ref_id' => $request->uuid
+            'ref_id' => $request->uuid,
         ];
 
         $logExtra = [
