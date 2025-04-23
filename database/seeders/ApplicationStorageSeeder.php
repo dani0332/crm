@@ -328,7 +328,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
     }
-    
+
     private function seedAmlAutomation()
     {
         ApplicationStorage::firstOrCreate(

@@ -48,6 +48,7 @@ class AMLScreeningCommand extends Command
         $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
         if (! $isAmlAutomationEnabled) {
             LoggerService::info('Aml Automation is not enabled from cms');
+
             return false;
         }
 
