@@ -19,6 +19,7 @@ use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
 use App\Services\PaymentLinkService;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
@@ -79,7 +80,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         try {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-            info('Starting payment creation process for Quote: '.$quoteModel->code);
+            LoggerService::startQuoteLogging($quoteModel);
+            LoggerService::info('Starting payment creation process for Quote');
             $masterPayment = (object) $request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
@@ -132,7 +134,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $paymentInformation['authorized_at'] = now();
             }
         } catch (Exception $exception) {
-            info('Error occurred during payment creation pre-processing: '.$exception->getMessage());
+            LoggerService::error('Error occurred during payment creation pre-processing', exception:$exception);
 
             return ['status' => 'error', 'message' => $exception->getMessage()];
         }
@@ -140,11 +142,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         DB::beginTransaction();
         try {
             $payment = $quoteModel->payments()->create($paymentInformation);
-            info('Payment created with Code: '.$paymentInformation['code']);
+            LoggerService::info('Payment created with Code: '.$paymentInformation['code']);
             // Add split payments start
             $this->addPaymentSplits($request, $payment);
             // Add split payments ends
-            info('Payment splits added for Payment Code: '.$paymentInformation['code']);
+            LoggerService::info('Payment splits added for Payment Code: '.$paymentInformation['code']);
 
             $paymentLog = new PaymentStatusLog([
                 'current_payment_status_id' => PaymentStatusEnum::NEW,
@@ -158,12 +160,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             $quoteModel->save();
             DB::commit();
-            info('Payment creation process completed successfully for Payment Code: '.$paymentInformation['code']);
+            LoggerService::info('Payment creation process completed successfully for Payment Code: '.$paymentInformation['code']);
 
             return ['status' => 'success', 'message' => 'Payment Added'];
         } catch (Exception $exception) {
             DB::rollBack(); // Rollback changes if any error occurred
-            info('Error occurred during payment creation: '.$exception->getMessage());
+            LoggerService::error('Error occurred during payment creation', exception:$exception);
 
             return ['status' => 'error', 'message' => $exception->getMessage()];
         }
@@ -174,7 +176,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $masterPayment = (object) $request->payment;
         $payment = Payment::where('code', $request->paymentCode)->first();
         if (! $payment) {
-            info('Payment does not exist for Payment Code: '.$request->paymentCode);
+            LoggerService::info('Payment does not exist for Payment Code: '.$request->paymentCode);
 
             return ['status' => 'error', 'message' => 'Payment record not found'];
         }
@@ -227,7 +229,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $this->handleWithDeadlockRetries(function () use ($request, $payment, $paymentInformation) {
             $payment->update($paymentInformation);
             // Log payment update
-            info('Payment updated successfully for Payment Code: '.$request->paymentCode);
+            LoggerService::info('Payment updated successfully for Payment Code: '.$request->paymentCode);
 
             // Update split payments start
             if (! empty($request->trashedFilesModal)) {
@@ -446,6 +448,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     private function handlePaymentDecline($request)
     {
         $quoteModel = $this->getQuoteModel($request->modelType, $request->quote_id, $request->send_update_id);
+        LoggerService::startQuoteLogging($quoteModel);
         $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
         $firstPayment->update([
             'decline_reason_id' => $request->declined_reason,
@@ -459,7 +462,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
         }
         $quoteModel->save();
-        info('Master payment code: '.$request->payment_code.' Transaction declined');
+        LoggerService::info('Master payment code: '.$request->payment_code.' Transaction declined');
 
         return 'Transaction declined';
     }
@@ -479,7 +482,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
-                    info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' approving process started');
+                    LoggerService::info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' approving process started');
 
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
@@ -487,7 +490,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
         }
         // Log the master payment approval process
-        info('Master payment code: '.$request->payment_code.' processing master payment approval');
+        LoggerService::info('Master payment code: '.$request->payment_code.' processing master payment approval');
 
         // process master payment approve
         return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
@@ -821,7 +824,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             } else {
                 $this->updateNonUpfrontStatus($payment);
             }
-            info('Master payment code: '.$payment->code.' Updating lead status');
+            LoggerService::info('Master payment code: '.$payment->code.' Updating lead status');
             app(SplitPaymentService::class)->updateLeadStatus($payment); // update lead status
         }
     }

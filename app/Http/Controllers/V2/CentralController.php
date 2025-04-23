@@ -74,6 +74,7 @@ use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -383,7 +384,7 @@ class CentralController extends Controller
     public function retrySplitPayment(RetrySplitPaymentRequest $request)
     {
         $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
-        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+        LoggerService::info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
 
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
@@ -692,16 +693,19 @@ class CentralController extends Controller
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
         $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
 
-        $logPayload = [
+        $logContext = [
+            'ref_id' => $request->uuid
+        ];
+
+        $logExtra = [
             'paymentCode' => $request->paymentCode,
-            'uuid' => $request->uuid,
             'quoteTypeId' => $quoteTypeId,
             'responseStatus' => isset($response['status']) ? $response['status'] : null,
             'responseMessage' => isset($response['message']) ? $response['message'] : null,
             'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
         ];
 
-        info('paymentsCaptureValidation', $logPayload);
+        LoggerService::info('paymentsCaptureValidation', $logContext, $logExtra);
 
         return response()->json(['response' => $response]);
     }
