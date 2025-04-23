@@ -81,17 +81,9 @@ trait QuoteModelTrait
         $q->from("{$q->getModel()->getTable()} as {$as}");
     }
 
-    public static function applySegmentFilter($query, $segmentFilter, $alias, $quoteTypeId, $requestParams = [])
+    public static function applySegmentFilter($query, $segmentFilter, $alias, $quoteTypeId)
     {
-        $request = collect($requestParams);
-        $user = null;
-        if (auth()->check()) {
-            $user = auth()->user();
-        } elseif (! empty($request->get('user'))) {
-            /* For queue when session data isn't present */
-            $user = $request->get('user');
-        }
-
+        $user = auth()->user();
         if ($user && $user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
             $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
