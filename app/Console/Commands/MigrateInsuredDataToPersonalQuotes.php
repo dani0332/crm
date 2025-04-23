@@ -82,6 +82,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                     // Update the personal quote with quote_id
                     if ($quote->getMorphClass() != PersonalQuote::class) {
                         $personalQuote->update(['quote_id' => $quote->id]);
+                        LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code . ' updated.',  ['quote_id' => $quote->id]);
                     } else {
                         LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code.' - Quote is of Personal QuoteTable.');
                     }
@@ -110,6 +111,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
 
                     // Update the personal quote with insured_id
                     $personalQuote->update(['insured_id' => $insured->id]);
+                    LoggerService::info(self::className.' fn:'.__FUNCTION__.' Quote Code: '.$personalQuote->code . ' updated.',  ['insured_id' => $insured->id]);
 
                     $processedIds[] = $personalQuote->id;
                     $totalUpdated++;
