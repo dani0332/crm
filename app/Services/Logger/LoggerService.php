@@ -37,7 +37,7 @@ class LoggerService
         }
     }
 
-    private static function getExceptionData(?Exception $exception = null): array
+    private static function getExceptionData(Exception $exception): array
     {
         return [
             'message' => $exception->getMessage(),
