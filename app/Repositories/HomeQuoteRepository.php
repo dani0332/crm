@@ -464,7 +464,7 @@ class HomeQuoteRepository extends BaseRepository
                 // If specific fields changed, call the getQuotePlans method with getLatestRating=true
                 if ($fieldsChanged) {
                     LoggerService::info('Fields changed, Fetching quote plans', extra: [
-                        'getLatestRating' => true
+                        'getLatestRating' => true,
                     ]);
                     app(\App\Services\HomeQuoteService::class)->getQuotePlans($uuid, ['getLatestRating' => true]);
                 }
