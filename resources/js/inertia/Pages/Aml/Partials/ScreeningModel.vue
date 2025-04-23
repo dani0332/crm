@@ -361,13 +361,13 @@ const entitySearchValidation = computed(() => {
   return true;
 });
 const searchInsuredDetails = customerType => {
-  let searchInsuredValidation =
-    customerType == customerTypeEnum.Individual
+  let searchInsuredValidation = 
+    [customerTypeEnum.Individual, ''].includes(customerType)
       ? individualSearchValidation.value
       : entitySearchValidation.value;
   if (searchInsuredValidation) {
     loader.insuredSearch = true;
-    let url = `/kyc/get-insured-details?customer_type=${screeningFormDetails.customer_type}&id_type=${screeningFormDetails.screening_id_type}&id_number=${screeningFormDetails.screening_id_number}&trade_license=${screeningFormDetails.trade_license_no}`;
+    let url = `/kyc/get-insured-details?customer_type=${customerType}&id_type=${screeningFormDetails.screening_id_type}&id_number=${screeningFormDetails.screening_id_number}&trade_license=${screeningFormDetails.trade_license_no}`;
     axios
       .get(url)
       .then(res => {
