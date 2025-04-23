@@ -749,6 +749,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
+    Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
 });
 
 Route::get('/add-batch-number', function () {
