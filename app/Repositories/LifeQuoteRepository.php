@@ -9,7 +9,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\LifeQuote;
-use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
