@@ -250,10 +250,9 @@ function customerTypeConfirmation() {
 }
 const updateScreeningDetails = () => {
   setFieldsByCustomerType(screeningFormDetails.customer_type);
-  isScreeningIndividual.value =
-    screeningFormDetails.customer_type ==
-    customerTypeEnum.Individual;
+  isScreeningIndividual.value = screeningFormDetails.customer_type == customerTypeEnum.Individual;
   customerTypeConfirmationModel.value = false;
+  modalHeaderMessage();
 };
 // Function to handle modal close without confirmation
 // const handleModalClose = () => {
@@ -637,12 +636,7 @@ const updateScreeningType = () => {
     }
   }
 };
-watch(
-  () => screeningFormDetails.customer_type,
-  newValue => {
-    modalHeaderMessage();
-  },
-);
+
 watch(() => {
   if (
     screeningFormDetails.screening_id_type === '' ||
