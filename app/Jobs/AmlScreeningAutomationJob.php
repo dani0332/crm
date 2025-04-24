@@ -51,20 +51,20 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle()
     {
         $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
         if (! $isAmlAutomationEnabled) {
             LoggerService::info($this->className.' is not enabled from cms');
 
-            return false;
+            return;
         }
 
         $this->quoteRequest->refresh();
         LoggerService::startQuoteLogging($this->quoteRequest);
 
         $isApiIssuanceStatusYes = $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-        $isAMLPending = $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
+        $isAMLPending = empty($this->quoteRequest->aml_status) ?: $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
         $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
 
         if (! $isApiIssuanceStatusYes || ! $isAMLPending || ! $isAutomationInQueue) {
@@ -82,6 +82,8 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         // Check customer required travel info is complete
         $checkCustomerTravelInfo = $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
         if (! $checkCustomerTravelInfo['status']) {
+            LoggerService::error($this->className.' - '.$checkCustomerTravelInfo['message']);
+
             return;
         }
 
@@ -95,11 +97,11 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         try {
             $insuredPersonData = app(AMLService::class)->getInsuredPersonDetails($idType, $idNumber);
-            LoggerService::info($this->className.' - reqCall: getInsuredPersonDetails - response: '.($insuredPersonData->status ? 'success' : 'error'));
+            LoggerService::info($this->className.' - getInsuredPersonDetails - response: '.($insuredPersonData ? '200' : '404'));
 
             $customer = $customerTravelInfo;
-            if ($insuredPersonData->status) {
-                $customer = [...$customerTravelInfo, ...(array) $insuredPersonData->response];
+            if (! empty($insuredPersonData)) {
+                $customer = [...$customerTravelInfo, ...(array) $insuredPersonData];
             }
 
             // Prepare AML check request data
@@ -120,14 +122,14 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $quoteAmlProcessCall = app(AMLService::class)->quoteAmlProcessCall($amlRequestData, $this->quoteType->id(), $this->quoteRequest->id);
             if (! $quoteAmlProcessCall->status) {
                 $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Error: '.$quoteAmlProcessCall->message]);
-                LoggerService::error($this->className.' - Completed - Error: '.$quoteAmlProcessCall->message);
+                LoggerService::error($this->className.' - Completed - AmlProcessCall - error: '.$quoteAmlProcessCall->message);
 
                 return;
             }
 
             $this->quoteRequest->refresh();
             $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $quoteAmlProcessCall->message]);
-            LoggerService::info($this->className.' - Completed - reqCall: quoteUpdate - response: '.$quoteAmlProcessCall->message);
+            LoggerService::info($this->className.' - Completed - AmlProcessCall - response: '.$quoteAmlProcessCall->message);
 
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);

@@ -52,6 +52,8 @@ class AMLScreeningCommand extends Command
             return false;
         }
 
+        LoggerService::info($this->className.' Started');
+
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
         if (! class_exists($quoteModel)) {
@@ -60,11 +62,12 @@ class AMLScreeningCommand extends Command
 
         $date = now()->subWeek()->startOfDay();
         $quoteRequestQuery = $quoteModel::select('id', 'code', 'api_issuance_status_id', 'aml_status')
-            ->where([
-                'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
-                'aml_status' => AMLStatusCode::AMLPending,
-            ])
             ->where('created_at', '>', $date)
+            ->where('api_issuance_status_id', PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID)
+            ->where(function ($query) {
+                $query->whereNull('aml_status')
+                    ->orWhere('aml_status', AMLStatusCode::AMLPending);
+            })
             ->whereNotIn('code', $quoteModel::from('aml_automation')->select('code'));
 
         if ($quoteRequestQuery->exists()) {
@@ -81,7 +84,7 @@ class AMLScreeningCommand extends Command
                     }
 
                     $isApiIssuanceStatusYes = $quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-                    $isAMLPending = $quoteRequest->aml_status == AMLStatusCode::AMLPending;
+                    $isAMLPending = empty($quoteRequest->aml_status) ?: $quoteRequest->aml_status == AMLStatusCode::AMLPending;
 
                     if (! $isApiIssuanceStatusYes || ! $isAMLPending || $quoteRequest->amlAutomation()->exists()) {
                         continue;
@@ -92,5 +95,6 @@ class AMLScreeningCommand extends Command
                 }
             });
         }
+        LoggerService::info($this->className.' Ended');
     }
 }
