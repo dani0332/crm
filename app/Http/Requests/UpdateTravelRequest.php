@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\quoteTypeCode;
 use App\Services\TravelQuoteService;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTravelRequest extends FormRequest
@@ -48,5 +49,12 @@ class UpdateTravelRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function failedValidation(Validator $validator)
+    {
+        $errors = $validator->errors(); // Here is your array of errors
+
+        dd($errors);
     }
 }
