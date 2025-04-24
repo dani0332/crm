@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LostReasonEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -54,6 +55,26 @@ trait Reportable
         ];
     }
 
+    public function getLostStatuses()
+    {
+        return [
+            QuoteStatusEnum::Lost,
+        ];
+    }
+
+    public function getLostReasons()
+    {
+        return [
+            LostReasonEnum::UNRESPONSIVE_VIA_EMAIL,
+            LostReasonEnum::ALREADY_PURCHASED_INSURANCE_ELSEWHERE,
+            LostReasonEnum::SHOPPING_AROUND,
+            LostReasonEnum::OUTSIDE_OF_BUDGET,
+            LostReasonEnum::NO_VALID_VISA,
+            LostReasonEnum::UNINSURABLE_DUE_TO_MEDICAL_REASONS,
+            LostReasonEnum::UNINSURABLE_DUE_TO_AGE,
+        ];
+    }
+
     public function getInProgressStatuses()
     {
         return [
@@ -65,6 +86,19 @@ trait Reportable
             QuoteStatusEnum::PaymentPending,
             QuoteStatusEnum::AMLScreeningCleared,
             QuoteStatusEnum::PendingQuote,
+        ];
+    }
+
+    public function getInProgressHealthStatuses()
+    {
+        return [
+            QuoteStatusEnum::FollowedUp,
+            QuoteStatusEnum::InNegotiation,
+            QuoteStatusEnum::ApplicationPending,
+            QuoteStatusEnum::MissingDocumentsRequested,
+            QuoteStatusEnum::ApplicationSubmitted,
+            QuoteStatusEnum::KYCCleared,
+            QuoteStatusEnum::PaymentPending,
         ];
     }
 
@@ -189,12 +223,12 @@ trait Reportable
 
     protected function calculateAdvisorRetentionPercentage($avgVolumeNetRetention, $volumeNetRetention)
     {
-        return number_format((((float) $volumeNetRetention) - ((float) $avgVolumeNetRetention)), 2).'%';
+        return number_format((((float) $volumeNetRetention) - ((float) $avgVolumeNetRetention)), 2) . '%';
     }
 
     protected function calculateRetentionPercentage($sales, $total)
     {
-        return ($total != 0) ? number_format(($sales / $total) * 100, 2).'%' : '0.00%';
+        return ($total != 0) ? number_format(($sales / $total) * 100, 2) . '%' : '0.00%';
     }
 
     protected function aggregateReportData($reportData)

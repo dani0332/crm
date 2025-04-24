@@ -190,10 +190,13 @@ class AdvisorConversionReportService extends BaseService
             ':badLeadsStatuses' => implode(',', $this->getBadLeadStatuses()),
             ':imRenewal' => QuoteStatusEnum::IMRenewal,
             ':notInterestedStatuses' => implode(',', $this->getNotInterestedStatuses()),
+            ':lostStatuses' => implode(',', $this->getLostStatuses()),
             ':newLead' => QuoteStatusEnum::NewLead,
-            ':newLeadHealth' => QuoteStatusEnum::Quoted,
+            ':quotedLead' => QuoteStatusEnum::Quoted,
             ':inProgressStatuses' => implode(',', $this->getInProgressStatuses()),
+            ':inProgressHealthStatuses' => implode(',', $this->getInProgressHealthStatuses()),
             ':paidStatuses' => implode(',', $this->getPaidStatuses()),
+            ':lostReasons' => implode(',', $this->getLostReasons()),
         ];
     }
 
@@ -208,16 +211,16 @@ class AdvisorConversionReportService extends BaseService
                     ) as '.$as, $this->getBindings($table));
         };
 
-        // $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatuses) and :table.source NOT IN (:excludedSources)';
 
         if ($lob === quoteTypeCode::Health) {
-            // $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatusesHealth)';
-            $newLeadsRaw = 'SUM(CASE WHEN :table.quote_status_id = :newLeadHealth THEN 1 ELSE 0 END) as new_leads';
+            $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:lostStatuses) AND personal_quote_details.lost_reason_id IN (:lostReasons) THEN 1 ELSE 0 END) as not_interested';
+            $newLeadsRaw = 'SUM(CASE WHEN :table.quote_status_id = :quotedLead THEN 1 ELSE 0 END) as new_leads';
+            $inProgressRaw = 'SUM(CASE WHEN :table.quote_status_id in (:inProgressHealthStatuses) THEN 1 ELSE 0 END) as in_progress';
         }else{
             $newLeadsRaw = 'SUM(CASE WHEN :table.quote_status_id = :newLead and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads';
+            $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested';
+            $inProgressRaw = 'SUM(CASE WHEN :table.quote_status_id in (:inProgressStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress';
         }
-    
-        // $notInterestedRaw .= ' THEN 1 ELSE 0 END) as not_interested';
 
         $query->addSelect(
             DB::raw(
@@ -227,10 +230,10 @@ class AdvisorConversionReportService extends BaseService
                 strtr($newLeadsRaw, $this->getBindings($table))
             ),
             DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings($table))
+                strtr($notInterestedRaw, $this->getBindings($table))
             ),
             DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id in (:inProgressStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings($table))
+                strtr($inProgressRaw, $this->getBindings($table))
             ),
             DB::raw(
                 strtr('SUM(CASE WHEN :table.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings($table))
@@ -563,8 +566,8 @@ class AdvisorConversionReportService extends BaseService
         $query->when(isset($filters->leadType), function ($subQuery) use ($filters, $table) {
             $quoteStatuses = match ($filters->leadType) {
                 ReportsLeadTypeEnum::NEW_LEADS => ($filters->lob == quoteTypeCode::Health) ? [QuoteStatusEnum::Quoted] : [QuoteStatusEnum::NewLead],
-                ReportsLeadTypeEnum::NOT_INTERESTED => $this->getNotInterestedStatuses(),
-                ReportsLeadTypeEnum::IN_PROGRESS => $this->getInProgressStatuses(),
+                ReportsLeadTypeEnum::NOT_INTERESTED => ($filters->lob == quoteTypeCode::Health) ? $this->getLostStatuses() : $this->getNotInterestedStatuses(),
+                ReportsLeadTypeEnum::IN_PROGRESS => ($filters->lob == quoteTypeCode::Health) ?  $this->getInProgressHealthStatuses() : $this->getInProgressStatuses(),
                 ReportsLeadTypeEnum::BAD_LEAD => $this->getBadLeadStatuses(),
                 ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT => [QuoteStatusEnum::IMRenewal],
                 default => [],
