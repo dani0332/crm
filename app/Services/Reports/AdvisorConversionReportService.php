@@ -568,7 +568,7 @@ class AdvisorConversionReportService extends BaseService
             $quoteStatuses = match ($filters->leadType) {
                 ReportsLeadTypeEnum::NEW_LEADS => ($filters->lob == quoteTypeCode::Health) ? [QuoteStatusEnum::Quoted] : [QuoteStatusEnum::NewLead],
                 ReportsLeadTypeEnum::NOT_INTERESTED => ($filters->lob == quoteTypeCode::Health) ? $this->getLostStatuses() : $this->getNotInterestedStatuses(),
-                ReportsLeadTypeEnum::IN_PROGRESS => ($filters->lob == quoteTypeCode::Health) ?  : $this->getInProgressStatuses(),
+                ReportsLeadTypeEnum::IN_PROGRESS => ($filters->lob == quoteTypeCode::Health) ? $this->getInProgressHealthStatuses() : $this->getInProgressStatuses(),
                 ReportsLeadTypeEnum::BAD_LEAD => $this->getBadLeadStatuses(),
                 ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT => [QuoteStatusEnum::IMRenewal],
                 default => [],
