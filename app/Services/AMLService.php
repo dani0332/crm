@@ -379,6 +379,8 @@ class AMLService
      * @return object containing properties:
      *                - 'status' (bool)
      *                - 'message' (string)
+     *
+     * Need to refactor this code to not call controller from here
      */
     public function quoteAmlProcessCall(array $amlRequestData, int $quoteTypeId, int $quoteRequestId): object
     {
