@@ -607,11 +607,11 @@ const checkMissingTravelAmlRequirement = () => {
     policyIssuanceEnum.POLICY_ISSUANCE_API_STATUS_YES_ID;
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
   const isAmlScreeningCleared = props.isAmlClearedForQuote;
-  
+
   if (
     isQuoteTypeTravel &&
     isPolicyIssuanceStatusIsYes &&
-    ! isAmlScreeningCleared
+    !isAmlScreeningCleared
   ) {
     const response = axios
       .get(route('check-missing-travelAml-requirement'), {
