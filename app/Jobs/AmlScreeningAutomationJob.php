@@ -95,11 +95,11 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
 
         try {
             $insuredPersonData = app(AMLService::class)->getInsuredPersonDetails($idType, $idNumber);
-            LoggerService::info($this->className.' - reqCall: getInsuredPersonDetails - response: '.($insuredPersonData->status ? 'success' : 'error'));
+            LoggerService::info($this->className.' - getInsuredPersonDetails - response: '.($insuredPersonData ? '200' : '404'));
 
             $customer = $customerTravelInfo;
-            if ($insuredPersonData->status) {
-                $customer = [...$customerTravelInfo, ...(array) $insuredPersonData->response];
+            if (! empty($insuredPersonData)) {
+                $customer = [...$customerTravelInfo, ...(array) $insuredPersonData];
             }
 
             // Prepare AML check request data
@@ -120,14 +120,14 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             $quoteAmlProcessCall = app(AMLService::class)->quoteAmlProcessCall($amlRequestData, $this->quoteType->id(), $this->quoteRequest->id);
             if (! $quoteAmlProcessCall->status) {
                 $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Error: '.$quoteAmlProcessCall->message]);
-                LoggerService::error($this->className.' - Completed - Error: '.$quoteAmlProcessCall->message);
+                LoggerService::error($this->className.' - Completed - AmlProcessCall - error: '.$quoteAmlProcessCall->message);
 
                 return;
             }
 
             $this->quoteRequest->refresh();
             $amlAutomation->update(['status' => AmlAutomationStatus::COMPLETE_STATUS, 'result' => $quoteAmlProcessCall->message]);
-            LoggerService::info($this->className.' - Completed - reqCall: quoteUpdate - response: '.$quoteAmlProcessCall->message);
+            LoggerService::info($this->className.' - Completed - AmlProcessCall - response: '.$quoteAmlProcessCall->message);
 
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);

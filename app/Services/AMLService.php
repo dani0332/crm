@@ -356,7 +356,7 @@ class AMLService
      *                - 'message' (string)
      *                - 'response' (object|null) may not exists
      */
-    public function getInsuredPersonDetails(string $idType, string $idNumber): object
+    public function getInsuredPersonDetails(string $idType, string $idNumber): object | null
     {
         $insuredPersonDetails = Insured::where([
             'id_type' => $idType,
