@@ -124,7 +124,7 @@ class QuoteAllocation extends Command
 
             LoggerService::startQuoteLogging($lead);
 
-            LoggerService::info('Processing record for Quote Allocation', extra: [
+            LoggerService::info('Processing record for Quote Allocation', [
                 'payment_status_id' => $lead->payment_status_id,
                 'source' => $lead->source,
                 'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
@@ -170,7 +170,7 @@ class QuoteAllocation extends Command
         foreach ($leads->get() as $lead) {
             LoggerService::startQuoteLogging($lead);
 
-            LoggerService::info('Processing Health record for Quote Allocation', extra: [
+            LoggerService::info('Processing Health record for Quote Allocation', [
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
@@ -219,7 +219,7 @@ class QuoteAllocation extends Command
 
             LoggerService::startQuoteLogging($lead);
 
-            LoggerService::info('Processing Travel record for Quote Allocation', extra: [
+            LoggerService::info('Processing Travel record for Quote Allocation', [
                 'payment_status_id' => $lead->payment_status_id,
                 'sic_advisor_requested' => $lead->sic_advisor_requested,
                 'quote_status_id' => $lead->quote_status_id,
