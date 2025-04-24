@@ -132,7 +132,6 @@ class AdvisorConversionReportService extends BaseService
                     })
                     ->pluck('user_id')
                     ->toArray();
-                    $userIds = $this->getUsers($userIds);
             }
 
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
@@ -299,7 +298,9 @@ class AdvisorConversionReportService extends BaseService
                     })
                     ->pluck('user_id')
                     ->toArray();
-                $userIds = $this->getUsers($userIds);
+                if($lob == quoteTypeCode::Health){
+                    $userIds = $this->getUsers($userIds);
+                }
             }
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
@@ -567,7 +568,7 @@ class AdvisorConversionReportService extends BaseService
             $quoteStatuses = match ($filters->leadType) {
                 ReportsLeadTypeEnum::NEW_LEADS => ($filters->lob == quoteTypeCode::Health) ? [QuoteStatusEnum::Quoted] : [QuoteStatusEnum::NewLead],
                 ReportsLeadTypeEnum::NOT_INTERESTED => ($filters->lob == quoteTypeCode::Health) ? $this->getLostStatuses() : $this->getNotInterestedStatuses(),
-                ReportsLeadTypeEnum::IN_PROGRESS => ($filters->lob == quoteTypeCode::Health) ?  $this->getInProgressHealthStatuses() : $this->getInProgressStatuses(),
+                ReportsLeadTypeEnum::IN_PROGRESS => ($filters->lob == quoteTypeCode::Health) ?  : $this->getInProgressStatuses(),
                 ReportsLeadTypeEnum::BAD_LEAD => $this->getBadLeadStatuses(),
                 ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT => [QuoteStatusEnum::IMRenewal],
                 default => [],
