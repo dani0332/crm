@@ -68,5 +68,6 @@ class UpdateTravelRequest extends FormRequest
     public function failedValidation(Validator $validator)
     {
         $errors = $validator->errors(); // Here is your array of errors
+        dd($errors);
     }
 }
