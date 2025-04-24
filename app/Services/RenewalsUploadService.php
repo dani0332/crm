@@ -857,24 +857,7 @@ class RenewalsUploadService
                     $quoteData['business_type_of_insurance_id'] = $businessSubline->id;
                 }
             }
-            if (isset($data['registration_type'])) {
-                $quoteData['registration_type'] = $data['registration_type'];
-            }
-            if (isset($data['vehicle_use'])) {
-                $quoteData['vehicle_use'] = $data['vehicle_use'];
-            }
-            if (isset($data['business_activity'])) {
-                $quoteData['business_activity'] = $data['business_activity'];
-            }
-            if (isset($data['driver_name'])) {
-                $quoteData['driver_name'] = $data['driver_name'];
-            }
-            if (isset($data['driver_nationality'])) {
-                $quoteData['driver_nationality'] = $data['driver_nationality'];
-            }
-            if (isset($data['driver_dob'])) {
-                $quoteData['driver_dob'] = $data['driver_dob'];
-            }
+
             $quote = $quoteObject->create($quoteData);
             if (! $isQuotePersonal) {
                 $this->syncQuote($quote, $quoteData);
@@ -1110,14 +1093,7 @@ class RenewalsUploadService
                 $quoteData['currently_insured_with'] = $insurer->text;
             }
 
-            if ($data['registration_type'] == CarRegistrationType::COMPANY) {
-                $quoteData['registration_type'] = $data['registration_type'];
-                $quoteData['vehicle_use'] = $data['vehicle_use'];
-                $quoteData['business_activity'] = $data['business_activity'] ?? null;
-                $quoteData['driver_name'] = $data['driver_name'] ?? null;
-                $quoteData['driver_nationality'] = $data['driver_nationality'] ?? null;
-                $quoteData['driver_dob'] = $data['driver_dob'] ?? null;
-            }
+
 
             LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
 
@@ -1834,34 +1810,7 @@ class RenewalsUploadService
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
                                 $leadValidationErrors->push('Invalid Previous Advisor Email');
                             }
-                            if (empty($leadData->registration_type)) {
-                                $leadValidationErrors->push('Registration Type is required');
-                            }
-                            if (! empty($leadData->registration_type) && ! CarRegistrationType::hasValue($leadData->registration_type)) {
-                                $leadValidationErrors->push('Invalid Registration Type ');
-                            }
-                            if (! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY) {
-                                if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL) {
-                                    if (empty($leadData->business_activity)) {
-                                        $leadValidationErrors->push('Business Activity Name is required');
-                                    }
-                                }
-                                if (empty($leadData->vehicle_use)) {
-                                    $leadValidationErrors->push('Vehicle Use is required');
-                                }
-                                if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::PRIVATE) {
-                                    if (empty($leadData->driver_name)) {
-                                        $leadValidationErrors->push('Driver Name is required');
-                                    }
-                                    if (empty($leadData->driver_nationality)) {
-                                        $leadValidationErrors->push('Driver Nationality is required');
-                                    }
-                                    if (empty($leadData->driver_dob)) {
-                                        $leadValidationErrors->push('Driver Date of Birth is required');
-                                    }
-                                }
 
-                            }
                             // Validation batch for car removed as per the discussion with the team
                             // click up: https://app.clickup.com/t/86eqmrdec
                             // if ($leadData->batch) {

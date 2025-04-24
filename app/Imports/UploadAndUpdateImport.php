@@ -2,8 +2,6 @@
 
 namespace App\Imports;
 
-use App\Enums\CarRegistrationType;
-use App\Enums\CarVehicleUse;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -162,16 +160,8 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             'previous_advisor' => ['index' => 39, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
             'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:500'],
             'is_gcc' => ['index' => 41, 'title' => 'Is GCC', 'rules' => 'max:3'],
-            'registration_type' => ['index' => 42, 'title' => 'Registration Type', 'rules' => 'max:100|in:'.implode(',', CarRegistrationType::getValues())],
-            'vehicle_use' => ['index' => 43, 'title' => 'Vehicle Use', 'rules' => 'nullable|max:100|in:'.implode(',', CarVehicleUse::getValues())],
-            'business_activity' => ['index' => 44, 'title' => 'Business Activity', 'rules' => 'nullable|max:100'],
-            'driver_name' => ['index' => 45, 'title' => 'Driver Name', 'rules' => 'nullable|max:100'],
-            'driver_nationality' => ['index' => 46, 'title' => 'Driver Nationality', 'rules' => 'nullable|max:100'],
-            'driver_dob' => ['index' => 47, 'title' => 'Driver Date of Birth', 'rules' => 'nullable|max:100'],
         ];
 
-        // Add conditional validation rules
-        $columns['vehicle_use']['rules'] = 'nullable|max:100|in:'.implode(',', CarVehicleUse::getValues());
 
         if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
             $columns['make']['rules'][] = 'required';
@@ -227,68 +217,4 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
         ];
     }
 
-    /**
-     * Add custom validation rules with withValidator
-     *
-     * @param  \Illuminate\Validation\Validator  $validator
-     */
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            // Get data from the validator - this is the data being validated
-            $data = $validator->getData();
-
-            // In Laravel Excel, the data is structured as row index => field values
-            // We need to check if the required fields exist and have proper values
-
-            foreach ($data as $rowIndex => $row) {
-                // Skip header row if needed
-                if ($rowIndex == 0) {
-                    continue;
-                }
-
-                // Check registration_type and vehicle_use relationship
-                if (isset($row[42]) && $row[42] == CarRegistrationType::COMPANY) {
-                    if (isset($row[43]) && empty($row[43])) {
-                        $validator->errors()->add(
-                            $rowIndex.'.43',
-                            'Vehicle Use is required when Registration Type is Company.'
-                        );
-                    }
-                }
-
-                // Check vehicle_use and business_activity relationship
-                if (isset($row[43]) && $row[43] == CarVehicleUse::COMMERCIAL) {
-                    if (isset($row[44]) && empty($row[44])) {
-                        $validator->errors()->add(
-                            $rowIndex.'.44',
-                            'Business Activity is required when Vehicle Use is Commercial.'
-                        );
-                    }
-                }
-
-                // Check vehicle_use and driver fields relationship
-                if (isset($row[43]) && $row[43] == CarVehicleUse::PRIVATE) {
-                    if (isset($row[45]) && empty($row[45])) {
-                        $validator->errors()->add(
-                            $rowIndex.'.45',
-                            'Driver Name is required when Vehicle Use is Private.'
-                        );
-                    }
-                    if (isset($row[46]) && empty($row[46])) {
-                        $validator->errors()->add(
-                            $rowIndex.'.46',
-                            'Driver Nationality is required when Vehicle Use is Private.'
-                        );
-                    }
-                    if (isset($row[47]) && empty($row[47])) {
-                        $validator->errors()->add(
-                            $rowIndex.'.47',
-                            'Driver Date of Birth is required when Vehicle Use is Private.'
-                        );
-                    }
-                }
-            }
-        });
-    }
 }
