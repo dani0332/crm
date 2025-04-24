@@ -83,6 +83,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $checkCustomerTravelInfo = $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
         if (! $checkCustomerTravelInfo['status']) {
             LoggerService::error($this->className.' - '.$checkCustomerTravelInfo['message']);
+
             return;
         }
 
