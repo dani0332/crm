@@ -64,7 +64,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         LoggerService::startQuoteLogging($this->quoteRequest);
 
         $isApiIssuanceStatusYes = $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-        $isAMLPending = $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
+        $isAMLPending = empty($this->quoteRequest->aml_status) ?: $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
         $isAutomationInQueue = $this->quoteRequest->amlAutomation?->status == AmlAutomationStatus::QUEUE_STATUS;
 
         if (! $isApiIssuanceStatusYes || ! $isAMLPending || ! $isAutomationInQueue) {
