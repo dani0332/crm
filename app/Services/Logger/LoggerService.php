@@ -12,6 +12,8 @@ class LoggerService
     public static function startQuoteLogging(Model|string|null $lead = null, array $extra = [])
     {
         if (empty($lead)) {
+            self::alert('startQuoteLogging - Lead is empty');
+
             return;
         }
 
