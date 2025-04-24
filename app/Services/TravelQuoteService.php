@@ -759,7 +759,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->destination_id = $request->destination_id;
         $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
-        (isset($request->region_cover_for_id) && $request->region_cover_for_id != 'undefined' ) && $travelQuote->region_cover_for_id = $request->region_cover_for_id;
+        (isset($request->region_cover_for_id) && $request->region_cover_for_id != 'undefined') && $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->policy_start_date = $request->policy_start_date;
         $travelQuote->details = $request->details;
         $travelQuote->save();
