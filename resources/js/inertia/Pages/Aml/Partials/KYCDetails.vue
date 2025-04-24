@@ -889,6 +889,7 @@ onMounted(() => {
     </dl>
     <div class="flex justify-end my-5 gap-x-2">
       <x-button
+        v-if="kycFormDetails.insured_id"
         size="sm"
         color="orange"
         type="submit"
@@ -897,6 +898,22 @@ onMounted(() => {
       >
         Save
       </x-button>
+      <x-tooltip v-else placement="left">
+        <x-button
+          size="sm"
+          color="orange"
+          type="submit"
+          class="px-6"
+          disabled
+        >
+          Save
+        </x-button>
+        <template #tooltip>
+          <span class="custom-tooltip-content">
+            Search the Insured's ID number
+          </span>
+        </template>
+      </x-tooltip>
     </div>
   </x-form>
 </template>
