@@ -764,6 +764,7 @@ const selectedPlanType = ref(null);
 const updateSelectedPlan = async selectedPlanData => {
   let data = {
     plan_id: selectedPlanData.plan.id,
+    code: page.props.quote.code
   };
 
   data.planType = selectedPlanData.extraDetails?.planType;
