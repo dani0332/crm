@@ -36,7 +36,6 @@ use App\Models\BusinessQuoteType;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
-use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\Emirate;
 use App\Models\Entity;
@@ -699,16 +698,7 @@ class AMLController extends Controller
 
     public function getInsuredPersonDetails(Request $request): \Illuminate\Http\JsonResponse
     {
-        $insuredPersonDetails = Insured::where([
-            'id_type' => $request->id_type,
-            'id_number' => $request->id_number,
-        ])->first();
-
-        if (! $insuredPersonDetails) {
-            $customerDetails = CustomerDetail::with(['customer:id,code,dob,gender,insured_first_name as first_name,insured_last_name as last_name,nationality_id'])
-                ->where(['id_type' => $request->id_type, 'id_number' => str_replace('-', '', $request->id_number)])->first();
-            $insuredPersonDetails = $customerDetails?->customer;
-        }
+        $insuredPersonDetails = app(AMLService::class)->getInsuredPersonDetails($request->id_type, $request->id_number);
 
         if ($insuredPersonDetails) {
             return response()->json(['status' => true, 'response' => $insuredPersonDetails, 'message' => 'Customer found with the entered ID number']);

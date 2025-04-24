@@ -52,6 +52,8 @@ class AMLScreeningCommand extends Command
             return false;
         }
 
+        LoggerService::info($this->className.' Started');
+
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
         if (! class_exists($quoteModel)) {
@@ -92,5 +94,6 @@ class AMLScreeningCommand extends Command
                 }
             });
         }
+        LoggerService::info($this->className.' Ended');
     }
 }
