@@ -9,8 +9,12 @@ use Illuminate\Support\Facades\Log;
 
 class LoggerService
 {
-    public static function startQuoteLogging(Model|string $lead, array $extra = [])
+    public static function startQuoteLogging(Model|string|null $lead = null, array $extra = [])
     {
+        if (empty($lead)) {
+            return;
+        }
+
         $refID = null;
 
         if ($lead instanceof string || is_string($lead)) {

@@ -423,7 +423,9 @@ class HomeQuoteRepository extends BaseRepository
                 // Track which fields were changed
                 $fieldsChanged = false;
                 $existingHomeQuote = HomeQuote::where('uuid', $uuid)->first();
-                LoggerService::startQuoteLogging($existingHomeQuote);
+                if ($existingHomeQuote) {
+                    LoggerService::startQuoteLogging($existingHomeQuote);
+                }
 
                 if ($existingHomeQuote) {
                     // Check if any of the fields that require a plan update have changed
