@@ -170,7 +170,7 @@ const customerTypeOptions = computed(() => {
     { value: customerTypeEnum.Entity, label: 'Entity' },
   ];
 });
-console.log(page.props.entityDetails?.entity);
+
 const screeningFormDetails = useForm({
   customer_type: null,
   customer_id: page.props.quoteRequest.customer_id,
@@ -254,8 +254,9 @@ watch(() => screeningFormDetails.customer_type, (newValue, oldValue) => {
 });
 
 function customerTypeConfirmation() {
-  // Store the previous customer type before showing the confirmation modal
-  // previousCustomerType.value = screeningFormDetails.customer_type;
+  if (screeningFormDetails.customer_type == newCustomerType.value) {
+    return;
+  }
   customerTypeConfirmationModel.value = true;
   if (screeningFormDetails.customer_type == customerTypeEnum.Individual) {
     confirmationMessage.value =
@@ -271,12 +272,7 @@ const updateScreeningDetails = () => {
   customerTypeConfirmationModel.value = false;
   modalHeaderMessage();
 };
-// Function to handle modal close without confirmation
-// const handleModalClose = () => {
-//     // Reset customer type to previous value
-//     screeningFormDetails.customer_type = previousCustomerType.value;
-//     customerTypeConfirmationModel.value = false;
-// }
+
 const documentIDTypeForScreening = computed(() => {
   return page.props.lookups.id_type
     ?.filter(docIDTypeScreening =>
@@ -675,6 +671,11 @@ onMounted(() => {
   // setFieldsByCustomerType();
   updateScreeningType();
 });
+
+const handleModalClose = () => {
+  screeningFormDetails.customer_type = oldCustomerType.value;
+  customerTypeConfirmationModel.value = false;
+}
 </script>
 <template>
   <x-modal
@@ -1021,11 +1022,9 @@ onMounted(() => {
     <x-modal
       v-model="customerTypeConfirmationModel"
       size="lg"
-      show-close
       :backdrop="false"
       :close-on-backdrop="false"
       persistent
-      @close="handleModalClose"
     >
       <div class="text-lg text-center">
         <span>{{ confirmationMessage }}</span>
@@ -1034,10 +1033,18 @@ onMounted(() => {
         <x-button
           size="sm"
           color="orange"
-          class="mt-4 text-center"
+          class="mt-4 text-center mr-2"
           @click="updateScreeningDetails"
         >
           <span>Confirm</span>
+        </x-button>
+        <x-button
+          size="sm"
+          color="gray"
+          class="mt-4 text-center"
+          @click="handleModalClose"
+        >
+          <span>Close</span>
         </x-button>
       </div>
     </x-modal>
