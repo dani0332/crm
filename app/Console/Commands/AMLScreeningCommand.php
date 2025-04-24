@@ -64,7 +64,7 @@ class AMLScreeningCommand extends Command
         $quoteRequestQuery = $quoteModel::select('id', 'code', 'api_issuance_status_id', 'aml_status')
             ->where('created_at', '>', $date)
             ->where('api_issuance_status_id', PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->whereNull('aml_status')
                     ->orWhere('aml_status', AMLStatusCode::AMLPending);
             })
