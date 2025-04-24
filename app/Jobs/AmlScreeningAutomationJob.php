@@ -51,7 +51,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle()
     {
         $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
         if (! $isAmlAutomationEnabled) {
