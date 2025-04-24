@@ -424,8 +424,9 @@ class HomeQuoteRepository extends BaseRepository
                 $fieldsChanged = false;
                 $existingHomeQuote = HomeQuote::where('uuid', $uuid)->first();
 
+                LoggerService::startQuoteLogging("HOM-{$uuid}");
+
                 if ($existingHomeQuote) {
-                    LoggerService::startQuoteLogging($existingHomeQuote);
                     // Check if any of the fields that require a plan update have changed
                     $fieldsThatTriggerPlanUpdate = [
                         'possession_type_id',
