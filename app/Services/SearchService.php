@@ -367,6 +367,7 @@ class SearchService extends BaseService
     {
         if ($request->has('company_name')) {
             $selectColumns[] = 'insured.company_name';
+            /* $selectColumns[] = 'entities.company_name'; */
         } else {
             $selectColumns[] = DB::raw('"N/A" as company_name');
         }

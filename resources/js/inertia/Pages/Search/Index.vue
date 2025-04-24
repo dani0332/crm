@@ -748,7 +748,10 @@ onMounted(() => {
               :helper="
                 availableFilters.date_type
                   ? ''
-                  : availableFilters.company_name
+                  : availableFilters.company_name ||
+                      availableFilters.policy_number ||
+                      availableFilters.insurer_tax_invoice_number ||
+                      availableFilters.insurer_commission_tax_invoice_number
                     ? ''
                     : 'Please select the date type first'
               "
