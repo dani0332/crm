@@ -21,10 +21,12 @@ use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\Insured;
 use App\Models\JetskiQuote;
 use App\Models\KycLog;
 use App\Models\LifeQuote;
@@ -356,14 +358,18 @@ class AMLService
      */
     public function getInsuredPersonDetails(string $idType, string $idNumber): object
     {
-        // Prepare the request for insured person details
-        $insuredPersonRequest = new Request([
+        $insuredPersonDetails = Insured::where([
             'id_type' => $idType,
             'id_number' => $idNumber,
-        ]);
+        ])->first();
 
-        // Fetch the insured person details
-        return app(AMLController::class)->getInsuredPersonDetails($insuredPersonRequest)->getData();
+        if (! $insuredPersonDetails) {
+            $customerDetails = CustomerDetail::with(['customer:id,code,dob,gender,insured_first_name as first_name,insured_last_name as last_name,nationality_id'])
+                ->where(['id_type' => $idType, 'id_number' => str_replace('-', '', $idNumber)])->first();
+            $insuredPersonDetails = $customerDetails?->customer;
+        }
+
+        return $insuredPersonDetails;
     }
 
     /**
