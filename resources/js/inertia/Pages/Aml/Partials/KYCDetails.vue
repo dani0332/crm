@@ -1,5 +1,11 @@
 <script setup>
-const props = defineProps({});
+import { watch } from 'vue';
+
+const props = defineProps({
+  searchData: { type: Object, default: null },
+  searchSuccess: { type: Boolean, default: false },
+  customerType: { type: String, default: '' }
+});
 const page = usePage();
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 const convertDate = date => useConvertDate(date);
@@ -11,6 +17,8 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const complianceDisable = ref(true);
 const patternFieldDisable = ref(true);
+const insuredDetails = page.props.insuredDetails;
+const lookups = page.props.lookups;
 const isScreeningIndividual =
   page.props.screeningType == page.props.customerTypeEnum.IndividualShort;
 const dateFormat = date =>
@@ -28,46 +36,46 @@ const countryList = computed(() => {
   return generateOptions(page.props.nationalities, 'id', 'country_name');
 });
 const residentialStatusOptions = computed(() => {
-  return generateOptions(page.props.lookups.resident_status, 'code', 'text');
+  return generateOptions(lookups.resident_status, 'code', 'text');
 });
 const documentIdTypeOptions = computed(() => {
   return generateOptions(
     isScreeningIndividual
-      ? page.props.lookups.id_type
-      : page.props.lookups.entity_document_type,
+      ? lookups.id_type
+      : lookups.entity_document_type,
     'code',
     'text',
   );
 });
 const modeOfContactOptions = computed(() => {
-  return generateOptions(page.props.lookups.mode_of_contact, 'code', 'text');
+  return generateOptions(lookups.mode_of_contact, 'code', 'text');
 });
 const modeOfDeliveryOptions = computed(() => {
-  return generateOptions(page.props.lookups.mode_of_delivery, 'code', 'text');
+  return generateOptions(lookups.mode_of_delivery, 'code', 'text');
 });
 const professionalTitleOptions = computed(() => {
-  return generateOptions(page.props.lookups.professional_title, 'code', 'text');
+  return generateOptions(lookups.professional_title, 'code', 'text');
 });
 const employmentSectorsOptions = computed(() => {
-  return generateOptions(page.props.lookups.employment_sector, 'code', 'text');
+  return generateOptions(lookups.employment_sector, 'code', 'text');
 });
 const companyPositionOptions = computed(() => {
-  return generateOptions(page.props.lookups.company_position, 'code', 'text');
+  return generateOptions(lookups.company_position, 'code', 'text');
 });
 const legalStructureOptions = computed(() => {
-  return generateOptions(page.props.lookups.legal_structure, 'code', 'text');
+  return generateOptions(lookups.legal_structure, 'code', 'text');
 });
 const industryTypeOptions = computed(() => {
-  return generateOptions(page.props.lookups.company_type, 'code', 'text');
+  return generateOptions(lookups.company_type, 'code', 'text');
 });
 const placeOfIssuanceOptions = computed(() => {
-  return generateOptions(page.props.lookups.issuance_place, 'code', 'text');
+  return generateOptions(lookups.issuance_place, 'code', 'text');
 });
 const issuingAuthorityOptions = computed(() => {
-  return generateOptions(page.props.lookups.issuing_authority, 'code', 'text');
+  return generateOptions(lookups.issuing_authority, 'code', 'text');
 });
 const uboRelationOptions = computed(() => {
-  return generateOptions(page.props.lookups.ubo_relation, 'code', 'text');
+  return generateOptions(lookups.ubo_relation, 'code', 'text');
 });
 const transactionVolumeOptions = [
   ['less-than-3-in-month', 'Less than 3 transactions in a month'],
@@ -105,104 +113,103 @@ function activePatternField() {
 const kycFormDetails = useForm({
   quote_uuid: page.props.quoteRequest.uuid,
   quote_type_id: page.props.quoteType.id,
-  customer_id: page.props.quoteRequest.customer_id,
-  insured_id: page.props.insuredDetails?.insured?.id,
+  insured_id: insuredDetails?.insured?.id,
   first_name:
     (isScreeningIndividual
-      ? page.props.insuredDetails?.insured?.first_name
+      ? insuredDetails?.insured?.first_name
       : page.props.quoteRequest.first_name) ?? null,
   last_name:
     (isScreeningIndividual
-      ? page.props.insuredDetails?.insured?.last_name
+      ? insuredDetails?.insured?.last_name
       : page.props.quoteRequest.last_name) ?? null,
   residential_address:
     (isScreeningIndividual
-      ? page.props.insuredDetails?.insured?.insured_kyc?.residential_address
-      : page.props.insuredDetails?.insured?.insured_kyc?.registered_address) ??
+      ? insuredDetails?.insured?.insured_kyc?.residential_address
+      : insuredDetails?.insured?.insured_kyc?.registered_address) ??
     null,
-  mobile_number: page.props.quoteRequest.mobile_no,
-  email: page.props.quoteRequest.email,
+  mobile_number: insuredDetails?.insured?.insured_kyc?.mobile_no ?? page.props.quoteRequest.mobile_no,
+  email: insuredDetails?.insured?.insured_kyc?.email ?? page.props.quoteRequest.email,
   customer_tenure:
-    page.props.insuredDetails?.insured?.insured_kyc?.customer_tenure ?? null,
-  id_type: page.props.insuredDetails?.insured?.id_type ?? null,
-  id_number: page.props.insuredDetails?.insured?.id_number ?? null,
+    insuredDetails?.insured?.insured_kyc?.customer_tenure ?? null,
+  id_type: insuredDetails?.insured?.id_type ?? null,
+  id_number: insuredDetails?.insured?.id_number ?? null,
   id_issue_date: convertDate(
-    page.props.insuredDetails?.insured?.insured_kyc?.id_issuance_date,
+    insuredDetails?.insured?.insured_kyc?.id_issuance_date,
   ),
   id_expiry_date: convertDate(
-    page.props.insuredDetails?.insured?.insured_kyc?.id_expiry_date ?? null,
+    insuredDetails?.insured?.insured_kyc?.id_expiry_date ?? null,
   ),
   mode_of_contact:
-    page.props.insuredDetails?.insured?.insured_kyc?.mode_of_contact ??
+    insuredDetails?.insured?.insured_kyc?.mode_of_contact ??
     'phoneAndEmail',
   mode_of_delivery:
-    page.props.insuredDetails?.insured?.insured_kyc?.mode_of_delivery ??
+    insuredDetails?.insured?.insured_kyc?.mode_of_delivery ??
     'mod-delivery-pse',
   pep:
-    page.props.insuredDetails?.insured?.insured_kyc?.pep ??
+    insuredDetails?.insured?.insured_kyc?.pep ??
     page.props.quoteAmlStatus,
   financial_sanctions:
-    page.props.insuredDetails?.insured?.insured_kyc?.financial_sanctions ??
+    insuredDetails?.insured?.insured_kyc?.financial_sanctions ??
     page.props.quoteAmlStatus,
   dual_nationality:
-    page.props.insuredDetails?.insured?.insured_kyc?.dual_nationality ??
+    insuredDetails?.insured?.insured_kyc?.dual_nationality ??
     page.props.quoteAmlStatus,
   transaction_pattern:
-    page.props.insuredDetails?.insured?.insured_kyc?.transaction_pattern ??
+    insuredDetails?.insured?.insured_kyc?.transaction_pattern ??
     'no_changes',
   // Individual Customer Type
-  dob: dateFormat(page.props.insuredDetails?.insured?.dob) || null,
-  nationality_id: page.props.insuredDetails?.insured?.nationality_id ?? null,
+  dob: dateFormat(insuredDetails?.insured?.dob) || null,
+  nationality_id: insuredDetails?.insured?.nationality_id ?? null,
   country_of_residence:
-    page.props.insuredDetails?.insured?.insured_kyc?.country_of_residence ??
+    insuredDetails?.insured?.insured_kyc?.country_of_residence ??
     page.props.defaultNationality,
   place_of_birth:
-    page.props.insuredDetails?.insured?.insured_kyc?.place_of_birth ?? null,
+    insuredDetails?.insured?.insured_kyc?.place_of_birth ?? null,
   resident_status:
-    page.props.insuredDetails?.insured?.insured_kyc?.resident_status ??
+    insuredDetails?.insured?.insured_kyc?.resident_status ??
     'uaeResident',
   in_sanction_list:
-    page.props.insuredDetails?.insured?.insured_kyc?.in_sanction_list ??
+    insuredDetails?.insured?.insured_kyc?.in_sanction_list ??
     page.props.quoteAmlStatus,
   is_partner:
-    page.props.insuredDetails?.insured?.insured_kyc?.is_partner ??
+    insuredDetails?.insured?.insured_kyc?.is_partner ??
     incomeSource.value,
   deal_sanction_list:
-    page.props.insuredDetails?.insured?.insured_kyc?.deal_sanction_list ??
+    insuredDetails?.insured?.insured_kyc?.deal_sanction_list ??
     page.props.quoteAmlStatus,
   is_operation_high_risk:
-    page.props.insuredDetails?.insured?.insured_kyc?.is_operation_high_risk ??
+    insuredDetails?.insured?.insured_kyc?.is_operation_high_risk ??
     page.props.quoteAmlStatus,
   professional_title:
-    page.props.insuredDetails?.insured?.insured_kyc?.job_title ?? null,
+    insuredDetails?.insured?.insured_kyc?.job_title ?? null,
   employment_sector:
-    page.props.insuredDetails?.insured?.insured_kyc?.employment_sector ?? null,
+    insuredDetails?.insured?.insured_kyc?.employment_sector ?? null,
   trade_license:
-    page.props.insuredDetails?.insured?.insured_kyc?.trade_license_no ?? null,
+    insuredDetails?.insured?.insured_kyc?.trade_license_no ?? null,
   company_position:
-    page.props.insuredDetails?.insured?.insured_kyc?.position_in_company ??
+    insuredDetails?.insured?.insured_kyc?.position_in_company ??
     null,
   premium_tenure:
-    page.props.insuredDetails?.insured?.insured_kyc?.premium_tenure ??
+    insuredDetails?.insured?.insured_kyc?.premium_tenure ??
     'single_premium',
   income_source:
-    page.props.insuredDetails?.insured?.insured_kyc?.source_of_income ?? null,
+    insuredDetails?.insured?.insured_kyc?.source_of_income ?? null,
   // Entity Customer Type
-  company_name: page.props.insuredDetails?.insured?.company_name ?? null,
+  company_name: insuredDetails?.insured?.company_name ?? null,
   legal_structure:
-    page.props.insuredDetails?.insured?.insured_kyc?.legal_structure ?? null,
-  industry_type: page.props.insuredDetails?.insured?.industry_type_code ?? null,
+    insuredDetails?.insured?.insured_kyc?.legal_structure ?? null,
+  industry_type: insuredDetails?.insured?.industry_type_code ?? null,
   country_of_corporation:
-    page.props.insuredDetails?.insured?.insured_kyc?.country_of_corporation ??
+    insuredDetails?.insured?.insured_kyc?.country_of_corporation ??
     null,
   communication_address:
-    page.props.insuredDetails?.insured?.insured_kyc?.communication_address ??
+    insuredDetails?.insured?.insured_kyc?.communication_address ??
     null,
-  website: page.props.insuredDetails?.insured?.insured_kyc?.website ?? null,
+  website: insuredDetails?.insured?.insured_kyc?.website ?? null,
   place_of_issue:
-    page.props.insuredDetails?.insured?.insured_kyc?.issaunce_place ?? null,
+    insuredDetails?.insured?.insured_kyc?.issuance_place ?? null,
   issuing_authority:
-    page.props.insuredDetails?.insured?.insured_kyc?.id_issuance_authority ??
+    insuredDetails?.insured?.insured_kyc?.id_issuance_authority ??
     null,
   manager_name:
     page.props.entityDetails?.entity?.quote_member?.first_name ?? null,
@@ -212,16 +219,16 @@ const kycFormDetails = useForm({
   manager_position:
     page.props.entityDetails?.entity?.quote_member?.relation_code ?? null,
   is_sanction_match:
-    page.props.insuredDetails?.insured?.insured_kyc?.is_sanction_match ?? null,
-  in_fatf: page.props.insuredDetails?.insured?.insured_kyc?.in_fatf ?? null,
+    insuredDetails?.insured?.insured_kyc?.is_sanction_match ?? null,
+  in_fatf: insuredDetails?.insured?.insured_kyc?.in_fatf ?? null,
   deal_sanction_list:
-    page.props.insuredDetails?.insured?.insured_kyc?.deal_sanction_list ?? null,
+    insuredDetails?.insured?.insured_kyc?.deal_sanction_list ?? null,
   is_owner_high_risk:
-    page.props.insuredDetails?.insured?.insured_kyc?.is_owner_high_risk ?? null,
+    insuredDetails?.insured?.insured_kyc?.is_owner_high_risk ?? null,
   transaction_volume:
-    page.props.insuredDetails?.insured?.insured_kyc?.transaction_volume ?? null,
+    insuredDetails?.insured?.insured_kyc?.transaction_volume ?? null,
   transaction_activities:
-    page.props.insuredDetails?.insured?.insured_kyc?.transaction_activities ??
+    insuredDetails?.insured?.insured_kyc?.transaction_activities ??
     null,
 });
 function insuredKycFormValidate() {
@@ -274,14 +281,100 @@ onMounted(() => {
   changeIncomeSource();
   activePatternField();
 });
+
+// Add watcher for searchData
+watch(
+  () => props.searchData,
+  (newData) => {
+    if (!props.searchSuccess || !newData || !newData.insured_kyc) return;
+    console.log(newData);
+    
+    const customerTypeEnum = page.props.customerTypeEnum;
+    const kyc = newData.insured_kyc;
+    
+    // Set common fields for both individual and entity
+    const commonFields = {
+      insured_id: kyc.id,
+      first_name: kyc.first_name,
+      last_name: kyc.last_name,
+      residential_address: kyc.residential_address,
+      mobile_number: kyc.mobile_no,
+      email: kyc.email,
+      customer_tenure: kyc.customer_tenure,
+      id_type: kyc.id_type,
+      id_number: kyc.id_number,
+      id_issue_date: convertDate(kyc.id_issuance_date),
+      id_expiry_date: convertDate(kyc.id_expiry_date),
+      mode_of_contact: kyc.mode_of_contact,
+      mode_of_delivery: kyc.mode_of_delivery,
+      transaction_pattern: kyc.transaction_pattern,
+      // Compliance fields
+      pep: kyc.pep,
+      financial_sanctions: kyc.financial_sanctions,
+      dual_nationality: kyc.dual_nationality,
+      in_sanction_list: kyc.in_sanction_list,
+      is_partner: kyc.is_partner,
+      deal_sanction_list: kyc.deal_sanction_list,
+      is_operation_high_risk: kyc.is_operation_high_risk,
+      is_sanction_match: kyc.is_sanction_match,
+      in_fatf: kyc.in_fatf,
+      is_owner_high_risk: kyc.is_owner_high_risk,
+      transaction_volume: kyc.transaction_volume,
+      transaction_activities: kyc.transaction_activities
+    };
+    
+    // Apply all common fields to the form
+    Object.entries(commonFields).forEach(([key, value]) => {
+      if (value !== undefined) {
+        kycFormDetails[key] = value;
+      }
+    });
+    
+    // Customer type specific fields
+    if (props.customerType === customerTypeEnum.Individual) {
+      // Individual specific fields
+      kycFormDetails.dob = dateFormat(newData.dob);
+      kycFormDetails.nationality_id = newData.nationality_id;
+      kycFormDetails.country_of_residence = kyc.country_of_residence;
+      kycFormDetails.place_of_birth = kyc.place_of_birth;
+      kycFormDetails.resident_status = kyc.residential_status || 'uaeResident';
+      kycFormDetails.premium_tenure = kyc.premium_tenure || 'single_premium';
+      kycFormDetails.income_source = kyc.source_of_income;
+      kycFormDetails.company_name = kyc.employer_company_name;
+      kycFormDetails.employment_sector = kyc.employment_sector;
+      kycFormDetails.professional_title = kyc.job_title;
+      
+      // Trigger income source handler to update related fields
+      if (kyc.source_of_income) {
+        changeIncomeSource();
+      }
+    } else if (props.customerType === customerTypeEnum.Entity) {
+      // Entity specific fields
+      kycFormDetails.company_name = newData.company_name;
+      kycFormDetails.legal_structure = kyc.legal_structure;
+      kycFormDetails.industry_type = newData.industry_type_code;
+      kycFormDetails.country_of_corporation = kyc.country_of_corporation;
+      kycFormDetails.communication_address = kyc.communication_address;
+      kycFormDetails.website = kyc.website;
+      kycFormDetails.place_of_issue = kyc.issuance_place;
+      kycFormDetails.issuing_authority = kyc.id_issuance_authority;
+      kycFormDetails.is_sanction_match = kyc.is_sanction_match;
+      kycFormDetails.is_owner_high_risk = kyc.is_owner_high_risk;
+      
+      // Manager fields are left commented out as in the original code
+      // They seem to be populated from a different data source (page.props.entityDetails)
+    }
+  },
+  { immediate: true, deep: true }
+);
 </script>
 <template>
   <x-form @submit="submitInsuredKycForm" :auto-focus="false">
     <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
-      <x-field label="Customer ID">
+      <x-field label="Insured ID">
         <x-input
-          v-model="kycFormDetails.customer_id"
-          placeholder="Customer ID"
+          v-model="kycFormDetails.insured_id"
+          placeholder="Insured ID"
           type="text"
           class="w-full"
           :disabled="true"

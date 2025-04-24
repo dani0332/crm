@@ -366,6 +366,8 @@ const entitySearchValidation = computed(() => {
   screeningFormDetails.clearErrors('trade_license_no');
   return true;
 });
+const searchResultData = ref(null);
+const searchSuccessStatus = ref(false);
 const searchInsuredDetails = customerType => {
   let searchInsuredValidation = 
     [customerTypeEnum.Individual, ''].includes(customerType)
@@ -381,6 +383,11 @@ const searchInsuredDetails = customerType => {
           clearErrors();
 
           let response = res.data.response;
+          
+          // Store search results to pass to KYCDetails
+          searchResultData.value = response;
+          searchSuccessStatus.value = true;
+          
           if (response.customer_type == customerTypeEnum.Individual) {
             IndividualDetailsFound.value = true;
             screeningFormDetails.insured_first_name = response.first_name;
@@ -428,6 +435,11 @@ function clearInsurerDetails(customerType) {
   screeningFormDetails.company_address = null;
   screeningFormDetails.industry_type_code = null;
   screeningFormDetails.emirate_of_registration_id = null;
+  
+  // Clear search results
+  searchResultData.value = null;
+  searchSuccessStatus.value = false;
+  
   customerType == customerTypeEnum.Individual
     ? (IndividualDetailsFound.value = false)
     : (EntityDetailsFound.value = false);
@@ -1018,7 +1030,11 @@ const handleModalClose = () => {
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>
     </div>
-    <KYCDetails />
+    <KYCDetails 
+      :searchData="searchResultData"
+      :searchSuccess="searchSuccessStatus"
+      :customerType="screeningFormDetails.customer_type"
+    />
     <x-modal
       v-model="customerTypeConfirmationModel"
       size="lg"

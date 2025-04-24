@@ -697,7 +697,7 @@ class AMLController extends Controller
                 'id_number' => $request->id_number,
             ];
 
-        $insuredDetails = Insured::where($whereClause)->first();
+        $insuredDetails = Insured::with('insuredKyc')->where($whereClause)->first();
 
         $customerType = $isEntity ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
         $status = (bool) $insuredDetails;
