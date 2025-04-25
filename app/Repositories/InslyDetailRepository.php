@@ -35,9 +35,11 @@ class InslyDetailRepository extends BaseRepository
         return InslyDetail::class;
     }
 
-    function buildSearchClause(string $field, mixed $value, string $type = 'exact')
+    public function buildSearchClause(string $field, mixed $value, string $type = 'exact')
     {
-        if (is_null($value) || $value === '') return null;
+        if (is_null($value) || $value === '') {
+            return null;
+        }
 
         switch ($type) {
             case 'exact':
@@ -45,17 +47,17 @@ class InslyDetailRepository extends BaseRepository
                     'text' => [
                         'query' => $value,
                         'path' => $field,
-                    ]
+                    ],
                 ];
 
             case 'like':
                 // For email and other simple like matches (e.g., for policy_no)
                 return [
                     'wildcard' => [
-                        'query' => '*' . strtolower($value) . '*',
+                        'query' => '*'.strtolower($value).'*',
                         'path' => $field,
                         'allowAnalyzedField' => true,
-                    ]
+                    ],
                 ];
 
             case 'like_regex':
@@ -67,10 +69,10 @@ class InslyDetailRepository extends BaseRepository
                                 // Wildcard search (LIKE %value%)
                                 [
                                     'wildcard' => [
-                                        'query' => '*' . strtolower($value) . '*',
+                                        'query' => '*'.strtolower($value).'*',
                                         'path' => $field,
                                         'allowAnalyzedField' => true,
-                                    ]
+                                    ],
                                 ],
                                 // Regex search for complex patterns (no 'caseInsensitive' field)
                                 [
@@ -78,36 +80,37 @@ class InslyDetailRepository extends BaseRepository
                                         'query' => $this->searchPhoneNumberRegexPattern($value),
                                         'path' => $field,
                                         'allowAnalyzedField' => true,
-                                    ]
-                                ]
+                                    ],
+                                ],
                             ],
-                            'minimumShouldMatch' => 1 // Either wildcard or regex will match
-                        ]
+                            'minimumShouldMatch' => 1, // Either wildcard or regex will match
+                        ],
                     ];
                 }
 
                 // For other fields, fallback to wildcard (LIKE)
                 return [
                     'wildcard' => [
-                        'query' => '*' . strtolower($value) . '*',
+                        'query' => '*'.strtolower($value).'*',
                         'path' => $field,
                         'allowAnalyzedField' => true,
-                    ]
+                    ],
                 ];
 
             case 'in':
                 $values = is_array($value) ? $value : explode(',', $value);
-                $should = array_map(fn($v) => [
+                $should = array_map(fn ($v) => [
                     'text' => [
                         'query' => trim($v),
                         'path' => $field,
-                    ]
+                    ],
                 ], $values);
+
                 return [
                     'compound' => [
                         'should' => $should,
                         'minimumShouldMatch' => 1,
-                    ]
+                    ],
                 ];
 
             default:
@@ -115,26 +118,24 @@ class InslyDetailRepository extends BaseRepository
         }
     }
 
-
     public function fetchGetData()
-    {        
+    {
         $coverage = $this->getCoverageList(auth()->user());
 
         $page = max((int) request()->get('page', 1), 1);
         $perPage = 15;
         $skip = ($page - 1) * $perPage;
 
-        
         $must = array_values(array_filter([
             $this->buildSearchClause('policy_no', request()->get('policy_number'), 'exact'),
-            $this-> buildSearchClause('policy.coverage', $coverage, 'in'),
+            $this->buildSearchClause('policy.coverage', $coverage, 'in'),
             $this->buildSearchClause('customer.email', request()->get('email'), 'like'),
             $this->buildSearchClause('customer.mobile_phone', request()->get('mobile_no'), 'like_regex'),
         ]));
 
         $pipeline = [];
 
-        if (!empty($must)) {
+        if (! empty($must)) {
             $pipeline[] = [
                 '$search' => [
                     'index' => 'insly_search_index',
@@ -148,8 +149,8 @@ class InslyDetailRepository extends BaseRepository
         $pipeline[] = ['$skip' => $skip];
         $pipeline[] = ['$limit' => $perPage + 1]; // Fetch 1 extra to check if there's a next page
 
-        $results = $this->raw(fn($collection) => $collection->aggregate($pipeline));
-        $items = iterator_to_array($results);        
+        $results = $this->raw(fn ($collection) => $collection->aggregate($pipeline));
+        $items = iterator_to_array($results);
 
         $hasMore = count($items) > $perPage;
         $items = array_slice($items, 0, $perPage); // Trim to perPage if we fetched extra
@@ -160,17 +161,17 @@ class InslyDetailRepository extends BaseRepository
         $queryParams = request()->except('page');
 
         $buildPageUrl = function ($pageNumber) use ($baseUrl, $queryParams) {
-            return $baseUrl . '?' . http_build_query(array_merge($queryParams, ['page' => $pageNumber]));
+            return $baseUrl.'?'.http_build_query(array_merge($queryParams, ['page' => $pageNumber]));
         };
 
         return [
-            'current_page'    => $page,
-            'data'            => $data,
-            'per_page'        => $perPage,
-            'from'            => $skip + 1,
-            'to'              => $skip + count($data),
-            'next_page_url'   => $hasMore ? $buildPageUrl($page + 1) : null,
-            'prev_page_url'   => $page > 1 ? $buildPageUrl($page - 1) : null,
+            'current_page' => $page,
+            'data' => $data,
+            'per_page' => $perPage,
+            'from' => $skip + 1,
+            'to' => $skip + count($data),
+            'next_page_url' => $hasMore ? $buildPageUrl($page + 1) : null,
+            'prev_page_url' => $page > 1 ? $buildPageUrl($page - 1) : null,
         ];
     }
 
@@ -625,15 +626,14 @@ class InslyDetailRepository extends BaseRepository
     }
 
     private function searchPhoneNumberRegexPattern($mobileNo)
-{
-    $phoneNumber = str_replace(' ', '', $mobileNo);
-    // Creating a regex pattern to match phone numbers ignoring spaces
-    $regexPattern = implode('.*', str_split($phoneNumber));
-    
-    // Return regex as a string instead of Regex object
-    return $regexPattern;
-}
+    {
+        $phoneNumber = str_replace(' ', '', $mobileNo);
+        // Creating a regex pattern to match phone numbers ignoring spaces
+        $regexPattern = implode('.*', str_split($phoneNumber));
 
+        // Return regex as a string instead of Regex object
+        return $regexPattern;
+    }
 
     private function getBusinessTypeOfInsuranceIDFromCoverage($coverage)
     {
