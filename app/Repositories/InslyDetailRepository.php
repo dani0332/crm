@@ -64,14 +64,14 @@ class InslyDetailRepository extends BaseRepository
                 // For fields where we want both LIKE (wildcard) and regex searches
                 return [
                     'compound' => [
-                        'should' => [                            
+                        'should' => [
                             [
                                 'wildcard' => [
                                     'query' => '*'.strtolower($value).'*',
                                     'path' => $field,
                                     'allowAnalyzedField' => true,
                                 ],
-                            ],                            
+                            ],
                             [
                                 'regex' => [
                                     'query' => $this->searchPhoneNumberRegexPattern($value),
@@ -82,7 +82,7 @@ class InslyDetailRepository extends BaseRepository
                         ],
                         'minimumShouldMatch' => 1, // Either wildcard or regex will match
                     ],
-                ];               
+                ];
 
             case 'in':
                 $values = is_array($value) ? $value : explode(',', $value);
@@ -145,13 +145,12 @@ class InslyDetailRepository extends BaseRepository
                 'policy.end_date' => 1,
                 'policy.insurer' => 1,
                 'policy.issue_date' => 1,
-            ]
+            ],
         ];
-        
 
         $pipeline[] = ['$skip' => $skip];
         $pipeline[] = ['$limit' => $perPage + 1]; // Fetch 1 extra to check if there's a next page
-        
+
         $results = $this->raw(fn ($collection) => $collection->aggregate($pipeline));
 
         $items = iterator_to_array($results);
