@@ -294,7 +294,7 @@ watch(
     
     // Set common fields for both individual and entity
     const commonFields = {
-      insured_id: kyc.id,
+      insured_id: newData.id,
       first_name: kyc.first_name,
       last_name: kyc.last_name,
       residential_address: kyc.residential_address,
