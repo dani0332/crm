@@ -51,6 +51,7 @@ class SearchService extends BaseService
         // Build query with essential joins and apply filters
         $baseQuery = $this->buildBaseQuery($baseTable, $isEndorsementList);
         $this->applyJoinsAndFilters($baseQuery, $baseTable, $isEndorsementList);
+        $selectColumns = $this->getFilteredCompanyCases(request(), $selectColumns);
         $this->applyAuthorizationFilters($baseQuery);
 
         // Apply sorting with proper index usage
@@ -366,7 +367,6 @@ class SearchService extends BaseService
     {
         if ($request->has('company_name')) {
             $selectColumns[] = 'insured.company_name';
-            /* $selectColumns[] = 'entities.company_name'; */
         } else {
             $selectColumns[] = DB::raw('"N/A" as company_name');
         }
