@@ -17,7 +17,7 @@ class BuyLeadService
 {
     private function todaysRequestsCount(QuoteTypes $quoteType): int
     {
-        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->whereDate('created_at', today())->sum('requested_count');
+        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->today()->sum('requested_count');
     }
 
     public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
@@ -133,7 +133,7 @@ class BuyLeadService
             ->with('quoteType:id,code')
             ->where('user_id', Auth::id())
             ->latest()
-            ->whereDate('created_at', today())
+            ->today()
             ->simplePaginate(20)
             ->withQueryString();
     }
