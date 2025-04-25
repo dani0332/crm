@@ -1,0 +1,28 @@
+{
+  "rules": [
+    {
+      "name": "Build Vue assets before commit",
+      "description": "Automatically runs yarn prod when Vue files are changed before committing and pushing",
+      "pattern": "**/*.vue",
+      "actions": [
+        {
+          "type": "command",
+          "command": "yarn prod",
+          "runAt": "pre-commit"
+        }
+      ]
+    },
+    {
+      "name": "Build Vue assets after merge",
+      "description": "Automatically runs yarn prod when Vue files are included in a merge",
+      "pattern": "**/*.vue",
+      "actions": [
+        {
+          "type": "command",
+          "command": "yarn prod",
+          "runAt": "post-merge"
+        }
+      ]
+    }
+  ]
+} 
