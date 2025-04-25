@@ -805,7 +805,6 @@ class TravelQuoteService extends BaseService
             'previous_quote_policy_premium' => 'input|title',
             'parent_duplicate_quote_id' => 'input|title',
             'policy_start_date' => 'input|date',
-            'members' => 'input|array|required',
             'direction_code' => 'input|text|required',
             'departure_country_id' => 'select|title|required_if:direction_code,'.TravelQuoteEnum::TRAVEL_UAE_INBOUND,
             'region_cover_for_id' => 'select|title|required',
