@@ -17,6 +17,12 @@ class LoggerService
 
     public static function startQuoteLogging(Model|string $lead, ?LoggerFeatureEnum $feature = null)
     {
+        if (empty($lead)) {
+            self::alert('startQuoteLogging - Lead is empty');
+
+            return;
+        }
+
         $refID = null;
 
         if ($lead instanceof string || is_string($lead)) {
