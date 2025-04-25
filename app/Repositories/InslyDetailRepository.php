@@ -62,40 +62,27 @@ class InslyDetailRepository extends BaseRepository
 
             case 'like_regex':
                 // For fields where we want both LIKE (wildcard) and regex searches
-                if ($field === 'customer.mobile_phone') {
-                    return [
-                        'compound' => [
-                            'should' => [
-                                // Wildcard search (LIKE %value%)
-                                [
-                                    'wildcard' => [
-                                        'query' => '*'.strtolower($value).'*',
-                                        'path' => $field,
-                                        'allowAnalyzedField' => true,
-                                    ],
+                return [
+                    'compound' => [
+                        'should' => [                            
+                            [
+                                'wildcard' => [
+                                    'query' => '*'.strtolower($value).'*',
+                                    'path' => $field,
+                                    'allowAnalyzedField' => true,
                                 ],
-                                // Regex search for complex patterns (no 'caseInsensitive' field)
-                                [
-                                    'regex' => [
-                                        'query' => $this->searchPhoneNumberRegexPattern($value),
-                                        'path' => $field,
-                                        'allowAnalyzedField' => true,
-                                    ],
+                            ],                            
+                            [
+                                'regex' => [
+                                    'query' => $this->searchPhoneNumberRegexPattern($value),
+                                    'path' => $field,
+                                    'allowAnalyzedField' => true,
                                 ],
                             ],
-                            'minimumShouldMatch' => 1, // Either wildcard or regex will match
                         ],
-                    ];
-                }
-
-                // For other fields, fallback to wildcard (LIKE)
-                return [
-                    'wildcard' => [
-                        'query' => '*'.strtolower($value).'*',
-                        'path' => $field,
-                        'allowAnalyzedField' => true,
+                        'minimumShouldMatch' => 1, // Either wildcard or regex will match
                     ],
-                ];
+                ];               
 
             case 'in':
                 $values = is_array($value) ? $value : explode(',', $value);
@@ -146,10 +133,27 @@ class InslyDetailRepository extends BaseRepository
             ];
         }
 
+        $pipeline[] = [
+            '$project' => [
+                '_id' => 1,
+                'policy_oid' => 1,
+                'policy.coverage' => 1,
+                'policy_no' => 1,
+                'customer.name' => 1,
+                'policy.policy_no' => 1,
+                'policy.start_date' => 1,
+                'policy.end_date' => 1,
+                'policy.insurer' => 1,
+                'policy.issue_date' => 1,
+            ]
+        ];
+        
+
         $pipeline[] = ['$skip' => $skip];
         $pipeline[] = ['$limit' => $perPage + 1]; // Fetch 1 extra to check if there's a next page
-
+        
         $results = $this->raw(fn ($collection) => $collection->aggregate($pipeline));
+
         $items = iterator_to_array($results);
 
         $hasMore = count($items) > $perPage;
