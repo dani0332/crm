@@ -173,7 +173,6 @@ function onSubmit(isValid) {
 
   if (editMode.value && quoteForm.uuid) {
     method = 'put';
-    delete quoteForm.members;
     url = route('travel.update', quoteForm.uuid);
   }
 
@@ -207,6 +206,7 @@ onMounted(() => {
   addUpdatedTraveller();
   updateRegionCover();
   quoteForm.destination_ids = mappedDestinationIds.value ?? [];
+  quoteForm.departure_country_id = props?.quote?.departure_country_id || null;
 });
 
 watch(
