@@ -3102,21 +3102,6 @@ const totalAmountFormat = computed(() => {
   return formatAmount(totalAmount.value);
 });
 
-const splitPaymentTotalPrice = (
-  splitPaymentNo,
-  splitPaymentAmount,
-  masterDiscountValue,
-) => {
-  let total = 0;
-  if (splitPaymentNo === 1 && masterDiscountValue > 0) {
-    total = splitPaymentAmount + masterDiscountValue;
-  } else {
-    total = splitPaymentAmount;
-  }
-
-  return formatAmount(total);
-};
-
 const openAmlVerificationModal = () => {
   isAmlApprovalRequired.value = true;
 };
