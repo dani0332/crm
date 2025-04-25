@@ -1,5 +1,6 @@
 <script setup>
 // Test comment for Cursor rule - testing pre-commit hook
+// Another test comment to trigger "Build Vue assets before commit" rule
 defineProps({
   quotes: Object,
   leadStatuses: Array,
