@@ -238,6 +238,7 @@ function insuredKycFormValidate() {
 }
 const submitInsuredKycForm = isValid => {
   if (insuredKycFormValidate()) {
+    kycFormDetails.processing = true;
     axios
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {
@@ -256,6 +257,7 @@ const submitInsuredKycForm = isValid => {
             title: response.data.message,
             position: 'top',
           });
+          kycFormDetails.processing = false;
         }
       })
       .catch(error => {
