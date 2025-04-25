@@ -45,11 +45,10 @@ const onLoadFtcEmailTrackData = async () => {
   updatedQuery.append('quoteTrackableType', props.quoteType);
   updatedQuery.append('quoteTrackableId', props.id);
   updatedQuery.append('code', props.quoteCode);
-  
+
   ftcEmailTracks.loading = true;
 
-
-  let url = props.url ?? '/ftc/email-tracks?'+ updatedQuery.toString();
+  let url = props.url ?? '/ftc/email-tracks?' + updatedQuery.toString();
 
   axios
     .get(url)
@@ -94,9 +93,7 @@ onMounted(() => {
           <template #item-updated_at="{ updated_at }">
             {{ dateFormat(updated_at).value }}
           </template>
-          <template #item-action="{ action }">
-                
-          </template>
+          <template #item-action="{ action }"> </template>
         </DataTable>
       </template>
     </Collapsible>

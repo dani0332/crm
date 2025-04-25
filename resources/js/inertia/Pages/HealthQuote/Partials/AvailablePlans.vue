@@ -276,7 +276,6 @@ const totalAdjustedPrice = ref(0);
 const vatAmount = ref(0);
 const loadingPriceBeingUpdated = ref(false);
 
-
 const handleLoadingPrice = (event, memberId) => {
   loadingPriceBeingUpdated.value = true;
   const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
@@ -332,8 +331,8 @@ const checkLoadingPriceUpdate = e => {
 };
 
 const memberIndexPerId = id => {
-  return props.plan.memberPremiumBreakdown.findIndex(m => m.memberId == id)
-}
+  return props.plan.memberPremiumBreakdown.findIndex(m => m.memberId == id);
+};
 
 const updateGeneralInfo = () => {
   //   if (confirm('Do you want to update this values?')) {
@@ -466,11 +465,13 @@ onUpdated(() => {
 
   props.plan?.memberPremiumBreakdown?.forEach(members => {
     members?.ratesPerCopay?.forEach(data => {
-      const isSelectedCopayMatch = data.healthPlanCoPaymentId === selectedCopay.value?.id;
-      const isDefaultCopayMatch = (selectedCopay.value === undefined || 
-                                selectedCopay.value?.length === 0) && 
-                                data.healthPlanCoPaymentId === defaultCopayId.value;
-      
+      const isSelectedCopayMatch =
+        data.healthPlanCoPaymentId === selectedCopay.value?.id;
+      const isDefaultCopayMatch =
+        (selectedCopay.value === undefined ||
+          selectedCopay.value?.length === 0) &&
+        data.healthPlanCoPaymentId === defaultCopayId.value;
+
       // Handle premium calculations
       const premiumValue = data.premium ?? 0;
       if (isDefaultCopayMatch) {
@@ -523,60 +524,72 @@ onUpdated(() => {
 const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
   createReusableTemplate();
 
-const formatPremium = (premium) => premium?.toLocaleString()
+const formatPremium = premium => premium?.toLocaleString();
 
-const shouldShowPremium = (data) => {
+const shouldShowPremium = data => {
   return (
-    data.healthPlanCoPaymentId === selectedCopay.value.id || 
-    ((!selectedCopay.value || selectedCopay.value.length === 0) && 
-     data.healthPlanCoPaymentId === defaultCopayId.value)
-  )
-}
+    data.healthPlanCoPaymentId === selectedCopay.value.id ||
+    ((!selectedCopay.value || selectedCopay.value.length === 0) &&
+      data.healthPlanCoPaymentId === defaultCopayId.value)
+  );
+};
 
-const shouldShowAdjustedPrice = (data) => {
-  const hasSelectedCopay = data.healthPlanCoPaymentId === selectedCopay.value.id
-  const hasDefaultCopay = (!selectedCopay.value || selectedCopay.value.length === 0) && 
-                         data.healthPlanCoPaymentId === defaultCopayId.value
-  
-  return hasSelectedCopay || hasDefaultCopay
-}
+const shouldShowAdjustedPrice = data => {
+  const hasSelectedCopay =
+    data.healthPlanCoPaymentId === selectedCopay.value.id;
+  const hasDefaultCopay =
+    (!selectedCopay.value || selectedCopay.value.length === 0) &&
+    data.healthPlanCoPaymentId === defaultCopayId.value;
 
-const shouldShowLoadingPrice = (data) => {
-  const hasSelectedCopay = data.healthPlanCoPaymentId === selectedCopay.value.id
-  const hasDefaultCopay = (!selectedCopay.value || selectedCopay.value.length === 0) && 
-                         data.healthPlanCoPaymentId === defaultCopayId.value
-  
-  return hasSelectedCopay || hasDefaultCopay
-}
+  return hasSelectedCopay || hasDefaultCopay;
+};
 
-const shouldShowFinalPrice = (data) => {
+const shouldShowLoadingPrice = data => {
+  const hasSelectedCopay =
+    data.healthPlanCoPaymentId === selectedCopay.value.id;
+  const hasDefaultCopay =
+    (!selectedCopay.value || selectedCopay.value.length === 0) &&
+    data.healthPlanCoPaymentId === defaultCopayId.value;
+
+  return hasSelectedCopay || hasDefaultCopay;
+};
+
+const shouldShowFinalPrice = data => {
   const conditions = {
     hasSelectedCopay: data.healthPlanCoPaymentId === selectedCopay.value.id,
-    hasDefaultCopay: (!selectedCopay.value || selectedCopay.value.length === 0) && 
-                     data.healthPlanCoPaymentId === defaultCopayId.value,
+    hasDefaultCopay:
+      (!selectedCopay.value || selectedCopay.value.length === 0) &&
+      data.healthPlanCoPaymentId === defaultCopayId.value,
     hasNoPremium: !data.premium || data.premium === undefined,
     hasNoLoadingPrice: !data.loadingPrice || data.loadingPrice === 0,
-    hasLoadingPrice: data.loadingPrice !== undefined && data.loadingPrice !== 0
-  }
+    hasLoadingPrice: data.loadingPrice !== undefined && data.loadingPrice !== 0,
+  };
 
   return (
     (conditions.hasSelectedCopay || conditions.hasDefaultCopay) &&
     (conditions.hasNoPremium || !conditions.hasNoPremium) &&
     (conditions.hasLoadingPrice || conditions.hasNoLoadingPrice)
-  )
-}
+  );
+};
 
 const calculateFinalPrice = (data, memberId) => {
-  const loadingPrice = Number(loadingPrices.value[memberIndexPerId(memberId)]?.price || 0)
-  const adjustingPrice = Number(adjustingPrices.value[memberIndexPerId(memberId)]?.price || 0)
-  const basePremium = data.premium || 0
-  const manualPremium = manualPlansMembersPremium.value[memberIndexPerId(memberId)]?.premium || 0
+  const loadingPrice = Number(
+    loadingPrices.value[memberIndexPerId(memberId)]?.price || 0,
+  );
+  const adjustingPrice = Number(
+    adjustingPrices.value[memberIndexPerId(memberId)]?.price || 0,
+  );
+  const basePremium = data.premium || 0;
+  const manualPremium =
+    manualPlansMembersPremium.value[memberIndexPerId(memberId)]?.premium || 0;
 
-  const total = loadingPrice + adjustingPrice + 
-                ((!data.premium || data.premium === undefined) ? manualPremium : basePremium)
+  const total =
+    loadingPrice +
+    adjustingPrice +
+    (!data.premium || data.premium === undefined ? manualPremium : basePremium);
 
-  return total.toLocaleString()
-}
+  return total.toLocaleString();
+};
 </script>
 
 <template>
@@ -726,7 +739,8 @@ const calculateFinalPrice = (data, memberId) => {
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
                       (props.plan.icpFee || 0) +
-                      totalLoadingPrice + totalAdjustedPrice)?.toLocaleString()
+                      totalLoadingPrice +
+                      totalAdjustedPrice)?.toLocaleString()
                   }}
                 </dd>
                 <dd v-else>
@@ -736,7 +750,8 @@ const calculateFinalPrice = (data, memberId) => {
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
                       (props.plan.icpFee || 0) +
-                      totalLoadingPrice + totalAdjustedPrice)?.toLocaleString()
+                      totalLoadingPrice +
+                      totalAdjustedPrice)?.toLocaleString()
                   }}
                 </dd>
               </div>
@@ -752,7 +767,7 @@ const calculateFinalPrice = (data, memberId) => {
                   {{ Number(totalLoadingPrice).toFixed(2)?.toLocaleString() }}
                 </dd>
               </div>
-              
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Total VAT amount</dt>
                 <dd>
@@ -955,7 +970,10 @@ const calculateFinalPrice = (data, memberId) => {
                           class="whitespace-normal text-wrap normal-case text-[10px]"
                         >
                           <p>
-                            This price, adjusted either by adding or subtracting from the Base Price, aligns with updated rates from the insurer, accommodating changes that may affect the displayed price.
+                            This price, adjusted either by adding or subtracting
+                            from the Base Price, aligns with updated rates from
+                            the insurer, accommodating changes that may affect
+                            the displayed price.
                           </p>
                         </div>
                       </template>
@@ -1026,7 +1044,10 @@ const calculateFinalPrice = (data, memberId) => {
                 </template>
 
                 <template #item-premium="item">
-                  <section v-for="(data, index) in item.ratesPerCopay" :key="'item-premium-'+index">
+                  <section
+                    v-for="(data, index) in item.ratesPerCopay"
+                    :key="'item-premium-' + index"
+                  >
                     <x-input
                       v-if="shouldShowPremium(data)"
                       :modelValue="formatPremium(data.premium)"
@@ -1037,10 +1058,15 @@ const calculateFinalPrice = (data, memberId) => {
                 </template>
 
                 <template #item-adjustedPrice="item">
-                  <section v-for="(data, index) in item.ratesPerCopay" :key="'item-adjustedPrice-'+index">
+                  <section
+                    v-for="(data, index) in item.ratesPerCopay"
+                    :key="'item-adjustedPrice-' + index"
+                  >
                     <x-input
                       v-if="shouldShowAdjustedPrice(data)"
-                      v-model="adjustingPrices[memberIndexPerId(item.memberId)].price"
+                      v-model="
+                        adjustingPrices[memberIndexPerId(item.memberId)].price
+                      "
                       :disabled="!isManual"
                       size="sm"
                       type="number"
@@ -1053,10 +1079,15 @@ const calculateFinalPrice = (data, memberId) => {
                 </template>
 
                 <template #item-loadingPrice="item">
-                  <section v-for="(data, index) in item.ratesPerCopay" :key="'item-loadingPrice-'+index">
+                  <section
+                    v-for="(data, index) in item.ratesPerCopay"
+                    :key="'item-loadingPrice-' + index"
+                  >
                     <x-input
                       v-if="shouldShowLoadingPrice(data)"
-                      v-model="loadingPrices[memberIndexPerId(item.memberId)].price"
+                      v-model="
+                        loadingPrices[memberIndexPerId(item.memberId)].price
+                      "
                       :disabled="!isManual"
                       size="sm"
                       type="number"
@@ -1069,7 +1100,10 @@ const calculateFinalPrice = (data, memberId) => {
                 </template>
 
                 <template #item-finalPrice="item">
-                  <section v-for="(data, index) in item.ratesPerCopay" :key="'item-finalPrice-'+index">
+                  <section
+                    v-for="(data, index) in item.ratesPerCopay"
+                    :key="'item-finalPrice-' + index"
+                  >
                     <x-input
                       v-if="shouldShowFinalPrice(data)"
                       :disabled="true"

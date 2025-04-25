@@ -260,20 +260,20 @@ const genderSelect = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.map((status) => {
-    var statusDisabled = false
+  return page.props.leadStatuses.map(status => {
+    var statusDisabled = false;
     // below status are not editable by advisor
-    if(status.id == page.props.quoteStatusEnum.PaymentLinkSentToCustomer) {
+    if (status.id == page.props.quoteStatusEnum.PaymentLinkSentToCustomer) {
       statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
     }
-    if(status.id == page.props.quoteStatusEnum.PaymentInitiated) {
+    if (status.id == page.props.quoteStatusEnum.PaymentInitiated) {
       statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
     }
     return {
       value: status.id,
       label: status.text,
-      disabled: statusDisabled
-    }
+      disabled: statusDisabled,
+    };
   });
 });
 
@@ -1020,8 +1020,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
   plansTable.data.forEach(element => {
     defaultCopayId = element.selectedCopayId;
     element.ratesPerCopay?.forEach(function callback(value, index) {
-      
-      const safeNumber = (val) => {
+      const safeNumber = val => {
         if (val === null || val === undefined) return 0;
         const num = Number(val);
         return isNaN(num) ? 0 : num;
@@ -1095,7 +1094,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
       element.loadingPrice = smallestCopayLoadingPrice;
-      element.adjustedPrice = smallestCopayAdjustedPrice
+      element.adjustedPrice = smallestCopayAdjustedPrice;
     }
     element.coPayments.forEach(function callback(value, index) {
       if (value.id == element.selectedCopayId) {
