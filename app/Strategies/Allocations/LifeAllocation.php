@@ -32,15 +32,16 @@ class LifeAllocation extends BaseAllocation
 
         $gaurav = 'gaurav.sharma@insurancemarket.ae';
         $vivian = 'vivian.sandel@insurancemarket.ae';
+        $sourabh = 'sourabh.yadav@insurancemarket.ae';
 
         $emails = [];
 
         if ($amount < 1000000 && in_array($category, [self::CAT_A])) {
-            $emails = [$gaurav, $vivian];
+            $emails = [$gaurav, $vivian, $sourabh];
         } elseif ($amount >= 1000000 && $amount <= 2000000 && in_array($category, [self::CAT_A])) {
             $emails = [$vivian];
         } elseif ($amount <= 2000000 && in_array($category, [self::CAT_B])) {
-            $emails = [$gaurav];
+            $emails = [$gaurav, $sourabh];
         } elseif ($amount > 2000000 && in_array($category, [self::CAT_A, self::CAT_B])) {
             $emails = [$santosh, $karuna, $christy, $katrina, $larry];
         }

@@ -216,6 +216,53 @@ class TravelQuoteService extends BaseService
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
+    public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
+    {
+        $model = $this->getModelObject($quoteType);
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        $customerTravelInfo = DB::table('travel_quote_request as tqr')
+            ->join('customer as c', 'c.id', '=', 'tqr.customer_id')
+            ->leftJoin('customer_members as cm', function ($join) use ($model) {
+                $join->on('cm.quote_id', '=', 'tqr.id')
+                    ->where('cm.quote_type', '=', ltrim($model, '\\'));
+            })
+            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.gender', 'c.dob', 'c.nationality_id', 'cm.passport')
+            ->where('tqr.id', $quoteRequestId)
+            ->first();
+
+        return $customerTravelInfo;
+    }
+
+    public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
+    {
+        $message = '';
+        $requiredProperty = collect(['first_name', 'last_name', 'gender', 'dob', 'nationality_id', 'passport']);
+
+        $missingDetails = [];
+        foreach ($requiredProperty as $value) {
+
+            if (empty($travelQuoteRequest[$value])) {
+                $propertyName = match ($value) {
+                    'dob' => 'date of birth',
+                    'nationality_id' => 'nationality',
+                    default => str_replace(['-', '_'], ' ', $value)
+                };
+                array_push($missingDetails, ucwords($propertyName));
+            }
+        }
+
+        $missingDetailCount = count($missingDetails);
+        if ($missingDetailCount) {
+            $message = 'Missing Info: '.implode(', ', $missingDetails);
+        }
+
+        return ['status' => $missingDetailCount ? false : true, 'message' => $message];
+    }
+
     public function saveTravelQuote(Request $request)
     {
         $members = [];
@@ -712,7 +759,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->destination_id = $request->destination_id;
         $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
-        $travelQuote->region_cover_for_id = $request->region_cover_for_id;
+        (isset($request->region_cover_for_id) && $request->region_cover_for_id != 'undefined') && $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->policy_start_date = $request->policy_start_date;
         $travelQuote->details = $request->details;
         $travelQuote->save();
@@ -758,10 +805,9 @@ class TravelQuoteService extends BaseService
             'previous_quote_policy_premium' => 'input|title',
             'parent_duplicate_quote_id' => 'input|title',
             'policy_start_date' => 'input|date',
-            'members' => 'input|array|required',
             'direction_code' => 'input|text|required',
-            'departure_country_id' => 'select|title|required',
-
+            'departure_country_id' => 'select|title|required_if:direction_code,'.TravelQuoteEnum::TRAVEL_UAE_INBOUND,
+            'region_cover_for_id' => 'select|title|required',
         ];
     }
 
@@ -855,7 +901,7 @@ class TravelQuoteService extends BaseService
     {
         return [
             'create' => 'policy_start_date,previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,policy_expiry_date,policy_number',
-            'list' => 'policy_start_date,previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,next_followup_date,days_cover_for,renewal_batch,renewal_import_code',
+            'list' => 'policy_start_date,previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,travel_cover_for_id,details,nationality_id,next_followup_date,days_cover_for,renewal_batch,renewal_import_code',
             'update' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,policy_expiry_date,policy_number',
             'show' => 'is_renewal,policy_number,policy_expiry_date,premium,source,previous_quote_id,payment_status_id,quote_status_id',
         ];

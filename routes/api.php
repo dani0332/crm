@@ -39,6 +39,7 @@ Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/home-sync-sal', [ApiController::class, 'homeSyncSAL'])->name('home-sync-sal');
     Route::post('duplicate-entires', [ApiController::class, 'duplicateEntries']);
     Route::post('/cache/forget', [ApiController::class, 'forgetCache']);
+    Route::post('/imcrm/trigger-aig-workflow', [ApiController::class, 'triggerAIGWorkflow'])->name('triggerAIGWorkflow');
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);

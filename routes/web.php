@@ -299,6 +299,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
+    Route::post('/payment-split/post-to-sage', [CentralController::class, 'postPrepaymentToSage'])->name('can-post-premium-prepayment')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::post('/payments/{quoteType}/split-update', [CentralController::class, 'splitPaymentUpdate'])->name('approve-payments')->middleware('check_route_access');
@@ -502,8 +503,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('car', CRUDController::class);
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
+        Route::get('home/{id}', function ($id) {
+            return redirect("/personal-quotes/home/{$id}");
+        })->where('id', '[A-Z0-9]+')->name('quotes.home.show');
+
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
-        Route::resource('home', CRUDController::class);
+        Route::resource('home', CRUDController::class)->except(['show']);
         Route::resource('business', CRUDController::class);
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
@@ -744,6 +749,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
+    Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
 });
 
 Route::get('/add-batch-number', function () {

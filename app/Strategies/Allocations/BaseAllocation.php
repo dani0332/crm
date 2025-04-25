@@ -13,6 +13,7 @@ use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService
 {
@@ -48,7 +49,7 @@ abstract class BaseAllocation extends AllocationService
                 if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
 
-                    LoggerService::warning(self::class.' - executeSteps: No advisor found');
+                    LoggerService::info(self::class.' - executeSteps: No advisor found');
 
                     $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {

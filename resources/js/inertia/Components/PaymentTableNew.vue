@@ -2129,6 +2129,7 @@ const processPaymentSplits = payment => {
 
   for (let i = 1; i <= payment.total_payments; i++) {
     const split = payment.payment_splits[i - 1];
+    console.log('split : ', split);
     readOnlyPayments.value[i] = paidStatusIds.includes(split.payment_status_id);
     if (readOnlyPayments.value[i]) {
       totalPaidAmount.value++;
@@ -2608,11 +2609,13 @@ const addPayment = (isValid) => {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
+          isApproveConfirmed.value = false;
           if (props.sendUpdate) {
             location.reload();
           }
         },
         onError: res => {
+          isApproveConfirmed.value = false;
           notification.error({
             title: res.error,
             position: 'top',
@@ -3171,7 +3174,7 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   ) {
     return true;
   }
-  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
+  return getValidStatuses(paymentRecord.payment_splits[0]);
 };
 
 const getCaptureValidation = computed(() => {
@@ -3244,6 +3247,7 @@ const getCaptureOption = computed(() => {
 });
 
 const planText = ref();
+const homePlanText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
@@ -3255,7 +3259,7 @@ const fetchPlans = () => {
   axios
     .get(url)
     .then(res => {
-      planText.value = res.data.text;
+      planText.value = res.data?.text ?? res.data?.planName;
     })
     .catch(err => {});
 };
@@ -3338,6 +3342,13 @@ const getPlanName = computed(() => {
     return planText.value || 'Not Available';
   }
 
+  if (props.quoteType === quoteTypeCodeEnum.Home) {
+    if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
+      homePlanText.value = props.quoteRequest.insurance_provider_plan.text;
+    }
+    return homePlanText.value || 'Not Available';
+  }
+
   return quoteTypesToCheck.includes(props.quoteType) && plan
     ? plan.text
     : 'Not Available';
@@ -3407,6 +3418,11 @@ const setPaymentInitialPrice = () => {
       initialAmount.value = props.eCommercePrice;
     } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
       initialAmount.value = props.quoteRequest.premium;
+    } else if (
+      props.isPlanDetailSectionEnabled &&
+      props.quoteType === quoteTypeCodeEnum.Home
+    ) {
+      initialAmount.value = props.quoteRequest.price_with_vat;
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
@@ -3833,7 +3849,7 @@ const isPolicySendUpdateBooked = option => {
     page.props.quoteStatusEnum.PolicyBooked;
   const isUpdateBooked =
     props.sendUpdate &&
-    props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+    props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
   const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
 
   if (isUpdateBooked && isCCAndInsurer) {
@@ -4002,6 +4018,72 @@ const fetchInsurerAMLStatus = async () => {
       });
     }
   }
+};
+
+const triggerPostPrepayment = async splitPayment => {
+  console.log(' triggerPostPrepayment : ', splitPayment.id);
+  let quoteStatusId = props.quoteRequest.quote_status_id;
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked === quoteStatusId;
+  if (!isPolicyBooked) {
+    notification.warning({
+      title:
+        'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
+      position: 'top',
+    });
+  }
+  try {
+    NProgress.start();
+    const response = await axios.post(route('can-post-premium-prepayment'), {
+      paymentSplitId: splitPayment.id,
+      quoteRequestId: props.quoteRequest.id,
+      quoteType: page.props.quoteType,
+      sendUpdateId: props.sendUpdate?.id,
+    });
+    NProgress.done();
+    if (response.data.success) {
+      notification.success({
+        title: 'Post Prepayment to Sage Process Started',
+        position: 'top',
+      });
+      router.reload({
+        only: ['payments'],
+      });
+    }
+  } catch (error) {
+    let errorMessages = error.response.data.errors;
+    Object.keys(errorMessages).forEach(function (key) {
+      notification.error({
+        title: errorMessages[key],
+        position: 'top',
+      });
+    });
+  }
+};
+const enablePostPrepaymentButton = splitPayment => {
+  console.log(
+    'showPostPrepaymentButton : showPrepaymentPostButton : ',
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
+    ' , batchNumber : ',
+    splitPayment.prepayment_receipt_status?.batchNumber,
+    splitPayment.prepayment_receipt_status,
+  );
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked ===
+    props.quoteRequest.quote_status_id;
+  let isSendUpdateBooked =
+    props.sendUpdate?.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
+  let isPolicyOrSendUpdateBooked =
+    (isPolicyBooked && !props.sendUpdate) ||
+    (props.sendUpdate && isSendUpdateBooked);
+  if (
+    can(permissionEnum.CAN_POST_PREMIUM_PREPAYMENT) &&
+    isPolicyOrSendUpdateBooked &&
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
+  ) {
+    return true;
+  }
+  return false;
 };
 
 onBeforeMount(() => {
@@ -4490,7 +4572,7 @@ onBeforeMount(() => {
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td>
+                        <td class="text-center">
                           {{ splitPayment.code }}-{{ splitPayment.sr_no }}
                         </td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
@@ -4641,6 +4723,16 @@ onBeforeMount(() => {
                               outlined
                               >Retry</x-button
                             >
+
+                            <x-button
+                              v-if="enablePostPrepaymentButton(splitPayment)"
+                              size="xs"
+                              color="red"
+                              class="ml-2"
+                              @click="triggerPostPrepayment(splitPayment)"
+                              outlined
+                              >Post
+                            </x-button>
                           </div>
                         </td>
                       </tr>

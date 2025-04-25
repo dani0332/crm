@@ -52,6 +52,7 @@ use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +60,7 @@ use Illuminate\Support\Facades\Log;
 
 class CentralService extends BaseService
 {
-    use GenericQueriesAllLobs, TeamHierarchyTrait;
+    use GenericQueriesAllLobs, HandlesDeadlockRetries, TeamHierarchyTrait;
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
@@ -233,7 +234,7 @@ class CentralService extends BaseService
         });
     }
 
-    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false)
+    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false, $getLatestRating = false)
     {
         $type = ucfirst($type);
         switch ($type) {
@@ -267,7 +268,7 @@ class CentralService extends BaseService
             case quoteTypeCode::Bike:
                 return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
             case quoteTypeCode::Home:
-                return app(HomeQuoteService::class)->getQuotePlans($id);
+                return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             default:
                 return [];
         }
@@ -493,7 +494,10 @@ class CentralService extends BaseService
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
 
         if ($plandId) {
-            return $planModel::find($plandId);
+            // Home Plans are fetching from home-quote-plan-details mongodb collection.
+            $key = $quoteType == QuoteTypes::HOME->value ? 'planId' : 'id';
+
+            return $planModel::where($key, (int) $plandId)->first();
         }
 
         return $planModel::where('provider_id', $providerId)->get();
@@ -1220,8 +1224,7 @@ class CentralService extends BaseService
             'quoteTypeId' => (int) $request->quote_type_id,
             'payments' => [
                 [
-                    // Notes:: This case include for Travel Single plan and mix inquiry case
-                    'codeRef' => ($request->quote_type_id == QuoteTypeId::Travel) ? $request->payment_code.'-1' : $request->payment_code,
+                    'codeRef' => $request->payment_code,
                 ],
             ],
         ];
@@ -1356,8 +1359,22 @@ class CentralService extends BaseService
         }
 
         // Delete Payment and Payment Splits
-        PaymentSplits::where('code', $request->payment_code)->delete();
-        Payment::where('id', $request->payment_id)->delete();
+        try {
+            $maxAttempts = 2;
+            $this->handleWithDeadlockRetries(function () use ($request) {
+                $paymentSplits = PaymentSplits::where('code', $request->payment_code)->get();
+                foreach ($paymentSplits as $paymentSplit) {
+                    $paymentSplit->documents()->forceDelete();
+                }
+                PaymentSplits::where('code', $request->payment_code)->delete();
+                Payment::where('id', $request->payment_id)->delete();
+            }, $maxAttempts);
+            info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);
+        } catch (\Throwable $th) {
+            info('fn:deletePayment - Payment deletion failed: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment deletion failed'];
+        }
 
         return ['status' => true, 'message' => 'Delete payment processed'];
     }

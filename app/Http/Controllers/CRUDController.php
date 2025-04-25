@@ -86,12 +86,12 @@ use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailServices\CarEmailService;
-use App\Services\EmailServices\HomeEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
@@ -2250,21 +2250,19 @@ class CRUDController extends Controller
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
         if ($quoteUuId) {
-
-            $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
-            if (QuoteTypes::getIdFromValue($quoteType) === (int) QuoteTypes::HOME->id()) {
-                // only for home quote if email is manually triggered then update the home automated flow executed flag
-                app(HomeEmailService::class)->updateHomeAutomatedFlowExecuted($quoteUuId);
-            }
+            $quoteType = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType));
+            $ocbEmailJob = $quoteType?->ocbEmailJob();
+            LoggerService::startQuoteLogging($quoteType->refId($quoteUuId));
+            LoggerService::info('Sending OCB email Manually');
             if ($ocbEmailJob) {
-                Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
+                LoggerService::info('sendOCBEmailNB OCB email sending started');
                 dispatch(new $ocbEmailJob($quoteUuId, null));
-                info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
+                LoggerService::info('sendOCBEmailNB OCB email Job dispatched');
             }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
         } else {
-            Log::info('sendOCBEmailNB OCB email quote uuid not found');
+            LoggerService::info('sendOCBEmailNB OCB email quote uuid not found');
 
             return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
         }
