@@ -48,11 +48,8 @@ class AMLScreeningCommand extends Command
         $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
         if (! $isAmlAutomationEnabled) {
             LoggerService::info($this->className.' is not enabled from cms');
-
-            return false;
+            return;
         }
-
-        LoggerService::info($this->className.' Started');
 
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
@@ -74,12 +71,12 @@ class AMLScreeningCommand extends Command
             $quoteRequestQuery->chunk(100, function ($quoteRequests) {
                 foreach ($quoteRequests as $quoteRequest) {
 
+                    LoggerService::startQuoteLogging($quoteRequest);
                     $quoteRequestId = $quoteRequest->id;
                     $quoteRequest = $this->getQuoteObject($this->quoteType->value, $quoteRequestId);
 
                     if (! $quoteRequest) {
                         LoggerService::error($this->className.' - '.$this->quoteType->value.' Quote #'.$quoteRequestId.' not found');
-
                         continue;
                     }
 
@@ -92,9 +89,9 @@ class AMLScreeningCommand extends Command
 
                     AmlAutomation::updateOrCreate(['code' => $quoteRequest->code], ['status' => AmlAutomationStatus::QUEUE_STATUS]);
                     AmlScreeningAutomationJob::dispatch($this->quoteType, $quoteRequest)->onQueue('renewals');
+                    LoggerService::endLogging();
                 }
             });
         }
-        LoggerService::info($this->className.' Ended');
     }
 }
