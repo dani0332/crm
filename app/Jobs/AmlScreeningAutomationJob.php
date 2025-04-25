@@ -56,6 +56,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
         if (! $isAmlAutomationEnabled) {
             LoggerService::info($this->className.' is not enabled from cms');
+
             return;
         }
 
@@ -81,6 +82,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         $checkCustomerTravelInfo = $travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo);
         if (! $checkCustomerTravelInfo['status']) {
             LoggerService::error($this->className.' - '.$checkCustomerTravelInfo['message']);
+
             return;
         }
 
@@ -120,6 +122,7 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
             if (! $quoteAmlProcessCall->status) {
                 $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Error: '.$quoteAmlProcessCall->message]);
                 LoggerService::error($this->className.' - Completed - AmlProcessCall - error: '.$quoteAmlProcessCall->message);
+
                 return;
             }
 

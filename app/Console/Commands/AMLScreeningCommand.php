@@ -48,6 +48,7 @@ class AMLScreeningCommand extends Command
         $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
         if (! $isAmlAutomationEnabled) {
             LoggerService::info($this->className.' is not enabled from cms');
+
             return;
         }
 
@@ -77,6 +78,7 @@ class AMLScreeningCommand extends Command
 
                     if (! $quoteRequest) {
                         LoggerService::error($this->className.' - '.$this->quoteType->value.' Quote #'.$quoteRequestId.' not found');
+
                         continue;
                     }
 
