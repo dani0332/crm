@@ -196,7 +196,7 @@ const kycFormDetails = useForm({
   income_source:
     insuredDetails?.insured?.insured_kyc?.source_of_income ?? null,
   // Entity Customer Type
-  company_name: insuredDetails?.insured?.company_name ?? null,
+  company_name: (isScreeningIndividual ? insuredDetails?.insured?.insured_kyc?.employer_company_name : insuredDetails?.insured?.company_name) ?? null,
   legal_structure:
     insuredDetails?.insured?.insured_kyc?.legal_structure ?? null,
   industry_type: insuredDetails?.insured?.industry_type_code ?? null,
@@ -334,7 +334,7 @@ watch(
     });
     
     // Customer type specific fields
-    if (props.customerType === customerTypeEnum.Individual) {
+    if ([customerTypeEnum.Individual, null, ''].includes(props.customerType)) {
       // Individual specific fields
       kycFormDetails.dob = dateFormat(newData.dob);
       kycFormDetails.nationality_id = newData.nationality_id;
@@ -346,6 +346,8 @@ watch(
       kycFormDetails.company_name = kyc.employer_company_name;
       kycFormDetails.employment_sector = kyc.employment_sector;
       kycFormDetails.professional_title = kyc.job_title;
+      kycFormDetails.trade_license = kyc.trade_license_no;
+      kycFormDetails.company_position = kyc.position_in_company;
       
       // Trigger income source handler to update related fields
       if (kyc.source_of_income) {
