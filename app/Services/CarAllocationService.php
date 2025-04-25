@@ -159,7 +159,16 @@ class CarAllocationService extends AllocationService
 
             if (! empty($axaValuation)) {
                 $firstAxaValuation = reset($axaValuation); // Get the first element of the array
-                $carValue = $firstAxaValuation->carValue;
+
+                if (! empty($firstAxaValuation)) {
+                    LoggerService::info('car value as per valuation engine for GIG', [
+                        'car_value' => $firstAxaValuation->carValue,
+                    ]);
+
+                    if ($firstAxaValuation->carValue > 0) {
+                        $carValue = $firstAxaValuation->carValue;
+                    }
+                }
             }
 
             LoggerService::info("car value as per valuation engine for GIG is {$carValue}");
