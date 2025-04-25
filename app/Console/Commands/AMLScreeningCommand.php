@@ -4,10 +4,12 @@ namespace App\Console\Commands;
 
 use App\Enums\AmlAutomationStatus;
 use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\AmlScreeningAutomationJob;
 use App\Models\AmlAutomation;
+use App\Services\ApplicationStorageService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -16,7 +18,7 @@ class AMLScreeningCommand extends Command
 {
     use GenericQueriesAllLobs;
 
-    private $className = 'AML Screening Command';
+    private $className = 'AMLScreeningCommand';
     private $quoteType = QuoteTypes::TRAVEL;
 
     /**
@@ -43,6 +45,13 @@ class AMLScreeningCommand extends Command
      */
     public function handle()
     {
+        $isAmlAutomationEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::AML_AUTOMATION_ENABLED);
+        if (! $isAmlAutomationEnabled) {
+            LoggerService::info($this->className.' is not enabled from cms');
+
+            return;
+        }
+
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
         if (! class_exists($quoteModel)) {
@@ -51,17 +60,19 @@ class AMLScreeningCommand extends Command
 
         $date = now()->subWeek()->startOfDay();
         $quoteRequestQuery = $quoteModel::select('id', 'code', 'api_issuance_status_id', 'aml_status')
-            ->where([
-                'api_issuance_status_id' => PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID,
-                'aml_status' => AMLStatusCode::AMLPending,
-            ])
             ->where('created_at', '>', $date)
+            ->where('api_issuance_status_id', PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID)
+            ->where(function ($query) {
+                $query->whereNull('aml_status')
+                    ->orWhere('aml_status', AMLStatusCode::AMLPending);
+            })
             ->whereNotIn('code', $quoteModel::from('aml_automation')->select('code'));
 
         if ($quoteRequestQuery->exists()) {
             $quoteRequestQuery->chunk(100, function ($quoteRequests) {
                 foreach ($quoteRequests as $quoteRequest) {
 
+                    LoggerService::startQuoteLogging($quoteRequest);
                     $quoteRequestId = $quoteRequest->id;
                     $quoteRequest = $this->getQuoteObject($this->quoteType->value, $quoteRequestId);
 
@@ -72,7 +83,7 @@ class AMLScreeningCommand extends Command
                     }
 
                     $isApiIssuanceStatusYes = $quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
-                    $isAMLPending = $quoteRequest->aml_status == AMLStatusCode::AMLPending;
+                    $isAMLPending = empty($quoteRequest->aml_status) ?: $quoteRequest->aml_status == AMLStatusCode::AMLPending;
 
                     if (! $isApiIssuanceStatusYes || ! $isAMLPending || $quoteRequest->amlAutomation()->exists()) {
                         continue;
@@ -80,6 +91,7 @@ class AMLScreeningCommand extends Command
 
                     AmlAutomation::updateOrCreate(['code' => $quoteRequest->code], ['status' => AmlAutomationStatus::QUEUE_STATUS]);
                     AmlScreeningAutomationJob::dispatch($this->quoteType, $quoteRequest)->onQueue('renewals');
+                    LoggerService::endLogging();
                 }
             });
         }
