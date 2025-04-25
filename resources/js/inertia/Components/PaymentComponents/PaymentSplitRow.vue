@@ -16,10 +16,19 @@ const props = defineProps({
   splitIndex: Number,
   linkedQuoteDetails: Object,
   quoteRequest: Object,
+  paymentMethodsForm: Object,
   paymentAllocationStatusTooltip: {
     type: Function,
     default: (status) => status
-  }
+  },
+  sendUpdate: {
+    type: Object,
+    default: null,
+  },
+  sendUpdateStatusEnum: {
+    type: Array,
+    default: null,
+  },
 });
 
 const emit = defineEmits([
@@ -31,9 +40,7 @@ const emit = defineEmits([
 ]);
 
 // Add can function for permission checks
-const can = (permission) => {
-  return useCan ? useCan(permission) : true;
-};
+const can = permission => useCan(permission);
 
 const viewPayment = () => {
   emit('view-payment', props.parentPayment, props.splitPayment.id, props.splitPayment.sr_no, 0);
@@ -56,14 +63,20 @@ const postPrepayment = () => {
 };
 
 const splitPaymentTotalPrice = (srNo, amount, discountValue) => {
-  // This is a mock of the original function - in the real app, you'd implement the actual logic
-  return formatAmount(amount);
+  let total = 0;
+  if (srNo === 1 && discountValue > 0) {
+    total = amount + discountValue;
+  } else {
+    total = amount;
+  }
+
+  return formatAmount(total);
 };
 
 // verify if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
   const isNotUpfront =
-    paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
+    props.paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
   const hasEditPermission = can(permissionEnum.PaymentsEdit);
   const isPolicyNotBooked =
     props.quoteRequest.quote_status_id !==
@@ -87,15 +100,40 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
   ];
 
   return (
-    isSplitDeleteEnabled &&
+    isSplitDeleteEnabled.value &&
     item.total_payments == splitIndex + 1 &&
     !eligibleStatuses.includes(splitPayment.payment_status_id) &&
     splitPayment.sr_no > 1
   );
 };
 
+// const enablePostPrepaymentButton = computed(() => {
+//   return props.enablePostPrepaymentButton && props.enablePostPrepaymentButton(props.splitPayment);
+// });
 const enablePostPrepaymentButton = computed(() => {
-  return props.enablePostPrepaymentButton && props.enablePostPrepaymentButton(props.splitPayment);
+  console.log(
+    'showPostPrepaymentButton : showPrepaymentPostButton : ',
+    props.splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
+    ' , batchNumber : ',
+    props.splitPayment.prepayment_receipt_status?.batchNumber,
+    props.splitPayment.prepayment_receipt_status,
+  );
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked ===
+    props.quoteRequest.quote_status_id;
+  let isSendUpdateBooked =
+    props.sendUpdate?.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
+  let isPolicyOrSendUpdateBooked =
+    (isPolicyBooked && !props.sendUpdate) ||
+    (props.sendUpdate && isSendUpdateBooked);
+  if (
+    can(permissionEnum.CAN_POST_PREMIUM_PREPAYMENT) &&
+    isPolicyOrSendUpdateBooked &&
+    props.splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
+  ) {
+    return true;
+  }
+  return false;
 });
 </script>
 

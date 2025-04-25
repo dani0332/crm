@@ -9,11 +9,11 @@ import { time } from 'highcharts';
 
 
 // New Flow Implementation
-import PaymentTableHeader from './../Components/PaymentComponents/PaymentTableHeader.vue';
-import PaymentHeader from './../Components/PaymentComponents/PaymentHeader.vue';
-import PaymentRow from './PaymentComponents/PaymentRow.vue';
-import PaymentSplitRow from './PaymentComponents/PaymentSplitRow.vue';
 import { usePayment } from '../Composables/usePayment';
+import { PaymentTableHeader, PaymentHeader, PaymentRow, PaymentSplitRow } from './PaymentComponents/index.js';
+
+// Assign barrel-imported components to prevent IDE from showing them as unused
+const components = {PaymentTableHeader};
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -3520,31 +3520,6 @@ const triggerPostPrepayment = async splitPayment => {
     });
   }
 };
-const enablePostPrepaymentButton = splitPayment => {
-  console.log(
-    'showPostPrepaymentButton : showPrepaymentPostButton : ',
-    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
-    ' , batchNumber : ',
-    splitPayment.prepayment_receipt_status?.batchNumber,
-    splitPayment.prepayment_receipt_status,
-  );
-  let isPolicyBooked =
-    page.props.quoteStatusEnum.PolicyBooked ===
-    props.quoteRequest.quote_status_id;
-  let isSendUpdateBooked =
-    props.sendUpdate?.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
-  let isPolicyOrSendUpdateBooked =
-    (isPolicyBooked && !props.sendUpdate) ||
-    (props.sendUpdate && isSendUpdateBooked);
-  if (
-    can(permissionEnum.CAN_POST_PREMIUM_PREPAYMENT) &&
-    isPolicyOrSendUpdateBooked &&
-    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
-  ) {
-    return true;
-  }
-  return false;
-};
 
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
@@ -3565,12 +3540,10 @@ onBeforeMount(() => {
        
         <PaymentHeader
           :payments="payments"
-          :can="can"
           :paymentTooltipEnum="paymentTooltipEnum"
           :proformaPayment="proformaPayment"
           :quoteRequest="quoteRequest"
           :quoteType="quoteType"
-          :expanded="expanded"
           :readOnlyMode="readOnlyMode"
           @add-payment-modal="addPaymentModal"
           @download-proforma-payment="downloadProformaPayment"
@@ -3586,13 +3559,6 @@ onBeforeMount(() => {
               <PaymentTableHeader />
 
               <tbody class="vue3-easy-data-table__body">
-                <!-- Empty State -->
-                <tr v-if="payments.length === 0">
-                  <td colspan="14" class="text-center py-4">
-                    No payments found.
-                  </td>
-                </tr>
-
                 <!-- Payment Rows with Splits -->
                 <template v-for="(payment, index) in payments" :key="payment.code">
                   <!-- Main payment row -->
@@ -3602,13 +3568,15 @@ onBeforeMount(() => {
                     :index="index"
                     :isExpanded="expandedPaymentRows[index]"
                     :isChildPaymentDeletable="isChildPaymentDeletable"
-                    :is_lacking_payment="false"
-                    :disableMainPaymentApproval="false"
-                    :isApproveConfirmed="false"
-                    :capturePaymentValidationInProcess="false"
+                    :is_lacking_payment="is_lacking_payment"
+                    :isApproveConfirmed="isApproveConfirmed"
+                    :capturePaymentValidationInProcess="capturePaymentValidationInProcess"
                     :isFuncsEnabled="props.isFuncsEnabled"
                     :bookPolicyDetails="props.bookPolicyDetails"
                     :quoteRequest="quoteRequest"
+                    :sendUpdate="sendUpdate"
+                    :quoteType="quoteType"
+                    :isCapBtnEnabled="isCapBtnEnabled"
                     @toggle-expand="toggleExpand"
                     @edit-payment="editPaymentModal"
                     @delete-payment="deletePaymentModel"
@@ -3631,6 +3599,9 @@ onBeforeMount(() => {
                       :linkedQuoteDetails="props.linkedQuoteDetails"
                       :quoteRequest="quoteRequest"
                       :paymentAllocationStatusTooltip="(status) => status"
+                      :sendUpdate="sendUpdate"
+                      :paymentMethodsForm="paymentMethodsForm"
+                      :sendUpdateStatusEnum="sendUpdateStatusEnum"
                       @view-payment="(payment, splitId, splitNo, action) => editPaymentModal(payment, splitId, splitNo, action)"
                       @generate-cc-link="(code, srNo, statusId) => copyPaymentLink(splitPayment.payment_link, statusId)"
                       @delete-split-payment="deleteSplitPaymentModal"
@@ -3641,7 +3612,12 @@ onBeforeMount(() => {
                 </template>
               </tbody>
             </table>
-            
+            <div
+              v-if="payments.length == 0"
+              class="vue3-easy-data-table__message"
+            >
+              No Available Data
+            </div>
           </div>
         </div>
 

@@ -504,13 +504,6 @@ const preparedPayments = computed(() => {
               <PaymentTableHeader />
               
               <tbody class="vue3-easy-data-table__body">
-                <!-- Empty State -->
-                <tr v-if="payments.length === 0">
-                  <td colspan="14" class="text-center py-4">
-                    No payments found.
-                  </td>
-                </tr>
-
                 <!-- Payment Rows with Splits -->
                 <template v-for="(payment, index) in preparedPayments" :key="payment.id">
                   <!-- Main payment row -->
@@ -557,6 +550,12 @@ const preparedPayments = computed(() => {
                 </template>
               </tbody>
             </table>
+            <div
+              v-if="payments.length == 0"
+              class="vue3-easy-data-table__message"
+            >
+              No Available Data
+            </div>
           </div>
         </div>
         

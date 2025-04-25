@@ -1,27 +1,21 @@
 <script setup>
 import { computed } from 'vue';
-import UpdateTotalPrice from './../../Components/UpdateTotalPrice.vue';
+import UpdateTotalPrice from './../UpdateTotalPrice.vue';
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
-const useCan = permission => props.can(permission);
+const can = permission => useCan(permission);
 const emit = defineEmits(['add-payment-modal', 'download-proforma-payment']);
 
 const props = defineProps({
   payments: Array,
-  can: Object,
   paymentTooltipEnum: Object,
   proformaPayment: Object,
   quoteRequest: Object,
   quoteType: String,
-  expanded: {
-    required: false,
-    type: Boolean,
-    default: true,
-  },
   readOnlyMode: {
     type: Object,
     default: () => ({ isDisable: true }),
@@ -39,10 +33,9 @@ const addPaymentModal = () => {
 </script>
 
 <template>
-  <div class="flex justify-between gap-4 items-center mb-4">
-    <h3 class="font-semibold text-primary-800 text-lg"></h3>
-    <div class="flex gap-2">
-      <template v-if="useCan(permissionEnum.ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON)">
+  <div class="flex items-center mb-4">
+    <div class="ml-auto flex gap-2">
+      <template v-if="can(permissionEnum.ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON)">
         <template v-if="proformaPayment?.payment_status_id == paymentStatusEnum.PAID">
           <x-button
             v-if="proformaPayment"
@@ -82,7 +75,7 @@ const addPaymentModal = () => {
           <div class="flex justify-between items-center gap-2" style="margin-left: auto">
             <UpdateTotalPrice
               v-if="
-                useCan(permissionEnum.TEMP_UPDATE_TOTALPRICE) &&
+                can(permissionEnum.TEMP_UPDATE_TOTALPRICE) &&
                 quoteRequest.quote_status_id === 15
               "
               :quoteId="quoteRequest.id"
@@ -93,7 +86,7 @@ const addPaymentModal = () => {
             />
             <div v-if="readOnlyMode.isDisable === true">
               <x-button
-                v-if="useCan(permissionEnum.PaymentsCreate)"
+                v-if="can(permissionEnum.PaymentsCreate)"
                 size="sm"
                 color="emerald"
                 @click="addPaymentModal"
@@ -108,7 +101,7 @@ const addPaymentModal = () => {
             <div v-if="readOnlyMode.isDisable === true">
               <x-button
                 class="focus:ring-2 focus:ring-black"
-                v-if="useCan(permissionEnum.PaymentsCreate)"
+                v-if="can(permissionEnum.PaymentsCreate)"
                 size="sm"
                 color="emerald"
                 @click="addPaymentModal"

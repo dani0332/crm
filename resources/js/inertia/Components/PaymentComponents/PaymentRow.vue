@@ -29,9 +29,9 @@ const props = defineProps({
   isExpanded: Boolean,
   isChildPaymentDeletable: Boolean,
   is_lacking_payment: Boolean,
-  amlAndKycTooltip: String,
   isApproveConfirmed: Boolean,
   capturePaymentValidationInProcess: Boolean,
+  quoteType: String,
   isFuncsEnabled: {
     type: Array,
     default: [],
@@ -39,6 +39,14 @@ const props = defineProps({
   bookPolicyDetails: {
     type: Array,
     default: [],
+  },
+  sendUpdate: {
+    type: Object,
+    default: null,
+  },
+  isCapBtnEnabled: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -68,7 +76,7 @@ const approvePayment = () => {
   if (!props.sendUpdate && (!isAmlVerified() || !isKycVerified())) {
     emit('open-aml-verification');
   } else {
-    const isValid = props.getCaptureValidation?.(props.payment) ?? false;
+    const isValid = getCaptureValidation.value;
     if (isValid) {
       emit('edit-payment', props.payment, 0, 0, 2);
     } else {
@@ -131,9 +139,7 @@ const isKycVerified = () => {
 };
 
 // Add can function for permission checks
-const can = (permission) => {
-  return useCan ? useCan(permission) : true;
-};
+const can = permission => useCan(permission);
 
 const getCaptureOption = computed(() => {
   const payment = props.payment;
