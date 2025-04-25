@@ -1,4 +1,5 @@
 <script setup>
+// Test comment for Cursor rule - testing pre-commit hook
 defineProps({
   quotes: Object,
   leadStatuses: Array,
