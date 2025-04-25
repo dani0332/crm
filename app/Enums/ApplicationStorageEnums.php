@@ -68,7 +68,6 @@ final class ApplicationStorageEnums extends Enum
     public const SAGE_ENABLED = 'SAGE_ENABLED';
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
     public const DTT_ENABLED = 'DTT_ENABLED';
-    public const DTT_FROM = 'DTT_FROM';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
     public const DTT_HEALTH_ENABLED = 'DTT_HEALTH_ENABLED';
@@ -211,4 +210,5 @@ final class ApplicationStorageEnums extends Enum
     /* AIG Workflow Integration */
     public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
     public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
+    public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
 }

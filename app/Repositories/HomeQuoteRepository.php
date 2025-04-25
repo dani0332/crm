@@ -424,6 +424,8 @@ class HomeQuoteRepository extends BaseRepository
                 $fieldsChanged = false;
                 $existingHomeQuote = HomeQuote::where('uuid', $uuid)->first();
 
+                LoggerService::startQuoteLogging(QuoteTypes::HOME->refId($uuid));
+
                 if ($existingHomeQuote) {
                     // Check if any of the fields that require a plan update have changed
                     $fieldsThatTriggerPlanUpdate = [
@@ -462,8 +464,10 @@ class HomeQuoteRepository extends BaseRepository
 
                 // If specific fields changed, call the getQuotePlans method with getLatestRating=true
                 if ($fieldsChanged) {
-                    LoggerService::info('Fields changed, Fetching quote plans for quote ID: '.$quote->id, ['getLatestRating' => true]);
-                    app(\App\Services\HomeQuoteService::class)->getQuotePlans($quote->id, ['getLatestRating' => true]);
+                    LoggerService::info('Fields changed, Fetching quote plans', extra: [
+                        'getLatestRating' => true,
+                    ]);
+                    app(\App\Services\HomeQuoteService::class)->getQuotePlans($uuid, ['getLatestRating' => true]);
                 }
 
                 // Return the updated quote

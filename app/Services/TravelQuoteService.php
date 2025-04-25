@@ -216,6 +216,53 @@ class TravelQuoteService extends BaseService
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
+    public function getCustomerTravelInfo(int $quoteRequestId, string $quoteType)
+    {
+        $model = $this->getModelObject($quoteType);
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        $customerTravelInfo = DB::table('travel_quote_request as tqr')
+            ->join('customer as c', 'c.id', '=', 'tqr.customer_id')
+            ->leftJoin('customer_members as cm', function ($join) use ($model) {
+                $join->on('cm.quote_id', '=', 'tqr.id')
+                    ->where('cm.quote_type', '=', ltrim($model, '\\'));
+            })
+            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.gender', 'c.dob', 'c.nationality_id', 'cm.passport')
+            ->where('tqr.id', $quoteRequestId)
+            ->first();
+
+        return $customerTravelInfo;
+    }
+
+    public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
+    {
+        $message = '';
+        $requiredProperty = collect(['first_name', 'last_name', 'gender', 'dob', 'nationality_id', 'passport']);
+
+        $missingDetails = [];
+        foreach ($requiredProperty as $value) {
+
+            if (empty($travelQuoteRequest[$value])) {
+                $propertyName = match ($value) {
+                    'dob' => 'date of birth',
+                    'nationality_id' => 'nationality',
+                    default => str_replace(['-', '_'], ' ', $value)
+                };
+                array_push($missingDetails, ucwords($propertyName));
+            }
+        }
+
+        $missingDetailCount = count($missingDetails);
+        if ($missingDetailCount) {
+            $message = 'Missing Info: '.implode(', ', $missingDetails);
+        }
+
+        return ['status' => $missingDetailCount ? false : true, 'message' => $message];
+    }
+
     public function saveTravelQuote(Request $request)
     {
         $members = [];

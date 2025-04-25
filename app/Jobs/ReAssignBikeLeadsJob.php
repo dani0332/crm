@@ -115,7 +115,7 @@ class ReAssignBikeLeadsJob implements ShouldQueue
         return $this->bikeAllocationService->fetchLeadsForReAssignment($this->advisorId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findTier($lead): ?Tier
     {
         if ($lead->tier_id == null) {
             return $this->bikeAllocationService->findTier($lead);
