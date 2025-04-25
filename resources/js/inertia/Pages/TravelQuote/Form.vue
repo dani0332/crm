@@ -206,6 +206,7 @@ onMounted(() => {
   addUpdatedTraveller();
   updateRegionCover();
   quoteForm.destination_ids = mappedDestinationIds.value ?? [];
+  quoteForm.departure_country_id = props?.quote?.departure_country_id || null;
 });
 
 watch(
