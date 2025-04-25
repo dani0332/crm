@@ -241,7 +241,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if (! empty($request->trashedFilesModal)) {
                 QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
-            $quoteUUID = $quoteModel instanceof SendUpdateLog ? null : $quoteModel->uuid;
+            $quoteUUID = $quoteModel instanceof SendUpdateLog || $payment->send_update_log_id != null ? null : $quoteModel->uuid;
 
             $this->updatePaymentSplits($request, $payment, $quoteUUID);
 
