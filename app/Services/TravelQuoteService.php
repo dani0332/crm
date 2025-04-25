@@ -752,7 +752,8 @@ class TravelQuoteService extends BaseService
         $travelQuote->premium = $request->premium;
         $travelQuote->destination = $request->destination;
         $travelQuote->dob = $request->dob;
-        if ($travelQuote->days_cover_for != $request->days_cover_for || $travelQuote->destination_id != $request->destination_id || $travelQuote->currently_located_in_id != $request->currently_located_in_id || $travelQuote->travel_cover_for_id != $request->travel_cover_for_id || $travelQuote->region_cover_for_id != $request->region_cover_for_id) {
+        if ($travelQuote->days_cover_for != $request->days_cover_for || $travelQuote->destination_id != $request->destination_id || $travelQuote->currently_located_in_id != $request->currently_located_in_id || $travelQuote->travel_cover_for_id != $request->travel_cover_for_id || $travelQuote->region_cover_for_id != $request->region_cover_for_id
+    || $travelQuote->departure_country_id != $request->departure_country_id || $travelQuote->start_date != $request->start_date || $travelQuote->end_date != $request->end_date || $travelQuote->direction_code != $request->direction_code) {
             $travelQuote->quote_updated_at = Carbon::now();
         }
         $travelQuote->days_cover_for = $request->days_cover_for;
@@ -761,12 +762,11 @@ class TravelQuoteService extends BaseService
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         (isset($request->region_cover_for_id) && $request->region_cover_for_id != 'undefined') && $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->policy_start_date = $request->policy_start_date;
-        $travelQuote->start_date =  $request->start_date ?? null;
+        $travelQuote->start_date = $request->start_date ?? null;
         $travelQuote->end_date = $request->end_date ?? null;
         $travelQuote->direction_code = $request->direction_code ?? null;
         $travelQuote->coverage_code = $request->coverage_code ?? null;
         $travelQuote->departure_country_id = $request->departure_country_id ?? null;
-
 
         $travelQuote->details = $request->details;
         $travelQuote->save();
