@@ -46,12 +46,6 @@ class UpdateTravelRequest extends FormRequest
                 $rule[] = 'min:7';
                 $rule[] = 'max:20';
             }
-            if ($key == 'members') {
-                $rules[$key.'.*.dob'][] = 'required_if:has_arrived_uae,0';
-                $rules[$key.'.*.dob'][] = 'required_if:has_arrived_destination,0';
-                $rules[$key.'.*.gender'][] = 'required_if:has_arrived_uae,0';
-                $rules[$key.'.*.gender'][] = 'required_if:has_arrived_destination,0';
-            }
             if ($key == 'departure_country_id') {
                 $rule = ['required_if:has_arrived_uae,1'];
             }
@@ -68,6 +62,5 @@ class UpdateTravelRequest extends FormRequest
     public function failedValidation(Validator $validator)
     {
         $errors = $validator->errors(); // Here is your array of errors
-        dd($errors);
     }
 }
