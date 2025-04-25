@@ -173,6 +173,7 @@ function onSubmit(isValid) {
 
   if (editMode.value && quoteForm.uuid) {
     method = 'put';
+    delete quoteForm.members;
     url = route('travel.update', quoteForm.uuid);
   }
 
