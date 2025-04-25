@@ -16,19 +16,15 @@ const props = defineProps({
   proformaPayment: Object,
   quoteRequest: Object,
   quoteType: String,
-  readOnlyMode: {
-    type: Object,
-    default: () => ({ isDisable: true }),
-  },
 });
 
-const downloadProformaPayment = () => {
-  emit('download-proforma-payment');
-};
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 
-const addPaymentModal = () => {
-  emit('add-payment-modal');
-};
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 </script>
 
@@ -42,7 +38,7 @@ const addPaymentModal = () => {
             size="sm"
             color="primary"
             target="_blank"
-            @click="downloadProformaPayment"
+            @click="$emit('download-proforma-payment')"
           >
             <span class="border-b border-dotted">Download Proforma Payment Request</span>
           </x-button>
@@ -54,7 +50,7 @@ const addPaymentModal = () => {
               size="sm"
               color="primary"
               target="_blank"
-              @click="downloadProformaPayment"
+              @click="$emit('download-proforma-payment')"
             >
               <span class="border-b border-dotted">Download Proforma Payment Request</span>
             </x-button>
@@ -89,7 +85,7 @@ const addPaymentModal = () => {
                 v-if="can(permissionEnum.PaymentsCreate)"
                 size="sm"
                 color="emerald"
-                @click="addPaymentModal"
+                @click="$emit('add-payment-modal')"
               >
                 Add Manual Payment
               </x-button>
@@ -104,7 +100,7 @@ const addPaymentModal = () => {
                 v-if="can(permissionEnum.PaymentsCreate)"
                 size="sm"
                 color="emerald"
-                @click="addPaymentModal"
+                @click="$emit('add-payment-modal')"
               >
                 <span class="border-b border-dotted">Add Manual Payment</span>
               </x-button>

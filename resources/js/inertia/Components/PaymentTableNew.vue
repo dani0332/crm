@@ -1692,9 +1692,6 @@ const addPaymentModal = () => {
   discountError.value = '';
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
-  console.log('totalPrice.value', totalPrice.value);
-  console.log('planDetail.value', planDetail.value);
-  console.log('sendUpdate', props.sendUpdate);
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -3121,14 +3118,6 @@ const isMasterPaymentPaid = computed(() => {
   }
   return false;
 });
-const readOnlyMode = reactive({
-  isDisable: true,
-});
-onMounted(() => {
-  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
-
-  // setLeadStatuses();
-});
 
 const is_lacking_payment = ref(
   page.props?.bookPolicyDetails?.isLackingOfPayment || false,
@@ -3540,11 +3529,9 @@ onBeforeMount(() => {
        
         <PaymentHeader
           :payments="payments"
-          :paymentTooltipEnum="paymentTooltipEnum"
           :proformaPayment="proformaPayment"
           :quoteRequest="quoteRequest"
           :quoteType="quoteType"
-          :readOnlyMode="readOnlyMode"
           @add-payment-modal="addPaymentModal"
           @download-proforma-payment="downloadProformaPayment"
         />
@@ -3559,6 +3546,11 @@ onBeforeMount(() => {
               <PaymentTableHeader />
 
               <tbody class="vue3-easy-data-table__body">
+                <tr v-if="payments.length === 0">
+                  <td colspan="14" class="text-center py-4">
+                    No payments found.
+                  </td>
+                </tr>
                 <!-- Payment Rows with Splits -->
                 <template v-for="(payment, index) in payments" :key="payment.code">
                   <!-- Main payment row -->
@@ -3568,7 +3560,7 @@ onBeforeMount(() => {
                     :index="index"
                     :isExpanded="expandedPaymentRows[index]"
                     :isChildPaymentDeletable="isChildPaymentDeletable"
-                    :is_lacking_payment="is_lacking_payment"
+                    :isLackingPayment="is_lacking_payment"
                     :isApproveConfirmed="isApproveConfirmed"
                     :capturePaymentValidationInProcess="capturePaymentValidationInProcess"
                     :isFuncsEnabled="props.isFuncsEnabled"
@@ -3585,7 +3577,6 @@ onBeforeMount(() => {
                     @void-payment="voidPaymentModel"
                     @alert-capture="alertCapture"
                     @open-aml-verification= "openAmlVerificationModal"
-                    
                   />
                   
                   <!-- Payment split rows (visible when payment is expanded) -->
@@ -3612,12 +3603,6 @@ onBeforeMount(() => {
                 </template>
               </tbody>
             </table>
-            <div
-              v-if="payments.length == 0"
-              class="vue3-easy-data-table__message"
-            >
-              No Available Data
-            </div>
           </div>
         </div>
 

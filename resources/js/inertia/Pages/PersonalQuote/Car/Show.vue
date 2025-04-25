@@ -3633,34 +3633,6 @@ const isCommercialVehicle = computed(() => {
       :quoteType="quoteType"
     />
 
-    <PaymentTableNewRefactored
-      quoteType="Car"
-      :payments="payments"
-      :proformaPayment="
-        payments.find(
-          item =>
-            item.payment_methods_code ===
-            page.props.paymentMethodsEnum.ProformaPaymentRequest,
-        )
-      "
-      :paymentDocument="paymentDocument"
-      :quoteRequest="paymentEntityModel"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-      :isPlanDetailEnabled="isPlanDetailEnabled"
-      :expanded="sectionExpanded"
-      :paymentGatewayEnum="paymentGatewayEnum"
-      :isFuncsEnabled="isFuncsEnabled"
-      :isCapBtnEnabled="isCommercialVehicle"
-      :isPlanDetailSectionEnabled="isPlanDetailEnabled"
-    />
-
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Car"

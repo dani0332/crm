@@ -28,7 +28,7 @@ const props = defineProps({
   index: Number,
   isExpanded: Boolean,
   isChildPaymentDeletable: Boolean,
-  is_lacking_payment: Boolean,
+  isLackingPayment: Boolean,
   isApproveConfirmed: Boolean,
   capturePaymentValidationInProcess: Boolean,
   quoteType: String,
@@ -464,7 +464,7 @@ const amlAndKycTooltip = computed(() => {
     </td>
     <td>
       <div class="flex gap-2">
-        <template v-if="is_lacking_payment">
+        <template v-if="isLackingPayment">
           <x-tooltip placement="left">
             <x-badge
               size="xs"
