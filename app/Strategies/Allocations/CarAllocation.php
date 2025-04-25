@@ -74,7 +74,7 @@ class CarAllocation implements Allocation
             if ($tier) {
                 $response = $this->processTier($lead, $tier);
             } else {
-                LoggerService::warning('Tier not found. Skipping for now.');
+                LoggerService::info('Tier not found. Skipping for now.');
 
                 $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
 
