@@ -289,7 +289,6 @@ watch(
   () => props.searchData,
   (newData) => {
     if (!props.searchSuccess || !newData || !newData.insured_kyc) return;
-    console.log(newData);
     
     const customerTypeEnum = page.props.customerTypeEnum;
     const kyc = newData.insured_kyc;
