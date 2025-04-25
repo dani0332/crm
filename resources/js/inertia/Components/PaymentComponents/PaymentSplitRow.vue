@@ -8,7 +8,7 @@ const permissionEnum = page.props.permissionsEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 
-const { formatDate, formatAmount, formatString } = usePayment();
+const { formatDate, formatAmount, formatString, paymentAllocationStatusTooltip } = usePayment();
 
 const props = defineProps({
   splitPayment: Object,
@@ -17,10 +17,6 @@ const props = defineProps({
   linkedQuoteDetails: Object,
   quoteRequest: Object,
   paymentMethodsForm: Object,
-  paymentAllocationStatusTooltip: {
-    type: Function,
-    default: (status) => status
-  },
   sendUpdate: {
     type: Object,
     default: null,
@@ -107,9 +103,6 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
   );
 };
 
-// const enablePostPrepaymentButton = computed(() => {
-//   return props.enablePostPrepaymentButton && props.enablePostPrepaymentButton(props.splitPayment);
-// });
 const enablePostPrepaymentButton = computed(() => {
   console.log(
     'showPostPrepaymentButton : showPrepaymentPostButton : ',
@@ -135,6 +128,7 @@ const enablePostPrepaymentButton = computed(() => {
   }
   return false;
 });
+
 </script>
 
 <template>

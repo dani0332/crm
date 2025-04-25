@@ -8,7 +8,7 @@ const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const can = permission => useCan(permission);
-const emit = defineEmits(['add-payment-modal', 'download-proforma-payment']);
+const emit = defineEmits(['add-payment-modal']);
 
 const props = defineProps({
   payments: Array,
@@ -26,6 +26,110 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
+const downloadProformaPayment = async () => {
+  let errorMsg = '';
+  if (paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id) {
+    errorMsg =
+      paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+    notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+    return;
+  }
+  /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documents */
+  let exportProformaRequest = isProformaPaymentRequestExportable(
+    props.proformaPayment,
+    props.quoteRequest.documents,
+  );
+  if (!exportProformaRequest) {
+    notification.error({
+      title: 'Please update the Payment details for this Proforma Request.',
+      position: 'top',
+    });
+    return;
+  }
+  if (totalPrice.value < 0 && planDetail.value) {
+    errorMsg = 'Please update the Total Price in the Plan Details section.';
+    if (quoteTypesToCheck.includes(props.quoteType)) {
+      errorMsg = 'Please select a plan.';
+    }
+    notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+    return;
+  }
+  if (props.proformaPayment) {
+    let isSendUpdateLogRoute = route().current() == 'send-update.show';
+    try {
+      NProgress.start();
+      const response = await axios.get(
+        route('create.proforma.payment.request', [
+          props.quoteType,
+          props.quoteRequest.uuid,
+        ]),
+        {
+          params: {
+            paymentCode: props.proformaPayment.code,
+            isSendUpdateLogRoute: isSendUpdateLogRoute,
+          },
+        },
+      );
+      NProgress.done();
+      if (response.data.success) {
+        if (response.data?.proforma_request) {
+          let proforma_request = response.data.proforma_request;
+          let proforma_request_id = proforma_request.id;
+          /* Create the link and download Proforma Request document*/
+          const a = document.createElement('a');
+          a.href = route('download.proforma.payment.request', [
+            proforma_request_id,
+          ]);
+          a.target = '_blank';
+          a.download = proforma_request.original_name;
+          document.body.appendChild(a);
+          await a.click();
+          /* Remove Link */
+          document.body.removeChild(a);
+
+          notification.success({
+            title: 'Proforma payment request has been saved',
+            position: 'top',
+          });
+          notification.success({
+            title: 'File exported',
+            position: 'top',
+          });
+          router.visit(location.href);
+        }
+      } else {
+        notification.error({
+          title: 'Proforma Payment Request Generation Failed',
+          position: 'top',
+        });
+      }
+    } catch (err) {
+      notification.error({
+        title: err,
+        position: 'top',
+      });
+      notification.error({
+        title: 'Proforma Payment Request Generation Failed',
+        position: 'top',
+      });
+    }
+    return;
+  } else {
+    errorMsg = 'No Proforma Payment found';
+    notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+    return;
+  }
+};
+
 </script>
 
 <template>
@@ -38,7 +142,7 @@ onMounted(() => {
             size="sm"
             color="primary"
             target="_blank"
-            @click="$emit('download-proforma-payment')"
+            @click="downloadProformaPayment"
           >
             <span class="border-b border-dotted">Download Proforma Payment Request</span>
           </x-button>
@@ -50,7 +154,7 @@ onMounted(() => {
               size="sm"
               color="primary"
               target="_blank"
-              @click="$emit('download-proforma-payment')"
+              @click="downloadProformaPayment"
             >
               <span class="border-b border-dotted">Download Proforma Payment Request</span>
             </x-button>
@@ -80,7 +184,7 @@ onMounted(() => {
               :totalPrice="payments[0].total_price"
               :totalPaidPrice="payments[0].total_amount + payments[0].discount_value"
             />
-            <div v-if="readOnlyMode.isDisable === true">
+            <div v-if="readOnlyMode.isDisable">
               <x-button
                 v-if="can(permissionEnum.PaymentsCreate)"
                 size="sm"
@@ -94,7 +198,7 @@ onMounted(() => {
         </template>
         <template v-else>
           <x-tooltip>
-            <div v-if="readOnlyMode.isDisable === true">
+            <div v-if="readOnlyMode.isDisable">
               <x-button
                 class="focus:ring-2 focus:ring-black"
                 v-if="can(permissionEnum.PaymentsCreate)"

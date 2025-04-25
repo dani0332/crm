@@ -1,7 +1,9 @@
 export const usePayment = () => {
     const page = usePage();
     const paymentStatusEnum = page.props.paymentStatusEnum;
-    
+    const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+    const paymentAllocationStatus = page.props.paymentAllocationStatus;
+
     const formatDate = (date, timeFlag = false) => {
         const parsedDate = new Date(date);
         const day = parsedDate.getDate().toString().padStart(2, '0');
@@ -85,6 +87,30 @@ export const usePayment = () => {
         return false;
     };
 
+    const paymentAllocationStatusTooltip = payment_allocation_status => {
+        // First convert to upper case as some of the values are in lower case & some of without space
+        payment_allocation_status = formatString(payment_allocation_status);
+        // Then converting to accordingly to match with the enum values
+        payment_allocation_status = payment_allocation_status
+          .replace(/ /g, '_')
+          .toLowerCase();
+        if (payment_allocation_status == paymentAllocationStatus.NOT_ALLOCATED) {
+          return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED;
+        } else if (
+          payment_allocation_status == paymentAllocationStatus.PARTIALLY_ALLOCATED
+        ) {
+          return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED;
+        } else if (
+          payment_allocation_status == paymentAllocationStatus.FULLY_ALLOCATED
+        ) {
+          return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED;
+        } else if (payment_allocation_status == paymentAllocationStatus.UNPAID) {
+          return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
+        }
+      
+        return '';
+    };
+
     return {
         formatDate,
         formatAmount,
@@ -93,6 +119,7 @@ export const usePayment = () => {
         getCaptureValidStatuses,
         filterCAPayments,
         verifyCreditApproved,
-        hasAnyCCSplitPayment
+        hasAnyCCSplitPayment,
+        paymentAllocationStatusTooltip
     };
 };

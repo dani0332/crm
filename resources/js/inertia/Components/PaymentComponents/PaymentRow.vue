@@ -147,7 +147,6 @@ const getCaptureOption = computed(() => {
 
   let isCaptureButtonEnabled =
     page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
-  console.log("isCaptureButtonEnabled", isCaptureButtonEnabled);  
   if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
     isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
   }
