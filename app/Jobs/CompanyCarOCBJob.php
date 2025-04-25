@@ -47,8 +47,12 @@ class CompanyCarOCBJob implements ShouldQueue
             if (! in_array($carLead->source, $leadSources)) {
                 info("Sending company car ocb email for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
                 $carEmailService->sendCompanyCarOCB($carLead);
-                $carLead->quote_status_id = QuoteStatusEnum::Quoted;
-                $carLead->save();
+                if($carLead->quote_status_id == QuoteStatusEnum::NewLead)
+                {
+                        $carLead->quote_status_id = QuoteStatusEnum::Quoted;
+                        $carLead->save();
+                }
+
             } else {
                 info(self::class." - Car Lead did not trigger company car ocb email WorkFlow due to ineligible source (Source: {$carLead->source}) - Ref ID: {$carLead->uuid} | Time: ".now());
 
