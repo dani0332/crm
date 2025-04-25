@@ -167,8 +167,6 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        logger()->debug('getData toRawSql: '.$query->toRawSql());
-
         return ($forExport) ? $query->get() : $query;
     }
 
