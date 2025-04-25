@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\HealthQuote;
 use App\Services\HealthAllocationService;
 use App\Services\Logger\LoggerService;
@@ -49,7 +50,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         }
 
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             info('-------- Reassignment started ---------');
 
