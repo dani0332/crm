@@ -172,7 +172,8 @@ const getCaptureOption = computed(() => {
 const getCaptureValidation = computed(() => {
   const payment = props.payment;
   if (shouldProcessUpdate) {
-    if (payment.is_approved === 1) return false;
+    const isPaidCapturePayment = payment.payment_status_id === paymentStatusEnum.PAID || payment.payment_status_id === paymentStatusEnum.CAPTURED;
+    if (payment.is_approved === 1 || isPaidCapturePayment) return false;
     let paymentRecord = payment;
     if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
       return validateUpfrontCapture(paymentRecord);
