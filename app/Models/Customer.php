@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -119,5 +120,15 @@ class Customer extends Model implements AuditableContract
             'id', // Local key on Customer table
             'insured_id' // Local key on CustomerInsured table
         );
+    }
+
+    /**
+     * Get all customer insured records associated with this customer.
+     *
+     * @todo Review this relationship after customer insured process is updated
+     */
+    public function customerInsured(): HasMany
+    {
+        return $this->hasMany(CustomerInsured::class, 'customer_id', 'id');
     }
 }

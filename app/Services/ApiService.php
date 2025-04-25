@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -102,7 +103,7 @@ class ApiService
 
         $lead = QuoteTypes::getName($allocationType)?->model()?->where('uuid', $allocationId)?->first();
         if ($lead) {
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
         }
 
         // Handle different scenarios based on request parameters

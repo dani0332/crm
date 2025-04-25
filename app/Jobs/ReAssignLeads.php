@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Services\AllocationService;
@@ -76,7 +77,7 @@ class ReAssignLeads implements ShouldQueue
         }
 
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             info(self::class.'::handle - Reassignment started ---------');
 
