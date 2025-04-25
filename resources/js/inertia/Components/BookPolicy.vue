@@ -578,7 +578,6 @@ const isTravelQuoteAndAMLNotCleared = () => {
     bookPolicyButtonLabel === sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT;
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
   const isPolicyAMLScreeningCleared = props.isAmlClearedForQuote;
-  console.log('isPolicyAMLScreeningCleared', isPolicyAMLScreeningCleared);
   if (
     isQuoteTypeTravel &&
     !isPolicyAMLScreeningCleared &&
