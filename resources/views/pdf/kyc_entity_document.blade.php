@@ -133,7 +133,7 @@
             <tbody>
                 <tr>
                     <td>Account opening number:</td>
-                    <td>{{ $data['customer_id'] }}</td>
+                    <td>{{ $data['insured_id'] }}</td>
                 </tr>
                 <tr>
                     <td>Entity Name:</td>
@@ -165,7 +165,7 @@
                 </tr>
                 <tr>
                     <td>Registered address:</td>
-                    <td>{{ $data['registered_address'] }}</td>
+                    <td>{{ $data['residential_address'] }}</td>
                 </tr>
                 <tr>
                     <td>Website:</td>

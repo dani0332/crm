@@ -427,8 +427,11 @@ class AMLController extends Controller
                 }
             }
 
-            if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
                 $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
+            }
+
+            if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 $this->InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote);
             }
 

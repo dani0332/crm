@@ -115,14 +115,8 @@ const kycFormDetails = useForm({
   quote_uuid: page.props.quoteRequest.uuid,
   quote_type_id: page.props.quoteType.id,
   insured_id: insuredDetails?.insured?.id,
-  first_name:
-    (isScreeningIndividual
-      ? insuredDetails?.insured?.first_name
-      : page.props.quoteRequest.first_name) ?? null,
-  last_name:
-    (isScreeningIndividual
-      ? insuredDetails?.insured?.last_name
-      : page.props.quoteRequest.last_name) ?? null,
+  first_name: insuredDetails?.insured?.insured_kyc?.first_name ?? null,
+  last_name: insuredDetails?.insured?.insured_kyc.last_name ?? null,
   residential_address:
     (isScreeningIndividual
       ? insuredDetails?.insured?.insured_kyc?.residential_address
@@ -239,8 +233,14 @@ function insuredKycFormValidate() {
   return isValid;
 }
 const submitInsuredKycForm = isValid => {
+  if (!isValid) return;
+
   if (insuredKycFormValidate()) {
     kycFormDetails.processing = true;
+    
+    // Debug customer_type value
+    // console.log('Submitting KYC form with customer_type:', kycFormDetails.customer_type);
+    
     axios
       .post('/update-insured-kyc', kycFormDetails)
       .then(response => {
@@ -285,6 +285,23 @@ onMounted(() => {
   changeIncomeSource();
   activePatternField();
 });
+
+// Add watcher for customerType prop
+watch(
+  () => props.customerType,
+  (newType) => {
+    // console.log('Customer type prop updated:', newType);
+    // Ensure we always set a value, even if null
+    kycFormDetails.customer_type = newType;
+    
+    // If we have searchData but customer_type is null/empty, try to infer from searchData
+    if ((!newType || newType === '') && props.searchData && props.searchData.customer_type) {
+      // console.log('Inferring customer_type from searchData:', props.searchData.customer_type);
+      kycFormDetails.customer_type = props.searchData.customer_type;
+    }
+  },
+  { immediate: true }
+);
 
 // Add watcher for searchData
 watch(

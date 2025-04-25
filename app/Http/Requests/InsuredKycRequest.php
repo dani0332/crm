@@ -67,6 +67,7 @@ class InsuredKycRequest extends FormRequest
             'customer_tenure' => 'sometimes',
             'residential_address' => 'required',
             'id_type' => 'required',
+            'website' => 'nullable',
             'customer_type' => 'nullable',
         ];
 
@@ -84,7 +85,6 @@ class InsuredKycRequest extends FormRequest
                 'employment_sector' => 'required_if:income_source,employed',
                 'trade_license' => 'required_if:income_source,business',
                 'company_position' => 'required_if:income_source,business',
-                'transaction_pattern' => 'sometimes',
                 'premium_tenure' => 'sometimes',
                 'is_partner' => 'sometimes',
             ];
@@ -100,7 +100,6 @@ class InsuredKycRequest extends FormRequest
                 'industry_type' => 'required',
                 'country_of_corporation' => 'required',
                 'communication_address' => 'required',
-                'website' => 'nullable',
                 'place_of_issue' => 'required',
                 'issuing_authority' => 'required',
                 'manager_name' => 'required',

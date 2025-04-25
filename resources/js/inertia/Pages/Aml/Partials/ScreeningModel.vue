@@ -202,7 +202,7 @@ const screeningFormDetails = useForm({
       : page.props.quoteRequest?.bike_quote?.chassis_number) ?? null,
   // Entity Type
   // entity_id: page.props.entityDetails?.entity?.id ?? null,
-  // entity_type: page.props.entityDetails?.entity?.entity_type_code ?? 'Parent',
+  entity_type: page.props.entityDetails?.entity?.entity_type_code ?? 'Parent',
   trade_license_no:
     page.props.insuredDetails?.insured?.trade_license_no ?? null,
   company_name: page.props.insuredDetails?.insured?.company_name ?? null,
@@ -251,6 +251,8 @@ const setFieldsByCustomerType = (customerType = '') => {
 watch(() => screeningFormDetails.customer_type, (newValue, oldValue) => {
   oldCustomerType.value = oldValue;
   newCustomerType.value = newValue;
+  // Debug the current customer type
+  // console.log('Customer type changed:', oldValue, '->', newValue);
 });
 
 function customerTypeConfirmation() {
@@ -460,7 +462,6 @@ function screeningFormValidate() {
     screeningFormDetails.customer_type == customerTypeEnum.Individual ||
     screeningFormDetails.customer_type == null
   ) {
-    console.log(screeningFormDetails);
     if (screeningFormDetails.screening_id_type === 'emiratesId') {
       if (!screeningFormDetails.screening_id_number) {
         screeningFormDetails.setError(
