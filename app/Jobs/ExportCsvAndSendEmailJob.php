@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
@@ -42,6 +43,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         Log::info('CSV export job started for '.$this->requestParams['fileName'].' attempt: '.$this->attempts());
 
         try {
+           DB::setDefaultConnection('mysql_read');
+
             // Instantiate the export class that uses the ExcelExportable trait
             $exportInstance = app($this->exportClass);
 

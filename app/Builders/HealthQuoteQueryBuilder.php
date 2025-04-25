@@ -129,7 +129,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('is_ecommerce', isBool: true)
             ->filterIn('insurer_aml_status')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
-            ->filterBySegment(request('segment_filter'), QuoteTypeId::Health)
+            ->filterBySegment()
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByDateRange('booking_date', 'policy_booking_date')
             ->filterByAdvisorAssignedDates('healthQuoteRequestDetail', ['assigned_to_date_start', 'assigned_to_date_end'], verifyQuoteStatus: true)
@@ -153,7 +153,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->when(request('is_renewal') == 'Yes', function ($query) {
                 $query->whereNotNull('previous_quote_policy_number');
             })
-            ->when(request()->filled('stale_at'), function ($query) {
+            ->when(request('stale_at'), function ($query) {
                 $query->whereNotNull('stale_at');
             })
             ->when(request()->filled('is_renewal') && request('is_renewal') != 'Yes', function ($query) {
@@ -166,17 +166,20 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 $query->whereRelation('payments', 'insurer_commmission_invoice_number', request('insurer_commission_tax_invoice_number'));
             })
             ->when(
-                request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
+                ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
                 fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
+
+            )
+            ->when(
+                request()->filled('email') && request()->filled('email') == '',
+                fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake]),
+
             )
             ->when($this->shouldApplyDatesFilter() && ! request()->filled('last_modified_date') && ! request()->filled('created_at_start') && ! request()->filled('renewal_batches') && ! request()->filled('policy_expiry_date') && ! request()->filled('policy_expiry_date_end'), function ($query) {
                 $query->filterByToday();
             })
             ->when($this->shouldApplyDatesFilter() && ! request()->filled('renewal_batches') && request()->filled('created_at_start') && request()->filled('created_at_end'), function ($query) {
                 $query->whereBetween('created_at', [$this->parseDate(request('created_at_start'), true), $this->parseDate(request('created_at_end'), false)]);
-            })
-            ->when(request()->filled('last_modified_date'), function ($query) {
-                $query->filterByDateRange('last_modified_date', 'updated_at');
             })
             ->when(
                 request()->filled('sortBy'),
