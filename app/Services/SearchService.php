@@ -417,7 +417,6 @@ class SearchService extends BaseService
                     LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for insured company_name. Consider adding FULLTEXT index for better performance.');
                 }
 
-
             }
 
             // Search by policy number
