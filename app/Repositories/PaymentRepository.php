@@ -320,7 +320,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteType = QuoteTypes::from($modelType);
             SendFTCEmailJob::dispatch($quoteUUID, $quoteType, true)->delay(now()->addSeconds(5));
         }
-        
+
         $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
         if ($discountDocuments && count($discountDocuments)) {
             $firstPaymentSplit = $firstPaymentSplit ?? PaymentSplits::where(['code' => $quoteID])->first();
