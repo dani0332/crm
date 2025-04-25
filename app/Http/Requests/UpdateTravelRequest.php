@@ -27,7 +27,7 @@ class UpdateTravelRequest extends FormRequest
     {
         $travelService = (app()->make(TravelQuoteService::class));
         $travelService->getGenericModel(quoteTypeCode::Travel);
-        $properties = $travelService->getFieldsToCreate('skipProperties', 'update');
+        $properties = $travelService->getFieldsToUpdate('skipProperties');
         $requireProperties = array_filter($properties, function ($value) {
             return strpos($value, 'required') !== false;
         });
