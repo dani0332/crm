@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -122,7 +123,7 @@ class QuoteAllocation extends Command
                 continue;
             }
 
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             LoggerService::info('Processing record for Quote Allocation', [
                 'payment_status_id' => $lead->payment_status_id,
@@ -168,7 +169,7 @@ class QuoteAllocation extends Command
         info("For Health - leads fetch query is : {$leads->toRawSql()}");
 
         foreach ($leads->get() as $lead) {
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             LoggerService::info('Processing Health record for Quote Allocation', [
                 'payment_status_id' => $lead->payment_status_id,
@@ -217,7 +218,7 @@ class QuoteAllocation extends Command
                 continue;
             }
 
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             LoggerService::info('Processing Travel record for Quote Allocation', [
                 'payment_status_id' => $lead->payment_status_id,
@@ -272,7 +273,7 @@ class QuoteAllocation extends Command
                 continue;
             }
 
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             info('Processing record for Bike Quote Allocation');
             QuoteTypes::BIKE->allocate(uuid: $lead->uuid);
@@ -297,7 +298,7 @@ class QuoteAllocation extends Command
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             info("Processing record for Quote Allocation Quote Type: {$quoteType->value}");
             $quoteType->allocate(uuid: $lead->uuid);
