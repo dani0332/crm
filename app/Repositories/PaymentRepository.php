@@ -146,7 +146,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment = $quoteModel->payments()->create($paymentInformation);
             info('Payment created with Code: '.$paymentInformation['code']);
 
-            $quoteUUID = $quoteModel instanceof SendUpdateLog ? $quoteModel->quote_uuid : $quoteModel->uuid;
+            $quoteUUID = $quoteModel instanceof SendUpdateLog ? null : $quoteModel->uuid;
             // Add split payments start
             $this->addPaymentSplits($request, $payment, $quoteUUID);
             // Add split payments ends
@@ -241,7 +241,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if (! empty($request->trashedFilesModal)) {
                 QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
-            $this->updatePaymentSplits($request, $payment, $quoteModel->uuid);
+            $quoteUUID = $quoteModel instanceof SendUpdateLog ? null : $quoteModel->uuid;
+
+            $this->updatePaymentSplits($request, $payment, $quoteUUID);
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
         }, $maxRetries);
@@ -315,7 +317,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
         // Update parent payment status
         $this->setMasterPaymentStatus($payment);
-        if ($sendFTCEmail) {
+        if ($sendFTCEmail && $quoteUUID != null) {
             $modelType = $request->modelType;
             $quoteType = QuoteTypes::from($modelType);
             SendFTCEmailJob::dispatch($quoteUUID, $quoteType, true)->delay(now()->addSeconds(5));
@@ -444,7 +446,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
         }
-        $sendFTCEmail && SendFTCEmailJob::dispatch($quoteUUID, QuoteTypes::from($request->modelType), true)->delay(now()->addSeconds(5));
+        ($sendFTCEmail && $quoteUUID != null) && SendFTCEmailJob::dispatch($quoteUUID, QuoteTypes::from($request->modelType), true)->delay(now()->addSeconds(5));
         $payment = Payment::where('code', $request->paymentCode)->first();
         $this->setMasterPaymentStatus($payment);
         $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
