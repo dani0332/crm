@@ -15,7 +15,7 @@ class LoggerService
         Log::withContext(['feature' => $feature->value]);
     }
 
-    public static function startQuoteLogging(Model|string $lead, ?LoggerFeatureEnum $feature = null)
+    public static function startQuoteLogging(Model|string|null $lead, ?LoggerFeatureEnum $feature = null)
     {
         if (empty($lead)) {
             self::alert('startQuoteLogging - Lead is empty');
