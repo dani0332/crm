@@ -3922,6 +3922,17 @@ const enablePostPrepaymentButton = splitPayment => {
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
 });
+const splitPaymentTotalPrice = (srNo, amount, discountValue) => {
+  let total = 0;
+  if (srNo === 1 && discountValue > 0) {
+    total = amount + discountValue;
+  } else {
+    total = amount;
+  }
+
+  return formatAmount(total);
+};
+
 </script>
 
 <template>
