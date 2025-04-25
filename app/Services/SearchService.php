@@ -183,8 +183,7 @@ class SearchService extends BaseService
      */
     private function applyTableJoins(Builder $query, $request): void
     {
-        // This is a placeholder for the model method that was being called
-        // Implement the joins logic directly here if needed
+        PersonalQuote::applyRequestTableJoins($query, $request);
     }
 
     /**
@@ -568,8 +567,7 @@ class SearchService extends BaseService
                 $quoteType = $quoteTypes[request()->line_of_business] ?? null;
 
                 if ($quoteType) {
-                    $join->on($quoteType.'.id', 'customer_members.quote_id')
-                        ->where('customer_members.quote_type', $quoteType);
+                    $join->on($quoteType.'.id', 'customer_members.quote_id');
                 }
             }
         });
@@ -580,7 +578,7 @@ class SearchService extends BaseService
 
             if (! empty($fullNameIndexExists)) {
                 // Use FULLTEXT search
-                $query->whereRaw('MATCH(customer_members.first_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_first_name.'*']);
+                $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_first_name.'*']);
             } else {
                 // Fallback to search
                 $query->where('customer_members.first_name', 'like', '%'.$request->member_first_name.'%');
