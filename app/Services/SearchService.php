@@ -593,7 +593,7 @@ class SearchService extends BaseService
 
             if (! empty($fullNameIndexExists)) {
                 // Use FULLTEXT search
-                $query->whereRaw('MATCH(customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_last_name.'*']);
+                $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_last_name.'*']);
             } else {
                 // Fallback to search
                 $query->where('customer_members.last_name', 'like', '%'.$request->member_last_name.'%');
