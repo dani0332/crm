@@ -403,8 +403,22 @@ class SearchService extends BaseService
             // Search by company name
             if ($request->has('company_name')) {
                 $query->join('insured', 'personal_quotes.insured_id', 'insured.id');
-                // Use LIKE with index hint for better performance
-                $query->where(DB::raw('insured.company_name'), 'like', '%'.$request->company_name.'%');
+
+                // Check if FULLTEXT index exists and use it for better performance
+                $companyNameFullTextIndexExists = DB::select("SHOW INDEX FROM insured WHERE Key_name = 'insured_company_name_fulltext'");
+
+                if (! empty($companyNameFullTextIndexExists)) {
+                    // Use FULLTEXT search
+                    $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->company_name.'*']);
+                } else {
+                    // Fallback to LIKE search
+                    $query->where(DB::raw('insured.company_name'), 'like', '%'.$request->company_name.'%');
+
+                    // Log that we're using slower search
+                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for insured company_name. Consider adding FULLTEXT index for better performance.');
+                }
+
+
             }
 
             // Search by policy number
@@ -510,19 +524,17 @@ class SearchService extends BaseService
         $query->join('customer', 'personal_quotes.customer_id', 'customer.id');
 
         // Check if FULLTEXT index exists and use it for better performance
-        $fullTextIndexExists = DB::select("SHOW INDEX FROM customer WHERE Key_name = 'customer_insured_name_fulltext'");
+        $insuredFullNameFullTextIndexExists = DB::select("SHOW INDEX FROM customer WHERE Key_name = 'customer_insured_name_fulltext'");
 
-        if (! empty($fullTextIndexExists)) {
+        if (! empty($insuredFullNameFullTextIndexExists)) {
             // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)',
-                ['*'.$request->insured_name.'*']);
+            $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insured_name.'*']);
         } else {
             // Fallback to LIKE search
-            $query->where(DB::raw("CONCAT(customer.insured_first_name, ' ', customer.insured_last_name)"),
-                'like', '%'.$request->insured_name.'%');
+            $query->where(DB::raw("CONCAT(customer.insured_first_name, ' ', customer.insured_last_name)"), 'like', '%'.$request->insured_name.'%');
 
             // Log that we're using slower search
-            LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for insured_name. Consider adding FULLTEXT index for better performance.');
+            LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for customer insured_name. Consider adding FULLTEXT index for better performance.');
         }
     }
 
@@ -564,11 +576,34 @@ class SearchService extends BaseService
 
         // Apply first/last name filters
         if ($request->has('member_first_name')) {
-            $query->where('customer_members.first_name', 'like', '%'.$request->member_first_name.'%');
+            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'customer_members_name_fulltext'");
+
+            if (! empty($fullNameIndexExists)) {
+                // Use FULLTEXT search
+                $query->whereRaw('MATCH(customer_members.first_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_first_name.'*']);
+            } else {
+                // Fallback to search
+                $query->where('customer_members.first_name', 'like', '%'.$request->member_first_name.'%');
+
+                // Log that we're using slower search
+                LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for customer_members first_name. Consider adding FULLTEXT index for better performance.');
+            }
         }
 
         if ($request->has('member_last_name')) {
-            $query->where('customer_members.last_name', 'like', '%'.$request->member_last_name.'%');
+            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'customer_members_name_fulltext'");
+
+            if (! empty($fullNameIndexExists)) {
+                // Use FULLTEXT search
+                $query->whereRaw('MATCH(customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_last_name.'*']);
+            } else {
+                // Fallback to search
+                $query->where('customer_members.last_name', 'like', '%'.$request->member_last_name.'%');
+
+                // Log that we're using slower search
+                LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for customer_members last_name. Consider adding FULLTEXT index for better performance.');
+            }
+
         }
     }
 
@@ -641,21 +676,66 @@ class SearchService extends BaseService
             $query->join('payments', 'personal_quotes.code', 'payments.code');
 
             if ($request->has('insurer_tax_invoice_number')) {
-                $query->where('payments.insurer_tax_number', $request->insurer_tax_invoice_number);
+                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM payments WHERE Key_name = 'payments_insurer_tax_invoice_number_fulltext'");
+
+                if (! empty($taxInvoiceIndexExists)) {
+                    // Use FULLTEXT search
+                    $query->whereRaw('MATCH(payments.insurer_tax_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insurer_tax_invoice_number.'*']);
+                } else {
+                    // Fallback to  search
+                    $query->where('payments.insurer_tax_number', $request->insurer_tax_invoice_number);
+
+                    // Log that we're using slower search
+                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for payments insurer_tax_invoice_number. Consider adding FULLTEXT index for better performance.');
+                }
             }
 
             if ($request->has('insurer_commission_tax_invoice_number')) {
-                $query->where('payments.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+                $comTaxInvoiceIndexExists = DB::select("SHOW INDEX FROM payments WHERE Key_name = 'payments_insurer_com_tax_invoice_number_fulltext'");
+
+                if (! empty($comTaxInvoiceIndexExists)) {
+                    // Use FULLTEXT search
+                    $query->whereRaw('MATCH(payments.insurer_commmission_invoice_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insurer_commission_tax_invoice_number.'*']);
+                } else {
+                    // Fallback to search
+                    $query->where('payments.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+
+                    // Log that we're using slower search
+                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for payments insurer_tax_invoice_number. Consider adding FULLTEXT index for better performance.');
+                }
+
             }
         } else {
             $query->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
 
             if ($request->has('insurer_tax_invoice_number')) {
-                $query->where('send_update_logs.insurer_tax_invoice_number', $request->insurer_tax_invoice_number);
+                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM send_update_logs WHERE Key_name = 'send_update_logs_insurer_tax_invoice_number_fulltext'");
+
+                if (! empty($taxInvoiceIndexExists)) {
+                    // Use FULLTEXT search
+                    $query->whereRaw('MATCH(send_update_logs.insurer_tax_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insurer_tax_invoice_number.'*']);
+                } else {
+                    // Fallback to  search
+                    $query->where('send_update_logs.insurer_tax_invoice_number', $request->insurer_tax_invoice_number);
+
+                    // Log that we're using slower search
+                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for send_update_logs insurer_tax_invoice_number. Consider adding FULLTEXT index for better performance.');
+                }
             }
 
             if ($request->has('insurer_commission_tax_invoice_number')) {
-                $query->where('send_update_logs.insurer_commission_invoice_number', $request->insurer_commission_tax_invoice_number);
+                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM send_update_logs WHERE Key_name = 'send_update_logs_insurer_com_tax_invoice_number_fulltext'");
+
+                if (! empty($taxInvoiceIndexExists)) {
+                    // Use FULLTEXT search
+                    $query->whereRaw('MATCH(send_update_logs.insurer_commission_invoice_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insurer_commission_tax_invoice_number.'*']);
+                } else {
+                    // Fallback to  search
+                    $query->where('send_update_logs.insurer_commission_invoice_number', $request->insurer_commission_tax_invoice_number);
+
+                    // Log that we're using slower search
+                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for send_update_logs insurer_commission_invoice_number. Consider adding FULLTEXT index for better performance.');
+                }
             }
         }
     }
