@@ -61,7 +61,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         }
 
         $this->quoteRequest->refresh();
-        LoggerService::startQuoteLogging($this->quoteRequest);
 
         $isApiIssuanceStatusYes = $this->quoteRequest->api_issuance_status_id == PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_YES_ID;
         $isAMLPending = empty($this->quoteRequest->aml_status) ?: $this->quoteRequest->aml_status == AMLStatusCode::AMLPending;
@@ -134,9 +133,6 @@ class AmlScreeningAutomationJob implements ShouldBeUnique, ShouldQueue
         } catch (\Exception $e) {
             $amlAutomation->update(['status' => AmlAutomationStatus::FAILED_STATUS, 'result' => 'Exception: '.$e->getMessage()]);
             LoggerService::error($this->className.' - Exception: '.$e->getMessage());
-
-        } finally {
-            LoggerService::endLogging();
         }
     }
 
