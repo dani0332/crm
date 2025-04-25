@@ -27,12 +27,12 @@ class InsuredKycRequest extends FormRequest
     protected function prepareForValidation()
     {
         // Get the insured record to determine customer type
-        if ($this->has('insured_id') && $this->insured_id) {
+        /*if ($this->has('insured_id') && $this->insured_id) {
             $insured = Insured::find($this->insured_id);
             if ($insured) {
                 $this->customerType = $insured->customer_type;
             }
-        }
+        }*/
 
         // TODO:: Need to add validation if customer type entity then trade license is required
     }
@@ -49,7 +49,6 @@ class InsuredKycRequest extends FormRequest
             'insured_id' => 'required|exists:insured,id',
             'quote_uuid' => 'required',
             'quote_type_id' => 'required',
-            'customer_id' => 'required',
             'first_name' => 'required',
             'last_name' => 'required',
             'mobile_number' => 'required',
@@ -68,10 +67,11 @@ class InsuredKycRequest extends FormRequest
             'customer_tenure' => 'sometimes',
             'residential_address' => 'required',
             'id_type' => 'required',
+            'customer_type' => 'nullable',
         ];
 
         // If customer type is Individual, add Individual-specific rules
-        if ($this->customerType === CustomerTypeEnum::Individual) {
+        if (request()->customer_type === CustomerTypeEnum::Individual) {
             $individualRules = [
                 'dob' => 'required',
                 'nationality_id' => 'required',
@@ -93,7 +93,7 @@ class InsuredKycRequest extends FormRequest
         }
 
         // If customer type is Entity, add Entity-specific rules
-        if ($this->customerType === CustomerTypeEnum::Entity) {
+        if (request()->customer_type === CustomerTypeEnum::Entity) {
             $entityRules = [
                 'company_name' => 'required',
                 'legal_structure' => 'required',

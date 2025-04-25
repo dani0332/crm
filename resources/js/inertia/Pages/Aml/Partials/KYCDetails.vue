@@ -7,6 +7,7 @@ const props = defineProps({
   customerType: { type: String, default: '' }
 });
 const page = usePage();
+const notification = useToast();
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 const convertDate = date => useConvertDate(date);
 const generateOptions = (items, valueKey, labelKey) =>
@@ -230,6 +231,7 @@ const kycFormDetails = useForm({
   transaction_activities:
     insuredDetails?.insured?.insured_kyc?.transaction_activities ??
     null,
+  customer_type: props.customerType,
 });
 function insuredKycFormValidate() {
   kycFormDetails.clearErrors();
@@ -244,7 +246,7 @@ const submitInsuredKycForm = isValid => {
       .then(response => {
         if (response.data.success) {
           notification.success({
-            title: 'KYC Document uploaded.',
+            title: 'KYC Document uploaded successfully',
             position: 'top',
           });
           router.reload({
@@ -254,14 +256,14 @@ const submitInsuredKycForm = isValid => {
           });
         } else {
           notification.error({
-            title: response.data.message,
+            title: 'Document upload failed',
             position: 'top',
           });
           kycFormDetails.processing = false;
         }
       })
       .catch(error => {
-        console.error(error.response.data);
+        console.error(error);
       })
       .finally(() => (kycFormDetails.processing = false));
   } else {

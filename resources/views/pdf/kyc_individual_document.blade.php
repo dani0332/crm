@@ -123,7 +123,7 @@
             <tbody>
                 <tr>
                     <td>Account opening number:</td>
-                    <td>{{ $data['customer_id'] }}</td>
+                    <td>{{ $data['insured_id'] }}</td>
                 </tr>
                 <tr>
                     <td>Full name:</td>

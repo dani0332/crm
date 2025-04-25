@@ -54,6 +54,7 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteStatusService;
 use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
@@ -798,14 +799,17 @@ class AMLController extends Controller
 
     public function insuredKycDetailsUpdate(InsuredKycRequest $insuredKycRequest)
     {
-        $quote = $this->getQuoteObjectBy($insuredKycRequest->quote_type_id, $insuredKycRequest->quote_uuid, 'uuid');
-        $insured = Insured::find($insuredKycRequest->insured_id);
+        $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
+        $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
+        LoggerService::startQuoteLogging($quote);
 
-        if (! $insured) {
-            return response()->json(['message' => 'Insured not found']);
+        $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
+
+        if ($preparedFormData) {
+            return response()->json(['success' => true]);
         }
 
-        $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest);
+        return response()->json(['success' => false]);
 
     }
 
