@@ -211,4 +211,9 @@ final class ApplicationStorageEnums extends Enum
     /* AIG Workflow Integration */
     public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
     public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
+
+    /* Advisor Emails for Allocation */
+    public const YACHT_ADVISORS = 'YACHT_ADVISORS';
+    public const PET_ADVISORS = 'PET_ADVISORS';
+    public const HOME_ADVISORS_FOR_PET = 'HOME_ADVISORS_FOR_PET';
 }
