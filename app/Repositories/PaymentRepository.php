@@ -445,6 +445,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     private function handlePaymentDecline($request)
     {
+        info("Processing payment decline for {$request->payment_code}");
+
         $quoteModel = $this->getQuoteModel($request->modelType, $request->quote_id, $request->send_update_id);
         $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
         $firstPayment->update([
@@ -459,7 +461,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
         }
         $quoteModel->save();
-        info('Master payment code: '.$request->payment_code.' Transaction declined');
+        info("Transaction declined process complete: {$request->payment_code}");
 
         return 'Transaction declined';
     }
@@ -473,21 +475,24 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     public function handlePaymentApprove($request)
     {
+        info("Payment approval process initiated: {$request->payment_code}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
                 $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
-                    info('Child payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' approving process started');
+                    info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} approving process started");
 
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
+                } else {
+                    info("Payment split not found or already paid: {$request->payment_code}, Split No: {$key}");
                 }
             }
         }
         // Log the master payment approval process
-        info('Master payment code: '.$request->payment_code.' processing master payment approval');
+        info('Master payment code: '.$request->payment_code.' processing master payment approval called');
 
         // process master payment approve
         return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
@@ -497,6 +502,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     // This method handles the approval or decline of split payments based on the request.
     public function fetchUpdateSplitPaymentsApprove($request)
     {
+        info("Processing split payment request for {$request->payment_code} - Action: ".($request->is_declined ? 'Decline' : 'Approve'));
+
         return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);
     }
 
@@ -934,7 +941,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function updatePriceVatApplicableAndVat($quote, $modelType)
     {
         /* Start - Temporarily adding for correcting historic data */
-        info('Start - Temporarily adding for correcting historic data'.$quote->uuid);
+        info('Start - Temporarily adding for correcting historic data: '.$quote->code);
         /* calculate price and vat for payments for old payment data  where price_vat_applicable is not available */
         $quotePayment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
         if ($quotePayment) {
@@ -965,7 +972,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
         }
 
-        info('End - Temporarily adding for correcting historic data '.$quote->uuid);
+        info('End - Temporarily adding for correcting historic data: '.$quote->code);
         /* End - Temporarily adding for correcting historic data */
 
     }
