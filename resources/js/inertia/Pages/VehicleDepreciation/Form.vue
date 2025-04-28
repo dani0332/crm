@@ -123,22 +123,6 @@ onMounted(() => {
         @update:modelValue="getCarModel($event)"
         label="Car Make"
       />
-      <!-- <x-field label="Car Make">
-        <ComboBox
-          :single="true"
-          v-model="deprecationForm.car_make_id"
-          :options="
-            props.carmakes.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          placeholder="Search by Car Make"
-          :rules="[isRequired]"
-          :hasError="makeCodeError"
-          @update:modelValue="getCarModel($event)"
-        />
-      </x-field> -->
 
       <x-select
         v-model="deprecationForm.car_model_id"
@@ -155,23 +139,6 @@ onMounted(() => {
         :loading="loader.carModel"
       />
 
-      <!-- <x-field label="Car Model">
-        <ComboBox
-          :single="true"
-          v-model="deprecationForm.car_model_id"
-          :options="
-            carModels.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :rules="[isRequired]"
-          class="w-full"
-          :hasError="carIdError"
-          :loading="loader.carModel"
-        />
-      </x-field> -->
-
       <x-select
         v-model="deprecationForm.insurance_provider_value"
         :options="
@@ -186,21 +153,6 @@ onMounted(() => {
         label="Insurance Provider"
       >
       </x-select>
-      <!-- <x-field label="Insurance Provider">
-        <ComboBox
-          :single="true"
-          v-model="deprecationForm.insurance_provider_value"
-          :options="
-            props.insuranceProviders.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :rules="[isRequired]"
-          :hasError="providerNameError"
-          class="w-full"
-        />
-      </x-field> -->
     </div>
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="First Year" required>
