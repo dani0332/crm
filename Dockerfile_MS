@@ -13,7 +13,7 @@ WORKDIR /var/www
 COPY package*.json yarn.lock /var/www/
 RUN yarn install --pure-lockfile
 
-FROM php:8.2-fpm as build
+FROM php:8.4-fpm as build
 WORKDIR /app
 # Add docker php ext repo
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
