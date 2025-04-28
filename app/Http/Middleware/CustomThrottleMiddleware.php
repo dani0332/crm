@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
+use App\Services\Logger\LoggerService;
 
 class CustomThrottleMiddleware
 {
@@ -35,7 +36,7 @@ class CustomThrottleMiddleware
         // If over limit, log it
         if ($hits > $limit) {
 
-            info('Rate limit exceeded , Identifier : '.$identifier, [
+            LoggerService::info('Rate limit exceeded , Identifier : '.$identifier, extra: [
                 'userId' => $userId,
                 'identifier' => $identifier,
                 'url' => $request->fullUrl(),
