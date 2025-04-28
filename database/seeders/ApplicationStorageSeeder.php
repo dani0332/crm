@@ -83,6 +83,7 @@ class ApplicationStorageSeeder extends Seeder
         // );
         // $this->seedBenchmarking();
         // $this->seedStopDeduplicateScript();
+        $this->seedAmlAutomation();
 
         $this->seedYachtAndPetAdvisors();
     }
@@ -231,16 +232,6 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::DTT_FROM],
-            [
-                'value' => '2025-02-19',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
         // TODO:: Need to confirm email addresses with Shahrukh
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS],
@@ -330,7 +321,20 @@ class ApplicationStorageSeeder extends Seeder
         );
     }
 
-    public function seedYachtAndPetAdvisors()
+    private function seedAmlAutomation()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedYachtAndPetAdvisors()
     {
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::YACHT_ADVISORS],
