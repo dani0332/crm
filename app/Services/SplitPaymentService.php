@@ -66,16 +66,13 @@ class SplitPaymentService
         return $discount;
     }
 
-    public function uploadDiscountDocuments($discountDocuments, $code)
+    public function uploadDiscountDocuments($discountDocuments, $paymentSplitRecord)
     {
-        if (isset($discountDocuments) && count($discountDocuments)) {
-            $paymentSplitRecord = PaymentSplits::where(['code' => $code])->first();
-            foreach ($discountDocuments[0] as $document) {
-                $quoteDocumentRec = QuoteDocument::find($document['id']);
-                if ($quoteDocumentRec) {
-                    $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
-                    $quoteDocumentRec->save();
-                }
+        foreach ($discountDocuments[0] as $document) {
+            $quoteDocumentRec = QuoteDocument::find($document['id']);
+            if ($quoteDocumentRec) {
+                $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
+                $quoteDocumentRec->save();
             }
         }
     }
@@ -178,6 +175,23 @@ class SplitPaymentService
             } else {
                 if ($isLiveApiCallStep3) {
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
+                }
+            }
+
+            $sendUpdateLog = $splitPayment->payment?->sendUpdateLog;
+            $isSendUpdateBooked = $sendUpdateLog?->status == SendUpdateLogStatusEnum::UPDATE_BOOKED;
+
+            $isPolicyBooked = $quote->quote_status_id == QuoteStatusEnum::PolicyBooked;
+
+            $shouldSchedulePostPrepayment = ($isPolicyBooked && ! $sendUpdateLog) || ($sendUpdateLog && $isSendUpdateBooked);
+
+            if ($shouldSchedulePostPrepayment) {
+                info(self::class.' fn:'.__FUNCTION__.' trigger post prepayment schedule for PaymentSplitID : '.$splitPayment->id);
+                $postPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->modelType, $splitPayment, $sendUpdateLog]);
+                if (! $postPrepayment['status']) {
+                    info(self::class.' fn:'.__FUNCTION__.' failed to scheduled post prepayment for PaymentSplitID : '.$splitPayment->id, $postPrepayment);
+                } else {
+                    info(self::class.' fn:'.__FUNCTION__.' post prepayment scheduled for PaymentSplitID : '.$splitPayment->id, $postPrepayment);
                 }
             }
 
@@ -1082,9 +1096,9 @@ class SplitPaymentService
     public function deleteSplitPayment($splitPaymentId)
     {
         $maxRetries = 2;
-        $this->handleWithDeadlockRetries(function () use ($splitPaymentId) {
-            $paymentSplit = PaymentSplits::find($splitPaymentId);
-            $masterPayment = $paymentSplit->payment;
+        $paymentSplit = PaymentSplits::find($splitPaymentId);
+        $masterPayment = $paymentSplit->payment;
+        $this->handleWithDeadlockRetries(function () use ($paymentSplit, $masterPayment) {
             $this->deletePaymentSplit($paymentSplit);
             $this->updateMasterPayment($masterPayment);
         }, $maxRetries);
@@ -1092,31 +1106,31 @@ class SplitPaymentService
 
     private function updateMasterPayment($masterPayment)
     {
-        if ($masterPayment->total_payments == 2) {
-            $this->updateMasterPaymentForTwoSplits($masterPayment);
-        } else {
-            $this->updateMasterPaymentForMultipleSplits($masterPayment);
+        // Get active payment splits only
+        $activeSplits = $masterPayment->paymentSplits()->get();
+        $totalSplits = $activeSplits->count();
+
+        if ($totalSplits === 1) {
+            $this->updateMasterPaymentForSingleSplit($masterPayment, $activeSplits->first());
+        } elseif ($totalSplits > 1) {
+            $this->updateMasterPaymentForMultipleSplits($masterPayment, $totalSplits);
         }
 
-        // get the sum of all the split payments to update the total amount in master payment
-        $masterPayment->total_amount = $masterPayment->paymentSplits()->sum('payment_amount');
+        // Calculate total amount only from active splits
+        $masterPayment->total_amount = $activeSplits->sum('payment_amount');
         $masterPayment->saveQuietly();
 
         info('Updated Master Payment For Code: '.$masterPayment->code.' with new total payments: '.$masterPayment->total_payments.' and frequency: '.$masterPayment->frequency);
     }
 
-    private function updateMasterPaymentForTwoSplits($masterPayment)
+    private function updateMasterPaymentForSingleSplit($masterPayment, $remainingSplit)
     {
         $masterPayment->total_payments = 1;
         $masterPayment->frequency = PaymentFrequency::UPFRONT;
+        $masterPayment->payment_methods_code = $remainingSplit->payment_method;
 
-        // if first split payment is authorized then update total price and total amount to first split payment
-        $firstSplitPayment = $masterPayment->paymentSplits()->where(['code' => $masterPayment->code, 'sr_no' => '1'])->first();
-        if (isset($firstSplitPayment)) {
-            $masterPayment->payment_methods_code = $firstSplitPayment->payment_method;
-            if ($firstSplitPayment->payment_status_id != PaymentStatusEnum::PAID) {
-                $masterPayment->payment_status_id = $firstSplitPayment->payment_status_id;
-            }
+        if ($remainingSplit->payment_status_id != PaymentStatusEnum::PAID) {
+            $masterPayment->payment_status_id = $remainingSplit->payment_status_id;
         }
     }
 

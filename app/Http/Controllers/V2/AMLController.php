@@ -18,6 +18,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\KycLogs;
 use App\Http\Controllers\Controller;
@@ -35,7 +36,6 @@ use App\Models\BusinessQuoteType;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
-use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\Emirate;
 use App\Models\Entity;
@@ -49,6 +49,7 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
@@ -59,6 +60,7 @@ use App\Services\BridgerInsightService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Services\SIBService;
+use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -397,9 +399,33 @@ class AMLController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function checkMissingTravelAmlRequirement(Request $request)
+    {
+        $travelQuoteService = app(TravelQuoteService::class);
+        $customerTravelInfo = (array) $travelQuoteService->getCustomerTravelInfo($request->quoteRequestId, $request->quoteType);
+
+        if (empty($customerTravelInfo['id'])) {
+            return response()->json(['status' => false, 'message' => 'Record not found'], 404);
+        }
+
+        return response()->json($travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo), 200);
+    }
+
+    private function handleResponse(bool $status, string $message, bool $isAutomation = false)
+    {
+        return match ($isAutomation) {
+            true => response()->json(['status' => $status, 'message' => $message]),
+            default => redirect()->back()->with($status ? 'success' : 'error', $message)
+        };
+    }
+
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
         // info('AML Screening Bridger - Process Started - Ref-ID: '.$quoteRequestId);
+        $isAutomation = $AMLCheckRequest->is_automation ?? false;
+        $systemUser = User::where('name', UserNameEnum::System)->first();
+        $processbyUser = $isAutomation ? $systemUser : auth()->user();
+
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
@@ -420,7 +446,7 @@ class AMLController extends Controller
             // info('AML Screening Bridger - Members found against Ref-ID: '.$quoteRequestId);
             $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
             if (in_array(null, $memberValidateCheck)) {
-                return redirect()->back()->with('error', 'First Name missing');
+                return $this->handleResponse(false, 'First Name missing', $isAutomation);
             }
 
             $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($value) use ($getLastScreening) {
@@ -429,11 +455,11 @@ class AMLController extends Controller
         }
 
         if ($updateQuote) {
-            if (auth()->user()->hasAnyRole([RolesEnum::AML, RolesEnum::PA])) {
+            if (auth()->user()?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]) || ($isAutomation && $systemUser?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]))) {
                 if (checkPersonalQuotes($quoteType->code)) {
-                    AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true);
+                    AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['pa_id' => $processbyUser->id]);
                 } else {
-                    $updateQuote->pa_id = auth()->user()->id;
+                    $updateQuote->pa_id = $processbyUser->id;
                     $updateQuote->save();
                 }
             }
@@ -549,9 +575,9 @@ class AMLController extends Controller
                 if (empty($getMemberOrUBODetails->toArray())) {
                     // info('AML Screening Bridger - No Member Found, AML Screening Cleared - Ref-ID: '.$quoteRequestId);
 
-                    $response = redirect()->back()->with('success', 'AML Screening Completed');
+                    $response = $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
 
-                    if (! empty($insurerAMLScreeningResponse)) {
+                    if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
                         $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
                     }
 
@@ -563,7 +589,7 @@ class AMLController extends Controller
 
                 // Job dispatch for all members including customer
                 // info('AML Screening Bridger - AML Screening Job Dispatched against Individual Customer - Ref-ID: '.$quoteRequestId);
-                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
@@ -591,7 +617,7 @@ class AMLController extends Controller
 
                     $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
                     // info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
-                    BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
+                    BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
                 } else {
                     $fetchEntity->trade_license_no = $AMLCheckRequest->trade_license_no;
                     $fetchEntity->company_name = $AMLCheckRequest->company_name;
@@ -605,7 +631,7 @@ class AMLController extends Controller
                         $fetchEntity->refresh();
 
                         $entityDetailsForApi = ['company_name' => $fetchEntity->company_name, 'code' => $fetchEntity->code];
-                        BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
+                        BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
                     }
                     QuoteRequestEntityMapping::updateOrCreate([
                         'quote_type_id' => $quoteType->id,
@@ -620,23 +646,23 @@ class AMLController extends Controller
                 }
 
                 if (empty($entityDetailsForApi) && empty($getMemberOrUBODetails->toArray())) {
-                    return redirect()->back()->with('success', 'AML Screening Completed');
+                    return $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
                 }
 
                 // Job dispatch for all UBO members
                 // info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
-                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
             }
 
-            $response = redirect()->back()->with('success', 'Quote is updated');
-            if (! empty($insurerAMLScreeningResponse)) {
+            $response = $this->handleResponse(true, 'Quote is updated', $isAutomation);
+            if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
                 $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
             }
 
             return $response;
         }
 
-        return redirect()->back()->with('error', 'Something went wrong');
+        return $this->handleResponse(false, 'Something went wrong', $isAutomation);
     }
 
     public function fetchEntity(Request $request)
@@ -672,16 +698,7 @@ class AMLController extends Controller
 
     public function getInsuredPersonDetails(Request $request): \Illuminate\Http\JsonResponse
     {
-        $insuredPersonDetails = Insured::where([
-            'id_type' => $request->id_type,
-            'id_number' => $request->id_number,
-        ])->first();
-
-        if (! $insuredPersonDetails) {
-            $customerDetails = CustomerDetail::with(['customer:id,code,dob,gender,insured_first_name as first_name,insured_last_name as last_name,nationality_id'])
-                ->where(['id_type' => $request->id_type, 'id_number' => str_replace('-', '', $request->id_number)])->first();
-            $insuredPersonDetails = $customerDetails?->customer;
-        }
+        $insuredPersonDetails = app(AMLService::class)->getInsuredPersonDetails($request->id_type, $request->id_number);
 
         if ($insuredPersonDetails) {
             return response()->json(['status' => true, 'response' => $insuredPersonDetails, 'message' => 'Customer found with the entered ID number']);
@@ -745,10 +762,10 @@ class AMLController extends Controller
         return response()->json($response);
     }
 
-    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType)
+    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType, $processByUser = null, $isAutomation = false)
     {
         foreach ($membersDetails as $memberDetail) {
-            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, auth()->user()->email);
+            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
         }
 
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {

@@ -1084,17 +1084,28 @@ const shouldShowPlanDetailsSection = computed(() => {
     parseInt(min),
   );
 
-  // For new leads (after cutoff date), always show available plans section
   if (createdDate >= cutoffDate) {
     return false;
   }
 
-  // For old leads (before cutoff date), show plan details section
-  // only if status matches one of the three specified statuses
-  return (
-    page.props.quote.quote_status_id === quoteStatusEnum.TransactionApproved ||
-    page.props.quote.quote_status_id === quoteStatusEnum.PolicyBooked ||
-    page.props.quote.quote_status_id === quoteStatusEnum.PaymentPending
+  const homeQuote = page.props.quote?.home_quote;
+  if (!homeQuote) {
+    return true;
+  }
+
+  const hasAccommodationTypeId = !!homeQuote.accommodation_type_id;
+
+  const hasCoverageTypeId = !!homeQuote.possession_type_id;
+
+  const hasRequiredValueFields =
+    !!homeQuote.building_value ||
+    !!homeQuote.contents_value_id ||
+    !!homeQuote.personal_belongings_value_id;
+
+  return !(
+    hasAccommodationTypeId &&
+    hasCoverageTypeId &&
+    hasRequiredValueFields
   );
 });
 </script>
