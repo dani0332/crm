@@ -82,4 +82,26 @@ class AllocationAudit extends BaseMongoModel
             get: fn () => $this->advisor_details['name'] ?? 'N/A'
         );
     }
+
+    public function scopeByQuoteType($query)
+    {
+        $query->when(
+            request()->filled('quote_type'),
+            function ($query) {
+                $quoteType = QuoteTypes::tryFrom(request('quote_type'));
+
+                $query->where('quote_type_id', (int) $quoteType?->id());
+            },
+            fn ($q) => $q->whereNull('quote_type_id'),
+        );
+    }
+
+    public function scopeByUuid($query)
+    {
+        $query->when(
+            request()->filled('uuid'),
+            fn ($q) => $q->where('uuid', request('uuid')),
+            fn ($q) => $q->whereNull('uuid'),
+        );
+    }
 }
