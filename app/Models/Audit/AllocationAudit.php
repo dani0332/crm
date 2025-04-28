@@ -13,8 +13,6 @@ class AllocationAudit extends BaseMongoModel
 {
     protected $collection = 'allocation_audits';
     protected $fillable = [
-        'auditable_id',
-        'auditable_type',
         'quote_type_id',
         'uuid',
         'assignment_type',
@@ -52,8 +50,6 @@ class AllocationAudit extends BaseMongoModel
         ];
 
         return static::create([
-            'auditable_id' => $model->getKey(),
-            'auditable_type' => get_class($model),
             'quote_type_id' => (int) $quoteType?->id() ?? $model->quote_type_id,
             'uuid' => $model->uuid,
             'assignment_type' => (int) $model->assignment_type,
