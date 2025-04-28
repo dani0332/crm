@@ -168,8 +168,13 @@ function onSubmit(isValid) {
 
   quoteForm.clearErrors();
 
-  const method = 'post';
-  const url = route('travel.store');
+  let method = 'post';
+  let url = route('travel.store');
+
+  if (editMode.value && quoteForm.uuid) {
+    method = 'put';
+    url = route('travel.update', quoteForm.uuid);
+  }
 
   const options = {
     onError: errors => {
@@ -201,6 +206,7 @@ onMounted(() => {
   addUpdatedTraveller();
   updateRegionCover();
   quoteForm.destination_ids = mappedDestinationIds.value ?? [];
+  quoteForm.departure_country_id = props?.quote?.departure_country_id || null;
 });
 
 watch(

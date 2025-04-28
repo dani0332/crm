@@ -313,7 +313,9 @@ class CentralController extends Controller
 
     public function loadAvailablePlans($type, $id)
     {
-        return (new CentralService)->loadAvailablePlans($type, $id);
+        $getLatestRating = request()->input('getLatestRating', false);
+
+        return (new CentralService)->loadAvailablePlans($type, $id, false, false, $getLatestRating);
     }
 
     /**
@@ -356,6 +358,8 @@ class CentralController extends Controller
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
+        info("Processing split payment approve {$request->payment_code}");
+
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
         if (! $successMessage) {
             return back()->with('error', 'Error in approving payment');
