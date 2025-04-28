@@ -27,6 +27,8 @@ class AllocationAudit extends BaseMongoModel
         'action_by_name',
         'advisor_name',
         'assignment_type_text',
+        'action_by_email',
+        'advisor_email',
     ];
 
     public static function log(Model $model, ?QuoteTypes $quoteType = null, ?User $user = null): self
@@ -76,10 +78,24 @@ class AllocationAudit extends BaseMongoModel
         );
     }
 
+    public function actionByEmail(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->action_by_details['email'] ?? 'N/A'
+        );
+    }
+
     public function advisorName(): Attribute
     {
         return Attribute::make(
             get: fn () => $this->advisor_details['name'] ?? 'N/A'
+        );
+    }
+
+    public function advisorEmail(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->advisor_details['email'] ?? 'N/A'
         );
     }
 

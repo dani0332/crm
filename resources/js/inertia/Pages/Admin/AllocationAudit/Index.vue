@@ -298,7 +298,7 @@ function search(isValid) {
         <div
           v-for="(audit, index) in props.audits"
           :key="index"
-          class="relative pl-16 pb-8"
+          class="relative pl-16 pb-5"
         >
           <!-- Timeline Dot -->
           <div
@@ -319,129 +319,110 @@ function search(isValid) {
             ]"
           ></div>
 
-          <!-- Audit Card -->
+          <!-- Audit Card - Redesigned for compact modern look -->
           <div
-            class="bg-gradient-to-br from-white to-gray-50 rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200 audit-card"
+            class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 audit-card"
           >
-            <div class="flex items-start justify-between">
-              <div class="space-y-4">
-                <!-- Assignment Type Badge -->
-                <div class="flex items-center space-x-3">
-                  <span
-                    class="px-3 py-1 text-sm font-semibold rounded-full shadow-sm"
-                    :class="{
-                      'bg-emerald-100 text-emerald-700 border border-emerald-300':
-                        audit.assignment_type == 1,
-                      'bg-amber-100 text-amber-700 border border-amber-300':
-                        audit.assignment_type == 2,
-                      'bg-blue-100 text-blue-700 border border-blue-300':
-                        audit.assignment_type == 3,
-                      'bg-indigo-100 text-indigo-700 border border-indigo-300':
-                        audit.assignment_type == 4,
-                      'bg-rose-100 text-rose-700 border border-rose-300':
-                        audit.assignment_type == 5,
-                      'bg-purple-100 text-purple-700 border border-purple-300':
-                        audit.assignment_type == 6,
-                    }"
-                  >
-                    {{ audit.assignment_type_text }}
-                  </span>
-                  <div class="flex items-center gap-1">
-                    <div
-                      class="bg-gray-100 rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-3 w-3 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <span class="text-xs font-medium text-gray-700">{{
-                        formatDateParts(audit.created_at).date
-                      }}</span>
-                    </div>
-                    <div
-                      class="bg-gray-100 rounded-lg px-2 py-1 flex items-center gap-1 shadow-sm"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-3 w-3 text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <span class="text-xs font-medium text-gray-700">{{
-                        formatDateParts(audit.created_at).time
-                      }}</span>
-                    </div>
-                  </div>
-                </div>
+            <!-- Header with Assignment Type and Date -->
+            <div class="flex items-center justify-between mb-3">
+              <span
+                class="px-3 py-1 text-xs font-semibold rounded-full shadow-sm"
+                :class="{
+                  'bg-emerald-100 text-emerald-700 border border-emerald-300':
+                    audit.assignment_type == 1,
+                  'bg-amber-100 text-amber-700 border border-amber-300':
+                    audit.assignment_type == 2,
+                  'bg-blue-100 text-blue-700 border border-blue-300':
+                    audit.assignment_type == 3,
+                  'bg-indigo-100 text-indigo-700 border border-indigo-300':
+                    audit.assignment_type == 4,
+                  'bg-rose-100 text-rose-700 border border-rose-300':
+                    audit.assignment_type == 5,
+                  'bg-purple-100 text-purple-700 border border-purple-300':
+                    audit.assignment_type == 6,
+                }"
+              >
+                {{ audit.assignment_type_text }}
+              </span>
+              <div class="flex items-center gap-2 text-xs text-gray-500">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                {{ formatDateParts(audit.created_at).date }}
+                {{ formatDateParts(audit.created_at).time }}
+              </div>
+            </div>
 
-                <!-- Advisor and Action By Info -->
-                <div class="grid grid-cols-2 gap-4">
-                  <div class="space-y-2">
-                    <div class="flex items-center space-x-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4 text-blue-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                      <span class="text-sm font-medium text-gray-900"
-                        >Advisor</span
-                      >
-                    </div>
-                    <p class="text-sm text-gray-600 ml-6">
-                      {{ audit.advisor_name }}
-                    </p>
-                  </div>
-                  <div class="space-y-2">
-                    <div class="flex items-center space-x-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4 text-primary-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                        />
-                      </svg>
-                      <span class="text-sm font-medium text-gray-900"
-                        >Action By</span
-                      >
-                    </div>
-                    <p class="text-sm text-gray-600 ml-6">
-                      {{ audit.action_by_name }}
-                    </p>
-                  </div>
+            <!-- User Information -->
+            <div
+              class="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-lg text-sm"
+            >
+              <!-- Advisor Info -->
+              <div class="space-y-1">
+                <div
+                  class="flex items-center gap-1 text-gray-700 font-medium mb-1"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                  Advisor
+                </div>
+                <div class="ml-5 text-gray-700">
+                  {{ audit.advisor_name || 'N/A' }}
+                </div>
+                <div class="ml-5 text-gray-500 text-xs">
+                  {{ audit.advisor_email || 'N/A' }}
+                </div>
+              </div>
+
+              <!-- Action By Info -->
+              <div class="space-y-1">
+                <div
+                  class="flex items-center gap-1 text-gray-700 font-medium mb-1"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 text-primary-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                    />
+                  </svg>
+                  Action By
+                </div>
+                <div class="ml-5 text-gray-700">
+                  {{ audit.action_by_name || 'N/A' }}
+                </div>
+                <div class="ml-5 text-gray-500 text-xs">
+                  {{ audit.action_by_email || 'N/A' }}
                 </div>
               </div>
             </div>
@@ -481,7 +462,7 @@ function search(isValid) {
 }
 
 .audit-card:hover {
-  @apply transform -translate-y-1 shadow-xl;
+  @apply transform -translate-y-1;
 }
 
 /* Timeline line animation */
@@ -491,10 +472,5 @@ function search(isValid) {
 
 .timeline-line:hover {
   @apply w-1;
-}
-
-/* Card content animations */
-.audit-card:hover .card-content {
-  @apply transform translate-x-1;
 }
 </style>
