@@ -11,7 +11,7 @@ enum QuoteFlowType: int
     case TRAVEL_SIC_FOLLOWUPS = 5;
     case TRAVEL_AUTOMATED_FOLLOWUPS = 6;
     case NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS = 7;
-    case SU_CAR_UPDATE = 8;
+    case SU_CAR_UPDATE = 36;
     case SU_TRAVEL_UPDATE = 9;
     case SU_BIKE_UPDATE = 10;
     case SU_CYCLE_UPDATE = 11;
@@ -39,6 +39,7 @@ enum QuoteFlowType: int
     case TRADE_NEW_POLICY = 33;
     case SU_PROFESSIONAL_UPDATE = 34;
     case PROFESSIONAL_NEW_POLICY = 35;
+    case HOME_AUTOMATED_FOLLOWUPS = 8;
 
     public function label(): string
     {
@@ -78,6 +79,7 @@ enum QuoteFlowType: int
             QuoteFlowType::TRADE_NEW_POLICY => 'trade_new_policy',
             QuoteFlowType::SU_PROFESSIONAL_UPDATE => 'su_professional_update',
             QuoteFlowType::PROFESSIONAL_NEW_POLICY => 'professional_new_policy',
+            QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS => 'home_automated_followups',
         };
     }
 
@@ -91,7 +93,6 @@ enum QuoteFlowType: int
             5 => QuoteFlowType::TRAVEL_SIC_FOLLOWUPS,
             6 => QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS,
             7 => QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS,
-            8 => QuoteFlowType::SU_CAR_UPDATE,
             9 => QuoteFlowType::SU_TRAVEL_UPDATE,
             10 => QuoteFlowType::SU_BIKE_UPDATE,
             11 => QuoteFlowType::SU_CYCLE_UPDATE,
@@ -119,6 +120,8 @@ enum QuoteFlowType: int
             33 => QuoteFlowType::TRADE_NEW_POLICY,
             34 => QuoteFlowType::SU_PROFESSIONAL_UPDATE,
             35 => QuoteFlowType::PROFESSIONAL_NEW_POLICY,
+            36 => QuoteFlowType::SU_CAR_UPDATE,
+            8 => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
             default => null,  // Return null if the value doesn't match any case
         };
     }

@@ -48,6 +48,7 @@ let availableFilters = {
   policy_expiry_date_end: '',
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
+  advisor_assigned_date: [],
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -264,6 +265,7 @@ watch(
   () => {
     if (
       (filters.created_at_start && filters.created_at_end) ||
+      (filters.policy_expiry_date && filters.policy_expiry_date_end) ||
       filters.payment_due_date ||
       filters.booking_date
     ) {
@@ -433,6 +435,13 @@ const insurerAMLStatusOption = computed(() => {
             class="w-full"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
@@ -563,8 +572,8 @@ const insurerAMLStatusOption = computed(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or policy expiry dates or payment due date or
+                booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

@@ -1552,6 +1552,7 @@ const isPlanDetailEnabled = computed(() => {
 if (isPlanDetailEnabled.value && page.props.record.insurer_name !== '') {
   selectedProviderPlan.value.premium = page.props.record.price_with_vat;
   selectedProviderPlan.value.providerName = page.props.record.insurer_name;
+  selectedProviderPlan.value.planName = 'N/A';
 }
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);

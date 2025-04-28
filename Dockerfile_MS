@@ -42,11 +42,13 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     wget \
     gnupg \
-    ghostscript
+    ghostscript \
+    libwebp-dev
 
-RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+RUN php -r 'var_dump(function_exists("imagecreatefromwebp"));'
+RUN pecl install mongodb-1.20.0 && docker-php-ext-enable mongodb
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 COPY . /app
@@ -80,7 +82,8 @@ libzip4 \
 zlib1g \
 libicu-dev \
 libmemcached11 \
-ghostscript
+ghostscript \
+libwebp-dev
 
 # Set working directory
 WORKDIR /var/www
@@ -126,5 +129,10 @@ RUN \
       -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
       -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
       /usr/local/etc/php/conf.d/newrelic.ini
+
+# RUN mkdir -p /var/www/storage/logs
+# RUN touch /var/www/storage/logs/laravel.log
+# RUN chown -R www-data:www-data /var/www/storage
+# RUN chmod -R 775 /var/www/storage
 
 ENTRYPOINT ["/var/www/docker/run.sh"]

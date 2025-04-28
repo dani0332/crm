@@ -173,9 +173,19 @@ const premiumToCapture = ref(0);
 const capturePaymentValidationInProcess = ref(false);
 const capturePaymentValidationErrorMessage = ref('');
 const modal2Ref = ref(null);
-const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
+const familyEmployeDiscount = [
+  quoteTypeCodeEnum.Car,
+  quoteTypeCodeEnum.Health,
+  quoteTypeCodeEnum.Home,
+  quoteTypeCodeEnum.Travel,
+];
 // Array of quote types to check against
-const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
+const quoteTypesToCheck = [
+  quoteTypeCodeEnum.Car,
+  quoteTypeCodeEnum.Health,
+  quoteTypeCodeEnum.Travel,
+  quoteTypeCodeEnum.Home,
+]; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
@@ -193,18 +203,23 @@ const showLackingPayment = () => {
 if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
 } else if (
-  props.quoteType === 'Health' &&
+  props.quoteType === quoteTypeCodeEnum.Health &&
   props.quoteRequest?.source !== 'Revival'
 ) {
   initialAmount.value = props.eCommercePrice;
 } else if (
-  props.quoteType === 'Health' &&
+  props.quoteType === quoteTypeCodeEnum.Health &&
   props.quoteRequest?.source === 'Revival'
 ) {
   initialAmount.value = props.quoteRequest.premium;
-} else if (props.quoteType === 'Bike') {
+} else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
+  initialAmount.value = props.quoteRequest.price_with_vat;
+} else if (
+  props.isPlanDetailSectionEnabled &&
+  props.quoteType === quoteTypeCodeEnum.Home
+) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
@@ -250,16 +265,17 @@ const approveProofDocument = props.paymentDocument.find(
 
 let initalPlanDetails = [];
 if (
-  props.quoteType == 'Business' ||
-  props.quoteType == 'Home' ||
+  props.quoteType == quoteTypeCodeEnum.Business ||
   props.isPlanDetailEnabled
 ) {
   initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.Home) {
+  initalPlanDetails = props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
-} else if (props.quoteType == 'Bike') {
+} else if (props.quoteType == quoteTypeCodeEnum.Bike) {
   initalPlanDetails = props.quoteRequest?.car_plan;
 } else {
   initalPlanDetails = props.quoteRequest?.insurance_provider;
@@ -404,7 +420,7 @@ const currentFile = computed(() => {
 
 // Define a computed property to calculate the initial total price without VAT
 const initialTotalPriceWithoutVat = computed(() => {
-  if (props.quoteType === 'Health') {
+  if (props.quoteType === quoteTypeCodeEnum.Health) {
     return props.eCommercePriceWithLP; // premium with loading price,excluding vat
   }
   const vatRate = vatValue ? vatValue / 100 : 0;
@@ -917,7 +933,7 @@ const handlePaymentTypes = count => {
 
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
-    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
       // need to fix this for payments
       isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
     }
@@ -1134,12 +1150,15 @@ const handleDiscountChange = (editDiscountValue = 0) => {
   }
 
   if (paymentMethodsForm.discount === 'employee_discount') {
-    if (props.quoteType === 'Health') {
+    if (props.quoteType === quoteTypeCodeEnum.Health) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (5 / 100)
       ).toFixed(2);
-    } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
+    } else if (
+      props.quoteType === quoteTypeCodeEnum.Home ||
+      props.quoteType === quoteTypeCodeEnum.Travel
+    ) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (15 / 100)
@@ -1152,12 +1171,15 @@ const handleDiscountChange = (editDiscountValue = 0) => {
     }
   }
   if (paymentMethodsForm.discount === 'family_employee_discount') {
-    if (props.quoteType === 'Health') {
+    if (props.quoteType === quoteTypeCodeEnum.Health) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (2.5 / 100)
       ).toFixed(2);
-    } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
+    } else if (
+      props.quoteType === quoteTypeCodeEnum.Home ||
+      props.quoteType === quoteTypeCodeEnum.Travel
+    ) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (12.5 / 100)
@@ -1692,7 +1714,9 @@ const addPaymentModal = () => {
   discountError.value = '';
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
-
+  console.log('totalPrice.value', totalPrice.value);
+  console.log('planDetail.value', planDetail.value);
+  console.log('sendUpdate', props.sendUpdate);
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -1711,13 +1735,13 @@ const addPaymentModal = () => {
   }
 
   const quoteCollectedBy = [
-    'Business',
-    'Health',
-    'Life',
-    'Marine',
-    'Pet',
-    'Cycle',
-    'Yacht',
+    quoteTypeCodeEnum.Business,
+    quoteTypeCodeEnum.Health,
+    quoteTypeCodeEnum.Life,
+    quoteTypeCodeEnum.Marine,
+    quoteTypeCodeEnum.Pet,
+    quoteTypeCodeEnum.Cycle,
+    quoteTypeCodeEnum.Yacht,
   ];
 
   if (
@@ -1863,9 +1887,11 @@ const editPaymentModal = async (
   if (
     capture_approval == 1 &&
     payment?.insurance_provider?.code == 'AXA' &&
-    (props.quoteType === 'Bike' || props.quoteType === 'Car')
+    (props.quoteType === quoteTypeCodeEnum.Bike ||
+      props.quoteType === quoteTypeCodeEnum.Car ||
+      props.quoteType === quoteTypeCodeEnum.Home)
   ) {
-    await doCapturePaymentValidation(payment.total_amount);
+    await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
 
   resetPaymentForm();
@@ -1882,11 +1908,12 @@ const editPaymentModal = async (
   setFrequencyTypes();
 };
 
-const doCapturePaymentValidation = totalAmount => {
+const doCapturePaymentValidation = (totalAmount, paymentCode) => {
   const data = {
     modelType: props.quoteType,
     uuid: props.quoteRequest.uuid,
     captureAmount: totalAmount,
+    paymentCode: paymentCode,
   };
 
   capturePaymentValidationInProcess.value = true;
@@ -2015,7 +2042,7 @@ const initializePaymentForm = (
       : splitPaymentRecord.value.decline_reason_id;
   paymentMethodsForm.declined_custom_reason =
     splitPaymentRecord.value.decline_custom_reason;
-  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
     paymentMethodsForm.isCreditCardEnabled = payment.isCreditCardEnabled;
     paymentMethodsForm.isGIGProvider = payment.isGIGProvider;
     paymentMethodsForm.isMultiplePaymentsEnabled =
@@ -2035,6 +2062,7 @@ const processPaymentSplits = payment => {
 
   for (let i = 1; i <= payment.total_payments; i++) {
     const split = payment.payment_splits[i - 1];
+    console.log('split : ', split);
     readOnlyPayments.value[i] = paidStatusIds.includes(split.payment_status_id);
     if (readOnlyPayments.value[i]) {
       totalPaidAmount.value++;
@@ -2143,13 +2171,18 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
   const handleTravelQuoteType = () => {
     if (
-      props.quoteType === 'Travel' &&
+      props.quoteType === quoteTypeCodeEnum.Travel &&
       ['edit', 'view'].includes(paymentMethodsForm.status)
     ) {
-      planDetail.value = payment.travel_plan;
+      planDetail.value =
+        payment?.travel_plan ??
+        props.sendUpdate?.travel_plan ??
+        props.quoteRequest?.plan ??
+        null;
       if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
         planDetail.value['insurance_provider'] =
-          payment.travel_plan.insurance_provider;
+          payment?.travel_plan?.insurance_provider ??
+          props.sendUpdate?.insurance_provider;
       }
     }
   };
@@ -2480,11 +2513,13 @@ const addPayment = isValid => {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
+          isApproveConfirmed.value = false;
           if (props.sendUpdate) {
             location.reload();
           }
         },
         onError: res => {
+          isApproveConfirmed.value = false;
           notification.error({
             title: res.error,
             position: 'top',
@@ -2815,19 +2850,15 @@ const uploadDocument = (doc, files, count) => {
           reject(errors);
         },
         onSuccess: data => {
-          let quoteDocuments = [];
-          if (
-            quoteTypesToCheck.includes(props.quoteType) ||
-            props.quoteType === 'Home' ||
+          let quoteTypes = quoteTypesToCheck.filter(
+            quoteType => quoteType !== quoteTypeCodeEnum.Home,
+          );
+          let quoteDocuments =
+            quoteTypes.includes(props.quoteType) ||
             props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
-          ) {
-            quoteDocuments = data.props.quoteDocuments;
-          } else {
-            quoteDocuments = data.props.quote.documents;
-          }
-          //quoteDocuments = [...quoteDocuments].reverse();
-          // Sort the array by the "id" property in descending order
+              ? data.props.quoteDocuments
+              : data.props.quote.documents;
           quoteDocuments.sort((a, b) => b.id - a.id);
           if (count === 0) {
             isDiscountDocumentNotUploaded.value = false;
@@ -2878,7 +2909,7 @@ const shouldProcessUpdate = payment => {
     props.quoteRequest.quote_status_id ===
     page.props.quoteStatusEnum.TransactionApproved;
   const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
-  const isTravelQuote = props.quoteType === 'Travel';
+  const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
   const shouldSendUpdate = props.sendUpdate;
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
@@ -3074,11 +3105,12 @@ const alertCapture = payment => {
 
 const getCaptureOption = computed(() => {
   return payment => {
+    // Return early if there are no payments
     if (props.payments.length === 0) return;
 
     let isCaptureButtonEnabled =
       page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
-    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
       isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
     }
 
@@ -3096,12 +3128,11 @@ const getCaptureOption = computed(() => {
       return 'capture';
     }
     return 'approve';
-
-    // return paymentMethodCC.length > 0 ? 'capture' : 'approve';
   };
 });
 
 const planText = ref();
+const homePlanText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
@@ -3113,7 +3144,7 @@ const fetchPlans = () => {
   axios
     .get(url)
     .then(res => {
-      planText.value = res.data.text;
+      planText.value = res.data?.text ?? res.data?.planName;
     })
     .catch(err => {});
 };
@@ -3154,7 +3185,7 @@ const isChildPaymentDeletable = computed(() => {
     paymentStatusEnum.OVERDUE,
   ].includes(props.payments[1].payment_status_id);
   return (
-    props.quoteType == 'Travel' &&
+    props.quoteType == quoteTypeCodeEnum.Travel &&
     page.props?.aboveAgeMembers &&
     childPaymentNotAuthorised
   );
@@ -3162,11 +3193,18 @@ const isChildPaymentDeletable = computed(() => {
 
 const getPlanName = computed(() => {
   const plan = planDetail.value;
-  if (props.quoteType === 'Bike') {
+  if (props.quoteType === quoteTypeCodeEnum.Bike) {
     return plan ? props.quoteRequest.car_plan.text : 'Not Available';
   }
   if (props.sendUpdate) {
     return planText.value || 'Not Available';
+  }
+
+  if (props.quoteType === quoteTypeCodeEnum.Home) {
+    if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
+      homePlanText.value = props.quoteRequest.insurance_provider_plan.text;
+    }
+    return homePlanText.value || 'Not Available';
   }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan
@@ -3195,6 +3233,7 @@ const providerId = computed(() => {
 
 const providerName = computed(() => {
   const plan = planDetail.value;
+  const ecomQuoteType = [...quoteTypesToCheck, quoteTypeCodeEnum.Bike];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
       provider => provider.id === providerId.value,
@@ -3202,7 +3241,7 @@ const providerName = computed(() => {
 
     return provider.text || 'Not Available';
   } else if (
-    quoteTypesToCheck.includes(props.quoteType) &&
+    ecomQuoteType.includes(props.quoteType) &&
     plan.insurance_provider
   ) {
     return plan ? plan.insurance_provider.text : 'Not Available';
@@ -3233,10 +3272,15 @@ const setPaymentInitialPrice = () => {
       initialAmount.value = props.quoteRequest.price_with_vat;
     } else if (props.sendUpdate) {
       initialAmount.value = props.sendUpdate?.price_with_vat;
-    } else if (props.quoteType === 'Health') {
+    } else if (props.quoteType === quoteTypeCodeEnum.Health) {
       initialAmount.value = props.eCommercePrice;
-    } else if (props.quoteType === 'Bike') {
+    } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
       initialAmount.value = props.quoteRequest.premium;
+    } else if (
+      props.isPlanDetailSectionEnabled &&
+      props.quoteType === quoteTypeCodeEnum.Home
+    ) {
+      initialAmount.value = props.quoteRequest.price_with_vat;
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
@@ -3247,15 +3291,13 @@ const setPaymentInitialPrice = () => {
 };
 
 const setPlanDetail = () => {
-  if (
-    props.quoteType == 'Business' ||
-    props.quoteType == 'Home' ||
-    props.isPlanDetailEnabled
-  ) {
+  if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (props.quoteType == quoteTypeCodeEnum.Home) {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
-  } else if (props.quoteType == 'Bike') {
+  } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
     if (props.sendUpdate) {
       initalPlanDetails =
@@ -3647,7 +3689,7 @@ const hasAnyCCSplitPayment = () => {
 
 const isCCPaymentDisabled = option => {
   let isCreditCardEnabled = isCCEnabled.value;
-  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
     isCreditCardEnabled = paymentMethodsForm.isCreditCardEnabled;
   }
   return (
@@ -3665,7 +3707,7 @@ const isPolicySendUpdateBooked = option => {
     page.props.quoteStatusEnum.PolicyBooked;
   const isUpdateBooked =
     props.sendUpdate &&
-    props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+    props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
   const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
 
   if (isUpdateBooked && isCCAndInsurer) {
@@ -3692,7 +3734,7 @@ const isEditPaymentEnabled = payment => {
   );
 
   let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
-  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
     isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
   }
   return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
@@ -3834,6 +3876,72 @@ const fetchInsurerAMLStatus = async () => {
       });
     }
   }
+};
+
+const triggerPostPrepayment = async splitPayment => {
+  console.log(' triggerPostPrepayment : ', splitPayment.id);
+  let quoteStatusId = props.quoteRequest.quote_status_id;
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked === quoteStatusId;
+  if (!isPolicyBooked) {
+    notification.warning({
+      title:
+        'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
+      position: 'top',
+    });
+  }
+  try {
+    NProgress.start();
+    const response = await axios.post(route('can-post-premium-prepayment'), {
+      paymentSplitId: splitPayment.id,
+      quoteRequestId: props.quoteRequest.id,
+      quoteType: page.props.quoteType,
+      sendUpdateId: props.sendUpdate?.id,
+    });
+    NProgress.done();
+    if (response.data.success) {
+      notification.success({
+        title: 'Post Prepayment to Sage Process Started',
+        position: 'top',
+      });
+      router.reload({
+        only: ['payments'],
+      });
+    }
+  } catch (error) {
+    let errorMessages = error.response.data.errors;
+    Object.keys(errorMessages).forEach(function (key) {
+      notification.error({
+        title: errorMessages[key],
+        position: 'top',
+      });
+    });
+  }
+};
+const enablePostPrepaymentButton = splitPayment => {
+  console.log(
+    'showPostPrepaymentButton : showPrepaymentPostButton : ',
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
+    ' , batchNumber : ',
+    splitPayment.prepayment_receipt_status?.batchNumber,
+    splitPayment.prepayment_receipt_status,
+  );
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked ===
+    props.quoteRequest.quote_status_id;
+  let isSendUpdateBooked =
+    props.sendUpdate?.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
+  let isPolicyOrSendUpdateBooked =
+    (isPolicyBooked && !props.sendUpdate) ||
+    (props.sendUpdate && isSendUpdateBooked);
+  if (
+    can(permissionEnum.CAN_POST_PREMIUM_PREPAYMENT) &&
+    isPolicyOrSendUpdateBooked &&
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
+  ) {
+    return true;
+  }
+  return false;
 };
 
 onBeforeMount(() => {
@@ -4234,7 +4342,7 @@ onBeforeMount(() => {
                           <template
                             v-if="
                               can(permissionEnum.ApprovePayments) &&
-                              !isChildPaymentDeletable
+                              (!isChildPaymentDeletable || index > 0)
                             "
                           >
                             <x-button
@@ -4322,7 +4430,9 @@ onBeforeMount(() => {
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td></td>
+                        <td class="text-center">
+                          {{ splitPayment.code }}-{{ splitPayment.sr_no }}
+                        </td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ splitPayment.payment_method.name }}</td>
@@ -4455,6 +4565,16 @@ onBeforeMount(() => {
                               outlined
                               >Retry</x-button
                             >
+
+                            <x-button
+                              v-if="enablePostPrepaymentButton(splitPayment)"
+                              size="xs"
+                              color="red"
+                              class="ml-2"
+                              @click="triggerPostPrepayment(splitPayment)"
+                              outlined
+                              >Post
+                            </x-button>
                           </div>
                         </td>
                       </tr>

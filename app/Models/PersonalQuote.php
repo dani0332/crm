@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use App\Traits\QuoteTraits\PersonalQuotable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,9 +18,20 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PersonalQuote extends Model implements AuditableContract
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, PersonalQuotable, QuoteModelTrait;
 
     protected $guarded = [];
+    public $allowedColumns = [
+        'first_name',
+        'last_name',
+        'email',
+        'mobile_no',
+        'dob',
+        'nationality_id',
+        'gender',
+        'company_name',
+        'company_address',
+    ];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::EXACT,
@@ -343,5 +355,20 @@ class PersonalQuote extends Model implements AuditableContract
             'id', // personal_quote_request.id
             'insured_id' // customer_insured.insured_id
         );
+    }
+
+    public function homeQuote()
+    {
+        return $this->hasOne(HomeQuote::class, 'personal_quote_id', 'id');
+    }
+
+    public function allowedColumns()
+    {
+        return $this->allowedColumns;
+    }
+
+    public function insuranceProviderPlan()
+    {
+        return $this->belongsTo(InsuranceProviderPlan::class, 'plan_id')->select(['id', 'text', 'provider_id']);
     }
 }
