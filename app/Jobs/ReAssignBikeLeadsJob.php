@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\Tier;
 use App\Services\BikeAllocationService;
 use App\Services\Logger\LoggerService;
@@ -52,7 +53,7 @@ class ReAssignBikeLeadsJob implements ShouldQueue
             return false; // when lead is not on criteria or not found
         }
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             info('--------------- ReAssignment processing ---------------');
 

@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
 use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
@@ -266,7 +267,7 @@ enum QuoteTypes: string
 
     public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false, bool $sicAdvisorRequested = false)
     {
-        LoggerService::startQuoteLogging($this->refId($uuid));
+        LoggerService::startQuoteLogging($this->refId($uuid), LoggerFeatureEnum::ALLOCATION);
 
         $allocationService = match ($this) {
             self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId, sicAdvisorRequested: $sicAdvisorRequested),
