@@ -18,12 +18,6 @@ const formatDateParts = date => {
 
 const { isRequired } = useRules();
 const params = useUrlSearchParams('history');
-const serverOptions = ref({
-  page: 1,
-  rowsPerPage: 15,
-  sortBy: 'created_at',
-  sortType: 'desc',
-});
 
 const loader = reactive({
   cards: false,
@@ -33,39 +27,6 @@ const filters = reactive({
   quote_type: '',
   uuid: '',
 });
-
-const tableHeader = [
-  {
-    text: 'Quote Type',
-    value: 'quote_type_id',
-    sortable: true,
-  },
-  {
-    text: 'Assignment Type',
-    value: 'assignment_type',
-    sortable: true,
-  },
-  {
-    text: 'Advisor ID',
-    value: 'advisor_id',
-    sortable: true,
-  },
-  {
-    text: 'Action By ID',
-    value: 'action_by_id',
-    sortable: true,
-  },
-  {
-    text: 'Created At',
-    value: 'created_at',
-    sortable: true,
-  },
-  {
-    text: 'Actions',
-    value: 'actions',
-    align: 'right',
-  },
-];
 
 function setQueryFilters() {
   for (const [key] of Object.entries(params)) {
@@ -81,14 +42,6 @@ onMounted(() => {
   setQueryFilters();
 });
 
-watch(
-  serverOptions,
-  value => {
-    search(true);
-  },
-  { deep: true },
-);
-
 const hasUuid = computed(() => !!filters.uuid);
 
 function resetFilters() {
@@ -98,7 +51,6 @@ function resetFilters() {
 
   router.visit(route('admin.allocation-audit.index'), {
     method: 'get',
-    data: { page: 1 },
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -115,8 +67,6 @@ function search(isValid) {
     return;
   }
 
-  serverOptions.value.page = 1;
-
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
@@ -127,7 +77,6 @@ function search(isValid) {
     method: 'get',
     data: {
       ...filters,
-      ...serverOptions.value,
     },
     preserveState: true,
     preserveScroll: true,
