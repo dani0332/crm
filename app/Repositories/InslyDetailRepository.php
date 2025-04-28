@@ -149,14 +149,14 @@ class InslyDetailRepository extends BaseRepository
         ];
 
         $pipeline[] = ['$skip' => $skip];
-        $pipeline[] = ['$limit' => $perPage + 1]; 
+        $pipeline[] = ['$limit' => $perPage + 1];
 
         $results = $this->raw(fn ($collection) => $collection->aggregate($pipeline));
 
         $items = iterator_to_array($results);
 
         $hasMore = count($items) > $perPage;
-        $items = array_slice($items, 0, $perPage); 
+        $items = array_slice($items, 0, $perPage);
 
         $data = $items;
 
