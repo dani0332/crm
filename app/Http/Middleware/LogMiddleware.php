@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Events\Axiom\FlushAxiomBatch;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +20,7 @@ class LogMiddleware
     {
         $startTime = microtime(true);
 
-        $traceId = $request->header('x-Trace-Id', (string) Str::uuid());
+        $traceId = $request->header('X-Trace-Id', (string) Str::uuid()) ?: (string) Str::uuid();
 
         Log::withContext([
             'trace_id' => $traceId,
@@ -42,6 +43,8 @@ class LogMiddleware
 
         $response->headers->set('X-Trace-Id', $traceId);
         $response->headers->set('X-Execution-Time', $executionTime);
+
+        FlushAxiomBatch::dispatch();
 
         return $response;
     }

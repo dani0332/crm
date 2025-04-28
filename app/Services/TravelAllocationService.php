@@ -19,6 +19,7 @@ use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\ProcessTracker\ProcessTrackerService;
 use Illuminate\Support\Facades\Log;
@@ -136,7 +137,7 @@ class TravelAllocationService extends AllocationService
             info(self::class.":assignAvailableAdvisorToChild - Finding Advisor for Child Lead: {$lead->uuid}");
             $advisor = $this->fetchAvailableAdvisor(teamId: getTeamId(TeamNameEnum::SIC_UNASSISTED), lead: $lead);
             if (! $advisor) {
-                info(self::class.":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid}");
+                LoggerService::info(self::class.":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid}");
                 $this->leadAllocationFailed($lead->uuid, QuoteTypes::TRAVEL);
             } else {
                 info(self::class.":assignAvailableAdvisorToChild - Advisor found for Child Lead: {$lead->uuid}");
