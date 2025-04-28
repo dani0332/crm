@@ -44,7 +44,6 @@ use App\Models\PetQuote;
 use App\Models\QuoteMemberDetail;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
-use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
