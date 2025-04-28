@@ -37,7 +37,7 @@ class Test extends Command
         //     $audit
         // );
 
-        // Auth::loginUsingId(1108);
+        Auth::loginUsingId(1108);
 
         // $personalQuote = PersonalQuote::find(232537);
 

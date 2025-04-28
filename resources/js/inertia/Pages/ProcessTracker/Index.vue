@@ -26,12 +26,15 @@ const filters = reactive({
 
 const page = usePage();
 const processTypes = ref([]);
+const hasSearched = ref(false);
+
+const canSearch = computed(() => !!filters.uuid && !!filters.quoteType);
 
 function resetFilters() {
   for (const key in filters) {
     filters[key] = '';
   }
-
+  hasSearched.value = false;
   router.visit(route('process-tracker.index'), {
     method: 'get',
     data: { page: 1 },
@@ -47,18 +50,16 @@ function resetFilters() {
 }
 
 function search(isValid) {
-  if (!isValid) {
+  if (!isValid || !canSearch.value) {
     return;
   }
-
+  hasSearched.value = true;
   serverOptions.value.page = 1;
-
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
     }
   }
-
   router.visit(route('process-tracker.index'), {
     method: 'get',
     data: {
@@ -93,7 +94,6 @@ function setQueryFilters() {
       filters[key] = params[key];
     }
   }
-
   resolveProcessTypes(filters.quoteType, false);
 }
 
@@ -159,7 +159,13 @@ watch(
       <div class="flex justify-between">
         <div></div>
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :disabled="!canSearch"
+            >Search</x-button
+          >
           <x-button size="sm" color="primary" @click.prevent="resetFilters"
             >Reset</x-button
           >
@@ -170,76 +176,76 @@ watch(
     <x-divider class="my-4" v-if="results.data.length > 0" />
 
     <div class="text-center">
-      <h3 v-if="!loader.cards && results.data.length === 0">
+      <h3 v-if="!loader.cards && results.data.length === 0 && hasSearched">
         No Records Available
       </h3>
       <x-loader v-if="loader.cards" label="Loading" status="active" />
     </div>
 
-    <div v-if="!loader.cards && results.data.length > 0">
-      <x-card>
-        <x-accordion>
-          <x-accordion-item
-            v-for="itr in results.data"
-            :key="itr.performedAt"
-            :disabled="itr.steps.length === 0"
+    <!-- Modern Timeline Results -->
+    <div
+      v-if="
+        !loader.cards && canSearch && hasSearched && results.data.length > 0
+      "
+      class="space-y-8 max-w-4xl mx-auto"
+    >
+      <div class="relative">
+        <!-- Timeline Line -->
+        <div
+          class="absolute left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-primary-400 to-green-300"
+        ></div>
+        <div
+          v-for="(itr, idx) in results.data"
+          :key="itr.performedAt"
+          class="relative pl-16 pb-8"
+        >
+          <!-- Timeline Dot -->
+          <div
+            class="absolute left-2 w-5 h-5 rounded-full border-4 shadow-lg"
+            :class="[
+              idx === 0 ? 'bg-green-400 border-green-100' : '',
+              idx === results.data.length - 1
+                ? 'bg-blue-400 border-blue-100'
+                : '',
+              idx !== 0 && idx !== results.data.length - 1
+                ? 'bg-primary-400 border-primary-100'
+                : '',
+            ]"
+          ></div>
+          <!-- Timeline Card -->
+          <div
+            class="bg-gradient-to-br from-white to-gray-50 rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition-all duration-200"
           >
-            <div class="flex items-center gap-2">
-              <x-tag size="xs" color="orange">
+            <div class="flex items-center gap-2 mb-2">
+              <span
+                class="px-3 py-1 text-xs font-semibold rounded-full shadow-sm bg-orange-100 text-orange-700 border border-orange-300"
+              >
                 {{ formatDate(itr.created_at) }}
-              </x-tag>
+              </span>
               <p class="line-clamp-1 flex-1 text-base" v-html="itr.summary"></p>
             </div>
-            <template #content>
-              <div class="p-4">
-                <ol
-                  class="relative border-s border-gray-400 dark:border-gray-700"
-                >
-                  <li
-                    v-for="step in itr.steps"
-                    :key="step.step"
-                    class="mb-10 ms-4"
-                  >
-                    <div
-                      class="absolute -start-[8.5px] mt-1.5 size-4 rounded-full border border-white bg-primary-400"
-                    />
-
-                    <h4
-                      class="mb-1 text-sm font-semibold"
-                      v-html="step.description"
-                    ></h4>
-                    <time
-                      class="text-sm font-normal leading-none text-gray-700"
-                    >
-                      {{ formatDate(step.performedAt) }}
-                    </time>
-
-                    <div class="mt-4 flex flex-wrap gap-3">
-                      <x-tag
-                        v-for="(v, k) in step.data"
-                        :key="k"
-                        color="secondary"
-                      >
-                        {{ k }}: {{ v }}
-                      </x-tag>
-                    </div>
-                  </li>
-                </ol>
-              </div>
-            </template>
-          </x-accordion-item>
-        </x-accordion>
-      </x-card>
-
-      <Pagination
-        :links="{
-          next: results.next_page_url,
-          prev: results.prev_page_url,
-          current: results.current_page,
-          from: results.from,
-          to: results.to,
-        }"
-      />
+            <ol class="relative border-s border-gray-200 ml-2 mt-4">
+              <li v-for="step in itr.steps" :key="step.step" class="mb-8 ms-4">
+                <div
+                  class="absolute -start-[8.5px] mt-1.5 size-4 rounded-full border border-white bg-primary-400"
+                />
+                <h4
+                  class="mb-1 text-sm font-semibold"
+                  v-html="step.description"
+                ></h4>
+                <time class="text-xs font-normal leading-none text-gray-700">
+                  {{ formatDate(step.performedAt) }}
+                </time>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <x-tag v-for="(v, k) in step.data" :key="k" color="secondary">
+                    {{ k }}: {{ v }}
+                  </x-tag>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
