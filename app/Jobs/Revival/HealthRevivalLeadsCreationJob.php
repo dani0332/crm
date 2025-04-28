@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Revival;
 
+use App\Console\Commands\Common\Batchable;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -15,19 +16,18 @@ use App\Models\QuoteBatches;
 use App\Services\SendEmailCustomerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Bus\Batchable as BusBatchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
-class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
+class HealthRevivalLeadsCreationJob implements ShouldQueue
 {
-    use AddPremiumAllLobs, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, Stackable;
+    use AddPremiumAllLobs, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, BusBatchable;
 
     public $tries = 3;
     public $timeout = 300;

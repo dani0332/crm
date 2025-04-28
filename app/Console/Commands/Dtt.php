@@ -12,7 +12,9 @@ use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Bus\Batch;
+use Throwable;
 
 class Dtt extends Command
 {
@@ -123,25 +125,24 @@ class Dtt extends Command
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
             if (! $isTierR) {
-                $jobs[] = new CarRevivalLeadsCreationJob($carLead);
+                $jobs[] = (new CarRevivalLeadsCreationJob($carLead))->delay(now()->addSeconds(30));
             }
         }
 
         if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
-
-                ->then(function () use ($logPrefix) {
+            Bus::batch($jobs)
+                ->then(function (Batch $batch) use ($logPrefix) {
                     info($logPrefix.' all jobs completed successfully');
                 })
-                ->catch(function () use ($logPrefix) {
+                ->catch(function (Batch $batch, Throwable $e) use ($logPrefix) {
                     info($logPrefix.' one of batch is failed.');
                 })
-                ->finally(function () use ($logPrefix) {
+                ->finally(function (Batch $batch) use ($logPrefix) {
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(30)
+                ->onQueue('renewals')
+                ->name('Car DTT Batch Jobs')
                 ->dispatch();
         } else {
             info($logPrefix.'------No lead Found------');

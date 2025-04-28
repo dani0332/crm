@@ -20,20 +20,20 @@ use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
-class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
+class CarRevivalLeadsCreationJob implements ShouldQueue, 
 {
-    use Dispatchable, InteractsWithQueue, Queueable, Stackable;
+    use Dispatchable, InteractsWithQueue, Queueable;
     use GenericQueriesAllLobs;
+    use Batchable;
 
     public $tries = 3;
     public $timeout = 90;
@@ -58,6 +58,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
+        if ($this->batch()->cancelled()) {
+            return;
+        }
 
         $logPrefix = 'CarRevivalLeadsCreationJob - ';
 
