@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\BusinessActivity;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class BusinessActivitiesSeeder extends Seeder
@@ -30,7 +29,7 @@ class BusinessActivitiesSeeder extends Seeder
             'Manufacture of soap and detergents, cleaning and polishing preparations', 'Varnish, paints, colouring agents, printing ink and adhesives', 'Manufacture of other chemical products',
             'Production of organic and inorganic products (e.g. ammonia, fertiliser, solvents, acids, salts)',
             'Manufacture of perfumes, aerosols and toilet cleaners', 'Air separation units',
-            'Production of organic and inorganic products (e.g. ammonia, fertiliser, solvents, acids, salts) with production/usage of flammable    liquids or explosive materials.', 
+            'Production of organic and inorganic products (e.g. ammonia, fertiliser, solvents, acids, salts) with production/usage of flammable    liquids or explosive materials.',
             'Production of man-made fibres (polyester, chemical fibres, synthetic fibress)',
             'Manufacture of explosives', 'Manufacture of furniture',
             'Manufacture of transport equipment n.e.c.', 'Manufacture, repair and maintenance of watercraft (shipyard,drydocks, boats etc.)',
@@ -96,8 +95,8 @@ class BusinessActivitiesSeeder extends Seeder
             'Outdoor cooling towers', 'Conventional power plants (excl. nuclear power plants)',
             'Waste water treatment & sewerage', 'Water distribution (potable & sea water)',
             'Remediation activities and other waste management services', 'Waste collection',
-            'Waste treatment and disposal plant (oil & gas)', 
-            "Separation/sorting/processing of different commercial grades for recycling as a preliminary stage to raw material, utilisation. processing shall be understood as shredding, cleaning, drying, grinding, melting and palletising, solid waste ,treatment and disposal plant other than oil & gas.",
+            'Waste treatment and disposal plant (oil & gas)',
+            'Separation/sorting/processing of different commercial grades for recycling as a preliminary stage to raw material, utilisation. processing shall be understood as shredding, cleaning, drying, grinding, melting and palletising, solid waste ,treatment and disposal plant other than oil & gas.',
             'Construction of buildings', 'Other specialized construction activities',
             'Building completion and finishing', 'Demolition and site preparation',
             'Electrical, plumbing and other construction installation activities', 'Civil works, construction, completed civil structures',
@@ -118,9 +117,9 @@ class BusinessActivitiesSeeder extends Seeder
             'Civil structures like bridge, tunnel, dam, dike and wharf', 'Railways depots',
             'Motor vehicle storage (open & covered)', 'Cold stores',
             'Tank farms',
-            "Extra hazardous goods warehouse as per nfpa class iv such as ammenities, disposable materials, furniture with foam & plastic, ,liquir, match box, paints, chemicals & liquids with flash point less than 37.8 0 c. and alike commodities. - for more details ,pls refer to the nfpa manual.",
+            'Extra hazardous goods warehouse as per nfpa class iv such as ammenities, disposable materials, furniture with foam & plastic, ,liquir, match box, paints, chemicals & liquids with flash point less than 37.8 0 c. and alike commodities. - for more details ,pls refer to the nfpa manual.',
 
-            "Hazardous goods warehouse - as per nfpa class iii - such as aerosols, charcoal, clothes, fiber, yarn, textiles, furniture ,without plastics & foam material, plastics, paper, leather goods, tobaco products, chemicals & liquid with flash point ,between 37.80 c & 600 c and alike commodities. - for more details pls refer to the nfpa manual.",
+            'Hazardous goods warehouse - as per nfpa class iii - such as aerosols, charcoal, clothes, fiber, yarn, textiles, furniture ,without plastics & foam material, plastics, paper, leather goods, tobaco products, chemicals & liquid with flash point ,between 37.80 c & 600 c and alike commodities. - for more details pls refer to the nfpa manual.',
 
             'Non hazardous warehouse as per nfpa class - i; such as white goods, metal parts, canned foods, machineries, spare parts, ,cement, dairy products, coffe, non combustible liquid, salt, soya, grains, medicines and alike commodities - refer nfpa ,manual for more details.',
 
@@ -191,10 +190,10 @@ class BusinessActivitiesSeeder extends Seeder
             'Churches / mosques / museums', 'Activities of business, employers and professional membership organizations',
             'Activities of trade unions', 'Undifferentiated goods-producing activities of private households for own use',
             'Undifferentiated service-producing activities of private households for own use',
-            'Activities of households as employers of domestic personnel', 'Activities of extraterritorial organizations and bodies'
+            'Activities of households as employers of domestic personnel', 'Activities of extraterritorial organizations and bodies',
         ];
 
-        foreach($activities as $activity) {
+        foreach ($activities as $activity) {
             BusinessActivity::firstOrCreate(['name' => $activity]);
         }
     }
