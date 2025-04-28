@@ -19,7 +19,7 @@ class LifeAllocation extends BaseAllocation
             ->first();
     }
 
-    private function getAdvisorEmails()
+    protected function getAdvisorEmails($storageKey = null)
     {
         $category = $this->evaluateCategory();
         $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
