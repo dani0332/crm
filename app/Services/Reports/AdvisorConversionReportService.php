@@ -12,7 +12,6 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
@@ -109,7 +108,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->where('users.is_active' , true)
+            ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
@@ -145,9 +144,9 @@ class AdvisorConversionReportService extends BaseService
     private function getUsers($userIds)
     {
         return User::whereIn('id', $userIds)
-        ->where('department_id', auth()->user()->department_id)
-        ->pluck('id')
-        ->toArray();
+            ->where('department_id', auth()->user()->department_id)
+            ->pluck('id')
+            ->toArray();
     }
 
     private function getAdvisorConversionQuoteStatusDate()
@@ -201,54 +200,48 @@ class AdvisorConversionReportService extends BaseService
 
     private function addSelect($query, $table, $lob)
     {
-        $getSaleLeadsQuery = function ($sourceCondition, $as) use ($table) {
-            return strtr('SUM(CASE WHEN (
-                            ((:table.payment_status_id in (:paidStatuses) OR :table.quote_status_id in (:approvedStatuses)) and :table.transaction_approved_at is NULL) OR
-                            (:table.quote_status_id in (:approvedStatuses) and :table.transaction_approved_at < ":quoteStatusDate") OR
-                            (:table.quote_status_id in (:saleStatuses) and :table.transaction_approved_at >= ":quoteStatusDate")
-                        ) and :table.source '.$sourceCondition.' (:excludedSources) THEN 1 ELSE 0 END
-                    ) as '.$as, $this->getBindings($table));
+        $bindings = $this->getBindings($table);
+
+        $buildCaseSum = function ($condition, $alias) use ($bindings) {
+            return DB::raw(strtr("SUM(CASE WHEN {$condition} THEN 1 ELSE 0 END) as {$alias}", $bindings));
         };
 
+        $getSaleLeadsQuery = function ($sourceCondition, $alias) use ($bindings) {
+            $condition = "(
+                ((:table.payment_status_id IN (:paidStatuses) OR :table.quote_status_id IN (:approvedStatuses)) AND :table.transaction_approved_at IS NULL) OR
+                (:table.quote_status_id IN (:approvedStatuses) AND :table.transaction_approved_at < \":quoteStatusDate\") OR
+                (:table.quote_status_id IN (:saleStatuses) AND :table.transaction_approved_at >= \":quoteStatusDate\")
+            ) AND :table.source {$sourceCondition} (:excludedSources)";
 
-        if ($lob === quoteTypeCode::Health) {
-            $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:lostStatuses) AND personal_quote_details.lost_reason_id IN (:lostReasons) THEN 1 ELSE 0 END) as not_interested';
-            $newLeadsRaw = 'SUM(CASE WHEN :table.quote_status_id = :quotedLead THEN 1 ELSE 0 END) as new_leads';
-            $inProgressRaw = 'SUM(CASE WHEN :table.quote_status_id in (:inProgressHealthStatuses) THEN 1 ELSE 0 END) as in_progress';
-        }else{
-            $newLeadsRaw = 'SUM(CASE WHEN :table.quote_status_id = :newLead and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads';
-            $notInterestedRaw = 'SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested';
-            $inProgressRaw = 'SUM(CASE WHEN :table.quote_status_id in (:inProgressStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress';
-        }
+            return DB::raw(strtr("SUM(CASE WHEN {$condition} THEN 1 ELSE 0 END) as {$alias}", $bindings));
+        };
 
-        $query->addSelect(
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr($newLeadsRaw, $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr($notInterestedRaw, $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr($inProgressRaw, $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id in (:badLeadsStatuses)  and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as bad_leads', $this->getBindings($table))
-            ),
-            DB::raw($getSaleLeadsQuery('NOT IN', 'sale_leads')),
-            DB::raw($getSaleLeadsQuery('IN', 'created_sale_leads')),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and :table.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN :table.quote_status_id in (:badLeadsStatuses) and :table.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created_bad_leads', $this->getBindings($table))
-            ),
-        );
+        $commonSelects = [
+            $buildCaseSum(':table.source NOT IN (:excludedSources)', 'total_leads'),
+            $buildCaseSum(':table.source IN (:excludedSources)', 'manual_created'),
+            $buildCaseSum(':table.quote_status_id IN (:badLeadsStatuses) AND :table.source NOT IN (:excludedSources)', 'bad_leads'),
+            $getSaleLeadsQuery('NOT IN', 'sale_leads'),
+            $getSaleLeadsQuery('IN', 'created_sale_leads'),
+            $buildCaseSum(':table.quote_status_id = :imRenewal AND :table.source NOT IN (:excludedSources)', 'afia_renewals_count'),
+            $buildCaseSum(':table.quote_status_id IN (:badLeadsStatuses) AND :table.source IN (:excludedSources)', 'manual_created_bad_leads'),
+        ];
+
+        $lobSpecificConditions = [
+            quoteTypeCode::Health => [
+                $buildCaseSum(':table.quote_status_id IN (:lostStatuses) AND personal_quote_details.lost_reason_id IN (:lostReasons)', 'not_interested'),
+                $buildCaseSum(':table.quote_status_id = :quotedLead', 'new_leads'),
+                $buildCaseSum(':table.quote_status_id IN (:inProgressHealthStatuses)', 'in_progress'),
+            ],
+            'default' => [
+                $buildCaseSum(':table.quote_status_id = :newLead AND :table.source NOT IN (:excludedSources)', 'new_leads'),
+                $buildCaseSum(':table.quote_status_id IN (:notInterestedStatuses) AND :table.source NOT IN (:excludedSources)', 'not_interested'),
+                $buildCaseSum(':table.quote_status_id IN (:inProgressStatuses) AND :table.source NOT IN (:excludedSources)', 'in_progress'),
+            ],
+        ];
+
+        $lobSelects = $lobSpecificConditions[$lob] ?? $lobSpecificConditions['default'];
+
+        $query->addSelect(...array_merge($commonSelects, $lobSelects));
     }
 
     private function getPersonsalQuoteQuery($lob)
@@ -269,7 +262,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
-            ->where('users.is_active' , true)
+            ->where('users.is_active', true)
             ->when($lob == quoteTypeCode::Health, function ($query) {
                 return $query->where('personal_quotes.source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })
@@ -298,7 +291,7 @@ class AdvisorConversionReportService extends BaseService
                     })
                     ->pluck('user_id')
                     ->toArray();
-                if($lob == quoteTypeCode::Health){
+                if ($lob == quoteTypeCode::Health) {
                     $userIds = $this->getUsers($userIds);
                 }
             }
@@ -573,7 +566,7 @@ class AdvisorConversionReportService extends BaseService
                 ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT => [QuoteStatusEnum::IMRenewal],
                 default => [],
             };
-            
+
             $subQuery->when(! empty($quoteStatuses), fn ($q) => $q->whereIn("{$table}.quote_status_id", $quoteStatuses))
                 ->when(in_array($filters->leadType, [ReportsLeadTypeEnum::SALE_LEAD, ReportsLeadTypeEnum::CREATED_SALE_LEAD]), function ($q) use ($table) {
                     $q->where(function ($sq) use ($table) {
