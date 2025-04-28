@@ -511,7 +511,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
         Route::resource('business', BusinessQuoteController::class);
 
-        Route::resource('travel', CRUDController::class);
+        // Route::resource('travel', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
@@ -737,6 +737,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
+    Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
 });
 
 Route::get('/add-batch-number', function () {
