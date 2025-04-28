@@ -5,15 +5,18 @@ const props = defineProps({
   assignmentTypes: Object,
 });
 
-const formatDate = date =>
-  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+// Simple date formatter function
+const formatDate = date => {
+  if (!date) return '';
 
-// Split date into date and time parts for better display
-const formatDateParts = date => {
-  if (!date) return { date: '-', time: '-' };
-  const formatted = useDateFormat(date, 'DD-MM-YYYY|HH:mm:ss').value;
-  const [datePart, timePart] = formatted.split('|');
-  return { date: datePart, time: timePart };
+  const dateObj = new Date(date);
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const year = dateObj.getFullYear();
+  const hours = String(dateObj.getHours()).padStart(2, '0');
+  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+
+  return `${day}-${month}-${year} ${hours}:${minutes}`;
 };
 
 const { isRequired } = useRules();
@@ -344,23 +347,28 @@ function search(isValid) {
               >
                 {{ audit.assignment_type_text }}
               </span>
-              <div class="flex items-center gap-2 text-xs text-gray-500">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3.5 w-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+
+              <!-- Ribbon Style Time -->
+              <div class="relative">
+                <div
+                  class="flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-200 shadow-sm ribbon"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                {{ formatDateParts(audit.created_at).date }}
-                {{ formatDateParts(audit.created_at).time }}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-1 text-gray-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {{ formatDate(audit.created_at) }}
+                </div>
               </div>
             </div>
 
@@ -472,5 +480,16 @@ function search(isValid) {
 
 .timeline-line:hover {
   @apply w-1;
+}
+
+/* Ribbon style for date/time */
+.ribbon {
+  @apply rounded-r-sm rounded-tl-sm rounded-bl-sm;
+  position: relative;
+  right: -1px;
+}
+
+.ribbon-fold {
+  z-index: 1;
 }
 </style>
