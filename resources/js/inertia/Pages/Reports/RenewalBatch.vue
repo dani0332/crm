@@ -600,7 +600,7 @@ watch(
           :max-limit="15"
         />
 
-        <ComboBox
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -619,9 +619,20 @@ watch(
             }))
           "
           @update:model-value="onTeamChange"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(team => team.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -634,9 +645,22 @@ watch(
           placeholder="Search by Sub Team"
           class="w-full"
           :options="subTeamsOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Sub Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.subTeams = subTeamsOptions.map(subTeam => subTeam.value)
+              "
+              @clear="filters.subTeams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -650,7 +674,20 @@ watch(
           placeholder="Search by Advisors"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
 
         <x-select
           v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager])"
