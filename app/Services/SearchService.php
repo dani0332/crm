@@ -404,7 +404,7 @@ class SearchService extends BaseService
                 $query->join('insured', 'personal_quotes.insured_id', 'insured.id');
 
                 // Check if FULLTEXT index exists and use it for better performance
-                $companyNameFullTextIndexExists = DB::select("SHOW INDEX FROM insured WHERE Key_name = 'insured_company_name_fulltext'");
+                $companyNameFullTextIndexExists = DB::select("SHOW INDEX FROM insured WHERE Key_name = 'index_insured_company_name_fulltext'");
 
                 if (! empty($companyNameFullTextIndexExists)) {
                     // Use FULLTEXT search
@@ -522,7 +522,7 @@ class SearchService extends BaseService
         $query->join('customer', 'personal_quotes.customer_id', 'customer.id');
 
         // Check if FULLTEXT index exists and use it for better performance
-        $insuredFullNameFullTextIndexExists = DB::select("SHOW INDEX FROM customer WHERE Key_name = 'customer_insured_name_fulltext'");
+        $insuredFullNameFullTextIndexExists = DB::select("SHOW INDEX FROM customer WHERE Key_name = 'index_customer_insured_name_fulltext'");
 
         if (! empty($insuredFullNameFullTextIndexExists)) {
             // Use FULLTEXT search
@@ -573,7 +573,7 @@ class SearchService extends BaseService
 
         // Apply first/last name filters
         if ($request->has('member_first_name')) {
-            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'customer_members_name_fulltext'");
+            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'index_customer_members_name_fulltext'");
 
             if (! empty($fullNameIndexExists)) {
                 // Use FULLTEXT search
@@ -588,7 +588,7 @@ class SearchService extends BaseService
         }
 
         if ($request->has('member_last_name')) {
-            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'customer_members_name_fulltext'");
+            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'index_customer_members_name_fulltext'");
 
             if (! empty($fullNameIndexExists)) {
                 // Use FULLTEXT search
@@ -673,7 +673,7 @@ class SearchService extends BaseService
             $query->join('payments', 'personal_quotes.code', 'payments.code');
 
             if ($request->has('insurer_tax_invoice_number')) {
-                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM payments WHERE Key_name = 'payments_insurer_tax_invoice_number_fulltext'");
+                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM payments WHERE Key_name = 'index_payments_insurer_tax_invoice_number_fulltext'");
 
                 if (! empty($taxInvoiceIndexExists)) {
                     // Use FULLTEXT search
@@ -688,7 +688,7 @@ class SearchService extends BaseService
             }
 
             if ($request->has('insurer_commission_tax_invoice_number')) {
-                $comTaxInvoiceIndexExists = DB::select("SHOW INDEX FROM payments WHERE Key_name = 'payments_insurer_com_tax_invoice_number_fulltext'");
+                $comTaxInvoiceIndexExists = DB::select("SHOW INDEX FROM payments WHERE Key_name = 'index_payments_insurer_com_tax_invoice_number_fulltext'");
 
                 if (! empty($comTaxInvoiceIndexExists)) {
                     // Use FULLTEXT search
@@ -706,7 +706,7 @@ class SearchService extends BaseService
             $query->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
 
             if ($request->has('insurer_tax_invoice_number')) {
-                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM send_update_logs WHERE Key_name = 'send_update_logs_insurer_tax_invoice_number_fulltext'");
+                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM send_update_logs WHERE Key_name = 'index_send_update_logs_insurer_tax_invoice_number_fulltext'");
 
                 if (! empty($taxInvoiceIndexExists)) {
                     // Use FULLTEXT search
@@ -721,7 +721,7 @@ class SearchService extends BaseService
             }
 
             if ($request->has('insurer_commission_tax_invoice_number')) {
-                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM send_update_logs WHERE Key_name = 'send_update_logs_insurer_com_tax_invoice_number_fulltext'");
+                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM send_update_logs WHERE Key_name = 'index_send_update_logs_insurer_com_tax_invoice_number_fulltext'");
 
                 if (! empty($taxInvoiceIndexExists)) {
                     // Use FULLTEXT search
