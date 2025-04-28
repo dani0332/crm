@@ -105,7 +105,7 @@ class InslyDetailRepository extends BaseRepository
         }
     }
 
-    public function fetchGetData()
+    public function fetchGetDataByIndex()
     {
         $coverage = $this->getCoverageList(auth()->user());
 
@@ -149,14 +149,14 @@ class InslyDetailRepository extends BaseRepository
         ];
 
         $pipeline[] = ['$skip' => $skip];
-        $pipeline[] = ['$limit' => $perPage + 1]; // Fetch 1 extra to check if there's a next page
+        $pipeline[] = ['$limit' => $perPage + 1]; 
 
         $results = $this->raw(fn ($collection) => $collection->aggregate($pipeline));
 
         $items = iterator_to_array($results);
 
         $hasMore = count($items) > $perPage;
-        $items = array_slice($items, 0, $perPage); // Trim to perPage if we fetched extra
+        $items = array_slice($items, 0, $perPage); 
 
         $data = $items;
 
@@ -176,6 +176,37 @@ class InslyDetailRepository extends BaseRepository
             'next_page_url' => $hasMore ? $buildPageUrl($page + 1) : null,
             'prev_page_url' => $page > 1 ? $buildPageUrl($page - 1) : null,
         ];
+    }
+
+    /**
+     * @deprecated keeping this for fallback option for now
+     */
+    public function fetchGetData()
+    {
+        $coverage = $this->getCoverageList(auth()->user());
+
+        $query = InslyDetail::query();
+
+        if (! empty($coverage)) {
+            $query->whereIn('policy.coverage', $coverage);
+        }
+
+        if (! empty(request()->policy_number)) {
+            $query->where('policy_no', '=', request()->policy_number);
+        }
+
+        if (! empty(request()->email)) {
+            $query->where('customer.email', 'like', '%'.request()->email.'%');
+        }
+
+        if (! empty(request()->mobile_no)) {
+            $query->where('customer.mobile_phone', 'like', '%'.request()->mobile_no.'%')
+                ->orWhere('customer.mobile_phone', 'regex', $this->searchPhoneNumberRegexPattern(request()->mobile_no));
+        }
+
+        $data = $query->simplePaginate()->withQueryString()->toArray();
+
+        return $data;
     }
 
     public function fetchGetBy($column, $value)
