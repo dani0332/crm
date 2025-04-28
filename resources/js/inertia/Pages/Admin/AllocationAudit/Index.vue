@@ -28,6 +28,9 @@ const filters = reactive({
   uuid: '',
 });
 
+// Track if search has been performed
+const hasSearched = ref(false);
+
 function setQueryFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
@@ -36,6 +39,9 @@ function setQueryFilters() {
       filters[key] = params[key];
     }
   }
+
+  // Check if URL already has search params
+  hasSearched.value = !!params.uuid;
 }
 
 onMounted(() => {
@@ -48,6 +54,9 @@ function resetFilters() {
   for (const key in filters) {
     filters[key] = '';
   }
+
+  // Reset the search state
+  hasSearched.value = false;
 
   router.visit(route('admin.allocation-audit.index'), {
     method: 'get',
@@ -66,6 +75,9 @@ function search(isValid) {
   if (!isValid) {
     return;
   }
+
+  // Set search state to true
+  hasSearched.value = true;
 
   for (const key in filters) {
     if (filters[key] === '') {
@@ -199,7 +211,10 @@ function search(isValid) {
   <!-- No Records Found State -->
   <div
     v-if="
-      hasUuid && !loader.cards && (!props.audits || props.audits.length === 0)
+      hasSearched &&
+      hasUuid &&
+      !loader.cards &&
+      (!props.audits || props.audits.length === 0)
     "
     class="text-center"
   >
@@ -262,7 +277,7 @@ function search(isValid) {
 
   <!-- Audit Timeline -->
   <div
-    v-if="hasUuid && !loader.cards && props.audits?.length > 0"
+    v-if="hasSearched && hasUuid && !loader.cards && props.audits?.length > 0"
     class="space-y-6"
   >
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
