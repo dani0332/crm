@@ -105,21 +105,9 @@ const setBatchYear = () => {
 };
 
 function onSubmit(isValid) {
-  if (batchForm.segment_volume.length > 0) isSagmentVolumeEmpty.value = false;
-  else isSagmentVolumeEmpty.value = true;
-
-  if (batchForm.segment_value.length > 0) isSagmentValueEmpty.value = false;
-  else isSagmentValueEmpty.value = true;
-
   let valid = validateSlabs();
 
-  if (
-    !isValid ||
-    !valid ||
-    isSagmentVolumeEmpty.value ||
-    isSagmentValueEmpty.value
-  )
-    return;
+  if (!isValid || !valid) return;
 
   batchForm.clearErrors();
   batchForm.month = setBatchMonth();
@@ -361,19 +349,35 @@ onMounted(() => {
                 Segment Volume <span class="required">*</span>
               </th>
               <td class="">
-                <ComboBox
+                <x-select
                   class="p-2"
                   v-model="batchForm.segment_volume"
-                  :single="false"
+                  name="segment_volume"
+                  placeholder="Please select Segment Volume"
                   :options="
                     carAdvisors.map(item => ({
                       value: item.id,
                       label: item.name,
                     }))
                   "
-                  :hasError="isSagmentVolumeEmpty"
-                  autocomplete
-                />
+                  filterable
+                  filterPlaceholder="Filter Segment Volume...."
+                  multiple
+                  truncate
+                  required
+                  :rules="[isRequired]"
+                >
+                  <template #content-footer>
+                    <ui-select-actions
+                      @select-all="
+                        batchForm.segment_volume = carAdvisors.map(
+                          item => item.id,
+                        )
+                      "
+                      @clear="batchForm.segment_volume = []"
+                    />
+                  </template>
+                </x-select>
               </td>
             </tr>
             <tr class="border">
@@ -381,19 +385,35 @@ onMounted(() => {
                 Segment Value <span class="required">*</span>
               </th>
               <td>
-                <ComboBox
+                <x-select
                   class="p-2"
                   v-model="batchForm.segment_value"
-                  :single="false"
+                  name="segment_value"
+                  placeholder="Please select Segment Value"
                   :options="
                     carAdvisors.map(item => ({
                       value: item.id,
                       label: item.name,
                     }))
                   "
-                  :hasError="isSagmentValueEmpty"
-                  autocomplete
-                />
+                  filterable
+                  filterPlaceholder="Filter Segment Value...."
+                  multiple
+                  truncate
+                  required
+                  :rules="[isRequired]"
+                >
+                  <template #content-footer>
+                    <ui-select-actions
+                      @select-all="
+                        batchForm.segment_value = carAdvisors.map(
+                          item => item.id,
+                        )
+                      "
+                      @clear="batchForm.segment_value = []"
+                    />
+                  </template>
+                </x-select>
               </td>
             </tr>
           </tbody>
