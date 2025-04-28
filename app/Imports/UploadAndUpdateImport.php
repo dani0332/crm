@@ -173,7 +173,6 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             'is_gcc' => ['index' => 41, 'title' => 'Is GCC', 'rules' => 'max:3'],
         ];
 
-
         if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
             $columns['make']['rules'][] = 'required';
             $columns['model']['rules'][] = 'required';

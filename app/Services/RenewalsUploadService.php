@@ -5,9 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanType;
-use App\Enums\CarRegistrationType;
 use App\Enums\carTypeInsuranceCode;
-use App\Enums\CarVehicleUse;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
@@ -1092,8 +1090,6 @@ class RenewalsUploadService
             if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike]) && ($insurer = $this->insuranceProviderService->getProviderByCode($data['insurer']))) {
                 $quoteData['currently_insured_with'] = $insurer->text;
             }
-
-
 
             LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
 

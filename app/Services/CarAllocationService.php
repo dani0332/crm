@@ -178,19 +178,19 @@ class CarAllocationService extends AllocationService
                 }
             } else {
 
-            if (! empty($axaValuation)) {
-                $firstAxaValuation = reset($axaValuation); // Get the first element of the array
+                if (! empty($axaValuation)) {
+                    $firstAxaValuation = reset($axaValuation); // Get the first element of the array
 
-                if (! empty($firstAxaValuation) && property_exists($firstAxaValuation, 'carValue')) {
-                    LoggerService::info('car value as per valuation engine for GIG', [
-                        'car_value' => $firstAxaValuation->carValue,
-                    ]);
+                    if (! empty($firstAxaValuation) && property_exists($firstAxaValuation, 'carValue')) {
+                        LoggerService::info('car value as per valuation engine for GIG', [
+                            'car_value' => $firstAxaValuation->carValue,
+                        ]);
 
-                    if ($firstAxaValuation->carValue > 0) {
-                        $carValue = $firstAxaValuation->carValue;
+                        if ($firstAxaValuation->carValue > 0) {
+                            $carValue = $firstAxaValuation->carValue;
+                        }
                     }
                 }
-            }
             }
 
             LoggerService::info("car value as per valuation engine for GIG is {$carValue}");
