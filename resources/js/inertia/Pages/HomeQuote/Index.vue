@@ -791,7 +791,7 @@ const formatDate = dateString =>
     >
       <template #item-code="{ code, uuid, stale_at, price_with_vat }">
         <Link
-          :href="route('home-quotes-show', uuid)" 
+          :href="route('home-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ code }}</span>
