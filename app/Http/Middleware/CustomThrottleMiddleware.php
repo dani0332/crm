@@ -2,11 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Logger\LoggerService;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
-use App\Services\Logger\LoggerService;
 
 class CustomThrottleMiddleware
 {
