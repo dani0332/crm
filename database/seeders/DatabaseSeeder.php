@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             // TravelRenewalTeamSeeder::class,
             LookupSeeder::class,
             DocumentTypesSeeder::class,
+            BusinessActivitiesSeeder::class,
         ]);
     }
 }
