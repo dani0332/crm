@@ -421,7 +421,20 @@ class SearchService extends BaseService
 
             // Search by policy number
             if ($request->has('policy_number') && ! isset($request->code)) {
-                $query->where('personal_quotes.policy_number', 'like', '%'.$request->policy_number.'%');
+                // Check if FULLTEXT index exists and use it for better performance
+                $companyNameFullTextIndexExists = DB::select("SHOW INDEX FROM personal_quotes WHERE Key_name = 'index_personal_quotes_policy_number_fulltext'");
+
+                if (! empty($companyNameFullTextIndexExists)) {
+                    // Use FULLTEXT search
+                    $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->policy_number.'*']);
+                } else {
+                    // Fallback to LIKE search
+                    $query->where('personal_quotes.policy_number', 'like', '%'.$request->policy_number.'%');
+
+                    // Log that we're using slower search
+                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for personal_quotes policy_number. Consider adding FULLTEXT index for better performance.');
+                }
+
             }
 
             // Search by mobile number (exact match)
