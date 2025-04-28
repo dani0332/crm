@@ -112,6 +112,7 @@ function activePatternField() {
   }
 }
 const kycFormDetails = useForm({
+  customer_id: page.props.quoteRequest.customer_id,
   quote_uuid: page.props.quoteRequest.uuid,
   quote_type_id: page.props.quoteType.id,
   insured_id: insuredDetails?.insured?.id,
@@ -393,10 +394,10 @@ watch(
 <template>
   <x-form @submit="submitInsuredKycForm" :auto-focus="false">
     <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
-      <x-field label="Insured ID">
+      <x-field label="Customer ID">
         <x-input
-          v-model="kycFormDetails.insured_id"
-          placeholder="Insured ID"
+          v-model="kycFormDetails.customer_id"
+          placeholder="Customer ID"
           type="text"
           class="w-full"
           :disabled="true"
