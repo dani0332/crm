@@ -587,7 +587,7 @@ watch(
           model-type="yyyy-MM-dd"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.batchNo"
           label="Batch Number"
           placeholder="Search by Batch Number"
@@ -597,8 +597,23 @@ watch(
               label: filterOptions.batches[key],
             }))
           "
-          :max-limit="15"
-        />
+          multiple
+          truncate
+          filterable
+          :rules="[maxSelections(1)]"
+          filterPlaceholder="Filter Batches...."
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.batchNo = filterOptions.batches.map(
+                  batch => batch.value,
+                )
+              "
+              @clear="filters.batchNo = []"
+            />
+          </template>
+        </x-select>
 
         <x-select
           v-if="

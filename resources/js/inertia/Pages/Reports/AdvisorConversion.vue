@@ -29,6 +29,7 @@ const isDirty = ref(false);
 const isMounted = ref(false);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const toast = useToast();
+const { maxSelections } = useRules();
 
 const {
   currentPageFirstIndex,
@@ -869,14 +870,15 @@ function sortPremium(order) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.lob"
           label="LOB"
           placeholder="Select LOB"
           :options="quoteTypesOptions"
           class="w-full"
-          :single="true"
           @update:modelValue="onLobChange"
+          filterable
+          filterPlaceholder="Filter LOB...."
         />
 
         <DatePicker
@@ -911,7 +913,7 @@ function sortPremium(order) {
           class="w-full"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.batches"
           label="Batch Number"
           placeholder="Search by Batch Number"
@@ -921,15 +923,30 @@ function sortPremium(order) {
               label: filterOptions.batches[key],
             }))
           "
-          :max-limit="8"
-        />
+          :rules="[maxSelections(8)]"
+          filterable
+          filterPlaceholder="Filter Batch Number...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.batches = Object.keys(filterOptions.batches).map(
+                  batch => batch,
+                )
+              "
+              @clear="filters.batches = []"
+            />
+          </template>
+        </x-select>
 
         <x-tooltip placement="top" v-if="canShow('tiers')">
           <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike">
             Development for Bike Tiers still in progress
           </template>
           <template #tooltip v-else> Select Tiers </template>
-          <ComboBox
+          <x-select
             :disabled="filters.lob === quoteTypeCodeEnum.Bike"
             :class="{
               'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
@@ -943,10 +960,25 @@ function sortPremium(order) {
                 label: filterOptions.tiers[key],
               }))
             "
-          />
+            filterable
+            filterPlaceholder="Filter Tiers...."
+            truncate
+            multiple
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.tiers = Object.keys(filterOptions.tiers).map(
+                    tier => tier,
+                  )
+                "
+                @clear="filters.tiers = []"
+              />
+            </template>
+          </x-select>
         </x-tooltip>
 
-        <ComboBox
+        <x-select
           v-if="filters.lob !== quoteTypeCodeEnum.Health"
           v-model="filters.leadSources"
           label="Lead Source"
@@ -957,10 +989,25 @@ function sortPremium(order) {
               label: filterOptions.leadSources[key],
             }))
           "
-          :max-limit="3"
-        />
+          :rules="[maxSelections(3)]"
+          filterable
+          filterPlaceholder="Filter Lead Source...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.leadSources = Object.keys(
+                  filterOptions.leadSources,
+                ).map(leadSource => leadSource)
+              "
+              @clear="filters.leadSources = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
           :class="{
@@ -972,9 +1019,20 @@ function sortPremium(order) {
           :options="teamOptions"
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(team => team.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('sub_teams')"
           :disabled="!isDisabled('sub_teams')"
           :class="{
@@ -986,9 +1044,22 @@ function sortPremium(order) {
           :options="subteamOptions"
           @update:model-value="onSubTeamChange"
           :loading="loaders.subteamOptions"
-        />
+          filterable
+          filterPlaceholder="Filter SubTeams...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_teams = subteamOptions.map(subteam => subteam.value)
+              "
+              @clear="filters.sub_teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('advisors')"
           :disabled="!isDisabled('advisors')"
           :class="{
@@ -998,7 +1069,20 @@ function sortPremium(order) {
           :label="getAdvisorLabel()"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-if="canShow('isEmbeddedProducts')"
           v-model="filters.isEmbeddedProducts"
@@ -1058,7 +1142,7 @@ function sortPremium(order) {
           placeholder="Select travel coverage"
           class="w-full"
         />
-        <ComboBox
+        <x-select
           v-if="
             can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
           "
@@ -1070,7 +1154,8 @@ function sortPremium(order) {
               filters.lob === 'Travel' ? segment.value !== 'sic-revival' : true,
             )
           "
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Segment...."
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">

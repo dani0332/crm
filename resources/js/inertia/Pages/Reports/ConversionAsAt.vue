@@ -392,7 +392,7 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.lob"
           label="Line of Business*"
           placeholder="Select LOB"
@@ -403,10 +403,11 @@ onMounted(() => {
             }))
           "
           class="w-full"
-          :single="true"
           :rules="[isRequired]"
           :hasError="isLobEmpty"
           @update:modelValue="onLobChange"
+          filterable
+          filterPlaceholder="Filter LOB...."
         />
 
         <DatePicker
@@ -433,15 +434,16 @@ onMounted(() => {
           :max-date="new Date()"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.displayBy"
           placeholder="Search by Group"
           label="Display by"
           :options="displayBy"
           class="w-full"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Display by...."
         />
-        <ComboBox
+        <x-select
           v-if="filters.lob == props.quoteTypeIdEnum.Car"
           v-model="filters.tag"
           placeholder="SIC/PUA"
@@ -452,16 +454,18 @@ onMounted(() => {
             { value: 'non-sic', label: 'PUA' },
           ]"
           class="w-full"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter SIC/PUA...."
         />
-        <ComboBox
+        <x-select
           v-model="filters.includeUnassignedLeads"
           placeholder="Select Option"
           label="Include Unassigned Leads?"
           :options="includeUnassignedLeads"
           class="w-full"
-          :single="true"
           @update:modelValue="onIncludeUnassignedLeadsChange"
+          filterable
+          filterPlaceholder="Filter Include Unassigned Leads...."
         />
         <DatePicker
           v-if="filters.includeUnassignedLeads == 'yes'"

@@ -583,19 +583,6 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
-        <!-- <x-field label="Lead Status">
-          <ComboBox
-            v-model="filters.quote_status_id"
-            name="quote_status"
-            placeholder="Search by Lead Status"
-            :options="
-              quoteStatuses.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-          />
-        </x-field> -->
         <x-select
           v-model="filters.insurer_aml_status"
           name="insurer_aml_status"
