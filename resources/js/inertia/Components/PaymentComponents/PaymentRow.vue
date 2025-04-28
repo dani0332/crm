@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import moment from 'moment';
 import { usePayment } from '../../Composables/usePayment';
+import { useAMLKYC } from '../../Composables/useAMLKYC';
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
@@ -20,6 +21,8 @@ const { formatDate,
    verifyCreditApproved,
    hasAnyCCSplitPayment
   } = usePayment();
+
+const { isAmlVerified, isKycVerified, isInsurerAmlVerified } = useAMLKYC();
 
 const props = defineProps({
   quoteRequest: Object,
@@ -73,7 +76,7 @@ const capturePayment = () => {
 };
 
 const approvePayment = () => {
-  if (!props.sendUpdate && (!isAmlVerified() || !isKycVerified())) {
+  if (!props.sendUpdate && (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments) || !isKycVerified(props.quoteRequest, props.quoteType, props.payments))) {
     emit('open-aml-verification');
   } else {
     const isValid = getCaptureValidation.value;
@@ -87,55 +90,6 @@ const approvePayment = () => {
 
 const voidPayment = () => {
   emit('void-payment', props.payment);
-};
-
-// We're assuming these functions are provided or can be mocked
-const isAmlVerified = () => {
-  //Bypass AML if its travel and insurer is other than GIG and payment is non CC
-  let isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
-  let isGIGInsuranceProvider =
-    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
-    page.props?.bookingDetails?.isGIGInsuranceProvider ||
-    false;
-  let paymentMethodCC =
-    props.payments[0]?.payment_methods_code ===
-    page.props.paymentMethodsEnum.CreditCard;
-
-  if (isTravelQuote) {
-    if (isGIGInsuranceProvider && paymentMethodCC) {
-      return (
-        props.quoteRequest.aml_status ===
-        page.props.amlStatusEnum.AMLScreeningCleared
-      );
-    }
-    return true;
-  }
-
-  return (
-    props.quoteRequest.aml_status ===
-    page.props.amlStatusEnum.AMLScreeningCleared
-  );
-};
-
-const isKycVerified = () => {
-  //Bypass KYC if its travel and insurer is other than GIG and payment is non CC
-  let isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
-  let isGIGInsuranceProvider =
-    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
-    page.props?.bookingDetails?.isGIGInsuranceProvider ||
-    false;
-  let paymentMethodCC =
-    props.payments[0]?.payment_methods_code ===
-    page.props.paymentMethodsEnum.CreditCard;
-
-  if (isTravelQuote) {
-    if (isGIGInsuranceProvider && paymentMethodCC) {
-      return props.quoteRequest.kyc_decision === 'Complete';
-    }
-    return true;
-  }
-
-  return props.quoteRequest.kyc_decision === 'Complete';
 };
 
 // Add can function for permission checks
@@ -170,9 +124,8 @@ const getCaptureOption = computed(() => {
 
 const getCaptureValidation = computed(() => {
   const payment = props.payment;
-  if (shouldProcessUpdate) {
-    const isPaidCapturePayment = payment.payment_status_id === paymentStatusEnum.PAID || payment.payment_status_id === paymentStatusEnum.CAPTURED;
-    if (payment.is_approved === 1 || isPaidCapturePayment) return false;
+  if (shouldProcessUpdate()) {
+    if (payment.is_approved === 1) return false;
     let paymentRecord = payment;
     if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
       return validateUpfrontCapture(paymentRecord);
@@ -195,81 +148,34 @@ const shouldProcessUpdate = () => {
     Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
   const hasPayments = props.payments.length > 0;
   const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
-  const isAmlCleared =
-    props.quoteRequest.aml_status ===
-    page.props.amlStatusEnum.AMLScreeningCleared;
-  const isTransactionDeclined =
-    props.quoteRequest.quote_status_id ===
-    page.props.quoteStatusEnum.TransactionDeclined;
-  const isTransactionApproved =
-    props.quoteRequest.quote_status_id ===
-    page.props.quoteStatusEnum.TransactionApproved;
-  const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
-  const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
-  const shouldSendUpdate = props.sendUpdate;
-  const isAmlOrTransactionApproved =
-    isAmlCleared || isTransactionDeclined || isTransactionApproved;
-  const isAmlAndKycComplete = isAmlOrTransactionApproved && isKycComplete;
-  let isGIGProvider = page.props?.bookPolicyDetails?.isGIGProvider || false;
-  if (isTravelQuote && !props.sendUpdate) {
-    isGIGProvider = payment.isGIGProvider;
-  }
-  const isInsurer = payment?.collection_type == 'insurer';
-  const insurerAMLStatus = props.quoteRequest?.insurer_aml_status || null;
-  let isInsurerAmlCleared = true;
-  let isAMlAndKycTravelComplete =
-    isAmlAndKycComplete || isTravelQuote || shouldSendUpdate;
-  let enabledQuoteTypesForInsurer = [
-    quoteTypeCodeEnum.Car,
-    quoteTypeCodeEnum.Home,
-    quoteTypeCodeEnum.Bike,
-    quoteTypeCodeEnum.Travel,
-  ];
-
-  const captureOption = getCaptureOption.value(payment);
-  if (
-    isInsurer &&
-    isGIGProvider &&
-    enabledQuoteTypesForInsurer.includes(props.quoteType) &&
-    hasAnyCCSplitPayment(payment) &&
-    !shouldSendUpdate
-  ) {
-    isInsurerAmlCleared =
-      insurerAMLStatus === page.props.amlStatusEnum.InsurerAMLScreeningCleared;
-    if (isTravelQuote) {
-      isAMlAndKycTravelComplete = isAmlOrTransactionApproved;
-    } else {
-      isAMlAndKycTravelComplete = isAmlAndKycComplete || shouldSendUpdate;
-    }
-  }
-
-  const isRenewalUploadConditionMet = () => {
-    return (
-      props.isCapBtnEnabled &&
+  
+  // Check if it's a renewal upload condition
+  if (props.isCapBtnEnabled &&
       props.quoteType === quoteTypeCodeEnum.Car &&
-      isGIGProvider &&
-      isAmlCleared &&
-      isKycVerified() &&
+      (page.props?.bookPolicyDetails?.isGIGProvider || false) &&
+      isAmlVerified(props.quoteRequest, props.quoteType, props.payments) &&
+      isKycVerified(props.quoteRequest, props.quoteType, props.payments) &&
       isTotalPriceMatching &&
       hasAnyCCSplitPayment(payment) &&
-      !shouldSendUpdate &&
+      !props.sendUpdate &&
       hasPayments &&
-      isInsurer
-    );
-  };
-
-  if (isRenewalUploadConditionMet()) {
+      payment?.collection_type == 'insurer') {
     return true;
   }
+  
+  // Check if capture option is approve
+  const captureOption = getCaptureOption.value;
   if (captureOption === 'approve') {
     return hasPayments;
   }
 
+  // All other cases
   return (
     hasPayments &&
     isTotalPriceMatching &&
-    isAMlAndKycTravelComplete &&
-    isInsurerAmlCleared
+    // Check if AML & KYC verification and insurer AML are complete
+    (isAmlVerified(props.quoteRequest, props.quoteType, props.payments) || props.quoteType === quoteTypeCodeEnum.Travel || props.sendUpdate) &&
+    isInsurerAmlVerified(props.quoteRequest, props.quoteType, props.payments)
   );
 };
 
@@ -361,45 +267,10 @@ const disableMainPaymentApproval = computed(() => {
   }
 
   return (
-    isAmlVerified() &&
-    (!isKycVerified() || !isInsurerAmlVerified() || !isTotalAmountMismatched())
+    isAmlVerified(props.quoteRequest, props.quoteType, props.payments) &&
+    (!isKycVerified(props.quoteRequest, props.quoteType, props.payments) || !isInsurerAmlVerified(props.quoteRequest, props.quoteType, props.payments) || !isTotalAmountMismatched())
   );
 });
-
-
-const isInsurerAmlVerified = () => {
-  //Bypass Insurer AML if its travel and insurer is other than GIG and payment is non CC
-  let isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
-  let isGIGInsuranceProvider =
-    page.props?.bookPolicyDetails?.isGIGInsuranceProvider ||
-    page.props?.bookingDetails?.isGIGInsuranceProvider ||
-    false;
-  let isPaymentMethodCC =
-    props.payments[0]?.payment_methods_code ===
-    page.props.paymentMethodsEnum.CreditCard;
-
-  let insurerAMLStatus = props.quoteRequest?.insurer_aml_status || 'N/A';
-  let insurerAmlClearedStatuses = [
-    page.props.amlStatusEnum.InsurerAMLScreeningNA,
-    page.props.amlStatusEnum.InsurerAMLScreeningCleared,
-  ];
-  let isInsurerAmlCleared =
-    insurerAmlClearedStatuses.includes(insurerAMLStatus);
-
-  if (isTravelQuote) {
-    if (isGIGInsuranceProvider && isPaymentMethodCC) {
-      // Insurer AML is required if its travel and insurer is GIG and payment is CC
-      return isInsurerAmlCleared;
-    }
-    //Bypass Insurer AML if its travel and insurer is other than GIG and payment is non CC
-    return true;
-  } else if (isPaymentMethodCC) {
-    // Insurer AML is required if its non travel and payment is CC
-    return isInsurerAmlCleared;
-  }
-
-  return true;
-};
 
 const isTotalAmountMismatched = () => {
   const totalPriceRounded =
@@ -414,11 +285,11 @@ const isTotalAmountMismatched = () => {
 };
 
 const amlAndKycTooltip = computed(() => {
-  if (!isAmlVerified()) {
+  if (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments)) {
     return page.props.paymentTooltipEnum.PENDING_AML_CLEARANCE;
-  } else if (!isInsurerAmlVerified()) {
+  } else if (!isInsurerAmlVerified(props.quoteRequest, props.quoteType, props.payments)) {
     return page.props.paymentTooltipEnum.PENDING_INSURER_AML_CLEARANCE;
-  } else if (!isKycVerified()) {
+  } else if (!isKycVerified(props.quoteRequest, props.quoteType, props.payments)) {
     return page.props.paymentTooltipEnum.PENDING_KYC_CLEARANCE;
   } else if (!isTotalAmountMismatched()) {
     return page.props.paymentTooltipEnum.TOTAL_AMOUNT_MISMATCHED;
@@ -554,10 +425,10 @@ const amlAndKycTooltip = computed(() => {
               outlined
               @click="
                   !props.sendUpdate &&
-                  (!isAmlVerified() || !isKycVerified())
+                  (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments) || !isKycVerified(props.quoteRequest, props.quoteType, props.payments))
                     ? $emit('open-aml-verification')
                     : getCaptureValidation
-                      ? editPaymentModal(payment, 0, 0, 2)
+                      ? $emit('edit-payment', payment, 0, 0, 2)
                       : alertCapture()
                 "
               :disabled="isApproveConfirmed"

@@ -10,6 +10,7 @@ import { time } from 'highcharts';
 
 // New Flow Implementation
 import { usePayment } from '../Composables/usePayment';
+import { useAMLKYC } from '../Composables/useAMLKYC';
 import { PaymentTableHeader, PaymentHeader, PaymentRow, PaymentSplitRow } from './PaymentComponents/index.js';
 
 // Assign barrel-imported components to prevent IDE from showing them as unused
@@ -31,6 +32,9 @@ const paymentAllocationStatus = page.props.paymentAllocationStatus;
 const paymentMethodsEnums = page.props.paymentMethodsEnum;
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+
+const { formatDate, formatAmount, formatString, filterCCPayments, filterCAPayments, verifyCreditApproved } = usePayment();
+const { isAmlVerified, isKycVerified } = useAMLKYC();
 
 const props = defineProps({
   payments: Array,
@@ -99,7 +103,6 @@ const props = defineProps({
   },
 });
 
-const { formatDate, formatAmount, formatString, filterCCPayments, filterCAPayments, verifyCreditApproved } = usePayment();
 
 // All reactive properties are defined here
 const createPaymentModal = ref(false);
@@ -5322,7 +5325,7 @@ onBeforeMount(() => {
                       size="sm"
                       color="#ff5e00"
                       @click="
-                        isAmlVerified()
+                        isAmlVerified(props.quoteRequest, props.quoteType, props.payments)
                           ? (isApproveClicked = !isApproveClicked)
                           : openAmlVerificationModal()
                       "
