@@ -959,7 +959,7 @@ function sortPremium(order) {
           "
           :max-limit="3"
         />
-        
+
         <ComboBox
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
@@ -1107,9 +1107,7 @@ function sortPremium(order) {
       <template #header-total_leads>
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Total Leads</span>
-          <template #tooltip>
-            All leads from InsuranceMarket.ae.
-          </template>
+          <template #tooltip> All leads from InsuranceMarket.ae. </template>
         </x-tooltip>
         <span v-else>Total Leads</span>
       </template>
@@ -1146,7 +1144,9 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Not Interested</span>
           <template #tooltip>
-            Lead status marked as lost due to no response, already purchased insurance, comparing options, budget issues, invalid visa, or ineligibility due to medical conditions or age etc.
+            Lead status marked as lost due to no response, already purchased
+            insurance, comparing options, budget issues, invalid visa, or
+            ineligibility due to medical conditions or age etc.
           </template>
         </x-tooltip>
         <span v-else>Not Interested</span>
@@ -1156,7 +1156,8 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>In Progress</span>
           <template #tooltip>
-            Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or 'Quoted,' from InsuranceMarket.ae.
+            Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or
+            'Quoted,' from InsuranceMarket.ae.
           </template>
         </x-tooltip>
         <span v-else>In Progress</span>
@@ -1165,9 +1166,7 @@ function sortPremium(order) {
       <template #header-manual_created>
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Manually Created</span>
-          <template #tooltip>
-            All leads from IMCRM.
-          </template>
+          <template #tooltip> All leads from IMCRM. </template>
         </x-tooltip>
         <span v-else>Manually Created</span>
       </template>
@@ -1186,7 +1185,9 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Sale Leads</span>
           <template #tooltip>
-            Quotes from InsuranceMarket.ae where payment is 'Captured' or status is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to customer,' and 'Policy Booked', Booking failed.
+            Quotes from InsuranceMarket.ae where payment is 'Captured' or status
+            is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to
+            customer,' and 'Policy Booked', Booking failed.
           </template>
         </x-tooltip>
         <span v-else>Sale Leads</span>
@@ -1196,7 +1197,8 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Created Sale Leads</span>
           <template #tooltip>
-            Quotes from IMCRM source where payment is 'Captured' or status is 'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
+            Quotes from IMCRM source where payment is 'Captured' or status is
+            'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
           </template>
         </x-tooltip>
         <span v-else>Created Sale Leads</span>
@@ -1206,7 +1208,8 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>IM Renewals</span>
           <template #tooltip>
-            Quotes from InsuranceMarket.ae source with status 'IMRenewal' and source 'renewal upload.'
+            Quotes from InsuranceMarket.ae source with status 'IMRenewal' and
+            source 'renewal upload.'
           </template>
         </x-tooltip>
         <span v-else>IM Renewals</span>
@@ -1447,7 +1450,6 @@ function sortPremium(order) {
               </Link>
             </template>
           </DataTable>
-          
         </div>
         <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
           <x-spinner size="lg" color="#1d83bc" />
