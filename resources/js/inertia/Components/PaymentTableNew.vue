@@ -3453,9 +3453,9 @@ onBeforeMount(() => {
                       :paymentMethodsForm="paymentMethodsForm"
                       :sendUpdateStatusEnum="sendUpdateStatusEnum"
                       @view-payment="(payment, splitId, splitNo, action) => editPaymentModal(payment, splitId, splitNo, action)"
-                      @generate-cc-link="(code, srNo, statusId) => copyPaymentLink(splitPayment.payment_link, statusId)"
-                      @delete-split-payment="deleteSplitPaymentModal"
-                      @retry-split-payment="(jobId, message) => retryProcess(splitPayment.id, jobId)"
+                      @generate-cc-link="(code, srNo, statusId) => generateCCLink(code, srNo, statusId)"
+                      @delete-split-payment="(splitId, statusId) => deleteSplitPaymentModal(splitId, statusId)"
+                      @retry-split-payment="(jobId, message) => retrySplitPaymentModal(jobId, message)"
                       @post-prepayment="triggerPostPrepayment"
                     />
                   </template>
