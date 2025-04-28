@@ -84,6 +84,8 @@ class ApplicationStorageSeeder extends Seeder
         // $this->seedBenchmarking();
         // $this->seedStopDeduplicateScript();
         $this->seedAmlAutomation();
+
+        $this->seedYachtAndPetAdvisors();
     }
 
     private function seedBirdWorkflowUrls()
@@ -325,6 +327,39 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
             [
                 'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedYachtAndPetAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::YACHT_ADVISORS],
+            [
+                'value' => 'vignesh.prasad@insurancemarket.ae,jayaraj.anthonyswamy@insurancemarket.ae,zaid.sheikh@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PET_ADVISORS],
+            [
+                'value' => 'smitha.chandran@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_ADVISORS_FOR_PET],
+            [
+                'value' => 'ghana.naeem@insurancemarket.ae,marialuisa.deguzman@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
