@@ -19,6 +19,7 @@ const components = {PaymentTableHeader};
 const notification = useNotifications('toast');
 const page = usePage();
 
+const policyIssuanceEnum = page.props.policyIssuanceEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const permissionEnum = page.props.permissionsEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
@@ -98,6 +99,10 @@ const props = defineProps({
   realQuote: Object,
   // For car commercial vehicles
   isCapBtnEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  isAllianceProvider: {
     type: Boolean,
     default: false,
   },

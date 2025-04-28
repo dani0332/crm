@@ -3063,7 +3063,13 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
 const getCaptureValidation = computed(() => {
   return payment => {
     if (shouldProcessUpdate(payment)) {
-      if (payment.is_approved === 1) return false;
+      const isTravelQuote = props.quoteType == quoteTypeCodeEnum.Travel;
+      const isInsurerApiStatus = props.quoteRequest.insurer_api_status;
+      const isAllianceProvider = props.isAllianceProvider;
+      const ispaymentApproveCapture = isTravelQuote && isAllianceProvider && isInsurerApiStatus == null;
+
+      if (payment.is_approved === 1 || ispaymentApproveCapture) return false;
+      
       let paymentRecord = payment;
       if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
         return validateUpfrontCapture(paymentRecord);
