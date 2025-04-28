@@ -189,4 +189,21 @@ abstract class BaseAllocation extends AllocationService
 
         return $oldAdvisorAssignedDate;
     }
+
+    protected function getAdvisorEmails($storageKey)
+    {
+        $emails = getAppStorageValueByKey($storageKey, useCache: true);
+
+        if (empty($emails)) {
+            return [];
+        }
+
+        $emails = explode(',', $emails);
+        $emails = array_map('trim', $emails);
+        $emails = array_filter($emails, fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL));
+
+        LoggerService::info(self::class.' - Advisor Emails fetched', ['count' => count($emails), 'advisors' => $emails]);
+
+        return $emails;
+    }
 }
