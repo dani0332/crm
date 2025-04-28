@@ -223,12 +223,12 @@ trait Reportable
 
     protected function calculateAdvisorRetentionPercentage($avgVolumeNetRetention, $volumeNetRetention)
     {
-        return number_format((((float) $volumeNetRetention) - ((float) $avgVolumeNetRetention)), 2) . '%';
+        return number_format((((float) $volumeNetRetention) - ((float) $avgVolumeNetRetention)), 2).'%';
     }
 
     protected function calculateRetentionPercentage($sales, $total)
     {
-        return ($total != 0) ? number_format(($sales / $total) * 100, 2) . '%' : '0.00%';
+        return ($total != 0) ? number_format(($sales / $total) * 100, 2).'%' : '0.00%';
     }
 
     protected function aggregateReportData($reportData)
