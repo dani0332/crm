@@ -116,6 +116,7 @@ class HealthAllocationService extends AllocationService
             LoggerService::warning('No team found - price starting from is null');
             $lead->is_error_email_sent = true;
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
+            return;
         }
 
         $healthTeam = Team::where('allocation_threshold_enabled', true)
