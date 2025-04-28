@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\CarPlan;
-use App\Models\CarAddOn;
-use App\Models\CarPlanAddon;
-use App\Models\CarAddOnOption;
-use Illuminate\Support\Facades\DB;
 use App\Enums\QuoteTypeId;
+use App\Models\CarAddOn;
+use App\Models\CarAddOnOption;
+use App\Models\CarPlan;
+use App\Models\CarPlanAddon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CommercialCarPlanSeeder extends Seeder
 {
@@ -30,17 +30,17 @@ class CommercialCarPlanSeeder extends Seeder
             $existingPlan = CarPlan::where([
                 'quote_type_id' => QuoteTypeId::CompanyCar,
                 'provider_id' => $basePlan->provider_id,
-                'repair_type' => $basePlan->repair_type
+                'repair_type' => $basePlan->repair_type,
             ])->first();
 
-            if (!$existingPlan) {
+            if (! $existingPlan) {
                 DB::beginTransaction();
 
                 // 1. Create the new commercial car plan
                 $newPlan = CarPlan::create(
                     [
                         'code' => null,
-                        'text' => 'Commercial - ' . $this->getRepairTypeText($basePlan->repair_type),
+                        'text' => 'Commercial - '.$this->getRepairTypeText($basePlan->repair_type),
                         'text_ar' => $basePlan->text_ar,
                         'provider_id' => $basePlan->provider_id,
                         'repair_type' => $basePlan->repair_type,
@@ -56,7 +56,7 @@ class CommercialCarPlanSeeder extends Seeder
                         'is_hidden' => $basePlan->is_hidden,
                         'pua_enabled' => 0,
                         'quote_type_id' => QuoteTypeId::CompanyCar,
-                        'is_commercial' => 1
+                        'is_commercial' => 1,
                     ]
                 );
 
@@ -72,9 +72,6 @@ class CommercialCarPlanSeeder extends Seeder
 
     /**
      * Get the human-readable repair type text
-     *
-     * @param string $repairType
-     * @return string
      */
     private function getRepairTypeText(string $repairType): string
     {
@@ -88,9 +85,6 @@ class CommercialCarPlanSeeder extends Seeder
 
     /**
      * Create addons and their options for a given plan
-     *
-     * @param int $planId
-     * @return void
      */
     private function createAddonsAndOptions(int $planId): void
     {
@@ -100,7 +94,7 @@ class CommercialCarPlanSeeder extends Seeder
                 'code' => 'myAlfred',
                 'text' => 'myAlfred membership',
                 'text_ar' => null,
-                'description' => "As an InsuranceMarket.ae customer you get access to the myAlfred app, which includes exclusive offers and discounts from a whole host of non-insurance brands which add up to total savings of over AED 8,000.",
+                'description' => 'As an InsuranceMarket.ae customer you get access to the myAlfred app, which includes exclusive offers and discounts from a whole host of non-insurance brands which add up to total savings of over AED 8,000.',
                 'description_ar' => null,
                 'type' => 'checkbox',
                 'options' => [
@@ -109,14 +103,14 @@ class CommercialCarPlanSeeder extends Seeder
                         'value_ar' => null,
                         'price' => 0,
                         'description' => 'As an InsuranceMarket.ae customer you get access to the myAlfred app, which includes exclusive offers and discounts...',
-                    ]
-                ]
+                    ],
+                ],
             ],
             [
                 'code' => 'fastTrackClaim',
                 'text' => 'Fast track claims service',
                 'text_ar' => null,
-                'description' => "Through the fast track claims service, a dedicated claims manager mediates your claim with the insurance companies, right from claim registration to the the completion of vehicle repairs, all in a timely manner helping you every step of the way.",
+                'description' => 'Through the fast track claims service, a dedicated claims manager mediates your claim with the insurance companies, right from claim registration to the the completion of vehicle repairs, all in a timely manner helping you every step of the way.',
                 'description_ar' => null,
                 'type' => 'checkbox',
                 'options' => [
@@ -125,14 +119,14 @@ class CommercialCarPlanSeeder extends Seeder
                         'value_ar' => null,
                         'price' => 0,
                         'description' => null,
-                    ]
-                ]
+                    ],
+                ],
             ],
             [
                 'code' => 'driverCover',
                 'text' => 'Driver cover',
                 'text_ar' => null,
-                'description' => "Provides financial benefits should you sustain bodily injury as a result of an incident whilst driving your vehicle.",
+                'description' => 'Provides financial benefits should you sustain bodily injury as a result of an incident whilst driving your vehicle.',
                 'description_ar' => null,
                 'type' => 'checkbox',
                 'options' => [
@@ -147,8 +141,8 @@ class CommercialCarPlanSeeder extends Seeder
                         'value_ar' => null,
                         'price' => 120,
                         'description' => 'Provides financial benefits...',
-                    ]
-                ]
+                    ],
+                ],
             ],
             [
                 'code' => 'passengerCover',
@@ -169,8 +163,8 @@ class CommercialCarPlanSeeder extends Seeder
                         'value_ar' => null,
                         'price' => 30,
                         'description' => 'Provides financial benefits should you sustain bodily injury...',
-                    ]
-                ]
+                    ],
+                ],
             ],
             [
                 'code' => 'carHire',
@@ -191,8 +185,8 @@ class CommercialCarPlanSeeder extends Seeder
                         'value_ar' => null,
                         'price' => 150,
                         'description' => null,
-                    ]
-                ]
+                    ],
+                ],
             ],
             [
                 'code' => 'breakdownCover',
@@ -213,8 +207,8 @@ class CommercialCarPlanSeeder extends Seeder
                         'value_ar' => null,
                         'price' => 25,
                         'description' => "Comes to your roadside rescue when there's something wrong with your vehicle...",
-                    ]
-                ]
+                    ],
+                ],
             ],
             [
                 'code' => 'omanCover',
@@ -229,8 +223,8 @@ class CommercialCarPlanSeeder extends Seeder
                         'value_ar' => null,
                         'price' => 0,
                         'description' => null,
-                    ]
-                ]
+                    ],
+                ],
             ],
         ];
 
@@ -247,7 +241,7 @@ class CommercialCarPlanSeeder extends Seeder
                 'sort_order' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
-                'deleted_at' => null
+                'deleted_at' => null,
             ]);
 
             // Link the addon to the plan
@@ -256,7 +250,7 @@ class CommercialCarPlanSeeder extends Seeder
                 'plan_id' => $planId,
                 'is_active' => 1,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
 
             // Create options for this addon
@@ -271,7 +265,7 @@ class CommercialCarPlanSeeder extends Seeder
                     'updated_at' => now(),
                     'description' => $optionData['description'],
                     'description_ar' => null,
-                    'vehicle_type_id' => null
+                    'vehicle_type_id' => null,
                 ]);
             }
         }
