@@ -42,6 +42,7 @@ use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
@@ -64,8 +65,10 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\Insured;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\SendUpdateLog;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\AMLService;
@@ -79,6 +82,7 @@ use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\CarQuoteRepository;
@@ -107,6 +111,7 @@ class CentralController extends Controller
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::HOME->value,
         ])) {
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
@@ -278,7 +283,6 @@ class CentralController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
-
     }
 
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
@@ -317,7 +321,9 @@ class CentralController extends Controller
 
     public function loadAvailablePlans($type, $id)
     {
-        return (new CentralService)->loadAvailablePlans($type, $id);
+        $getLatestRating = request()->input('getLatestRating', false);
+
+        return (new CentralService)->loadAvailablePlans($type, $id, false, false, $getLatestRating);
     }
 
     /**
@@ -360,6 +366,8 @@ class CentralController extends Controller
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
+        info("Processing split payment approve {$request->payment_code}");
+
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
         if (! $successMessage) {
             return back()->with('error', 'Error in approving payment');
@@ -396,7 +404,6 @@ class CentralController extends Controller
     public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
     {
         return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
-
     }
 
     // Store new payment
@@ -596,7 +603,6 @@ class CentralController extends Controller
                     OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
                     info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
                 }
-
             }
             info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 
@@ -708,6 +714,42 @@ class CentralController extends Controller
         info('paymentsCaptureValidation', $logPayload);
 
         return response()->json(['response' => $response]);
+    }
+
+    public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
+    {
+        try {
+            $request = $postPrepaymentToSageRequest->safe();
+            $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
+            $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
+            $sendUpdateLog = null;
+            if ($request->sendUpdateId) {
+                $sendUpdateLog = SendUpdateLog::whereId(request()->sendUpdateId)->first();
+            }
+
+            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Prepayment Posting of Payment split.');
+
+            $schedulePostPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->quoteType, $paymentSplit, $sendUpdateLog]);
+
+            if (! $schedulePostPrepayment['status']) {
+                $errors = count($schedulePostPrepayment['errors']) > 0 ? $schedulePostPrepayment['errors'] : ['message' => $schedulePostPrepayment['message']];
+                info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' -  Start Prepayment Posting of Payment split -  Error : ', $errors);
+
+                return response()->json(['errors' => $errors], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Prepayment posting to Sage has been scheduled and will be processed in the background.',
+            ], 200);
+        } catch (Exception $exception) {
+            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', $exception->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Prepayment posting is failed, please try again later.',
+            ], 500);
+        }
     }
 
     public function deletePayment(Request $request): \Illuminate\Http\JsonResponse

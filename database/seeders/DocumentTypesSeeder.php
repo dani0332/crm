@@ -590,6 +590,18 @@ class DocumentTypesSeeder extends Seeder
                 'business_type_of_insurance_id' => null,
                 'business_type_of_customer' => null,
             ],
+            [
+                'code' => 'HOME_SAL',
+                'text' => 'Home SAL Declaration',
+                'is_active' => 1,
+                'quote_type_id' => 2,
+                'folder_path' => 'home_sal',
+                'accepted_files' => '.pdf',
+                'max_files' => 5,
+                'max_size' => 5,
+                'is_required' => 0,
+                'category' => DocumentTypeCode::QUOTE,
+            ],
         ];
 
         foreach ($quoteDocuments as $document) {

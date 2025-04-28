@@ -12,6 +12,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayIdEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
@@ -49,7 +50,9 @@ use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +60,7 @@ use Illuminate\Support\Facades\Log;
 
 class CentralService extends BaseService
 {
-    use GenericQueriesAllLobs, TeamHierarchyTrait;
+    use GenericQueriesAllLobs, HandlesDeadlockRetries, TeamHierarchyTrait;
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
@@ -175,9 +178,9 @@ class CentralService extends BaseService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::Home];
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
         if (str_starts_with($leadsIds, ',')) {
             $leadsIds = substr($leadsIds, 1);
@@ -231,7 +234,7 @@ class CentralService extends BaseService
         });
     }
 
-    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false)
+    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false, $getLatestRating = false)
     {
         $type = ucfirst($type);
         switch ($type) {
@@ -264,6 +267,8 @@ class CentralService extends BaseService
                 return $listQuotePlans;
             case quoteTypeCode::Bike:
                 return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
+            case quoteTypeCode::Home:
+                return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             default:
                 return [];
         }
@@ -271,10 +276,10 @@ class CentralService extends BaseService
 
     public function updateQuotePayment($quote, $priceWithVat, $insuranceProviderId)
     {
-        info('fn: updateQuotePayment called');
+        LoggerService::info('fn: updateQuotePayment called');
 
         if ($quote->payments()->count() > 0) {
-            info('fn: updateQuotePayment payment found to be updated for quote uuid: '.$quote->uuid);
+            LoggerService::info('fn: updateQuotePayment payment found to be updated for quote uuid: '.$quote->uuid);
 
             $payment = $quote->payments->first();
 
@@ -298,7 +303,7 @@ class CentralService extends BaseService
 
             $payment->update($paymentData);
 
-            info('fn: updateQuotePayment payment updated for quote uuid: '.$quote->uuid);
+            LoggerService::info('fn: updateQuotePayment payment updated for quote uuid: '.$quote->uuid);
         }
     }
 
@@ -307,34 +312,105 @@ class CentralService extends BaseService
      */
     public function savePlanDetails($quoteType, $code, $data)
     {
-        return DB::transaction(function () use ($quoteType, $code, $data) {
-            $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
-            $repository = getRepositoryObject($quoteType);
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $repository = getRepositoryObject($quoteType);
 
-            $priceVatApp = $data->price_vat_applicable ?? 0;
-            $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+        $priceVatApp = $data->price_vat_applicable ?? 0;
+        $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
 
-            if ($quoteType == QuoteTypes::BUSINESS->value) {
-                $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
-            } else {
-                $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
-            }
+        if ($quoteType == QuoteTypes::BUSINESS->value) {
+            $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
+        } else {
+            $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
+        }
 
-            $quote = $repository::where('code', $code)->firstOrFail();
+        $quote = $repository::where('code', $code)->firstOrFail();
 
+        $oldInsuranceProviderId = $quote->insurance_provider_id;
+        $newInsuranceProviderId = $data->insurance_provider_id;
+
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $businessTypeId = $quote->business_type_of_insurance_id ?? null;
+        $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId, null, $quote);
+
+        return DB::transaction(function () use ($quoteType, $data, $quote, $isCreditCardEnabled, $newInsuranceProviderId, $oldInsuranceProviderId) {
             $quote->update($data->toArray());
 
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $quote->carQuoteRequestDetail->update(['insurer_quote_number' => $data->insurer_quote_number]);
             }
 
-            $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
-            $businessTypeId = $quote->business_type_of_insurance_id ?? null;
-            $isCreditCardEnabled = app(BrokerCommissionService::class)->isCreditCardEnabled($quoteTypeId, request()->insurance_provider_id, $businessTypeId);
-            $this->synchronizePaymentInformation($quote, null, $data->insurance_provider_id, $isCreditCardEnabled);
+            $this->synchronizePaymentInformation($quote, null, $newInsuranceProviderId, $isCreditCardEnabled);
+
+            info("Checking conditions for updating payment method for quote code: {$quote->code}", [
+                'quote_type' => $quoteType,
+                'source' => $quote->source,
+                'old_provider' => $oldInsuranceProviderId,
+                'new_provider' => $newInsuranceProviderId,
+            ]);
+            if ($quoteType == QuoteTypes::HOME->value && $quote->source == LeadSourceEnum::RENEWAL_UPLOAD && $newInsuranceProviderId != $oldInsuranceProviderId) {
+                $this->updatePaymentMethodBasedOnInsurer($quote, $newInsuranceProviderId);
+            }
 
             return true;
         });
+    }
+
+    private function updatePaymentMethodBasedOnInsurer($quote, $insuranceProviderId)
+    {
+        $insuranceProvider = app(InsuranceProviderService::class)->getEntity($insuranceProviderId);
+
+        $insurersWithoutCCRenewal = [
+            InsurerProviderEnum::GIG_INSURANCE,
+            InsurerProviderEnum::EMIRATES_INSURANCE,
+            InsurerProviderEnum::LIVANA_INSURANCE,
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
+        ];
+
+        info('Updating payment method for home renewal lead', [
+            'quote_code' => $quote->code,
+            'insurer' => $insuranceProvider->code,
+            'payment_gateway_id' => $insuranceProvider->payment_gateway_id,
+        ]);
+
+        // Define payment method based on payment gateway
+        $newPaymentMethod = in_array($insuranceProvider->code, $insurersWithoutCCRenewal) && $quote->source == LeadSourceEnum::RENEWAL_UPLOAD
+            ? PaymentMethodsEnum::InsurerPayment
+            : PaymentMethodsEnum::CreditCard;
+
+        $pendingStatuses = [
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DRAFT,
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::OVERDUE,
+        ];
+
+        // Update master payment and related splits
+        $payment = Payment::with('paymentSplits')
+            ->whereIn('payment_status_id', $pendingStatuses)
+            ->where('code', $quote->code)->first();
+
+        if ($payment) {
+            $payment->payment_methods_code = $newPaymentMethod;
+            $payment->save();
+
+            info('Updated master payment method', [
+                'quote_code' => $quote->code,
+                'new_method' => $newPaymentMethod,
+            ]);
+
+            // Update payment splits that are not in final status
+            $payment->paymentSplits()
+                ->whereIn('payment_status_id', $pendingStatuses)
+                ->update([
+                    'payment_method' => $newPaymentMethod,
+                ]);
+
+            info('Updated payment splits payment method', [
+                'quote_code' => $quote->code,
+                'new_method' => $newPaymentMethod,
+            ]);
+        }
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
@@ -395,6 +471,16 @@ class CentralService extends BaseService
                 ];
                 $response = Ken::request($endpoint, 'post', $data);
                 break;
+            case QuoteTypes::HOME->value:
+                $endpoint = '/process-home-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteTypeId' => QuoteTypeId::Home,
+                    'quoteUID' => $uuid,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
+                break;
         }
 
         return $response;
@@ -408,7 +494,10 @@ class CentralService extends BaseService
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
 
         if ($plandId) {
-            return $planModel::find($plandId);
+            // Home Plans are fetching from home-quote-plan-details mongodb collection.
+            $key = $quoteType == QuoteTypes::HOME->value ? 'planId' : 'id';
+
+            return $planModel::where($key, (int) $plandId)->first();
         }
 
         return $planModel::where('provider_id', $providerId)->get();
@@ -484,7 +573,7 @@ class CentralService extends BaseService
             if ($payment && $payment->paymentSplits->isNotEmpty()) {
                 $this->straightforwardPayments($payment, $payment->paymentSplits, $quote);
             } else {
-                info('Quote Code: '.$quote->code.' updatePaymentAllocation no payment found');
+                LoggerService::info('Quote Code: '.$quote->code.' updatePaymentAllocation no payment found');
             }
         }
     }
@@ -497,7 +586,7 @@ class CentralService extends BaseService
      */
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
-        info('Quote Code: '.$quote->code.' fn: straightforwardPayments');
+        LoggerService::info('Quote Code: '.$quote->code.' fn: straightforwardPayments');
 
         if ($payment) {
             $paymentSplit = $paymentSplits->first();
@@ -532,31 +621,31 @@ class CentralService extends BaseService
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
         $priceWithVat = $quote->price_with_vat;
-        info('Quote Code: '.$quote->code.' fn: calculateAllocationStatus sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
+        LoggerService::info('Quote Code: '.$quote->code.' fn: calculateAllocationStatus sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
 
         switch (true) {
             case $paymentSplit && $paymentSplit->sage_reciept_id == null:
-                info('Quote Code: '.$quote->code.' Condition: Payment split sage_reciept_id is set to null');
+                LoggerService::info('Quote Code: '.$quote->code.' Condition: Payment split sage_reciept_id is set to null');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
-                info('Quote Code: '.$quote->code.' Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
+                LoggerService::info('Quote Code: '.$quote->code.' Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
 
                 return null;
             case $paymentSplit && in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED]):
-                info('Quote Code: '.$quote->code.' Condition: Payment split status is PENDING or CREDIT_APPROVED');
+                LoggerService::info('Quote Code: '.$quote->code.' Condition: Payment split status is PENDING or CREDIT_APPROVED');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case $collectionAmount <= 0:
-                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to 0');
+                LoggerService::info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to 0');
 
                 return PaymentAllocationStatus::UNPAID;
             case $collectionAmount <= $priceWithVat:
-                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to price with VAT');
+                LoggerService::info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to price with VAT');
 
                 return PaymentAllocationStatus::FULLY_ALLOCATED;
             default:
-                info('Quote Code: '.$quote->code.' Condition: Default case, partially allocated');
+                LoggerService::info('Quote Code: '.$quote->code.' Condition: Default case, partially allocated');
 
                 return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
         }
@@ -861,7 +950,7 @@ class CentralService extends BaseService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            info('fn: updateQuotePayment payment updated for quote uuid: '.$quoteUuId);
+            LoggerService::info('fn: updateQuotePayment payment updated for quote uuid: '.$quoteUuId);
         }
     }
 
@@ -881,7 +970,8 @@ class CentralService extends BaseService
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyCancelledReissued,
-            QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
         ];
 
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
@@ -938,12 +1028,12 @@ class CentralService extends BaseService
     {
         if (
             ($quoteType == quoteTypeCode::Business &&
-            in_array($businessTypeOfInsuranceId, [
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoIndividual),
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineHull),
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoOpenCover),
-                quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupLife),
-            ])) ||
+                in_array($businessTypeOfInsuranceId, [
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoIndividual),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineHull),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::marineCargoOpenCover),
+                    quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupLife),
+                ])) ||
             $quoteType == quoteTypeCode::Life
         ) {
             return true;
@@ -962,15 +1052,15 @@ class CentralService extends BaseService
                 'ip_address' => request()->ip(),
                 'url' => request()->fullUrl(),
             ]);
-            info('fn: generateExportLogs export log created');
+            LoggerService::info('fn: generateExportLogs export log created');
         } catch (\Exception $e) {
-            info('fn: generateExportLogs error: '.$e->getMessage());
+            LoggerService::error('fn: generateExportLogs error: '.$e->getMessage());
         }
     }
 
-    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true)
+    public function synchronizePaymentInformation($quoteObject, $sendUpdatePayment = null, $insuranceProviderId = null, $isCreditCardEnabled = true, $isHomeRenewalLead = false)
     {
-        info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
+        LoggerService::info('Quote Code: '.$quoteObject->code.' fn: synchronizePaymentInformation called');
         if (! $sendUpdatePayment) {
             $payment = $quoteObject->payments()->mainLeadPayment()->first();
         } else {
@@ -1002,10 +1092,10 @@ class CentralService extends BaseService
         }
 
         $quote = $this->getQuoteObject($type, $id);
-        info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
+        LoggerService::info('Quote Code: '.$quote->code.' fn: updateQuoteStatus called quote status id '.$quote->quote_status_id.' policy issuance status id '.$quote->policy_issuance_status_id);
         if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyIssued]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
-            info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
+            LoggerService::info('Quote Code: '.$quote->code.' Is policy details filled : '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
                 $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
                 if (app(QuoteDocumentService::class)->areDocsUploaded($quoteDocuments, $type, $quote)) {
@@ -1015,7 +1105,7 @@ class CentralService extends BaseService
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
                         'policy_issuance_status_other' => '',
                     ]);
-                    info('Quote code: '.$quote->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quote->quote_status_id);
+                    LoggerService::info('Quote code: '.$quote->code.' - Old Quote Status: '.$oldQuoteStatus.' New Quote Status: '.$quote->quote_status_id);
 
                     // If lead status is policy issued and policy issuance status is not policy issued then only update the policy issuance status
                     // No need to create quote status log
@@ -1031,7 +1121,7 @@ class CentralService extends BaseService
                         ]);
                     }
                 }
-                info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
+                LoggerService::info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
         }
     }
@@ -1063,7 +1153,7 @@ class CentralService extends BaseService
         $insuranceProviderId = $insuranceProvider ? $insuranceProvider->id : null;
 
         // Get broker commission details
-        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId);
+        [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote);
 
         $isCaptureButtonEnabled = false;
         if ($insuranceProvider) {
@@ -1107,23 +1197,23 @@ class CentralService extends BaseService
 
     public function voidPayment($request): array
     {
-        info('fn:voidPayment - Void authorized payment process started');
+        LoggerService::info('fn:voidPayment - Void authorized payment process started');
         $payment = Payment::where('code', $request->payment_code)->first();
         if (! $payment) {
-            info('fn:voidPayment - Payment not found. - Payment Code:'.$request->payment_code);
+            LoggerService::info('fn:voidPayment - Payment not found. - Payment Code:'.$request->payment_code);
 
             return ['status' => false, 'message' => 'Payment not found'];
         }
 
         $paymentAgainst = $request->send_update_log_id ? 'Send Update' : 'Main Lead';
-        info('fn:voidPayment - Payment found against '.$paymentAgainst.' - Payment Code:'.$request->payment_code);
+        LoggerService::info('fn:voidPayment - Payment found against '.$paymentAgainst.' - Payment Code:'.$request->payment_code);
         $paymentGateways = [
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT => PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT_TEXT,
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP_TEXT,
         ];
 
         if ($payment->payment_gateway_id !== PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP) {
-            info('fn:voidPayment - Payment gateway not supported - Payment Gateway: '.$paymentGateways[$payment->payment_gateway_id].' Payment Code:'.$request->payment_code);
+            LoggerService::info('fn:voidPayment - Payment gateway not supported - Payment Gateway: '.$paymentGateways[$payment->payment_gateway_id].' Payment Code:'.$request->payment_code);
 
             return ['status' => false, 'message' => 'Payment gateway not supported'];
         }
@@ -1134,8 +1224,7 @@ class CentralService extends BaseService
             'quoteTypeId' => (int) $request->quote_type_id,
             'payments' => [
                 [
-                    // Notes:: This case include for Travel Single plan and mix inquiry case
-                    'codeRef' => ($request->quote_type_id == QuoteTypeId::Travel) ? $request->payment_code.'-1' : $request->payment_code,
+                    'codeRef' => $request->payment_code,
                 ],
             ],
         ];
@@ -1147,15 +1236,15 @@ class CentralService extends BaseService
         }
 
         $response = Marshall::request($voidPaymentURL, 'post', $payload);
-        info('fn:voidPayment - Payment Code:'.$request->payment_code.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment - payload:'.json_encode($payload).' - response:'.json_encode($response));
+        LoggerService::info('fn:voidPayment - Payment Code:'.$request->payment_code.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment - payload:'.json_encode($payload).' - response:'.json_encode($response));
 
         if (! empty($response)) {
-            info('fn:voidPayment - Void authorized payment process failed');
+            LoggerService::info('fn:voidPayment - Void authorized payment process failed');
 
             return ['status' => false, 'message' => 'Something went wrong'];
         }
 
-        info('fn:voidPayment - Void authorized payment process completed');
+        LoggerService::info('fn:voidPayment - Void authorized payment process completed');
 
         return ['status' => true, 'message' => 'Void payment processed'];
     }
@@ -1200,13 +1289,19 @@ class CentralService extends BaseService
             return Ken::request('/capture-payment-validation', 'put', $data);
 
         } catch (\Throwable $th) {
+            LoggerService::error('capturePaymentValidation failed: '.$th->getMessage(), [
+                'uuid' => $uuid,
+                'quoteTypeId' => $quoteTypeId,
+                'captureAmount' => $captureAmount,
+            ]);
+
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
     }
 
     public function deletePayment($request): array
     {
-        info('fn:deletePayment - process started: '.$request->payment_id);
+        LoggerService::info('fn:deletePayment - process started: '.$request->payment_id);
 
         $payment = Payment::where(
             [
@@ -1222,7 +1317,7 @@ class CentralService extends BaseService
             ])
             ->first();
         if (! $payment) {
-            info('fn:deletePayment - Payment not found: '.$request->payment_id);
+            LoggerService::info('fn:deletePayment - Payment not found: '.$request->payment_id);
 
             return ['status' => false, 'message' => 'Payment not found'];
         }
@@ -1230,14 +1325,28 @@ class CentralService extends BaseService
         $quote = $payment->paymentable;
         $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
         if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
-            info('fn:deletePayment - Payment cannot be deleted: '.$request->payment_id);
+            LoggerService::info('fn:deletePayment - Payment cannot be deleted: '.$request->payment_id);
 
             return ['status' => false, 'message' => 'Payment cannot be deleted'];
         }
 
         // Delete Payment and Payment Splits
-        PaymentSplits::where('code', $request->payment_code)->delete();
-        Payment::where('id', $request->payment_id)->delete();
+        try {
+            $maxAttempts = 2;
+            $this->handleWithDeadlockRetries(function () use ($request) {
+                $paymentSplits = PaymentSplits::where('code', $request->payment_code)->get();
+                foreach ($paymentSplits as $paymentSplit) {
+                    $paymentSplit->documents()->forceDelete();
+                }
+                PaymentSplits::where('code', $request->payment_code)->delete();
+                Payment::where('id', $request->payment_id)->delete();
+            }, $maxAttempts);
+            info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);
+        } catch (\Throwable $th) {
+            info('fn:deletePayment - Payment deletion failed: '.$request->payment_id);
+
+            return ['status' => false, 'message' => 'Payment deletion failed'];
+        }
 
         return ['status' => true, 'message' => 'Delete payment processed'];
     }
