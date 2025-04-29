@@ -125,14 +125,10 @@ const getCaptureOption = computed(() => {
   }
   return 'approve';
 });
-<<<<<<< HEAD
 /**
  * Validates if payment can be captured based on payment type and status
  * Returns true if payment is valid for capture, false otherwise
  */
-=======
-
->>>>>>> 608b03965497c938d7dd867e59ec702f392bd883
 const getCaptureValidation = computed(() => {
   const payment = props.payment;
   if (shouldProcessUpdate()) {
@@ -217,10 +213,7 @@ const validateUpfrontCapture = paymentRecord => {
   return isIPPending || isCAPayment || isPaidPayment;
 };
 
-<<<<<<< HEAD
 // Check if the void payment is enabled based on the payment status and payment gateway
-=======
->>>>>>> 608b03965497c938d7dd867e59ec702f392bd883
 const isVoidPaymentEnabled = payment => {
   return (
     props.isFuncsEnabled.tapIntegration &&
