@@ -675,7 +675,11 @@ class SagePayloadFactory
     public static function createPrepaymentReceiptPayload($sageRequest, $isCommissionReceipt = false)
     {
         $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
-        $optionalFields['INSURERRECEIPTNUM'] = $sageRequest->insurerReceiptNumber ?? 'N/A';
+        $optionalFields[] = [
+            'OptionalField' => 'INSURERRCTNO',
+            'Value' => $sageRequest->insurerReceiptNumber ?? 'N/A'
+        ];
+
         $entryType = SageEnum::SCT_STRAIGHT;
 
         $customerNumber = $sageRequest->sage_customer_number;
@@ -1156,7 +1160,7 @@ class SagePayloadFactory
                 'Value' => $sageRequest->endorsementNumber ?? 'N/A',
             ],
             [
-                'OptionalField' => 'ENDORSEMENTNUM',
+                'OptionalField' => 'ENDORSEMENT',
                 'Value' => $sageRequest->sendUpdateEndorsementNumber ?? 'N/A',
             ],
         ];
@@ -1292,8 +1296,8 @@ class SagePayloadFactory
         // TODO:: Need to update the insurer details when contact and insured person FR approved
         $firstChildPayment = $paymentSplits->first();
         $insuredFullName = isset($quote->customer_id) ? $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name : '';
-        $latestEndorsementCode = '';
-        $latestEndorsementNumber = '';
+        $latestEndorsementCode = null;
+        $latestEndorsementNumber = null;
         $endorsementSubType = '';
 
         if (isset($quote->personal_quote_id) && $quote?->personal_quote_id) {
