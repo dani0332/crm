@@ -448,39 +448,42 @@ onMounted(() => {
 
 watch(
   () => policyDetailsForm.vat,
-  (newValue) => {
+  newValue => {
     if (Number(newValue) < 0) {
       policyDetailsForm.vat = 0;
     }
-  }
+  },
 );
 
 watch(
   () => policyDetailsForm.price_vat_applicable,
-  (newValue) => {
+  newValue => {
     if (Number(newValue) < 0) {
       policyDetailsForm.price_vat_applicable = 0;
     }
-  }
+  },
 );
 
 watch(
   () => policyDetailsForm.price_vat_notapplicable,
-  (newValue) => {
+  newValue => {
     if (Number(newValue) < 0) {
       policyDetailsForm.price_vat_notapplicable = 0;
     }
-  }
+  },
 );
 
 const calculateTotalPrice = () => {
   const vat = useRoundIt(policyDetailsForm.vat).toFixed(2);
-  const priceVatApplicable = useRoundIt(policyDetailsForm.price_vat_applicable).toFixed(2);
-  const amountWithVat = useRoundIt(Number(vat) + Number(priceVatApplicable)).toFixed(2);
+  const priceVatApplicable = useRoundIt(
+    policyDetailsForm.price_vat_applicable,
+  ).toFixed(2);
+  const amountWithVat = useRoundIt(
+    Number(vat) + Number(priceVatApplicable),
+  ).toFixed(2);
   policyDetailsForm.amount_with_vat = amountWithVat;
   policyDetailsForm.vat = vat;
 };
-
 </script>
 
 <template>
@@ -667,7 +670,10 @@ const calculateTotalPrice = () => {
                   type="number"
                   placeholder="Total VAT Amount"
                   class="w-full"
-                  :disabled="!can(permissionsEnum.POLICY_DETAILS_ADD_VAT) || !policyDetailsState.isEditing"
+                  :disabled="
+                    !can(permissionsEnum.POLICY_DETAILS_ADD_VAT) ||
+                    !policyDetailsState.isEditing
+                  "
                   @change="calculateTotalPrice"
                 />
               </div>
