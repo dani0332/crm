@@ -114,8 +114,8 @@ const kycFormDetails = useForm({
   quote_uuid: page.props.quoteRequest.uuid,
   quote_type_id: page.props.quoteType.id,
   insured_id: insuredDetails?.insured?.id,
-  first_name: insuredDetails?.insured?.insured_kyc?.first_name ?? null,
-  last_name: insuredDetails?.insured?.insured_kyc.last_name ?? null,
+  first_name: insuredDetails?.insured.first_name ?? null,
+  last_name: insuredDetails?.insured?.last_name ?? null,
   residential_address:
     (isScreeningIndividual
       ? insuredDetails?.insured?.insured_kyc?.residential_address
