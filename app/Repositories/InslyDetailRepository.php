@@ -26,6 +26,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use MongoDB\BSON\Regex;
 use MongoDB\BSON\UTCDateTime;
+use App\Services\Logger\LoggerService;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -38,7 +39,7 @@ class InslyDetailRepository extends BaseRepository
 
     public function buildSearchClause(string $field, mixed $value, string $type = FilterTypes::EXACT)
     {
-        if (is_null($value) || $value === '') {
+        if (is_null($value) || $value === '' || empty($value)) {
             return null;
         }
 
@@ -113,6 +114,8 @@ class InslyDetailRepository extends BaseRepository
         $page = max((int) request()->get('page', 1), 1);
         $perPage = 15;
         $skip = ($page - 1) * $perPage;
+
+        LoggerService::info('InslyDetailRepository - getDataByIndex.', extra: request()->all());
 
         $must = array_values(array_filter([
             $this->buildSearchClause('policy_no', request()->get('policy_number'), FilterTypes::EXACT),
@@ -633,7 +636,7 @@ class InslyDetailRepository extends BaseRepository
         if (! empty($coverage)) {
             // converted all values to lower case because some time data in mongodb have different case values.
             $lowerCaseCoverageValues = array_map('strtolower', $coverage);
-            $coverage = array_merge($coverage, $lowerCaseCoverageValues);
+            $coverage = array_merge($coverage, $lowerCaseCoverageValues);            
         }
 
         return $coverage;
