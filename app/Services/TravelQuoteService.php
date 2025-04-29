@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\PaymentStatusEnum;
@@ -337,11 +338,19 @@ class TravelQuoteService extends BaseService
             return $response;
         }
         // LoggerService::info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
+        $response = CapiRequestService::sendCAPIRequest('
+        ', $travelQuote);
         // LoggerService::info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
+
+            $quote = TravelQuote::where('uuid', $response->quoteUID)->first();
+            if ($quote && $quote->advisor_id && $quote->source === config('constants.SOURCE_NAME')) {
+                $quote->update([
+                    'assignment_type' => AssignmentTypeEnum::SYSTEM_ASSIGNED,
+                ]);
+            }
 
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());

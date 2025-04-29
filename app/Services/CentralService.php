@@ -158,6 +158,7 @@ class CentralService extends BaseService
                         $update = [
                             'parent_duplicate_quote_id' => $parentRecord->code,
                             'advisor_id' => auth()->user()->id,
+                            'assignment_type' => AssignmentTypeEnum::SYSTEM_ASSIGNED,
                         ];
                         if (strtolower($lob) == strtolower(quoteTypeCode::Health)) {
                             $subTeam = null;

@@ -631,6 +631,7 @@ class LeadAllocationService extends BaseService
 
                             $carQuote = CarQuote::where('id', $carLead->id)->first();
                             $carQuote->advisor_id = $userId;
+                            $carQuote->assignment_type = $carQuote->advisor_id ? AssignmentTypeEnum::SYSTEM_ASSIGNED : null;
                             $carQuote->tier_id = $selectedTier->id;
                             $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
                             $carQuote->auto_assigned = true;

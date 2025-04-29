@@ -2275,6 +2275,7 @@ class CRUDController extends Controller
             'updated_at' => now(),
             'updated_by' => auth()->user()->email,
             'advisor_id' => null,
+            'assignment_type' => null,
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'quote_status_date' => now(),
             'is_renewal_tier_email_sent' => 0,
