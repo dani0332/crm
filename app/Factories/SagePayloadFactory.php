@@ -675,6 +675,7 @@ class SagePayloadFactory
     public static function createPrepaymentReceiptPayload($sageRequest, $isCommissionReceipt = false)
     {
         $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
+        $optionalFields['INSURERRECEIPTNUM'] = $sageRequest->insurerReceiptNumber ?? 'N/A';
         $entryType = SageEnum::SCT_STRAIGHT;
 
         $customerNumber = $sageRequest->sage_customer_number;
@@ -695,6 +696,7 @@ class SagePayloadFactory
             $bankReceiptAmount = $sageRequest->commission;
             $checkReceiptNumber = $sageRequest->commissionChargeId;
         }
+
 
         $payLoad = [
             'BatchRecordType' => 'CA',
@@ -1149,6 +1151,14 @@ class SagePayloadFactory
                 'OptionalField' => 'REFID',
                 'Value' => $sageRequest->quoteCode,
             ],
+            [
+                'OptionalField' => 'SUREFID',
+                'Value' => $sageRequest->endorsementNumber ?? 'N/A',
+            ],
+            [
+                'OptionalField' => 'ENDORSEMENTNUM',
+                'Value' => $sageRequest->sendUpdateEndorsementNumber ?? 'N/A',
+            ],
         ];
 
         return $optionalArray;
@@ -1269,6 +1279,7 @@ class SagePayloadFactory
         $sageRequest->orignalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
+        $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
         $sageRequest->policyNumber = $quote?->policy_number;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->quoteCode = $quote->code;
@@ -1282,11 +1293,13 @@ class SagePayloadFactory
         $firstChildPayment = $paymentSplits->first();
         $insuredFullName = isset($quote->customer_id) ? $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name : '';
         $latestEndorsementCode = '';
+        $latestEndorsementNumber = '';
         $endorsementSubType = '';
 
         if (isset($quote->personal_quote_id) && $quote?->personal_quote_id) {
             $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
             $latestEndorsementCode = $latestEndorsement?->code;
+            $latestEndorsementNumber = $latestEndorsement?->endorsement_number;
 
             if (! empty($latestEndorsement->option_id)) {
                 $endorsementSubType = Lookup::find($latestEndorsement?->option_id)?->text ?? '';
@@ -1334,6 +1347,7 @@ class SagePayloadFactory
         $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
         $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
         $sageRequest->endorsementNumber = $latestEndorsementCode;
+        $sageRequest->sendUpdateEndorsementNumber = $latestEndorsementNumber;
         $sageRequest->endorsementSubType = $endorsementSubType;
         $sageRequest->insured = $insuredFullName;
         $sageRequest->policyHolder = $insuredFullName;
