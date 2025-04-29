@@ -17,11 +17,16 @@ class AllocationAuditController extends Controller
 
     public function index(Request $request)
     {
-        $audits = AllocationAudit::query()
-            ->byQuoteType()
-            ->byUuid()
-            ->orderBy('created_at', 'desc')
-            ->get();
+        if ($request->filled('uuid') && $request->filled('quote_type')) {
+
+            $audits = AllocationAudit::query()
+                ->byQuoteType()
+                ->byUuid()
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            $audits = [];
+        }
 
         $quoteTypes = collect(QuoteTypes::withLabels())->filter(fn ($item) => in_array($item['value'], [
             QuoteTypes::CAR->value,
