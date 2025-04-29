@@ -1375,17 +1375,17 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
               <x-button class="!p-4" color="gray" size="lg" loading rounded />
             </div>
             <div class="grid md:grid-cols-1 gap-5 p-4 copay-select">
-              <ComboBox
+              <x-select
                 class="w-full"
                 v-model="coPay"
                 :options="coPayOptions"
                 :disabled="!isManual"
-                :single="true"
+                filterable
+                filterPlaceholder="Filter Co-Pay...."
                 label="Co-Pay"
                 placeholder="Select a Co-Pay option"
                 @update:model-value="onCoPaySelect"
-              >
-              </ComboBox>
+              />
             </div>
             <dl class="grid md:grid-cols-2 gap-5 p-4">
               <div
