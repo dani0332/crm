@@ -92,16 +92,16 @@ const tableHeader = [
     value: 'sale_leads',
   },
   {
+    text: 'Manual Created',
+    value: 'manual_created',
+  },
+  {
     text: 'Created Sale Leads',
     value: 'created_sale_leads',
   },
   {
     text: 'IM Renewals',
     value: 'afia_renewals_count',
-  },
-  {
-    text: 'Manual Created',
-    value: 'manual_created',
   },
   {
     text: 'Gross Conversion',
@@ -134,11 +134,22 @@ const totalLeads = reactive({
       value: 'fullName',
     },
     {
+      text: 'Assigned Date',
+      value: 'assignedDate',
+    },
+    {
       text: 'Lead Status',
       value: 'quoteStatusName',
     },
+    {
+      text: 'Premium',
+      value: 'premium',
+      sortable: true,
+    },
   ],
 });
+
+const showPremiumSortOptions = ref(false);
 
 function calculateGrossConversion(item) {
   if (item) {
@@ -814,6 +825,38 @@ const getAdvisorLabel = () => {
 
   return label;
 };
+
+const getRouteByLob = computed(() => {
+  const routeMap = {
+    [quoteTypeCodeEnum.Car]: 'car.show',
+    [quoteTypeCodeEnum.Travel]: 'travel.show',
+    [quoteTypeCodeEnum.Health]: 'health.show',
+    [quoteTypeCodeEnum.CORPLINE]: 'business.show',
+    [quoteTypeCodeEnum.GroupMedical]: 'amt.show',
+    [quoteTypeCodeEnum.Bike]: 'bike-quotes-show',
+    [quoteTypeCodeEnum.Home]: 'home-quotes-show',
+    [quoteTypeCodeEnum.Pet]: 'pet-quotes-show',
+    [quoteTypeCodeEnum.Cycle]: 'cycle-quotes-show',
+    [quoteTypeCodeEnum.Jetski]: 'jetski-quotes-show',
+    [quoteTypeCodeEnum.Yacht]: 'yacht-quotes-show',
+  };
+  return routeMap[filters.lob];
+});
+
+function togglePremiumSortOptions() {
+  showPremiumSortOptions.value = !showPremiumSortOptions.value;
+}
+
+function sortPremium(order) {
+  const items = [...(totalLeads.data.data || [])];
+  if (order === 'high') {
+    items.sort((a, b) => a.premium - b.premium);
+  } else if (order === 'low') {
+    items.sort((a, b) => b.premium - a.premium);
+  }
+  totalLeads.data.data = items;
+  showPremiumSortOptions.value = false;
+}
 </script>
 
 <template>
@@ -904,6 +947,7 @@ const getAdvisorLabel = () => {
         </x-tooltip>
 
         <ComboBox
+          v-if="filters.lob !== quoteTypeCodeEnum.Health"
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
@@ -915,7 +959,7 @@ const getAdvisorLabel = () => {
           "
           :max-limit="3"
         />
-
+        
         <ComboBox
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
@@ -1060,6 +1104,114 @@ const getAdvisorLabel = () => {
       :sort-by="'net_conversion'"
       :sort-type="'desc'"
     >
+      <template #header-total_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Total Leads</span>
+          <template #tooltip>
+            All leads from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+        <span v-else>Total Leads</span>
+      </template>
+
+      <template #header-gross_conversion>
+        <x-tooltip>
+          <span>Gross Conversion</span>
+          <template #tooltip>
+            Sale leads divided by gross denominator, expressed as a percentage.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-net_conversion>
+        <x-tooltip>
+          <span>Net Conversion</span>
+          <template #tooltip>
+            Sale leads divided by net denominator, expressed as a percentage.
+          </template>
+        </x-tooltip>
+      </template>
+
+      <template #header-new_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>New Leads</span>
+          <template #tooltip>
+            Lead status marked as 'Quoted' from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+        <span v-else>New Leads</span>
+      </template>
+
+      <template #header-not_interested>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Not Interested</span>
+          <template #tooltip>
+            Lead status marked as lost due to no response, already purchased insurance, comparing options, budget issues, invalid visa, or ineligibility due to medical conditions or age etc.
+          </template>
+        </x-tooltip>
+        <span v-else>Not Interested</span>
+      </template>
+
+      <template #header-in_progress>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>In Progress</span>
+          <template #tooltip>
+            Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or 'Quoted,' from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+        <span v-else>In Progress</span>
+      </template>
+
+      <template #header-manual_created>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Manually Created</span>
+          <template #tooltip>
+            All leads from IMCRM.
+          </template>
+        </x-tooltip>
+        <span v-else>Manually Created</span>
+      </template>
+
+      <template #header-bad_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Bad Leads</span>
+          <template #tooltip>
+            Quotes marked as 'Duplicate' or 'Fake,' from InsuranceMarket.ae.
+          </template>
+        </x-tooltip>
+        <span v-else>Bad Leads</span>
+      </template>
+
+      <template #header-sale_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Sale Leads</span>
+          <template #tooltip>
+            Quotes from InsuranceMarket.ae where payment is 'Captured' or status is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to customer,' and 'Policy Booked', Booking failed.
+          </template>
+        </x-tooltip>
+        <span v-else>Sale Leads</span>
+      </template>
+
+      <template #header-created_sale_leads>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>Created Sale Leads</span>
+          <template #tooltip>
+            Quotes from IMCRM source where payment is 'Captured' or status is 'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
+          </template>
+        </x-tooltip>
+        <span v-else>Created Sale Leads</span>
+      </template>
+
+      <template #header-afia_renewals_count>
+        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+          <span>IM Renewals</span>
+          <template #tooltip>
+            Quotes from InsuranceMarket.ae source with status 'IMRenewal' and source 'renewal upload.'
+          </template>
+        </x-tooltip>
+        <span v-else>IM Renewals</span>
+      </template>
+
       <template #item-gross_conversion="item">
         <p v-if="item.gross_conversion == 0">NaN</p>
         <p v-else>{{ item.gross_conversion }} %</p>
@@ -1134,6 +1286,17 @@ const getAdvisorLabel = () => {
         </button>
       </template>
 
+      <template #item-manual_created="item">
+        <p v-if="item.manual_created == 0">{{ item.manual_created }}</p>
+        <button
+          v-else
+          @click="onFetchAdvisorAssignedLeads(item, 'manual_created')"
+          class="text-primary underline"
+        >
+          {{ item.manual_created }}
+        </button>
+      </template>
+
       <template #item-created_sale_leads="item">
         <p v-if="item.created_sale_leads == 0">{{ item.created_sale_leads }}</p>
         <button
@@ -1155,17 +1318,6 @@ const getAdvisorLabel = () => {
           class="text-primary underline"
         >
           {{ item.afia_renewals_count }}
-        </button>
-      </template>
-
-      <template #item-manual_created="item">
-        <p v-if="item.manual_created == 0">{{ item.manual_created }}</p>
-        <button
-          v-else
-          @click="onFetchAdvisorAssignedLeads(item, 'manual_created')"
-          class="text-primary underline"
-        >
-          {{ item.manual_created }}
         </button>
       </template>
 
@@ -1194,13 +1346,13 @@ const getAdvisorLabel = () => {
             {{ calculateTotalSum(reportData, 'sale_leads') }}
           </td>
           <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'manual_created') }}
+          </td>
+          <td class="direction-center">
             {{ calculateTotalSum(reportData, 'created_sale_leads') }}
           </td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData, 'afia_renewals_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'manual_created') }}
           </td>
           <td class="direction-center">
             {{ calculateTotalGrossConversion(reportData) }}
@@ -1285,7 +1437,17 @@ const getAdvisorLabel = () => {
             border-cell
             hide-rows-per-page
             hide-footer
-          ></DataTable>
+          >
+            <template #item-cdbId="{ cdbId, uuid }">
+              <Link
+                :href="route(getRouteByLob, uuid)"
+                class="text-primary-500 hover:underline"
+              >
+                {{ cdbId }}
+              </Link>
+            </template>
+          </DataTable>
+          
         </div>
         <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
           <x-spinner size="lg" color="#1d83bc" />
