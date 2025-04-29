@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import UpdateTotalPrice from './../UpdateTotalPrice.vue';
+import moment from 'moment';
 import NProgress from 'nprogress';
 
 const page = usePage();
@@ -32,6 +33,7 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
+// Check if the proforma payment request is exportable 
 const isProformaPaymentRequestExportable = (payment, documents) => {
   if (!documents && !quoteDocuments) return true;
   let proformaPaymentRequestDocuments = null;
@@ -59,6 +61,7 @@ const isProformaPaymentRequestExportable = (payment, documents) => {
   return paymentUpdateAt.isAfter(latestProformaRequestDocumentCreatedAt);
 };
 
+// Download the proforma payment request
 const downloadProformaPayment = async () => {
   let errorMsg = '';
   if (paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id) {

@@ -120,8 +120,10 @@ const getCaptureOption = computed(() => {
   }
   return 'approve';
 });
-
-
+/**
+ * Validates if payment can be captured based on payment type and status
+ * Returns true if payment is valid for capture, false otherwise
+ */
 const getCaptureValidation = computed(() => {
   const payment = props.payment;
   if (shouldProcessUpdate()) {
@@ -185,6 +187,7 @@ const shouldProcessUpdate = () => {
   );
 };
 
+// Validate the upfront capture logic
 const validateUpfrontCapture = paymentRecord => {
   let paymentSplitRec = paymentRecord.payment_splits[0];
   if (paymentSplitRec.payment_method.code === 'CC')
@@ -200,7 +203,7 @@ const validateUpfrontCapture = paymentRecord => {
   return isIPPending || isCAPayment || isPaidPayment;
 };
 
-
+// Check if the void payment is enabled based on the payment status and payment gateway
 const isVoidPaymentEnabled = payment => {
   return (
     props.isFuncsEnabled.tapIntegration &&
@@ -210,6 +213,7 @@ const isVoidPaymentEnabled = payment => {
   );
 };
 
+// Validate the split payments capture 
 const validateSplitPaymentsCapture = paymentRecord => {
   const paymentMethodCC = filterCCPayments(paymentRecord);
   const creditApprovedPayments = filterCAPayments(paymentRecord);
@@ -247,6 +251,7 @@ const validateSplitPaymentsCapture = paymentRecord => {
   }
 };
 
+// Validate the non upfront and split capture 
 const validateNonUpfrontAndSplitCapture = paymentRecord => {
   if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
     if (verifyCreditApproved(paymentRecord)) return true;
@@ -261,6 +266,7 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   return getCaptureValidStatuses(paymentRecord.payment_splits[0]);
 };
 
+// Disable the main payment approval if the sendUpdate is true or if the AML status is failed
 const disableMainPaymentApproval = computed(() => {
   if (props.sendUpdate) {
     return false;
@@ -278,6 +284,7 @@ const disableMainPaymentApproval = computed(() => {
   );
 });
 
+// Check if the total price is mismatched based on the total amount and discount value
 const isTotalAmountMismatched = () => {
   const totalPriceRounded =
     Math.round(props.payments[0]?.total_price * 100) / 100;
@@ -290,6 +297,7 @@ const isTotalAmountMismatched = () => {
   return totalPriceRounded === calculatedTotal;
 };
 
+// AML & KYC tooltip message based on the status of the payment
 const amlAndKycTooltip = computed(() => {
   if (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments)) {
     return page.props.paymentTooltipEnum.PENDING_AML_CLEARANCE;
