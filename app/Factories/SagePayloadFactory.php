@@ -675,7 +675,7 @@ class SagePayloadFactory
         $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
         $optionalFields[] = [
             'OptionalField' => 'INSURERRCTNO',
-            'Value' => $sageRequest->insurerReceiptNumber ?? 'N/A'
+            'Value' => $sageRequest->insurerReceiptNumber ?? 'N/A',
         ];
 
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -698,7 +698,6 @@ class SagePayloadFactory
             $bankReceiptAmount = $sageRequest->commission;
             $checkReceiptNumber = $sageRequest->commissionChargeId;
         }
-
 
         $payLoad = [
             'BatchRecordType' => 'CA',
