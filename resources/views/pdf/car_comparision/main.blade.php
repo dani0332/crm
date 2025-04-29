@@ -374,7 +374,7 @@
             background: #1F84BD !important;
             color: white;
             padding: 2px 8px 15px;
-            width: 100%;
+            width: calc(100% + 25px);
             height: 255px;
             min-height: 190px;
             box-sizing: border-box;
@@ -619,12 +619,12 @@
         
         .hero-image {
             width: 100%;
-            height: 1047px;
+            height: 1150px;
         }
         
         .hero-image img {
             width: 100%;
-            height: 1047px;
+            height: 1150px;
         }
         
         /* Clear the page breaks from the table section */
@@ -755,20 +755,21 @@
 
 @endphp
 
-        <!-- first page with first banner image -->
-        <div class="page">
-            <div class="hero-image">
-                <img src="{{ public_path('images/car-banner-pdf-1.png') }}" 
-                alt="Car Banner 1">
+       	 <!-- first page with first banner image -->
+            <div class="page">
+                <div class="hero-image">
+                    <img src="{{ public_path('images/car-banner-pdf-1.png') }}" 
+                    alt="Car Banner 1">
+                </div>
             </div>
-        </div>
-
-        <!-- second page with second banner image -->
-        <div class="page">
-            <div class="hero-image">
-                <img src="{{ public_path('images/car-pdf-banner-2.png') }}" alt="Car Banner 2">
+    
+            <!-- second page with second banner image -->
+            <div class="page">
+                <div class="hero-image">
+                    <img src="{{ public_path('images/car-pdf-banner-2.png') }}" alt="Car Banner 2">
+                </div>
             </div>
-        </div>
+    
 
         <!-- plans page -->
         <div class="page" >
@@ -1022,8 +1023,8 @@
             </div>
         </div>
 
-        <!-- third page with second banner image -->
-        <div class="page" style="page-break-before: always !important;">
+         <!-- third page with second banner image -->
+         <div class="page" style="page-break-before: always !important;">
             <div class="hero-image">
                 <img src="{{ public_path('images/home_pdf_second_last_page_with_header.jpg') }}" alt="Car Banner 2">
             </div>
@@ -1035,5 +1036,7 @@
                 <img src="{{ public_path('images/car-comparision-4-image.png') }}" alt="Car Banner 2" style="height: auto; max-height: 1047px;">
             </div>
         </div>
+
+       
 </body>
 </html>

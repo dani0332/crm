@@ -18,23 +18,23 @@
         -webkit-print-color-adjust: exact;
         background: #1F84BD !important;
         color: white;
-        width: calc(100% + 20px);
-        height: 265px;
+        width: calc(100% + 25px); 
+               height: 160px;
         box-sizing: border-box;
         /* position:relative; */
         bottom: 0;
         left: 0;
-        padding: 10px 10px;
+        padding: 0px 10px;
         margin-left: -10px;
         margin-right: -10px;
     }
 
     .trademark {
         font-weight: 600;
-        font-size: 18px;
-        line-height: 1.2;
+        font-size: 16px;
         text-align: center;
         width: 100%;
+        /* padding-top:1px; */
         font-family: 'Raleway', sans-serif;
     }
 
@@ -42,18 +42,26 @@
         width: 100%;
         padding: 0;
         margin: 0;
+        height:80px;
+    }
+
+    .footer-box{
+        border-radius: 24px;
+        border: 2px solid #CF9E3C;
+        padding: 6px 10px;
+        text-align: left;
     }
 
     .certifications {
         width: 36%;
-        background: #1F84BD;
-        border: 2px solid #D3A240;
+        border: 2px solid #CF9E3C;
         border-radius: 20px;
-        padding: 10px;
-        height: 140px;
+        background: #1F84BD;
         float: left;
-        margin:7px; 
+        padding: 6px 10px;
         font-family: 'Poppins', sans-serif;
+        margin: auto 7px;
+
     }
 
     .cert-details {
@@ -66,11 +74,10 @@
         text-align: left;
     }
 
-    .cert-item,
-    .cert-item-alt {
+    .cert-item {
         font-weight: 400;
-        font-size: 10px;
-        line-height: 1.2;
+        font-size: 8px;
+        line-height: 1.1;
         margin: 1px 0;
         text-align: left;
         padding-left: 0;
@@ -84,12 +91,12 @@
         padding: 10px;
         display: flex;
         font-weight: 400;
-        font-size: 14px;
+        font-size:12px;
         line-height: 1.5;
         text-align: left;
-        height: 130px;
         float: left;
-        margin:7px; 
+        margin: auto 7px;
+
         font-family: 'Poppins', sans-serif;
     }
 
@@ -108,7 +115,7 @@
     .address-icon img {
         width: 50%;
         height: auto;
-        margin-top: 50px;
+        margin-top: 28px;
         margin-left: 20px;
     }
 
@@ -123,18 +130,18 @@
         background-color: #1D83BC;
         border: 2px solid #CE9D3B;
         border-radius: 20px;
-        padding: 0px 8px;
-        height: 150px;
+        padding: 5px 10px;
         float: left;
-        margin:7px; 
+        margin: auto 7px;
 
     }
 
     .advisor-title {
         font-weight: 400;
-        font-size: 12px;;
-        line-height: 1.2;
-        margin-bottom: 5px;
+        font-size: 12px;
+        line-height: 1;
+        margin: 5px auto;
+        padding:0px; 
         text-align: left;
         font-family: 'Poppins', sans-serif;
     }
@@ -143,30 +150,17 @@
     }
 
     .advisor-image {
-        width: 80px;
-        height: 80px;
-        border-radius: 100%;
+        width: 60px;
+        height: 60px;
+        border-radius:50%;
         background-color: #7DBCD8;
-        padding: 5px 5px 0px 5px;
         overflow: hidden;
         float:left; 
+        margin:auto; 
         /* text-align: center; */
     }
 
-    .advisor-image-small {
-        /* width: 80px;
-        height: 70px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        /* background-color: red; */
-        /* float:left; */
-        /* padding: 0; */
-        /* text-align: center; */
-        /* overflow: hidden;
-        position: relative;
-        clear:both; 
-        margin-top: 5px; */ 
-    }
+    
 
     .advisor-image img {
         width: 100%;
@@ -176,15 +170,15 @@
 
     .advisor-info {
         float:left;
-        margin-left:4px;
-        margin-top: 5px;
+        padding-left: 10px;
+        line-height: 1.5;
     }
 
     .advisor-name,
     .advisor-direct {
         font-weight: 500;
-        font-size: 8px;
-        line-height: 1.5;
+        font-size: 10px;
+        /* line-height: 1; */
         margin: 0;
         font-family: 'Raleway', sans-serif;
     }
@@ -231,7 +225,7 @@
 <body>
 <footer class="footer">
     <div class="trademark">
-        <p>InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC</p>
+        <p style="padding-top: 5px;">InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC</p>
     </div>
     <div class="footer-content">
         <!-- certifications section -->
@@ -282,17 +276,17 @@
                     @endif
                     
                     @if(isset($quote->advisor->email))
-                        <p class="advisor-name"><a style="text-decoration: none; color: white;" href="mailto:{{$quote->advisor->email}}"><strong>Email:</strong> {{$quote->advisor->email}} </a></p>    
+                        <p class="advisor-name"><a style="text-decoration: none;color:white" href="mailto:{{$quote->advisor->email}}"><strong>Email:</strong> {{$quote->advisor->email}} </a></p>    
                     @endif
                 
                     @if(isset($quote->advisor->mobile_no))
-                        <p class="advisor-name" href="tel:{{$quote->advisor->mobile_no}}"><strong>Mobile number: </strong>{{ $quote->advisor->mobile_no }} <img src="{{ public_path('images/whatsapp-small.png') }}" style="max-width: 5%; height: auto;margin-top:5px"> </p>    
+                        <p class="advisor-name" href="tel:{{$quote->advisor->mobile_no}}"><strong>Mobile number: </strong>{{ $quote->advisor->mobile_no }} <img src="{{ public_path('images/whatsapp-small.png') }}" style="max-width: 10%; height: auto;margin-left: 1px; vertical-align: baseline;" /> </p>    
                     @endif
                     @if(isset($quote->advisor->landline_no))
                         <p class="advisor-name"><strong>Direct Line: </strong>{{ $quote->advisor->landline_no }}</p>    
                     @endif
                 </div>
-            </div>
+            </iv>
         </div>
     </div>
 </footer>
