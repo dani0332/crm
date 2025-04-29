@@ -7,14 +7,18 @@ import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { time } from 'highcharts';
 
-
 // New Flow Implementation
 import { usePayment } from '../Composables/usePayment';
 import { useAMLKYC } from '../Composables/useAMLKYC';
-import { PaymentTableHeader, PaymentHeader, PaymentRow, PaymentSplitRow } from './PaymentComponents/index.js';
+import {
+  PaymentTableHeader,
+  PaymentHeader,
+  PaymentRow,
+  PaymentSplitRow,
+} from './PaymentComponents/index.js';
 
 // Assign barrel-imported components to prevent IDE from showing them as unused
-const components = {PaymentTableHeader};
+const components = { PaymentTableHeader };
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -34,7 +38,14 @@ const paymentMethodsEnums = page.props.paymentMethodsEnum;
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
-const { formatDate, formatAmount, formatString, filterCCPayments, filterCAPayments, verifyCreditApproved } = usePayment();
+const {
+  formatDate,
+  formatAmount,
+  formatString,
+  filterCCPayments,
+  filterCAPayments,
+  verifyCreditApproved,
+} = usePayment();
 const { isAmlVerified, isKycVerified } = useAMLKYC();
 
 const props = defineProps({
@@ -107,7 +118,6 @@ const props = defineProps({
     default: false,
   },
 });
-
 
 // All reactive properties are defined here
 const createPaymentModal = ref(false);
@@ -448,7 +458,7 @@ const initialTotalPriceWithoutVat = computed(() => {
 // Add state for expanded rows
 const expandedPaymentRows = ref({});
 
-const toggleExpand = (index) => {
+const toggleExpand = index => {
   expandedPaymentRows.value[index] = !expandedPaymentRows.value[index];
 };
 
@@ -2946,7 +2956,6 @@ const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
-   
     initalPlanDetails = props.quoteRequest.insurance_provider;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
@@ -3106,7 +3115,6 @@ const transactionActionText = computed(() => {
     return 'APPROVE TRANSACTION';
   }
 });
-
 
 const isCCEnabled = ref(
   page.props?.bookPolicyDetails?.isCreditCardEnabled || false,
@@ -3375,7 +3383,6 @@ onBeforeMount(() => {
         </div>
       </template>
       <template #body>
-       
         <PaymentHeader
           :payments="payments"
           :proformaPayment="proformaPayment"
@@ -3386,12 +3393,11 @@ onBeforeMount(() => {
           :planDetail="planDetail"
           @add-payment-modal="addPaymentModal"
         />
-        
+
         <div class="vue3-easy-data-table tablefixed custom-height">
           <div
             class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div"
           >
-
             <table>
               <!-- Payment Table Header Component -->
               <PaymentTableHeader />
@@ -3403,7 +3409,10 @@ onBeforeMount(() => {
                   </td>
                 </tr>
                 <!-- Payment Rows with Splits -->
-                <template v-for="(payment, index) in payments" :key="payment.code">
+                <template
+                  v-for="(payment, index) in payments"
+                  :key="payment.code"
+                >
                   <!-- Main payment row -->
                   <PaymentRow
                     :payments="payments"
@@ -3413,7 +3422,9 @@ onBeforeMount(() => {
                     :isChildPaymentDeletable="isChildPaymentDeletable"
                     :isLackingPayment="is_lacking_payment"
                     :isApproveConfirmed="isApproveConfirmed"
-                    :capturePaymentValidationInProcess="capturePaymentValidationInProcess"
+                    :capturePaymentValidationInProcess="
+                      capturePaymentValidationInProcess
+                    "
                     :isFuncsEnabled="props.isFuncsEnabled"
                     :bookPolicyDetails="props.bookPolicyDetails"
                     :quoteRequest="quoteRequest"
@@ -3427,13 +3438,15 @@ onBeforeMount(() => {
                     @approve-payment="capturePayment"
                     @void-payment="voidPaymentModel"
                     @alert-capture="alertCapture"
-                    @open-aml-verification= "openAmlVerificationModal"
+                    @open-aml-verification="openAmlVerificationModal"
                   />
-                  
+
                   <!-- Payment split rows (visible when payment is expanded) -->
                   <template v-if="expandedPaymentRows[index]">
                     <PaymentSplitRow
-                      v-for="(splitPayment, splitIndex) in payment.payment_splits"
+                      v-for="(
+                        splitPayment, splitIndex
+                      ) in payment.payment_splits"
                       :key="splitPayment.id"
                       :splitPayment="splitPayment"
                       :parentPayment="payment"
@@ -3443,10 +3456,22 @@ onBeforeMount(() => {
                       :sendUpdate="sendUpdate"
                       :paymentMethodsForm="paymentMethodsForm"
                       :sendUpdateStatusEnum="sendUpdateStatusEnum"
-                      @view-payment="(payment, splitId, splitNo, action) => editPaymentModal(payment, splitId, splitNo, action)"
-                      @generate-cc-link="(code, srNo, statusId) => generateCCLink(code, srNo, statusId)"
-                      @delete-split-payment="(splitId, statusId) => deleteSplitPaymentModal(splitId, statusId)"
-                      @retry-split-payment="(jobId, message) => retrySplitPaymentModal(jobId, message)"
+                      @view-payment="
+                        (payment, splitId, splitNo, action) =>
+                          editPaymentModal(payment, splitId, splitNo, action)
+                      "
+                      @generate-cc-link="
+                        (code, srNo, statusId) =>
+                          generateCCLink(code, srNo, statusId)
+                      "
+                      @delete-split-payment="
+                        (splitId, statusId) =>
+                          deleteSplitPaymentModal(splitId, statusId)
+                      "
+                      @retry-split-payment="
+                        (jobId, message) =>
+                          retrySplitPaymentModal(jobId, message)
+                      "
                       @post-prepayment="triggerPostPrepayment"
                     />
                   </template>
@@ -5316,7 +5341,11 @@ onBeforeMount(() => {
                       size="sm"
                       color="#ff5e00"
                       @click="
-                        isAmlVerified(props.quoteRequest, props.quoteType, props.payments)
+                        isAmlVerified(
+                          props.quoteRequest,
+                          props.quoteType,
+                          props.payments,
+                        )
                           ? (isApproveClicked = !isApproveClicked)
                           : openAmlVerificationModal()
                       "

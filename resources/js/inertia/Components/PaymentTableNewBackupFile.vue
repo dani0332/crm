@@ -3066,10 +3066,11 @@ const getCaptureValidation = computed(() => {
       const isTravelQuote = props.quoteType == quoteTypeCodeEnum.Travel;
       const isInsurerApiStatus = props.quoteRequest.insurer_api_status;
       const isAllianceProvider = props.isAllianceProvider;
-      const ispaymentApproveCapture = isTravelQuote && isAllianceProvider && isInsurerApiStatus == null;
+      const ispaymentApproveCapture =
+        isTravelQuote && isAllianceProvider && isInsurerApiStatus == null;
 
       if (payment.is_approved === 1 || ispaymentApproveCapture) return false;
-      
+
       let paymentRecord = payment;
       if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
         return validateUpfrontCapture(paymentRecord);
@@ -3938,7 +3939,6 @@ const splitPaymentTotalPrice = (srNo, amount, discountValue) => {
 
   return formatAmount(total);
 };
-
 </script>
 
 <template>

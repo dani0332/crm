@@ -165,14 +165,15 @@ const downloadProformaPayment = async () => {
     return;
   }
 };
-
 </script>
 
 <template>
   <div class="flex items-center mb-4">
     <div class="ml-auto flex gap-2">
       <template v-if="can(permissionEnum.ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON)">
-        <template v-if="proformaPayment?.payment_status_id == paymentStatusEnum.PAID">
+        <template
+          v-if="proformaPayment?.payment_status_id == paymentStatusEnum.PAID"
+        >
           <x-button
             v-if="proformaPayment"
             size="sm"
@@ -180,7 +181,9 @@ const downloadProformaPayment = async () => {
             target="_blank"
             @click="downloadProformaPayment"
           >
-            <span class="border-b border-dotted">Download Proforma Payment Request</span>
+            <span class="border-b border-dotted"
+              >Download Proforma Payment Request</span
+            >
           </x-button>
         </template>
         <template v-else>
@@ -192,10 +195,14 @@ const downloadProformaPayment = async () => {
               target="_blank"
               @click="downloadProformaPayment"
             >
-              <span class="border-b border-dotted">Download Proforma Payment Request</span>
+              <span class="border-b border-dotted"
+                >Download Proforma Payment Request</span
+              >
             </x-button>
             <template #tooltip>
-              <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT }}</span>
+              <span>{{
+                paymentTooltipEnum.PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT
+              }}</span>
             </template>
           </x-tooltip>
         </template>
@@ -203,12 +210,16 @@ const downloadProformaPayment = async () => {
       <div
         v-if="
           !page.props.linkedQuoteDetails ||
-          quoteRequest.quote_status_id != page.props.quoteStatusEnum.PolicyCancelled ||
+          quoteRequest.quote_status_id !=
+            page.props.quoteStatusEnum.PolicyCancelled ||
           page.props.linkedQuoteDetails?.childLeadsCount == 0
         "
       >
         <template v-if="payments.length > 0">
-          <div class="flex justify-between items-center gap-2" style="margin-left: auto">
+          <div
+            class="flex justify-between items-center gap-2"
+            style="margin-left: auto"
+          >
             <UpdateTotalPrice
               v-if="
                 can(permissionEnum.TEMP_UPDATE_TOTALPRICE) &&
@@ -218,7 +229,9 @@ const downloadProformaPayment = async () => {
               :paymentCode="payments[0].code"
               :quoteType="quoteType"
               :totalPrice="payments[0].total_price"
-              :totalPaidPrice="payments[0].total_amount + payments[0].discount_value"
+              :totalPaidPrice="
+                payments[0].total_amount + payments[0].discount_value
+              "
             />
             <div v-if="readOnlyMode.isDisable">
               <x-button
@@ -246,11 +259,13 @@ const downloadProformaPayment = async () => {
               </x-button>
             </div>
             <template #tooltip>
-              <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT }}</span>
+              <span>{{
+                paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
+              }}</span>
             </template>
           </x-tooltip>
         </template>
       </div>
     </div>
   </div>
-</template> 
+</template>

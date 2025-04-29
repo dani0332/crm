@@ -12,15 +12,16 @@ const paymentGatewayEnum = page.props.paymentGatewayEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 
-const { formatDate,
-   formatAmount,
-   formatString,
-   filterCCPayments,
-   getCaptureValidStatuses,
-   filterCAPayments,
-   verifyCreditApproved,
-   hasAnyCCSplitPayment
-  } = usePayment();
+const {
+  formatDate,
+  formatAmount,
+  formatString,
+  filterCCPayments,
+  getCaptureValidStatuses,
+  filterCAPayments,
+  verifyCreditApproved,
+  hasAnyCCSplitPayment,
+} = usePayment();
 
 const { isAmlVerified, isKycVerified, isInsurerAmlVerified } = useAMLKYC();
 
@@ -60,7 +61,7 @@ const emit = defineEmits([
   'approve-payment',
   'void-payment',
   'alert-capture',
-  'open-aml-verification'
+  'open-aml-verification',
 ]);
 
 const editPayment = () => {
@@ -76,7 +77,11 @@ const capturePayment = () => {
 };
 
 const approvePayment = () => {
-  if (!props.sendUpdate && (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments) || !isKycVerified(props.quoteRequest, props.quoteType, props.payments))) {
+  if (
+    !props.sendUpdate &&
+    (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments) ||
+      !isKycVerified(props.quoteRequest, props.quoteType, props.payments))
+  ) {
     emit('open-aml-verification');
   } else {
     const isValid = getCaptureValidation.value;
@@ -120,20 +125,25 @@ const getCaptureOption = computed(() => {
   }
   return 'approve';
 });
+<<<<<<< HEAD
 /**
  * Validates if payment can be captured based on payment type and status
  * Returns true if payment is valid for capture, false otherwise
  */
+=======
+
+>>>>>>> 608b03965497c938d7dd867e59ec702f392bd883
 const getCaptureValidation = computed(() => {
   const payment = props.payment;
   if (shouldProcessUpdate()) {
     const isTravelQuote = props.quoteType == quoteTypeCodeEnum.Travel;
     const isInsurerApiStatus = props.quoteRequest.insurer_api_status;
     const isAllianceProvider = props.isAllianceProvider;
-    const ispaymentApproveCapture = isTravelQuote && isAllianceProvider && isInsurerApiStatus == null;
+    const ispaymentApproveCapture =
+      isTravelQuote && isAllianceProvider && isInsurerApiStatus == null;
 
     if (payment.is_approved === 1 || ispaymentApproveCapture) return false;
-    
+
     let paymentRecord = payment;
     if (paymentRecord.frequency === paymentFrequencyEnum.UPFRONT) {
       return validateUpfrontCapture(paymentRecord);
@@ -156,21 +166,23 @@ const shouldProcessUpdate = () => {
     Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
   const hasPayments = props.payments.length > 0;
   const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
-  
+
   // Check if it's a renewal upload condition
-  if (props.isCapBtnEnabled &&
-      props.quoteType === quoteTypeCodeEnum.Car &&
-      (page.props?.bookPolicyDetails?.isGIGProvider || false) &&
-      isAmlVerified(props.quoteRequest, props.quoteType, props.payments) &&
-      isKycVerified(props.quoteRequest, props.quoteType, props.payments) &&
-      isTotalPriceMatching &&
-      hasAnyCCSplitPayment(payment) &&
-      !props.sendUpdate &&
-      hasPayments &&
-      payment?.collection_type == 'insurer') {
+  if (
+    props.isCapBtnEnabled &&
+    props.quoteType === quoteTypeCodeEnum.Car &&
+    (page.props?.bookPolicyDetails?.isGIGProvider || false) &&
+    isAmlVerified(props.quoteRequest, props.quoteType, props.payments) &&
+    isKycVerified(props.quoteRequest, props.quoteType, props.payments) &&
+    isTotalPriceMatching &&
+    hasAnyCCSplitPayment(payment) &&
+    !props.sendUpdate &&
+    hasPayments &&
+    payment?.collection_type == 'insurer'
+  ) {
     return true;
   }
-  
+
   // Check if capture option is approve
   const captureOption = getCaptureOption.value;
   if (captureOption === 'approve') {
@@ -182,7 +194,9 @@ const shouldProcessUpdate = () => {
     hasPayments &&
     isTotalPriceMatching &&
     // Check if AML & KYC verification and insurer AML are complete
-    (isAmlVerified(props.quoteRequest, props.quoteType, props.payments) || props.quoteType === quoteTypeCodeEnum.Travel || props.sendUpdate) &&
+    (isAmlVerified(props.quoteRequest, props.quoteType, props.payments) ||
+      props.quoteType === quoteTypeCodeEnum.Travel ||
+      props.sendUpdate) &&
     isInsurerAmlVerified(props.quoteRequest, props.quoteType, props.payments)
   );
 };
@@ -203,7 +217,10 @@ const validateUpfrontCapture = paymentRecord => {
   return isIPPending || isCAPayment || isPaidPayment;
 };
 
+<<<<<<< HEAD
 // Check if the void payment is enabled based on the payment status and payment gateway
+=======
+>>>>>>> 608b03965497c938d7dd867e59ec702f392bd883
 const isVoidPaymentEnabled = payment => {
   return (
     props.isFuncsEnabled.tapIntegration &&
@@ -280,7 +297,13 @@ const disableMainPaymentApproval = computed(() => {
 
   return (
     isAmlVerified(props.quoteRequest, props.quoteType, props.payments) &&
-    (!isKycVerified(props.quoteRequest, props.quoteType, props.payments) || !isInsurerAmlVerified(props.quoteRequest, props.quoteType, props.payments) || !isTotalAmountMismatched())
+    (!isKycVerified(props.quoteRequest, props.quoteType, props.payments) ||
+      !isInsurerAmlVerified(
+        props.quoteRequest,
+        props.quoteType,
+        props.payments,
+      ) ||
+      !isTotalAmountMismatched())
   );
 });
 
@@ -301,22 +324,24 @@ const isTotalAmountMismatched = () => {
 const amlAndKycTooltip = computed(() => {
   if (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments)) {
     return page.props.paymentTooltipEnum.PENDING_AML_CLEARANCE;
-  } else if (!isInsurerAmlVerified(props.quoteRequest, props.quoteType, props.payments)) {
+  } else if (
+    !isInsurerAmlVerified(props.quoteRequest, props.quoteType, props.payments)
+  ) {
     return page.props.paymentTooltipEnum.PENDING_INSURER_AML_CLEARANCE;
-  } else if (!isKycVerified(props.quoteRequest, props.quoteType, props.payments)) {
+  } else if (
+    !isKycVerified(props.quoteRequest, props.quoteType, props.payments)
+  ) {
     return page.props.paymentTooltipEnum.PENDING_KYC_CLEARANCE;
   } else if (!isTotalAmountMismatched()) {
     return page.props.paymentTooltipEnum.TOTAL_AMOUNT_MISMATCHED;
   }
 });
-
-
 </script>
 
 <template>
   <tr>
     <td class="text-center">
-      <span class= "expand-pointer" @click="emit('toggle-expand', index)">
+      <span class="expand-pointer" @click="emit('toggle-expand', index)">
         {{ isExpanded ? '∧' : '∨' }}
       </span>
     </td>
@@ -334,15 +359,21 @@ const amlAndKycTooltip = computed(() => {
     <td>
       <x-tooltip placement="left">
         <span class="border-b border-dotted border-black">
-          {{ payment.payment_allocation_status !== null
+          {{
+            payment.payment_allocation_status !== null
               ? formatString(payment.payment_allocation_status)
-              : '' }}
+              : ''
+          }}
         </span>
         <template #tooltip>
           <span class="custom-tooltip-content">
-            {{ paymentAllocationStatusTooltip
-                ? paymentAllocationStatusTooltip(payment.payment_allocation_status)
-                : payment.payment_allocation_status }}
+            {{
+              paymentAllocationStatusTooltip
+                ? paymentAllocationStatusTooltip(
+                    payment.payment_allocation_status,
+                  )
+                : payment.payment_allocation_status
+            }}
           </span>
         </template>
       </x-tooltip>
@@ -370,9 +401,11 @@ const amlAndKycTooltip = computed(() => {
               <template #content>!</template>
             </x-badge>
             <template #tooltip>
-              {{ isEditPaymentEnabled && isEditPaymentEnabled(payment)
+              {{
+                isEditPaymentEnabled && isEditPaymentEnabled(payment)
                   ? paymentTooltipEnum.PAYMENT_TOTAL_PRICE_EXCEEDS_AUTHORISED_AMOUNT
-                  : paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED }}
+                  : paymentTooltipEnum.PAYMENT_REVISED_ACTION_NEEDED
+              }}
             </template>
           </x-tooltip>
         </template>
@@ -388,17 +421,16 @@ const amlAndKycTooltip = computed(() => {
           </x-button>
         </template>
         <template v-if="index == 1 && isChildPaymentDeletable">
-          <x-button
-            size="xs"
-            color="orange"
-            outlined
-            @click="deletePayment"
-          >
+          <x-button size="xs" color="orange" outlined @click="deletePayment">
             Delete
           </x-button>
         </template>
-        <template v-if="can(permissionEnum.ApprovePayments) && 
-                        (!isChildPaymentDeletable || index > 0)">
+        <template
+          v-if="
+            can(permissionEnum.ApprovePayments) &&
+            (!isChildPaymentDeletable || index > 0)
+          "
+        >
           <x-button
             v-if="getCaptureOption === 'capture' && getCaptureValidation"
             size="xs"
@@ -438,13 +470,22 @@ const amlAndKycTooltip = computed(() => {
               color="orange"
               outlined
               @click="
-                  !props.sendUpdate &&
-                  (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments) || !isKycVerified(props.quoteRequest, props.quoteType, props.payments))
-                    ? $emit('open-aml-verification')
-                    : getCaptureValidation
-                      ? $emit('edit-payment', payment, 0, 0, 2)
-                      : alertCapture()
-                "
+                !props.sendUpdate &&
+                (!isAmlVerified(
+                  props.quoteRequest,
+                  props.quoteType,
+                  props.payments,
+                ) ||
+                  !isKycVerified(
+                    props.quoteRequest,
+                    props.quoteType,
+                    props.payments,
+                  ))
+                  ? $emit('open-aml-verification')
+                  : getCaptureValidation
+                    ? $emit('edit-payment', payment, 0, 0, 2)
+                    : alertCapture()
+              "
               :disabled="isApproveConfirmed"
             >
               Approve
@@ -452,12 +493,7 @@ const amlAndKycTooltip = computed(() => {
           </template>
         </template>
         <template v-if="isVoidPaymentEnabled(payment)">
-          <x-button
-            size="xs"
-            color="orange"
-            outlined
-            @click="voidPayment"
-          >
+          <x-button size="xs" color="orange" outlined @click="voidPayment">
             Void
           </x-button>
         </template>
@@ -473,4 +509,4 @@ const amlAndKycTooltip = computed(() => {
   font-weight: bold;
   color: #1d83bc;
 }
-</style> 
+</style>
