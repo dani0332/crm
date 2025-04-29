@@ -463,8 +463,8 @@ class AMLController extends Controller
             // Process members (UBO or regular members)
             if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
                 info('AML Screening Bridger - No Member Found, AML Screening Cleared - Ref-ID: '.$updateQuote->code);
-                $response = redirect()->back()->with('success', 'AML Screening Completed');
-                if (! empty($insurerAMLScreeningResponse)) {
+                $response = $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
+                if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
                     $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
                 }
 
@@ -478,8 +478,8 @@ class AMLController extends Controller
             info('AML Screening Bridger - AML Screening Job Dispatched for Members - Ref-ID: '.$updateQuote->code);
             $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
 
-            $response = redirect()->back()->with('success', 'Quote is updated');
-            if (! empty($insurerAMLScreeningResponse)) {
+            $response = $this->handleResponse(true, 'Quote is updated', $isAutomation);
+            if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
                 $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
             }
 
