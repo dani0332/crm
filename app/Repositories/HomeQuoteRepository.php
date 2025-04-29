@@ -626,14 +626,13 @@ class HomeQuoteRepository extends BaseRepository
         ];
     }
 
-    public function fetchGetBy($column, $value)
+    public function fetchGetBy($columnUUID, $uuid)
     {
         try {
-            $quote = $this->getQuoteWithRelations($column, $value);
+            $quote = $this->getQuoteWithRelations($columnUUID, $uuid);
 
             if (! $quote) {
-                LoggerService::info('Quote not found', extra: ['column' => $column, 'value' => $value]);
-
+                LoggerService::info('Quote not found', extra: ['column' => $columnUUID, 'value' => $uuid]);
                 return null;
             }
 
@@ -643,19 +642,18 @@ class HomeQuoteRepository extends BaseRepository
             return $quote;
         } catch (\Exception $e) {
             LoggerService::error('Error fetching quote data', exception: $e, extra: [
-                'column' => $column,
-                'value' => $value,
+                'column' => $columnUUID, 
+                'value' => $uuid,
             ]);
-
             // Return null instead of throwing the exception to ensure smooth execution
             return null;
         }
     }
 
-    private function getQuoteWithRelations($column, $value)
+    private function getQuoteWithRelations($columnUUID, $uuid)
     {
         $response = $this->byQuoteTypeId(QuoteTypes::HOME->id())
-            ->where($column, $value)
+            ->where($columnUUID, $uuid)
             ->with([
                 'insuranceProvider',
                 'insuranceProviderPlan',
