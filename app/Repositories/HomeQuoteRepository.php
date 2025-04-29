@@ -631,14 +631,22 @@ class HomeQuoteRepository extends BaseRepository
         try {
             $quote = $this->getQuoteWithRelations($column, $value);
 
-            $this->setQuoteAdditionalData($quote);
+            if (!$quote) {
+                LoggerService::info('Quote not found', extra: ['column' => $column, 'value' => $value]);
+                return null;
+            }
 
+            $this->setQuoteAdditionalData($quote);
             $this->appendExternalData($quote);
 
             return $quote;
         } catch (\Exception $e) {
-            LoggerService::error('Error fetching quote data', exception: $e);
-            throw $e; // Rethrow the exception so it propagates to the controller
+            LoggerService::error('Error fetching quote data', exception: $e, extra: [
+                'column' => $column, 
+                'value' => $value
+            ]);
+            // Return null instead of throwing the exception to ensure smooth execution
+            return null;
         }
     }
 
@@ -701,10 +709,16 @@ class HomeQuoteRepository extends BaseRepository
                 "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
             ])
-            ->firstOrFail();
+            ->first();
 
-        if ($response?->insured) {
-            $response->emirates_id_number = $response?->insured?->id_type == 'emiratesId' ? $response?->insured?->id_number : null;
+        if ($response) {
+            // Only access insured property if response exists
+            $insured = $response->insured ?? null;
+            if ($insured && $insured->id_type === 'emiratesId') {
+                $response->emirates_id_number = $insured->id_number;
+            } else {
+                $response->emirates_id_number = null;
+            }
         }
 
         return $response;
@@ -712,24 +726,33 @@ class HomeQuoteRepository extends BaseRepository
 
     private function setQuoteAdditionalData($quote)
     {
-        $data = ! empty($quote) ? $quote->toArray() : [];
+        if (empty($quote)) {
+            return;
+        }
 
+        $data = $quote->toArray();
+
+        // Use null coalescing for safely accessing possibly undefined array keys
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
-        // Setting permissions or appending additional fields to payments
-        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+        // Check if payments property exists before using it
+        if ($quote->payments && $quote->payments->isNotEmpty()) {
+            $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+        }
     }
 
     private function appendExternalData($quote)
     {
+        if (empty($quote)) {
+            return;
+        }
+
         // fetch look up data
         try {
             $lookUpData = app(LookupService::class)->getHomeLookUpData();
-            if ($lookUpData) {
-                $quote->lookUpData = $lookUpData;
-            }
+            $quote->lookUpData = $lookUpData ?: [];
         } catch (\Exception $e) {
             LoggerService::error('Error fetching home lookup data', exception: $e);
             $quote->lookUpData = [];
@@ -738,9 +761,7 @@ class HomeQuoteRepository extends BaseRepository
         // fetch customer address data and append it
         try {
             $customerAddressData = app(CustomerService::class)->getCustomerAddressData($quote);
-            if ($customerAddressData) {
-                $quote->customerAddressData = $customerAddressData;
-            }
+            $quote->customerAddressData = $customerAddressData ?: [];
         } catch (\Exception $e) {
             LoggerService::error('Error fetching customer address data', exception: $e);
             $quote->customerAddressData = [];
