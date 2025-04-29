@@ -631,8 +631,9 @@ class HomeQuoteRepository extends BaseRepository
         try {
             $quote = $this->getQuoteWithRelations($column, $value);
 
-            if (!$quote) {
+            if (! $quote) {
                 LoggerService::info('Quote not found', extra: ['column' => $column, 'value' => $value]);
+
                 return null;
             }
 
@@ -642,9 +643,10 @@ class HomeQuoteRepository extends BaseRepository
             return $quote;
         } catch (\Exception $e) {
             LoggerService::error('Error fetching quote data', exception: $e, extra: [
-                'column' => $column, 
-                'value' => $value
+                'column' => $column,
+                'value' => $value,
             ]);
+
             // Return null instead of throwing the exception to ensure smooth execution
             return null;
         }
