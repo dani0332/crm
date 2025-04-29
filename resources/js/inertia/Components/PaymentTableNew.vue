@@ -2392,11 +2392,13 @@ const addPayment = isValid => {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
+          isApproveConfirmed.value = false;
           if (props.sendUpdate) {
             location.reload();
           }
         },
         onError: res => {
+          isApproveConfirmed.value = false;
           notification.error({
             title: res.error,
             position: 'top',
@@ -2809,6 +2811,7 @@ const getCaptureOption = computed(() => {
 });
 
 const planText = ref();
+const homePlanText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
@@ -2820,7 +2823,7 @@ const fetchPlans = () => {
   axios
     .get(url)
     .then(res => {
-      planText.value = res.data.text;
+      planText.value = res.data?.text ?? res.data?.planName;
     })
     .catch(err => {});
 };
@@ -2874,6 +2877,13 @@ const getPlanName = computed(() => {
   }
   if (props.sendUpdate) {
     return planText.value || 'Not Available';
+  }
+
+  if (props.quoteType === quoteTypeCodeEnum.Home) {
+    if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
+      homePlanText.value = props.quoteRequest.insurance_provider_plan.text;
+    }
+    return homePlanText.value || 'Not Available';
   }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan

@@ -489,7 +489,6 @@ class TravelController extends Controller
     public function update(UpdateTravelRequest $request, $id)
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-
         $this->travelQuoteService->updateTravelQuote($request, $id);
 
         return redirect('/quotes/travel/'.$id)->with('message', 'Record updated successfully');
