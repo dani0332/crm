@@ -28,7 +28,12 @@
             padding: 0;
             height: 100vh;
             position: relative;
-            /* page-in */
+            page-break-after: always;
+            overflow: hidden;
+        }
+        
+        .page:last-of-type {
+            page-break-after: auto;
         }
         
         /* Redesigned header section for Laravel Snappy compatibility */
@@ -373,7 +378,7 @@
             height: 255px;
             min-height: 190px;
             box-sizing: border-box;
-            position: fixed;
+            position: absolute;
             bottom: 0;
             left: 0;
             display: flex;
@@ -476,7 +481,6 @@
         }
         
         .advisor-title {
-            font-family: 'Prompt', sans-serif;
             font-weight: 400;
             font-size: 16px;
             line-height: 1.2;
@@ -767,7 +771,7 @@
         </div>
 
         <!-- plans page -->
-        <div class="page"  style="page-break-after: always !important;">
+        <div class="page" >
             <div class="header">
                 <div class="header-content">
                     <div class="header-details">
@@ -1017,20 +1021,18 @@
 
             </div>
         </div>
-        <pagebreak />   
 
         <!-- third page with second banner image -->
-        <div class="page" style="page-break-after: avoid !important;">
+        <div class="page" style="page-break-before: always !important;">
             <div class="hero-image">
                 <img src="{{ public_path('images/home_pdf_second_last_page_with_header.jpg') }}" alt="Car Banner 2">
             </div>
         </div>
 
         <!-- fourth page with second banner image -->
-        <div class="page" style="page-break-after: avoid !important;">
-            
-            <div class="hero-image">
-                <img src="{{ public_path('images/car-comparision-4-image.png') }}" alt="Car Banner 2">
+        <div class="page">
+            <div class="hero-image" style="height: auto; max-height: 1047px;">
+                <img src="{{ public_path('images/car-comparision-4-image.png') }}" alt="Car Banner 2" style="height: auto; max-height: 1047px;">
             </div>
         </div>
 </body>

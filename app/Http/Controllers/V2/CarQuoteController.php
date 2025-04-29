@@ -271,10 +271,8 @@ class CarQuoteController extends Controller
         ->setOption('margin-right', 0)
         ->setOption('margin-top', 20)
         ->setOption('margin-bottom', 55)
-        ->setOption('page-size', 'A4')
-        ->setOption('page-size', 'A4')
-        ->setOption('header-right', '[page]/[toPage]');
-
+        ->setOption('page-size', 'A4'); 
+        
         return $pdf->stream();
     }
 }

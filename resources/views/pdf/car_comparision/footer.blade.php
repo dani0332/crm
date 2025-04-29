@@ -132,10 +132,11 @@
 
     .advisor-title {
         font-weight: 400;
-        font-size: 10px;
+        font-size: 12px;;
         line-height: 1.2;
         margin-bottom: 5px;
         text-align: left;
+        font-family: 'Poppins', sans-serif;
     }
 
     .advisor-details {
@@ -170,7 +171,7 @@
     .advisor-image img {
         width: 100%;
         height: auto;
-        margin-top: 1px;
+        margin-bottom: -2px;
     }
 
     .advisor-info {
@@ -281,21 +282,14 @@
                     @endif
                     
                     @if(isset($quote->advisor->email))
-                        <a class="advisor-email" href="mailto:{{$quote->advisor->email}}"><strong>Email:</strong> {{$quote->advisor->email}} </a>    
+                        <p class="advisor-name"><a style="text-decoration: none; color: white;" href="mailto:{{$quote->advisor->email}}"><strong>Email:</strong> {{$quote->advisor->email}} </a></p>    
                     @endif
-                  
+                
                     @if(isset($quote->advisor->mobile_no))
-                    <div class="mobile-container">
-                        <p class="mobile-label"><strong>Mobile number:</strong></p>
-                        <p class="mobile-number">{{$quote->advisor->mobile_no}} <img src="{{ public_path('images/whatsapp-small.png') }}" style="max-width: 10%; height: auto;"></p>
-                    </div>
+                        <p class="advisor-name" href="tel:{{$quote->advisor->mobile_no}}"><strong>Mobile number: </strong>{{ $quote->advisor->mobile_no }} <img src="{{ public_path('images/whatsapp-small.png') }}" style="max-width: 5%; height: auto;margin-top:5px"> </p>    
                     @endif
-
                     @if(isset($quote->advisor->landline_no))
-                            <div class="mobile-container">
-                                <p class="mobile-label"><strong>Direct Line:</strong></p>
-                                <p class="mobile-number">{{$quote->advisor->landline_no}}</p>
-                            </div>
+                        <p class="advisor-name"><strong>Direct Line: </strong>{{ $quote->advisor->landline_no }}</p>    
                     @endif
                 </div>
             </div>
