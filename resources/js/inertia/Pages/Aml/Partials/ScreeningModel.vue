@@ -237,23 +237,32 @@ const oldCustomerType = ref(null);
 const newCustomerType = ref(null);
 
 const setFieldsByCustomerType = (customerType = '') => {
-  if (customerType == customerTypeEnum.Entity && [undefined, customerTypeEnum.Individual].includes(oldCustomerType.value)) {
+  if (
+    customerType == customerTypeEnum.Entity &&
+    [undefined, customerTypeEnum.Individual].includes(oldCustomerType.value)
+  ) {
     validateNationality.value = false;
     clearErrors();
     clearInsurerDetails(customerTypeEnum.Entity);
-  } else if (customerType == customerTypeEnum.Individual && oldCustomerType.value === customerTypeEnum.Entity) {
+  } else if (
+    customerType == customerTypeEnum.Individual &&
+    oldCustomerType.value === customerTypeEnum.Entity
+  ) {
     validateNationality.value = false;
     clearErrors();
     clearInsurerDetails(customerTypeEnum.Individual);
   }
 };
 
-watch(() => screeningFormDetails.customer_type, (newValue, oldValue) => {
-  oldCustomerType.value = oldValue;
-  newCustomerType.value = newValue;
-  // Debug the current customer type
-  // console.log('Customer type changed:', oldValue, '->', newValue);
-});
+watch(
+  () => screeningFormDetails.customer_type,
+  (newValue, oldValue) => {
+    oldCustomerType.value = oldValue;
+    newCustomerType.value = newValue;
+    // Debug the current customer type
+    // console.log('Customer type changed:', oldValue, '->', newValue);
+  },
+);
 
 function customerTypeConfirmation() {
   if (screeningFormDetails.customer_type == newCustomerType.value) {
@@ -270,7 +279,8 @@ function customerTypeConfirmation() {
 }
 const updateScreeningDetails = () => {
   setFieldsByCustomerType(screeningFormDetails.customer_type);
-  isScreeningIndividual.value = screeningFormDetails.customer_type == customerTypeEnum.Individual;
+  isScreeningIndividual.value =
+    screeningFormDetails.customer_type == customerTypeEnum.Individual;
   customerTypeConfirmationModel.value = false;
   modalHeaderMessage();
 };
@@ -371,10 +381,11 @@ const entitySearchValidation = computed(() => {
 const searchResultData = ref(null);
 const searchSuccessStatus = ref(false);
 const searchInsuredDetails = customerType => {
-  let searchInsuredValidation = 
-    [customerTypeEnum.Individual, ''].includes(customerType)
-      ? individualSearchValidation.value
-      : entitySearchValidation.value;
+  let searchInsuredValidation = [customerTypeEnum.Individual, ''].includes(
+    customerType,
+  )
+    ? individualSearchValidation.value
+    : entitySearchValidation.value;
   if (searchInsuredValidation) {
     loader.insuredSearch = true;
     let url = `/kyc/get-insured-details?customer_type=${customerType}&id_type=${screeningFormDetails.screening_id_type}&id_number=${screeningFormDetails.screening_id_number}&trade_license=${screeningFormDetails.trade_license_no}`;
@@ -385,11 +396,11 @@ const searchInsuredDetails = customerType => {
           clearErrors();
 
           let response = res.data.response;
-          
+
           // Store search results to pass to KYCDetails
           searchResultData.value = response;
           searchSuccessStatus.value = true;
-          
+
           if (response.customer_type == customerTypeEnum.Individual) {
             IndividualDetailsFound.value = true;
             screeningFormDetails.insured_first_name = response.first_name;
@@ -437,11 +448,11 @@ function clearInsurerDetails(customerType) {
   screeningFormDetails.company_address = null;
   screeningFormDetails.industry_type_code = null;
   screeningFormDetails.emirate_of_registration_id = null;
-  
+
   // Clear search results
   searchResultData.value = null;
   searchSuccessStatus.value = false;
-  
+
   customerType == customerTypeEnum.Individual
     ? (IndividualDetailsFound.value = false)
     : (EntityDetailsFound.value = false);
@@ -688,7 +699,7 @@ onMounted(() => {
 const handleModalClose = () => {
   screeningFormDetails.customer_type = oldCustomerType.value;
   customerTypeConfirmationModel.value = false;
-}
+};
 </script>
 <template>
   <x-modal
@@ -1031,7 +1042,7 @@ const handleModalClose = () => {
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>
     </div>
-    <KYCDetails 
+    <KYCDetails
       :searchData="searchResultData"
       :searchSuccess="searchSuccessStatus"
       :customerType="screeningFormDetails.customer_type"
