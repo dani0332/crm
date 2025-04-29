@@ -23,11 +23,9 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: json, dom, curl, libxml, mbstring, mongodb
           coverage: none
-        env:
-          runner: self-hosted
 
       - name: Install Composer dependencies
-        run: composer install
+        run: rm -Rf composer.lock && rm -Rf vendor && composer install
 
       - name: Run Pint
         run: composer pint:fix
