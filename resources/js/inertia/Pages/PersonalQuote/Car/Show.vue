@@ -5,8 +5,6 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
-import PaymentTableNewRefactored from '@/inertia/Components/PaymentComponents/PaymentTable.vue';
-import PaymentTableNewOldVersion from '@/inertia/Components/PaymentTableNewOldVersion.vue';
 
 defineProps({
   quote: Object,
@@ -3674,35 +3672,6 @@ const isCommercialVehicle = computed(() => {
           return { value: pm.code, label: pm.name };
         })
       "
-    />
-
-
-    <PaymentTableNewOldVersion
-      quoteType="Car"
-      :payments="payments"
-      :proformaPayment="
-        payments.find(
-          item =>
-            item.payment_methods_code ===
-            page.props.paymentMethodsEnum.ProformaPaymentRequest,
-        )
-      "
-      :paymentDocument="paymentDocument"
-      :quoteRequest="paymentEntityModel"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-      :isPlanDetailEnabled="isPlanDetailEnabled"
-      :expanded="sectionExpanded"
-      :paymentGatewayEnum="paymentGatewayEnum"
-      :isFuncsEnabled="isFuncsEnabled"
-      :isCapBtnEnabled="isCommercialVehicle"
-      :isPlanDetailSectionEnabled="isPlanDetailEnabled"
     />
 
     <div
