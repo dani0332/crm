@@ -752,7 +752,19 @@
 @endphp
 
         <!-- first page with first banner image -->
-       
+        <div class="page">
+            <div class="hero-image">
+                <img src="{{ public_path('images/car-banner-pdf-1.png') }}" 
+                alt="Car Banner 1">
+            </div>
+        </div>
+
+        <!-- second page with second banner image -->
+        <div class="page">
+            <div class="hero-image">
+                <img src="{{ public_path('images/car-pdf-banner-2.png') }}" alt="Car Banner 2">
+            </div>
+        </div>
 
         <!-- plans page -->
         <div class="page"  style="page-break-after: always !important;">
@@ -1007,6 +1019,19 @@
         </div>
         <pagebreak />   
 
-        
+        <!-- third page with second banner image -->
+        <div class="page" style="page-break-after: avoid !important;">
+            <div class="hero-image">
+                <img src="{{ public_path('images/home_pdf_second_last_page_with_header.jpg') }}" alt="Car Banner 2">
+            </div>
+        </div>
+
+        <!-- fourth page with second banner image -->
+        <div class="page" style="page-break-after: avoid !important;">
+            
+            <div class="hero-image">
+                <img src="{{ public_path('images/car-comparision-4-image.png') }}" alt="Car Banner 2">
+            </div>
+        </div>
 </body>
 </html>
