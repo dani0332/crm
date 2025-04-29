@@ -133,39 +133,41 @@ function search(isValid) {
 
   <!-- Search Card -->
   <div
-    class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 transition-all duration-300 hover:shadow-lg"
+    class="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 pt-6 mb-8 transition-all duration-300 hover:shadow-lg"
   >
-    <x-form
-      @submit="search"
-      :auto-focus="false"
-      class="flex items-center gap-4"
-    >
-      <x-field label="Quote Type" :rules="[isRequired]" class="flex-1">
-        <x-select
-          v-model="filters.quote_type"
-          placeholder="Select Quote Type"
-          :options="props.quoteTypes"
-          class="w-full rounded-xl border-gray-200 focus:border-primary-500 focus:ring focus:ring-primary-200 focus:ring-opacity-50 transition-all duration-200 h-12"
-        />
-      </x-field>
-      <x-field
-        :label="(filters.quote_type || '') + ' UUID'"
-        :rules="[isRequired]"
-        class="flex-1"
-      >
-        <x-input
-          v-model="filters.uuid"
-          type="search"
-          class="w-full rounded-xl border-gray-200 focus:border-primary-500 focus:ring focus:ring-primary-200 focus:ring-opacity-50 transition-all duration-200 h-12"
-          :placeholder="'Type ' + (filters.quote_type || '') + ' UUID'"
-        />
-      </x-field>
-      <div class="flex gap-2 items-center h-12">
+    <x-form @submit="search" :auto-focus="false" class="flex flex-col">
+      <div class="flex gap-4">
+        <div class="flex-1">
+          <x-field label="Quote Type" :rules="[isRequired]">
+            <ComboBox
+              v-model="filters.quote_type"
+              placeholder="Select Quote Type"
+              :options="props.quoteTypes"
+              :single="true"
+              class="w-full"
+            />
+          </x-field>
+        </div>
+        <div class="flex-1">
+          <x-field
+            :label="(filters.quote_type || '') + ' UUID'"
+            :rules="[isRequired]"
+          >
+            <x-input
+              v-model="filters.uuid"
+              type="search"
+              class="w-full"
+              :placeholder="'Type ' + (filters.quote_type || '') + ' UUID'"
+            />
+          </x-field>
+        </div>
+      </div>
+      <div class="flex justify-end gap-4">
         <x-button
           size="sm"
           color="#ff5e00"
           type="submit"
-          class="px-6 h-12 rounded-xl transition-all duration-200 hover:shadow-md flex items-center font-semibold"
+          class="px-12 rounded-md"
         >
           Search
         </x-button>
@@ -173,7 +175,7 @@ function search(isValid) {
           size="sm"
           color="primary"
           @click.prevent="resetFilters"
-          class="px-6 h-12 rounded-xl transition-all duration-200 hover:shadow-md flex items-center font-semibold"
+          class="px-12 rounded-md"
         >
           Reset
         </x-button>
