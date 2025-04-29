@@ -77,11 +77,6 @@ class AllocationAudit extends BaseMongoModel
             $data['quote_type_id'] = (int) $quoteType?->id;
         }
 
-        LoggerService::debug('AllocationAudit - Record', [
-            'data' => $data,
-            'record' => $record,
-        ]);
-
         static::create($data);
 
         return true;
