@@ -48,7 +48,7 @@ class CompanyCarFollowupJob implements ShouldQueue
             if (in_array($carLead->quote_status_id, $eligibleStatuses) && ! in_array($carLead->source, $leadSources)) {
                 info("Sending company car  email follow-ups for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
                 $carEmailService->sendCompanyCarWorkFlow($carLead);
-                $carLead->quote_status_id = QuoteStatusEnum::Quoted;
+                $carLead->quote_status_id = QuoteStatusEnum::FollowedUp;
                 $carLead->save();
             } else {
                 info(self::class." - Car Lead did not trigger company car motor WorkFlow due to ineligible source (Source: {$carLead->source}) - Ref ID: {$carLead->uuid} | Time: ".now());
