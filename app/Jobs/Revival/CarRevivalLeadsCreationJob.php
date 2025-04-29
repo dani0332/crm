@@ -29,11 +29,11 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class CarRevivalLeadsCreationJob implements ShouldQueue, 
+class CarRevivalLeadsCreationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable;
-    use GenericQueriesAllLobs;
     use Batchable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable;
+    use GenericQueriesAllLobs;
 
     public $tries = 3;
     public $timeout = 90;
@@ -59,7 +59,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue,
     public function handle()
     {
         if ($this->batch()->cancelled()) {
-            return;
+            return false;
         }
 
         $logPrefix = 'CarRevivalLeadsCreationJob - ';

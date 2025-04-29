@@ -2,7 +2,6 @@
 
 namespace App\Jobs\Revival;
 
-use App\Console\Commands\Common\Batchable;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -27,7 +26,7 @@ use Throwable;
 
 class HealthRevivalLeadsCreationJob implements ShouldQueue
 {
-    use AddPremiumAllLobs, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, BusBatchable;
+    use AddPremiumAllLobs, BusBatchable, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable;
 
     public $tries = 3;
     public $timeout = 300;

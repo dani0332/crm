@@ -11,9 +11,9 @@ use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
 use Carbon\Carbon;
+use Illuminate\Bus\Batch;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Bus\Batch;
 use Throwable;
 
 class Dtt extends Command

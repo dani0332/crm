@@ -11,9 +11,9 @@ use App\Models\HealthQuote;
 use App\Models\Transaction;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
+use Illuminate\Bus\Batch;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Bus\Batch;
 use Throwable;
 
 class DttHealth extends Command
