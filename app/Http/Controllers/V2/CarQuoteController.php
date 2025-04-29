@@ -15,12 +15,19 @@ use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
 use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Knp\Snappy\Pdf;
+use Barryvdh\Snappy\Facades\SnappyPdf;
+
+// use Barryvdh\Snappy\Facades\SnappyPdf;
 
 class CarQuoteController extends Controller
 {
+    use GenericQueriesAllLobs; 
+    
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -225,5 +232,49 @@ class CarQuoteController extends Controller
         }
 
         return back()->with('success', 'Event Followup sending successful');
+    }
+
+    function generatePdfwithSnappy(){
+
+        $data = [
+            'quote_uuid' => '765U26H4',
+            'plan_ids' => [109, 8],
+            'addons' => null,
+        ];
+        
+        $planIds = $data['plan_ids'];
+        $addons = (isset($data['addons'])) ? $data['addons'] : null;
+        $quotePlans = app(CarQuoteService::class)->getQuotePlans($data['quote_uuid']);
+        // $this->carQgetQuotePlans($data['quote_uuid']);
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $quoteType = 'car';
+
+        $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
+
+        $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+        }, 'customer']);
+
+        // $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons'));
+
+        $pdf = SnappyPdf::loadView('pdf.car_comparision.main', compact('quotePlans', 'planIds', 'quote', 'addons'))
+        ->setOption('header-html', view('pdf.car_comparision.header', []))
+        ->setOption('footer-html', view('pdf.car_comparision.footer', compact('quote')))
+        ->setOption('disable-external-links', false)
+        ->setOption('enable-local-file-access', true)
+        ->setOption('enable-internal-links' , true)
+        ->setOption('margin-left', 0)
+        ->setOption('margin-right', 0)
+        ->setOption('margin-top', 20)
+        ->setOption('margin-bottom', 55)
+        ->setOption('page-size', 'A4')
+        ->setOption('page-size', 'A4')
+        ->setOption('header-right', '[page]/[toPage]');
+
+        return $pdf->stream();
     }
 }
