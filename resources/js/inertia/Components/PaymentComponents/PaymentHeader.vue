@@ -8,6 +8,7 @@ const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const documentTypeEnum = page.props.documentTypeEnum;
 
 const can = permission => useCan(permission);
 const emit = defineEmits(['add-payment-modal']);
