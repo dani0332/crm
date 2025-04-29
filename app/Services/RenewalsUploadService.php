@@ -70,6 +70,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Models\VehicleType;
 use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
@@ -426,8 +427,9 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix) {
+                    ->finally(function () use ($logPrefix, $batch) {
                         LoggerService::info($logPrefix.' everything done');
+                        EmbeddedProductRepository::generateEPRenewal($batch);
                     })
                     ->allowFailures()
                     ->withDelay(10)
@@ -771,6 +773,7 @@ class RenewalsUploadService
                 'quote_status_id' => $transApprovedId,
                 'renewal_import_code' => $renewalUploadLead->renewal_import_code,
                 'previous_quote_policy_number' => $data['policy_number'],
+                'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'previous_policy_expiry_date' => $this->formatDate($data['end_date']),
                 'previous_quote_policy_premium' => $data['premium'],
             ];
@@ -1039,6 +1042,7 @@ class RenewalsUploadService
                 'car_value' => $data['car_value'],
                 'car_value_tier' => $data['car_value'],
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
+                'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
                 'renewal_batch_id' => null,

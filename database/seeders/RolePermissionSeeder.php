@@ -21,7 +21,8 @@ class RolePermissionSeeder extends Seeder
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
-        // $this->addBridgerSkipPermission();
+        $this->addBridgerSkipPermission();
+        $this->addPostPrepaymentButtonPermission();
         $this->sendUpdateCancelPermission();
         // $this->addLeadAllocationLobPermissions();
 
@@ -141,6 +142,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::SKIP_BRIDGER_AML,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPostPrepaymentButtonPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::CAN_POST_PREMIUM_PREPAYMENT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

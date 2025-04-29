@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EmbeddedProductTypeEnum;
 use App\Enums\EpCategoryEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -30,6 +31,7 @@ use App\Models\GenericDocument;
 use App\Models\PaymentAction;
 use App\Models\PaymentSplits;
 use App\Models\QuoteType;
+use App\Models\RenewalBatch;
 use App\Services\SendEmailCustomerService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\COU;
@@ -193,8 +195,9 @@ class EmbeddedProductRepository extends BaseRepository
                 'prices' => function ($query) {
                     $query->where('is_active', 1);
                 },
-                'prices.transactions' => function ($query) use ($quoteRequestId) {
+                'prices.transactions' => function ($query) use ($quoteTypeId, $quoteRequestId) {
                     $query->where('quote_request_id', $quoteRequestId);
+                    $query->where('quote_type_id', $quoteTypeId);
                 },
                 'prices.transactions.payments',
                 'prices.transactions.travelAnnualPayments',
@@ -1003,5 +1006,56 @@ class EmbeddedProductRepository extends BaseRepository
             'doc_uuid' => $docUuid,
             'created_by_id' => null,
         ];
+    }
+
+    public function fetchGenerateEPRenewal($batchName)
+    {
+        $batch = RenewalBatch::where('name', $batchName)->first();
+        $capturedStartDate = Carbon::createFromFormat('Y-m-d', $batch->start_date)->subMonths(16)->startOfMonth()->format('Y-m-d H:i:s');
+        $capturedEndDate = Carbon::createFromFormat('Y-m-d', $batch->end_date)->subMonths(10)->endOfMonth()->format('Y-m-d H:i:s');
+
+        $ep = EmbeddedProductRepository::where('short_code', EmbeddedProductEnum::MDX)->with('prices')->first();
+        $embeddedOptionIds = $ep->prices->pluck('id')->toArray();
+
+        $quotes = DB::table('car_quote_request as c1')
+            ->join('car_quote_request as c2', function ($join) {
+                $join->on('c1.email', '=', 'c2.email')
+                    ->on('c1.car_make_id', '=', 'c2.car_make_id')
+                    ->on('c1.car_model_id', '=', 'c2.car_model_id')
+                    ->on('c1.year_of_manufacture', '=', 'c2.year_of_manufacture')
+                    ->whereColumn('c1.code', '!=', 'c2.code');
+            })
+            ->join('embedded_transactions as e', function ($join) {
+                $join->on('e.quote_request_id', '=', 'c2.id')
+                    ->where('e.quote_request_type', '=', 'App\\Models\\CarQuote');
+            })
+            ->join('payments as p', function ($join) {
+                $join->on('p.paymentable_id', '=', 'e.id')
+                    ->where('p.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
+            })
+            ->where(function ($query) use ($batch) {
+                $query->where('c1.renewal_batch', $batch->name)
+                    ->orWhereBetween('c1.previous_policy_expiry_date', [$batch->start_date, $batch->end_date]);
+            })
+            ->where('c1.source', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->whereBetween('p.captured_at', [$capturedStartDate, $capturedEndDate])
+            ->where('e.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->whereIn('e.product_id', $embeddedOptionIds)
+            ->select('c1.id', 'c1.code as c1_code', 'e.product_id', 'e.price_without_vat', 'e.price_with_vat', 'e.vat')
+            ->orderBy('c1.id', 'asc');
+
+        if ($quotes->count() > 0) {
+            $quotes->chunk(1000, function ($quoteBatch) use ($batchName) {
+                $codes = $quoteBatch->pluck('c1_code')->map(function ($code) {
+                    return 'MDX-'.$code;
+                })->toArray();
+                $epsToUpdate = EmbeddedTransaction::whereIn('code', $codes)->get()->pluck('code')->toArray();
+
+                if (! empty($epsToUpdate)) {
+                    EmbeddedTransaction::whereIn('code', $epsToUpdate)->update(['is_selected' => 1]);
+                    info('EP Renewals - Updated EPs for batch: '.$batchName.' - count: '.count($epsToUpdate));
+                }
+            });
+        }
     }
 }
