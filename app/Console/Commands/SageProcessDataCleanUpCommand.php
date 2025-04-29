@@ -6,7 +6,6 @@ use App\Enums\SageEnum;
 use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use DB;
 use Illuminate\Console\Command;
 
 class SageProcessDataCleanUpCommand extends Command
@@ -36,13 +35,7 @@ class SageProcessDataCleanUpCommand extends Command
             ->where('created_at', '<', $date)
             ->delete();
 
-        LoggerService::info('Saga Process Data Clean Up Command executed successfully.', [' data before date' => $date]);
-
-        // TODO : Check if this is required or not
-        /*
-         DB::statement('OPTIMIZE TABLE sage_processes');
-        info('Sage Process table optimized successfully.');
-        */
+        LoggerService::info('Saga Process Data Clean Up Command executed successfully.', extra: [' data before date' => $date]);
 
     }
 }

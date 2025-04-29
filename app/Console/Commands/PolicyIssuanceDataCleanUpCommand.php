@@ -35,6 +35,6 @@ class PolicyIssuanceDataCleanUpCommand extends Command
             ->where('created_at', '<', $date)
             ->delete();
 
-        LoggerService::info('Policy Issuance Automation Data Clean Up Command executed successfully.', [' data before date' => $date]);
+        LoggerService::info('Policy Issuance Automation Data Clean Up Command executed successfully.', extra: [' data before date' => $date]);
     }
 }
