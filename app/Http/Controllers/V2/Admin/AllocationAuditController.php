@@ -18,7 +18,6 @@ class AllocationAuditController extends Controller
     public function index(Request $request)
     {
         if ($request->filled('uuid') && $request->filled('quote_type')) {
-
             $audits = AllocationAudit::query()
                 ->byQuoteType()
                 ->byUuid()
