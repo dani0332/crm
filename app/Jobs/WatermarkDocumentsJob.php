@@ -13,7 +13,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
-use Monolog\Logger;
 
 class WatermarkDocumentsJob implements ShouldQueue
 {
@@ -45,7 +44,6 @@ class WatermarkDocumentsJob implements ShouldQueue
     {
         LoggerService::startQuoteLogging($this->uuid);
         LoggerService::info('watermark job started for '.$this->uuid.' attempt: '.$this->attempts());
-
 
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed()) {

@@ -519,6 +519,7 @@ class QuoteDocumentService extends BaseService
                 // Copy the original file to the output path
                 copy($sourceFilePath, $outputPath);
                 LoggerService::info("Using unwatermarked original file due to error for UUID: $uuid");
+
                 return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
             }
 
@@ -556,14 +557,14 @@ class QuoteDocumentService extends BaseService
             exec('which pdftk 2>&1', $pdftk_check_output, $pdftk_check_return);
 
             LoggerService::info("PDFtk availability check for UUID: $uuid");
-            LoggerService::info("PDFtk path: " . (empty($pdftk_check_output) ? "Not found" : implode("\n", $pdftk_check_output)));
+            LoggerService::info('PDFtk path: '.(empty($pdftk_check_output) ? 'Not found' : implode("\n", $pdftk_check_output)));
             LoggerService::info("PDFtk check return code: $pdftk_check_return");
             // end Check if PDFtk is installed
 
             // Use PDFtk's background operation to apply watermark behind content
-            $pdftk_command = 'pdftk ' . escapeshellarg($sourceFilePath) .
-                          ' background ' . escapeshellarg($watermarkPdf) .
-                          ' output ' . escapeshellarg($outputPath) . ' 2>&1';
+            $pdftk_command = 'pdftk '.escapeshellarg($sourceFilePath).
+                          ' background '.escapeshellarg($watermarkPdf).
+                          ' output '.escapeshellarg($outputPath).' 2>&1';
 
             // Execute the command and capture output
             $output = [];
@@ -573,19 +574,19 @@ class QuoteDocumentService extends BaseService
             // Show detailed output from command execution for direct debugging
             LoggerService::info("PDFtk command execution details for UUID: $uuid");
             LoggerService::info("Return code: $returnVar");
-            LoggerService::info("Command output: " . (empty($output) ? "No output" : implode("\n", $output)));
-            LoggerService::info("Output file exists: " . (file_exists($outputPath) ? "Yes" : "No"));
-            LoggerService::info("Output file size: " . (file_exists($outputPath) ? filesize($outputPath) . " bytes" : "N/A"));
+            LoggerService::info('Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
+            LoggerService::info('Output file exists: '.(file_exists($outputPath) ? 'Yes' : 'No'));
+            LoggerService::info('Output file size: '.(file_exists($outputPath) ? filesize($outputPath).' bytes' : 'N/A'));
 
             // Simple check - if file doesn't exist or is too small, try Ghostscript
-            if ($returnVar !== 0 || !file_exists($outputPath) || filesize($outputPath) < 100) {
+            if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
                 LoggerService::error("PDFtk background failed, trying Ghostscript for UUID: $uuid");
                 $this->ghostscriptWatermark($sourceFilePath, $outputPath, $uuid);
             }
 
             // Clean up the watermark file
             if (file_exists($watermarkPdf)) {
-                 unlink($watermarkPdf);
+                unlink($watermarkPdf);
             }
 
             return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
@@ -594,7 +595,7 @@ class QuoteDocumentService extends BaseService
             LoggerService::error('PDF watermarking failed: '.$e->getMessage()." for UUID: $uuid");
             // Clean up the watermark file if it exists
             if (file_exists($watermarkPdf ?? '')) {
-                 unlink($watermarkPdf);
+                unlink($watermarkPdf);
             }
             // Re-throw the exception to be handled by the calling method
             throw $e;
@@ -626,7 +627,7 @@ class QuoteDocumentService extends BaseService
                   '-dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dSubsetFonts=false '.
                   '-dCompatibilityLevel=1.4 -dPrinted=false '.
                   '-sOutputFile='.escapeshellarg($outputPath).' '.
-                  escapeshellarg($sourceFilePath).' '.escapeshellarg($watermarkPdfGs) . ' 2>&1';
+                  escapeshellarg($sourceFilePath).' '.escapeshellarg($watermarkPdfGs).' 2>&1';
 
         // Execute command and capture output for debugging
         $output = [];
@@ -636,17 +637,17 @@ class QuoteDocumentService extends BaseService
         // Show detailed output for direct debugging
         LoggerService::info("Ghostscript command execution details for UUID: $uuid");
         LoggerService::info("Return code: $returnVar");
-        LoggerService::info("Command output: " . (empty($output) ? "No output" : implode("\n", $output)));
-        LoggerService::info("Output file exists: " . (file_exists($outputPath) ? "Yes" : "No"));
-        LoggerService::info("Output file size: " . (file_exists($outputPath) ? filesize($outputPath) . " bytes" : "N/A"));
+        LoggerService::info('Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
+        LoggerService::info('Output file exists: '.(file_exists($outputPath) ? 'Yes' : 'No'));
+        LoggerService::info('Output file size: '.(file_exists($outputPath) ? filesize($outputPath).' bytes' : 'N/A'));
 
         // Clean up
         if (file_exists($watermarkPdfGs)) {
-             unlink($watermarkPdfGs);
+            unlink($watermarkPdfGs);
         }
 
         // If Ghostscript also failed, just use the original file
-        if ($returnVar !== 0 || !file_exists($outputPath) || filesize($outputPath) < 100) {
+        if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
             LoggerService::error("Ghostscript watermarking failed for UUID: $uuid");
 
             if (file_exists($sourceFilePath)) {
@@ -871,4 +872,3 @@ class QuoteDocumentService extends BaseService
             ->exists();
     }
 }
-
