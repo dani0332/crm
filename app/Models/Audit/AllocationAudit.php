@@ -3,9 +3,12 @@
 namespace App\Models\Audit;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
 use App\Models\BaseMongoModel;
+use App\Models\PersonalQuote;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
@@ -29,8 +32,12 @@ class AllocationAudit extends BaseMongoModel
         'advisor_email',
     ];
 
-    public static function log(Model $model, ?QuoteTypes $quoteType = null, ?User $user = null): self
+    public static function log(Model $model, ?QuoteTypes $quoteType = null, ?User $user = null): bool
     {
+        $record = $model->newQuery()->with('advisor:id,name,email')->find($model->getKey());
+
+        LoggerService::startQuoteLogging($record, LoggerFeatureEnum::ALLOCATION_AUDIT);
+
         $user = $user ?: (object) [
             'id' => -1,
             'name' => 'System',
@@ -44,20 +51,40 @@ class AllocationAudit extends BaseMongoModel
         ];
 
         $advisorDetails = [
-            'id' => $model->advisor->id,
-            'name' => $model->advisor->name,
-            'email' => $model->advisor->email,
+            'id' => $record->advisor->id,
+            'name' => $record->advisor->name,
+            'email' => $record->advisor->email,
         ];
 
-        return static::create([
-            'quote_type_id' => (int) $quoteType?->id() ?? $model->quote_type_id,
-            'uuid' => $model->uuid,
-            'assignment_type' => (int) $model->assignment_type,
+        $data = [
+            'quote_type_id' => (int) $quoteType?->id(),
+            'uuid' => $record->uuid,
+            'assignment_type' => (int) $record->assignment_type,
             'advisor_id' => (int) $advisorDetails['id'],
             'action_by_id' => (int) $actionByDetails['id'],
             'action_by_details' => $actionByDetails,
             'advisor_details' => $advisorDetails,
+        ];
+
+        if ($record instanceof PersonalQuote) {
+            $quoteType = $record->quoteType;
+            if (! checkPersonalQuotes($quoteType?->code)) {
+                LoggerService::info('Allocation Audit Skipping because Parent Quote is not migrated to Personal Quote yet.');
+
+                return false;
+            }
+
+            $data['quote_type_id'] = (int) $quoteType?->id;
+        }
+
+        LoggerService::debug('AllocationAudit - Record', [
+            'data' => $data,
+            'record' => $record,
         ]);
+
+        static::create($data);
+
+        return true;
     }
 
     public function assignmentTypeText(): Attribute

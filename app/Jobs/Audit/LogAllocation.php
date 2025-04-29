@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Attributes\WithoutRelations;
 use Illuminate\Support\Facades\Auth;
 
 class LogAllocation implements ShouldQueue
@@ -23,8 +24,8 @@ class LogAllocation implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public Model $model,
-        public ?QuoteTypes $quoteType = null
+        #[WithoutRelations] protected Model $model,
+        protected ?QuoteTypes $quoteType = null
     ) {
         if (Auth::check()) {
             $this->user = Auth::user();
