@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
@@ -25,7 +26,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use MongoDB\BSON\Regex;
 use MongoDB\BSON\UTCDateTime;
-use App\Enums\FilterTypes;
 
 class InslyDetailRepository extends BaseRepository
 {
