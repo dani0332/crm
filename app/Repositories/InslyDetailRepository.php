@@ -115,7 +115,7 @@ class InslyDetailRepository extends BaseRepository
         $perPage = 15;
         $skip = ($page - 1) * $perPage;
 
-        LoggerService::info('InslyDetailRepository - getDataByIndex.', extra: request()->all());
+        LoggerService::info('InslyDetailRepository - getDataByIndex.', extra: request()->only(['policy_number', 'email', 'mobile_no']));
 
         $must = array_values(array_filter([
             $this->buildSearchClause('policy_no', request()->get('policy_number'), FilterTypes::EXACT),
