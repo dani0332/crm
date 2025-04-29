@@ -20,6 +20,12 @@
             min-height: 100vh;
         }
         
+
+        .separator {
+        color: #D3D3D3; /* Match border color */
+        font-weight: normal; /* Ensure it's not bold */
+        padding: 0 5px; /* Adjust spacing */
+    }
         .page {
             width: 100%;
             background-color: white;
@@ -64,10 +70,11 @@
             display: inline-block;
             padding-right: 6px;
             margin-right: 6px;
-            border-right: 1px solid rgba(91, 95, 96, 0.3);
-            border-top:0px;
-            border-bottom:0px;
-            border-left:0px;
+            /* border-right: 1px solid rgba(91, 95, 96, 0.3); */
+            border:0px;   
+            border-top: 0px;
+            border-bottom: 0px;
+            border-left: 0px;
         }
         
         .header-item:last-child {
@@ -777,16 +784,16 @@
                 <div class="header-content">
                     <div class="header-details">
                         <div class="header-item">
-                            <h1 class="header-title">Car Insurance comparison Table </h1>
+                            <h1 class="header-title">Car Insurance comparison Table <span class="separator">|</span></h1>
                         </div>
                         <div class="header-item">
-                            <p class="header-text">Customer name: <strong>{{ $quote->first_name }} {{ $quote->last_name }}</strong> </p>
+                            <p class="header-text">Customer name: <strong>{{ $quote->first_name }} {{ $quote->last_name }}</strong> <span class="separator">|</span></p> 
                         </div>
                         <div class="header-item">
-                            <p class="header-text">Car make/model: <strong>{{ @$quote->carMake->text }} {{ @$quote->carModel->text }}</strong> </p>
+                            <p class="header-text">Car make/model: <strong>{{ @$quote->carMake->text }} {{ @$quote->carModel->text }}</strong> <span class="separator">|</span> </p>
                         </div>
                         <div class="header-item">
-                            <p class="header-text">Year: <strong>{{ @$quote->year_of_manufacture }}</strong></p>
+                            <p class="header-text">Year: <strong>{{ @$quote->year_of_manufacture }}</strong> </p>
                         </div>
                     </div>
                     <div class="quote-ref">
