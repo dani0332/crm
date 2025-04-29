@@ -2,6 +2,7 @@
 
 namespace App\Services\Logger;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Context;
@@ -9,8 +10,19 @@ use Illuminate\Support\Facades\Log;
 
 class LoggerService
 {
-    public static function startQuoteLogging(Model|string $lead)
+    public static function startFeatureLogging(LoggerFeatureEnum $feature)
     {
+        Log::withContext(['feature' => $feature->value]);
+    }
+
+    public static function startQuoteLogging(Model|string|null $lead, ?LoggerFeatureEnum $feature = null)
+    {
+        if (empty($lead)) {
+            self::alert('startQuoteLogging - Lead is empty');
+
+            return;
+        }
+
         $refID = null;
 
         if ($lead instanceof string || is_string($lead)) {
@@ -21,6 +33,10 @@ class LoggerService
 
         self::endLogging();
         Log::withContext(['ref_id' => $refID]);
+
+        if ($feature) {
+            self::startFeatureLogging($feature);
+        }
     }
 
     public static function endLogging()

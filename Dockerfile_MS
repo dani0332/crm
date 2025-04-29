@@ -43,8 +43,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     ghostscript \
-    pdftk \
-    libwebp-dev
+    libwebp-dev \
+    pdftk
 
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd

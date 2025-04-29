@@ -4,6 +4,7 @@ namespace App\Console;
 
 use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
+use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
 use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
@@ -39,6 +40,7 @@ class Kernel extends ConsoleKernel
         SageProcessesMarkFailedCommand::class,
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
+        PolicyIssuanceMarkFailedCommand::class,
     ];
 
     /**
@@ -117,7 +119,6 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
-        $schedule->command('DttWithDate')->timezone('Asia/Dubai')->dailyAt('19:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('DttHealth')->timezone('Asia/Dubai')->dailyAt('09:03')->onOneServer()->withoutOverlapping();
         $schedule->command('DttHealthFollowUp')->timezone('Asia/Dubai')->dailyAt('11:48')->onOneServer()->withoutOverlapping();
@@ -131,6 +132,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('aml-screening-automation:run')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
         $schedule->command('aml-screening-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('policy-issuance-automation:cleanup')->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('policy-issuance:mark-failed')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('quotes-syncing:retry')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
     }
