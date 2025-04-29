@@ -25,6 +25,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use MongoDB\BSON\Regex;
 use MongoDB\BSON\UTCDateTime;
+use App\Enums\FilterTypes;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -35,22 +36,22 @@ class InslyDetailRepository extends BaseRepository
         return InslyDetail::class;
     }
 
-    public function buildSearchClause(string $field, mixed $value, string $type = 'exact')
+    public function buildSearchClause(string $field, mixed $value, string $type = FilterTypes::EXACT)
     {
         if (is_null($value) || $value === '') {
             return null;
         }
 
         switch ($type) {
-            case 'exact':
+            case FilterTypes::EXACT:
                 return [
-                    'text' => [
+                    'phrase' => [
                         'query' => $value,
                         'path' => $field,
                     ],
                 ];
 
-            case 'like':
+            case FilterTypes::FREE:
                 // For email and other simple like matches (e.g., for policy_no)
                 return [
                     'wildcard' => [
@@ -60,7 +61,7 @@ class InslyDetailRepository extends BaseRepository
                     ],
                 ];
 
-            case 'like_regex':
+            case FilterTypes::FREE_REGEX:
                 // For fields where we want both LIKE (wildcard) and regex searches
                 return [
                     'compound' => [
@@ -84,7 +85,7 @@ class InslyDetailRepository extends BaseRepository
                     ],
                 ];
 
-            case 'in':
+            case FilterTypes::IN:
                 $values = is_array($value) ? $value : explode(',', $value);
                 $should = array_map(fn ($v) => [
                     'text' => [
@@ -114,10 +115,10 @@ class InslyDetailRepository extends BaseRepository
         $skip = ($page - 1) * $perPage;
 
         $must = array_values(array_filter([
-            $this->buildSearchClause('policy_no', request()->get('policy_number'), 'exact'),
-            $this->buildSearchClause('policy.coverage', $coverage, 'in'),
-            $this->buildSearchClause('customer.email', request()->get('email'), 'like'),
-            $this->buildSearchClause('customer.mobile_phone', request()->get('mobile_no'), 'like_regex'),
+            $this->buildSearchClause('policy_no', request()->get('policy_number'), FilterTypes::EXACT),
+            $this->buildSearchClause('policy.coverage', $coverage, FilterTypes::IN),
+            $this->buildSearchClause('customer.email', request()->get('email'), FilterTypes::FREE),
+            $this->buildSearchClause('customer.mobile_phone', request()->get('mobile_no'), FilterTypes::FREE_REGEX),
         ]));
 
         $pipeline = [];
