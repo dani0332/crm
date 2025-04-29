@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import UpdateTotalPrice from './../UpdateTotalPrice.vue';
+import NProgress from 'nprogress';
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
@@ -9,6 +10,9 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const can = permission => useCan(permission);
 const emit = defineEmits(['add-payment-modal']);
+const notification = useNotifications('toast');
+
+const quoteDocuments = page.props.quoteDocuments;
 
 const props = defineProps({
   payments: Array,
@@ -16,6 +20,8 @@ const props = defineProps({
   proformaPayment: Object,
   quoteRequest: Object,
   quoteType: String,
+  totalPrice: Number,
+  planDetail: Object,
 });
 
 const readOnlyMode = reactive({
@@ -25,6 +31,33 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const isProformaPaymentRequestExportable = (payment, documents) => {
+  if (!documents && !quoteDocuments) return true;
+  let proformaPaymentRequestDocuments = null;
+  if (documents) {
+    proformaPaymentRequestDocuments = documents.filter(
+      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
+    );
+  } else if (!proformaPaymentRequestDocuments) {
+    // For some LOBs, Documents are not available in the quote object, so we need to check the quoteDocuments object
+    proformaPaymentRequestDocuments = quoteDocuments.filter(
+      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
+    );
+  }
+  if (proformaPaymentRequestDocuments.length == 0) return true;
+
+  proformaPaymentRequestDocuments.sort((a, b) => b.id - a.id);
+  let latestProformaPaymentRequestDocument = proformaPaymentRequestDocuments[0];
+
+  let paymentUpdateAt = moment(payment.updated_at);
+  let latestProformaRequestDocumentCreatedAt = moment(
+    latestProformaPaymentRequestDocument.created_at,
+    'DD-MM-YYYY HH:mm:s',
+  ).format('YYYY-MM-DD HH:mm:ss');
+
+  return paymentUpdateAt.isAfter(latestProformaRequestDocumentCreatedAt);
+};
 
 const downloadProformaPayment = async () => {
   let errorMsg = '';
@@ -49,7 +82,7 @@ const downloadProformaPayment = async () => {
     });
     return;
   }
-  if (totalPrice.value < 0 && planDetail.value) {
+  if (props.totalPrice < 0 && props.planDetail) {
     errorMsg = 'Please update the Total Price in the Plan Details section.';
     if (quoteTypesToCheck.includes(props.quoteType)) {
       errorMsg = 'Please select a plan.';

@@ -1512,33 +1512,6 @@ const isBrokerHavePermission = () => {
   return true;
 };
 
-const isProformaPaymentRequestExportable = (payment, documents) => {
-  if (!documents && !quoteDocuments) return true;
-  let proformaPaymentRequestDocuments = null;
-  if (documents) {
-    proformaPaymentRequestDocuments = documents.filter(
-      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
-    );
-  } else if (!proformaPaymentRequestDocuments) {
-    // For some LOBs, Documents are not available in the quote object, so we need to check the quoteDocuments object
-    proformaPaymentRequestDocuments = quoteDocuments.filter(
-      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
-    );
-  }
-  if (proformaPaymentRequestDocuments.length == 0) return true;
-
-  proformaPaymentRequestDocuments.sort((a, b) => b.id - a.id);
-  let latestProformaPaymentRequestDocument = proformaPaymentRequestDocuments[0];
-
-  let paymentUpdateAt = moment(payment.updated_at);
-  let latestProformaRequestDocumentCreatedAt = moment(
-    latestProformaPaymentRequestDocument.created_at,
-    'DD-MM-YYYY HH:mm:s',
-  ).format('YYYY-MM-DD HH:mm:ss');
-
-  return paymentUpdateAt.isAfter(latestProformaRequestDocumentCreatedAt);
-};
-
 const sendUpdateStatusEnum = props.sendUpdateStatusEnum;
 const isEF = computed(() => {
   return (
@@ -3408,6 +3381,9 @@ onBeforeMount(() => {
           :proformaPayment="proformaPayment"
           :quoteRequest="quoteRequest"
           :quoteType="quoteType"
+          :quoteDocuments="quoteDocuments"
+          :totalPrice="totalPrice"
+          :planDetail="planDetail"
           @add-payment-modal="addPaymentModal"
         />
         
