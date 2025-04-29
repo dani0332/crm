@@ -404,6 +404,7 @@ final class PermissionsEnum extends Enum
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
+    public const CANCEL_SEND_UPDATE = 'cancel-send-update';
     public const LIFE_LEADPOOL = 'life-leadpool';
     public const HOME_LEADPOOL = 'home-leadpool';
     public const YACHT_LEADPOOL = 'yacht-leadpool';
@@ -412,6 +413,7 @@ final class PermissionsEnum extends Enum
     public const CYCLE_LEADPOOL = 'cycle-leadpool';
     public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool';
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
+    public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
 
     public static function getAdvisorConversionReportPermissions()
     {

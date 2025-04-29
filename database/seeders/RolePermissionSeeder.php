@@ -22,7 +22,8 @@ class RolePermissionSeeder extends Seeder
         // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
         $this->addBridgerSkipPermission();
-        $this->addLeadAllocationLobPermissions();
+        $this->addPostPrepaymentButtonPermission();
+        $this->sendUpdateCancelPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -145,6 +146,17 @@ class RolePermissionSeeder extends Seeder
         ]);
     }
 
+    private function addPostPrepaymentButtonPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::CAN_POST_PREMIUM_PREPAYMENT,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function addLeadAllocationLobPermissions()
     {
         $permissions = [
@@ -167,5 +179,16 @@ class RolePermissionSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+    }
+
+    private function sendUpdateCancelPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::CANCEL_SEND_UPDATE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

@@ -6,6 +6,7 @@ use App\Enums\RuleTypeEnum;
 use App\Models\Rule;
 use App\Models\RuleDetail;
 use App\Models\RuleUser;
+use App\Services\Logger\LoggerService;
 use DB;
 use Illuminate\Http\Request;
 use stdClass;
@@ -123,7 +124,7 @@ class RuleService extends BaseService
             $rule->ruleUsers()->attach($userIds);
         }
 
-        info('------ Rule update is successfully done by user : '.auth()->user()->id.' for rule : '.$rule->name.' ------');
+        LoggerService::info('------ Rule update is successfully done by user : '.auth()->user()->id.' for rule : '.$rule->name.' ------');
 
         return $rule;
     }

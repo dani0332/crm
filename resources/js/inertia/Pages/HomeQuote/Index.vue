@@ -1,4 +1,7 @@
 <script setup>
+// Test comment for Cursor rule - testing pre-commit hook
+// Another test comment to trigger "Build Vue assets before commit" rule
+// Testing git hook implementation
 defineProps({
   quotes: Object,
   leadStatuses: Array,
@@ -136,10 +139,21 @@ const leadStatusOptions = computed(() => {
 });
 
 const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
+  let options = [
+    {
+      value: '-1',
+      label: 'UnAssigned',
+    },
+  ];
+
+  options.push(
+    ...page.props.advisors.map(advisor => ({
+      value: advisor.id,
+      label: advisor.name,
+    })),
+  );
+
+  return options;
 });
 
 const renewalBatchOptions = computed(() => {
@@ -194,7 +208,6 @@ function onSubmit(isValid) {
       onFinish: () => (loader.table = false),
     });
   } else {
-    console.log('Invalid');
   }
 }
 
@@ -516,6 +529,13 @@ const formatDate = dateString =>
         <x-field label="Created Date End">
           <DatePicker v-model="filters.created_at_end" name="created_at_end" />
         </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"

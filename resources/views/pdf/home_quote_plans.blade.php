@@ -1033,14 +1033,13 @@
                 <td class="footer-td" style="width: 30%;">
                     <div class="footer-box" style="margin-right: 20px; padding: 5px 10px">
                         <div class="advisor-section">
-                            <div class="advisor-photo-container">
-                                <img src="{{ $quote->advisor?->profile_photo_path != null ? $quote->advisor?->profile_photo_path : public_path('image/alfred-theme.png') }}"
-                                     alt="Advisor Photo" class="advisor-photo">
-                            </div>
-                            
                             @if($quote->advisor)
+                                <div class="advisor-photo-container">
+                                    <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('image/alfred-theme.png') }}"
+                                         alt="Advisor Photo" class="advisor-photo">
+                                </div>
                                 <div class="advisor-details">
-                                    <p class="advisor-name">{{ $quote->advisor?->name }}</p>
+                                    <p class="advisor-name">{{ $quote->advisor->name }}</p>
                                     <p class="advisor-role">Insurance Advisor</p>
                                     <p class="advisor-contact">
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
@@ -1057,6 +1056,15 @@
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
                                         <span>{{ $quote->advisor->landline_no }}</span>
                                         <br>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
+                                        <span>800 ALFRED (800 253 733)</span>
+                                    </p>
+                                </div>
+                            @else
+                                <div style="text-align: center; width: 100%;">
+                                    <img src="{{ public_path('image/alfred-theme.png') }}"
+                                         alt="Advisor Photo" class="advisor-photo" style="margin: 0 auto; display: block;">
+                                    <p class="advisor-contact" style="text-align: center; margin-top: 8px;">
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
                                         <span>800 ALFRED (800 253 733)</span>
                                     </p>

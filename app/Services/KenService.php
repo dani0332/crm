@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Http;
 
 class KenService
@@ -37,11 +38,20 @@ class KenService
         $url = $this->baseUrl.$path;
         $response = $this->client->withBody(json_encode($data), 'application/json')
             ->send($method, $url)->onError(function ($response) use ($data, $url) {
-                info('KEN Service Exception', ['data' => $data, 'url' => $url]);
-                if (isset($response->json()['msg'])) {
-                    vAbort($response->json()['msg']);
-                } else {
-                    vAbort('KEN Service Exception');
+                // Only log 5XX errors
+                if ($response->status() >= 500) {
+                    LoggerService::error('KEN Service Server Error', [
+                        'data' => $data,
+                        'url' => $url,
+                        'status_code' => $response->status(),
+                        'response' => $response->json(),
+                    ]);
+
+                    if (isset($response->json()['msg'])) {
+                        vAbort($response->json()['msg']);
+                    } else {
+                        vAbort('KEN Service Exception');
+                    }
                 }
             });
 
@@ -53,7 +63,16 @@ class KenService
         $url = config('constants.KEN2_API_ENDPOINT').$path;
         $response = $this->client->withBody(json_encode($data), 'application/json')
             ->send($method, $url)->onError(function ($response) use ($data, $url) {
-                info('KEN Service Exception', ['data' => $data, 'url' => $url]);
+                // Only log 5XX errors
+                if ($response->status() >= 500) {
+                    LoggerService::error('KEN Service Server Error', [
+                        'data' => $data,
+                        'url' => $url,
+                        'status_code' => $response->status(),
+                        'response' => $response->json(),
+                    ]);
+                }
+
                 if (isset($response->json()['msg'])) {
                     vAbort($response->json()['msg']);
                 } else {

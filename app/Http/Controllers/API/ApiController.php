@@ -6,11 +6,13 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AIGWorkflowRequest;
 use App\Http\Requests\Api\ClearCacheRequest;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\EmailEventsRequest;
@@ -32,6 +34,7 @@ use App\Services\Cache\CacheManager;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
+use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
@@ -47,13 +50,15 @@ class ApiController extends Controller
 
     public $apiService;
     public $inboundEmailsHookService;
+    public $outboundEmailsHookService;
     protected $emailStatusService;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
+        $this->outboundEmailsHookService = $outboundEmailsHookService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -242,6 +247,10 @@ class ApiController extends Controller
         return Ken::renewalRequest('/get-connectivity-check', 'get');
     }
 
+    public function birdOutboundEmailsHook(BirdOutBoundWebhookRequest $request)
+    {
+        return $this->outboundEmailsHookService->handleOutboundEmailsHook($request);
+    }
     public function duplicateEntries()
     {
         return DeDuplicateQuoteDetailScript::run();
@@ -316,5 +325,10 @@ class ApiController extends Controller
         CacheManager::forget($request->getKey());
 
         return apiResponse(null, Response::HTTP_OK, 'Cache cleared successfully');
+    }
+
+    public function triggerAIGWorkflow(AIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerAIGWorkflow($request);
     }
 }

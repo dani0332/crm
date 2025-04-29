@@ -7,10 +7,10 @@ use App\Enums\QuoteTypes;
 use App\Models\HealthQuote;
 use App\Services\HealthAllocationService;
 use App\Services\HealthEmailService;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class HealthAllocation implements Allocation
 {
@@ -31,13 +31,13 @@ class HealthAllocation implements Allocation
             $lead = $this->fetchLead();
 
             if (! $lead) {
-                info('Lead not found or not under fetch criteria');
+                LoggerService::info('Lead not found or not under fetch criteria');
 
                 return $this->healthAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
             if ($lead->isAllocationInProgress()) {
-                info("Allocation is already started at {$lead->allocation_started_at}");
+                LoggerService::info("Allocation is already started at {$lead->allocation_started_at}");
 
                 return $this->healthAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
             }
@@ -47,7 +47,7 @@ class HealthAllocation implements Allocation
             $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
-                info('No health team found against');
+                LoggerService::warning('No health team found against');
 
                 $lead->endAllocation();
 
@@ -59,10 +59,10 @@ class HealthAllocation implements Allocation
             if (! $advisor) {
                 $this->healthAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::HEALTH);
 
-                info('No advisors found against');
+                LoggerService::warning('No advisors found against');
 
                 if ($lead->isApplicationPending() && ! $lead->isApplyNowEmailSent() && Carbon::parse($lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
-                    info("Sending Apply Now Email as it's been 10 minutes since quote status was marked as applicatio pending");
+                    LoggerService::info("Sending Apply Now Email as it's been 10 minutes since quote status was marked as applicatio pending");
                     app(HealthEmailService::class)->initiateApplyNowEmail($lead);
                 }
 
@@ -70,7 +70,7 @@ class HealthAllocation implements Allocation
             }
 
             if ($advisor->id == $lead->advisor_id) {
-                info('Advisor is same as previous advisor. Skipping for now. for');
+                LoggerService::info('Advisor is same as previous advisor. Skipping for now. for');
                 $lead->endAllocation();
                 $this->healthAllocationService->endBuyLeadProcessing();
 
@@ -86,8 +86,8 @@ class HealthAllocation implements Allocation
             $this->healthAllocationService->endBuyLeadProcessing();
 
             $message = $th->getMessage() ?? '';
-            info('exception occurred in health lead allocation with error : '.$message);
-            info('exception occurred in health lead allocation with error stack as  : '.$th->getTraceAsString());
+            LoggerService::error('exception occurred in health lead allocation with error : '.$message);
+            LoggerService::error('exception occurred in health lead allocation with error stack as  : '.$th->getTraceAsString());
 
             return $this->healthAllocationService->createResponse(0, 'exception occurred in health lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -117,7 +117,7 @@ class HealthAllocation implements Allocation
         } catch (\Exception $e) {
             DB::rollback();
             $this->healthAllocationService->endBuyLeadProcessing();
-            Log::error($e->getMessage());
+            LoggerService::error($e->getMessage());
         }
     }
 }

@@ -8,6 +8,7 @@ use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Cache;
 
 class EmailStatusService extends BaseService
@@ -41,7 +42,6 @@ class EmailStatusService extends BaseService
 
     public function addBirdEmailStatus($request)
     {
-
         switch (request('quoteTypeId')) {
             case QuoteTypeId::Car:
                 $quote = CarQuote::where('uuid', $request->uuid)->first();
@@ -57,7 +57,10 @@ class EmailStatusService extends BaseService
                 break;
         }
         if (! $quote) {
-            info("lead not found for uuid: {$request->uuid} time: ".now());
+            LoggerService::warning("Lead not found for uuid: {$request->uuid} time: ".now(), [
+                'uuid' => $request->uuid,
+                'quoteTypeId' => request('quoteTypeId'),
+            ]);
 
             return (object) ['message' => 'lead not found', 'status' => false];
         }
@@ -70,8 +73,22 @@ class EmailStatusService extends BaseService
 
             return (object) ['message' => 'Email event logged successfully', 'status' => true];
         } else {
+
             return (object) ['message' => 'Email event already logged', 'status' => true];
         }
+    }
+
+    public function updateEmailStatus($emailData, $status)
+    {
+        $emailStatus = EmailStatus::where('id', $emailData->id)->first();
+        if (empty($emailStatus)) {
+            info(self::class.' - updateEmailStatus not found for msg_id: '.$emailData->message_id.' | Time: '.now());
+
+            return;
+        }
+        $emailStatus->email_status = $status;
+        $emailStatus->save();
+        info('EmailStatusService - EmailStatus updated for msg_id: '.$emailData->message_id.' email_status: '.$emailStatus->email_status.' | Time:'.now());
     }
 
 }
