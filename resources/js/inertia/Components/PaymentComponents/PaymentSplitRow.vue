@@ -8,7 +8,12 @@ const permissionEnum = page.props.permissionsEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 
-const { formatDate, formatAmount, formatString, paymentAllocationStatusTooltip } = usePayment();
+const {
+  formatDate,
+  formatAmount,
+  formatString,
+  paymentAllocationStatusTooltip,
+} = usePayment();
 
 const props = defineProps({
   splitPayment: Object,
@@ -32,26 +37,45 @@ const emit = defineEmits([
   'generate-cc-link',
   'delete-split-payment',
   'retry-split-payment',
-  'post-prepayment'
+  'post-prepayment',
 ]);
 
 // Add can function for permission checks
 const can = permission => useCan(permission);
 
 const viewPayment = () => {
-  emit('view-payment', props.parentPayment, props.splitPayment.id, props.splitPayment.sr_no, 0);
+  emit(
+    'view-payment',
+    props.parentPayment,
+    props.splitPayment.id,
+    props.splitPayment.sr_no,
+    0,
+  );
 };
 
 const generateCCLink = () => {
-  emit('generate-cc-link', props.splitPayment.code, props.splitPayment.sr_no, props.splitPayment.payment_status_id);
+  emit(
+    'generate-cc-link',
+    props.splitPayment.code,
+    props.splitPayment.sr_no,
+    props.splitPayment.payment_status_id,
+  );
 };
 
 const deleteSplitPayment = () => {
-  emit('delete-split-payment', props.splitPayment.id, props.splitPayment.payment_status_id);
+  emit(
+    'delete-split-payment',
+    props.splitPayment.id,
+    props.splitPayment.payment_status_id,
+  );
 };
 
 const retrySplitPayment = () => {
-  emit('retry-split-payment', props.splitPayment.process_job?.id, props.splitPayment.process_job?.message);
+  emit(
+    'retry-split-payment',
+    props.splitPayment.process_job?.id,
+    props.splitPayment.process_job?.message,
+  );
 };
 
 const postPrepayment = () => {
@@ -128,7 +152,6 @@ const enablePostPrepaymentButton = computed(() => {
   }
   return false;
 });
-
 </script>
 
 <template>
@@ -176,9 +199,7 @@ const enablePostPrepaymentButton = computed(() => {
         <span class="border-b border-dotted border-black">
           {{
             splitPayment.payment_allocation_status !== null
-              ? formatString(
-                  splitPayment.payment_allocation_status,
-                )
+              ? formatString(splitPayment.payment_allocation_status)
               : ''
           }}
         </span>
@@ -199,17 +220,13 @@ const enablePostPrepaymentButton = computed(() => {
           !page.props.linkedQuoteDetails ||
           quoteRequest.quote_status_id !=
             page.props.quoteStatusEnum.PolicyCancelled ||
-          page.props.linkedQuoteDetails?.childLeadsCount ==
-            0
+          page.props.linkedQuoteDetails?.childLeadsCount == 0
         "
       >
-        <x-button
-          size="xs"
-          color="primary"
-          @click="viewPayment"
-          outlined
-        >View</x-button>
-        
+        <x-button size="xs" color="primary" @click="viewPayment" outlined
+          >View</x-button
+        >
+
         <x-button
           v-if="splitPayment.payment_method.code == 'CC'"
           class="ml-2"
@@ -217,19 +234,19 @@ const enablePostPrepaymentButton = computed(() => {
           color="emerald"
           @click.prevent="generateCCLink"
           outlined
-        >Copy Payment Link</x-button>
-        
+          >Copy Payment Link</x-button
+        >
+
         <x-button
-          v-if="canDeleteSplitPayment( parentPayment,
-                                  splitIndex,
-                                  splitPayment)"
+          v-if="canDeleteSplitPayment(parentPayment, splitIndex, splitPayment)"
           size="xs"
           color="red"
           class="ml-2"
           @click="deleteSplitPayment"
           outlined
-        >Delete</x-button>
-        
+          >Delete</x-button
+        >
+
         <x-button
           v-if="
             can(permissionEnum.ReApprovePayments) &&
@@ -240,7 +257,8 @@ const enablePostPrepaymentButton = computed(() => {
           class="ml-2"
           @click="retrySplitPayment"
           outlined
-        >Retry</x-button>
+          >Retry</x-button
+        >
 
         <x-button
           v-if="enablePostPrepaymentButton"
@@ -249,7 +267,8 @@ const enablePostPrepaymentButton = computed(() => {
           class="ml-2"
           @click="postPrepayment"
           outlined
-        >Post</x-button>
+          >Post</x-button
+        >
       </div>
     </td>
   </tr>
@@ -264,4 +283,4 @@ const enablePostPrepaymentButton = computed(() => {
   font-size: 12px;
   text-transform: none;
 }
-</style> 
+</style>

@@ -149,4 +149,4 @@ const paymentTooltipEnum = page.props.paymentTooltipEnum;
       </th>
     </tr>
   </thead>
-</template> 
+</template>

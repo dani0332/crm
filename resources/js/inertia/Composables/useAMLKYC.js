@@ -1,13 +1,13 @@
 export const useAMLKYC = () => {
   const page = usePage();
   const kycEnums = page.props.kycEnums;
-  
+
   /**
    * Checks if the AML verification is complete
    * Bypass AML if it's travel and insurer is other than GIG and payment is non CC
-   * 
+   *
    * @param {Object} quoteRequest - The quote request object
-   * @param {String} quoteType - The quote type code 
+   * @param {String} quoteType - The quote type code
    * @param {Array} payments - The array of payments
    * @returns {Boolean} - Whether AML verification is complete
    */
@@ -33,15 +33,14 @@ export const useAMLKYC = () => {
     }
 
     return (
-      quoteRequest.aml_status ===
-      page.props.amlStatusEnum.AMLScreeningCleared
+      quoteRequest.aml_status === page.props.amlStatusEnum.AMLScreeningCleared
     );
   };
 
   /**
    * Checks if the KYC verification is complete
    * Bypass KYC if it's travel and insurer is other than GIG and payment is non CC
-   * 
+   *
    * @param {Object} quoteRequest - The quote request object
    * @param {String} quoteType - The quote type code
    * @param {Array} payments - The array of payments
@@ -71,7 +70,7 @@ export const useAMLKYC = () => {
   /**
    * Checks if the Insurer AML verification is complete
    * Bypass Insurer AML if it's travel and insurer is other than GIG and payment is non CC
-   * 
+   *
    * @param {Object} quoteRequest - The quote request object
    * @param {String} quoteType - The quote type code
    * @param {Array} payments - The array of payments
@@ -114,6 +113,6 @@ export const useAMLKYC = () => {
   return {
     isAmlVerified,
     isKycVerified,
-    isInsurerAmlVerified
+    isInsurerAmlVerified,
   };
-}; 
+};
