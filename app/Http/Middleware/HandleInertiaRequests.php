@@ -662,6 +662,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::Engineering]),
+                        'Private Client Config',
+                        route('admin.private-client-config.show'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->hasAnyRole([RolesEnum::Engineering]) && getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_ENABLED, 0, useCache: true) == 1,
                         'Query Benchmarker',
                         route('admin.benchmarker.query.show'),
