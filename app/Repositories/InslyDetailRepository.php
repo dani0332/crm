@@ -20,13 +20,13 @@ use App\Services\ApplicationStorageService;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\InslyDataService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use MongoDB\BSON\Regex;
 use MongoDB\BSON\UTCDateTime;
-use App\Services\Logger\LoggerService;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -636,7 +636,7 @@ class InslyDetailRepository extends BaseRepository
         if (! empty($coverage)) {
             // converted all values to lower case because some time data in mongodb have different case values.
             $lowerCaseCoverageValues = array_map('strtolower', $coverage);
-            $coverage = array_merge($coverage, $lowerCaseCoverageValues);            
+            $coverage = array_merge($coverage, $lowerCaseCoverageValues);
         }
 
         return $coverage;
