@@ -20,6 +20,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\InslyDataService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
@@ -38,7 +39,7 @@ class InslyDetailRepository extends BaseRepository
 
     public function buildSearchClause(string $field, mixed $value, string $type = FilterTypes::EXACT)
     {
-        if (is_null($value) || $value === '') {
+        if (is_null($value) || $value === '' || empty($value)) {
             return null;
         }
 
@@ -113,6 +114,8 @@ class InslyDetailRepository extends BaseRepository
         $page = max((int) request()->get('page', 1), 1);
         $perPage = 15;
         $skip = ($page - 1) * $perPage;
+
+        LoggerService::info('InslyDetailRepository - getDataByIndex.', extra: request()->only(['policy_number', 'email', 'mobile_no']));
 
         $must = array_values(array_filter([
             $this->buildSearchClause('policy_no', request()->get('policy_number'), FilterTypes::EXACT),
