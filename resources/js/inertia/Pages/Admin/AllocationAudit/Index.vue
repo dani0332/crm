@@ -168,6 +168,7 @@ function search(isValid) {
           color="#ff5e00"
           type="submit"
           class="px-12 rounded-md"
+          :disabled="!filters.quote_type || !filters.uuid"
         >
           Search
         </x-button>
