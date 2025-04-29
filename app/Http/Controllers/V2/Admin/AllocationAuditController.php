@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2\Admin;
 
-use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -41,7 +40,6 @@ class AllocationAuditController extends Controller
         return inertia('Admin/AllocationAudit/Index', [
             'audits' => $audits,
             'quoteTypes' => $quoteTypes,
-            'assignmentTypes' => AssignmentTypeEnum::withLabels(),
         ]);
     }
 }
