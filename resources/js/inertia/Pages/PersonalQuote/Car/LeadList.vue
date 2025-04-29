@@ -125,17 +125,16 @@ const filteredTableHeader = computed(() => {
     // If the registration type is "Company", exclude "First Name" and "Last Name" columns
     filteredHeader = filteredHeader.filter(
       column =>
-        column.value !== 'first_name'
-        && column.value !== 'last_name'
-        && column.value !== 'dob'
-        && column.value !== 'nationality_id_text'
-        && column.value !== 'uae_license_held_for_id_text',
+        column.value !== 'first_name' &&
+        column.value !== 'last_name' &&
+        column.value !== 'dob' &&
+        column.value !== 'nationality_id_text' &&
+        column.value !== 'uae_license_held_for_id_text',
     );
   } else {
     filteredHeader = filteredHeader.filter(
       column =>
-        column.value !== 'vehicle_use'
-        && column.value !== 'car_company_name'
+        column.value !== 'vehicle_use' && column.value !== 'car_company_name',
     );
   }
 
@@ -156,10 +155,12 @@ const advisorOptions = computed(() => {
   return options;
 });
 
-const registrationTypeOptions = Object.values(carRegistrationTypeEnum).map(item => ({
-  value: item,
-  label: item,
-}));
+const registrationTypeOptions = Object.values(carRegistrationTypeEnum).map(
+  item => ({
+    value: item,
+    label: item,
+  }),
+);
 
 const vehicleUseOptions = Object.values(carVehicleUseEnum).map(item => ({
   value: item,
@@ -647,7 +648,7 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Please select vehicle use"
           :options="vehicleUseOptions"
         />
-        
+
         <x-input
           v-model="filters.code"
           type="search"

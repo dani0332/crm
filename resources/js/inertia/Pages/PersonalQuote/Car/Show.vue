@@ -1539,11 +1539,17 @@ const handlePlanSelected = plan => {
   });
 };
 
-const isCompanyCar = page.props.record.registration_type == page.props.carRegistrationType.COMPANY;
-const isPrivateCar = isCompanyCar && page.props.record.vehicle_use == page.props.carVehicleUse.PRIVATE;
+const isCompanyCar =
+  page.props.record.registration_type == page.props.carRegistrationType.COMPANY;
+const isPrivateCar =
+  isCompanyCar &&
+  page.props.record.vehicle_use == page.props.carVehicleUse.PRIVATE;
 
 const isPlanDetailEnabled = computed(() => {
-  if (page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD && !isCompanyCar) {
+  if (
+    page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD &&
+    !isCompanyCar
+  ) {
     return page.props.record.vehicle_type_id_text == 'BIKE';
   }
   return false;
@@ -2100,7 +2106,9 @@ const isCommercialVehicle = computed(() => {
 
           <div v-if="isPrivateCar">
             <div class="flex justify-between items-center mt-7 mb-3">
-              <h3 class="font-semibold text-primary-800 text-lg">Driver Details</h3>
+              <h3 class="font-semibold text-primary-800 text-lg">
+                Driver Details
+              </h3>
             </div>
             <div class="text-sm">
               <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -2497,7 +2505,13 @@ const isCommercialVehicle = computed(() => {
                 </div>
                 <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                   <dt class="font-medium">BUSINESS ACTIVITY</dt>
-                  <dd>{{ businessActivities.filter(i => i.id == record.business_activity_id )[0]?.name }}</dd>
+                  <dd>
+                    {{
+                      businessActivities.filter(
+                        i => i.id == record.business_activity_id,
+                      )[0]?.name
+                    }}
+                  </dd>
                 </div>
               </dl>
               <div
