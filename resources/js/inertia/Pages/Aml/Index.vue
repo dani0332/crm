@@ -204,7 +204,7 @@ onMounted(() => {
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-        <ComboBox
+        <x-select
           v-model="filtersForm.quoteType"
           label="Quote Type"
           placeholder="Search by Quote Type"
@@ -212,8 +212,9 @@ onMounted(() => {
             { value: '', label: 'Select Quote Type' },
             ...quoteTypeOptions.value,
           ]"
-          :single="true"
-          :hasError="isQuoteTypeEmpty"
+          filterable
+          filterPlaceholder="Filter Quote Type...."
+          :rules="[isRequired]"
         />
 
         <x-select

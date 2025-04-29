@@ -159,17 +159,6 @@ const getAddonVat = item => {
             required
             label="Insurance Provider"
           />
-
-          <!-- <x-field label="Insurance Provider" required>
-            <ComboBox
-              v-model="addPlanForm.insurance_provider_id"
-              :single="true"
-              :options="insuranceProviderOptions"
-              :hasError="isEmptyField"
-              placeholder="Select Insurance provider"
-              @update:modelValue="setBikePlans"
-            />
-          </x-field> -->
         </div>
       </div>
       <div class="w-full md:w-1/2">
