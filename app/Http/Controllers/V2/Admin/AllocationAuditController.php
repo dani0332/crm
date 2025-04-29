@@ -24,9 +24,23 @@ class AllocationAuditController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        $quoteTypes = collect(QuoteTypes::withLabels())->filter(fn ($item) => in_array($item['value'], [
+            QuoteTypes::CAR->value,
+            QuoteTypes::HOME->value,
+            QuoteTypes::HEALTH->value,
+            QuoteTypes::LIFE->value,
+            QuoteTypes::BUSINESS->value,
+            QuoteTypes::BIKE->value,
+            QuoteTypes::YACHT->value,
+            QuoteTypes::TRAVEL->value,
+            QuoteTypes::PET->value,
+            QuoteTypes::CYCLE->value,
+            QuoteTypes::JETSKI->value,
+        ]))->values();
+
         return inertia('Admin/AllocationAudit/Index', [
             'audits' => $audits,
-            'quoteTypes' => QuoteTypes::withLabels(),
+            'quoteTypes' => $quoteTypes,
             'assignmentTypes' => AssignmentTypeEnum::withLabels(),
         ]);
     }
