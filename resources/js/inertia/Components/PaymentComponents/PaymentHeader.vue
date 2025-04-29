@@ -34,7 +34,7 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
-// Check if the proforma payment request is exportable 
+// Check if the proforma payment request is exportable
 const isProformaPaymentRequestExportable = (payment, documents) => {
   if (!documents && !quoteDocuments) return true;
   let proformaPaymentRequestDocuments = null;

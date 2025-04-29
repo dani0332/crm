@@ -223,7 +223,7 @@ const isVoidPaymentEnabled = payment => {
   );
 };
 
-// Validate the split payments capture 
+// Validate the split payments capture
 const validateSplitPaymentsCapture = paymentRecord => {
   const paymentMethodCC = filterCCPayments(paymentRecord);
   const creditApprovedPayments = filterCAPayments(paymentRecord);
@@ -261,7 +261,7 @@ const validateSplitPaymentsCapture = paymentRecord => {
   }
 };
 
-// Validate the non upfront and split capture 
+// Validate the non upfront and split capture
 const validateNonUpfrontAndSplitCapture = paymentRecord => {
   if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
     if (verifyCreditApproved(paymentRecord)) return true;
