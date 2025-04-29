@@ -633,6 +633,7 @@ class HomeQuoteRepository extends BaseRepository
 
             if (! $quote) {
                 LoggerService::info('Quote not found', extra: ['column' => $columnUUID, 'value' => $uuid]);
+
                 return null;
             }
 
@@ -642,9 +643,10 @@ class HomeQuoteRepository extends BaseRepository
             return $quote;
         } catch (\Exception $e) {
             LoggerService::error('Error fetching quote data', exception: $e, extra: [
-                'column' => $columnUUID, 
+                'column' => $columnUUID,
                 'value' => $uuid,
             ]);
+
             // Return null instead of throwing the exception to ensure smooth execution
             return null;
         }
