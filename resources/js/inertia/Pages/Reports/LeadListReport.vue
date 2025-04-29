@@ -153,6 +153,7 @@ const tableHeader = reactive([
         :options="tiers"
         multiple
         :rules="[maxSelections(3)]"
+        helper="You can select up to 3 tiers"
         class="w-full"
         filterable
         filterPlaceholder="Filter Tiers...."
@@ -169,12 +170,16 @@ const tableHeader = reactive([
         label="Lead Source"
         v-model="filters.leadSources"
         placeholder="Search by Lead Source"
+        virtualList
+        :virtual-list-item-height="34"
+        :virtual-list-overscan="10"
         :options="leadSource"
         multiple
         :rules="[maxSelections(3)]"
         class="w-full"
         filterable
         filterPlaceholder="Filter Lead Source...."
+        helper="You can select up to 3 lead sources"
         truncate
       >
         <template #content-footer>
@@ -200,6 +205,7 @@ const tableHeader = reactive([
         class="w-full"
         filterable
         filterPlaceholder="Filter Teams...."
+        helper="You can select up to 3 teams"
         truncate
       >
         <template #content-footer>
@@ -227,6 +233,7 @@ const tableHeader = reactive([
         :options="paymentStatus"
         multiple
         :rules="[maxSelections(3)]"
+        helper="You can select up to 3 payment status"
         class="w-full"
         filterable
         filterPlaceholder="Filter Payment Status...."

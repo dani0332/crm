@@ -19,6 +19,7 @@ const page = usePage();
 const dataTableRef = ref();
 const isMounted = ref(false);
 const isDirty = ref(false);
+const { maxSelections } = useRules();
 
 const advisorOptions = ref(
   Object.keys(page.props.filterOptions.advisors).map(key => ({
@@ -600,8 +601,9 @@ watch(
           multiple
           truncate
           filterable
-          :rules="[maxSelections(1)]"
+          :rules="[maxSelections(15)]"
           filterPlaceholder="Filter Batches...."
+          helper="You can select up to 15 batches"
         >
           <template #content-footer>
             <ui-select-actions

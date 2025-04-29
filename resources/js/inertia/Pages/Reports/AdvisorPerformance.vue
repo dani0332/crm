@@ -207,6 +207,9 @@ onMounted(() => {
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
+          virtualList
+          :virtual-list-item-height="34"
+          :virtual-list-overscan="10"
           :options="
             Object.keys(filterOptions.leadSources).map(key => ({
               value: key,
@@ -218,6 +221,7 @@ onMounted(() => {
           truncate
           multiple
           :rules="[maxSelections(3)]"
+          helper="You can select up to 3 lead sources"
         >
           <template #content-footer>
             <ui-select-actions

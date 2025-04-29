@@ -928,6 +928,7 @@ function sortPremium(order) {
           filterPlaceholder="Filter Batch Number...."
           truncate
           multiple
+          helper="You can select up to 8 batch numbers"
         >
           <template #content-footer>
             <ui-select-actions
@@ -983,6 +984,9 @@ function sortPremium(order) {
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
+          virtualList
+          :virtual-list-item-height="34"
+          :virtual-list-overscan="10"
           :options="
             Object.keys(filterOptions.leadSources).map(key => ({
               value: key,
@@ -991,9 +995,11 @@ function sortPremium(order) {
           "
           :rules="[maxSelections(3)]"
           filterable
-          filterPlaceholder="Filter Lead Source...."
+          filterPlaceholder="Filter Lead Source..."
           truncate
           multiple
+          helper="You can select up to 3 lead sources"
+          class="w-full"
         >
           <template #content-footer>
             <ui-select-actions
@@ -1071,6 +1077,7 @@ function sortPremium(order) {
           :loading="loaders.advisorOptions"
           filterable
           filterPlaceholder="Filter Advisors...."
+          placeholder="Search by Advisors"
           truncate
           multiple
         >

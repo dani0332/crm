@@ -690,6 +690,7 @@ const travelCoverageOptions = computed(() => {
           :loading="loaders.advisorOptions"
           filterable
           filterPlaceholder="Filter Advisors...."
+          placeholder="Search by Advisors"
           truncate
           multiple
         >
@@ -728,6 +729,9 @@ const travelCoverageOptions = computed(() => {
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
+          virtualList
+          :virtual-list-item-height="34"
+          :virtual-list-overscan="10"
           :options="
             Object.keys(filterOptions.leadSources).map(key => ({
               value: key,
@@ -739,6 +743,7 @@ const travelCoverageOptions = computed(() => {
           filterPlaceholder="Filter Lead Source...."
           truncate
           multiple
+          helper="You can select up to 3 lead sources"
         >
           <template #content-footer>
             <ui-select-actions
@@ -826,7 +831,7 @@ const travelCoverageOptions = computed(() => {
           "
           v-model="filters.assignmentType"
           label="Assignment Type"
-          placeholder="Select any option"
+          placeholder="Search by Assignment Type"
           :options="assignmentTypes"
           filterable
           filterPlaceholder="Filter Assignment Type...."
