@@ -24,8 +24,6 @@ class RolePermissionSeeder extends Seeder
         $this->addBridgerSkipPermission();
         $this->addPostPrepaymentButtonPermission();
         $this->sendUpdateCancelPermission();
-        // $this->addLeadAllocationLobPermissions();
-
         $this->addPolicyDetailsAddVatPermission();
     }
 
