@@ -10,7 +10,7 @@ class TravelDestination extends Model
     use HasFactory;
 
     protected $table = 'travel_destination';
-    
+
     /**
      * The attributes that are mass assignable.
      *
