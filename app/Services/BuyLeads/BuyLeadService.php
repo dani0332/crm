@@ -11,7 +11,7 @@ use App\Models\LeadAllocation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class BuyLeadService
 {

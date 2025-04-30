@@ -49,7 +49,7 @@ use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService

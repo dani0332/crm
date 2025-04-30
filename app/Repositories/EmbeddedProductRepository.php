@@ -46,7 +46,7 @@ use finfo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class EmbeddedProductRepository extends BaseRepository
 {

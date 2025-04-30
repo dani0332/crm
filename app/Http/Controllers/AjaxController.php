@@ -32,7 +32,7 @@ use App\Services\QuoteDocumentService;
 use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class AjaxController extends Controller
 {

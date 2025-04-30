@@ -9,27 +9,20 @@
         
         * {
             font-family: 'Prompt', sans-serif !important;
+            box-sizing: border-box;
         }
 
         .raleway-font {
             font-family: 'Raleway', sans-serif !important;
         }
         
-        html {
-            line-height: 1;
+        html, body {
             margin: 0;
             padding: 0;
-        }
-        
-        body {
             line-height: 1;
-            margin: 0;
-            padding: 0;
             font-size: 12px;
             font-weight: 400;
             color: #333333;
-            position: relative;
-            min-height: 100vh;
         }
         
         div, span, table, tbody, tfoot, thead, tr, th, td, blockquote, dl, dd, h1, h2, h3, h4, h5, h6, hr, figure, p, pre {
@@ -39,25 +32,16 @@
         }
 
         .separator {
-            color: #D3D3D3; /* Match border color */
-            font-weight: normal; /* Ensure it's not bold */
-            padding: 0 5px; /* Adjust spacing */
+            color: #D3D3D3;
+            font-weight: normal;
+            padding: 0 5px;
         }
         
         .page {
             width: 100%;
             background-color: white;
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            height: 100vh;
-            position: relative;
-            page-break-after: always;
-            overflow: hidden;
-        }
-        
-        .page:last-of-type {
-            page-break-after: auto;
         }
         
         .font-700 {
@@ -67,14 +51,12 @@
         /* Header section styling */
         .header {
             width: 100%;
-            margin: 0 auto 20px;
+            margin: 0 auto 15px;
             padding: 8px 10px;
             border-top: 2px solid #D3D3D3;
             border-bottom: 2px solid #D3D3D3;
             background-color: white;
-            box-sizing: border-box;
             display: block;
-            clear: both;
         }
         
         .header-content {
@@ -92,10 +74,7 @@
             display: inline-block;
             padding-right: 6px;
             margin-right: 6px;
-            border:0px;   
-            border-top: 0px;
-            border-bottom: 0px;
-            border-left: 0px;
+            border: 0;
         }
         
         .header-item:last-child {
@@ -144,7 +123,6 @@
             width: 90%;
             margin: 0 auto;
             border-collapse: collapse;
-            border-radius: 10px;
             table-layout: fixed;
             text-indent: 0;
             border-color: #bfbfbf;
@@ -160,7 +138,7 @@
             vertical-align: middle;
             word-wrap: break-word;
             white-space: normal;
-=        }
+        }
         
         .table-headers th {
             font-family: 'Raleway', sans-serif !important;
@@ -172,7 +150,6 @@
         
         tr {
             page-break-inside: avoid;
-            page-break-after: auto;
         }
         
         table.nested {
@@ -186,15 +163,7 @@
         table.nested td {
             border: none;
             padding: 0;
-            margin: 0px;
-        }
-        
-        .full-width-border {
-            border-top: 1px solid #bfbfbf;
-            width: 100%;
             margin: 0;
-            padding: 0;
-            display: block;
         }
         
         .detail-table {
@@ -239,16 +208,16 @@
         }
 
         .btn-buy {
-        background-color: #FE7333;
-        color: #ffffff;
-        padding: 3px 35px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 14px;
-        border-radius: 5px;
-        line-height: 0.7;
-    }
+            background-color: #FE7333;
+            color: #ffffff;
+            padding: 3px 35px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            border-radius: 5px;
+            line-height: 0.7;
+        }
         
         .buy-button p {
             font-size: 14px;
@@ -265,12 +234,13 @@
             font-weight: 500;
             text-align: center;
             font-size: 16px;
-            height:30px;
+            height: 30px;
             line-height: 30px;
-            padding: 3px 70px;
+            padding: 0 10px;
             font-family: 'Prompt', sans-serif;
             display: inline-block;
             text-decoration: none;
+            width: 200px;
             position: relative;
         }
         
@@ -287,10 +257,18 @@
             text-align: left;
             font-family: 'Prompt', sans-serif;
             padding: 10px 20px;
+            margin-bottom: 0;
         }
 
+        /* Prevent extra page */
+        @page {
+            margin: 0;
+            padding: 0;
+        }
+
+        
         /* footer section */
-         .footer{
+        .footer{
             background: #1D83BC !important;
             color: white;
             padding: 10px;
@@ -466,272 +444,289 @@
         ["code" => "spacer"],
         ["code" => "ancillaryExcess", "title" => "Ancillary excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
     ];
-
 @endphp
 
-      
-        <!-- plans page -->
-        <div class="page" >
-            <div class="header">
-                <div class="header-content">
-                    <div class="header-details">
-                        <div class="header-item">
-                            <h1 class="header-title raleway-font">Car Insurance comparison Table <span class="separator">|</span></h1>
-                        </div>
-                        <div class="header-item">
-                            <p class="header-text">Customer name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span> <span class="separator">|</span></p> 
-                        </div>
-                        <div class="header-item">
-                            <p class="header-text">Car make/model: <span class="header-text-highlight">{{ @$quote->carMake->text }} {{ @$quote->carModel->text }}</span> <span class="separator">|</span> </p>
-                        </div>
-                        <div class="header-item">
-                            <p class="header-text">Year: <span class="header-text-highlight">{{ @$quote->year_of_manufacture }}</span> </p>
-                        </div>
-                    </div>
-                    <div class="quote-ref">
-                        <p>Quote reference number:<strong> CAR-{{ $quote->uuid }}</strong></p>
-                    </div>
+
+	 <!-- first page with first banner image -->
+     <div class="page">
+        <div class="hero-image">
+            <img src="{{ public_path('images/car-banner-pdf-1.png') }}" 
+            alt="Car Banner 1">
+        </div>
+    </div>
+
+    <!-- second page with second banner image -->
+    <div class="page">
+        <div class="hero-image">
+            <img src="{{ public_path('images/car-pdf-banner-2.png') }}" alt="Car Banner 2">
+        </div>
+    </div>
+
+<div class="page">
+    <div class="header">
+        <div class="header-content">
+            <div class="header-details">
+                <div class="header-item">
+                    <h1 class="header-title raleway-font">Car Insurance comparison Table <span class="separator">|</span></h1>
                 </div>
-            </div> 
-            <!-- header detail end -->
-
-            <!-- comparison table -->
-            <div style="margin: 30px auto;">
-                @if(count($planIds) > 0)
-                @php
-                    // Limit to maximum 5 plans
-                    $displayPlans = array_slice($planIds, 0, 5);
-                    $planCount = count($displayPlans);
-                    
-                    $firstColWidth = 25;
-                    $planColWidth = (90 - $firstColWidth) / $planCount;
-                @endphp
-                <!-- First Table -->
-                <table cellspacing="0" cellpadding="0" style="width: 90%; table-layout: fixed; border-collapse: collapse;">
-                    <colgroup>
-                        <col style="width: {{ $firstColWidth }}%;">
-                        @foreach($displayPlans as $planId)
-                        <col style="width: {{ $planColWidth }}%;">
-                        @endforeach
-                    </colgroup>
-                    <tr>
-                        <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">Insurance company</td>
-                        @foreach($displayPlans as $planId)
-                        <td style="padding:0px;">
-                            <table class="nested">
-                                <tr>
-                                    <td style="width: 100%; vertical-align: middle; text-align: center; height: 30px; padding: 5px 0;">
-                                        <div style="width: 100%; text-align: center;">
-                                            @php
-                                                $providerCode = strtolower($plans[$planId]->providerCode);
-                                                $providerLogoImage = "https://cdn.alfred.ae/assets/logo/partners/{$providerCode}.png";
-
-                                                // Check if the image exists
-                                                $headers = @get_headers($providerLogoImage);
-                                                if (!$headers || strpos($headers[0], '404') !== false) {
-                                                    $providerLogoImage = public_path('images/insurance_providers/default.png');
-                                                }
-                                            @endphp
-                                            <img src="{{ $providerLogoImage }}" 
-                                            style="max-width: 45px; max-height: 20px; margin: 0 auto; display: block; object-fit: contain;" />
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="border:none; border-top:1px solid #bfbfbf; width: 100%; padding: 0; margin: 0; font-size: 0; line-height: 0;">
-                                        {{-- <hr class="full-width-border"> --}}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="width: 100%; vertical-align: middle; text-align: center; height: 35px;">
-                                        <div style="font-size:12px; padding:4px 2px;">{{ $plans[$planId]->providerName }}</div>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                        @endforeach
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">
-                            Plan name
-                        </td>
-                        @foreach($displayPlans as $planId)
-                        <td style="padding: 6px; text-align: center;">
-                            {{ $plans[$planId]->name }}
-                            @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)
-                                <span class="badge badge-success">Renewal Quote</span>
-                            @endif
-                        </td>
-                        @endforeach
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">
-                            Price
-                        </td>
-                        @foreach($displayPlans as $planId)
-                        <td style="padding: 6px; text-align: center;">
-                            {{ formatAmount($plans[$planId]->discountPremium) }}
-                        </td>
-                        @endforeach
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">
-                            VAT
-                        </td>
-                        @foreach($displayPlans as $planId)
-                        <td style="padding: 6px; text-align: center;">
-                            {{ formatAmount($plans[$planId]->vat) }}
-                        </td>
-                        @endforeach
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">
-                            Total price with (VAT)
-                        </td>
-                        @foreach($displayPlans as $planId)
-                        <td style="padding: 6px; text-align: center;">
-                            <a class="buy-button" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}">
-                                BUY NOW   <br />
-                                <span style="font-size: 10px; font-weight: normal">AED</span> <strong>{{ number_format($plans[$planId]->actualPremium ?? '0.0', 2) }}</strong>
-                            </a>
-                        </td>
-                        @endforeach
-                    </tr>
-                </table>
-
-                <!-- Second Table -->
-                <table class="detail-table" cellspacing="0" cellpadding="0" style="width: 90%; table-layout: fixed; border-collapse: collapse;">
-                    <colgroup>
-                        <col style="width: {{ $firstColWidth }}%;">
-                        @foreach($displayPlans as $planId)
-                        <col style="width: {{ $planColWidth }}%;">
-                        @endforeach
-                    </colgroup>
-                    <tr>
-                        <td colspan="{{ count($displayPlans) + 1 }}" class="section-header">
-                            Vehicle detail
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font">
-                            Excess (Deductible)
-                        </td>
-                        @foreach($displayPlans as $planId)
-                        <td style="padding: 6px; text-align: center;">
-                            {{ formatAmount($plans[$planId]->excess) }}
-                        </td>
-                        @endforeach
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font">
-                            Ancillary excess
-                        </td>
-                        @foreach($displayPlans as $planId)
-                        <td style="padding: 6px; text-align: center; ">
-                            {!! $plans[$planId]->ancillaryExcess ? ($plans[$planId]->ancillaryExcess . '%') : 'TBD' !!}
-                        </td>
-                        @endforeach
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font">
-                            Vehicle value
-                        </td>
-                        @foreach($displayPlans as $planId)
-                        <td style="padding: 6px; text-align: center; ">
-                            @php
-                                $carValue = formatAmount($plans[$planId]->carValue, 0);
-                                if($plans[$planId]->repairType == \App\Enums\CarPlanType::TPL) $carValue = 'N/A';
-                            @endphp
-                            {{ $carValue }}
-                        </td>
-                        @endforeach
-                    </tr>
-                </table>
-
-                <!-- Third Table -->
-                <table class="detail-table" cellspacing="0" cellpadding="0" style="width: 90%; 
-                table-layout: fixed; border-collapse: collapse;">
-                    <colgroup>
-                        <col style="width: {{ $firstColWidth }}%;">
-                        @foreach($displayPlans as $planId)
-                        <col style="width: {{ $planColWidth }}%;">
-                        @endforeach
-                    </colgroup>
-                    <tr>
-                        <td colspan="{{ count($displayPlans) + 1 }}" class="section-header">
-                            Contents
-                        </td>
-                    </tr>
-                    
-                    @foreach($features as $feature)
-                        @if(@$feature['code'] == 'heading' || @$feature['code'] == 'spacer')
-                            @continue
-                        @endif
-                        
-                        @if(isset($feature['title']))
-                        <tr>
-                            <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font">{{ $feature['title'] }}</td>
-                            @foreach($displayPlans as $planId)
-                            <td style="padding: 6px; text-align: center;">
-                                @if($feature['type'] == 'info')
-                                    @if($feature['code'] == 'ancillaryExcess')
-                                        {!! $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%') : '<span style="color:red">Not applicable</span>' !!}
-                                    @else
-                                        {!! $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']}) : '<span style="color:red">Not applicable</span>' !!}
-                                    @endif
-                                @elseif($feature['type'] == 'prop')
-                                    {{ $plans[$planId]->{$feature['code']} }}
-                                @elseif($feature['type'] == 'buy')
-                                    @if($plans[$planId]->discountPremium)
-                                        <a target="_blank" class="buy-button" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >
-                                            Buy Now
-                                        </a>
-                                    @else
-                                        N/A
-                                    @endif
-                                @elseif(is_array($feature['type']))
-                                    @php 
-                                        $value = "Excluded"; 
-                                        foreach($feature['type'] as $type) {
-                                            if(isset($plans[$planId]->{$type}->{$feature['code']}->value)) {
-                                                $value = $plans[$planId]->{$type}->{$feature['code']}->value; 
-                                                break;
-                                            }
-                                        }
-                                    @endphp
-                                    {{ $value }}
-                                @else
-                                    {{ $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' }}
-                                @endif
-                            </td>
-                            @endforeach
-                        </tr>
-                        @endif
-                    @endforeach
-                </table>
-                @endif
-
-                <!-- View all quotes button -->
-                <div style="width: 100%; text-align: center; margin-top: 20px;">
-                    <a href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid }}" class="view-quotes">
-                        View all quotes 
-                        <div style="position: absolute; right: 50px; top: 10px;">
-                            <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
-                                style="width: 16px; height: 16px; vertical-align: baseline; display: block;">
-                        </div>
-                    </a>
+                <div class="header-item">
+                    <p class="header-text">Customer name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span> <span class="separator">|</span></p> 
                 </div>
-
-                <!-- disclaimer -->
-                <div class="disclaimer">
-                    <p><strong>Disclaimer:</strong> This is a comparison table for illustrative purposes only. The prices and benefits are subject to change without prior notice. Please refer to the official terms and conditions of the insurance provider for the most accurate and current information.</p>
+                <div class="header-item">
+                    <p class="header-text">Car make/model: <span class="header-text-highlight">{{ @$quote->carMake->text }} {{ @$quote->carModel->text }}</span> <span class="separator">|</span> </p>
                 </div>
-
+                <div class="header-item">
+                    <p class="header-text">Year: <span class="header-text-highlight">{{ @$quote->year_of_manufacture }}</span> </p>
+                </div>
+            </div>
+            <div class="quote-ref">
+                <p>Quote reference number:<strong> CAR-{{ $quote->uuid }}</strong></p>
             </div>
         </div>
+    </div>
 
-      
-        
-      
+    <div style="margin: 20px auto;">
+        @if(count($planIds) > 0)
+        @php
+            // Limit to maximum 5 plans
+            $displayPlans = array_slice($planIds, 0, 5);
+            $planCount = count($displayPlans);
+            
+            $firstColWidth = 25;
+            $planColWidth = (90 - $firstColWidth) / $planCount;
+        @endphp
+        <!-- First Table -->
+        <table cellspacing="0" cellpadding="0" style="width: 90%; table-layout: fixed; border-collapse: collapse;">
+            <colgroup>
+                <col style="width: {{ $firstColWidth }}%;">
+                @foreach($displayPlans as $planId)
+                <col style="width: {{ $planColWidth }}%;">
+                @endforeach
+            </colgroup>
+            <tr>
+                <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">Insurance company</td>
+                @foreach($displayPlans as $planId)
+                <td style="padding:0px;">
+                    <table class="nested">
+                        <tr>
+                            <td style="width: 100%; vertical-align: middle; text-align: center; height: 30px; padding: 5px 0;">
+                                <div style="width: 100%; text-align: center;">
+                                    @php
+                                        $providerCode = strtolower($plans[$planId]->providerCode);
+                                        $providerLogoImage = "https://cdn.alfred.ae/assets/logo/partners/{$providerCode}.png";
+
+                                        // Check if the image exists
+                                        $headers = @get_headers($providerLogoImage);
+                                        if (!$headers || strpos($headers[0], '404') !== false) {
+                                            $providerLogoImage = public_path('images/insurance_providers/default.png');
+                                        }
+                                    @endphp
+                                    <img src="{{ $providerLogoImage }}" 
+                                    style="max-width: 45px; max-height: 20px; margin: 0 auto; display: block; object-fit: contain;" />
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="border:none; border-top:1px solid #bfbfbf; width: 100%; padding: 0; margin: 0; font-size: 0; line-height: 0;"></td>
+                        </tr>
+                        <tr>
+                            <td style="width: 100%; vertical-align: middle; text-align: center; height: 35px;">
+                                <div style="font-size:12px; padding:4px 2px;">{{ $plans[$planId]->providerName }}</div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                @endforeach
+            </tr>
+            <tr>
+                <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">
+                    Plan name
+                </td>
+                @foreach($displayPlans as $planId)
+                <td style="padding: 6px; text-align: center;">
+                    {{ $plans[$planId]->name }}
+                    @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)
+                        <span class="badge badge-success">Renewal Quote</span>
+                    @endif
+                </td>
+                @endforeach
+            </tr>
+            <tr>
+                <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">
+                    Price
+                </td>
+                @foreach($displayPlans as $planId)
+                <td style="padding: 6px; text-align: center;">
+                    {{ formatAmount($plans[$planId]->discountPremium) }}
+                </td>
+                @endforeach
+            </tr>
+            <tr>
+                <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">
+                    VAT
+                </td>
+                @foreach($displayPlans as $planId)
+                <td style="padding: 6px; text-align: center;">
+                    {{ formatAmount($plans[$planId]->vat) }}
+                </td>
+                @endforeach
+            </tr>
+            <tr>
+                <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font font-700">
+                    Total price with (VAT)
+                </td>
+                @foreach($displayPlans as $planId)
+                <td style="padding: 6px; text-align: center;">
+                    <a class="buy-button" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}">
+                        BUY NOW   <br />
+                        <span style="font-size: 10px; font-weight: normal">AED</span> <strong>{{ number_format($plans[$planId]->actualPremium ?? '0.0', 2) }}</strong>
+                    </a>
+                </td>
+                @endforeach
+            </tr>
+        </table>
+
+        <!-- Second Table -->
+        <table class="detail-table" cellspacing="0" cellpadding="0" style="width: 90%; table-layout: fixed; border-collapse: collapse;">
+            <colgroup>
+                <col style="width: {{ $firstColWidth }}%;">
+                @foreach($displayPlans as $planId)
+                <col style="width: {{ $planColWidth }}%;">
+                @endforeach
+            </colgroup>
+            <tr>
+                <td colspan="{{ count($displayPlans) + 1 }}" class="section-header">
+                    Vehicle detail
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font">
+                    Excess (Deductible)
+                </td>
+                @foreach($displayPlans as $planId)
+                <td style="padding: 6px; text-align: center;">
+                    {{ formatAmount($plans[$planId]->excess) }}
+                </td>
+                @endforeach
+            </tr>
+            <tr>
+                <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font">
+                    Ancillary excess
+                </td>
+                @foreach($displayPlans as $planId)
+                <td style="padding: 6px; text-align: center; ">
+                    {!! $plans[$planId]->ancillaryExcess ? ($plans[$planId]->ancillaryExcess . '%') : 'TBD' !!}
+                </td>
+                @endforeach
+            </tr>
+            <tr>
+                <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font">
+                    Vehicle value
+                </td>
+                @foreach($displayPlans as $planId)
+                <td style="padding: 6px; text-align: center; ">
+                    @php
+                        $carValue = formatAmount($plans[$planId]->carValue, 0);
+                        if($plans[$planId]->repairType == \App\Enums\CarPlanType::TPL) $carValue = 'N/A';
+                    @endphp
+                    {{ $carValue }}
+                </td>
+                @endforeach
+            </tr>
+        </table>
+
+        <!-- Third Table -->
+        <table class="detail-table" cellspacing="0" cellpadding="0" style="width: 90%; 
+        table-layout: fixed; border-collapse: collapse;">
+            <colgroup>
+                <col style="width: {{ $firstColWidth }}%;">
+                @foreach($displayPlans as $planId)
+                <col style="width: {{ $planColWidth }}%;">
+                @endforeach
+            </colgroup>
+            <tr>
+                <td colspan="{{ count($displayPlans) + 1 }}" class="section-header">
+                    Contents
+                </td>
+            </tr>
+            
+            @foreach($features as $feature)
+                @if(@$feature['code'] == 'heading' || @$feature['code'] == 'spacer')
+                    @continue
+                @endif
+                
+                @if(isset($feature['title']))
+                <tr>
+                    <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font">{{ $feature['title'] }}</td>
+                    @foreach($displayPlans as $planId)
+                    <td style="padding: 6px; text-align: center;">
+                        @if($feature['type'] == 'info')
+                            @if($feature['code'] == 'ancillaryExcess')
+                                {!! $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%') : '<span style="color:red">Not applicable</span>' !!}
+                            @else
+                                {!! $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']}) : '<span style="color:red">Not applicable</span>' !!}
+                            @endif
+                        @elseif($feature['type'] == 'prop')
+                            {{ $plans[$planId]->{$feature['code']} }}
+                        @elseif($feature['type'] == 'buy')
+                            @if($plans[$planId]->discountPremium)
+                                <a target="_blank" class="buy-button" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >
+                                    Buy Now
+                                </a>
+                            @else
+                                N/A
+                            @endif
+                        @elseif(is_array($feature['type']))
+                            @php 
+                                $value = "Excluded"; 
+                                foreach($feature['type'] as $type) {
+                                    if(isset($plans[$planId]->{$type}->{$feature['code']}->value)) {
+                                        $value = $plans[$planId]->{$type}->{$feature['code']}->value; 
+                                        break;
+                                    }
+                                }
+                            @endphp
+                            {{ $value }}
+                        @else
+                            {{ $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' }}
+                        @endif
+                    </td>
+                    @endforeach
+                </tr>
+                @endif
+            @endforeach
+        </table>
+        @endif
+
+        <!-- View all quotes button -->
+        <div style="width: 100%; text-align: center; margin-top: 15px;">
+            <a href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid }}" style="background-color: #1D83BC; color: white; border-radius: 5px; font-weight: 500; padding: 6px 20px; font-size: 16px; display: inline-block; width: 250px; text-align: center; text-decoration: none; line-height: 1.5;">
+                View all quotes
+                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" style="width: 16px; height: 16px; vertical-align: middle; margin-left: 5px;">
+            </a>
+        </div>
+
+        <!-- disclaimer -->
+        <div class="disclaimer">
+            <p><strong>Disclaimer:</strong> This is a comparison table for illustrative purposes only. The prices and benefits are subject to change without prior notice. Please refer to the official terms and conditions of the insurance provider for the most accurate and current information.</p>
+        </div>
+    </div>
+
+
+     <!-- third page with second banner image -->
+     <div class="page" style="page-break-before: always !important;">
+        <div class="hero-image">
+            <img src="{{ public_path('images/home_pdf_second_last_page_with_header.jpg') }}" alt="Car Banner 2">
+        </div>
+    </div>
+
+    <!-- fourth page with second banner image -->
+    <div class="page">
+        <div class="hero-image" style="height: auto; max-height: 1150px;">
+            <img src="{{ public_path('images/car-comparision-4-image.png') }}" alt="Car Banner 2" style="height: auto; max-height: 1150px;">
+        </div>
+    </div>
+    
+</div>
 </body>
 </html>

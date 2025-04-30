@@ -240,7 +240,7 @@ class CarQuoteController extends Controller
 
         $data = [
             'quote_uuid' => '765U26H4',
-            'plan_ids' => [109, 8, 3,2],
+            'plan_ids' => [109, 8, 3,2, 1],
             'addons' => null,
         ];
         
@@ -285,51 +285,6 @@ class CarQuoteController extends Controller
 
         return $mainPdfContent;
 
-        // // Generate extra PDF page in memory (without header/footer)
-        // $extraPdfOptions = $pdfOptions;
-        // // $extraPdfOptions['margin-top'] = 0; // No margin for header
-        
-        // $extraPdfContent = SnappyPdf::loadView('pdf.car_comparision.last-page')
-        //     ->setOptions($extraPdfOptions)
-        //     ->setOption('header-html', view('pdf.car_comparision.header-last-page', []))
-        //     ->setOption('footer-html', view('pdf.car_comparision.footer', compact('quote')))
-        //     ->output();
-    
-        // // Create temporary files to store PDF content
-        // $mainTempFile = tempnam(sys_get_temp_dir(), 'main_pdf_');
-        // $extraTempFile = tempnam(sys_get_temp_dir(), 'extra_pdf_');
-        
-        // file_put_contents($mainTempFile, $mainPdfContent);
-        // file_put_contents($extraTempFile, $extraPdfContent);
-        
-        // // Merge PDFs with FPDI using temporary files
-        // $pdf = new Fpdi();
-        
-        // // Add pages from main PDF
-        // $pageCount = $pdf->setSourceFile($mainTempFile);
-        // for ($i = 1; $i <= $pageCount; $i++) {
-        //     $templateId = $pdf->importPage($i);
-        //     $size = $pdf->getTemplateSize($templateId);
-        //     $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-        //     $pdf->useTemplate($templateId, 0, 0, null, null, true);
-        // }
-        
-        // // Add pages from extra PDF
-        // $pageCount = $pdf->setSourceFile($extraTempFile);
-        // for ($i = 1; $i <= $pageCount; $i++) {
-        //     $templateId = $pdf->importPage($i);
-        //     $size = $pdf->getTemplateSize($templateId);
-        //     $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-        //     $pdf->useTemplate($templateId, 0, 0, null, null, true);
-        // }
-        
-        // // Clean up temporary files
-        // @unlink($mainTempFile);
-        // @unlink($extraTempFile);
-    
-        // return response($pdf->Output('S'), 200)
-        //     ->header('Content-Type', 'application/pdf')
-        //     ->header('Content-Disposition', 'inline; filename="merged_quote.pdf"');
     }
 }
 

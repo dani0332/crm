@@ -35,8 +35,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Barryvdh\Snappy\Facades\SnappyPdf;
+use App\Enums\CarRegistrationType;
 
 
 class CarQuoteService extends BaseService
@@ -1486,21 +1487,32 @@ class CarQuoteService extends BaseService
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
         }, 'customer']);
 
-        // $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons'));
+        if ($quote->registration_type == CarRegistrationType::COMPANY) {
 
-        $pdf = SnappyPdf::loadView('pdf.car_comparision.main', compact('quotePlans', 'planIds', 'quote', 'addons'))
-        ->setOption('header-html', view('pdf.car_comparision.header', []))
-        ->setOption('footer-html', view('pdf.car_comparision.footer', []))
-        ->setOption('disable-external-links', false)
-        ->setOption('enable-local-file-access', true)
-        ->setOption('enable-internal-links' , true)
-        ->setOption('margin-left', 0)
-        ->setOption('margin-right', 0)
-        ->setOption('margin-top', 20)
-        ->setOption('margin-bottom', 55)
-        ->setOption('page-size', 'A4');
+             // use Snappy PDF for company car plans
+            
+             $pdf = SnappyPdf::loadView('pdf.car_comparision.main', compact('quotePlans', 'planIds', 'quote', 'addons'))
+             ->setOption('header-html', view('pdf.car_comparision.header', []))
+             ->setOption('footer-html', view('pdf.car_comparision.footer', []))
+             ->setOption('disable-external-links', false)
+             ->setOption('enable-local-file-access', true)
+             ->setOption('enable-internal-links' , true)
+             ->setOption('margin-left', 0)
+             ->setOption('margin-right', 0)
+             ->setOption('margin-top', 20)
+             ->setOption('margin-bottom', 55)
+             ->setOption('page-size', 'A4');
+
+        } else {
+         
+                $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons'));
+        
+
+        }
+
        
 
+        
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
         return ['pdf' => $pdf, 'name' => $pdfName];
