@@ -1,8 +1,15 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue';
 
+/**
+ * Component props definition
+ * - modelValue: Controls the visibility of the modal (for v-model directive)
+ * - files: Array of file objects to display in the gallery
+ * - initialIndex: Starting index for the gallery viewer
+ * - storageUrl: Base URL for accessing stored files
+ */
 const props = defineProps({
-  modelValue: { // For v-model
+  modelValue: {
     type: Boolean,
     required: true,
   },
@@ -22,29 +29,51 @@ const props = defineProps({
   },
 });
 
+// Define emits for two-way binding with v-model
 const emit = defineEmits(['update:modelValue']); 
 
+// Reactive state for the component
 const currentFileIndex = ref(props.initialIndex);
 const zoomLevel = ref(1);
 const modalRef = ref(null);
 
+/**
+ * Returns the currently displayed file object
+ * Based on the currentFileIndex in the files array
+ */
 const currentFile = computed(() => {
   return props.files[currentFileIndex.value];
 });
 
+/**
+ * Determines if there is a next file available in the gallery
+ * Used to enable/disable the "Next" navigation button
+ */
 const hasNextFile = computed(() => {
   return currentFileIndex.value < props.files.length - 1;
 });
 
+/**
+ * Determines if there is a previous file available in the gallery
+ * Used to enable/disable the "Previous" navigation button
+ */
 const hasPreviousFile = computed(() => {
   return currentFileIndex.value > 0;
 });
 
+/**
+ * Closes the modal by emitting update:modelValue event with false
+ * Resets zoom level to default when closing
+ */
 const closeModal = () => {
   zoomLevel.value = 1;
   emit('update:modelValue', false);
 };
 
+/**
+ * Navigates to the next file in the gallery
+ * Resets zoom level when navigating to a new file
+ */
 const nextFile = () => {
   if (hasNextFile.value) {
     currentFileIndex.value++;
@@ -52,6 +81,10 @@ const nextFile = () => {
   }
 };
 
+/**
+ * Navigates to the previous file in the gallery
+ * Resets zoom level when navigating to a new file
+ */
 const previousFile = () => {
   if (hasPreviousFile.value) {
     currentFileIndex.value--;
@@ -59,14 +92,28 @@ const previousFile = () => {
   }
 };
 
+/**
+ * Increases zoom level for the current image
+ * Limited to maximum zoom of 3x (300%)
+ */
 const zoomIn = () => {
   zoomLevel.value = Math.min(zoomLevel.value + 0.25, 3);
 };
 
+/**
+ * Decreases zoom level for the current image
+ * Limited to minimum zoom of 0.25x (25%)
+ */
 const zoomOut = () => {
   zoomLevel.value = Math.max(zoomLevel.value - 0.25, 0.25);
 };
 
+/**
+ * Handles keyboard navigation in the gallery
+ * - Escape: Close the modal
+ * - ArrowLeft: Navigate to previous file
+ * - ArrowRight: Navigate to next file
+ */
 const handleKeyDown = event => {
   if (event.key === 'Escape') {
     closeModal();
@@ -77,12 +124,18 @@ const handleKeyDown = event => {
   }
 };
 
-// Watch for changes in the initialIndex prop to update the local ref
+/**
+ * Watches for changes in initialIndex prop to update the local currentFileIndex ref
+ * This ensures synchronization when the parent component changes the initial index
+ */
 watch(() => props.initialIndex, (newIndex) => {
   currentFileIndex.value = newIndex;
 });
 
-// Watch for the modal opening to set focus
+/**
+ * Watches for the modal visibility state
+ * When modal opens, focuses the modal element for keyboard navigation
+ */
 watch(() => props.modelValue, (isOpen) => {
   if (isOpen) {
     nextTick(() => {

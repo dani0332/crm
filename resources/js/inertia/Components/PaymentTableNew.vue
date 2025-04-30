@@ -201,7 +201,7 @@ const isTransactionCaptureButtonEnabled = ref(true);
 const premiumToCapture = ref(0);
 const capturePaymentValidationInProcess = ref(false);
 const capturePaymentValidationErrorMessage = ref('');
-const modal2Ref = ref(null);
+
 const familyEmployeDiscount = [
   quoteTypeCodeEnum.Car,
   quoteTypeCodeEnum.Health,
@@ -320,6 +320,10 @@ const getCustomReasonIndex = value => {
   return index !== -1 ? index : null;
 };
 
+/**
+ * Calculates the total amount after applying discount
+ * Updates totalAmount value and triggers payment breakup recalculation
+ */
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
   if (
@@ -396,16 +400,20 @@ const openModal = () => {
   isGalleryModelOpen.value = true;
 };
 
-// Replace these functions with simplified versions that work with the ImageGalleryModal component
+/**
+ * Opens the image gallery modal to display a specific file
+ * 
+ * @param {number} fileId - ID of the file to display initially
+ */
 const openInnerModal = fileId => {
-  // Prepare the files array for the gallery modal
+  // Prepare the files array for the gallery modal by combining files from different sources
   filesTest.value = [
     ...fileUploadModels.value.flat(),
     ...approvedDocumentModel.value.flat(),
     ...discountDocumentModel.value.flat(),
   ];
   
-  // Find the index of the file to display
+  // Find the index of the file to display in the combined array
   currentFileIndex.value = filesTest.value.findIndex(
     item => item.id === fileId,
   );
@@ -414,6 +422,10 @@ const openInnerModal = fileId => {
   isGalleryModelOpen.value = true;
 };
 
+/**
+ * Closes the image gallery modal without affecting the parent payment modal
+ * Used by the ImageGalleryModal component through event binding
+ */
 const closeInnerModal = () => {
   // Just close the gallery modal, not the payment modal
   isGalleryModelOpen.value = false;
@@ -529,6 +541,17 @@ const calculateTotalSplitAmount = () => {
   return totalSplitAmount;
 };
 
+/**
+ * Validates payment options before submission
+ * Checks for issues such as:
+ * - Missing payment frequency
+ * - Missing payment methods
+ * - Payment calculation errors
+ * - Missing required documents
+ * - Discount validation
+ * 
+ * @returns {boolean} True if there are validation issues, false if all validations pass
+ */
 const validatePaymentOption = () => {
   var totalSplitAmount = 0;
   var issueFound = false;
@@ -1360,6 +1383,12 @@ const resetTotalPayments = () => {
   }
 };
 
+/**
+ * Handles payment frequency changes
+ * Updates payment number and calculates payment breakups based on selected frequency
+ * 
+ * @param {boolean} noPaymentUpdate - If true, will reset payment number to default
+ */
 const handleFrequencyChange = (noPaymentUpdate = true) => {
   var resetPaymentMethod = false;
   isPaymentFrequencyNotSelected.value = false;
@@ -1666,6 +1695,16 @@ const handleDeletePayment = async () => {
     });
 };
 
+/**
+ * Opens the payment modal for editing a payment
+ * Loads payment data, initializes form, and sets appropriate view/edit state
+ * 
+ * @param {Object} payment - Payment data object
+ * @param {number} split_payment_id - ID of the split payment to edit
+ * @param {number} sr_no - Serial number of the payment split
+ * @param {number} capture_approval - Flag to indicate if this is a capture approval operation
+ * @returns {boolean|void} False if edit not allowed, otherwise void
+ */
 const editPaymentModal = async (
   payment,
   split_payment_id,
@@ -1755,6 +1794,10 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
     });
 };
 
+/**
+ * Resets the payment form to its initial state
+ * Clears all form data, validation states, and temporary storage
+ */
 const resetPaymentForm = () => {
   paymentMethodsForm.reset();
   splitPaymentNo.value = 0;
@@ -5467,12 +5510,14 @@ onBeforeMount(() => {
             </div>
           </x-form>
 
+          <!-- Image Gallery Modal - Renders document preview with navigation and zoom controls -->
           <ImageGalleryModal
             v-model="isGalleryModelOpen"
             :files="filesTest"
             :initial-index="currentFileIndex"
             :storage-url="storageUrl"
             @update:model-value="val => val === false && closeInnerModal()"
+            class="max-w-6xl mx-auto"
           />
         </x-modal>
 
