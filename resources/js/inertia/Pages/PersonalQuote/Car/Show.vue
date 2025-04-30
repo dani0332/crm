@@ -3249,7 +3249,9 @@ const isCommercialVehicle = computed(() => {
             <div class="flex mb-4 justify-end">
               <template v-if="!hasRole(rolesEnum.PA)">
                 <x-tooltip
-                  v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
+                  v-if="
+                    !hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)
+                  "
                 >
                   <x-button
                     class="ml-2 mr-2"
@@ -3271,7 +3273,9 @@ const isCommercialVehicle = computed(() => {
                 <x-button-group v-if="selectedPlans.length > 0" size="sm">
                   <x-button
                     @click.prevent="onTogglePlans(false)"
-                    :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                    :disabled="
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
                     :loading="toggleLoader"
                     v-if="readOnlyMode.isDisable === true"
                   >
@@ -3367,8 +3371,8 @@ const isCommercialVehicle = computed(() => {
                 <template #tooltip
                   >No further actions can be taken on an issued policy. For
                   changes, such as a change in insurer, go to 'Send Update',
-                  select 'Add Update', and choose 'Cancellation from inception and
-                  reissuance.</template
+                  select 'Add Update', and choose 'Cancellation from inception
+                  and reissuance.</template
                 >
               </x-tooltip>
               <AddPlanButtonReuseTemplate
@@ -3505,7 +3509,10 @@ const isCommercialVehicle = computed(() => {
               </template>
               <template #item-addons="{ addons }">
                 <template v-for="addon in addons" :key="addon">
-                  <template v-for="option in addon.carAddonOption" :key="option">
+                  <template
+                    v-for="option in addon.carAddonOption"
+                    :key="option"
+                  >
                     <span v-if="addon.code">
                       <template
                         v-if="
@@ -3592,8 +3599,8 @@ const isCommercialVehicle = computed(() => {
                     v-if="
                       quote.quote_status_id !=
                         page.props.quoteStatusEnum.PolicyCancelled ||
-                        page.props.linkedQuoteDetails.childLeadsCount == 0
-                      "
+                      page.props.linkedQuoteDetails.childLeadsCount == 0
+                    "
                     size="xs"
                     color="primary"
                     outlined

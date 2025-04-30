@@ -2050,7 +2050,10 @@ const shouldShowPlanDetailsSection = computed(() => {
             </p>
           </div>
           <div v-else>
-            <div v-if="availablePlansTable.isLoading" class="flex justify-center my-8">
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
               <x-spinner size="lg" />
             </div>
             <DataTable

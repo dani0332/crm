@@ -3143,7 +3143,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
             </p>
           </div>
           <div v-else>
-            <div v-if="availablePlansTable.isLoading" class="flex justify-center my-8">
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
               <x-spinner size="lg" />
             </div>
             <DataTable
@@ -3240,7 +3243,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </h6>
             </div>
             <div>
-              <div v-if="availableSeniorPlansTable.isLoading" class="flex justify-center my-8">
+              <div
+                v-if="availableSeniorPlansTable.isLoading"
+                class="flex justify-center my-8"
+              >
                 <x-spinner size="lg" />
               </div>
               <DataTable

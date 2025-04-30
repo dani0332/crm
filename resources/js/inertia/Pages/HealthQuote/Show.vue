@@ -3284,8 +3284,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <template #tooltip>
                   <div>
                     When clicked, this button sends the One Click Apply (OCA)
-                    email to the customer with updated rates and coverage options,
-                    helping them finalize their purchase with ease.
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
                   </div>
                 </template>
               </x-tooltip>
