@@ -1195,13 +1195,11 @@ const onExportPlans = () => {
     .finally(() => {
       exportLoader.value = false;
     });
-
 };
 
-
 const downloadCompanyPdf = () => {
-  console.log('Testing'); 
-  
+  console.log('Testing');
+
   if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
     notification.error({
       title: 'Please select 1 to 5 plans to download PDF.',
@@ -1242,9 +1240,7 @@ const downloadCompanyPdf = () => {
     .finally(() => {
       exportLoader.value = false;
     });
-
 };
-
 
 const confirmSendEmail = () => {
   const first_name = page.props.record.first_name || '';
@@ -3281,7 +3277,11 @@ const isCommercialVehicle = computed(() => {
                 </x-button>
               </x-button-group>
               <x-button
-                v-if="selectedPlans.length > 0 && page.props.record.registration_type == page.props.carRegistrationType.COMPANY"
+                v-if="
+                  selectedPlans.length > 0 &&
+                  page.props.record.registration_type ==
+                    page.props.carRegistrationType.COMPANY
+                "
                 size="sm"
                 color="emerald"
                 class="ml-2 mr-2"
@@ -3293,7 +3293,11 @@ const isCommercialVehicle = computed(() => {
               </x-button>
 
               <x-button
-                v-if="selectedPlans.length > 0  && page.props.record.registration_type != page.props.carRegistrationType.COMPANY"
+                v-if="
+                  selectedPlans.length > 0 &&
+                  page.props.record.registration_type !=
+                    page.props.carRegistrationType.COMPANY
+                "
                 size="sm"
                 color="emerald"
                 class="ml-2 mr-2"
@@ -3301,8 +3305,7 @@ const isCommercialVehicle = computed(() => {
                 :loading="exportLoader"
                 :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
               >
-              
-              Download PDF 
+                Download PDF
               </x-button>
 
               <x-tooltip placement="top" align="left">
