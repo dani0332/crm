@@ -1473,16 +1473,12 @@ class SendUpdateLogService
     {
         info('fn: getProviderDetails start for Send Update - code: '.$quote->code);
         $insuranceProviderId = $plan_id = null;
-        $isCommercial = false;
-        if ($quoteTypeId == QuoteTypeId::Car) {
-            $isCommercial = app(LeadAllocationService::class)->isCommercialVehicles($quote);
-        }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
             info('fn: getProviderDetails end for Send Update - code: '.$quote->code.', in case of creation legacy policy.');
 
             return [$quote?->insurance_provider_id, $plan_id];
         }
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quoteServiceFile = getServiceObject($quoteType);
             $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);
