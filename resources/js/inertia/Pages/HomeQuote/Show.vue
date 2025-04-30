@@ -1060,7 +1060,9 @@ const shouldShowPlanDetailsSection = computed(() => {
   const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
   const str = page.props.quote.created_at;
 
-  const match = str.match(/(\d+)-([A-Za-z]+)-(\d+)\s+(\d+):(\d+)(am|pm)/i);
+  const match = str.match(
+    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
+  );
   if (!match) return false;
 
   const [_, day, monthStr, year, hour, min, ampm] = match;
