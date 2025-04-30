@@ -585,6 +585,7 @@ function capitalizeString(str) {
 
 const availablePlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -627,6 +628,7 @@ const selectedPlanIds = computed(() => {
 const availableAllPlans = ref([]);
 
 const onLoadAvailablePlansData = async () => {
+  availablePlansTable.isLoading = true;
   const url = `/quotes/home/available-plans/${page.props.quote.uuid}`;
   const data = {
     jsonData: true,
@@ -645,7 +647,11 @@ const onLoadAvailablePlansData = async () => {
       homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
     } else {
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+  } finally {
+    availablePlansTable.isLoading = false;
+  }
 };
 
 const onTogglePlans = toggle => {
@@ -2044,7 +2050,11 @@ const shouldShowPlanDetailsSection = computed(() => {
             </p>
           </div>
           <div v-else>
+            <div v-if="availablePlansTable.isLoading" class="flex justify-center my-8">
+              <x-spinner size="lg" />
+            </div>
             <DataTable
+              v-else
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed"
               :headers="availablePlansTable.columns"

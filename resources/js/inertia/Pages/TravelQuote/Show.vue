@@ -741,6 +741,7 @@ const onExportPlans = () => {
 };
 
 const onLoadAvailablePlansData = async () => {
+  availablePlansTable.isLoading = true;
   let data = {
     jsonData: true,
   };
@@ -756,6 +757,9 @@ const onLoadAvailablePlansData = async () => {
     })
     .catch(err => {
       console.log(err);
+    })
+    .finally(() => {
+      availablePlansTable.isLoading = false;
     });
 };
 
@@ -896,6 +900,7 @@ const emailStatusesTableColumns = computed(() => {
 
 const availablePlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -930,6 +935,7 @@ const availablePlansTable = reactive({
 
 const availableSeniorPlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -3137,7 +3143,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
             </p>
           </div>
           <div v-else>
+            <div v-if="availablePlansTable.isLoading" class="flex justify-center my-8">
+              <x-spinner size="lg" />
+            </div>
             <DataTable
+              v-else
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed"
               :headers="availablePlansTable.columns"
@@ -3230,7 +3240,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </h6>
             </div>
             <div>
+              <div v-if="availableSeniorPlansTable.isLoading" class="flex justify-center my-8">
+                <x-spinner size="lg" />
+              </div>
               <DataTable
+                v-else
                 v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed"
                 :headers="availableSeniorPlansTable.columns"
