@@ -3242,100 +3242,104 @@ const isCommercialVehicle = computed(() => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex mb-4 justify-end">
-            <template v-if="!hasRole(rolesEnum.PA)">
-              <x-tooltip
-                v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
-              >
-                <x-button
-                  class="ml-2 mr-2"
-                  :disabled="disableFollowUp"
-                  size="sm"
-                  color="rose"
-                  @click="showfollowup = !showfollowup"
-                  v-if="readOnlyMode.isDisable === true"
+          <div v-if="isLoadingAvailablePlans" class="flex justify-center my-8">
+            <x-spinner size="lg" />
+          </div>
+          <template v-else>
+            <div class="flex mb-4 justify-end">
+              <template v-if="!hasRole(rolesEnum.PA)">
+                <x-tooltip
+                  v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
                 >
-                  Pause Follow-up to customer
-                </x-button>
-                <template #tooltip>
-                  <span
-                    >When Activated, The button temporarily suspends the
-                    automatic sending of follow-up emails to clients</span
+                  <x-button
+                    class="ml-2 mr-2"
+                    :disabled="disableFollowUp"
+                    size="sm"
+                    color="rose"
+                    @click="showfollowup = !showfollowup"
+                    v-if="readOnlyMode.isDisable === true"
                   >
-                </template>
-              </x-tooltip>
-              <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                    Pause Follow-up to customer
+                  </x-button>
+                  <template #tooltip>
+                    <span
+                      >When Activated, The button temporarily suspends the
+                      automatic sending of follow-up emails to clients</span
+                    >
+                  </template>
+                </x-tooltip>
+                <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                  <x-button
+                    @click.prevent="onTogglePlans(false)"
+                    :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                    :loading="toggleLoader"
+                    v-if="readOnlyMode.isDisable === true"
+                  >
+                    Show
+                  </x-button>
+                  <x-button
+                    @click.prevent="onTogglePlans(true)"
+                    :loading="toggleLoader"
+                    v-if="readOnlyMode.isDisable === true"
+                  >
+                    Hide
+                  </x-button>
+                </x-button-group>
                 <x-button
-                  @click.prevent="onTogglePlans(false)"
-                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-                  :loading="toggleLoader"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Show
-                </x-button>
-                <x-button
-                  @click.prevent="onTogglePlans(true)"
-                  :loading="toggleLoader"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Hide
-                </x-button>
-              </x-button-group>
-              <x-button
-                v-if="
-                  selectedPlans.length > 0 &&
-                  page.props.record.registration_type ==
-                    page.props.carRegistrationType.COMPANY
-                "
-                size="sm"
-                color="emerald"
-                class="ml-2 mr-2"
-                @click.prevent="downloadCompanyPdf"
-                :loading="exportLoader"
-                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-              >
-                Download Company
-              </x-button>
-
-              <x-button
-                v-if="
-                  selectedPlans.length > 0 &&
-                  page.props.record.registration_type !=
-                    page.props.carRegistrationType.COMPANY
-                "
-                size="sm"
-                color="emerald"
-                class="ml-2 mr-2"
-                @click.prevent="onExportPlans"
-                :loading="exportLoader"
-                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-              >
-                Download PDF
-              </x-button>
-
-              <x-tooltip placement="top" align="left">
-                <x-button
-                  @click.prevent="modals.sendConfirm = true"
-                  size="sm"
-                  color="orange"
-                  class="mr-2"
-                  :disabled="
-                    record.advisor_id != $page.props.auth.user.id ||
-                    page.props.linkedQuoteDetails.childLeadsCount > 0
+                  v-if="
+                    selectedPlans.length > 0 &&
+                    page.props.record.registration_type ==
+                      page.props.carRegistrationType.COMPANY
                   "
-                  v-if="readOnlyMode.isDisable === true"
+                  size="sm"
+                  color="emerald"
+                  class="ml-2 mr-2"
+                  @click.prevent="downloadCompanyPdf"
+                  :loading="exportLoader"
+                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 >
-                  Send OCB Email to Customer
+                  Download Company
                 </x-button>
-                <template #tooltip>
-                  <div>
-                    When clicked, this button sends the One Click Buy (OCB)
-                    email to the customer with updated rates and coverage
-                    options, helping them finalize their purchase with ease.
-                  </div>
-                </template>
-              </x-tooltip>
-            </template>
+
+                <x-button
+                  v-if="
+                    selectedPlans.length > 0 &&
+                    page.props.record.registration_type !=
+                      page.props.carRegistrationType.COMPANY
+                  "
+                  size="sm"
+                  color="emerald"
+                  class="ml-2 mr-2"
+                  @click.prevent="onExportPlans"
+                  :loading="exportLoader"
+                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                >
+                  Download PDF
+                </x-button>
+
+                <x-tooltip placement="top" align="left">
+                  <x-button
+                    @click.prevent="modals.sendConfirm = true"
+                    size="sm"
+                    color="orange"
+                    class="mr-2"
+                    :disabled="
+                      record.advisor_id != $page.props.auth.user.id ||
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
+                    v-if="readOnlyMode.isDisable === true"
+                  >
+                    Send OCB Email to Customer
+                  </x-button>
+                  <template #tooltip>
+                    <div>
+                      When clicked, this button sends the One Click Buy (OCB)
+                      email to the customer with updated rates and coverage
+                      options, helping them finalize their purchase with ease.
+                    </div>
+                  </template>
+                </x-tooltip>
+              </template>
 
               <AddPlanButtonTemplate v-slot="{ isDisabled }">
                 <x-button
@@ -3588,8 +3592,8 @@ const isCommercialVehicle = computed(() => {
                     v-if="
                       quote.quote_status_id !=
                         page.props.quoteStatusEnum.PolicyCancelled ||
-                      page.props.linkedQuoteDetails.childLeadsCount == 0
-                    "
+                        page.props.linkedQuoteDetails.childLeadsCount == 0
+                      "
                     size="xs"
                     color="primary"
                     outlined
@@ -3638,7 +3642,7 @@ const isCommercialVehicle = computed(() => {
                 </div>
               </template>
             </DataTable>
-          </div>
+          </template>
         </template>
       </Collapsible>
 
