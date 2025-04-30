@@ -179,7 +179,16 @@ return [
         'uat' => [
             'supervisor-uat' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals,insly,policy-issuance-automation,shared',
+                'queue' => 'default,renewals,insly,policy-issuance-automation',
+                'balance' => 'auto',
+                'maxProcesses' => 3,
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 60,
+            ],
+            'supervisor-uat-shared' => [
+                'connection' => 'redis',
+                'queue' => 'shared',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,
