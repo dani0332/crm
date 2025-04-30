@@ -265,7 +265,8 @@ class AdvisorConversionReportService extends BaseService
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
             ->when($lob == quoteTypeCode::Health, function ($query) {
-                return $query->where('personal_quotes.source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
+                return $query->where('personal_quotes.source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%')
+                    ->orWhere('personal_quotes.source', LeadSourceEnum::IMCRM);
             })
             ->groupBy(
                 'personal_quotes.advisor_id',
