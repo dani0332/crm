@@ -3049,7 +3049,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white" v-if="!$page.props.can.isAdvisor">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
