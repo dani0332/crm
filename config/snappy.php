@@ -35,18 +35,19 @@ return [
 
     'pdf' => [
         'enabled' => true,
-        'binary' => '"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"',
+        'binary' => env('WKHTMLTOPDF_BINARY', '"usr/local/bin/wkhtmltopdf"'),
         'timeout' => false,
         'options' => [],
         'env' => [],
     ],
 
-    'image' => [
-        'enabled' => true,
-        'binary' => '"C:\Program Files\wkhtmltopdf\bin\wkhtmltoimage.exe"',
-        'timeout' => false,
-        'options' => [],
-        'env' => [],
-    ],
+    // commented for now as we are using image related task from snappy
+    // 'image' => [
+    //     'enabled' => true,
+    //     'binary' => '"C:\Program Files\wkhtmltopdf\bin\wkhtmltoimage.exe"',
+    //     'timeout' => false,
+    //     'options' => [],
+    //     'env' => [],
+    // ],
 
 ];
