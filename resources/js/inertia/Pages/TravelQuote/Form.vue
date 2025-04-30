@@ -182,7 +182,7 @@ function onSubmit(isValid) {
   quoteForm.transform(data => {
     // For edit mode, remove fields that shouldn't be updated
     if (editMode.value) {
-      const { policy_number, members, ...updateData } = data;
+      const { mobile_no, email, policy_number, members, ...updateData } = data;
       return updateData;
     }
     return data;

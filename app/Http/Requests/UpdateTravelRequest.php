@@ -31,6 +31,11 @@ class UpdateTravelRequest extends FormRequest
         $requireProperties = array_filter($properties, function ($value) {
             return strpos($value, 'required') !== false;
         });
+        
+        // Explicitly exclude email and mobile_no from required properties
+        unset($requireProperties['email']);
+        unset($requireProperties['mobile_no']);
+        
         $rules = [];
         foreach ($requireProperties as $key => $value) {
             $rule = ['required'];
@@ -38,13 +43,6 @@ class UpdateTravelRequest extends FormRequest
                 $rule[] = 'between:1,20';
             }
 
-            if ($key == 'email') {
-                $rule[] = 'email:rfc,dns';
-            }
-            if ($key == 'mobile_no') {
-                $rule[] = 'min:7';
-                $rule[] = 'max:20';
-            }
             if ($key == 'departure_country_id') {
                 $rule = ['required_if:has_arrived_uae,1'];
             }
