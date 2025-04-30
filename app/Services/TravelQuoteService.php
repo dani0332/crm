@@ -759,10 +759,10 @@ class TravelQuoteService extends BaseService
         $travelQuote->days_cover_for = $request->days_cover_for;
 
         // Handle multiple destinations using the existing TravelDestinations relation
-        if (is_array($request->destination_ids) && !empty($request->destination_ids)) {
+        if (is_array($request->destination_ids) && ! empty($request->destination_ids)) {
             // Delete existing destinations first
             $travelQuote->TravelDestinations()->delete();
-            
+
             // Create new destination records
             foreach ($request->destination_ids as $destinationId) {
                 $travelQuote->TravelDestinations()->create([
@@ -774,7 +774,7 @@ class TravelQuoteService extends BaseService
             // Set the primary destination_id to the first one in the array
             $travelQuote->destination_id = $request->destination_ids[0];
         }
-        
+
         $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         (isset($request->region_cover_for_id) && $request->region_cover_for_id != 'undefined') && $travelQuote->region_cover_for_id = $request->region_cover_for_id;
