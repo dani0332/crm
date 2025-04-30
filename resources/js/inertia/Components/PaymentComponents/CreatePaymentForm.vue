@@ -9,7 +9,7 @@
 		PaymentFormDecline, 
 		PaymentFormVerification, 
 		PaymentFormFooter 
-	} from './PaymentForm/index.js';
+	} from './PaymentFormComps/index.js';
 
 	const props = defineProps({
 		isFieldReadonly: Boolean,
