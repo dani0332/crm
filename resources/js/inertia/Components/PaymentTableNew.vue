@@ -1993,6 +1993,7 @@ const initializePaymentForm = (
     paymentMethodsForm.splitPaymentId = split_payment_id;
     paymentMethodsForm.status = 'view';
     paymentMethodsForm.collection_amount = '';
+    paymentMethodsForm.insurer_receipt_number = '';
     paymentMethodsForm.payment_method = payment.payment_method.code;
     paymentMethodsForm.bank_reference_number = '';
     splitPaymentRecord.value = payment.payment_splits.find(
@@ -2237,6 +2238,7 @@ const paymentMethodsForm = useForm({
   paymentCode: '',
   status: 'create',
   approvalModal: '',
+  insurer_receipt_number: '',
 });
 
 const validateViewPayment = isValid => {
@@ -2506,6 +2508,7 @@ const addPayment = isValid => {
       declined_custom_reason: declinedCustomReason,
       send_update_id: props.sendUpdate?.id || null,
       collection_type: paymentMethodsForm.collection_type,
+      insurer_receipt_number: paymentMethodsForm.insurer_receipt_number,
     };
     paymentMethodsForm
       .transform(data => viewData)
@@ -6255,6 +6258,29 @@ onBeforeMount(() => {
                         class="w-full"
                         v-model="paymentMethodsForm.collection_amount"
                         :rules="[rules.isRequired, rules.amount]"
+                      />
+                    </x-field>
+                  </div>
+                </div>
+                <div class="w-1/2 px-2">
+                  <div>
+                    <x-tooltip class="tooltip-display">
+                      <span
+                        class="border-b-2 border-dotted border-black text-sm"
+                        >INSURER RECEIPT NUMBER
+                        <sup class="text-red-500">*</sup></span
+                      >
+                      <template #tooltip>
+                        <span>{{
+                          paymentTooltipEnum.PAYMENT_VIEW_INSURER_RECEIPT_NUMBER
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                    <x-field class="w-full">
+                      <x-input
+                        class="w-full"
+                        v-model="paymentMethodsForm.insurer_receipt_number"
+                        :rules="[rules.isRequired]"
                       />
                     </x-field>
                   </div>

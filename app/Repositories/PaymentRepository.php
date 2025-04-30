@@ -556,6 +556,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'updated_by' => $request->user()->id,
                     'verified_at' => now(),
                     'verified_by' => $request->user()->id,
+                    'insurer_receipt_number' => $request->insurer_receipt_number,
                 ];
 
                 // associate approved documents with payment split
