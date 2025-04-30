@@ -172,6 +172,7 @@ class AdvisorConversionReportService extends BaseService
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
         ];
     }
 
