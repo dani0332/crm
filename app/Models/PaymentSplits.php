@@ -123,7 +123,7 @@ class PaymentSplits extends Model implements Auditable
                 $sageProcess = $this->sageProcess;
                 $sageApiLogs = $this->sageApiLogs->keyBy('step')->toArray();
                 $prepaymentCreationResponse = isset($sageApiLogs[2]) ? json_decode($sageApiLogs[2]['response'], true) : null;
-                $batchNumber = $prepaymentCreationResponse ? $prepaymentCreationResponse['BatchNumber'] : null;
+                $batchNumber = $prepaymentCreationResponse['BatchNumber'] ?? null;
                 $lastStep = end($sageApiLogs);
                 $isPrepaymentAlreadyPosted = $lastStep && $lastStep['sage_request_type'] == SageEnum::SRT_POST_PP_REC && $lastStep['status'] == SageEnum::STATUS_SUCCESS;
                 $sageProcessFailed = $sageProcess?->status == SageEnum::SAGE_PROCESS_FAILED_STATUS;

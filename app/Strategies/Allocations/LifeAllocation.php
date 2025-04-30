@@ -19,7 +19,7 @@ class LifeAllocation extends BaseAllocation
             ->first();
     }
 
-    private function getAdvisorEmails()
+    protected function getAdvisorEmails($storageKey = null)
     {
         $category = $this->evaluateCategory();
         $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
@@ -37,7 +37,7 @@ class LifeAllocation extends BaseAllocation
         $emails = [];
 
         if ($amount < 1000000 && in_array($category, [self::CAT_A])) {
-            $emails = [$gaurav, $vivian, $sourabh];
+            $emails = [$gaurav, $vivian];
         } elseif ($amount >= 1000000 && $amount <= 2000000 && in_array($category, [self::CAT_A])) {
             $emails = [$vivian];
         } elseif ($amount <= 2000000 && in_array($category, [self::CAT_B])) {
