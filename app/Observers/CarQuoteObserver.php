@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
@@ -48,6 +49,9 @@ class CarQuoteObserver
             try {
                 $lead->markLeadAllocationPassed();
                 $oldAdvisorId = $changes['advisor_id']['old'];
+
+                LogAllocation::dispatch($lead, QuoteTypes::CAR);
+
                 event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId));
             } catch (Exception $e) {
                 Log::error('CarQuoteObserver - handle car update advisor failed', [
