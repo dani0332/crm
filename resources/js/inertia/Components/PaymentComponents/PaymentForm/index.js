@@ -5,3 +5,4 @@ export { default as PaymentFormNotes } from "./PaymentNotes.vue";
 export { default as PaymentFormVerified } from "./PaymentVerified.vue";
 export { default as PaymentFormDecline } from "./PaymentDecline.vue";
 export { default as PaymentFormVerification } from "./PaymentVerification.vue";
+export { default as PaymentFormFooter } from "./PaymentFooter.vue";

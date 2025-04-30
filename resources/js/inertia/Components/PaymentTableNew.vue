@@ -17,7 +17,7 @@ import {
   PaymentSplitRow,
 } from './PaymentComponents/index.js';
 
-import { PaymentFormFields, PaymentFormAlerts, PaymentFormScheduleTable, PaymentFormNotes, PaymentFormVerified, PaymentFormDecline, PaymentFormVerification } from './PaymentComponents/PaymentForm/index.js';
+import { PaymentFormFields, PaymentFormAlerts, PaymentFormScheduleTable, PaymentFormNotes, PaymentFormVerified, PaymentFormDecline, PaymentFormVerification, PaymentFormFooter } from './PaymentComponents/PaymentForm/index.js';
 
 // Assign barrel-imported components to prevent IDE from showing them as unused
 const components = { PaymentTableHeader, PaymentFormFields };
@@ -3480,7 +3480,6 @@ onBeforeMount(() => {
               :paymentMethodsForm="paymentMethodsForm"
             />
 
-            <!-- RELATED TO PAYMENT VERIFICATION -->
             <PaymentFormVerified
               :splitPaymentRecord="splitPaymentRecord"
               :paymentMethodsForm="paymentMethodsForm"
@@ -3488,7 +3487,6 @@ onBeforeMount(() => {
               :splitPaymentNo="splitPaymentNo"
             />
 
-            <!-- RELATED TO PAYMENT DECLINE -->
             <PaymentFormDecline
               :paymentMethodsForm="paymentMethodsForm"
               :rules="rules"
@@ -3501,7 +3499,6 @@ onBeforeMount(() => {
               @handle-declined-reason-change="handleDeclinedReasonChange"
             />
 
-            <!-- RELATED TO PAYMENT APPROVE -->
             <PaymentFormVerification
               :isViewEnabled="isViewEnabled"
               :isApproveClicked="isApproveClicked"
@@ -3522,259 +3519,130 @@ onBeforeMount(() => {
             />
 
             <x-divider class="mb-4 mt-1" />
-            <!-- RELATED TO FOOTER -->
-            <template v-if="isViewEnabled || isCreditApprovalView">
-              <template
-                v-if="
-                  isCreditApprovalView ||
-                  (paymentMethodsModels[splitPaymentNo] !== 'CA' &&
-                    paymentMethodsModels[splitPaymentNo] !== 'CC')
-                "
-              >
+            
+            <PaymentFormFooter
+              :isViewEnabled="isViewEnabled"
+              :isCreditApprovalView="isCreditApprovalView"
+              :isCreditCardView="isCreditCardView"
+              :splitPaymentNo="splitPaymentNo"
+              :paymentMethodsModels="paymentMethodsModels"
+              :splitPaymentRecord="splitPaymentRecord"
+              :paymentStatusEnum="paymentStatusEnum"
+              :permissionEnum="permissionEnum"
+              :paymentMethodsEnum="paymentMethodsEnum"
+              :can="can"
+              :isDeclineClicked="isDeclineClicked"
+              :isApproveClicked="isApproveClicked"
+              :isVerificationAllowed="isVerificationAllowed"
+              :isProformaPaymentRequest="isProformaPaymentRequest"
+              :isTransactionCaptureButtonEnabled="isTransactionCaptureButtonEnabled"
+              :isApproveConfirmed="isApproveConfirmed"
+              :processing="paymentMethodsForm.processing"
+              :formStatus="paymentMethodsForm.status"
+              :quoteRequest="props.quoteRequest"
+              :quoteType="props.quoteType"
+              :payments="props.payments"
+              @cancel="handleCancelChanges"
+              @decline="handleDeclinedChange"
+              @approve="isApproveClicked = !isApproveClicked"
+              @cancel-modal="createPaymentModal = !createPaymentModal"
+              @aml-verification="openAmlVerificationModal"
+            />
+          </x-form>
+
+          <div
+            class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+            v-if="isApproveConfirmed"
+          >
+            <div
+              class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+            >
+              <div class="modal-confirm-header text-base text-white bg-white">
                 <div
-                  v-if="
-                    isCreditApprovalView ||
-                    (splitPaymentRecord.payment_status_id !=
-                      paymentStatusEnum.PAID &&
-                      (can(permissionEnum.ApprovePayments) ||
-                        (can(permissionEnum.INPL_APPROVER) &&
-                          splitPaymentRecord.payment_method.code ==
-                            paymentMethodsEnum?.InsureNowPayLater)))
-                  "
-                  class="w-full flex justify-end"
+                  class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
                 >
-                  <div v-if="isDeclineClicked" class="mr-4">
-                    <x-button
-                      size="sm"
-                      @click="handleCancelChanges"
-                      tabindex="0"
-                      class="focus:outline-black"
-                    >
-                      Cancel
-                    </x-button>
+                  <div class="flex items-center space-x-2">
+                    {{ transactionActionText }}
                   </div>
-                  <div
-                    v-if="
-                      ((!isApproveClicked && !isDeclineClicked) ||
-                        (isCreditApprovalView && !isDeclineClicked)) &&
-                      isVerificationAllowed
-                    "
-                    class="mr-4"
-                  >
-                    <x-button
-                      v-if="!isProformaPaymentRequest"
-                      size="sm"
-                      @click="handleDeclinedChange"
-                      tabindex="0"
-                      class="focus:outline-black"
+                  <div class="flex items-center space-x-2">
+                    <span
+                      @click="closeConfirmModal"
+                      class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
                     >
-                      Decline
-                    </x-button>
+                      <!-- Cross icon -->
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        tabindex="0"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        class="w-4 h-4 text-gray-800"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        ></path>
+                      </svg>
+                    </span>
                   </div>
-                  <div
-                    v-if="
-                      !isApproveClicked &&
-                      isDeclineClicked &&
-                      isVerificationAllowed
-                    "
-                    class="mr-4"
-                  >
-                    <x-button
-                      size="sm"
-                      type="submit"
-                      tabindex="0"
-                      class="focus:outline-black"
-                      :loading="paymentMethodsForm.processing"
-                    >
-                      Decline
-                    </x-button>
-                  </div>
-                  <div
-                    v-if="
-                      !isDeclineClicked &&
-                      (paymentMethodsModels[splitPaymentNo] != 'CC' ||
-                        isCreditApprovalView)
-                    "
-                  >
-                    <x-button
-                      v-if="
-                        !isApproveClicked &&
-                        isViewEnabled &&
-                        !isProformaPaymentRequest &&
-                        isVerificationAllowed
-                      "
-                      class="mr-2 focus:outline-black"
-                      size="sm"
-                      color="#ff5e00"
-                      @click="
-                        isAmlVerified(
-                          props.quoteRequest,
-                          props.quoteType,
-                          props.payments,
-                        )
-                          ? (isApproveClicked = !isApproveClicked)
-                          : openAmlVerificationModal()
-                      "
-                      tabindex="0"
-                    >
-                      Approve
-                    </x-button>
-                    <x-button
-                      v-if="
-                        (isApproveClicked ||
-                          (isCreditApprovalView && !isDeclineClicked)) &&
-                        isTransactionCaptureButtonEnabled
-                      "
-                      class="mr-2 focus:outline-black"
-                      size="sm"
-                      color="#ff5e00"
-                      type="submit"
-                      tabindex="0"
-                      :loading="paymentMethodsForm.processing"
-                      :disabled="
-                        isApproveConfirmed || !isTransactionCaptureButtonEnabled
-                      "
-                    >
-                      <template v-if="isCreditApprovalView && isCreditCardView">
-                        Capture
-                      </template>
-                      <template v-else-if="isVerificationAllowed">
-                        Approve
-                      </template>
-                      <template v-else> Approve </template>
-                    </x-button>
-                  </div>
-                </div>
-              </template>
-            </template>
-            <template v-else>
-              <div class="w-full md:col-span-4 flex justify-end">
-                <div v-if="paymentMethodsForm.status == 'edit'" class="mr-4">
-                  <x-button
-                    @click="createPaymentModal = !createPaymentModal"
-                    tabindex="0"
-                    class="focus:outline-black"
-                  >
-                    Cancel
-                  </x-button>
-                </div>
-                <div
-                  v-if="
-                    paymentMethodsForm.status == 'create' ||
-                    paymentMethodsForm.status == 'edit'
-                  "
-                >
-                  <x-button
-                    color="emerald"
-                    type="submit"
-                    tabindex="0"
-                    class="focus:outline-black"
-                    :loading="paymentMethodsForm.processing"
-                  >
-                    {{
-                      paymentMethodsForm.status == 'create'
-                        ? 'Add Manual Payment'
-                        : 'Update'
-                    }}
-                  </x-button>
                 </div>
               </div>
-            </template>
-
-            <div
-              class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
-              v-if="isApproveConfirmed"
-            >
-              <div
-                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
-              >
-                <div class="modal-confirm-header text-base text-white bg-white">
-                  <div
-                    class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
-                  >
-                    <div class="flex items-center space-x-2">
-                      {{ transactionActionText }}
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <span
-                        @click="closeConfirmModal"
-                        class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
-                      >
-                        <!-- Cross icon -->
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          tabindex="0"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          class="w-4 h-4 text-gray-800"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          ></path>
-                        </svg>
-                      </span>
-                    </div>
+              <div class="w-full h-full mt-2 flex flex-col items-center">
+                <div
+                  class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
+                >
+                  <div class="flex items-center text-center mr-2 mt-4">
+                    <input
+                      type="checkbox"
+                      @click="isApproveNotChecked = !isApproveNotChecked"
+                      class="h-6 w-6 mr-2 border border-gray-300 rounded checked:bg-blue-500 checked:border-transparent focus:ring-blue-400"
+                    />
+                  </div>
+                  <div class="text-left">
+                    <span
+                      v-if="paymentMethodsForm.collection_type === 'insurer'"
+                      >I certify that all details provided, including the
+                      official receipt or payment confirmation, are correct
+                      and in compliance with our conduct standards.</span
+                    >
+                    <span
+                      v-if="paymentMethodsForm.collection_type === 'broker'"
+                      >I verify that the information provided is accurate and
+                      my actions align with our standards of conduct.</span
+                    >
                   </div>
                 </div>
-                <div class="w-full h-full mt-2 flex flex-col items-center">
-                  <div
-                    class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
-                  >
-                    <div class="flex items-center text-center mr-2 mt-4">
-                      <input
-                        type="checkbox"
-                        @click="isApproveNotChecked = !isApproveNotChecked"
-                        class="h-6 w-6 mr-2 border border-gray-300 rounded checked:bg-blue-500 checked:border-transparent focus:ring-blue-400"
-                      />
-                    </div>
-                    <div class="text-left">
-                      <span
-                        v-if="paymentMethodsForm.collection_type === 'insurer'"
-                        >I certify that all details provided, including the
-                        official receipt or payment confirmation, are correct
-                        and in compliance with our conduct standards.</span
-                      >
-                      <span
-                        v-if="paymentMethodsForm.collection_type === 'broker'"
-                        >I verify that the information provided is accurate and
-                        my actions align with our standards of conduct.</span
-                      >
-                    </div>
-                  </div>
-                  <x-tooltip v-if="isApproveNotChecked">
-                    <x-button
-                      size="lg"
-                      color="orange"
-                      class="px-4 py-2 mt-4"
-                      :disabled="isApproveNotChecked"
-                    >
-                      <span>Confirm</span></x-button
-                    >
-                    <template #tooltip>
-                      <span>{{
-                        paymentTooltipEnum.CONFIRM_APPROVE_UNSELECT
-                      }}</span>
-                    </template>
-                  </x-tooltip>
+                <x-tooltip v-if="isApproveNotChecked">
                   <x-button
-                    v-if="!isApproveNotChecked"
                     size="lg"
-                    type="submit"
                     color="orange"
                     class="px-4 py-2 mt-4"
                     :disabled="isApproveNotChecked"
-                    :loading="paymentMethodsForm.processing"
                   >
                     <span>Confirm</span></x-button
                   >
-                </div>
+                  <template #tooltip>
+                    <span>{{
+                      paymentTooltipEnum.CONFIRM_APPROVE_UNSELECT
+                    }}</span>
+                  </template>
+                </x-tooltip>
+                <x-button
+                  v-if="!isApproveNotChecked"
+                  size="lg"
+                  type="submit"
+                  color="orange"
+                  class="px-4 py-2 mt-4"
+                  :disabled="isApproveNotChecked"
+                  :loading="paymentMethodsForm.processing"
+                >
+                  <span>Confirm</span></x-button
+                >
               </div>
             </div>
-          </x-form>
+          </div>
 
           <div
             class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center"
