@@ -13,7 +13,7 @@ use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\DB;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class BikeQuoteService extends BaseService
 {

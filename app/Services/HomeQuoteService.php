@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class HomeQuoteService extends BaseService
 {
