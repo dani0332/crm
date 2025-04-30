@@ -106,7 +106,7 @@ trait ExcelExportable
         }
 
         // Generate CSV content in memory
-        $csvFileName = $fileName.'-'.Carbon::now()->format('Y-m-d').'.csv';
+        $csvFileName = $fileName.'.csv';
         $stream = fopen('php://temp', 'r+');
 
         $requestParams['user'] = User::where(['email' => $requestParams['recipientEmail']])->first();
