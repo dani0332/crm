@@ -33,15 +33,13 @@ use App\Models\Tier;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
-use Barryvdh\Snappy\Facades\SnappyPdf;
-
 
 class CarQuoteService extends BaseService
 {
@@ -1566,9 +1564,10 @@ class CarQuoteService extends BaseService
         }, 'customer']);
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons'));
-        
+
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
 
