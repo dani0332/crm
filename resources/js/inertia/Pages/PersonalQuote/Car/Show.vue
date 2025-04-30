@@ -1195,7 +1195,57 @@ const onExportPlans = () => {
     .finally(() => {
       exportLoader.value = false;
     });
+
 };
+
+
+const downloadCompanyPdf = () => {
+  console.log('Testing'); 
+  
+  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 1 to 5 plans to download PDF.',
+      position: 'top',
+    });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
+  axios
+    .post(
+      '/personal-quotes/car/pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.record.uuid,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
+
+};
+
+
 const confirmSendEmail = () => {
   const first_name = page.props.record.first_name || '';
   const last_name = page.props.record.last_name || '';
@@ -3231,7 +3281,19 @@ const isCommercialVehicle = computed(() => {
                 </x-button>
               </x-button-group>
               <x-button
-                v-if="selectedPlans.length > 0"
+                v-if="selectedPlans.length > 0 && page.props.record.registration_type == page.props.carRegistrationType.COMPANY"
+                size="sm"
+                color="emerald"
+                class="ml-2 mr-2"
+                @click.prevent="downloadCompanyPdf"
+                :loading="exportLoader"
+                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+              >
+                Download Company
+              </x-button>
+
+              <x-button
+                v-if="selectedPlans.length > 0  && page.props.record.registration_type != page.props.carRegistrationType.COMPANY"
                 size="sm"
                 color="emerald"
                 class="ml-2 mr-2"
@@ -3239,8 +3301,10 @@ const isCommercialVehicle = computed(() => {
                 :loading="exportLoader"
                 :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
               >
-                Download PDF
+              
+              Download PDF 
               </x-button>
+
               <x-tooltip placement="top" align="left">
                 <x-button
                   @click.prevent="modals.sendConfirm = true"
