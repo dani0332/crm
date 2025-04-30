@@ -757,12 +757,12 @@ class TravelQuoteService extends BaseService
             $travelQuote->quote_updated_at = Carbon::now();
         }
         $travelQuote->days_cover_for = $request->days_cover_for;
-        
+
         // Handle multiple destinations using the existing TravelDestinations relation
         if (is_array($request->destination_ids)) {
             // Delete existing destinations
             $travelQuote->TravelDestinations()->delete();
-            
+
             // Add new destinations
             foreach ($request->destination_ids as $destinationId) {
                 $travelQuote->TravelDestinations()->create([
@@ -770,12 +770,12 @@ class TravelQuoteService extends BaseService
                     'destination_id' => $destinationId,
                 ]);
             }
-            
+
             // Set the primary destination_id to the first one in the array
-            if (!empty($request->destination_ids)) {
+            if (! empty($request->destination_ids)) {
                 $travelQuote->destination_id = $request->destination_ids[0];
             }
-        } else if (!empty($request->destination_ids)) {
+        } elseif (! empty($request->destination_ids)) {
             // If a single destination ID is provided
             $travelQuote->destination_id = $request->destination_ids;
         }
