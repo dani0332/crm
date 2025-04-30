@@ -751,14 +751,34 @@ class TravelQuoteService extends BaseService
         $travelQuote->last_name = $request->last_name;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
-        $travelQuote->destination = $request->destination;
         $travelQuote->dob = $request->dob;
         if ($travelQuote->days_cover_for != $request->days_cover_for || $travelQuote->destination_id != $request->destination_id || $travelQuote->currently_located_in_id != $request->currently_located_in_id || $travelQuote->travel_cover_for_id != $request->travel_cover_for_id || $travelQuote->region_cover_for_id != $request->region_cover_for_id
     || $travelQuote->departure_country_id != $request->departure_country_id || $travelQuote->start_date != $request->start_date || $travelQuote->end_date != $request->end_date || $travelQuote->direction_code != $request->direction_code) {
             $travelQuote->quote_updated_at = Carbon::now();
         }
         $travelQuote->days_cover_for = $request->days_cover_for;
-        $travelQuote->destination_id = $request->destination_id;
+        
+        // Handle multiple destinations using the existing TravelDestinations relation
+        if (is_array($request->destination_ids)) {
+            // Delete existing destinations
+            $travelQuote->TravelDestinations()->delete();
+            
+            // Add new destinations
+            foreach ($request->destination_ids as $destinationId) {
+                $travelQuote->TravelDestinations()->create([
+                    'uuid' => $travelQuote->uuid,
+                    'destination_id' => $destinationId,
+                ]);
+            }
+            
+            // Set the primary destination_id to the first one in the array
+            if (!empty($request->destination_ids)) {
+                $travelQuote->destination_id = $request->destination_ids[0];
+            }
+        } else if (!empty($request->destination_ids)) {
+            // If a single destination ID is provided
+            $travelQuote->destination_id = $request->destination_ids;
+        }
         $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         (isset($request->region_cover_for_id) && $request->region_cover_for_id != 'undefined') && $travelQuote->region_cover_for_id = $request->region_cover_for_id;
