@@ -410,6 +410,7 @@ class CarQuoteService extends BaseService
                 'ls.text as lost_reason',
                 'cqr.previous_quote_policy_number',
                 DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+                DB::raw('DATE_FORMAT(cqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
                 'cqr.previous_quote_policy_premium',
                 'cqr.car_model_detail_id',
                 'cmd.text as car_model_detail_id_text',
