@@ -105,7 +105,7 @@ const resetCustomErrors = () => {
   customErrors.amlCreatedEndDate = '';
 };
 
-const onDataExport = flag => {
+const onDataExport = async (exportType = 'download') => {
   isDateMandatory.value = true;
   isQuoteTypeEmpty.value = false;
   resetCustomErrors();
@@ -145,7 +145,49 @@ const onDataExport = flag => {
   removeEmptyFields(exportData);
 
   const url = `/kyc/export`;
-  window.open(url + '?' + useObjToUrl(exportData));
+  exportData.exportType = exportType;
+  const data = useObjToUrl(exportData);
+
+  const payload = {
+    // quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Aml'),
+    exportType: exportType,
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+
+  loader.export = true;
+  if(exportType == 'email'){
+    const exportResponse = await axios
+      .get(payload.url)
+      .then(resp => {
+        // return resp.data;
+        if (resp.data.message) {
+          notification.success({
+            title: resp.data.message,
+            position: 'top',
+          });
+        }
+
+        if (resp)
+          setTimeout(() => {
+            loader.export = false;
+          }, 1000);
+      })
+      .catch(err => {
+        notification.error({
+          title: err.response.data.message
+            ? err.response.data.message
+            : 'Unable to start an export',
+          position: 'top',
+        });
+        throw err;
+      });
+  }else{
+    setTimeout(() => {
+      loader.export = false;
+    }, 1000);
+    window.open(url + '?' + useObjToUrl(exportData));
+
+  }
 };
 
 function removeEmptyFields(obj) {
@@ -260,8 +302,19 @@ onMounted(() => {
           v-if="can(permissionsEnum.DATA_EXTRACTION)"
           size="sm"
           color="#48bb78"
+          @click.prevent="onDataExport('email')"
+          :disabled="loader.export"
+          :loading="loader.export"
+        >
+          Export via email
+        </x-button>
+        <x-button
+          v-if="can(permissionsEnum.DATA_EXTRACTION)"
+          size="sm"
+          color="#48bb78"
           @click.prevent="onDataExport()"
-          :disabled="loader.table"
+          :disabled="loader.export"
+          :loading="loader.export"
         >
           Export to Excel
         </x-button>

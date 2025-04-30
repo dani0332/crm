@@ -51,9 +51,17 @@ trait ExcelExportable
         }
 
         $currentDate = Carbon::now()->format('d-m-Y');
-        $requestParams['quoteType'] = ucfirst($requestParams['quoteType']);
         $requestParams['fileName'] = $fileName;
-        $requestParams['subject'] = "{$requestParams['quoteType']} Export - {$currentDate}";
+
+        if (!empty($requestParams['exportTitle'])) {
+            $requestParams['exportTitle'] = ucfirst($requestParams['exportTitle']);
+        } else {
+            $requestParams['exportTitle'] = ucfirst($requestParams['quoteType']);
+        }
+
+        if (empty($requestParams['subject'])) {
+            $requestParams['subject'] = "{$requestParams['exportTitle']} Export - {$currentDate}";
+        }
 
         // Dispatch job to process CSV generation and email sending
         ExportCsvAndSendEmailJob::dispatch(
@@ -131,7 +139,7 @@ trait ExcelExportable
 
         $emailParams = [
             'recipientName' => $recipientName,
-            'quoteTypeName' => $requestParams['quoteType'],
+            'exportTitle' => $requestParams['exportTitle'],
             'currentDate' => $currentDate,
             'recordCount' => $recordCount,
             'fileSize' => $fileSize,

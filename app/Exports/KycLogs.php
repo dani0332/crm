@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Services\AMLService;
 use App\Traits\ExcelExportable;
 use Illuminate\Support\Collection;
 
@@ -9,11 +10,9 @@ class KycLogs
 {
     use ExcelExportable;
 
-    public function __construct(public Collection $data) {}
-
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return $this->data;
+        return app(AMLService::class)->getAMLData(requestParams: $requestParams);
     }
 
     public function headings(): array

@@ -55,12 +55,12 @@
         <div class="content">
             <p>Dear <span class="highlight">{{ $recipientName }}</span>,</p>
 
-            <p>Your requested export of <span class="highlight">{{ $quoteTypeName }}</span> data has been processed successfully on {{ $currentDate }}.</p>
+            <p>Your requested export of <span class="highlight">{{ $exportTitle }}</span> data has been processed successfully on {{ $currentDate }}.</p>
 
             <div class="info-box">
                 <p><strong>Export Details:</strong></p>
                 <ul>
-                    <li>Content: {{ $quoteTypeName }} data</li>
+                    <li>Content: {{ $exportTitle }} data</li>
                     <li>Records: {{ $recordCount }}</li>
                     <li>File size: Approximately {{ $fileSize }} KB</li>
                     <li>Export date: {{ $currentDate }}</li>
