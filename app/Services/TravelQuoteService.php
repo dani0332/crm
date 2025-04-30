@@ -338,8 +338,7 @@ class TravelQuoteService extends BaseService
             return $response;
         }
         // LoggerService::info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
-        $response = CapiRequestService::sendCAPIRequest('
-        ', $travelQuote);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
         // LoggerService::info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
 
         if (isset($response->quoteUID)) {
@@ -348,7 +347,7 @@ class TravelQuoteService extends BaseService
             $quote = TravelQuote::where('uuid', $response->quoteUID)->first();
             if ($quote && $quote->advisor_id && $quote->source === config('constants.SOURCE_NAME')) {
                 $quote->update([
-                    'assignment_type' => AssignmentTypeEnum::SYSTEM_ASSIGNED,
+                    'assignment_type' => AssignmentTypeEnum::SELF_ASSIGNED,
                 ]);
             }
 
