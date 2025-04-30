@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
  * Entities Insured Migration Command
  * This command migrates data from the legacy Entity structure to the new Insured table structure.
  * It handles the migration of entities, their KYC details, and creates proper mappings to customers.
+ * This command is designed to be resumable - it will only process entities that haven't been migrated yet.
  * This command is deprecated and should be removed after the migration is completed.
  */
 class EntitiesInsuredMigration extends Command
@@ -38,28 +39,35 @@ class EntitiesInsuredMigration extends Command
     {
         info('------------------- Entities Insured Migration Command Started At: '.now().' -------------------');
 
-        info('Command:EntitiesInsuredMigration - Start updating the existing records in the insured table by setting the customer type to Individual at '.now());
-        $insured = Insured::where(function ($query) {
-            $query->whereNull('customer_type')
-                ->orWhere('customer_type', '');
-        })->where('entity_id', null);
+        $this->updateExistingRecords();
 
-        if ($insured->count() > 0) {
-            $insured->update(['customer_type' => CustomerTypeEnum::Individual]);
+        $totalEntities = Entity::count();
+        $alreadyMigratedCount = Insured::whereNotNull('entity_id')->count();
+        
+        info("Total entities: {$totalEntities}, Already migrated: {$alreadyMigratedCount}, Remaining: " . ($totalEntities - $alreadyMigratedCount));
+
+        // Skip if everything is already migrated
+        if ($alreadyMigratedCount >= $totalEntities) {
+            info('All entities have already been migrated. Nothing to do.');
+            return Command::SUCCESS;
         }
 
-        info('Command:EntitiesInsuredMigration - Existing insured table records updated as Individual successfully at '.now());
-
+        // Process stats
         $failedDetails = [];
         $migratedCount = $skippedCount = $failedCount = 0;
 
-        Entity::chunk(500, function ($entities) use (&$migratedCount, &$skippedCount, &$failedCount, &$failedDetails) {
-            foreach ($entities as $entity) {
-                $isEntityAlreadyCreated = Insured::where('entity_id', $entity->id)->first();
+        // Get IDs of already migrated entities
+        $alreadyMigratedEntityIds = Insured::whereNotNull('entity_id')->pluck('entity_id')->toArray();
+
+        // Query only entities that haven't been migrated yet
+        $entities = Entity::whereNotIn('id', $alreadyMigratedEntityIds);
+
+        $entities->chunk(1000, function ($entitiesToProcess) use (&$migratedCount, &$skippedCount, &$failedCount, &$failedDetails) {
+            foreach ($entitiesToProcess as $entity) {
+                $isEntityAlreadyCreated = Insured::where('entity_id', $entity->id)->exists();
                 if ($isEntityAlreadyCreated) {
                     info('Command:EntitiesInsuredMigration - Entity '.$entity->id.' already exists in the insured table');
                     $skippedCount++;
-
                     continue;
                 }
 
@@ -104,12 +112,36 @@ class EntitiesInsuredMigration extends Command
         $jsonEncodeFailedDetails = json_encode($failedDetails);
 
         info("Migration completed: {$migratedCount} entities migrated, {$skippedCount} entities skipped (already existed), {$failedCount} entities failed.");
-        info("Failed migration details: {$jsonEncodeFailedDetails}");
+        
+        if ($failedCount > 0) {
+            info("Failed migration details: {$jsonEncodeFailedDetails}");
+        }
+        
         info('End creating new insured records for entities at '.now());
-
         info('------------------- Entities Insured Migration Command Ended At: '.now().' -------------------');
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Update existing insured records that don't have a customer type
+     */
+    private function updateExistingRecords()
+    {
+        info('Command:EntitiesInsuredMigration - Start updating the existing records in the insured table by setting the customer type to Individual at '.now());
+        
+        $insured = Insured::where(function ($query) {
+            $query->whereNull('customer_type')
+                ->orWhere('customer_type', '');
+        })->where('entity_id', null);
+
+        $count = $insured->count();
+        if ($count > 0) {
+            info("Updating {$count} existing insured records with customer_type = Individual");
+            $insured->update(['customer_type' => CustomerTypeEnum::Individual]);
+        }
+
+        info('Command:EntitiesInsuredMigration - Existing insured table records updated as Individual successfully at '.now());
     }
 
     private function createCustomerInsuredMappingsForEntity(Insured $insured, Entity $entity)
@@ -148,10 +180,11 @@ class EntitiesInsuredMigration extends Command
     private function migrateEntityKycDetailsToInsuredKyc(Insured $insured, Entity $entity)
     {
         info('Migrating Entity KYC details to insured KYC for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
+        
+        // Skip if KYC details are already migrated
         $insuredKyc = InsuredKyc::where('insured_id', $insured->id)->first();
         if ($insuredKyc) {
             info('Insured KYC already exist for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
-
             return;
         }
 
