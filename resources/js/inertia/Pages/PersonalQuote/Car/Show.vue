@@ -85,7 +85,6 @@ defineProps({
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   vatPercentage: Number,
-  commercialRules: Boolean,
 
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
@@ -100,6 +99,7 @@ defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   insurerAMLStatus: String,
+  businessActivities: Object,
 });
 
 const page = usePage();
@@ -1539,12 +1539,17 @@ const handlePlanSelected = plan => {
   });
 };
 
+const isCompanyCar =
+  page.props.record.registration_type == page.props.carRegistrationType.COMPANY;
+const isPrivateCar =
+  isCompanyCar &&
+  page.props.record.vehicle_use == page.props.carVehicleUse.PRIVATE;
+
 const isPlanDetailEnabled = computed(() => {
-  if (page.props.commercialRules) {
-    // Check rules for commercial
-    return true;
-  }
-  if (page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD) {
+  if (
+    page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD &&
+    !isCompanyCar
+  ) {
     return page.props.record.vehicle_type_id_text == 'BIKE';
   }
   return false;
@@ -1875,16 +1880,12 @@ const isCommercialVehicle = computed(() => {
                 <div>{{ record.code }}</div>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">REGISTRATION TYPE</dt>
+                <dd>{{ quote.registration_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">COMPANY NAME</dt>
-                <dd>{{ quote.car_company_name }}</dd>
-              </div>
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">COMPANY ADDRESS</dt>
-                <dd>{{ quote.car_company_address }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IM AML STATUS</dt>
@@ -1898,13 +1899,17 @@ const isCommercialVehicle = computed(() => {
                 <dt class="font-medium">BATCH</dt>
                 <dd>{{ record.quote_batch_id_text }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div v-if="!isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER AGE</dt>
                 <dd>{{ record.customer_age }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LEAD SOURCE</dt>
                 <dd>{{ record.source }}</dd>
+              </div>
+              <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
+                <dt class="font-medium">Vehicle use</dt>
+                <dd>{{ record.vehicle_use }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CAR MAKE</dt>
@@ -2097,6 +2102,38 @@ const isCommercialVehicle = computed(() => {
                 <dd>{{ record.transaction_approved_at }}</dd>
               </div>
             </dl>
+          </div>
+
+          <div v-if="isPrivateCar">
+            <div class="flex justify-between items-center mt-7 mb-3">
+              <h3 class="font-semibold text-primary-800 text-lg">
+                Driver Details
+              </h3>
+            </div>
+            <div class="text-sm">
+              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Name</dt>
+                  <dd>{{ record.first_name }} {{ record.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ record.nationality_id_text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">DATE OF BIRTH</dt>
+                  <dd>{{ record.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">UAE LICENSE HELD FOR</dt>
+                  <dd>{{ record.uae_license_held_for_id_text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
+                  <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
+                </div>
+              </dl>
+            </div>
           </div>
           <x-divider class="mb-4 mt-4" />
 
@@ -2362,11 +2399,13 @@ const isCommercialVehicle = computed(() => {
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
-                  <dd>{{ record.first_name }}</dd>
+                  <dd v-if="isPrivateCar">{{ record.customer_first_name }}</dd>
+                  <dd v-else>{{ record.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">LAST NAME</dt>
-                  <dd>{{ record.last_name }}</dd>
+                  <dd v-if="isPrivateCar">{{ record.customer_last_name }}</dd>
+                  <dd v-else>{{ record.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MOBILE NUMBER</dt>
@@ -2462,6 +2501,16 @@ const isCommercialVehicle = computed(() => {
                       ]"
                       class="w-full"
                     />
+                  </dd>
+                </div>
+                <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
+                  <dt class="font-medium">BUSINESS ACTIVITY</dt>
+                  <dd>
+                    {{
+                      businessActivities.filter(
+                        i => i.id == record.business_activity_id,
+                      )[0]?.name
+                    }}
                   </dd>
                 </div>
               </dl>

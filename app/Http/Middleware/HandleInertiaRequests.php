@@ -148,6 +148,8 @@ class HandleInertiaRequests extends Middleware
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'impersonatingUser' => app('impersonate')?->getImpersonatorId() ? User::find(app('impersonate')?->getImpersonatorId()) : null,
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
+            'carRegistrationType' => CarRegistrationType::asArray(),
+            'carVehicleUse' => CarVehicleUse::asArray(),
         ];
     }
 

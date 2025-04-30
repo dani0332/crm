@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypeId;
 use App\Models\QuoteType;
 
 class QuoteTypeRepository extends BaseRepository
@@ -21,7 +22,7 @@ class QuoteTypeRepository extends BaseRepository
 
     public function fetchAllowedQuoteForAml()
     {
-        $notAllowedQuoted = [];
+        $notAllowedQuoted = [QuoteTypeId::CompanyCar];
 
         return $this->whereNotIn('id', $notAllowedQuoted)->withActive()->orderBy('sort_order')->get();
     }
