@@ -2,7 +2,6 @@
 
 namespace App\Factories;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -11,7 +10,6 @@ use App\Enums\quoteStatusCode;
 use App\Enums\SageEnum;
 use App\Enums\SagePaymentMethodsEnum;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
@@ -675,6 +673,11 @@ class SagePayloadFactory
     public static function createPrepaymentReceiptPayload($sageRequest, $isCommissionReceipt = false)
     {
         $optionalFields = self::createPrepaymentOptionalFields($sageRequest);
+        $optionalFields[] = [
+            'OptionalField' => 'INSURERRCTNO',
+            'Value' => $sageRequest->insurerReceiptNumber ?? 'N/A',
+        ];
+
         $entryType = SageEnum::SCT_STRAIGHT;
 
         $customerNumber = $sageRequest->sage_customer_number;
@@ -1149,6 +1152,14 @@ class SagePayloadFactory
                 'OptionalField' => 'REFID',
                 'Value' => $sageRequest->quoteCode,
             ],
+            [
+                'OptionalField' => 'SUREFID',
+                'Value' => $sageRequest->endorsementNumber ?? 'N/A',
+            ],
+            [
+                'OptionalField' => 'ENDORSEMENT',
+                'Value' => $sageRequest->sendUpdateEndorsementNumber ?? 'N/A',
+            ],
         ];
 
         return $optionalArray;
@@ -1269,6 +1280,7 @@ class SagePayloadFactory
         $sageRequest->orignalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
+        $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
         $sageRequest->policyNumber = $quote?->policy_number;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->quoteCode = $quote->code;
@@ -1281,12 +1293,14 @@ class SagePayloadFactory
         // TODO:: Need to update the insurer details when contact and insured person FR approved
         $firstChildPayment = $paymentSplits->first();
         $insuredFullName = isset($quote->customer_id) ? $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name : '';
-        $latestEndorsementCode = '';
+        $latestEndorsementCode = null;
+        $latestEndorsementNumber = null;
         $endorsementSubType = '';
 
         if (isset($quote->personal_quote_id) && $quote?->personal_quote_id) {
             $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
             $latestEndorsementCode = $latestEndorsement?->code;
+            $latestEndorsementNumber = $latestEndorsement?->endorsement_number;
 
             if (! empty($latestEndorsement->option_id)) {
                 $endorsementSubType = Lookup::find($latestEndorsement?->option_id)?->text ?? '';
@@ -1334,6 +1348,7 @@ class SagePayloadFactory
         $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
         $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
         $sageRequest->endorsementNumber = $latestEndorsementCode;
+        $sageRequest->sendUpdateEndorsementNumber = $latestEndorsementNumber;
         $sageRequest->endorsementSubType = $endorsementSubType;
         $sageRequest->insured = $insuredFullName;
         $sageRequest->policyHolder = $insuredFullName;
@@ -1352,12 +1367,7 @@ class SagePayloadFactory
         $sageRequest->advisorName = $advisorName;
         $sageRequest->manager = $managerName;
         $sageRequest->advisorDepartment = $advisorDepartment;
-
-        // calculate vat
-        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
-        $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
-        //        $sageRequest->vatOnPremium = isset($quote->vat) ?: (isset($quote->price_with_vat) ? (floatval($quote->price_with_vat) - floatval($quote->price_vat_applicable ?? 0)) : 0); TODO:: This was added previous endorsement function, need to verify
-
+        $sageRequest->vatOnPremium = $quote->vat;
         $sageRequest->premiumWithoutTax = floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
         $sageRequest->vatOnCommission = floatval($payment->commission_vat);

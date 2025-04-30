@@ -37,6 +37,11 @@ class SageApiLog extends Model
         return $this->morphTo();
     }
 
+    public function model()
+    {
+        return $this->morphTo();
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class)->select(['id', 'email', 'name', 'mobile_no']);
