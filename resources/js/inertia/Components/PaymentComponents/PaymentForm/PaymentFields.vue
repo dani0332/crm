@@ -789,4 +789,12 @@
 		font-size: 0.7rem;
 		font-weight: normal;
 	}
+	.custom-tooltip-content {
+		max-width: 200px; /* Adjust the max-width as needed */
+		white-space: normal; /* Allow the text to wrap */
+		z-index: 999;
+		position: relative;
+		font-size: 12px;
+		text-transform: none;
+	}
 </style>

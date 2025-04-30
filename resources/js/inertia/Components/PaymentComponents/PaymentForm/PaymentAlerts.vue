@@ -1,5 +1,6 @@
 <script setup>
 
+	const page = usePage();
 	const paymentTooltipEnum = page.props.paymentTooltipEnum;
 
 	const props = defineProps({
