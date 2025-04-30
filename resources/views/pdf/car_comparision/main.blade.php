@@ -229,14 +229,26 @@
         .buy-button {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 5px 35px;
+            padding: 7px 35px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 14px;
+            font-size: 12px;
             border-radius: 5px;
-            line-height: 1.3;
+            line-height: 1.1;
         }
+
+        .btn-buy {
+        background-color: #FE7333;
+        color: #ffffff;
+        padding: 3px 35px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        border-radius: 5px;
+        line-height: 0.7;
+    }
         
         .buy-button p {
             font-size: 14px;
@@ -421,58 +433,43 @@
 
 
     $features = [
-        ["code" => "heading", "title" => "BENEFITS"],
-        ["code" => "damage", "title" => "Loss or Damage to the Insured Vehicle", "type" => ["feature", "inclusion", "exclusion"]],
-        ["code" => "damageLimit", "title" => "Third Party Property Liability", "type" => "feature"],
-        ["code" => "bloodMoney", "title" => "Blood Money", "type" => ["inclusion", "exclusion"]],
-        ["code" => "fireAndTheft", "title" => "Fire and Theft Cover", "type" => ["inclusion", "exclusion"]],
-        ["code" => "stormAndFlood", "title" => "Storm, Flood", "type" => ["inclusion", "exclusion"]],
-        ["code" => "riotAndStrike", "title" => "Natural Perils Riot and Strike", "type" => ["inclusion", "exclusion"]],
+        ["code" => "heading", "title" => "Benefits"],
+        ["code" => "damage", "title" => "Loss or damage to the insured vehicle", "type" => ["feature", "inclusion", "exclusion"]],
+        ["code" => "damageLimit", "title" => "Third party property liability", "type" => "feature"],
+        ["code" => "bloodMoney", "title" => "Blood money", "type" => ["inclusion", "exclusion"]],
+        ["code" => "fireAndTheft", "title" => "Fire and theft cover", "type" => ["inclusion", "exclusion"]],
+        ["code" => "stormAndFlood", "title" => "Storm, flood", "type" => ["inclusion", "exclusion"]],
+        ["code" => "riotAndStrike", "title" => "Natural perils riot and strike", "type" => ["inclusion", "exclusion"]],
         ["code" => "repairTypeInfo", "title" => "Repairs", "type" => "prop"],
-        ["code" => "emergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => ["inclusion", "exclusion"]],
+        ["code" => "emergencyMedicalExpenses", "title" => "Emergency medical expenses", "type" => ["inclusion", "exclusion"]],
         ["code" => "personalBelongings", "title" => "Personal belongings", "type" => ["inclusion", "exclusion"]],
-        ["code" => "omanCover", "title" => "Oman Cover (Orange card not Included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
-        ["code" => "offRoadCover", "title" => "Off-road Cover", "type" => ["addons", "inclusion", "inclusion", "roadSideAssistance"]],
-        ["code" => "guaranteedRepairs", "title" => "Guaranteed Repairs", "type" => ["inclusion", "exclusion"]],
-        ["code" => "breakdownCover", "title" => "24 Hour Accident and Breakdown Recovery", "type" => "addons"],
-        ["code" => "ambulanceCover", "title" => "Ambulance Cover", "type" => ["inclusion", "exclusion"]],
-        ["code" => "excessForWindscreenDamage", "title" => "Excess for Windscreen Damage", "type" => ["inclusion", "exclusion"]],
-        ["code" => "heading", "title" => "Optional Covers", "type" => ""],
-        ["code" => "driverCover", "title" => "Driver Cover", "type" => "addons"],
-        ["code" => "passengerCover", "title" => "Passengers Cover", "type" => "addons"],
-        ["code" => "carHire", "title" => "Hire car Benefit", "type" => "addons"],
+        ["code" => "omanCover", "title" => "Oman cover (orange card not included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
+        ["code" => "offRoadCover", "title" => "Off-road cover", "type" => ["addons", "inclusion", "inclusion", "roadSideAssistance"]],
+        ["code" => "guaranteedRepairs", "title" => "Guaranteed repairs", "type" => ["inclusion", "exclusion"]],
+        ["code" => "breakdownCover", "title" => "24 hour accident and breakdown recovery", "type" => "addons"],
+        ["code" => "ambulanceCover", "title" => "Ambulance cover", "type" => ["inclusion", "exclusion"]],
+        ["code" => "excessForWindscreenDamage", "title" => "Excess for windscreen damage", "type" => ["inclusion", "exclusion"]],
+        ["code" => "heading", "title" => "Optional covers", "type" => ""],
+        ["code" => "driverCover", "title" => "Driver cover", "type" => "addons"],
+        ["code" => "passengerCover", "title" => "Passengers cover", "type" => "addons"],
+        ["code" => "carHire", "title" => "Hire car benefit", "type" => "addons"],
         ["code" => "spacer"],
         ["code" => "discountPremium", "title" => "Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
-        ["code" => "vat", "title" => "VAT Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "vat", "title" => "Vat amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
-        ["code" => "total", "title" => "Payable Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "total", "title" => "Payable amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
         ["type" => "buy", "heading_class" => "no-border"],
         ["code" => "spacer"],
         ["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
-        ["code" => "ancillaryExcess", "title" => "Ancillary Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "ancillaryExcess", "title" => "Ancillary excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
     ];
 
 @endphp
 
-       	 <!-- first page with first banner image -->
-            <div class="page">
-                <div class="hero-image">
-                    <img src="{{ public_path('images/car-banner-pdf-1.png') }}" 
-                    alt="Car Banner 1">
-                </div>
-            </div>
-    
-            <!-- second page with second banner image -->
-            <div class="page">
-                <div class="hero-image">
-                    <img src="{{ public_path('images/car-pdf-banner-2.png') }}" alt="Car Banner 2">
-                </div>
-            </div>
-    
-
+      
         <!-- plans page -->
         <div class="page" >
             <div class="header">
@@ -492,7 +489,7 @@
                         </div>
                     </div>
                     <div class="quote-ref">
-                        <p>Quote reference number:<strong>{{ $quote->uuid }}</strong></p>
+                        <p>Quote reference number:<strong> CAR-{{ $quote->uuid }}</strong></p>
                     </div>
                 </div>
             </div> 
@@ -536,7 +533,7 @@
                                                 }
                                             @endphp
                                             <img src="{{ $providerLogoImage }}" 
-                                            style="max-width: 50px; height: auto; margin: 0 auto 5px auto; display: block;" />
+                                            style="max-width: 45px; height: auto; margin: 0 auto; display: block;" />
                                         </div>
                                     </td>
                                 </tr>
@@ -547,7 +544,7 @@
                                 </tr>
                                 <tr>
                                     <td style="width: 100%; vertical-align: middle; text-align: center;">
-                                        <div style="margin-top: 5px;font-size:14px;">{{ $plans[$planId]->providerName }}</div>
+                                        <div style="font-size:12px;padding:4px auto;">{{ $plans[$planId]->providerName }}</div>
                                     </td>
                                 </tr>
                             </table>
@@ -595,7 +592,7 @@
                         <td style="padding: 6px; text-align: center;">
                             <a class="buy-button" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}">
                                 BUY NOW   <br />
-                                <span>AED</span> <strong>{{ number_format($plans[$planId]->actualPremium ?? '0.0', 2) }}</strong>
+                                <span style="font-size: 10px; font-weight: normal">AED</span> <strong>{{ number_format($plans[$planId]->actualPremium ?? '0.0', 2) }}</strong>
                             </a>
                         </td>
                         @endforeach
@@ -612,7 +609,7 @@
                     </colgroup>
                     <tr>
                         <td colspan="{{ count($displayPlans) + 1 }}" class="section-header">
-                            Vehicle Details
+                            Vehicle detail
                         </td>
                     </tr>
                     <tr>
@@ -631,13 +628,13 @@
                         </td>
                         @foreach($displayPlans as $planId)
                         <td style="padding: 6px; text-align: center;">
-                            {{ $plans[$planId]->ancillaryExcess ? ($plans[$planId]->ancillaryExcess . '%') : 'TBA' }}
+                            {!! $plans[$planId]->ancillaryExcess ? ($plans[$planId]->ancillaryExcess . '%') : 'TBD' !!}
                         </td>
                         @endforeach
                     </tr>
                     <tr>
                         <td style="text-align: left; padding: 6px;" class="bg-light-blue raleway-font">
-                            Vehicle Value
+                            Vehicle value
                         </td>
                         @foreach($displayPlans as $planId)
                         <td style="padding: 6px; text-align: center;">
@@ -662,7 +659,7 @@
                     </colgroup>
                     <tr>
                         <td colspan="{{ count($displayPlans) + 1 }}" class="section-header">
-                            Benefits
+                            Contents
                         </td>
                     </tr>
                     
@@ -678,9 +675,9 @@
                             <td style="padding: 6px; text-align: center;">
                                 @if($feature['type'] == 'info')
                                     @if($feature['code'] == 'ancillaryExcess')
-                                        {{ $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%') : 'TBA' }}
+                                        {!! $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%') : '<span style="color:red">Not applicable</span>' !!}
                                     @else
-                                        {{ $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']}) : 'TBA' }}
+                                        {!! $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']}) : '<span style="color:red">Not applicable</span>' !!}
                                     @endif
                                 @elseif($feature['type'] == 'prop')
                                     {{ $plans[$planId]->{$feature['code']} }}
@@ -733,13 +730,8 @@
             </div>
         </div>
 
-         <!-- third page with second banner image -->
-         <div class="page" style="page-break-before: always !important;">
-            <div class="hero-image">
-                <img src="{{ public_path('images/home_pdf_second_last_page_with_header.jpg') }}" alt="Car Banner 2">
-            </div>
-        </div>
-
+      
+        
       
 </body>
 </html>
