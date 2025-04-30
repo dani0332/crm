@@ -106,7 +106,13 @@ class CarQuoteService extends BaseService
         }
         LoggerService::info('Create triggered from IMCRM for Car Quote request with email : '.$request->email.' and sending request to CAPI');
 
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr, CarQuote::class);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr, CarQuote::class);
+
+        if (isset($response->quoteUID)) {
+            $this->selfAssign(QuoteTypes::CAR, $response->quoteUID);
+        }
+
+        return $response;
     }
 
     public function updateCarQuote(Request $request, $id)

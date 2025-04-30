@@ -335,6 +335,8 @@ class HealthQuoteService extends BaseService
                 $subTeam = auth()->user()->subTeam->name;
             }
             HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => $subTeam]);
+
+            $this->selfAssign(QuoteTypes::HEALTH, $response->quoteUID);
         }
 
         return $response;

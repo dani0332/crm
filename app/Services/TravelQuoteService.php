@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Builders\TravelQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\PaymentStatusEnum;
@@ -18,7 +17,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
-use App\Jobs\Audit\LogAllocation;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CustomerMembers;
@@ -345,14 +343,7 @@ class TravelQuoteService extends BaseService
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
 
-            $quote = TravelQuote::where('uuid', $response->quoteUID)->first();
-            if ($quote && $quote->advisor_id && $quote->source === config('constants.SOURCE_NAME')) {
-                $quote->update([
-                    'assignment_type' => AssignmentTypeEnum::SELF_ASSIGNED,
-                ]);
-
-                LogAllocation::dispatch($quote, QuoteTypes::TRAVEL);
-            }
+            $this->selfAssign(QuoteTypes::TRAVEL, $response->quoteUID);
 
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
