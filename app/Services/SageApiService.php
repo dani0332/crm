@@ -308,9 +308,13 @@ class SageApiService
             unset($extraDetails['paymentFrequency']);
         }
 
-        $createPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment']]);
-        if (! $createPrepayment['status']) {
-            return $createPrepayment;
+        if ($preparedData['sendUpdateLog']?->category?->code == SendUpdateLogStatusEnum::CPD || (isset($preparedData['sendUpdateLog']?->option?->code) && 
+            ! in_array($preparedData['sendUpdateLog']?->option?->code, [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATCRNB]))
+        ) {
+            $createPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment']]);
+            if (! $createPrepayment['status']) {
+                return $createPrepayment;
+            }
         }
 
         LoggerService::info('fn bookStraightEndorsementOnSage - Upfront Endorsement Booking Completed on Sage - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
