@@ -293,7 +293,7 @@
                 @if(isset($quote->advisor->mobile_no))
                     <p class="advisor-name" style="margin-bottom: 2px;">
                         <a href="tel:{{$quote->advisor->mobile_no}}" style="color: white; text-decoration: none;">
-                            <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" style="width: 12px; height: 12px; vertical-align: middle;" />
+                            <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" style="width: 12px; height: 12px; vertical-align: middle;" />
                             <span style="vertical-align: middle;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
                             <img src="{{ public_path('images/whatsapp-small.png') }}" style="width: 12px; height: 12px; margin-left: 2px; vertical-align: middle;" />
                         </a>
@@ -302,7 +302,7 @@
                 
                 @if(isset($quote->advisor->landline_no))
                     <p class="advisor-name" style="margin-bottom: 2px;">
-                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" style="width: 12px; height: 12px; vertical-align: middle;" />
+                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" style="width: 12px; height: 12px; vertical-align: middle;" />
                         <span style="vertical-align: middle;">{{ $quote->advisor->landline_no }}</span>
                     </p>
                 @endif

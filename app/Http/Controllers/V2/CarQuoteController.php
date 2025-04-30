@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Knp\Snappy\Pdf;
 use Barryvdh\Snappy\Facades\SnappyPdf;
+
 use setasign\Fpdi\Fpdi;
 
 
@@ -236,11 +237,11 @@ class CarQuoteController extends Controller
         return back()->with('success', 'Event Followup sending successful');
     }
 
-    function generatePdfwithSnappy(){
+    function generatePdfwithSnappy(Request $request){
 
         $data = [
-            'quote_uuid' => '765U26H4',
-            'plan_ids' => [109, 8, 3,2, 1],
+            'quote_uuid' => $request->quote_uuid,
+            'plan_ids' => $request->plan_ids,
             'addons' => null,
         ];
         
@@ -281,9 +282,14 @@ class CarQuoteController extends Controller
             ->setOption('header-html', view('pdf.car_comparision.header', []))
             ->setOption('footer-html', view('pdf.car_comparision.footer', compact('quote')))
             ->setOptions($pdfOptions)
-            ->stream();
+            ->download();
 
-        return $mainPdfContent;
+                    $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+
+        
+            return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($mainPdfContent), 'name' => $pdfName]);
+
 
     }
 }
