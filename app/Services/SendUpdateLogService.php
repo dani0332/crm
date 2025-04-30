@@ -892,6 +892,7 @@ class SendUpdateLogService
             'transaction_type_id' => $quoteDetails->transaction_type_id,
             'advisor_id' => $quoteDetails?->advisor_id ?? null,
             'price_vat_applicable' => abs($preparedDetailsForEndorsement['payment']->total_price),
+            'vat' => abs($sendUpdateLog->price_with_vat),
             'price_with_vat' => abs($sendUpdateLog->price_with_vat),
             'insly_migrated' => $quoteDetails->insly_migrated,
             'insurance_provider_id' => $preparedDetailsForEndorsement['payment']->insurance_provider_id, // TODO:: Need to verify this field

@@ -74,7 +74,7 @@ class CycleQuoteController extends Controller
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('CycleQuote/Index', [
-            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
+            'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
