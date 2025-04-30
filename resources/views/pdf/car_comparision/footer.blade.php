@@ -154,8 +154,8 @@
     }
 
     .advisor-image {
-        width: 60px;
-        height: 60px;
+        width: 70px;
+        height: 70px;
         border-radius:50%;
         background-color: #7DBCD8;
         overflow: hidden;
@@ -254,14 +254,16 @@
                 <p>27th floor, Control Tower, Detroit road, Motor city, Dubai.<br>United Arab Emirates.<br>PO Box -
                     26423</p>
             </div>
+
             <div class="address-icon">
                 @php
                     $linkIcon = public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png');
                 @endphp
-                <a href="https://google.com" target="_blank">
-                    <img src="{{ $linkIcon }}" alt="Link Icon" style="width: 50%; height: auto;">
+                <a href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share" target="_blank">
+                    <img src="{{ $linkIcon }}" alt="Link Icon" style="width: 50%; height: auto;" />
                 </a>
             </div>
+
         </div>
 
         <!-- advisor section -->
@@ -269,10 +271,9 @@
             <div class="advisor-details">
                 <div class="advisor-image">
                     <div class="advisor-image-small">
-                        <a href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
                         <img src="{{ public_path('images/headset-1.png') }}" 
-                        alt="Headset" />
-                        </a>
+                        alt="Headset" style="max-width: 90%; height: auto;padding-top:5px; padding-left: 5px;" />
+                        
                     </div>
                 </div>
                 <div class="advisor-info">

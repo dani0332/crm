@@ -702,7 +702,7 @@
         <div style="width: 100%; text-align: center; margin-top: 15px;">
             <a href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid }}" style="background-color: #1D83BC; color: white; border-radius: 5px; font-weight: 500; padding: 6px 20px; font-size: 16px; display: inline-block; width: 250px; text-align: center; text-decoration: none; line-height: 1.5;">
                 View all quotes
-                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" style="width: 16px; height: 16px; vertical-align: middle; margin-left: 5px;">
+                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" style="width: 16px; height: 16px; vertical-align: middle; margin-left: 5px;margin-top: -4px;">
             </a>
         </div>
 
