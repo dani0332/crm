@@ -51,8 +51,7 @@ class CompanyCarFollowupJob implements ShouldQueue
                 $carLead->quote_status_id = QuoteStatusEnum::FollowedUp;
                 $carLead->save();
             } else {
-                info(self::class." - Car Lead did not trigger company car motor WorkFlow due to ineligible source (Source: {$carLead->source}) - Ref ID: {$carLead->uuid} | Time: ".now());
-                info(self::class." - Car Lead did not trigger company car WorkFlow due to ineligible status (Status ID: {$carLead->quote_status_id}) - Ref ID: {$carLead->uuid} | Time: ".now());
+                info(self::class." - Car Lead did not trigger company car WorkFlow due to ineligible source ({$carLead->source}) or status ({$carLead->quote_status_id}) - Ref ID: {$carLead->uuid} | Time: ".now());
             }
         } catch (\Throwable $th) {
             info(self::class." - Exception encountered: '{$th->getMessage()}' - Ref ID: {$this->quoteUuid} | Time: ".now());
