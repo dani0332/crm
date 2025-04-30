@@ -30,6 +30,8 @@ class LogAllocation implements ShouldQueue
         if (Auth::check()) {
             $this->user = Auth::user();
         }
+
+        $this->onQueue('shared');
     }
 
     /**
