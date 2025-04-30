@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Services\Logger\LoggerService;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class CapiService
@@ -38,12 +39,22 @@ class CapiService
     public function request($path, $method = 'post', $data = [])
     {
         $url = $this->baseUrl.$path;
-        $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) use ($data, $url) {
-            LoggerService::error('CAPI Service Exception', ['data' => $data, 'url' => $url]);
-            if (isset($response->json()['msg'])) {
-                vAbort($response->json()['msg']);
-            } else {
-                vAbort(self::CAPI_EXCEPTION_MESSAGE);
+        $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function (Response $response) use ($data, $url) {
+            $errorMessage = $response->json()['msg'] ?? $response->json()['message'] ?? self::CAPI_EXCEPTION_MESSAGE;
+            // Only log 5XX errors
+            if ($response->status() >= 500) {
+                LoggerService::error(self::CAPI_EXCEPTION_MESSAGE, extra: [
+                    'data' => $data,
+                    'url' => $url,
+                    'response_status' => $response ? $response->getStatusCode() : null,
+                    'response_message' => $errorMessage,
+                ]);
+
+                if ($errorMessage) {
+                    vAbort($errorMessage);
+                } else {
+                    vAbort(self::CAPI_EXCEPTION_MESSAGE);
+                }
             }
         });
 

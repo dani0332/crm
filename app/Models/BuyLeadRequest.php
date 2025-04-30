@@ -4,10 +4,13 @@ namespace App\Models;
 
 use App\Enums\BuyLeadSegment;
 use App\Enums\QuoteTypes;
+use App\Traits\Filterable;
 use Illuminate\Database\Eloquent\Model;
 
 class BuyLeadRequest extends Model
 {
+    use Filterable;
+
     protected $fillable = [
         'quote_type_id',
         'user_id',
