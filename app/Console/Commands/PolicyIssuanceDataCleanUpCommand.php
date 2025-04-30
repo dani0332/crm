@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\PolicyIssuanceEnum;
 use App\Models\PolicyIssuance;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -34,6 +35,6 @@ class PolicyIssuanceDataCleanUpCommand extends Command
             ->where('created_at', '<', $date)
             ->delete();
 
-        info('Policy Issuance Automation Data Clean Up Command executed successfully.', [' data before date' => $date]);
+        LoggerService::info('Policy Issuance Automation Data Clean Up Command executed successfully.', extra: [' data before date' => $date]);
     }
 }
