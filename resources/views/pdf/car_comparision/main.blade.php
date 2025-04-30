@@ -160,7 +160,7 @@
             vertical-align: middle;
             word-wrap: break-word;
             white-space: normal;
-        }
+=        }
         
         .table-headers th {
             font-family: 'Raleway', sans-serif !important;
@@ -229,7 +229,7 @@
         .buy-button {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 7px 35px;
+            padding: 7px 15px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -520,7 +520,7 @@
                         <td style="padding:0px;">
                             <table class="nested">
                                 <tr>
-                                    <td style="width: 100%; vertical-align: middle; text-align: center;">
+                                    <td style="width: 100%; vertical-align: middle; text-align: center; height: 30px; padding: 5px 0;">
                                         <div style="width: 100%; text-align: center;">
                                             @php
                                                 $providerCode = strtolower($plans[$planId]->providerCode);
@@ -533,7 +533,7 @@
                                                 }
                                             @endphp
                                             <img src="{{ $providerLogoImage }}" 
-                                            style="max-width: 45px; height: auto; margin: 0 auto; display: block;" />
+                                            style="max-width: 45px; max-height: 20px; margin: 0 auto; display: block; object-fit: contain;" />
                                         </div>
                                     </td>
                                 </tr>
@@ -543,8 +543,8 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td style="width: 100%; vertical-align: middle; text-align: center;">
-                                        <div style="font-size:12px;padding:4px auto;">{{ $plans[$planId]->providerName }}</div>
+                                    <td style="width: 100%; vertical-align: middle; text-align: center; height: 35px;">
+                                        <div style="font-size:12px; padding:4px 2px;">{{ $plans[$planId]->providerName }}</div>
                                     </td>
                                 </tr>
                             </table>
@@ -627,7 +627,7 @@
                             Ancillary excess
                         </td>
                         @foreach($displayPlans as $planId)
-                        <td style="padding: 6px; text-align: center;">
+                        <td style="padding: 6px; text-align: center; ">
                             {!! $plans[$planId]->ancillaryExcess ? ($plans[$planId]->ancillaryExcess . '%') : 'TBD' !!}
                         </td>
                         @endforeach
@@ -637,7 +637,7 @@
                             Vehicle value
                         </td>
                         @foreach($displayPlans as $planId)
-                        <td style="padding: 6px; text-align: center;">
+                        <td style="padding: 6px; text-align: center; ">
                             @php
                                 $carValue = formatAmount($plans[$planId]->carValue, 0);
                                 if($plans[$planId]->repairType == \App\Enums\CarPlanType::TPL) $carValue = 'N/A';
