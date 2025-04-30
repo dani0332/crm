@@ -18,6 +18,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Jobs\Audit\LogAllocation;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CustomerMembers;
@@ -349,6 +350,8 @@ class TravelQuoteService extends BaseService
                 $quote->update([
                     'assignment_type' => AssignmentTypeEnum::SELF_ASSIGNED,
                 ]);
+
+                LogAllocation::dispatch($quote, QuoteTypes::TRAVEL);
             }
 
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
