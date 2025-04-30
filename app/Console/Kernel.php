@@ -135,6 +135,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('policy-issuance:mark-failed')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(8);
 
         $schedule->command('quotes-syncing:retry')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
+
+        $schedule->command('horizon:snapshot')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
     }
 
     /**
