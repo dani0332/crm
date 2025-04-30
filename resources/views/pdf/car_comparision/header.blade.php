@@ -22,7 +22,7 @@
 <body>
     <div id="header-content">
         <div class="logo-container" style="text-align: center;">
-            <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/logo-new.png'))) }}"  alt="Logo" style="max-width: 50%; height: auto;">
+            <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/logo-25k.png'))) }}"  alt="Logo" style="max-width: 50%; height: auto;">
         </div>
     </div> 
 </body>

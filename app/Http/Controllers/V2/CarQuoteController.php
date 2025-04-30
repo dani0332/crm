@@ -21,6 +21,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Knp\Snappy\Pdf;
 use Barryvdh\Snappy\Facades\SnappyPdf;
+use setasign\Fpdi\Fpdi;
+
 
 // use Barryvdh\Snappy\Facades\SnappyPdf;
 
@@ -243,36 +245,86 @@ class CarQuoteController extends Controller
         ];
         
         $planIds = $data['plan_ids'];
-        $addons = (isset($data['addons'])) ? $data['addons'] : null;
+        $addons = $data['addons'] ?? null;
+    
         $quotePlans = app(CarQuoteService::class)->getQuotePlans($data['quote_uuid']);
-        // $this->carQgetQuotePlans($data['quote_uuid']);
-
-        if (! isset($quotePlans->quotes->plans)) {
+    
+        if (!isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
         }
-
+    
         $quoteType = 'car';
-
         $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
-
+    
         $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
         }, 'customer']);
-
-        // $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons'));
-
-        $pdf = SnappyPdf::loadView('pdf.car_comparision.main', compact('quotePlans', 'planIds', 'quote', 'addons'))
-        ->setOption('header-html', view('pdf.car_comparision.header', []))
-        ->setOption('footer-html', view('pdf.car_comparision.footer', compact('quote')))
-        ->setOption('disable-external-links', false)
-        ->setOption('enable-local-file-access', true)
-        ->setOption('enable-internal-links' , true)
-        ->setOption('margin-left', 0)
-        ->setOption('margin-right', 0)
-        ->setOption('margin-top', 20)
-        ->setOption('margin-bottom', 33)
-        ->setOption('page-size', 'A4');
-
-        return $pdf->stream();
+    
+        // Define consistent PDF options for both documents
+        $pdfOptions = [
+            'disable-external-links' => false,
+            'enable-local-file-access' => true,
+            'enable-internal-links' => true,
+            'page-size' => 'A4',
+            'margin-top' => 20,
+            'margin-right' => 0,
+            'margin-bottom' => 33,
+            'margin-left' => 0,
+            'encoding' => 'UTF-8'
+        ];
+    
+        // Generate main PDF in memory with header and footer
+        $mainPdfContent = SnappyPdf::loadView('pdf.car_comparision.main', compact('quotePlans', 'planIds', 'quote', 'addons'))
+            ->setOption('header-html', view('pdf.car_comparision.header', []))
+            ->setOption('footer-html', view('pdf.car_comparision.footer', compact('quote')))
+            ->setOptions($pdfOptions)
+            ->output();
+    
+        // Generate extra PDF page in memory (without header/footer)
+        $extraPdfOptions = $pdfOptions;
+        // $extraPdfOptions['margin-top'] = 0; // No margin for header
+        
+        $extraPdfContent = SnappyPdf::loadView('pdf.car_comparision.last-page')
+            ->setOptions($extraPdfOptions)
+            ->setOption('header-html', view('pdf.car_comparision.header-last-page', []))
+            ->setOption('footer-html', view('pdf.car_comparision.footer', compact('quote')))
+            ->output();
+    
+        // Create temporary files to store PDF content
+        $mainTempFile = tempnam(sys_get_temp_dir(), 'main_pdf_');
+        $extraTempFile = tempnam(sys_get_temp_dir(), 'extra_pdf_');
+        
+        file_put_contents($mainTempFile, $mainPdfContent);
+        file_put_contents($extraTempFile, $extraPdfContent);
+        
+        // Merge PDFs with FPDI using temporary files
+        $pdf = new Fpdi();
+        
+        // Add pages from main PDF
+        $pageCount = $pdf->setSourceFile($mainTempFile);
+        for ($i = 1; $i <= $pageCount; $i++) {
+            $templateId = $pdf->importPage($i);
+            $size = $pdf->getTemplateSize($templateId);
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            $pdf->useTemplate($templateId, 0, 0, null, null, true);
+        }
+        
+        // Add pages from extra PDF
+        $pageCount = $pdf->setSourceFile($extraTempFile);
+        for ($i = 1; $i <= $pageCount; $i++) {
+            $templateId = $pdf->importPage($i);
+            $size = $pdf->getTemplateSize($templateId);
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            $pdf->useTemplate($templateId, 0, 0, null, null, true);
+        }
+        
+        // Clean up temporary files
+        @unlink($mainTempFile);
+        @unlink($extraTempFile);
+    
+        return response($pdf->Output('S'), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="merged_quote.pdf"');
     }
 }
+
