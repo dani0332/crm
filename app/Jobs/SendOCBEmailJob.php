@@ -22,6 +22,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use App\Services\Logger\LoggerService;
+use App\Enums\LeadSourceEnum;
+use Carbon\Carbon;
 
 class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 {
@@ -56,10 +59,19 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
         try {
             $carQuote = CarQuote::where('uuid', $this->quoteUuid)->firstOrFail();
             if (! $carQuote) {
-                info('SendOCBEmailJob - OCB Email Not Sent - Car Quote Not Found '.$this->quoteUuid);
+                info('SendOCBEmailJob - OCB Email Not Sent - Car Quote Not Found ' . $this->quoteUuid);
 
                 return false;
             }
+
+            $isPCPTeamAdvisor = !empty($carQuote->advisor_id) ? $carQuoteService->isPCPAdvisor($carQuote->advisor_id) : false;
+            LoggerService::info(self::class . ' - PCP Team Advisor: ' . $isPCPTeamAdvisor . ' | Lead source: ' . $carQuote->source . ' | Ref-ID: ' . $carQuote->uuid );
+            if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
+                $this->sendPCPFollowups($carQuote);
+                LoggerService::info(self::class . ' - PCP OCB Email Job dispatched against UUID:' . $carQuote->uuid );
+                return;
+            }
+
             $listQuotePlans = $carQuoteService->getPlans($this->quoteUuid, true, true);
 
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
@@ -80,12 +92,12 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
             $responseCode = $this->sendEmail($carQuote, $emailTemplateId, $emailData, $sendEmailCustomerService);
 
             if (in_array($responseCode, [200, 201])) {
-                Log::info('SendOCBEmailJob - OCB Email Sent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '.$this->quoteUuid);
+                Log::info('SendOCBEmailJob - OCB Email Sent: ' . $responseCode . ' Customer Email Address: ' . $carQuote->email . ' Quote UuId: ' . $this->quoteUuid);
             } else {
-                Log::error('SendOCBEmailJob - OCB Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$carQuote->email);
+                Log::error('SendOCBEmailJob - OCB Email Not Sent: ' . $responseCode . ' Customer EmailAddress:' . $carQuote->email);
             }
         } catch (Exception $e) {
-            Log::info('SendOCBEmailJob - Error: '.$e->getMessage());
+            Log::info('SendOCBEmailJob - Error: ' . $e->getMessage());
         }
     }
 
@@ -99,7 +111,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
      */
     private function sendEmail($carQuote, $emailTemplateId, $emailData, $sendEmailCustomerService)
     {
-        Log::info('Renewals OCB Email sending for uuid: '.$carQuote->uuid);
+        Log::info('Renewals OCB Email sending for uuid: ' . $carQuote->uuid);
 
         if (isset($carQuote->advisor_id)) {
             return $sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
@@ -132,7 +144,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
         ];
 
         $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();
-        info('Renewals OCB Email No advisor: workflow trigger on BIRD, BIRD_SIC_MOTOR_RENEWAL_WORKFLOW value: '.$sicEvent->value);
+        info('Renewals OCB Email No advisor: workflow trigger on BIRD, BIRD_SIC_MOTOR_RENEWAL_WORKFLOW value: ' . $sicEvent->value);
 
         if ($sicEvent) {
             app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $birdEmailData);
@@ -142,7 +154,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
     private function getEmailTemplateId($carQuote, $quotePlansCount)
     {
         $emailTemplateId = (int) app(CRUDService::class)->getOcbCustomerEmailTemplate($quotePlansCount);
-        Log::info('fn: sendOcbEmailJob Renewals OCB Email email template id: '.$emailTemplateId);
+        Log::info('fn: sendOcbEmailJob Renewals OCB Email email template id: ' . $emailTemplateId);
 
         if (! $carQuote->advisor_id) {
             $key = $this->getNoAdvisorKey($quotePlansCount);
@@ -172,11 +184,29 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        info('SendOCBEmailJob Failed: '.$this->quoteUuid.' Error: '.$exception->getMessage());
+        info('SendOCBEmailJob Failed: ' . $this->quoteUuid . ' Error: ' . $exception->getMessage());
     }
 
     public function uniqueId(): string
     {
         return $this->quoteUuid;
+    }
+
+    private function sendPCPFollowups($carQuote)
+    {
+        try {
+            LoggerService::info(self::class . " - Sending sendPCPFollowups followups email for lead: " . $carQuote->uuid);
+            SendPCPCarOCBEmailJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(1));
+            LoggerService::info(self::class . " - SendPCPCarOCBEmailJob dispatched for CAR-" . $carQuote->uuid );
+            if (empty($carQuote->pcp_flow_executed_at)) {
+                SendPCPFollowupsJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(3));
+                LoggerService::info(self::class . ' -  SendPCPFollowupsJob dispatched for CAR-' . $carQuote->uuid . ' - Time: ' . now());
+            } else {
+                LoggerService::info(self::class . ' -  SendPCPFollowupsJob already dispatched for CAR-' . $carQuote->uuid . ' - Time: ' . now());
+            }
+
+        } catch (\Throwable $th) {
+            LoggerService::error('Renewals PCP OCB Email failed for  CAR-' . $carQuote->uuid .' Customer EmailAddress:' . $carQuote->email);
+        }
     }
 }
