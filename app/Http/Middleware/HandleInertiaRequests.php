@@ -148,6 +148,8 @@ class HandleInertiaRequests extends Middleware
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'impersonatingUser' => app('impersonate')?->getImpersonatorId() ? User::find(app('impersonate')?->getImpersonatorId()) : null,
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
+            'carRegistrationType' => CarRegistrationType::asArray(),
+            'carVehicleUse' => CarVehicleUse::asArray(),
         ];
     }
 
@@ -657,6 +659,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
                         'Process Tracker',
                         route('process-tracker.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        'Allocation Audit',
+                        route('admin.allocation-audit.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
