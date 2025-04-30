@@ -29,7 +29,7 @@ class BusinessActivitiesSeeder extends Seeder
             'Manufacture of soap and detergents, cleaning and polishing preparations', 'Varnish, paints, colouring agents, printing ink and adhesives', 'Manufacture of other chemical products',
             'Production of organic and inorganic products (e.g. ammonia, fertiliser, solvents, acids, salts)',
             'Manufacture of perfumes, aerosols and toilet cleaners', 'Air separation units',
-            'Production of organic and inorganic products (e.g. ammonia, fertiliser, solvents, acids, salts) with production/usage of flammable    liquids or explosive materials.',
+            'Production of organic and inorganic products (e.g. ammonia, fertiliser, solvents, acids, salts) with production/usage of flammable liquids or explosive materials.',
             'Production of man-made fibres (polyester, chemical fibres, synthetic fibress)',
             'Manufacture of explosives', 'Manufacture of furniture',
             'Manufacture of transport equipment n.e.c.', 'Manufacture, repair and maintenance of watercraft (shipyard,drydocks, boats etc.)',
