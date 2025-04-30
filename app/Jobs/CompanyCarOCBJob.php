@@ -45,7 +45,7 @@ class CompanyCarOCBJob implements ShouldQueue
             }
             $leadSources = [LeadSourceEnum::RENEWAL_UPLOAD];
             if (! in_array($carLead->source, $leadSources)) {
-                info("Sending company car ocb email for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
+                info(self::class." - Sending company car ocb email for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
                 $carEmailService->sendCompanyCarOCB($carLead);
                 if ($carLead->quote_status_id == QuoteStatusEnum::NewLead) {
                     $carLead->quote_status_id = QuoteStatusEnum::Quoted;

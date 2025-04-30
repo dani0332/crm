@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             QuoteTypeTableSeeder::class,
             DocumentTypesSeeder::class,
             CommercialCarPlanSeeder::class,
+            RuleNameSeeder::class,
         ]);
     }
 }
