@@ -169,7 +169,8 @@
     .advisor-image img {
         width: 100%;
         height: auto;
-        margin-bottom: -2px;
+        margin-top:3px;
+        /* margin-bottom: -2px; */
     }
 
     .advisor-info {
@@ -268,14 +269,16 @@
             <div class="advisor-details">
                 <div class="advisor-image">
                     <div class="advisor-image-small">
+                        <a href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
                         <img src="{{ public_path('images/headset-1.png') }}" 
                         alt="Headset" />
+                        </a>
                     </div>
                 </div>
                 <div class="advisor-info">
 
                     @if(isset($quote->advisor->name))
-                        <p class="advisor-name" style="padding:0px; margin:0px; line-height: 1.3 !important;font-weight: 700 !important;">
+                        <p class="advisor-name" style="padding:0px; margin:0px; line-height: 1.3 !important;font-weight: 600 !important;">
                             {{$quote->advisor->name }}
                             <span style="display:block; font-size: 8px; font-weight: 400;">Insurance Advisor</span>
                         </p>
@@ -284,8 +287,8 @@
                     @if(isset($quote->advisor->email))
                     <p class="advisor-name" style="margin-bottom: 2px;padding-top:5px">
                         <a style="color:white; text-decoration: none;" href="mailto:{{$quote->advisor->email}}">
-                            <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" style="width: 12px; height: 12px; vertical-align: middle;" />
-                            <span style="vertical-align: middle;">{{$quote->advisor->email}}</span>
+                            <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" style="width: 16px; height: 16px; vertical-align: middle;" />
+                            <span style="vertical-align: middle; font-size: 11px;">{{$quote->advisor->email}}</span>
                         </a>
                     </p>
                 @endif
@@ -293,17 +296,17 @@
                 @if(isset($quote->advisor->mobile_no))
                     <p class="advisor-name" style="margin-bottom: 2px;">
                         <a href="tel:{{$quote->advisor->mobile_no}}" style="color: white; text-decoration: none;">
-                            <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" style="width: 12px; height: 12px; vertical-align: middle;" />
-                            <span style="vertical-align: middle;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
-                            <img src="{{ public_path('images/whatsapp-small.png') }}" style="width: 12px; height: 12px; margin-left: 2px; vertical-align: middle;" />
+                            <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" style="width: 16px; height: 16px; vertical-align: middle;" />
+                            <span style="vertical-align: middle; font-size: 11px;">{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
+                            <img src="{{ public_path('images/whatsapp-small.png') }}" style="width: 16px; height: 16px; margin-left: 2px; vertical-align: middle;" />
                         </a>
                     </p>
                 @endif
                 
                 @if(isset($quote->advisor->landline_no))
                     <p class="advisor-name" style="margin-bottom: 2px;">
-                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" style="width: 12px; height: 12px; vertical-align: middle;" />
-                        <span style="vertical-align: middle;">{{ $quote->advisor->landline_no }}</span>
+                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" style="width: 16px; height: 16px; vertical-align: middle;" />
+                        <span style="vertical-align: middle; font-size: 11px;">{{ $quote->advisor->landline_no }}</span>
                     </p>
                 @endif
                 

@@ -722,8 +722,8 @@
 
     <!-- fourth page with second banner image -->
     <div class="page">
-        <div class="hero-image" style="height: auto; max-height: 1150px;">
-            <img src="{{ public_path('images/car-comparision-4-image.png') }}" alt="Car Banner 2" style="height: auto; max-height: 1150px;">
+        <div class="hero-image" style="height: auto; max-height: 1170px;">
+            <img src="{{ public_path('images/car-comparision-4-image-1.png') }}" alt="Car Banner 2" style="height: auto; max-height: 1170px;">
         </div>
     </div>
     
