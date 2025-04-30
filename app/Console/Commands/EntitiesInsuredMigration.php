@@ -43,12 +43,13 @@ class EntitiesInsuredMigration extends Command
 
         $totalEntities = Entity::count();
         $alreadyMigratedCount = Insured::whereNotNull('entity_id')->count();
-        
-        info("Total entities: {$totalEntities}, Already migrated: {$alreadyMigratedCount}, Remaining: " . ($totalEntities - $alreadyMigratedCount));
+
+        info("Total entities: {$totalEntities}, Already migrated: {$alreadyMigratedCount}, Remaining: ".($totalEntities - $alreadyMigratedCount));
 
         // Skip if everything is already migrated
         if ($alreadyMigratedCount >= $totalEntities) {
             info('All entities have already been migrated. Nothing to do.');
+
             return Command::SUCCESS;
         }
 
@@ -68,6 +69,7 @@ class EntitiesInsuredMigration extends Command
                 if ($isEntityAlreadyCreated) {
                     info('Command:EntitiesInsuredMigration - Entity '.$entity->id.' already exists in the insured table');
                     $skippedCount++;
+
                     continue;
                 }
 
@@ -112,11 +114,11 @@ class EntitiesInsuredMigration extends Command
         $jsonEncodeFailedDetails = json_encode($failedDetails);
 
         info("Migration completed: {$migratedCount} entities migrated, {$skippedCount} entities skipped (already existed), {$failedCount} entities failed.");
-        
+
         if ($failedCount > 0) {
             info("Failed migration details: {$jsonEncodeFailedDetails}");
         }
-        
+
         info('End creating new insured records for entities at '.now());
         info('------------------- Entities Insured Migration Command Ended At: '.now().' -------------------');
 
@@ -129,7 +131,7 @@ class EntitiesInsuredMigration extends Command
     private function updateExistingRecords()
     {
         info('Command:EntitiesInsuredMigration - Start updating the existing records in the insured table by setting the customer type to Individual at '.now());
-        
+
         $insured = Insured::where(function ($query) {
             $query->whereNull('customer_type')
                 ->orWhere('customer_type', '');
@@ -180,11 +182,12 @@ class EntitiesInsuredMigration extends Command
     private function migrateEntityKycDetailsToInsuredKyc(Insured $insured, Entity $entity)
     {
         info('Migrating Entity KYC details to insured KYC for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
-        
+
         // Skip if KYC details are already migrated
         $insuredKyc = InsuredKyc::where('insured_id', $insured->id)->first();
         if ($insuredKyc) {
             info('Insured KYC already exist for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
+
             return;
         }
 

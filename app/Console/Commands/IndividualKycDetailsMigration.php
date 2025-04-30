@@ -32,12 +32,13 @@ class IndividualKycDetailsMigration extends Command
         info('------------------- Individual customer KYC Details from Customer Details to Insured KYC Migration Command Started At: '.now().' -------------------');
         $totalCustomerDetails = CustomerDetail::count();
         $alreadyMigratedCount = Insured::whereNotNull('customer_details_id')->count();
-        
-        info("Total customer details: {$totalCustomerDetails}, Already migrated: {$alreadyMigratedCount}, Remaining: " . ($totalCustomerDetails - $alreadyMigratedCount));
+
+        info("Total customer details: {$totalCustomerDetails}, Already migrated: {$alreadyMigratedCount}, Remaining: ".($totalCustomerDetails - $alreadyMigratedCount));
 
         // Skip if everything is already migrated
         if ($alreadyMigratedCount >= $totalCustomerDetails) {
             info('All customer details have already been migrated. Nothing to do.');
+
             return Command::SUCCESS;
         }
 
@@ -46,12 +47,12 @@ class IndividualKycDetailsMigration extends Command
 
         // Get IDs of already migrated customer details
         $alreadyMigratedDetailIds = Insured::whereNotNull('customer_details_id')->pluck('customer_details_id')->toArray();
-        
+
         // Add IDs of customer details that already have KYC entries
         $alreadyWithKycDetailIds = InsuredKyc::whereNotNull('customer_details_id')->pluck('customer_details_id')->toArray();
         $alreadyProcessedIds = array_unique(array_merge($alreadyMigratedDetailIds, $alreadyWithKycDetailIds));
-        
-        info("Total customer details already processed: " . count($alreadyProcessedIds));
+
+        info('Total customer details already processed: '.count($alreadyProcessedIds));
 
         // Query only customer details that haven't been migrated yet
         $customerDetailsQuery = CustomerDetail::with('customer')
@@ -66,6 +67,7 @@ class IndividualKycDetailsMigration extends Command
                 if ($isIndividualCustomerDetailsAlreadyCreated) {
                     info('Command:IndividualKycDetailsMigration - Data against Customer Detail ID: '.$customerDetail->id.' already exists in the insured table');
                     $skippedCount++;
+
                     continue;
                 }
 
@@ -73,6 +75,7 @@ class IndividualKycDetailsMigration extends Command
                 if (! $customer) {
                     info('Command:IndividualKycDetailsMigration - No customer found against customer detail ID:'.$customerDetail->id);
                     $skippedCount++;
+
                     continue;
                 }
 
@@ -129,6 +132,7 @@ class IndividualKycDetailsMigration extends Command
                         info('Insured KYC details already exist against customer detail ID:'.$customerDetail->id.' and insured ID:'.$insured->id);
                         $skippedCount++;
                         DB::commit();
+
                         continue;
                     }
 
@@ -190,11 +194,11 @@ class IndividualKycDetailsMigration extends Command
         $jsonEncodeFailedDetails = json_encode($failedDetails);
 
         info("Migration completed: individual customer kyc details - Migrated:{$migratedCount}, Skipped: {$skippedCount} (already existed), Failed:{$failedCount}.");
-        
+
         if ($failedCount > 0) {
             info("Failed migration details: {$jsonEncodeFailedDetails}");
         }
-        
+
         info('End migrating individual customer KYC details at '.now());
         info('------------------- Individual KYC Details from Customer Details to Insured KYC Migration Command Ended At: '.now().' -------------------');
 
