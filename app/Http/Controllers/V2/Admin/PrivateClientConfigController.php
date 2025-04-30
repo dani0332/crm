@@ -51,7 +51,7 @@ class PrivateClientConfigController extends Controller
         ]);
     }
 
-    public function update(Request $request)
+    public function upsert(Request $request)
     {
         // Validate and process the request
         $validated = $request->validate([
