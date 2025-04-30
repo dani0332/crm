@@ -15,12 +15,19 @@ use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
 use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
+use App\Traits\GenericQueriesAllLobs;
+use Barryvdh\Snappy\Facades\SnappyPdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Knp\Snappy\Pdf;
+
+// use Barryvdh\Snappy\Facades\SnappyPdf;
 
 class CarQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -225,5 +232,59 @@ class CarQuoteController extends Controller
         }
 
         return back()->with('success', 'Event Followup sending successful');
+    }
+
+    public function generatePdfwithSnappy(Request $request)
+    {
+
+        $data = [
+            'quote_uuid' => $request->quote_uuid,
+            'plan_ids' => $request->plan_ids,
+            'addons' => null,
+        ];
+
+        $planIds = $data['plan_ids'];
+        $addons = $data['addons'] ?? null;
+
+        $quotePlans = app(CarQuoteService::class)->getQuotePlans($data['quote_uuid']);
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $quoteType = 'car';
+        $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
+
+        $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+        }, 'customer']);
+
+        // Define consistent PDF options for both documents
+        $pdfOptions = [
+            'disable-external-links' => false,
+            'enable-local-file-access' => true,
+            'enable-internal-links' => true,
+            'enable-javascript' => true,
+            'javascript-delay' => 1000,
+            'no-stop-slow-scripts' => true,
+            'page-size' => 'A4',
+            'margin-top' => 20,
+            'margin-right' => 0,
+            'margin-bottom' => 33,
+            'margin-left' => 0,
+            'encoding' => 'UTF-8',
+        ];
+
+        // Generate main PDF in memory with header and footer
+        $mainPdfContent = SnappyPdf::loadView('pdf.car_comparision.main', compact('quotePlans', 'planIds', 'quote', 'addons'))
+            ->setOption('header-html', view('pdf.car_comparision.header', []))
+            ->setOption('footer-html', view('pdf.car_comparision.footer', compact('quote')))
+            ->setOptions($pdfOptions)
+            ->download();
+
+        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($mainPdfContent), 'name' => $pdfName]);
+
     }
 }

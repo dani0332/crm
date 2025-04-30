@@ -21,7 +21,10 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
+            QuoteTypeTableSeeder::class,
             DocumentTypesSeeder::class,
+            CommercialCarPlanSeeder::class,
+            RuleNameSeeder::class,
         ]);
     }
 }
