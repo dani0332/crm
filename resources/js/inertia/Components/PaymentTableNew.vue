@@ -15,12 +15,11 @@ import {
   PaymentHeader,
   PaymentRow,
   PaymentSplitRow,
+  CreatePaymentForm,
 } from './PaymentComponents/index.js';
 
-import { PaymentFormFields, PaymentFormAlerts, PaymentFormScheduleTable, PaymentFormNotes, PaymentFormVerified, PaymentFormDecline, PaymentFormVerification, PaymentFormFooter } from './PaymentComponents/PaymentForm/index.js';
-
 // Assign barrel-imported components to prevent IDE from showing them as unused
-const components = { PaymentTableHeader, PaymentFormFields };
+const components = { PaymentTableHeader };
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -3365,7 +3364,7 @@ onBeforeMount(() => {
           backdrop
         >
           <x-form @submit="addPayment" :auto-focus="false">
-            <PaymentFormFields
+            <CreatePaymentForm
               :isFieldReadonly="isFieldReadonly"
               :paymentMethodsForm="paymentMethodsForm"
               :rules="rules"
@@ -3401,40 +3400,15 @@ onBeforeMount(() => {
               :discountError="discountError"
               :totalAmount="totalAmount"
               :documentForm="documentForm"
-              @handle-collection-type-change="handleCollectionTypeChange"
-              @handle-frequency-change="handleFrequencyChange"
-              @calculate-payment-breakup="calculatePaymentBreakup"
-              @reset-credit-approval="resetCreditApproval"
-              @handle-approval-reason-change="handleApprovalReasonChange"
-              @reset-discount="resetDiscount"
-              @handle-discount-change="handleDiscountChange"
-              @handle-discount-reason-change="handleDiscountReasonChange"
-              @upload-document="uploadDocument"
-              @open-inner-modal="openInnerModal"
-              @delete-document="deleteDocument"
-              @calculate-total-amount="calculateTotalAmount"
-            />
-
-            <x-divider class="mb-4 mt-10" />
-
-            <PaymentFormAlerts
               :isDowngradeFrequencyError="isDowngradeFrequencyError"
               :isPaymentCalculationError="isPaymentCalculationError"
-              :isPaymentLocked="isPaymentLocked"
-              :paymentMethodsForm="paymentMethodsForm"
               :fileErrorMessage="fileErrorMessage"
-            />
-
-            <PaymentFormScheduleTable
               :isViewEnabled="isViewEnabled"
               :isCreditApprovalView="isCreditApprovalView"
               :isVerifiedEnabled="isVerifiedEnabled"
               :isPaymentMethodEnabled="isPaymentMethodEnabled"
               :isPaidEditable="isPaidEditable"
-              :isPaymentLocked="isPaymentLocked"
               :isCreditCardView="isCreditCardView"
-              :isFieldReadonly="isFieldReadonly"
-              :paymentMethodsForm="paymentMethodsForm"
               :splitPaymentNo="splitPaymentNo"
               :splitPaymentRecord="splitPaymentRecord"
               :paymentMethodsModels="paymentMethodsModels"
@@ -3453,8 +3427,6 @@ onBeforeMount(() => {
               :isCheckDetailsEnabled="isCheckDetailsEnabled"
               :authorizedPayments="authorizedPayments"
               :paymentProofDocument="paymentProofDocument"
-              :documentForm="documentForm"
-              :rules="rules"
               :capturePaymentValidationErrorMessage="capturePaymentValidationErrorMessage"
               :paymentTypes="paymentTypes"
               :paymentTypesFiltered="paymentTypesFiltered"
@@ -3465,88 +3437,44 @@ onBeforeMount(() => {
               :isCCEnabled="isCCEnabled"
               :quoteRequest="quoteRequest"
               :sendUpdateStatusEnum="sendUpdateStatusEnum"
-              @upload-document="uploadDocument"
-              @delete-document="deleteDocument"
-              @open-inner-modal="openInnerModal"
-              @handle-payment-options="handlePaymentOptions"
-            />
-
-            <x-divider class="mb-4 mt-1" />
-
-            <PaymentFormNotes
-              :isViewEnabled="isViewEnabled"
-              :isFieldReadonly="isFieldReadonly"
-              :isCreditApprovalView="isCreditApprovalView"
-              :paymentMethodsForm="paymentMethodsForm"
-            />
-
-            <PaymentFormVerified
-              :splitPaymentRecord="splitPaymentRecord"
-              :paymentMethodsForm="paymentMethodsForm"
-              :paymentMethodsModels="paymentMethodsModels"
-              :splitPaymentNo="splitPaymentNo"
-            />
-
-            <PaymentFormDecline
-              :paymentMethodsForm="paymentMethodsForm"
-              :rules="rules"
               :isDeclineClicked="isDeclineClicked"
-              :isViewEnabled="isViewEnabled"
-              :isCreditApprovalView="isCreditApprovalView"
               :isDeclinedReasonError="isDeclinedReasonError"
               :declinedReasons="declinedReasons"
               :isDeclineCustomReason="isDeclineCustomReason"
-              @handle-declined-reason-change="handleDeclinedReasonChange"
-            />
-
-            <PaymentFormVerification
-              :isViewEnabled="isViewEnabled"
               :isApproveClicked="isApproveClicked"
-              :paymentMethodsModels="paymentMethodsModels"
-              :splitPaymentNo="splitPaymentNo"
-              :paymentMethodsForm="paymentMethodsForm"
               :isApprovePaymentError="isApprovePaymentError"
               :approveErrorMessage="approveErrorMessage"
               :approveProofDocument="approveProofDocument"
-              :documentForm="documentForm"
               :isApprovedDocumentNotUploaded="isApprovedDocumentNotUploaded"
               :approvedDocumentModel="approvedDocumentModel"
-              :readOnlyPayments="readOnlyPayments"
-              :rules="rules"
-              @upload-document="uploadDocument"
-              @open-inner-modal="openInnerModal"
-              @delete-document="deleteDocument"
-            />
-
-            <x-divider class="mb-4 mt-1" />
-            
-            <PaymentFormFooter
-              :isViewEnabled="isViewEnabled"
-              :isCreditApprovalView="isCreditApprovalView"
-              :isCreditCardView="isCreditCardView"
-              :splitPaymentNo="splitPaymentNo"
-              :paymentMethodsModels="paymentMethodsModels"
-              :splitPaymentRecord="splitPaymentRecord"
               :paymentStatusEnum="paymentStatusEnum"
               :permissionEnum="permissionEnum"
               :paymentMethodsEnum="paymentMethodsEnum"
-              :can="can"
-              :isDeclineClicked="isDeclineClicked"
-              :isApproveClicked="isApproveClicked"
               :isVerificationAllowed="isVerificationAllowed"
               :isProformaPaymentRequest="isProformaPaymentRequest"
               :isTransactionCaptureButtonEnabled="isTransactionCaptureButtonEnabled"
               :isApproveConfirmed="isApproveConfirmed"
               :processing="paymentMethodsForm.processing"
               :formStatus="paymentMethodsForm.status"
-              :quoteRequest="props.quoteRequest"
-              :quoteType="props.quoteType"
-              :payments="props.payments"
+              @handle-declined-reason-change="handleDeclinedReasonChange"
+              @handle-collection-type-change="handleCollectionTypeChange"
+              @handle-frequency-change="handleFrequencyChange"
+              @calculate-payment-breakup="calculatePaymentBreakup"
+              @reset-credit-approval="resetCreditApproval"
+              @handle-approval-reason-change="handleApprovalReasonChange"
+              @reset-discount="resetDiscount"
+              @handle-discount-change="handleDiscountChange"
+              @handle-discount-reason-change="handleDiscountReasonChange"
+              @upload-document="uploadDocument"
+              @open-inner-modal="openInnerModal"
+              @delete-document="deleteDocument"
+              @calculate-total-amount="calculateTotalAmount"
               @cancel="handleCancelChanges"
               @decline="handleDeclinedChange"
               @approve="isApproveClicked = !isApproveClicked"
               @cancel-modal="createPaymentModal = !createPaymentModal"
               @aml-verification="openAmlVerificationModal"
+              @handle-payment-options="handlePaymentOptions"
             />
           </x-form>
 

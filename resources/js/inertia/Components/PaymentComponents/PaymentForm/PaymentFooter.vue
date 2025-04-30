@@ -4,6 +4,8 @@ import { useAMLKYC } from '../../../Composables/useAMLKYC';
 
 const { isAmlVerified } = useAMLKYC();
 
+const can = permission => useCan(permission);
+
 const props = defineProps({
   isViewEnabled: {
     type: Boolean,
@@ -40,10 +42,6 @@ const props = defineProps({
   paymentMethodsEnum: {
     type: Object,
     default: () => ({}),
-  },
-  can: {
-    type: Function,
-    default: () => false,
   },
   isDeclineClicked: {
     type: Boolean,
