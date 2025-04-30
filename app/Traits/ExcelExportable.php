@@ -56,7 +56,7 @@ trait ExcelExportable
         if (!empty($requestParams['exportTitle'])) {
             $requestParams['exportTitle'] = ucfirst($requestParams['exportTitle']);
         } else {
-            $requestParams['exportTitle'] = ucfirst($requestParams['quoteType']);
+            $requestParams['exportTitle'] = ucfirst($requestParams['quoteType'] ?? 'Data');
         }
 
         if (empty($requestParams['subject'])) {
@@ -91,7 +91,7 @@ trait ExcelExportable
     public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
     {
         if (! isset($this->quoteType)) {
-            $this->quoteType = $requestParams['quoteType'];
+            $this->quoteType = $requestParams['quoteType'] ?? null;
         }
         // Get environment variables for email configuration
         $emailL_sys = config('constants.APP_ENV');
