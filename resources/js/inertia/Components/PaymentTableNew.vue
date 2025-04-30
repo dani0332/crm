@@ -6,6 +6,7 @@ import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { time } from 'highcharts';
+import ImageGalleryModal from './../Components/ImageGalleryModal.vue';
 
 // New Flow Implementation
 import { usePayment } from '../Composables/usePayment';
@@ -18,7 +19,7 @@ import {
 } from './PaymentComponents/index.js';
 
 // Assign barrel-imported components to prevent IDE from showing them as unused
-const components = { PaymentTableHeader };
+const components = { PaymentTableHeader, ImageGalleryModal };
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -394,58 +395,29 @@ const onCopyPaymentLink = (paymentLink, paymentStatus) => {
 const openModal = () => {
   isGalleryModelOpen.value = true;
 };
-const nextFile = () => {
-  if (currentFileIndex.value < filesTest.value.length - 1) {
-    currentFileIndex.value++;
-    zoomLevel.value = 1;
-  }
-};
 
-const zoomIn = () => {
-  zoomLevel.value = Math.min(zoomLevel.value + 0.25, 3);
-};
-
-const zoomOut = () => {
-  zoomLevel.value = Math.max(zoomLevel.value - 0.25, 0.25);
-};
-
+// Replace these functions with simplified versions that work with the ImageGalleryModal component
 const openInnerModal = fileId => {
-  //filesTest.value = fileUploadModels.value.flat();
+  // Prepare the files array for the gallery modal
   filesTest.value = [
     ...fileUploadModels.value.flat(),
     ...approvedDocumentModel.value.flat(),
     ...discountDocumentModel.value.flat(),
   ];
+  
+  // Find the index of the file to display
   currentFileIndex.value = filesTest.value.findIndex(
     item => item.id === fileId,
   );
+  
+  // Open the modal
   isGalleryModelOpen.value = true;
-  setTimeout(() => {
-    if (modal2Ref.value) {
-      modal2Ref.value.focus();
-    }
-  }, 0);
 };
 
-const previousFile = () => {
-  if (currentFileIndex.value > 0) {
-    currentFileIndex.value--;
-    zoomLevel.value = 1;
-  }
+const closeInnerModal = () => {
+  // Just close the gallery modal, not the payment modal
+  isGalleryModelOpen.value = false;
 };
-
-const handleKeyDown = event => {
-  if (event.key === 'ArrowLeft' && hasPreviousFile) {
-    previousFile();
-  } else if (event.key === 'ArrowRight' && hasNextFile) {
-    nextFile();
-  }
-};
-
-const currentFile = computed(() => {
-  return filesTest.value[currentFileIndex.value];
-});
-
 // Define a computed property to calculate the initial total price without VAT
 const initialTotalPriceWithoutVat = computed(() => {
   if (props.quoteType === quoteTypeCodeEnum.Health) {
@@ -462,14 +434,7 @@ const toggleExpand = index => {
   expandedPaymentRows.value[index] = !expandedPaymentRows.value[index];
 };
 
-const closeInnerModal = () => {
-  zoomLevel.value = 1;
-  isGalleryModelOpen.value = false;
-  isGalleryModelOpen.value = false;
-  isApproveConfirmed.value = false;
-  isApproveNotChecked.value = true;
-};
-
+// Close confirmation modal function remains unchanged
 const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
@@ -479,14 +444,6 @@ const closeConfirmModal = () => {
 const closeAmlConfirmModal = () => {
   isAmlApprovalRequired.value = false;
 };
-
-const hasNextFile = computed(() => {
-  return currentFileIndex.value < filesTest.value.length - 1;
-});
-
-const hasPreviousFile = computed(() => {
-  return currentFileIndex.value > 0;
-});
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -5510,171 +5467,13 @@ onBeforeMount(() => {
             </div>
           </x-form>
 
-          <div
-            class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center"
-            v-if="isGalleryModelOpen"
-          >
-            <div
-              class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg"
-              tabindex="0"
-              ref="modal2Ref"
-              @keydown="handleKeyDown"
-            >
-              <div class="modal-header text-base text-white bg-gray-800">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center space-x-2">
-                    {{ currentFile.original_name }}
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <span
-                      @click="closeInnerModal"
-                      class="text-gray-300 font-bold cursor-pointer pr-1"
-                    >
-                      <!-- SVG for Close Modal -->
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        tabindex="0"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        class="w-4 h-4"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        ></path>
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-                <div class="flex items-center justify-between">
-                  <div
-                    class="flex items-center space-x-2 cursor-pointer"
-                    @click="previousFile"
-                    :class="{
-                      'opacity-50 cursor-not-allowed': !hasPreviousFile,
-                    }"
-                  >
-                    <!-- SVG for Previous -->
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      class="w-6 h-6 text-gray-300"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15 19l-7-7 7-7"
-                      ></path>
-                    </svg>
-                    Previous
-                  </div>
-                  <div
-                    class="flex items-center space-x-2"
-                    v-if="currentFile.doc_mime_type != 'application/pdf'"
-                  >
-                    <div
-                      class="flex items-center space-x-2 cursor-pointer"
-                      @click="zoomOut"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        class="h-6 w-6 text-gray-300"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M20 12H4"
-                        />
-                      </svg>
-                    </div>
-                    <div class="flex flex-initial w-24 justify-center">
-                      <span class="text-gray-300 font-bold"
-                        >{{ zoomLevel * 100 }}%</span
-                      >
-                    </div>
-                    <div
-                      class="flex items-center space-x-2 cursor-pointer"
-                      @click="zoomIn"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        class="h-6 w-6 text-gray-300"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <div
-                    class="flex items-center space-x-2 cursor-pointer"
-                    @click="nextFile"
-                    :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }"
-                  >
-                    <!-- SVG for Next -->
-                    Next
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      class="w-6 h-6 text-gray-300"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 5l7 7-7 7"
-                      ></path>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              <div class="modal-body w-full h-full mt-2">
-                <div
-                  v-if="
-                    currentFile.doc_mime_type === 'image/jpeg' ||
-                    currentFile.doc_mime_type === 'image/png'
-                  "
-                  class="flex items-center justify-center"
-                >
-                  <div class="overflow-auto items-center justify-center">
-                    <img
-                      :src="storageUrl + currentFile.doc_url"
-                      :style="{ transform: `scale(${zoomLevel})` }"
-                      class="max-w-full max-h-full"
-                    />
-                  </div>
-                </div>
-                <div
-                  v-else-if="currentFile.doc_mime_type === 'application/pdf'"
-                  class="w-full h-80vh"
-                >
-                  <embed
-                    :src="storageUrl + currentFile.doc_url"
-                    type="application/pdf"
-                    class="w-full h-full"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          <ImageGalleryModal
+            v-model="isGalleryModelOpen"
+            :files="filesTest"
+            :initial-index="currentFileIndex"
+            :storage-url="storageUrl"
+            @update:model-value="val => val === false && closeInnerModal()"
+          />
         </x-modal>
 
         <!--  Clear AML KYC Screening         -->
