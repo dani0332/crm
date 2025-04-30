@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
