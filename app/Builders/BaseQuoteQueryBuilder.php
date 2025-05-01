@@ -18,7 +18,7 @@ abstract class BaseQuoteQueryBuilder
 
     protected function getOrderByColumn()
     {
-        if (!request()->filled('sortBy')) {
+        if (! request()->filled('sortBy')) {
             return 'created_at';
         }
 
