@@ -45,6 +45,9 @@ class TravelQuote extends Model implements AuditableContract
         'insurer_api_status',
         'api_issuance_status',
         'insurer_api_email_action',
+        'insurer_aml_status_text',
+        'previous_policy_expiry_date_formatted',
+        'dob_formatted',
     ];
 
     protected static function booted()
@@ -98,6 +101,11 @@ class TravelQuote extends Model implements AuditableContract
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    public function amlAutomation()
+    {
+        return $this->belongsTo(AmlAutomation::class, 'code', 'code');
     }
 
     public function payments()
@@ -174,7 +182,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function insuranceProvider()
     {
-        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code']);
     }
 
     /**
@@ -317,5 +325,15 @@ class TravelQuote extends Model implements AuditableContract
     public function isSenior()
     {
         return $this->customerMembers->where('age', '>=', 65)->count() > 0;
+    }
+
+    public function renewalBatch()
+    {
+        return $this->belongsTo(renewalBatch::class, 'renewal_batch_id');
+    }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
     }
 }

@@ -7,10 +7,14 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
+use App\Models\Team;
 use App\Models\User;
+use App\Models\UserManager;
 use App\Traits\TeamHierarchyTrait;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -30,6 +34,7 @@ class LeadAllocationController extends Controller
             QuoteTypes::YACHT => PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::LIFE => PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
             QuoteTypes::HOME => PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::GROUP_MEDICAL => PermissionsEnum::GROUP_MEDICAL_LEAD_ALLOCATION_DASHBOARD,
         };
         $this->middleware("permission:{$permission}", ['only' => ['index']]);
     }
@@ -38,6 +43,8 @@ class LeadAllocationController extends Controller
     {
         try {
             $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
+
+            $team = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $this->quoteType->value)->first();
 
             $users = User::activeUser()
                 ->select(
@@ -51,7 +58,15 @@ class LeadAllocationController extends Controller
                     'la.manual_assignment_count as manualAllocationCount',
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.reset_cap',
-                    DB::RAW('GROUP_CONCAT(teams.name ORDER BY teams.name ASC SEPARATOR ", ") as teamNames')
+                    DB::RAW("
+                        GROUP_CONCAT(
+                            CASE
+                                WHEN teams.parent_team_id = {$team?->id} THEN teams.name
+                                ELSE NULL
+                            END
+                            ORDER BY teams.name ASC SEPARATOR ', '
+                        ) AS teamNames
+                    ")
                 )
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
@@ -74,7 +89,8 @@ class LeadAllocationController extends Controller
                 $users = $users->whereIn('teams.id', $userTeamIds);
             }
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $users = $users->where('users.manager_id', auth()->id());
+                $userIds = UserManager::where('manager_id', Auth::id())->pluck('user_id')->toArray();
+                $users = $users->whereIn('users.id', $userIds);
             }
 
             return $users->get();
@@ -135,6 +151,23 @@ class LeadAllocationController extends Controller
             'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
             'quoteType' => $quoteType->value,
             'data' => $data,
+            'lobSpecificLeadAllocation' => $this->lobSpecificLeadAllocation(),
         ]);
+    }
+
+    private function lobSpecificLeadAllocation()
+    {
+        $permission = match ($this->quoteType) {
+            QuoteTypes::CORPLINE => PermissionsEnum::CORPLINE_LEADPOOL,
+            QuoteTypes::CYCLE => PermissionsEnum::CYCLE_LEADPOOL,
+            QuoteTypes::PET => PermissionsEnum::PET_LEADPOOL,
+            QuoteTypes::YACHT => PermissionsEnum::YACHT_LEADPOOL,
+            QuoteTypes::LIFE => PermissionsEnum::LIFE_LEADPOOL,
+            QuoteTypes::HOME => PermissionsEnum::HOME_LEADPOOL,
+            QuoteTypes::GROUP_MEDICAL => PermissionsEnum::GROUP_MEDICAL_LEADPOOL,
+            // QuoteTypes::SAVINGS => PermissionsEnum::SAVINGS_LEADPOOL
+        };
+
+        return request()->user()->can($permission);
     }
 }

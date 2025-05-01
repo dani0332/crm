@@ -4,17 +4,16 @@ namespace App\Services;
 
 use App\Enums\CarPlanType;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\CarPlan;
-use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Illuminate\Support\Facades\DB;
-use PDF;
 
 class BikeQuoteService extends BaseService
 {
@@ -200,43 +199,58 @@ class BikeQuoteService extends BaseService
         $logPrefix = 'fn: isPlanModifyAllowed ';
         $quote = PersonalQuote::where('uuid', $data['bike_quote_uuid'])->with('paymentStatus')->first();
 
+        $paymentStatuses = [
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DECLINED,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::OVERDUE,
+            PaymentStatusEnum::CREDIT_APPROVED,
+            PaymentStatusEnum::CANCELLED,
+            PaymentStatusEnum::REFUNDED,
+            PaymentStatusEnum::DISPUTED,
+            PaymentStatusEnum::FAILED,
+            PaymentStatusEnum::DRAFT,
+        ];
+
+        $quoteStatuses = [
+            QuoteStatusEnum::NewLead,
+            QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+            QuoteStatusEnum::PaymentLinkInprogress,
+            QuoteStatusEnum::PaymentLinkSentToCustomer,
+            QuoteStatusEnum::Quoted,
+            QuoteStatusEnum::FollowedUp,
+            QuoteStatusEnum::PaymentPending,
+            QuoteStatusEnum::SentForTransactionApproval,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::Stale,
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+        ];
+
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
-            $bikePayment = Payment::where('code', '=', $quote->code)->first();
-            if (! empty($bikePayment->captured_at)) {
-                $paymentCapturedAt = $bikePayment->captured_at;
-                $today = Carbon::today();
+            if (auth()->user()->hasRole(RolesEnum::BikeAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+                LoggerService::info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
 
-                $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
-                $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
+                return true;
+            } elseif (auth()->user()->hasRole(RolesEnum::BikeManager) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+                LoggerService::info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid);
 
-                if (Auth::user()->hasRole(RolesEnum::BikeAdvisor) && $today->lte($dateLimitForAdvisor)) {
-                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
-
-                    return true;
-                } elseif (Auth::user()->hasRole(RolesEnum::BikeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
-                    info($logPrefix.' plan modify allowed to bike manager for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
-
-                    return true;
-                }
+                return true;
             }
         }
 
-        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::BikeAdvisor, RolesEnum::BikeManager])) {
-            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+        if (auth()->user()->hasAnyRole([RolesEnum::BikeManager, RolesEnum::BikeAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if (in_array($quote->payment_status_id, $paymentStatuses) || in_array($quote->quote_status_id, $quoteStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
+                LoggerService::info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
-            return true;
+                return true;
+            }
         }
 
-        if (
-            $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
-                && Auth::user()->hasAnyRole([RolesEnum::BikeAdvisor,  RolesEnum::BikeManager]))
-        ) {
-            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
-
-            return true;
-        }
-
-        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+        LoggerService::warning($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
 
         return 'Plan Modification is not allowed';
     }

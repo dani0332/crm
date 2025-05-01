@@ -51,6 +51,7 @@ use App\Http\Controllers\TravelLeadAllocationController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\Admin\AllocationAuditController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
@@ -70,6 +71,7 @@ use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\HealthRevivalQuoteController;
+use App\Http\Controllers\V2\HomeQuoteController;
 use App\Http\Controllers\V2\ImpersonateController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
@@ -175,6 +177,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::get('/bike-insurance-provider-plans', [BikeQuoteController::class, 'bikePlansByInsuranceProvider']);
 
+    // home routes without check_route_access middleware
+    Route::post('{quoteType}/home-manual-plan-toggle', [HomeQuoteController::class, 'manualPlanToggle'])->name('homeManualPlanToggle');
+    Route::get('quotes/home/cards', [HomeQuoteController::class, 'cardsView'])->name('home-quotes-card');
+    Route::get('home/{quoteId}/plan_details/{planId}', [HomeQuoteController::class, 'planDetails'])->name('home_plan_details');
+    Route::post('/home-plan-manual-update-process', [HomeQuoteController::class, 'homePlanUpdateManualProcess']);
+
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -189,6 +197,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/total-premium', [ReportsController::class, 'totalPremiumLeadsSaleReport'])->name('total-premium-leads-sales-report');
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
+        Route::post('/personal-quotes/car/pdf', [CarQuoteController::class, 'generatePdfwithSnappy']);
+
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
         Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
 
@@ -201,6 +211,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacht-quotes-card');
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
+
+        Route::resource('personal-quotes/home', HomeQuoteController::class)->names(generateRouteNames('home-quotes'));
 
         Route::group(['prefix' => 'quotes/'], function () {
             Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('carrevival-quotes-list');
@@ -223,9 +235,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('customer/{uuid}', [V2CustomerController::class, 'show'])->name('customers-show');
         Route::get('customer/{uuid}/edit', [V2CustomerController::class, 'edit'])->name('customers-edit');
         Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
-
-        Route::get('quotes/car-sold', [CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
-        Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
         Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
@@ -295,6 +304,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
+    Route::post('/payment-split/post-to-sage', [CentralController::class, 'postPrepaymentToSage'])->name('can-post-premium-prepayment')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::post('/payments/{quoteType}/split-update', [CentralController::class, 'splitPaymentUpdate'])->name('approve-payments')->middleware('check_route_access');
@@ -306,6 +316,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/retry-payment', [CentralController::class, 'retrySplitPayment'])->name('approve-payments')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/delete-split-payment', [CentralController::class, 'deleteSplitPayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/void-payment', [CentralController::class, 'voidPayment'])->name('payments-void')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/payments-capture-validation', [CentralController::class, 'paymentsCaptureValidtion'])->name('capture-validation');
+    Route::post('/payments/{quoteType}/delete-payment', [CentralController::class, 'deletePayment'])->name('payments-delete');
 
     Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
 
@@ -478,6 +490,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::post('process', [QueryBenchmarkerController::class, 'process'])->name('admin.benchmarker.query.process');
             });
         });
+
+        Route::get('/allocation-audit', [AllocationAuditController::class, 'index'])->name('admin.allocation-audit.index');
     });
 
     Route::prefix('buy-leads')->group(function () {
@@ -494,14 +508,18 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('car', CRUDController::class);
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
+        Route::get('home/{id}', function ($id) {
+            return redirect("/personal-quotes/home/{$id}");
+        })->where('id', '[A-Z0-9]+')->name('quotes.home.show');
+
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
-        Route::resource('home', CRUDController::class);
+        Route::resource('home', CRUDController::class)->except(['show']);
         Route::resource('business', CRUDController::class);
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
         Route::resource('business', BusinessQuoteController::class);
 
-        Route::resource('travel', CRUDController::class);
+        // Route::resource('travel', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
@@ -635,6 +653,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/save-provider-details', 'saveProviderDetails')->name('save-provider-details');
         Route::post('/book-update-validation', 'sendUpdateValidation')->name('book-update-validation');
         Route::post('book-update', 'sendUpdate')->name('book-update');
+        Route::post('/send-update-cancel', 'sendUpdateCancel')->name('send-update-cancel');
     });
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update.get-by-id');
@@ -699,6 +718,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::post('/bike-plan-manual-update-process', [BikeQuoteController::class, 'bikePlanUpdateManualProcess']);
     Route::post('/car-plan-manual-update-process', [CarQuoteController::class, 'carPlanUpdateManualProcess']);
+
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
     Route::post('/travel-plan-manual-update-process', [TravelController::class, 'travelPlanUpdateManualProcess']);
@@ -728,6 +748,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
+    Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
 });
 
 Route::get('/add-batch-number', function () {

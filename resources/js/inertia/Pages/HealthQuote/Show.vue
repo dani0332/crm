@@ -1,8 +1,8 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const props = defineProps({
   quote: Object,
@@ -675,6 +675,7 @@ const plansTable = reactive({
 });
 
 const onLoadAvailablePlansData = async () => {
+  plansTable.isLoading = true;
   let data = {
     jsonData: true,
   };
@@ -708,6 +709,9 @@ const onLoadAvailablePlansData = async () => {
         title: 'Error loading plans',
         position: 'top',
       });
+    })
+    .finally(() => {
+      plansTable.isLoading = false;
     });
 };
 
@@ -1654,6 +1658,7 @@ const handlePlanSelected = plan => {
       'ecomDetails',
       'coPayment',
       'bookPolicyDetails',
+      'quote',
     ],
   });
 };
@@ -3049,7 +3054,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div
+      class="p-4 rounded shadow mb-6 bg-white"
+      v-if="!$page.props.can.isAdvisor"
+    >
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -3232,137 +3240,142 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex flex-wrap gap-3 justify-end mb-3">
-            <x-button-group v-if="selectedPlans.length > 0" size="sm">
-              <x-button
-                @click.prevent="onTogglePlans(false)"
-                :loading="toggleLoader"
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Show
-              </x-button>
-              <x-button
-                @click.prevent="onTogglePlans(true)"
-                :loading="toggleLoader"
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Hide
-              </x-button>
-            </x-button-group>
 
-            <x-button
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              color="emerald"
-              @click.prevent="onExportPlans"
-              :loading="exportLoader"
-            >
-              Download PDF
-            </x-button>
-            <x-tooltip placement="top" align="left">
+          <div v-if="plansTable.isLoading" class="flex justify-center my-8">
+            <x-spinner size="lg" />
+          </div>
+          <template v-else>
+            <div class="flex flex-wrap gap-3 justify-end mb-3">
+              <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                <x-button
+                  @click.prevent="onTogglePlans(false)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Show
+                </x-button>
+                <x-button
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Hide
+                </x-button>
+              </x-button-group>
+
               <x-button
-                @click.prevent="validateEmailSending"
+                v-if="selectedPlans.length > 0"
                 size="sm"
-                color="orange"
-                :disabled="doesEmailStatusExist || isOcaButtonDisabled"
-                v-if="readOnlyMode.isDisable === true"
+                color="emerald"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
               >
-                Send OCA Email to Customer
+                Download PDF
               </x-button>
-              <template #tooltip>
-                <div>
-                  When clicked, this button sends the One Click Apply (OCA)
-                  email to the customer with updated rates and coverage options,
-                  helping them finalize their purchase with ease.
-                </div>
-              </template>
-            </x-tooltip>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="validateEmailSending"
+                  size="sm"
+                  color="orange"
+                  :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Send OCA Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Apply (OCA)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
 
-            <x-button
-              v-if="plansTable.data.length > 0"
-              size="sm"
-              color="orange"
-              @click.prevent="
-                onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
-              "
-            >
-              Copy Link
-            </x-button>
-            <x-modal
-              v-model="modals.sendConfirm"
-              title="Send Email"
-              show-close
-              backdrop
-            >
-              <p>Are you sure send email to customer?</p>
-              <template #actions>
-                <div class="text-right space-x-4">
-                  <x-button
-                    size="sm"
-                    ghost
-                    @click.prevent="modals.sendConfirm = false"
-                  >
-                    Cancel
-                  </x-button>
-                  <x-button
-                    size="sm"
-                    color="error"
-                    @click.prevent="confirmSendEmail"
-                    :loading="loader.link"
-                  >
-                    Send
-                  </x-button>
-                </div>
-              </template>
-            </x-modal>
-            <x-badge
-              size="sm"
-              color="error"
-              outlined
-              animated
-              :show="planFiltersCount > 0"
-            >
               <x-button
                 v-if="plansTable.data.length > 0"
                 size="sm"
-                color="primary"
-                @click.prevent="modals.planFilters = true"
+                color="orange"
+                @click.prevent="
+                  onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
+                "
               >
-                Filters
+                Copy Link
               </x-button>
-              <template #content> {{ planFiltersCount }} </template>
-            </x-badge>
-
-            <AddPlanButtonTemplate v-slot="{ isDisabled }">
-              <x-button
-                v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
+              <x-modal
+                v-model="modals.sendConfirm"
+                title="Send Email"
+                show-close
+                backdrop
+              >
+                <p>Are you sure send email to customer?</p>
+                <template #actions>
+                  <div class="text-right space-x-4">
+                    <x-button
+                      size="sm"
+                      ghost
+                      @click.prevent="modals.sendConfirm = false"
+                    >
+                      Cancel
+                    </x-button>
+                    <x-button
+                      size="sm"
+                      color="error"
+                      @click.prevent="confirmSendEmail"
+                      :loading="loader.link"
+                    >
+                      Send
+                    </x-button>
+                  </div>
+                </template>
+              </x-modal>
+              <x-badge
                 size="sm"
-                color="emerald"
-                @click.prevent="modals.createPlan = true"
-                :disabled="isDisabled"
+                color="error"
+                outlined
+                animated
+                :show="planFiltersCount > 0"
               >
-                Add Plan
-              </x-button>
-            </AddPlanButtonTemplate>
+                <x-button
+                  v-if="plansTable.data.length > 0"
+                  size="sm"
+                  color="primary"
+                  @click.prevent="modals.planFilters = true"
+                >
+                  Filters
+                </x-button>
+                <template #content> {{ planFiltersCount }} </template>
+              </x-badge>
 
-            <x-tooltip
-              v-if="page.props.lockLeadSectionsDetails.plan_selection"
-              position="left"
-              align="center"
-              class="yoyo-tip"
-            >
-              <AddPlanButtonReuseTemplate :isDisabled="true" />
-              <template #tooltip>
-                <div class="whitespace-normal text-xs">
-                  No further actions can be taken on an issued policy. For
-                  changes, such as a change in insurer, go to 'Send Update',
-                  select 'Add Update', and choose 'Cancellation from inception
-                  and reissuance.
-                </div>
-              </template>
-            </x-tooltip>
-            <AddPlanButtonReuseTemplate v-else />
+              <AddPlanButtonTemplate v-slot="{ isDisabled }">
+                <x-button
+                  v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="modals.createPlan = true"
+                  :disabled="isDisabled"
+                >
+                  Add Plan
+                </x-button>
+              </AddPlanButtonTemplate>
 
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.plan_selection"
+                position="left"
+                align="center"
+                class="yoyo-tip"
+              >
+                <AddPlanButtonReuseTemplate :isDisabled="true" />
+                <template #tooltip>
+                  <div class="whitespace-normal text-xs">
+                    No further actions can be taken on an issued policy. For
+                    changes, such as a change in insurer, go to 'Send Update',
+                    select 'Add Update', and choose 'Cancellation from inception
+                    and reissuance.
+                  </div>
+                </template>
+              </x-tooltip>
+              <AddPlanButtonReuseTemplate v-else />
+            </div>
             <DataTable
               ref="planDataTable"
               v-model:items-selected="selectedPlans"
@@ -3540,7 +3553,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </div>
               </template>
             </DataTable>
-          </div>
+          </template>
         </template>
       </Collapsible>
     </div>
@@ -3702,6 +3715,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :bookPolicyDetails="bookPolicyDetails"
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
+      :isPlanDetailSectionEnabled="false"
     />
 
     <PaymentTable
@@ -4035,7 +4049,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
     <lead-raw-data
       :modelType="'Health'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

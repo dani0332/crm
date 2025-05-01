@@ -10,6 +10,7 @@ enum QuoteSegmentEnum: string
     case SIC = 'sic';
     case NON_SIC = 'non-sic';
     case SIC_REVIVAL = 'sic-revival';
+    case AIG = 'aig';
 
     public function label()
     {
@@ -18,6 +19,7 @@ enum QuoteSegmentEnum: string
             self::SIC => 'SIC Ecom leads',
             self::NON_SIC => 'Non SIC Ecom leads',
             self::SIC_REVIVAL => 'Revival Leads',
+            self::AIG => 'AIG Leads',
         };
     }
 
@@ -27,6 +29,7 @@ enum QuoteSegmentEnum: string
             self::SIC => 'SIC',
             self::SIC_REVIVAL => 'Revival',
             self::NON_SIC => 'Non-SIC',
+            self::AIG => 'AIG',
         };
     }
 

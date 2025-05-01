@@ -2,19 +2,26 @@
 
 namespace App\Traits;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\CarQuotePlanDetail;
 use App\Models\Payment;
+use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use App\Traits\QuoteTraits\QuoteAllocatable;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 
@@ -76,7 +83,7 @@ trait QuoteModelTrait
     public static function applySegmentFilter($query, $segmentFilter, $alias, $quoteTypeId)
     {
         $user = auth()->user();
-        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
+        if ($user && $user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
             $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -103,6 +110,14 @@ trait QuoteModelTrait
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
                 ]);
+            })->when($segmentFilter === QuoteSegmentEnum::AIG->value, function ($query) use ($alias, $quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                });
             });
         }
     }
@@ -159,10 +174,10 @@ trait QuoteModelTrait
     {
         if ($isSIC) {
             return (! $this->isStale() && ! $this->isPaid()) &&
-            (request('isRequestedForAnAdvisor', false) ||
-            $this->sic_advisor_requested == 1 ||
-            $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
-            $this->assignment_type == AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD);
+                (request('isRequestedForAnAdvisor', false) ||
+                    $this->sic_advisor_requested == 1 ||
+                    $this->assignment_type == AssignmentTypeEnum::BOUGHT_LEAD ||
+                    $this->assignment_type == AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD);
         }
 
         // If lead is not stale and not paid, or previously lead is bought lead or reassigned as bought lead
@@ -196,5 +211,81 @@ trait QuoteModelTrait
                 $join->on('personal_quotes.code', '=', $quoteTypes[$request->line_of_business].'.code');
             });
         }
+    }
+
+    public function assignmentTypeText(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return AssignmentTypeEnum::getAssignmentTypeText($this->assignment_type);
+            }
+        );
+    }
+
+    public function dobFormatted(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->dob ? Carbon::parse($this->dob)->format('d-m-Y') : null;
+            }
+        );
+    }
+
+    public function previousPolicyExpiryDateFormatted(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->previous_policy_expiry_date ? Carbon::parse($this->previous_policy_expiry_date)->format('d-m-Y') : null;
+            }
+        );
+    }
+
+    public function insurerAmlStatusText(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return match ($this->insurer_aml_status) {
+                    AMLStatusCode::InsurerAMLScreeningPending => AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending),
+                    AMLStatusCode::InsurerAMLScreeningCleared => AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningCleared),
+                    AMLStatusCode::InsurerAMLScreeningFailed => AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningFailed),
+                    default => AMLStatusCode::InsurerAMLScreeningNA,
+                };
+            }
+        );
+    }
+
+    public function isPaymentLinkRequested(): bool
+    {
+        return $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
+    }
+
+    public function isPUA(): bool
+    {
+        if (empty($this->plan_id)) {
+            return false;
+        }
+
+        return CarQuotePlanDetail::where('quote_uuid', $this->uuid)
+            ->whereIn('pua_type', PuaEnum::TAGS)
+            ->where('plan_id', $this->plan_id)
+            ->exists();
+    }
+
+    public function payment()
+    {
+        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
+    }
+
+    public function customerType(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $exists = QuoteRequestEntityMapping::where('quote_type_id', QuoteTypeId::Health)
+                    ->where('quote_request_id', $this->id)
+                    ->exists();
+
+                return $exists ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+            }
+        );
     }
 }

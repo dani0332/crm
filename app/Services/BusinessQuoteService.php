@@ -14,6 +14,7 @@ use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
+use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
@@ -23,7 +24,6 @@ use Config;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class BusinessQuoteService extends BaseService
 {
@@ -73,6 +73,7 @@ class BusinessQuoteService extends BaseService
                 'rb.name as renewal_batch_text',
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
+                'bqr.previous_policy_start_date',
                 'bqr.previous_quote_policy_premium',
                 'bqr.gender',
                 'bqr.device',
@@ -669,7 +670,7 @@ class BusinessQuoteService extends BaseService
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
 
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -702,5 +703,35 @@ class BusinessQuoteService extends BaseService
         }
 
         return 'true';
+    }
+
+    public function formatInsuranceName(string $name): string
+    {
+        // Remove any extra whitespace
+        $trimmedName = trim($name);
+
+        // Split the name into words and filter out 'insurance'
+        $words = array_filter(
+            preg_split('/\s+/', $trimmedName),
+            fn ($word) => strtolower($word) !== 'insurance'
+        );
+        $words = array_values($words); // Re-index the array
+
+        // If the name is too short (3 words or less), return as is
+        if (count($words) <= 3) {
+            return implode(' ', $words);
+        }
+
+        // Handle special cases with & sign
+        if (str_contains($trimmedName, '&')) {
+            // For cases like "Kidnap & Ransom", return both parts
+            $parts = array_map('trim', explode('&', $trimmedName));
+            if (count($parts) === 2) {
+                return implode(' & ', $parts);
+            }
+        }
+
+        // Return first two words for lengthy names (more than 3 words)
+        return $words[0].' '.$words[1];
     }
 }

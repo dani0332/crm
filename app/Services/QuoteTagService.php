@@ -14,18 +14,18 @@ class QuoteTagService
      * @param  int  $quoteTypeId
      * @return bool
      */
-    public function isTapCaptureProcessStart($quote, $quoteTypeId, $sendUpdateLog = null)
+    public function isCapturePaymentStarted($quoteUUid, $quoteTypeId, $sendUpdateLogId = null)
     {
         $whereClause = [
             'quote_type_id' => $quoteTypeId,
-            'quote_uuid' => $quote->uuid,
+            'quote_uuid' => $quoteUUid,
             'name' => QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START,
             'value' => 1,
         ];
 
-        if ($sendUpdateLog) {
-            $whereClause['name'] = QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLog->id;
-            $whereClause['send_update_log_id'] = $sendUpdateLog->id;
+        if ($sendUpdateLogId) {
+            $whereClause['name'] = QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_SU_START.'-'.$sendUpdateLogId;
+            $whereClause['send_update_log_id'] = $sendUpdateLogId;
         }
 
         return QuoteTag::where($whereClause)

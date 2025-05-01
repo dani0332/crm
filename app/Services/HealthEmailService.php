@@ -11,16 +11,17 @@ use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\QuoteFlowDetails;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class HealthEmailService extends BaseService
 {
     public function sendHealthOCBIntroEmail($lead, $triggerSICWorkFlow)
     {
         // Retrieve plans with available ratings for the given lead
-        info("sic sendHealthOCBEmail - Ref ID: {$lead->uuid}| Time: ".now());
+        LoggerService::info("sic sendHealthOCBEmail - Ref ID: {$lead->uuid}| Time: ".now());
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
@@ -30,15 +31,15 @@ class HealthEmailService extends BaseService
                     $response = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
                     $lead->sic_flow_enabled = true;
                     $lead->save();
-                    info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                    LoggerService::info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
                 } else {
-                    info("SIC Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                    LoggerService::warning("SIC Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
                 }
             } else {
-                info("SIC Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
+                LoggerService::info("SIC Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
             }
         } else {
-            info("triggerSICWorkFlow: {$triggerSICWorkFlow} | - SIC Health workflow not enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::info("triggerSICWorkFlow: {$triggerSICWorkFlow} | - SIC Health workflow not enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
         }
 
         return $response ?? null;
@@ -89,6 +90,25 @@ class HealthEmailService extends BaseService
             ->toArray();
     }
 
+    private function includeHostInAttachmentPath(array $documents): array
+    {
+        if (empty($documents)) {
+            return [];
+        }
+
+        $storageUrl = rtrim(config('constants.AZURE_IM_STORAGE_URL', ''), '/');
+
+        return array_map(function (array $document) use ($storageUrl) {
+            $link = $document['link'] ?? '';
+
+            if (! empty($link) && ! Str::startsWith($link, ['http://', 'https://'])) {
+                $document['link'] = $storageUrl.'/'.ltrim($link, '/');
+            }
+
+            return $document;
+        }, $documents);
+    }
+
     private function buildEmailDataForApplyNowEmail(HealthQuote $lead, ?User $advisor = null)
     {
         $currentPlan = $lead->getCurrentPlan();
@@ -132,8 +152,8 @@ class HealthEmailService extends BaseService
                 'tpa' => $currentPlan?->eligibilityName ?? '',
                 'actualPremium' => "AED {$getDiscountPremium()}",
                 'vat' => "AED {$getVat()}",
-                'tobs' => array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? []),
-                'networkLinks' => array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? []),
+                'tobs' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? [])),
+                'networkLinks' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? [])),
                 'mafLink' => $currentPlan?->mafLink,
             ],
             'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
@@ -156,10 +176,10 @@ class HealthEmailService extends BaseService
 
     public function initiateApplyNowEmail(HealthQuote $lead)
     {
-        info(self::class." Inside Apply Now for uuid: {$lead->uuid}");
+        LoggerService::info(self::class." Inside Apply Now for uuid: {$lead->uuid}");
         try {
             if (! $lead->isApplicationPending()) {
-                info(self::class." Skipping Apply Now Email becuase quote status is not application pending for uuid: {$lead->uuid}");
+                LoggerService::info(self::class." Skipping Apply Now Email becuase quote status is not application pending for uuid: {$lead->uuid}");
 
                 return;
             }
@@ -175,22 +195,22 @@ class HealthEmailService extends BaseService
                         $lead->apply_now_email_sent_at = now();
                         $lead->save();
                     });
-                    info(self::class." - Apply Now Email Sent to Customer Email: {$lead->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
+                    LoggerService::info(self::class." - Apply Now Email Sent to Customer Email: {$lead->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
                 } elseif ($advisor) {
-                    info(self::class." - Apply Now Email Sent to Advisor Email: {$advisor->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
+                    LoggerService::info(self::class." - Apply Now Email Sent to Advisor Email: {$advisor->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
                 }
 
             } else {
-                Log::error(self::class." - Apply Now Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$lead->uuid}");
+                LoggerService::error(self::class." - Apply Now Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$lead->uuid}");
             }
         } catch (Exception $e) {
-            Log::error(self::class." - Exception for uuid {$lead->uuid}: ".$e->getMessage());
+            LoggerService::error(self::class." - Exception for uuid {$lead->uuid}: ".$e->getMessage());
         }
     }
 
     public function sendOCAHealthWorkFlow($lead)
     {
-        info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
+        LoggerService::info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS);
@@ -199,17 +219,17 @@ class HealthEmailService extends BaseService
                 $response = app(BirdService::class)->triggerWebHookRequest($birdSicHealthWorkflowData->value, $emailData);
                 $lead->oca_flow_enabled = true;
                 $lead->save();
-                info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                info("OCA Health workflow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info("OCA Health workflow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
 
                 if (! empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($lead, $response);
                 }
             } else {
-                info("OCA Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::warning("OCA Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } else {
-            info("OCA Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::info("OCA Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
         }
 
         return $response ?? null;
@@ -226,14 +246,14 @@ class HealthEmailService extends BaseService
                     'flow_type' => QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS->value,
                     'flow_id' => $runId,
                 ]);
-                info("OCA Health workflow run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info("OCA Health workflow run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             } else {
-                info("OCA Health workflow run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::warning("OCA Health workflow run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } catch (\Throwable $th) {
             $errorMessage = "Error while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
-            info($errorMessage);
-            info("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::error($errorMessage);
+            LoggerService::error("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
             throw $th;
         }
     }
@@ -241,16 +261,16 @@ class HealthEmailService extends BaseService
     public function sendApplicationSubmittedEmail($healthQuote)
     {
         try {
-            info(self::class." - Inside for UUID: {$healthQuote->uuid}");
+            LoggerService::info(self::class." - Inside for UUID: {$healthQuote->uuid}");
             $emailData = $this->mapDataForFollowupEmail($healthQuote, $healthQuote->advisor, WorkflowTypeEnum::HEALTH_APPLICATION_SUBMITTED);
             $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
-            info(self::class." - Triggering Bird triggerWebHookRequest for UUID: {$healthQuote->uuid}");
+            LoggerService::info(self::class." - Triggering Bird triggerWebHookRequest for UUID: {$healthQuote->uuid}");
             $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
-            info("Application submitted email sent for lead uuid: {$healthQuote->uuid} | Time: ".now());
+            LoggerService::info("Application submitted email sent for lead uuid: {$healthQuote->uuid} | Time: ".now());
 
             return $response;
         } catch (Exception $e) {
-            Log::error("Error sending application submitted email for lead Ref-ID: {$healthQuote->uuid} | Time: ".now().' - Error: '.$e->getMessage());
+            LoggerService::error("Error sending application submitted email for lead Ref-ID: {$healthQuote->uuid} | Time: ".now().' - Error: '.$e->getMessage());
 
             return false;
         }

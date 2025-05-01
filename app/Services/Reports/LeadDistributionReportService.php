@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
@@ -185,10 +186,10 @@ class LeadDistributionReportService extends BaseService
                 });
             })
             ->when($lob === quoteTypeCode::GroupMedical, function ($q) {
-                $q->where('business_type_of_insurance_id', 5); // 5 is the id for group medical
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
             ->when($lob === quoteTypeCode::CORPLINE, function ($q) {
-                $q->where('business_type_of_insurance_id', '!=', 5); // other than 5 is the id for corpline
+                $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
             ->groupBy('teams.name')
             ->orderBy('teams.name');

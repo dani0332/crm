@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -58,7 +59,7 @@ class CycleQuoteRepository extends BaseRepository
             'nationalityId' => $data['nationality_id'],
         ];
 
-        info('cycleQuote:'.json_encode($quoteData));
+        LoggerService::info('cycleQuote:'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
@@ -119,7 +120,7 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()

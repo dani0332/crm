@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
+use App\Enums\EnvEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -26,7 +28,6 @@ use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
-use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -516,6 +517,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::JETSKI->value,
             QuoteTypes::PET->value,
             QuoteTypes::YACHT->value,
+            QuoteTypes::HOME->value,
         ]);
     }
 }
@@ -691,9 +693,13 @@ if (! function_exists('addDaysExcludeWeekend')) {
 }
 
 if (! function_exists('getIMLogo')) {
-    function getIMLogo($isPDF = false)
+    function getIMLogo($isPDF = false, $latest = false)
     {
         $imLogo = 'images/logo-new.png';
+
+        if ($latest) {
+            $imLogo = 'images/im_logo_23k-hi.png';
+        }
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
@@ -1001,15 +1007,23 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
 }
 
 if (! function_exists('getAppStorageValueByKey')) {
-    function getAppStorageValueByKey($keyName, $default = false)
+    function getAppStorageValueByKey($keyName, $default = false, bool $useCache = false, $cacheTime = null)
     {
-        $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
+        $getStorageValue = function () use ($keyName, $default) {
+            $query = ApplicationStorage::select('value')->where('key_name', $keyName)->first();
 
-        if (! $query) {
-            return $default;
+            if (! $query) {
+                return $default;
+            }
+
+            return $query->value;
+        };
+
+        if (! $useCache || config('constants.APP_ENV') !== EnvEnum::PRODUCTION) {
+            return $getStorageValue();
         }
 
-        return $query->value;
+        return Cache::remember("APP_STORAGE_{$keyName}", $cacheTime ?: now()->addHour(), $getStorageValue);
     }
 }
 
@@ -1330,7 +1344,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer_addresses.city as courier_address_city',
                 'customer_addresses.landmark as courier_address_landmark',
             ])
-                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel]), function ($q) use ($table, $quoteTypeId) {
+                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home]), function ($q) use ($table, $quoteTypeId) {
                     $q->addSelect([
                         'emirates.code as emirate_code',
                         'emirates.text as emirate_text',
@@ -1339,6 +1353,20 @@ if (! function_exists('getCourierQuote')) {
                             QuoteTypeId::Health => "{$table}.emirate_of_your_visa_id",
                             default => "{$table}.emirate_of_registration_id"
                         });
+                })
+                ->when(in_array($quoteTypeId, [QuoteTypeId::Home]), function ($q) use ($table) {
+                    $q->addSelect([
+                        'emirates.code as emirate_code',
+                        'emirates.text as emirate_text',
+                    ])->leftJoin('home_quote_request', function (JoinClause $join) use ($table) {
+                        $join->on('home_quote_request.personal_quote_id', '=', "{$table}.id")
+                            ->leftJoin('sub_areas', function (JoinClause $subJoin) {
+                                $subJoin->on('sub_areas.id', '=', 'home_quote_request.sub_area_id')
+                                    ->leftJoin('emirates', function (JoinClause $sub) {
+                                        $sub->on('emirates.id', '=', 'sub_areas.emirates_id');
+                                    });
+                            });
+                    });
                 })
                 ->when(! empty($quoteStatuses) && is_array($quoteStatuses), function ($q) use ($table, $quoteStatuses) {
                     $q->whereIn("{$table}.quote_status_id", $quoteStatuses);
@@ -1525,7 +1553,7 @@ if (! function_exists('getInsuranceProvider')) {
     function getInsuranceProvider($payment, $quoteType, $quote = null)
     {
         $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value];
         $planRelationName = strtolower($quoteType).'Plan';
 
         //        Reminder:: Add Commercial vehicle logic for fetch correct provider
@@ -1540,10 +1568,11 @@ if (! function_exists('getInsuranceProvider')) {
 
             if (! empty($quoteDetails)) {
                 $quoteDetails->fill(['full_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name]);
-                $isCommercialVehicle = app(\App\Services\LeadAllocationService::class)->isCommercialVehicles($quoteDetails);
                 $vehicleType = \App\Models\VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
 
-                if ($isCommercialVehicle || ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD && $vehicleType == strtoupper(QuoteTypes::BIKE->value))) {
+                if ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD
+                && $vehicleType == strtoupper(QuoteTypes::BIKE->value)
+                && $quoteDetails?->registration_type === CarRegistrationType::PERSONAL) {
                     return $payment?->insuranceProvider;
                 }
             }
@@ -1583,9 +1612,7 @@ if (! function_exists('isCHSAdvisor')) {
 if (! function_exists('isTapEnabled')) {
     function isTapEnabled($processType = []): bool
     {
-        $isTapEnabled = ApplicationStorageService::getValueByKeyName(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION);
-
-        return $isTapEnabled;
+        return getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_TAP_INTEGRATION, useCache: true);
     }
 }
 

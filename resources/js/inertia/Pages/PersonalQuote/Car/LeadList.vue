@@ -27,6 +27,8 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 const quoteSegments = page.props.quoteSegments;
 const cleanObj = obj => useCleanObj(obj);
 const exportLoader = ref(false);
@@ -43,51 +45,58 @@ const serverOptions = ref({
 
 const tableHeader = [
   { text: 'REF-ID', value: 'code' },
-  { text: 'BATCH', value: 'quote_batch_id_text' },
+  { text: 'BATCH', value: 'batch.name' },
+  { text: 'Vehicle Use', value: 'vehicle_use' },
+  { text: 'Company Name', value: 'car_company_name' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at_formatted' },
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
-  { text: 'DATE OF BIRTH', value: 'dob' },
+  { text: 'DATE OF BIRTH', value: 'dob_formatted' },
   { text: 'LEAD SOURCE', value: 'source' },
   { text: 'ADVISOR REQUESTED', value: 'sic_advisor_requested' },
-  { text: 'NATIONALITY', value: 'nationality_id_text' },
-  { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for_id_text' },
-  { text: 'CAR MAKE', value: 'car_make_id_text' },
-  { text: 'CAR MODEL', value: 'car_model_id_text' },
+  { text: 'NATIONALITY', value: 'nationality.text' },
+  { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for.text' },
+  { text: 'CAR MAKE', value: 'car_make.text' },
+  { text: 'CAR MODEL', value: 'car_model.text' },
   { text: 'CAR MODEL YEAR', value: 'year_of_manufacture' },
   { text: 'FIRST REGISTRATION DATE', value: 'year_of_first_registration' },
   { text: 'CAR VALUE', value: 'car_value' },
   { text: 'CAR VALUE (AT ENQUIRY)', value: 'car_value_tier' },
-  { text: 'VEHICLE TYPE', value: 'vehicle_type_id_text' },
-  { text: 'TYPE OF CAR INSURANCE', value: 'current_insurance_status' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_text' },
-  { text: 'CLAIM HISTORY', value: 'claim_history_id_text' },
+  { text: 'VEHICLE TYPE', value: 'vehicle_type.text' },
+  { text: 'TYPE OF CAR INSURANCE', value: 'car_type_insurance.text' },
+  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
+  { text: 'CLAIM HISTORY', value: 'claim_history.text' },
   { text: 'CREATED DATE', value: 'created_at' },
   {
     text: 'POLICY EXPIRY DATE',
-    value: 'previous_policy_expiry_date',
-    sortable: true,
+    value: 'previous_policy_expiry_date_formatted',
   },
-  { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
-  { text: 'LEAD COST', value: 'cost_per_lead' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
-  { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
+  {
+    text: 'ADVISOR ASSIGNED DATE',
+    value: 'car_quote_request_detail.advisor_assigned_date_formatted',
+  },
+  { text: 'LEAD COST', value: 'tier.cost_per_lead' },
+  { text: 'LEAD STATUS', value: 'quote_status.text' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_text' },
+  { text: 'PAYMENT STATUS', value: 'payment_status.text' },
   { text: 'ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'TIER NAME', value: 'tier_id_text' },
-  { text: 'VISIT COUNT', value: 'visit_count' },
-  { text: 'FOLLOW UP DATE', value: 'next_followup_date' },
+  { text: 'TIER NAME', value: 'tier.name' },
+  { text: 'VISIT COUNT', value: 'quote_view_count.visit_count' },
+  {
+    text: 'FOLLOW UP DATE',
+    value: 'car_quote_request_detail.next_followup_date_formatted',
+  },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
+  { text: 'ADVISOR', value: 'advisor.name' },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type_text' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PRICE', value: 'premium' },
-  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'LOST REASON', value: 'car_quote_request_detail.lost_reason.text' },
   { text: 'QUOTE LINK', value: 'quote_link' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
   {
@@ -100,20 +109,36 @@ const tableHeader = [
 
 const ecommerceOptions = [
   { value: '', label: 'Please select is ecommerce' },
-  { value: 'Yes', label: 'Yes' },
-  { value: 'No', label: 'No' },
+  { value: 1, label: 'Yes' },
+  { value: 0, label: 'No' },
 ];
 
 const filteredTableHeader = computed(() => {
-  if (!hasRole(rolesEnum.CarAdvisor)) {
-    // If the user does not have the "CarAdvisor" role, include all columns
-    return tableHeader;
-  } else {
-    // If the user has the "CarAdvisor" role, exclude "Lead Source" and "Assignment Type" columns
-    return tableHeader.filter(
+  let filteredHeader = [...tableHeader];
+  if (hasRole(rolesEnum.CarAdvisor)) {
+    filteredHeader = filteredHeader.filter(
       column => column.value !== 'source' && column.value !== 'assignment_type',
     );
   }
+
+  if (filters.registration_type === carRegistrationTypeEnum.COMPANY) {
+    // If the registration type is "Company", exclude "First Name" and "Last Name" columns
+    filteredHeader = filteredHeader.filter(
+      column =>
+        column.value !== 'first_name' &&
+        column.value !== 'last_name' &&
+        column.value !== 'dob' &&
+        column.value !== 'nationality_id_text' &&
+        column.value !== 'uae_license_held_for_id_text',
+    );
+  } else {
+    filteredHeader = filteredHeader.filter(
+      column =>
+        column.value !== 'vehicle_use' && column.value !== 'car_company_name',
+    );
+  }
+
+  return filteredHeader;
 });
 
 const advisorOptions = computed(() => {
@@ -129,6 +154,18 @@ const advisorOptions = computed(() => {
 
   return options;
 });
+
+const registrationTypeOptions = Object.values(carRegistrationTypeEnum).map(
+  item => ({
+    value: item,
+    label: item,
+  }),
+);
+
+const vehicleUseOptions = Object.values(carVehicleUseEnum).map(item => ({
+  value: item,
+  label: item,
+}));
 
 const leadStatuses = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(status => ({
@@ -250,6 +287,9 @@ const filters = reactive({
   policy_expiry_date_end: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  registration_type: carRegistrationTypeEnum.PERSONAL,
+  vehicle_use: '',
+  company_name: '',
 });
 
 const teamUsers =
@@ -288,6 +328,14 @@ watch(
       canExportLeadsAndPlan.value = true;
     } else {
       canExportLeadsAndPlan.value = false;
+    }
+
+    if (filters.registration_type == carRegistrationTypeEnum.COMPANY) {
+      filters.first_name = '';
+      filters.last_name = '';
+    } else {
+      filters.vehicle_use = '';
+      filters.company_name = '';
     }
   },
   { deep: true, immediate: true },
@@ -584,6 +632,23 @@ const insurerAMLStatusOption = computed(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <x-select
+          v-model="filters.registration_type"
+          label="Registration Type"
+          name="registration_type"
+          placeholder="Please select registration type"
+          :options="registrationTypeOptions"
+          class="w-full"
+        />
+        <ComboBox
+          v-if="filters.registration_type == carRegistrationTypeEnum.COMPANY"
+          v-model="filters.vehicle_use"
+          label="Vehicle use"
+          name="vehicle_ue"
+          placeholder="Please select vehicle use"
+          :options="vehicleUseOptions"
+        />
+
         <x-input
           v-model="filters.code"
           type="search"
@@ -600,6 +665,16 @@ const insurerAMLStatusOption = computed(() => {
           :options="batchOptions"
         />
         <x-input
+          v-if="filters.registration_type == carRegistrationTypeEnum.COMPANY"
+          v-model="filters.company_name"
+          type="search"
+          name="company_name"
+          label="Company Name"
+          class="w-full"
+          placeholder="Search by Company Name"
+        />
+        <x-input
+          v-if="filters.registration_type == carRegistrationTypeEnum.PERSONAL"
           v-model="filters.first_name"
           type="search"
           name="first_name"
@@ -608,6 +683,7 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Search by First Name"
         />
         <x-input
+          v-if="filters.registration_type == carRegistrationTypeEnum.PERSONAL"
           v-model="filters.last_name"
           type="search"
           name="last_name"
@@ -1091,13 +1167,13 @@ const insurerAMLStatusOption = computed(() => {
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
       </template>
       <template #item-authorized_at="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ item.authorized_at }}
+        <p v-if="item.payment_status?.text === 'AUTHORISED'">
+          {{ item.payment?.authorized_at_formatted }}
         </p>
       </template>
       <template #item-expiry_date="item">
-        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
-          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        <p v-if="item.payment_status?.text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.payment?.authorized_at_formatted) }}
         </p>
       </template>
     </DataTable>
