@@ -53,7 +53,7 @@ trait ExcelExportable
         $currentDate = Carbon::now()->format('d-m-Y');
         $requestParams['fileName'] = $fileName;
 
-        if (!empty($requestParams['exportTitle'])) {
+        if (! empty($requestParams['exportTitle'])) {
             $requestParams['exportTitle'] = ucfirst($requestParams['exportTitle']);
         } else {
             $requestParams['exportTitle'] = ucfirst($requestParams['quoteType'] ?? 'Data');

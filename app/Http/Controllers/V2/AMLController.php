@@ -179,10 +179,11 @@ class AMLController extends Controller
 
         $request->merge(['exportTitle' => 'AML']);
 
-        logger()->debug("AMLController export: " . json_encode($request->all()));
-        if($request->exportType == 'email'){
-            return app(KycLogs::class)->emailCSV("AML Logs {$reportDateRange}",$request->all());
+        logger()->debug('AMLController export: '.json_encode($request->all()));
+        if ($request->exportType == 'email') {
+            return app(KycLogs::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
         }
+
         return app(KycLogs::class)->download("AML Logs {$reportDateRange}");
     }
 
