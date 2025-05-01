@@ -456,7 +456,7 @@
         color: #ffffff;
         padding: 10px 10px 15px 10px;
         text-align: center;
-        height: 150px;
+        height: 140px;
     }
 
     .footer-table {
@@ -464,7 +464,6 @@
         table-layout: fixed;
         border-collapse: collapse;
         color: #ffffff;
-        margin-top: 5px;
     }
 
     .footer-td {
