@@ -7,6 +7,7 @@ use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
+use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
@@ -18,7 +19,6 @@ use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
-use App\Http\Controllers\FtcEmailLogController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -572,9 +572,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'ftc'], function () {
-        Route::resource('email-logs', FtcEmailLogController::class)
-            ->only(['index'])
-            ->parameters(['email-logs' => 'emailTrack']);
+        Route::get('email-logs', [FtcEmailLogController::class, 'index']);
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);

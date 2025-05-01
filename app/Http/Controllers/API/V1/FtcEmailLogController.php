@@ -21,6 +21,18 @@ class FtcEmailLogController extends Controller
         $this->ftcEmailLogService = $ftcEmailLogService;
     }
 
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $quoteType = $request->quoteTrackableType;
+        $quoteObject = $this->getQuoteObject($quoteType, $request->quoteTrackableId);
+        $emailLogs = $quoteObject->ftcEmailLogs()->get();
+
+        return response()->json($emailLogs);
+    }
+
     public function store($quoteType, $quoteUuid, FtcEmailLogRequestStore $request)
     {
         try {
