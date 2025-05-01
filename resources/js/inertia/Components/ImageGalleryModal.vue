@@ -154,7 +154,7 @@ watch(() => props.modelValue, (isOpen) => {
     @keydown.esc="closeModal"
   >
     <div
-      class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg "
+      class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg"
       tabindex="0"
       ref="modalRef"
       @keydown="handleKeyDown"
@@ -167,10 +167,9 @@ watch(() => props.modelValue, (isOpen) => {
           <div class="flex items-center space-x-2">
             <span
               @click="closeModal"
-              class="text-gray-300 font-bold cursor-pointer pr-1"
+              class="text-gray-300 font-bold cursor-pointer"
               tabindex="0"
             >
-              <!-- SVG for Close Modal -->
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -190,13 +189,12 @@ watch(() => props.modelValue, (isOpen) => {
         </div>
         <div class="flex items-center justify-between">
           <button
-            class="flex items-center space-x-2 cursor-pointer text-gray-300 px-2 py-1 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex items-center space-x-2 cursor-pointer text-gray-300"
             @click="previousFile"
             :disabled="!hasPreviousFile"
+            :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }"
             tabindex="0"
-            aria-label="Previous File"
           >
-            <!-- SVG for Previous -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -217,12 +215,10 @@ watch(() => props.modelValue, (isOpen) => {
             class="flex items-center space-x-2"
             v-if="currentFile?.doc_mime_type != 'application/pdf'"
           >
-             <button
-              class="flex items-center space-x-2 cursor-pointer text-gray-300 p-1 rounded hover:bg-gray-700 disabled:opacity-50"
+            <button
+              class="flex items-center space-x-2 cursor-pointer text-gray-300"
               @click="zoomOut"
               :disabled="zoomLevel <= 0.25"
-              tabindex="0"
-              aria-label="Zoom Out"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -243,11 +239,9 @@ watch(() => props.modelValue, (isOpen) => {
               <span class="text-gray-300 font-bold">{{ Math.round(zoomLevel * 100) }}%</span>
             </div>
             <button
-              class="flex items-center space-x-2 cursor-pointer text-gray-300 p-1 rounded hover:bg-gray-700 disabled:opacity-50"
+              class="flex items-center space-x-2 cursor-pointer text-gray-300"
               @click="zoomIn"
               :disabled="zoomLevel >= 3"
-              tabindex="0"
-              aria-label="Zoom In"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -265,15 +259,14 @@ watch(() => props.modelValue, (isOpen) => {
               </svg>
             </button>
           </div>
-           <button
-            class="flex items-center space-x-2 cursor-pointer text-gray-300 px-2 py-1 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          <button
+            class="flex items-center space-x-2 cursor-pointer text-gray-300"
             @click="nextFile"
             :disabled="!hasNextFile"
+            :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }"
             tabindex="0"
-            aria-label="Next File"
           >
             <span>Next</span>
-            <!-- SVG for Next -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -297,13 +290,13 @@ watch(() => props.modelValue, (isOpen) => {
             currentFile?.doc_mime_type === 'image/jpeg' ||
             currentFile?.doc_mime_type === 'image/png'
           "
-          class="flex items-center justify-center h-80vh"
+          class="flex items-center justify-center"
         >
-          <div class="overflow-auto flex items-center justify-center max-w-full max-h-full">
+          <div class="overflow-auto items-center justify-center">
             <img
               :src="storageUrl + currentFile?.doc_url"
-              :style="{ transform: `scale(${zoomLevel})`, transformOrigin: 'center center' }"
-              class="max-w-none max-h-none object-contain transition-transform duration-150"
+              :style="{ transform: `scale(${zoomLevel})` }"
+              class="max-w-full max-h-full"
               alt="Document Image"
             />
           </div>
@@ -318,8 +311,8 @@ watch(() => props.modelValue, (isOpen) => {
             class="w-full h-full"
           />
         </div>
-         <div v-else class="text-center p-10 text-gray-500">
-            Preview not available for this file type.
+        <div v-else class="text-center p-10 text-gray-500">
+          Preview not available for this file type.
         </div>
       </div>
     </div>
@@ -327,56 +320,38 @@ watch(() => props.modelValue, (isOpen) => {
 </template>
 
 <style scoped>
-/* Ensure overlay and container take up space */
 .modal-overlay {
-  z-index: 1040; /* Ensure it's above other content */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
 }
+
 .modal-container {
-  z-index: 1050; /* Ensure modal is above overlay */
-  background-color: #1f2937; /* Dark background for contrast */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background-color: hsl(0, 4%, 9%);
+  border-radius: 4px;
+  padding: 5px;
+  z-index: 1050;
 }
+
 .modal-header {
-  padding: 0.75rem 1rem; /* Adjust padding as needed */
+  background-color: hsl(0, 4%, 9%);
 }
+
 .modal-body {
-  background-color: #374151; /* Slightly lighter background for body */
-  /* padding: 1rem; */
+  padding: 10px 0;
 }
+
 .h-80vh {
-  height: 80vh; /* Ensure body has height */
+  height: 85vh;
 }
-
-/* Styling for buttons */
-button {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  padding: 0;
-  font: inherit;
-  outline: inherit;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-button:focus-visible {
-  outline: 2px solid orange; /* Or your preferred focus style */
-  outline-offset: 2px;
-}
-
-/* Ensure images don't overflow their container */
-img {
-  display: block; /* Prevent extra space below image */
-}
-
-/* Center the image within the zoom container */
-.overflow-auto {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 </style>
