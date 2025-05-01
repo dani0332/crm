@@ -236,62 +236,9 @@ class CarQuoteController extends Controller
 
     public function generatePdfwithSnappy(Request $request)
     {
-
         $data = [
             'quote_uuid' => $request->quote_uuid,
             'plan_ids' => $request->plan_ids,
-            'addons' => null,
-        ];
-
-        $planIds = $data['plan_ids'];
-        $addons = $data['addons'] ?? null;
-
-        $quotePlans = app(CarQuoteService::class)->getQuotePlans($data['quote_uuid']);
-
-        if (! isset($quotePlans->quotes->plans)) {
-            return ['error' => 'Quote plans not available'];
-        }
-
-        $quoteType = 'car';
-        $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
-
-        $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
-            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
-        }, 'customer']);
-
-        // Define consistent PDF options for both documents
-        $pdfOptions = [
-            'disable-external-links' => false,
-            'enable-local-file-access' => true,
-            'enable-internal-links' => true,
-            'enable-javascript' => true,
-            'javascript-delay' => 1000,
-            'no-stop-slow-scripts' => true,
-            'page-size' => 'A4',
-            'margin-top' => 20,
-            'margin-right' => 0,
-            'margin-bottom' => 33,
-            'margin-left' => 0,
-            'encoding' => 'UTF-8',
-        ];
-
-        // Generate main PDF in memory with header and footer
-        $mainPdfContent = SnappyPdf::loadView('pdf.car_comparision.main', compact('quotePlans', 'planIds', 'quote', 'addons'))
-            ->setOption('header-html', view('pdf.car_comparision.header', []))
-            ->setOption('footer-html', view('pdf.car_comparision.footer', compact('quote')))
-            ->setOptions($pdfOptions)
-            ->download();
-
-        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
-
-        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($mainPdfContent), 'name' => $pdfName]);
-    }
-
-    public function generatePdfwithSnappy2(Request $request)
-    {
-        $data = [
-            'quote_uuid' => $request->quote_uuid ?? '5E4LYBB8',
-            'plan_ids' => $request->plan_ids ?? [109, 14, 8],
             'addons' => null,
         ];
 
@@ -322,9 +269,23 @@ class CarQuoteController extends Controller
         $options->set('defaultPaperSize', 'A4');
         $options->set('defaultPaperOrientation', 'portrait');
         $options->set('chroot', public_path()); // Set root directory for image access
-        $options->set('debugKeepTemp', true); // Keep temporary files for debugging
-        $options->set('debugCss', true); // Debug CSS issues
-        $options->set('debugLayout', true); // Debug layout issues
+        
+        // Disable debug options to prevent debug output
+        $options->set('debugKeepTemp', false);
+        $options->set('debugCss', false);
+        $options->set('debugLayout', false);
+        
+        // Enable CSS floating to ensure proper layout
+        $options->set('isJavascriptEnabled', true);
+        $options->set('fontCache', storage_path('fonts'));
+        $options->set('tempDir', storage_path('app/dompdf'));
+        
+        // Additional rendering settings
+        $options->set('enable_css_float', true);
+        $options->set('enable_html5_parser', true);
+        $options->set('enable_font_subsetting', true);
+        $options->set('dpi', 150);
+        $options->set('enable_remote', true);
 
         // Create DomPDF instance with options
         $dompdf = new \Dompdf\Dompdf($options);
@@ -363,14 +324,9 @@ class CarQuoteController extends Controller
 
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
-        // Stream the PDF directly to the browser
-        return $dompdf->stream($pdfName, [
-            'Attachment' => false // Set to false to display in browser instead of downloading
-        ]);
-
         // For JSON response (alternative approach)
-        // $pdfContent = $dompdf->output();
-        // return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdfContent), 'name' => $pdfName]);
+        $pdfContent = $dompdf->output();
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdfContent), 'name' => $pdfName]);
     }
 
     

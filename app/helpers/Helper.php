@@ -698,7 +698,7 @@ if (! function_exists('getIMLogo')) {
         $imLogo = 'images/logo-new.png';
 
         if ($latest) {
-            $imLogo = 'images/im_logo_23k-hi.png';
+            $imLogo = 'images/im_logo_24k-hi.png';
         }
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);

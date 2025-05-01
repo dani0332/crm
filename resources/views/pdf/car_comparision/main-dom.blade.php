@@ -680,10 +680,10 @@
 @endphp
 
     {{-- First Page --}}
-    <img src="{{ public_path('images/car-banner-pdf-1.png') }}" class="full-page-image" style="height: 100%;"/>
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_first_page.jpg') }}" class="full-page-image" style="height: 100%;"/>
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
-    <img src="{{ public_path('images/car-pdf-banner-2.png') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" class="full-page-image" />
     <div style="page-break-after: always;"></div>
 
     {{-- PDF Page Header --}}
@@ -1050,11 +1050,11 @@
 
     {{-- Third Page --}}
     <div style="page-break-after: always;"></div>
-    <img src="{{ isset($imageData['home_pdf_second_last_page_with_header.jpg']) ? $imageData['home_pdf_second_last_page_with_header.jpg'] : public_path('images/home_pdf_second_last_page_with_header.jpg') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}" class="full-page-image" />
     
     {{-- Fourth Page --}}
     <div style="page-break-after: always;"></div>
-    <img src="{{ isset($imageData['car-comparision-4-image-1.png']) ? $imageData['car-comparision-4-image-1.png'] : public_path('images/car-comparision-4-image-1.png') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}"  class="full-page-image" />
 </body>
 
 </html>
