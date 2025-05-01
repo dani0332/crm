@@ -29,7 +29,8 @@ const isDirty = ref(false);
 const isMounted = ref(false);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const toast = useToast();
-
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 const {
   currentPageFirstIndex,
   currentPageLastIndex,
@@ -246,6 +247,8 @@ const getFiltersObject = () => {
     insurance_for: '',
     travel_coverage: '',
     segment_filter: 'all',
+    registration_type: '',
+    vehicle_use: '',
   };
 };
 
@@ -826,6 +829,31 @@ const getAdvisorLabel = () => {
   return label;
 };
 
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const commericalOptions = [
+  { value: 'All', label: 'All' },
+  { value: true, label: 'Yes' },
+  { value: false, label: 'No' },
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
 const getRouteByLob = computed(() => {
   const routeMap = {
     [quoteTypeCodeEnum.Car]: 'car.show',
@@ -959,7 +987,7 @@ function sortPremium(order) {
           "
           :max-limit="3"
         />
-        
+
         <ComboBox
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
@@ -1011,15 +1039,26 @@ function sortPremium(order) {
         />
         <x-select
           v-if="canShow('isCommercial')"
-          v-model="filters.isCommercial"
-          label="Commercial"
+          v-model="filters.registration_type"
+          label="Registration Type"
           placeholder="Select any option"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
+          :options="registrationTypeOptions"
         />
+        <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
+        <x-select
+          v-if="canShow('isCommercial')"
+          v-model="filters.isCommercial"
+          label="Commercial Rule"
+          placeholder="Select any option"
+          :options="commericalOptions"
+        />
+
         <x-select
           v-if="canShow('insurance_type')"
           v-model="filters.insurance_type"
@@ -1072,6 +1111,24 @@ function sortPremium(order) {
           "
           :single="true"
         />
+        <x-tooltip placement="top" v-if="canShow('tiers')">
+          <template #tooltip> Select Tiers </template>
+          <ComboBox
+            :disabled="filters.lob === quoteTypeCodeEnum.Car"
+            :class="{
+              'opacity-50': filters.lob === quoteTypeCodeEnum.Car,
+            }"
+            v-model="filters.tiers"
+            label="Tiers"
+            placeholder="Search by Tiers"
+            :options="
+              Object.keys(filterOptions.tiers).map(key => ({
+                value: key,
+                label: filterOptions.tiers[key],
+              }))
+            "
+          />
+        </x-tooltip>
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">
@@ -1107,9 +1164,7 @@ function sortPremium(order) {
       <template #header-total_leads>
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Total Leads</span>
-          <template #tooltip>
-            All leads from InsuranceMarket.ae.
-          </template>
+          <template #tooltip> All leads from InsuranceMarket.ae. </template>
         </x-tooltip>
         <span v-else>Total Leads</span>
       </template>
@@ -1146,7 +1201,9 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Not Interested</span>
           <template #tooltip>
-            Lead status marked as lost due to no response, already purchased insurance, comparing options, budget issues, invalid visa, or ineligibility due to medical conditions or age etc.
+            Lead status marked as lost due to no response, already purchased
+            insurance, comparing options, budget issues, invalid visa, or
+            ineligibility due to medical conditions or age etc.
           </template>
         </x-tooltip>
         <span v-else>Not Interested</span>
@@ -1156,7 +1213,8 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>In Progress</span>
           <template #tooltip>
-            Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or 'Quoted,' from InsuranceMarket.ae.
+            Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or
+            'Quoted,' from InsuranceMarket.ae.
           </template>
         </x-tooltip>
         <span v-else>In Progress</span>
@@ -1165,9 +1223,7 @@ function sortPremium(order) {
       <template #header-manual_created>
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Manually Created</span>
-          <template #tooltip>
-            All leads from IMCRM.
-          </template>
+          <template #tooltip> All leads from IMCRM. </template>
         </x-tooltip>
         <span v-else>Manually Created</span>
       </template>
@@ -1186,7 +1242,9 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Sale Leads</span>
           <template #tooltip>
-            Quotes from InsuranceMarket.ae where payment is 'Captured' or status is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to customer,' and 'Policy Booked', Booking failed.
+            Quotes from InsuranceMarket.ae where payment is 'Captured' or status
+            is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to
+            customer,' and 'Policy Booked', Booking failed.
           </template>
         </x-tooltip>
         <span v-else>Sale Leads</span>
@@ -1196,7 +1254,8 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Created Sale Leads</span>
           <template #tooltip>
-            Quotes from IMCRM source where payment is 'Captured' or status is 'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
+            Quotes from IMCRM source where payment is 'Captured' or status is
+            'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
           </template>
         </x-tooltip>
         <span v-else>Created Sale Leads</span>
@@ -1206,7 +1265,8 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>IM Renewals</span>
           <template #tooltip>
-            Quotes from InsuranceMarket.ae source with status 'IMRenewal' and source 'renewal upload.'
+            Quotes from InsuranceMarket.ae source with status 'IMRenewal' and
+            source 'renewal upload.'
           </template>
         </x-tooltip>
         <span v-else>IM Renewals</span>
@@ -1447,7 +1507,6 @@ function sortPremium(order) {
               </Link>
             </template>
           </DataTable>
-          
         </div>
         <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
           <x-spinner size="lg" color="#1d83bc" />
