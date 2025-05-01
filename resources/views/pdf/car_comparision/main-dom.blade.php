@@ -468,7 +468,7 @@
     }
 
     .footer-td {
-        padding: 5px;
+        padding: 10px;
         vertical-align: top;
         border: none;
     }
@@ -476,12 +476,8 @@
     .footer-box {
         border-radius: 24px;
         border: 2px solid #CF9E3C;
-        padding: 8px 12px;
+        padding: 6px 10px;
         text-align: left;
-        height: auto;
-        min-height: 120px;
-        display: block;
-        box-sizing: border-box;
     }
 
     .footer-link {
@@ -509,14 +505,10 @@
 
     .footer-content-1{
         font-size: 9px !important;
-        line-height: 1.2 !important;
-        margin-bottom: 2px !important;
     }
 
     .footer-content-2{
         font-size: 13px !important;
-        line-height: 1.4 !important;
-        margin-bottom: 2px !important;
     }
 
     .advisor-section {
@@ -693,10 +685,10 @@
 @endphp
 
     {{-- First Page --}}
-    <img src="{{ isset($imageData['car-banner-pdf-1.png']) ? $imageData['car-banner-pdf-1.png'] : public_path('images/car-banner-pdf-1.png') }}" class="full-page-image" style="height: 100%;"/>
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header_and_footer.jpg') }}" class="full-page-image" style="height: 100%;"/>
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
-    <img src="{{ isset($imageData['car-pdf-banner-2.png']) ? $imageData['car-pdf-banner-2.png'] : public_path('images/car-pdf-banner-2.png') }}" class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
     <div style="page-break-after: always;"></div>
 
     {{-- PDF Page Header --}}
@@ -982,7 +974,7 @@
         <table class="footer-table" align="center">
             <tr>
                 <td class="footer-td" style="width: 42%">
-                    <div class="footer-box" style="line-height: 1.2;">
+                    <div class="footer-box" style="line-height: 0.8 !important;">
                         <p class="footer-content-1">UAE Central Bank Registration No. 85</p>
                         <p class="footer-content-1">Registered Member of Gulf Insurance Federation</p>
                         <p class="footer-content-1">Registered Member of Emirates Insurance Federation, number B6</p>
@@ -994,19 +986,17 @@
                 </td>
     
                 <td class="footer-td" style="width: 28%">
-                    <div class="footer-box" style="line-height: 1.3; position: relative;">
-                        <p class="footer-content-2">27th floor, Control Tower,</p>
-                        <p class="footer-content-2">Detroit Road, Motor City,</p>
-                        <p class="footer-content-2">PO Box - 26423,</p>
-                        <p class="footer-content-2">Dubai, United Arab Emirates.</p>
-                        <p class="footer-content-2" style="margin-top: 5px;">Happiness Center number:</p>
+                    <div class="footer-box" style="margin-top: 8px; line-height: 0.8; position: relative;">
+                        <p class="footer-content-2">27th floor, Control Tower, Detroit Road,<br>Motor City, PO Box - 26423,<br>Dubai, United Arab Emirates.
+                        </p>
+                        <p class="footer-content-2">Happiness Center number:</p>
                         <p class="footer-content-2">800 ALFRED (800 256 733)</p>
-                        <div class="open-new-icon" style="position: absolute; right:10px; top:38px;">
+                        <div class="open-new-icon" style="position: absolute; right:5px; top:42px;">
                             <a
                             class="text-white"
                             href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">
-                                <img src="{{ isset($imageData['quote_plans_pages/ecom_home/open_in_new_icon.png']) ? $imageData['quote_plans_pages/ecom_home/open_in_new_icon.png'] : public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
-                                style="width: 22px; height: 22px; vertical-align: middle; display: inline-block;">
+                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
+                                style="width: 22px; height: 22px; vertical-align: baseline; display: inline-block;">
                             </a>
                         </div>
                     </div>
