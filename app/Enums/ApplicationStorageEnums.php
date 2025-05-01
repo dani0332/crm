@@ -123,7 +123,6 @@ final class ApplicationStorageEnums extends Enum
     public const SUKOON_TEMPLATE_TAX_INVOICE_BUYER = 'SUKOON_TEMPLATE_TAX_INVOICE_BUYER';
     public const LEAD_SOURCE_ECOMMERCE = 'LEAD_SOURCE_ECOMMERCE';
     public const FAKE_LEAD_DOMAINS = 'FAKE_LEAD_DOMAINS';
-    public const IM_ECOM_URL = 'IM_ECOM_URL';
 
     // Travel SIC 2.0
     public const SIC_TRAVEL_WORKFLOW_ENABLE = 'SIC_TRAVEL_WORKFLOW_ENABLE';

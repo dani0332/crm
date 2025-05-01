@@ -599,7 +599,7 @@ class SplitPaymentService
         $quoteModel = $this->getQuoteObject($modelType, $quoteId);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 
-        $paymentLink = ApplicationStorage::where([['key_name', ApplicationStorageEnums::IM_ECOM_URL], ['is_active', true]])->first()->value;
+        $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
         $paymentLinkURL = $paymentLink.'/redirect/'.$quoteTypeId.'/'.$quoteModel->uuid.'/'.$quoteModel->plan?->id ?? '';
 
         return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
