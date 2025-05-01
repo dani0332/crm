@@ -19,6 +19,7 @@ const props = defineProps({
 });
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const { isRequired } = useRules();
 
 const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
