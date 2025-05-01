@@ -285,6 +285,93 @@ class CarQuoteController extends Controller
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($mainPdfContent), 'name' => $pdfName]);
-
     }
+
+    public function generatePdfwithSnappy2(Request $request)
+    {
+        $data = [
+            'quote_uuid' => $request->quote_uuid ?? '5E4LYBB8',
+            'plan_ids' => $request->plan_ids ?? [109, 14, 8],
+            'addons' => null,
+        ];
+
+        $planIds = $data['plan_ids'];
+        $addons = $data['addons'] ?? null;
+
+        $quotePlans = app(CarQuoteService::class)->getQuotePlans($data['quote_uuid']);
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $quoteType = 'car';
+        $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
+
+        $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }, 'customer']);
+
+        // Configure DomPDF options
+        $options = new \Dompdf\Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isPhpEnabled', true);
+        $options->set('defaultFont', 'Prompt');
+        $options->set('defaultMediaType', 'print');
+        $options->set('isFontSubsettingEnabled', true);
+        $options->set('defaultPaperSize', 'A4');
+        $options->set('defaultPaperOrientation', 'portrait');
+        $options->set('chroot', public_path()); // Set root directory for image access
+        $options->set('debugKeepTemp', true); // Keep temporary files for debugging
+        $options->set('debugCss', true); // Debug CSS issues
+        $options->set('debugLayout', true); // Debug layout issues
+
+        // Create DomPDF instance with options
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        // Convert public_path image references to base64 for embedding
+        $imagePaths = [
+            'car-banner-pdf-1.png',
+            'car-pdf-banner-2.png',
+            'home_pdf_second_last_page_with_header.jpg',
+            'car-comparision-4-image-1.png',
+            'quote_plans_pages/ecom_home/open_in_new_icon.png',
+            'quote_plans_pages/ecom_home/mail_icon.png',
+            'quote_plans_pages/ecom_home/smartphone_icon.png',
+            'whatsapp-small.png',
+            'quote_plans_pages/ecom_home/phone_callback_icon.png',
+            'quote_plans_pages/ecom_home/call_icon.png'
+        ];
+        
+        $imageData = [];
+        foreach ($imagePaths as $path) {
+            $fullPath = public_path('images/' . $path);
+            if (file_exists($fullPath)) {
+                $type = pathinfo($fullPath, PATHINFO_EXTENSION);
+                $imageData[$path] = 'data:image/' . $type . ';base64,' . base64_encode(file_get_contents($fullPath));
+            }
+        }
+
+        // Generate PDF view content using the DOM template (which includes header and footer)
+        $html = view('pdf.car_comparision.main-dom', compact('quotePlans', 'planIds', 'quote', 'addons', 'imageData'))->render();
+
+        // Load the HTML into DomPDF
+        $dompdf->loadHtml($html);
+
+        // Render PDF
+        $dompdf->render();
+
+        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+        // Stream the PDF directly to the browser
+        return $dompdf->stream($pdfName, [
+            'Attachment' => false // Set to false to display in browser instead of downloading
+        ]);
+
+        // For JSON response (alternative approach)
+        // $pdfContent = $dompdf->output();
+        // return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdfContent), 'name' => $pdfName]);
+    }
+
+    
 }

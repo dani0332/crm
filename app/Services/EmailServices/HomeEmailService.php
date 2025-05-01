@@ -212,5 +212,6 @@ class HomeEmailService extends BaseService
             LoggerService::info("Error: {$th->getMessage()}");
             throw $th;
         }
+    
     }
 }

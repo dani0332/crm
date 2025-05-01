@@ -198,6 +198,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
         Route::post('/personal-quotes/car/pdf', [CarQuoteController::class, 'generatePdfwithSnappy']);
+        Route::get('/personal-quotes/car/pdf-test', [CarQuoteController::class, 'generatePdfwithSnappy2']);
+        
 
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
         Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
