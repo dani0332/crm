@@ -4,7 +4,6 @@ namespace App\Services\Reports;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
-use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
@@ -264,9 +263,6 @@ class AdvisorConversionReportService extends BaseService
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
-            ->when($lob == quoteTypeCode::Health, function ($query) {
-                return $query->where('personal_quotes.source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
-            })
             ->groupBy(
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_batch_id'
