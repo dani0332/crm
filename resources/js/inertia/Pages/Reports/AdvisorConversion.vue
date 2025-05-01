@@ -1164,11 +1164,10 @@ function sortPremium(order) {
       </template>
 
       <template #header-manual_created>
-        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+        <x-tooltip>
           <span>Manually Created</span>
           <template #tooltip> All leads from IMCRM. </template>
         </x-tooltip>
-        <span v-else>Manually Created</span>
       </template>
 
       <template #header-bad_leads>
