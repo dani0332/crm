@@ -189,9 +189,9 @@ class SplitPaymentService
                 LoggerService::info(self::class.' fn:'.__FUNCTION__.' trigger post prepayment schedule for PaymentSplitID : '.$splitPayment->id);
                 $postPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->modelType, $splitPayment, $sendUpdateLog]);
                 if (! $postPrepayment['status']) {
-                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' failed to scheduled post prepayment for PaymentSplitID : '.$splitPayment->id, $postPrepayment);
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' failed to scheduled post prepayment for PaymentSplitID : '.$splitPayment->id, extra: $postPrepayment);
                 } else {
-                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' post prepayment scheduled for PaymentSplitID : '.$splitPayment->id, $postPrepayment);
+                    LoggerService::info(self::class.' fn:'.__FUNCTION__.' post prepayment scheduled for PaymentSplitID : '.$splitPayment->id, extra: $postPrepayment);
                 }
             }
 

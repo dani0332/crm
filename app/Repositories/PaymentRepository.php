@@ -478,7 +478,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     public function handlePaymentApprove($request)
     {
-        info("Payment approval process initiated: {$request->payment_code}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
+        LoggerService::info("Payment approval process initiated: {$request->payment_code}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
                 $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
@@ -490,7 +490,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
                 } else {
-                    info("Payment split not found or already paid: {$request->payment_code}, Split No: {$key}");
+                    LoggerService::info("Payment split not found or already paid: {$request->payment_code}, Split No: {$key}");
                 }
             }
         }
