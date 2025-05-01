@@ -69,6 +69,7 @@ use App\Models\PaymentSplits;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\SendUpdateLog;
+use App\Repositories\CarQuoteRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\AMLService;
@@ -208,6 +209,13 @@ class CentralController extends Controller
                 'quote_type_id' => $customerProfileRequest->quote_type_id,
                 'quote_request_id' => $customerProfileRequest->quote_request_id,
             ], ['entity_id' => $entity->id, 'entity_type_code' => $customerProfileRequest->entity_type_code]);
+
+            if ($customerProfileRequest->quote_type_id === QuoteTypeId::Car) {
+                CarQuoteRepository::where('id', $customerProfileRequest->quote_request_id)->update([
+                    'company_name' => $customerProfileRequest->company_name,
+                    'company_address' => $customerProfileRequest->company_address,
+                ]);
+            }
         }
 
         return redirect()->back();
