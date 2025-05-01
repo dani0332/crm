@@ -2709,7 +2709,7 @@ const deleteForm = useForm({
   payment_process_job_id: null,
 });
 
-const deleteDocument = (docName, count, docId) => {
+const deleteDocument = (docName, count, doc_id, doc_uuid) => {
   if (paymentMethodsForm.status == 'edit') {
     if (fileUploadModels.value[count]) {
       fileUploadModels.value[count] = fileUploadModels.value[count].filter(
@@ -2726,7 +2726,7 @@ const deleteDocument = (docName, count, docId) => {
         item => item.doc_name !== docName,
       );
     }
-    trashedFilesModal.value.push(docId);
+    trashedFilesModal.value.push(doc_id);
   } else if (
     paymentMethodsForm.status == 'view' &&
     paymentMethodsForm.collection_type === 'insurer' &&
@@ -2747,8 +2747,8 @@ const deleteDocument = (docName, count, docId) => {
     router.post(
       `/documents/delete`,
       {
-        docName: docName,
-        quoteId: props.quoteRequest.id,
+        doc_id,
+        doc_uuid,
       },
       {
         preserveScroll: true,
@@ -5152,7 +5152,14 @@ onBeforeMount(() => {
                     </span>
                     <span
                       class="delete-pointer"
-                      @click="deleteDocument(fileData.doc_name, 0, fileData.id)"
+                      @click="
+                        deleteDocument(
+                          fileData.doc_name,
+                          0,
+                          fileData.id,
+                          fileData.doc_uuid,
+                        )
+                      "
                       v-if="!isFieldReadonly"
                     >
                       &#10006;
@@ -6086,6 +6093,7 @@ onBeforeMount(() => {
                                 fileData.doc_name,
                                 count,
                                 fileData.id,
+                                fileData.doc_uuid,
                               )
                             "
                             v-if="!readOnlyPayments[count]"
@@ -6355,6 +6363,7 @@ onBeforeMount(() => {
                             fileData.doc_name,
                             splitPaymentNo,
                             fileData.id,
+                            fileData.doc_uuid,
                           )
                         "
                         v-if="!readOnlyPayments[splitPaymentNo]"
