@@ -830,13 +830,13 @@ class AMLController extends Controller
 
     private function saveManualAuditLog($quoteDetails, User $processByUser)
     {
-        if(! $quoteDetails instanceof TravelQuote) {
+        if (! $quoteDetails instanceof TravelQuote) {
             return false;
         }
 
         $dirty = $quoteDetails->getDirty();
 
-        if(empty($dirty)) {
+        if (empty($dirty)) {
             return false;
         }
 
@@ -851,7 +851,7 @@ class AMLController extends Controller
             'user_id' => $processByUser->id ?? null,
             'event' => 'updated',
             'old_values' => $changes['old_values'],
-            'new_values' => $changes['new_values']
+            'new_values' => $changes['new_values'],
         ]);
 
         return true;
