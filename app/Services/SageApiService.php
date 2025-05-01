@@ -308,7 +308,7 @@ class SageApiService
             unset($extraDetails['paymentFrequency']);
         }
 
-        if ($preparedData['sendUpdateLog']?->category?->code == SendUpdateLogStatusEnum::CPD || (isset($preparedData['sendUpdateLog']?->option?->code) && 
+        if ($preparedData['sendUpdateLog']?->category?->code == SendUpdateLogStatusEnum::CPD || (isset($preparedData['sendUpdateLog']?->option?->code) &&
             ! in_array($preparedData['sendUpdateLog']?->option?->code, [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATCRNB]))
         ) {
             $createPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment']]);
