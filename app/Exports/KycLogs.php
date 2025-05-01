@@ -4,7 +4,6 @@ namespace App\Exports;
 
 use App\Services\AMLService;
 use App\Traits\ExcelExportable;
-use Illuminate\Support\Collection;
 
 class KycLogs
 {

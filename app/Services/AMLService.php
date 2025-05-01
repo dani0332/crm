@@ -825,7 +825,7 @@ class AMLService
 
     public function getAMLData($requestParams = [])
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
             Auth::login($user);
@@ -853,20 +853,21 @@ class AMLService
             foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
                 $quoteType = QuoteTypes::getName($quoteTypeId);
                 $nameSpace = '\\App\\Models\\';
-                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType->value) . 'Quote';
+                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
 
                 $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
                 $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
                 foreach ($quoteRequestData as $quoteRequest) {
                     $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
                     foreach ($amlData as $index => $value) {
-                        $chunk[$index]['uuid'] = $quoteType->shortCode() . $quoteRequest->uuid;
+                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
                         $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
                     }
                 }
             }
             $data = $data->merge($chunk);
         });
+
         return $data;
     }
 }
