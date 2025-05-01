@@ -46,6 +46,7 @@ class HealthQuoteObserver
         ) {
             // Trigger the event for transaction approval
             HealthTransactionApproved::dispatch($healthQuote);
+            $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
         }
 
         if (isset($dirty['advisor_id'])) {
