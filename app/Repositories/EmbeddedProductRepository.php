@@ -40,7 +40,7 @@ use App\Strategies\EmbeddedProducts\MDX;
 use App\Strategies\EmbeddedProducts\RDX;
 use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\GenericQueriesAllLobs;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use PDF;
 use Carbon\Carbon;
 use Exception;
 use finfo;

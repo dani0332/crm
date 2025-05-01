@@ -8,7 +8,7 @@ use App\Models\BuyLeadConfiguration;
 use App\Models\BuyLeadRequest;
 use App\Models\BuyLeadRequestLog;
 use App\Models\LeadAllocation;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use PDF;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;

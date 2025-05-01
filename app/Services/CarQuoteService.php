@@ -33,7 +33,7 @@ use App\Models\Tier;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;

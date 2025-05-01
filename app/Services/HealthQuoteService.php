@@ -45,7 +45,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use PDF;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;

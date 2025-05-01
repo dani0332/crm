@@ -12,7 +12,7 @@ use App\Models\CarPlan;
 use App\Models\PersonalQuote;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use PDF;
 use Illuminate\Support\Facades\DB;
 
 class BikeQuoteService extends BaseService

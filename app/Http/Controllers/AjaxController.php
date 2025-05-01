@@ -30,7 +30,7 @@ use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\QuoteDocumentService;
 use App\Traits\CentralTrait;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 

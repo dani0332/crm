@@ -29,7 +29,7 @@ use App\Services\Reports\RetentionReportService;
 use App\Strategies\ManagementReport;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
+use PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
