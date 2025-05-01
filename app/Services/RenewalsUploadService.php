@@ -994,7 +994,6 @@ class RenewalsUploadService
         $quoteTypeCode = array_key_exists('quote_type', $data) ? $data['quote_type'] : $renewalQuoteProcess->quote_type;
         $isQuoteTypeHealth = $quoteTypeCode == QuoteTypeShortCode::HEA;
 
-
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged, $quoteTypeCode, $isQuoteTypeHealth) {
             throw_if(! in_array($quoteTypeCode, [QuoteTypeShortCode::CAR, QuoteTypeShortCode::HEA]), 'Only Insurance Type Car and Health are allowed to update lead');
 
@@ -1222,7 +1221,7 @@ class RenewalsUploadService
      *
      * @return void
      */
-    private function updateBasePricePlan($quote, $data) 
+    private function updateBasePricePlan($quote, $data)
     {
         $memberDobs = array_map('trim', explode('|', $data['member_dob']));
         $memberNames = array_map('trim', explode('|', $data['member_names']));
@@ -1234,25 +1233,25 @@ class RenewalsUploadService
             ->where('quote_type', HealthQuote::class)
             ->whereNull('deleted_at')
             ->get()
-            ->keyBy(fn($member) => strtolower(trim($member->first_name . ' ' . $member->last_name)));
-            
+            ->keyBy(fn ($member) => strtolower(trim($member->first_name.' '.$member->last_name)));
+
         $memberPremiumBreakdown = [];
         foreach ($memberDobs as $index => $dob) {
             $memberNameArray = explode(' ', $memberNames[$index]);
             $firstName = array_shift($memberNameArray);
             $lastName = implode(' ', $memberNameArray);
-            $fullNameKey = strtolower(trim($firstName . ' ' . $lastName));
-            
-            if(isset($existingCustomersMember[$fullNameKey]) && isset($memberPremiums[$index])) {
+            $fullNameKey = strtolower(trim($firstName.' '.$lastName));
+
+            if (isset($existingCustomersMember[$fullNameKey]) && isset($memberPremiums[$index])) {
                 $premium = $memberPremiums[$index];
                 $memberPremiumBreakdown[] = [
                     'memberId' => $existingCustomersMember[$fullNameKey]->id,
                     'ratesPerCopay' => [
                         [
-                            "healthPlanCoPaymentId" => $healthCoPlan->id,
-                            "basePrice" => (float)  $premium
-                        ]
-                    ]
+                            'healthPlanCoPaymentId' => $healthCoPlan->id,
+                            'basePrice' => (float) $premium,
+                        ],
+                    ],
                 ];
             }
         }
@@ -1260,7 +1259,7 @@ class RenewalsUploadService
             'planId' => $healthPlan->id,
             'selectedCopayId' => $healthCoPlan->id,
             'isManualUpdate' => true,
-            'memberPremiumBreakdown' => $memberPremiumBreakdown
+            'memberPremiumBreakdown' => $memberPremiumBreakdown,
         ];
         $dataArray = [
             'quoteUID' => $quote->uuid,
@@ -1269,7 +1268,7 @@ class RenewalsUploadService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
-        info('Renewal: Health Plan Modify V2 Request Data: ' . json_encode($dataArray));
+        info('Renewal: Health Plan Modify V2 Request Data: '.json_encode($dataArray));
         $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
         return $response;
@@ -1282,7 +1281,7 @@ class RenewalsUploadService
      * @param [type] $data
      * @return void
      */
-    private function updateOrCreateHealthMembers($quote, $data) 
+    private function updateOrCreateHealthMembers($quote, $data)
     {
         $memberCategorySalaryMapping = [
             'Investor or Partner' => 2,
@@ -1314,17 +1313,17 @@ class RenewalsUploadService
             ->where('quote_type', HealthQuote::class)
             ->whereNull('deleted_at')
             ->get()
-            ->keyBy(fn($member) => strtolower(trim($member->first_name . ' ' . $member->last_name)));
-            
+            ->keyBy(fn ($member) => strtolower(trim($member->first_name.' '.$member->last_name)));
+
         $memberDetails = [];
         $updateMemberDetails = [];
-        $isCase1 = count($memberDobs) == 1 ;
+        $isCase1 = count($memberDobs) == 1;
         foreach ($memberDobs as $index => $dob) {
             $dobFormatted = Carbon::parse($this->formatDate($dob))->toDateString();
             $memberNameArray = explode(' ', $memberNames[$index]);
             $firstName = array_shift($memberNameArray);
             $lastName = implode(' ', $memberNameArray);
-            $fullNameKey = strtolower(trim($firstName . ' ' . $lastName));
+            $fullNameKey = strtolower(trim($firstName.' '.$lastName));
 
             $memberDetails[] = [
                 'dob' => $dobFormatted,
@@ -1345,7 +1344,7 @@ class RenewalsUploadService
                     'last_name',
                     'dob',
                     'gender',
-                    'nationality_id'
+                    'nationality_id',
                 ]);
                 Customer::where('id', $quote->customer_id)->update($customerPayload);
 
@@ -1355,15 +1354,16 @@ class RenewalsUploadService
                         // Update existing member if found
                         $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
                         $updateMemberDetails[] = Arr::only($memberDetails[$index], [
-                            'id','first_name','last_name',
-                            'dob','emirate_of_your_visa_id','gender',
-                            'nationality_id','member_category_id','salary_band_id'
+                            'id', 'first_name', 'last_name',
+                            'dob', 'emirate_of_your_visa_id', 'gender',
+                            'nationality_id', 'member_category_id', 'salary_band_id',
                         ]);
                         unset($memberDetails[$index]);
-                    } 
+                    }
                 } else {
                     // Case 2: Policyholder excluded from member details
                     unset($memberDetails[$index]);
+
                     continue;
                 }
             }
@@ -1379,19 +1379,19 @@ class RenewalsUploadService
         $memberDetails = arrayKeysToCamelCase($memberDetails);
         $updateMemberDetails = arrayKeysToCamelCase($updateMemberDetails);
 
-        info('Health quote update member: ' . json_encode($memberDetails));
+        info('Health quote update member: '.json_encode($memberDetails));
         $addResponse = count($memberDetails) > 0 && Ken::request('/add-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$memberDetails],
         ]);
 
-        info('Health quote update member: '. json_encode($updateMemberDetails));
+        info('Health quote update member: '.json_encode($updateMemberDetails));
         $updateResponse = count($updateMemberDetails) > 0 && Ken::request('/update-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$updateMemberDetails],
         ]);
 
-        if($addResponse || $updateResponse) {
+        if ($addResponse || $updateResponse) {
             info(' Health Members added/updated successfully for UUID: '.$quote->uuid);
             $this->updateBasePricePlan($quote, $data);
         }
@@ -1874,7 +1874,6 @@ class RenewalsUploadService
                     }
                 }
 
-
                 switch (strtoupper($lead->quote_type)) {
                     case QuoteTypeShortCode::CAR:
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
@@ -2085,7 +2084,7 @@ class RenewalsUploadService
                             }
                             if ($leadData->plan_code) {
                                 $healthPlan = HealthPlan::where('code', $leadData->plan_code)->first();
-                                if(! $healthPlan) {
+                                if (! $healthPlan) {
                                     $leadValidationErrors->push('Invalid Plan Code');
                                 } else {
                                     $coPlan = HealthPlanCoPayment::where('code', $leadData->copay)->where('health_plan_id', $healthPlan->id)->first();
@@ -2101,7 +2100,6 @@ class RenewalsUploadService
                         ! $checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         break;
                 }
-            
 
                 if ($leadValidationErrors->count() == 0) {
                     $lead->status = RenewalProcessStatuses::VALIDATED;
