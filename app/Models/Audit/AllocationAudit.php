@@ -36,6 +36,10 @@ class AllocationAudit extends BaseMongoModel
     {
         $record = $model->newQuery()->with('advisor:id,name,email')->find($model->getKey());
 
+        if (! $record || ! $record->advisor) {
+            return false;
+        }
+
         LoggerService::startQuoteLogging($record, LoggerFeatureEnum::ALLOCATION_AUDIT);
 
         $user = $user ?: (object) [
