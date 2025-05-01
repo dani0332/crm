@@ -456,7 +456,7 @@
         color: #ffffff;
         padding: 10px 10px 15px 10px;
         text-align: center;
-        height: 160px;
+        height: 150px;
     }
 
     .footer-table {
@@ -500,7 +500,6 @@
         font-size: 14px;
         font-weight: bold;
         text-align: center;
-        margin-bottom: 8px;
     }
 
     .footer-content-1{
@@ -533,7 +532,7 @@
     .advisor-details {
         display: table-cell;
         vertical-align: middle;
-        line-height: 1.2;
+        line-height: 0.9;
         padding-left: 10px;
     }
 
@@ -541,26 +540,23 @@
         font-weight: bold;
         font-size: 12px;
         margin: 0;
-        margin-bottom: 4px;
     }
 
     .advisor-role {
         font-size: 10px;
         margin: 0;
-        margin-bottom: 4px;
     }
 
     .advisor-contact {
         font-size: 12px;
-        line-height: 1.5;
+        line-height: 1;
     }
 
     .advisor-contact .icon {
-        width: 12px;
-        height: 12px;
-        vertical-align: middle;
+        width: 10px;
+        height: 10px;
+        vertical-align: baseline;
         display: inline-block;
-        margin-right: 4px;
     }
 
     .section-header {
@@ -685,10 +681,10 @@
 @endphp
 
     {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header_and_footer.jpg') }}" class="full-page-image" style="height: 100%;"/>
+    <img src="{{ public_path('images/car-banner-pdf-1.png') }}" class="full-page-image" style="height: 100%;"/>
     <div style="page-break-after: always;"></div>
     {{-- Second Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
+    <img src="{{ public_path('images/car-pdf-banner-2.png') }}" class="full-page-image" />
     <div style="page-break-after: always;"></div>
 
     {{-- PDF Page Header --}}
@@ -966,7 +962,7 @@
     </main>
 
      {{-- PDF Page Footer --}}
-     <div class="footer">
+    <div class="footer">
         <h4 class="footer-header">
             InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
         </h4>
@@ -974,7 +970,7 @@
         <table class="footer-table" align="center">
             <tr>
                 <td class="footer-td" style="width: 42%">
-                    <div class="footer-box" style="line-height: 0.8 !important;">
+                    <div class="footer-box" style="line-height: 0.8;">
                         <p class="footer-content-1">UAE Central Bank Registration No. 85</p>
                         <p class="footer-content-1">Registered Member of Gulf Insurance Federation</p>
                         <p class="footer-content-1">Registered Member of Emirates Insurance Federation, number B6</p>
@@ -1003,44 +999,46 @@
                 </td>
     
                 <td class="footer-td" style="width: 30%;">
-                    <div class="footer-box" style="padding: 8px 12px;">
+                    <div class="footer-box" style="margin-right: 20px; padding: 5px 10px">
                         <div class="advisor-section">
-                            @if(isset($quote->advisor))
+                            @if($quote->advisor)
                                 <div class="advisor-photo-container">
-                                    <img src="{{ isset($quote->advisor->profile_photo_path) && $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('images/alfred-theme.png') }}"
+                                    <img src="{{ $quote->advisor->profile_photo_path != null ? $quote->advisor->profile_photo_path : public_path('image/alfred-theme.png') }}"
                                          alt="Advisor Photo" class="advisor-photo">
                                 </div>
                                 <div class="advisor-details">
-                                    <p class="advisor-name">{{ $quote->advisor->name ?? 'Insurance Advisor' }}</p>
+                                    <p class="advisor-name">{{ $quote->advisor->name }}</p>
                                     <p class="advisor-role">Insurance Advisor</p>
                                     <p class="advisor-contact">
-                                        <img src="{{ isset($imageData['quote_plans_pages/ecom_home/mail_icon.png']) ? $imageData['quote_plans_pages/ecom_home/mail_icon.png'] : public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
-                                        <span style="text-decoration: underline;">{{ $quote->advisor->email ?? '' }}</span>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/mail_icon.png') }}" alt="" class="icon"> 
+                                        @if (strlen($quote->advisor->email) > 35)
+                                        <span style="text-decoration: underline; font-size:10px">{{ $quote->advisor->email }}</span>
+                                        @else
+                                        <span style="text-decoration: underline;">{{ $quote->advisor->email }}</span>
+                                        @endif
                                         <br>
-                                        <img src="{{ isset($imageData['quote_plans_pages/ecom_home/smartphone_icon.png']) ? $imageData['quote_plans_pages/ecom_home/smartphone_icon.png'] : public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
-                                        <span>{{ isset($quote->advisor->mobile_no) ? formatMobileNumber($quote->advisor->mobile_no) : '' }}</span>
-                                        <img src="{{ isset($imageData['whatsapp-small.png']) ? $imageData['whatsapp-small.png'] : public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 5px; width: 12px; height: 12px;">
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
+                                        <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
+                                        <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
                                         <br>
-                                        <img src="{{ isset($imageData['quote_plans_pages/ecom_home/phone_callback_icon.png']) ? $imageData['quote_plans_pages/ecom_home/phone_callback_icon.png'] : public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
-                                        <span>{{ $quote->advisor->landline_no ?? '' }}</span>
-                                        <br>
-                                        <img src="{{ isset($imageData['quote_plans_pages/ecom_home/call_icon.png']) ? $imageData['quote_plans_pages/ecom_home/call_icon.png'] : public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
-                                        <span>800 ALFRED (800 256 733)</span>
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
+                                        <span>{{ $quote->advisor->landline_no }}</span>
                                     </p>
                                 </div>
                             @else
                                 <div style="text-align: center; width: 100%;">
-                                    <img src="{{ public_path('images/alfred-theme.png') }}"
+                                    <img src="{{ public_path('image/alfred-theme.png') }}"
                                          alt="Advisor Photo" class="advisor-photo" style="margin: 0 auto; display: block;">
-                                    <p class="advisor-contact" style="text-align: center; margin-top: 10px;">
-                                        <img src="{{ isset($imageData['quote_plans_pages/ecom_home/call_icon.png']) ? $imageData['quote_plans_pages/ecom_home/call_icon.png'] : public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
-                                        <span>800 ALFRED (800 256 733)</span>
+                                    <p class="advisor-contact" style="text-align: center; margin-top: 8px;">
+                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
+                                        <span>800 ALFRED (800 253 733)</span>
                                     </p>
                                 </div>
                             @endif
                         </div>
                     </div>
                 </td>
+                
             </tr>
         </table>
     </div>
