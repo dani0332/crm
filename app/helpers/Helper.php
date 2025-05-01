@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EnvEnum;
@@ -1343,7 +1344,7 @@ if (! function_exists('getCourierQuote')) {
                 'customer_addresses.city as courier_address_city',
                 'customer_addresses.landmark as courier_address_landmark',
             ])
-                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel]), function ($q) use ($table, $quoteTypeId) {
+                ->when(! in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home]), function ($q) use ($table, $quoteTypeId) {
                     $q->addSelect([
                         'emirates.code as emirate_code',
                         'emirates.text as emirate_text',
@@ -1352,6 +1353,20 @@ if (! function_exists('getCourierQuote')) {
                             QuoteTypeId::Health => "{$table}.emirate_of_your_visa_id",
                             default => "{$table}.emirate_of_registration_id"
                         });
+                })
+                ->when(in_array($quoteTypeId, [QuoteTypeId::Home]), function ($q) use ($table) {
+                    $q->addSelect([
+                        'emirates.code as emirate_code',
+                        'emirates.text as emirate_text',
+                    ])->leftJoin('home_quote_request', function (JoinClause $join) use ($table) {
+                        $join->on('home_quote_request.personal_quote_id', '=', "{$table}.id")
+                            ->leftJoin('sub_areas', function (JoinClause $subJoin) {
+                                $subJoin->on('sub_areas.id', '=', 'home_quote_request.sub_area_id')
+                                    ->leftJoin('emirates', function (JoinClause $sub) {
+                                        $sub->on('emirates.id', '=', 'sub_areas.emirates_id');
+                                    });
+                            });
+                    });
                 })
                 ->when(! empty($quoteStatuses) && is_array($quoteStatuses), function ($q) use ($table, $quoteStatuses) {
                     $q->whereIn("{$table}.quote_status_id", $quoteStatuses);
@@ -1553,10 +1568,11 @@ if (! function_exists('getInsuranceProvider')) {
 
             if (! empty($quoteDetails)) {
                 $quoteDetails->fill(['full_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name]);
-                $isCommercialVehicle = app(\App\Services\LeadAllocationService::class)->isCommercialVehicles($quoteDetails);
                 $vehicleType = \App\Models\VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
 
-                if ($isCommercialVehicle || ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD && $vehicleType == strtoupper(QuoteTypes::BIKE->value))) {
+                if ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD
+                && $vehicleType == strtoupper(QuoteTypes::BIKE->value)
+                && $quoteDetails?->registration_type === CarRegistrationType::PERSONAL) {
                     return $payment?->insuranceProvider;
                 }
             }

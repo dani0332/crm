@@ -6,6 +6,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AIGWorkflowRequest;
 use App\Http\Requests\Api\ClearCacheRequest;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
@@ -324,5 +325,10 @@ class ApiController extends Controller
         CacheManager::forget($request->getKey());
 
         return apiResponse(null, Response::HTTP_OK, 'Cache cleared successfully');
+    }
+
+    public function triggerAIGWorkflow(AIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerAIGWorkflow($request);
     }
 }

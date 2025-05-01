@@ -26,13 +26,13 @@ use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use PDF;
 
 class HomeQuoteService extends BaseService
 {
@@ -806,8 +806,19 @@ class HomeQuoteService extends BaseService
             'quoteUID' => $quoteUuId,
             'lang' => 'en',
             'callSource' => 'imcrm',
-            ...$extraData,
         ];
+
+        // Add getLatestRating flag if it exists in extraData
+        if (isset($extraData['getLatestRating'])) {
+            $plansDataArr['getLatestRating'] = $extraData['getLatestRating'];
+        }
+
+        // Add any other extraData parameters
+        foreach ($extraData as $key => $value) {
+            if ($key !== 'getLatestRating') {
+                $plansDataArr[$key] = $value;
+            }
+        }
 
         $client = new \GuzzleHttp\Client;
 
@@ -1016,7 +1027,7 @@ class HomeQuoteService extends BaseService
     {
         $logPrefix = self::class.' fn: isPlanModifyAllowed ';
         $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
-        LoggerService::startQuoteLogging($quote->uuid);
+        LoggerService::startQuoteLogging($quote);
 
         $isAllowed = false;
 
