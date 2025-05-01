@@ -19,9 +19,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Knp\Snappy\Pdf;
-
-// use Barryvdh\Snappy\Facades\SnappyPdf;
 
 class CarQuoteController extends Controller
 {
@@ -233,7 +230,7 @@ class CarQuoteController extends Controller
         return back()->with('success', 'Event Followup sending successful');
     }
 
-    public function generatePdfwithSnappy(Request $request)
+    public function generateCompanyCarPdf(Request $request)
     {
         $data = [
             'quote_uuid' => $request->quote_uuid,

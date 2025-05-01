@@ -244,7 +244,6 @@ return [
         'CapiService' => \App\Services\CapiService::class,
         'KyoService' => \App\Services\KyoService::class,
         'PostMark' => \App\Facades\PostMark::class,
-        'SnappyPDF' => Barryvdh\Snappy\Facades\SnappyPdf::class,
     ],
 
 ];
