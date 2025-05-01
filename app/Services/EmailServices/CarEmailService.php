@@ -528,34 +528,33 @@ class CarEmailService extends BaseService
     public function sendCompanyCarWorkFlow($lead)
     {
         try {
-            LoggerService::info('Sending Company Car followups email for lead: '.$lead->uuid.' | Time: '.now());
+            LoggerService::info(self::class.' - Sending Company Car followups email for lead: '.$lead->uuid.' | Time: '.now());
             if (empty($lead->nb_flow_executed_at)) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
                 $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::COMPANY_CAR_AUTOMATED_FOLLOWUPS);
                 $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
                 if ($birdMotorEventNB) {
                     $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                    LoggerService::info("CompanyCarWorkFlow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                    LoggerService::info("CompanyCarWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+                    LoggerService::info(self::class. " - CompanyCarWorkFlow - Event triggered | Response: {$response->status_code} | Lead Ref-ID: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
                     $lead->nb_flow_executed_at = now();
-                    LoggerService::info("CompanyCarWorkFlow lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+
                     $lead->save();
 
                     if (! empty($response->headers['Run-Id'])) {
                         $this->createQuoteFlowDetails($lead, $response);
                     }
                 } else {
-                    LoggerService::info("CompanyCarWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                    LoggerService::info(self::class. " - CompanyCarWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
                 }
             } else {
-                LoggerService::info("CompanyCarWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
+                LoggerService::info(self::class. " - CompanyCarWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
             }
 
             return $response ?? null;
         } catch (\Throwable $th) {
-            $errorMessage = "CompanyCarWorkFlow-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            $errorMessage = self::class. " - CompanyCarWorkFlow-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             LoggerService::error($errorMessage);
-            LoggerService::error("CompanyCarWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::error(self::class. " - CompanyCarWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
 
         }
     }
@@ -569,11 +568,7 @@ class CarEmailService extends BaseService
             $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
             if ($birdMotorEventNB) {
                 $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                LoggerService::info("CompanyCarOCB event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                LoggerService::info("CompanyCarWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
-                $lead->nb_flow_executed_at = now();
-                LoggerService::info("CompanyCarOCB lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-                $lead->save();
+                LoggerService::info("CompanyCarOCB - Event triggered | Response: {$response->status_code} | Lead Ref-ID: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
 
                 if (! empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($lead, $response);
