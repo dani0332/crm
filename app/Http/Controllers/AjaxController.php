@@ -32,9 +32,9 @@ use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\QuoteDocumentService;
 use App\Traits\CentralTrait;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use PDF;
 
 class AjaxController extends Controller
 {
@@ -62,7 +62,7 @@ class AjaxController extends Controller
             $carMakeCode = $request->id;
         }
         $carmodel = CarModel::activeWithCode($carMakeCode)
-            ->select('id', 'text', 'code', 'car_make_code')->orderBy('text')->get();
+            ->select('id', 'text', 'code', 'car_make_code', 'is_commercial')->orderBy('text')->get();
 
         return response()->json($carmodel);
     }

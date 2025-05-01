@@ -407,6 +407,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Yacht => ['YPD', 'YPDR', 'YDPDR'],
             QuoteTypeId::Business => ['GMQPD', 'GMQPDR', 'GMQDPDR'],
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
+            QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
         ];
 
         return $mapping[$quoteTypeId] ?? [];
@@ -434,10 +435,12 @@ class QuoteDocumentService extends BaseService
                 if (strpos($policyWording->link, $baseUrl) !== 0) {
                     $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
                 }
+                $url = trim($policyWording->link);
+                $extension = pathinfo(filter_var($url, FILTER_SANITIZE_URL), PATHINFO_EXTENSION);
 
                 return [
                     'url' => preg_replace('/\s+$/m', '', $policyWording->link),
-                    'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.pathinfo($policyWording->link, PATHINFO_EXTENSION),
+                    'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.$extension,
                 ];
             });
 
