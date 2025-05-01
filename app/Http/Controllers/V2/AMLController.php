@@ -48,6 +48,7 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
@@ -63,6 +64,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 class AMLController extends Controller
@@ -682,6 +684,7 @@ class AMLController extends Controller
             }
 
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
+            ($isAutomation && ! Config::get('audit.console', true)) && $this->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 $this->stopHapexReminder($quoteDetails);
@@ -698,6 +701,7 @@ class AMLController extends Controller
             ]);
 
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
+            ($isAutomation && ! Config::get('audit.console', true)) && $this->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid) {
@@ -709,6 +713,36 @@ class AMLController extends Controller
 
         session()->forget('amlResponseCheck');
     }
+
+    private function saveManualAuditLog($quoteDetails, User $processByUser)
+    {
+        if(! $quoteDetails instanceof TravelQuote) {
+            return false;
+        }
+
+        $dirty = $quoteDetails->getDirty();
+
+        if(empty($dirty)) {
+            return false;
+        }
+
+        $changes = [];
+        foreach ($dirty as $attribute => $value) {
+            $changes['old_values'][$attribute] = $quoteDetails->getOriginal($attribute);
+            $changes['new_values'][$attribute] = $value;
+        }
+
+        $quoteDetails->audits()->create([
+            'user_type' => get_class($processByUser),
+            'user_id' => $processByUser->id ?? null,
+            'event' => 'updated',
+            'old_values' => $changes['old_values'],
+            'new_values' => $changes['new_values']
+        ]);
+
+        return true;
+    }
+
 
     public function getInsuredDetails(Request $request): \Illuminate\Http\JsonResponse
     {
