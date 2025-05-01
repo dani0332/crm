@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\QuoteTypes;
 use App\Facades\Marshall;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -43,7 +44,7 @@ class SendFTCEmailJob implements ShouldQueue
         $nonEligibleSICTypes = [QuoteTypes::BIKE->id(), QuoteTypes::HOME->id(), QuoteTypes::HEALTH->id()];
 
         try {
-            info(self::class." - Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid {$this->quoteUUID}");
+            LoggerService::info('Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid', '', ['feature' => 'SendFTCEmailJob']);
             $isSic = false;
             $leadQuery = $this->quoteType->model()::with('payments')
                 ->whereNotNull('advisor_id')
@@ -70,15 +71,19 @@ class SendFTCEmailJob implements ShouldQueue
                     ];
 
                     Marshall::request('/payment/send-payment-auth-email', 'post', $data);
-                    info(self::class." - Email Sent Sucessfully for uuid: {$this->quoteUUID}");
+                    LoggerService::info('Email Sent Successfully for uuid', '', ['feature' => 'SendFTCEmailJob']);
                 } else {
-                    info(self::class." - Payment not authorized for uuid {$this->quoteUUID}");
+                    LoggerService::info('Payment not authorized for uuid', '', ['feature' => 'SendFTCEmailJob']);
                 }
             } else {
-                info(self::class." - Quote not found for uuid {$this->quoteUUID}");
+                LoggerService::info('Quote not found for uuid', '', ['feature' => 'SendFTCEmailJob']);
             }
         } catch (Exception $e) {
-            Log::error(self::class.' - Error: '.$e->getMessage().$e->getTraceAsString());
+            LoggerService::error('Error sending FTC email', [
+                'quoteUUID' => $this->quoteUUID,
+                'quoteType' => $this->quoteType->id(),
+                'isInsurerPayment' => $this->isInsurerPayment,
+            ], $e, ['feature' => 'SendFTCEmailJob']);
         }
     }
 }

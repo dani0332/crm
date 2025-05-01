@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 
-class FtcEmailTrackController extends Controller
+class FtcEmailLogController extends Controller
 {
     use GenericQueriesAllLobs;
     /**
@@ -15,8 +15,8 @@ class FtcEmailTrackController extends Controller
     {
         $quoteType = $request->quoteTrackableType;
         $quoteObject = $this->getQuoteObject($quoteType, $request->quoteTrackableId);
-        $emailTracks = $quoteObject->ftcEmailTracks()->get();
+        $emailLogs = $quoteObject->ftcEmailLogs()->get();
 
-        return response()->json($emailTracks);
+        return response()->json($emailLogs);
     }
 }

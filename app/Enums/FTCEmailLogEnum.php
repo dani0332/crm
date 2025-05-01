@@ -4,7 +4,7 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-final class FTCEmailTrackEnum extends Enum
+final class FTCEmailLogEnum extends Enum
 {
     public const EMAIL_SENT = 'sent';
     public const CLICKED = 'clicked';

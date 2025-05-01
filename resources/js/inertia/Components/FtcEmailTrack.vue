@@ -25,7 +25,7 @@ const props = defineProps({
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 
-const ftcEmailTracks = reactive({
+const ftcEmailLogs = reactive({
   loading: false,
   data: null,
   table: [
@@ -40,31 +40,31 @@ const ftcEmailTracks = reactive({
   ],
 });
 
-const onLoadFtcEmailTrackData = async () => {
+const onLoadFtcEmailLogData = async () => {
   const updatedQuery = new URLSearchParams();
   updatedQuery.append('quoteTrackableType', props.quoteType);
   updatedQuery.append('quoteTrackableId', props.id);
   updatedQuery.append('code', props.quoteCode);
 
-  ftcEmailTracks.loading = true;
+  ftcEmailLogs.loading = true;
 
   let url = props.url ?? '/ftc/email-tracks?' + updatedQuery.toString();
 
   axios
     .get(url)
     .then(res => {
-      ftcEmailTracks.data = res.data;
+      ftcEmailLogs.data = res.data;
     })
     .catch(err => {
       console.log(err);
     })
     .finally(() => {
-      ftcEmailTracks.loading = false;
+      ftcEmailLogs.loading = false;
     });
 };
 
 onMounted(() => {
-  onLoadFtcEmailTrackData();
+  onLoadFtcEmailLogData();
 });
 </script>
 
@@ -80,12 +80,12 @@ onMounted(() => {
         <x-divider class="my-4" />
         <DataTable
           table-class-name="compact"
-          :headers="ftcEmailTracks.table"
-          :items="ftcEmailTracks.data || []"
+          :headers="ftcEmailLogs.table"
+          :items="ftcEmailLogs.data || []"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
-          :hide-footer="ftcEmailTracks?.data?.length < 15"
+          :hide-footer="ftcEmailLogs?.data?.length < 15"
         >
           <template #item-created_at="{ created_at }">
             {{ dateFormat(created_at).value }}

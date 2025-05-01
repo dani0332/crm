@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
-use App\Models\FtcEmailTrack;
+use App\Models\FtcEmailLog;
 use App\Models\Payment;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -71,7 +71,7 @@ class UpdatePaymentRequest extends FormRequest
                 $paymentSplit = request()->input('payment.payment_splits');
                 foreach ($paymentSplit as $split) {
                     if ($split['insurer_payment_link']) {
-                        $linkUsed = FtcEmailTrack::where('quote_trackable_id', '!=', $payment->paymentable_id)->where('link', $split['insurer_payment_link'])->exists();
+                        $linkUsed = FtcEmailLog::where('quote_trackable_id', '!=', $payment->paymentable_id)->where('link', $split['insurer_payment_link'])->exists();
                         if ($linkUsed) {
                             $validator->errors()->add('insurer_payment_link', 'You have already sent this payment link for another lead. Please verify and ensure each lead is sent a unique link to avoid processing errors');
                         }

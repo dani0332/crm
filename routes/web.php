@@ -18,7 +18,7 @@ use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
-use App\Http\Controllers\FtcEmailTrackController;
+use App\Http\Controllers\FtcEmailLogController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -572,9 +572,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'ftc'], function () {
-        Route::resource('email-tracks', FtcEmailTrackController::class)
+        Route::resource('email-logs', FtcEmailLogController::class)
             ->only(['index'])
-            ->parameters(['email-tracks' => 'emailTrack']);
+            ->parameters(['email-logs' => 'emailTrack']);
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
