@@ -3475,6 +3475,7 @@ onBeforeMount(() => {
               @cancel-modal="createPaymentModal = !createPaymentModal"
               @aml-verification="openAmlVerificationModal"
               @handle-payment-options="handlePaymentOptions"
+              @handle-discount-value-change="(value) => discountValue = value"
             />
             <div
             class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"

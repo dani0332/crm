@@ -22,6 +22,7 @@
 		'open-inner-modal',
 		'delete-document',
 		'calculate-total-amount',
+		'handle-discount-value-change',
 	]);
 
 	const lookupsEnum = page.props.lookupsEnum;
@@ -84,13 +85,15 @@
 		item => item.text === 'Discount Proof',
 	);
 
-	const discountValue = computed(() => {
-		return props.discountValue;
-	});
-
 	const totalAmountFormat = computed(() => {
 		return formatAmount(props.totalAmount);
 	});
+
+	const localDiscountValue = ref(props.discountValue);
+
+	const discountValueChanged = () => {
+		emit('handle-discount-value-change', localDiscountValue.value);
+	}
 
 	setTimeout(() => {
 		console.log("===totalPayments", props.totalPayments);
@@ -687,8 +690,9 @@
 						v-if="!isFieldReadonly"
 						class="w-full"
 						:class="{ 'custom-select-error': isDiscountError }"
-						v-model="discountValue"
+						v-model="localDiscountValue"
 						name="discount_value"
+						@change="discountValueChanged()"
 						@keyup="emit('calculate-total-amount')"
 					/>
 					<sup

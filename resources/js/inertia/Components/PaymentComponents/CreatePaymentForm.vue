@@ -188,6 +188,7 @@
 		@open-inner-modal="(fileId) => emit('open-inner-modal', fileId)"
 		@delete-document="(docName, count, docId) => emit('delete-document', docName, count, docId)"
 		@calculate-total-amount="emit('calculate-total-amount')"
+		@handle-discount-value-change="(value) => emit('handle-discount-value-change', value)"
 	/>
 
 	<x-divider class="mb-4 mt-10" />
