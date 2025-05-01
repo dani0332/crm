@@ -2190,7 +2190,7 @@ class SageApiService
             if (count($sageProcesses) > 0) {
                 foreach ($sageProcesses as $sageProcess) {
 
-                    info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$sageProcess->insurance_provider_id);
+                    LoggerService::info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$sageProcess->insurance_provider_id);
 
                     $sageProcessRequest = json_decode($sageProcess->request);
                     $sageRequest = $sageProcessRequest->sagePayload;
@@ -2208,11 +2208,11 @@ class SageApiService
                     }
                 }
             } else {
-                info('cmd:SageProcessesCommand - No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
+                LoggerService::info('cmd:SageProcessesCommand - No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
             }
             $sageProcessCommandLock->release();
         } else {
-            info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command is already running, skipping execution.');
+            LoggerService::info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command is already running, skipping execution.');
         }
     }
 
