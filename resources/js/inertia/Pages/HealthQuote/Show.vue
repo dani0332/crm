@@ -1141,33 +1141,6 @@ const documentsTableItems = computed(() => {
   });
 });
 
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
-const confirmDeleteDoc = () => {
-  quoteDocumentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        quoteDocumentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
-};
-
 //activities
 const activityTable = [
   { text: 'Client Name', value: 'client_name' },
