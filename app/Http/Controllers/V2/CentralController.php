@@ -705,7 +705,6 @@ class CentralController extends Controller
     public function removeInsurerPaymentLink(Request $request)
     {
         $response = app(CentralService::class)->removeInsurerPaymentLink($request);
-        info('fn:removeInsurerPaymentLink - Response:'.$response['status'].' - '.$response['message']);
         if ($response['status']) {
             return redirect()->back()->with('success', $response['message']);
         }

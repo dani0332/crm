@@ -1252,32 +1252,23 @@ class CentralService extends BaseService
 
     public function removeInsurerPaymentLink($request)
     {
-        try {
-            info('fn:removeInsurerPaymentLink - Removing insurer payment link for quote id:'.$request->quoteId.' and quote type:'.$request->quoteType);
-
-            $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
-            if (! $quote) {
-                return ['status' => false, 'message' => 'Quote not found'];
-            }
-
-            $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
-            $quote->save();
-
-            $paymentSplits = $quote->getAllInsurerPaymentLinkSplits();
-            info('fn:removeInsurerPaymentLink - Payment splits count: '.$paymentSplits->count());
-            foreach ($paymentSplits as $ps) {
-                info('fn:removeInsurerPaymentLink - Payment split id: '.$ps->id);
-                $ps->insurer_payment_link = null;
-                $ps->save();
-            }
-
-            return ['status' => true, 'message' => 'Insurer payment link removed'];
-        } catch (\Throwable $th) {
-            info('fn:removeInsurerPaymentLink - Error:'.$th->getMessage());
-
-            return ['status' => false, 'message' => 'Something went wrong'];
+        $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
+        if (! $quote) {
+            return ['status' => false, 'message' => 'Quote not found'];
         }
+
+        $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
+        $quote->save();
+
+        $paymentSplits = $quote->getAllInsurerPaymentLinkSplits();
+        foreach ($paymentSplits as $ps) {
+            $ps->insurer_payment_link = null;
+            $ps->save();
+        }
+
+        return ['status' => true, 'message' => 'Insurer payment link removed'];
     }
+    
     // Todo: This method will remove in future if Business confirm we will enable capture of all providers
     private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
     {
