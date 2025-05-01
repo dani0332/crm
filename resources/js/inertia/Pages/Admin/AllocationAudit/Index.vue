@@ -322,6 +322,7 @@ function search(isValid) {
               audit.assignment_type == 6
                 ? 'bg-purple-500 border-purple-100'
                 : '',
+              audit.assignment_type == 7 ? 'bg-cyan-500 border-cyan-100' : '',
             ]"
           ></div>
 
@@ -346,6 +347,8 @@ function search(isValid) {
                     audit.assignment_type == 5,
                   'bg-purple-100 text-purple-700 border border-purple-300':
                     audit.assignment_type == 6,
+                  'bg-cyan-100 text-cyan-700 border border-cyan-300':
+                    audit.assignment_type == 7,
                 }"
               >
                 {{ audit.assignment_type_text }}

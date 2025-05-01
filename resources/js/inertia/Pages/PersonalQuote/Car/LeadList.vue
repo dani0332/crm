@@ -27,6 +27,8 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 const quoteSegments = page.props.quoteSegments;
 const cleanObj = obj => useCleanObj(obj);
 const exportLoader = ref(false);
@@ -44,6 +46,8 @@ const serverOptions = ref({
 const tableHeader = [
   { text: 'REF-ID', value: 'code' },
   { text: 'BATCH', value: 'batch.name' },
+  { text: 'Vehicle Use', value: 'vehicle_use' },
+  { text: 'Company Name', value: 'car_company_name' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at_formatted' },
@@ -110,15 +114,31 @@ const ecommerceOptions = [
 ];
 
 const filteredTableHeader = computed(() => {
-  if (!hasRole(rolesEnum.CarAdvisor)) {
-    // If the user does not have the "CarAdvisor" role, include all columns
-    return tableHeader;
-  } else {
-    // If the user has the "CarAdvisor" role, exclude "Lead Source" and "Assignment Type" columns
-    return tableHeader.filter(
+  let filteredHeader = [...tableHeader];
+  if (hasRole(rolesEnum.CarAdvisor)) {
+    filteredHeader = filteredHeader.filter(
       column => column.value !== 'source' && column.value !== 'assignment_type',
     );
   }
+
+  if (filters.registration_type === carRegistrationTypeEnum.COMPANY) {
+    // If the registration type is "Company", exclude "First Name" and "Last Name" columns
+    filteredHeader = filteredHeader.filter(
+      column =>
+        column.value !== 'first_name' &&
+        column.value !== 'last_name' &&
+        column.value !== 'dob' &&
+        column.value !== 'nationality_id_text' &&
+        column.value !== 'uae_license_held_for_id_text',
+    );
+  } else {
+    filteredHeader = filteredHeader.filter(
+      column =>
+        column.value !== 'vehicle_use' && column.value !== 'car_company_name',
+    );
+  }
+
+  return filteredHeader;
 });
 
 const advisorOptions = computed(() => {
@@ -134,6 +154,18 @@ const advisorOptions = computed(() => {
 
   return options;
 });
+
+const registrationTypeOptions = Object.values(carRegistrationTypeEnum).map(
+  item => ({
+    value: item,
+    label: item,
+  }),
+);
+
+const vehicleUseOptions = Object.values(carVehicleUseEnum).map(item => ({
+  value: item,
+  label: item,
+}));
 
 const leadStatuses = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(status => ({
@@ -255,6 +287,9 @@ const filters = reactive({
   policy_expiry_date_end: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  registration_type: carRegistrationTypeEnum.PERSONAL,
+  vehicle_use: '',
+  company_name: '',
 });
 
 const teamUsers =
@@ -294,6 +329,14 @@ watch(
       canExportLeadsAndPlan.value = true;
     } else {
       canExportLeadsAndPlan.value = false;
+    }
+
+    if (filters.registration_type == carRegistrationTypeEnum.COMPANY) {
+      filters.first_name = '';
+      filters.last_name = '';
+    } else {
+      filters.vehicle_use = '';
+      filters.company_name = '';
     }
   },
   { deep: true, immediate: true },
@@ -617,6 +660,23 @@ const insurerAMLStatusOption = computed(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <x-select
+          v-model="filters.registration_type"
+          label="Registration Type"
+          name="registration_type"
+          placeholder="Please select registration type"
+          :options="registrationTypeOptions"
+          class="w-full"
+        />
+        <ComboBox
+          v-if="filters.registration_type == carRegistrationTypeEnum.COMPANY"
+          v-model="filters.vehicle_use"
+          label="Vehicle use"
+          name="vehicle_ue"
+          placeholder="Please select vehicle use"
+          :options="vehicleUseOptions"
+        />
+
         <x-input
           v-model="filters.code"
           type="search"
@@ -633,6 +693,16 @@ const insurerAMLStatusOption = computed(() => {
           :options="batchOptions"
         />
         <x-input
+          v-if="filters.registration_type == carRegistrationTypeEnum.COMPANY"
+          v-model="filters.company_name"
+          type="search"
+          name="company_name"
+          label="Company Name"
+          class="w-full"
+          placeholder="Search by Company Name"
+        />
+        <x-input
+          v-if="filters.registration_type == carRegistrationTypeEnum.PERSONAL"
           v-model="filters.first_name"
           type="search"
           name="first_name"
@@ -641,6 +711,7 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Search by First Name"
         />
         <x-input
+          v-if="filters.registration_type == carRegistrationTypeEnum.PERSONAL"
           v-model="filters.last_name"
           type="search"
           name="last_name"
