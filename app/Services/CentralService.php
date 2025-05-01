@@ -1273,6 +1273,9 @@ class CentralService extends BaseService
             $quoteType = $this->checkBusinessTypeOfInsurance($quote->business_type_of_insurance_id);
         } else {
             $quoteType = strtoupper(QuoteTypes::getName($quoteTypeId)->value);
+            if ($quoteTypeId == QuoteTypeId::Car && app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
+                $quoteType = 'COMMERCIAL_'.$quoteType;
+            }
         }
         if ($sendUpdateLog) {
             $workflowType = 'SU_'.$quoteType.'_UPDATE';
@@ -1359,6 +1362,9 @@ class CentralService extends BaseService
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             $emailData->carDetails = $quote->carMake->text.' '.$quote->carModel->text.' '.$quote->carModelDetail->text;
+            if (app(LeadAllocationService::class)->isCommercialVehicles($quote)) {
+                $emailData->companyName = $quote->company_name ?? null;
+            }
         }
 
         if ($quoteTypeId == QuoteTypeId::Bike) {
