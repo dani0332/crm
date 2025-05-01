@@ -28,7 +28,6 @@ use Intervention\Image\ImageManager;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
 use setasign\Fpdi\PdfParser\StreamReader;
-use Illuminate\Support\Str;
 
 class QuoteDocumentService extends BaseService
 {
@@ -437,6 +436,7 @@ class QuoteDocumentService extends BaseService
                 }
                 $link = preg_replace('/[\n\r\t]+/', '', $policyWording->link);
                 $extension = pathinfo($link, PATHINFO_EXTENSION); // Get extension first
+
                 return [
                     'url' => preg_replace('/\s+$/m', '', $policyWording->link),
                     'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.trim($extension),
