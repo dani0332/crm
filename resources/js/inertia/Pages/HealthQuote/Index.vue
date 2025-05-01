@@ -99,7 +99,7 @@ const tableHeader = ref([
     text: 'POLICY EXPIRY DATE',
     value: 'previous_policy_expiry_date_formatted',
     is_active: true,
-    sortable: true,
+    sortable: false,
   },
   { text: 'HEALTH TEAM TYPE', value: 'health_team_type', is_active: true },
   {
