@@ -42,10 +42,8 @@ class FtcEmailLogController extends Controller
             return response()->json(['message' => 'Quote not found.'], 404);
         } catch (\Exception $th) {
             LoggerService::error('Error creating FTC email log', [
-                'quoteType' => $quoteType,
-                'quoteUuid' => $quoteUuid,
                 'request' => $request->all(),
-            ], $th, ['feature' => 'ftc_email_log']);
+            ], $th, ['ref_id' => $quoteUuid, 'feature' => 'ftc_email_log']);
             return response()->json(['message' => 'Internal server error.'], 500);
         }
         
