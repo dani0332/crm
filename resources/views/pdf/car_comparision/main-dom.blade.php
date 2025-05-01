@@ -935,6 +935,12 @@
                     @endif
                 @endforeach
 
+                <tr style="page-break-inside: avoid;">
+                    <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
+                        <div class="spacer"></div>
+                    </td>
+                </tr>
+
                 <tr>
                     <td colspan="{{ count($displayPlans) + 1 }}" class="no-border text-center">
                         <a target="_blank" class="btn-all-quotes"
