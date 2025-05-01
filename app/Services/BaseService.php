@@ -6,6 +6,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Jobs\Audit\LogAllocation;
 use App\Models\GenericModel;
 use App\Models\QuoteViewCount;
 use App\Models\User;
@@ -459,5 +460,21 @@ class BaseService
         $this->addOrUpdateQuoteViewCount($lead, $quoteType->id(), $userId);
 
         $lead->save();
+    }
+
+    public function selfAssign(QuoteTypes $quoteType, string $uuid)
+    {
+        $lead = $quoteType->model()->where('uuid', $uuid)->first();
+
+        if (! $lead) {
+            return;
+        }
+
+        if ($lead->advisor_id && $lead->source === config('constants.SOURCE_NAME')) {
+            $lead->assignment_type = AssignmentTypeEnum::SELF_ASSIGNED;
+            $lead->saveQuietly();
+
+            LogAllocation::dispatch($lead, $quoteType);
+        }
     }
 }

@@ -49,10 +49,8 @@ class AMLScreeningCommand extends Command
         if (! $isAmlAutomationEnabled) {
             LoggerService::info($this->className.' is not enabled from cms');
 
-            return false;
+            return;
         }
-
-        LoggerService::info($this->className.' Started');
 
         $quoteModel = $this->getModelObject(strtolower($this->quoteType->value));
 
@@ -95,6 +93,5 @@ class AMLScreeningCommand extends Command
                 }
             });
         }
-        LoggerService::info($this->className.' Ended');
     }
 }

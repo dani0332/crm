@@ -202,6 +202,7 @@ final class ApplicationStorageEnums extends Enum
     public const GROUP_MEDICAL_NON_MICRO_ADVISORS = 'GROUP_MEDICAL_NON_MICRO_ADVISORS';
     public const STOP_DE_DUPLICATION_JOB = 'STOP_DE_DUPLICATION_JOB';
     public const BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW = 'BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW';
+    public const COMPANY_CAR_FOLLOWUP_DELAY_DURATION = 'COMPANY_CAR_FOLLOWUP_DELAY_DURATION';
 
     /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
     public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
@@ -212,4 +213,9 @@ final class ApplicationStorageEnums extends Enum
     public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
     public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
     public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
+
+    /* Advisor Emails for Allocation */
+    public const YACHT_ADVISORS = 'YACHT_ADVISORS';
+    public const PET_ADVISORS = 'PET_ADVISORS';
+    public const HOME_ADVISORS_FOR_PET = 'HOME_ADVISORS_FOR_PET';
 }

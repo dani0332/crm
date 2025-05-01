@@ -45,11 +45,11 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
@@ -130,6 +130,7 @@ class HealthQuoteService extends BaseService
             'hqr.renewal_import_code',
             'hqr.previous_quote_policy_number',
             DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+            DB::raw('DATE_FORMAT(hqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
             'hqr.previous_quote_policy_premium',
             'hqr.device',
             'hqr.wcu_id',
@@ -334,6 +335,8 @@ class HealthQuoteService extends BaseService
                 $subTeam = auth()->user()->subTeam->name;
             }
             HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => $subTeam]);
+
+            $this->selfAssign(QuoteTypes::HEALTH, $response->quoteUID);
         }
 
         return $response;
@@ -1194,6 +1197,7 @@ class HealthQuoteService extends BaseService
             $this->leadAllocationService->removeLeadAllocationForOldAdvisor($entity);
         }
         $entity->advisor_id = null;
+        $entity->assignment_type = null;
         $entity->quote_status_id = $quoteStatusId;
         $entity->save();
     }
@@ -1213,6 +1217,7 @@ class HealthQuoteService extends BaseService
                 continue;
             } elseif ($lead) {
                 $lead->advisor_id = null;
+                $lead->assignment_type = null;
                 $lead->quote_status_id = QuoteStatusEnum::NewLead;
                 $lead->wcu_id = $userId;
                 $lead->health_team_type = $request->assign_team;
@@ -1852,6 +1857,7 @@ class HealthQuoteService extends BaseService
     {
         LoggerService::info('inside the check for manual assignment QA');
         $lead->advisor_id = $userId;
+        $lead->assignment_type = AssignmentTypeEnum::MANUAL_ASSIGNED;
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
