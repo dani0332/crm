@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Models\CarMake;
 use App\Models\InsuranceProvider;
 use App\Models\PrivateClientConfig;
+use App\Models\SubArea;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class PrivateClientConfigController extends Controller
@@ -30,18 +32,7 @@ class PrivateClientConfigController extends Controller
         $insurers = InsuranceProvider::select('code as value', 'text as label')->where('is_active', true)->get()->toArray();
 
         // Location areas
-        $locationAreas = [
-            ['label' => 'Dubai Marina', 'value' => 'Dubai Marina'],
-            ['label' => 'Downtown Dubai', 'value' => 'Downtown Dubai'],
-            ['label' => 'Palm Jumeirah', 'value' => 'Palm Jumeirah'],
-            ['label' => 'Emirates Hills', 'value' => 'Emirates Hills'],
-            ['label' => 'Jumeirah Beach Residence', 'value' => 'Jumeirah Beach Residence'],
-            ['label' => 'Arabian Ranches', 'value' => 'Arabian Ranches'],
-            ['label' => 'Dubai Hills Estate', 'value' => 'Dubai Hills Estate'],
-            ['label' => 'The Springs', 'value' => 'The Springs'],
-            ['label' => 'Jumeirah Lakes Towers', 'value' => 'Jumeirah Lakes Towers'],
-            ['label' => 'Bluewaters Island', 'value' => 'Bluewaters Island'],
-        ];
+        $locationAreas = SubArea::select('code as value', 'text as label')->get()->toArray();
 
         return Inertia::render('Admin/PrivateClientConfig/Config/Show', [
             'configurations' => $configurations,
@@ -53,29 +44,45 @@ class PrivateClientConfigController extends Controller
 
     public function upsert(Request $request)
     {
-        // Validate and process the request
-        $validated = $request->validate([
-            'configurations' => 'array',
-        ]);
+        try {
+            // Validate incoming request
+            $validated = $request->validate([
+                'configurations' => 'required|array',
+                'configurations.*.quote_type_id' => 'required|integer',
+                'configurations.*.field_name' => 'required|string|max:255',
+                'configurations.*.operator' => 'required|string',
+                'configurations.*.value' => 'nullable|string',
+                'configurations.*.currency_type_id' => 'nullable|integer',
+                'configurations.*.status' => 'required|integer|in:0,1',
+            ]);
 
-        // Process and save configs
-        foreach ($validated['configurations'] as $config) {
-            PrivateClientConfig::updateOrCreate(
-                [
-                    'quote_type_id' => $config['quote_type_id'],
-                    'field_name' => $config['field_name'],
-                ],
-                [
-                    'name' => $config['name'],
-                    'operator' => $config['operator'],
-                    'value' => $config['value'],
-                    'currency_type_id' => $config['currency_type_id'] ?? null,
-                    'status' => $config['status'] ?? 1,
-                    'is_active' => true,
-                ]
-            );
+            DB::beginTransaction();
+
+            foreach ($validated['configurations'] as $config) {
+                PrivateClientConfig::updateOrCreate(
+                    [
+                        'quote_type_id' => $config['quote_type_id'],
+                        'field_name' => $config['field_name'],
+                        'currency_type_id' => $config['currency_type_id'] ?? null,
+                    ],
+                    [
+                        'field_name' => $config['field_name'],
+                        'operator' => $config['operator'],
+                        'value' => $config['value'],
+                        'status' => $config['status'],
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('message', 'Private Client Configuration updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->validator)->withInput();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->with('error', 'An error occurred while updating the configuration: '.$e->getMessage());
         }
-
-        return back()->with('success', 'Configuration updated successfully');
     }
 }
