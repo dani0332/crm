@@ -3302,7 +3302,7 @@ const isCommercialVehicle = computed(() => {
                   :loading="exportLoader"
                   :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 >
-                  Download Company
+                  Download PDF
                 </x-button>
 
                 <x-button
