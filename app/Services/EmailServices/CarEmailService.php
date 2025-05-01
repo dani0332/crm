@@ -421,14 +421,14 @@ class CarEmailService extends BaseService
                     'flow_type' => QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS->value,
                     'flow_id' => $runId,
                 ]);
-                LoggerService::info(self::class. " - createQuoteFlowDetails  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info(self::class." - createQuoteFlowDetails  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             } else {
-                LoggerService::info(self::class. " - createQuoteFlowDetails  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info(self::class." - createQuoteFlowDetails  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } catch (\Throwable $th) {
-            $errorMessage = self::class. " - createQuoteFlowDetails-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            $errorMessage = self::class." - createQuoteFlowDetails-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             LoggerService::error($errorMessage);
-            LoggerService::error(self::class. " - createQuoteFlowDetails-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::error(self::class." - createQuoteFlowDetails-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
 
         }
     }
@@ -535,7 +535,7 @@ class CarEmailService extends BaseService
                 $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
                 if ($birdMotorEventNB) {
                     $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                    LoggerService::info(self::class. " - CompanyCarWorkFlow - Event triggered | Response: {$response->status_code} | Lead Ref-ID: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+                    LoggerService::info(self::class." - CompanyCarWorkFlow - Event triggered | Response: {$response->status_code} | Lead Ref-ID: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
                     $lead->nb_flow_executed_at = now();
 
                     $lead->save();
@@ -544,17 +544,17 @@ class CarEmailService extends BaseService
                         $this->createQuoteFlowDetails($lead, $response);
                     }
                 } else {
-                    LoggerService::info(self::class. " - CompanyCarWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                    LoggerService::info(self::class." - CompanyCarWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
                 }
             } else {
-                LoggerService::info(self::class. " - CompanyCarWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
+                LoggerService::info(self::class." - CompanyCarWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
             }
 
             return $response ?? null;
         } catch (\Throwable $th) {
-            $errorMessage = self::class. " - CompanyCarWorkFlow-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            $errorMessage = self::class." - CompanyCarWorkFlow-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             LoggerService::error($errorMessage);
-            LoggerService::error(self::class. " - CompanyCarWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::error(self::class." - CompanyCarWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
 
         }
     }
