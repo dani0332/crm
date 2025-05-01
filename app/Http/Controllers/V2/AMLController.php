@@ -794,7 +794,7 @@ class AMLController extends Controller
             }
 
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
-            ($isAutomation && ! Config::get('audit.console', true)) && $this->saveManualAuditLog($quoteDetails, $processByUser);
+            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();
             // this event only working for travel lob
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
@@ -812,7 +812,7 @@ class AMLController extends Controller
             ]);
 
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
-            ($isAutomation && ! Config::get('audit.console', true)) && $this->saveManualAuditLog($quoteDetails, $processByUser);
+            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 $isPassportDocumentExist = app(QuoteDocumentService::class)->isDocumentExists(quoteTypeCode::Travel, $quoteDetails->id, DocumentTypeCode::TRVLPAS);
@@ -826,35 +826,6 @@ class AMLController extends Controller
         }
 
         session()->forget('amlResponseCheck');
-    }
-
-    private function saveManualAuditLog($quoteDetails, User $processByUser)
-    {
-        if (! $quoteDetails instanceof TravelQuote) {
-            return false;
-        }
-
-        $dirty = $quoteDetails->getDirty();
-
-        if (empty($dirty)) {
-            return false;
-        }
-
-        $changes = [];
-        foreach ($dirty as $attribute => $value) {
-            $changes['old_values'][$attribute] = $quoteDetails->getOriginal($attribute);
-            $changes['new_values'][$attribute] = $value;
-        }
-
-        $quoteDetails->audits()->create([
-            'user_type' => get_class($processByUser),
-            'user_id' => $processByUser->id ?? null,
-            'event' => 'updated',
-            'old_values' => $changes['old_values'],
-            'new_values' => $changes['new_values'],
-        ]);
-
-        return true;
     }
 
     public function updateQuoteComment(Request $request)
