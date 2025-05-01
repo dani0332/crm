@@ -83,7 +83,7 @@ class SendFTCEmailJob implements ShouldQueue
                 'quoteUUID' => $this->quoteUUID,
                 'quoteType' => $this->quoteType->id(),
                 'isInsurerPayment' => $this->isInsurerPayment,
-            ], $e, ['feature' => 'SendFTCEmailJob']);
+            ], $e, ['ref_id' => $this->quoteUUID, 'feature' => 'SendFTCEmailJob']);
         }
     }
 }
