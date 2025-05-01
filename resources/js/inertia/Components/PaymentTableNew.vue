@@ -3476,9 +3476,7 @@ onBeforeMount(() => {
               @aml-verification="openAmlVerificationModal"
               @handle-payment-options="handlePaymentOptions"
             />
-          </x-form>
-
-          <div
+            <div
             class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
             v-if="isApproveConfirmed"
           >
@@ -3571,6 +3569,7 @@ onBeforeMount(() => {
               </div>
             </div>
           </div>
+          </x-form>
 
           <div
             class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center"
