@@ -101,9 +101,9 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                         continue;
                     }
 
-                    if ($entityMapping->entity_type_code) {
+                    /*if ($entityMapping->entity_type_code) {
                         $personalQuote->update(['insured_type_code' => $entityMapping->entity_type_code]);
-                    }
+                    }*/
 
                     // Get insured record using entity_id
                     $insured = Insured::where('entity_id', $entityMapping->entity_id)->first();
