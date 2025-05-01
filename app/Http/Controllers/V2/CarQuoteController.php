@@ -16,7 +16,6 @@ use App\Repositories\UserRepository;
 use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
 use App\Traits\GenericQueriesAllLobs;
-use Barryvdh\Snappy\Facades\SnappyPdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -257,9 +256,9 @@ class CarQuoteController extends Controller
         $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer', 'vehicleType']);
-        
+
         // Configure DomPDF options
-        $options = new \Dompdf\Options();
+        $options = new \Dompdf\Options;
         $options->set('isRemoteEnabled', true);
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isPhpEnabled', true);
@@ -269,17 +268,17 @@ class CarQuoteController extends Controller
         $options->set('defaultPaperSize', 'A4');
         $options->set('defaultPaperOrientation', 'portrait');
         $options->set('chroot', public_path()); // Set root directory for image access
-        
+
         // Disable debug options to prevent debug output
         $options->set('debugKeepTemp', false);
         $options->set('debugCss', false);
         $options->set('debugLayout', false);
-        
+
         // Enable CSS floating to ensure proper layout
         $options->set('isJavascriptEnabled', true);
         $options->set('fontCache', storage_path('fonts'));
         $options->set('tempDir', storage_path('app/dompdf'));
-        
+
         // Additional rendering settings
         $options->set('enable_css_float', true);
         $options->set('enable_html5_parser', true);
@@ -301,15 +300,15 @@ class CarQuoteController extends Controller
             'quote_plans_pages/ecom_home/smartphone_icon.png',
             'whatsapp-small.png',
             'quote_plans_pages/ecom_home/phone_callback_icon.png',
-            'quote_plans_pages/ecom_home/call_icon.png'
+            'quote_plans_pages/ecom_home/call_icon.png',
         ];
-        
+
         $imageData = [];
         foreach ($imagePaths as $path) {
-            $fullPath = public_path('images/' . $path);
+            $fullPath = public_path('images/'.$path);
             if (file_exists($fullPath)) {
                 $type = pathinfo($fullPath, PATHINFO_EXTENSION);
-                $imageData[$path] = 'data:image/' . $type . ';base64,' . base64_encode(file_get_contents($fullPath));
+                $imageData[$path] = 'data:image/'.$type.';base64,'.base64_encode(file_get_contents($fullPath));
             }
         }
 
@@ -326,8 +325,8 @@ class CarQuoteController extends Controller
 
         // For JSON response (alternative approach)
         $pdfContent = $dompdf->output();
+
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdfContent), 'name' => $pdfName]);
     }
 
-    
 }
