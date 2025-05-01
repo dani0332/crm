@@ -71,14 +71,14 @@ class BikeAllocation implements Allocation
                     } else {
                         $this->bikeAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::BIKE);
 
-                        LoggerService::warning('Advisor not found. Skipping for now.');
+                        LoggerService::info('Advisor not found. Skipping for now.');
                         // Update the lead's tier information
                         $this->updateLeadTier($lead, $tier);
                         $response = $this->bikeAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                     }
                 } else {
                     // Log that tier was not found for the lead and skip processing
-                    LoggerService::warning('Tier not found. Skipping for now.');
+                    LoggerService::info('Tier not found. Skipping for now.');
                     $lead->endAllocation();
                     $response = $this->bikeAllocationService->createResponse(0, 'Tier not found', Response::HTTP_UNPROCESSABLE_ENTITY);
                 }

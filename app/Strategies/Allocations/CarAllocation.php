@@ -3,9 +3,11 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
+use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
@@ -67,14 +69,29 @@ class CarAllocation implements Allocation
                 return $this->carAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
             }
 
+            if (isLeadSic($lead->uuid) && $lead->registration_type == CarRegistrationType::COMPANY) {
+                info(self::class." - Lead is SIC and Registration type Company Webform. Skipping allocation for Ref-ID: {$lead->uuid} | Time: ".now());
+                $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
+                return $this->carAllocationService->createResponse(0, 'Lead is SIC and the registration type is Company. Skipping allocation.', Response::HTTP_OK);
+            }
+
             $lead->startAllocation();
 
             $tier = $this->determineTier($lead);
 
+            if ($tier->name == TiersEnum::TIER_R) {
+                info(self::class." - Lead is Tier R and from Company Webform. Skipping allocation for Ref-ID: {$lead->uuid} | Time: ".now());
+
+                $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
+                return $this->carAllocationService->createResponse(0, 'Lead is Tier R Skipping allocation.', Response::HTTP_OK);
+            }
+
             if ($tier) {
                 $response = $this->processTier($lead, $tier);
             } else {
-                LoggerService::warning('Tier not found. Skipping for now.');
+                LoggerService::info('Tier not found. Skipping for now.');
 
                 $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
 
@@ -159,6 +176,7 @@ class CarAllocation implements Allocation
         }
 
         if ($advisorId && $advisorId != 0) {
+
             $this->assignLead($lead, $advisorId, $tier);
 
             if ($lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
@@ -187,7 +205,7 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getTier($tierId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findTier($lead): ?Tier
     {
         if ($lead->tier_id == null) {
             return $this->carAllocationService->findTier($lead);
