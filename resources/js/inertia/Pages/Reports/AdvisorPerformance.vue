@@ -11,6 +11,8 @@ const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 
 const params = useUrlSearchParams('history');
 const tableHeader = [
@@ -63,6 +65,8 @@ const filters = reactive({
   teams: [],
   segment_filter: 'all',
   isCommercial: 'All',
+  vehicle_use: 'All',
+  registration_type: 'All',
   page: 1,
 });
 
@@ -121,6 +125,26 @@ function setQueryStringFilters() {
     }
   }
 }
+
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
 
 onMounted(() => {
   if (page.props.defaultFilters) {
@@ -185,8 +209,21 @@ onMounted(() => {
           :max-limit="3"
         />
         <x-select
+          v-model="filters.registration_type"
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
+        />
+        <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
+        <x-select
           v-model="filters.isCommercial"
-          label="Commercial"
+          label="Commercial Rule"
           placeholder="Select any option"
           :options="[
             { value: 'All', label: 'All' },
@@ -194,6 +231,7 @@ onMounted(() => {
             { value: false, label: 'No' },
           ]"
         />
+
         <x-select
           v-model="filters.assignmentTypes"
           label="Assignment Type"
