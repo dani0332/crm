@@ -113,7 +113,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                         $this->currentInsurerApiStatus = PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID;
                         $policyIssuanceResponse = $this->issuePolicyAndFillPolicyDetails($quote, $selectedPlan, $travelType);
                         if (! $policyIssuanceResponse['status']) {
-                            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - trigger fn:updateQuoteApiIssuanceStatusAndAllocate for step '.$nextStepToBeExecuted, extra:['response' =>$policyIssuanceResponse]);
+                            LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - trigger fn:updateQuoteApiIssuanceStatusAndAllocate for step '.$nextStepToBeExecuted, extra: ['response' => $policyIssuanceResponse]);
                             $this->updateQuoteApiIssuanceStatusAndAllocate($quote, $this->currentInsurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
 
                             return $policyIssuanceResponse;
