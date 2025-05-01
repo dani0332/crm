@@ -256,8 +256,8 @@ class CarQuoteController extends Controller
 
         $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
-        }, 'customer']);
-
+        }, 'customer', 'vehicleType']);
+        
         // Configure DomPDF options
         $options = new \Dompdf\Options();
         $options->set('isRemoteEnabled', true);
@@ -314,7 +314,7 @@ class CarQuoteController extends Controller
         }
 
         // Generate PDF view content using the DOM template (which includes header and footer)
-        $html = view('pdf.car_comparision.main-dom', compact('quotePlans', 'planIds', 'quote', 'addons', 'imageData'))->render();
+        $html = view('pdf.car_comparision.commercial_car_pdf', compact('quotePlans', 'planIds', 'quote', 'addons', 'imageData'))->render();
 
         // Load the HTML into DomPDF
         $dompdf->loadHtml($html);

@@ -697,9 +697,9 @@
                 <div class="header-text">
                     <strong class="raleway-font" style="font-weight: 600 !important;">Car Insurance comparison Table</strong>
                     <span class="separator">|</span>
-                    Customer name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span>
+                    Company name: <span class="header-text-highlight">{{ $quote->company_name }}</span>
                     <span class="separator">|</span>
-                    Car make/model: <span class="header-text-highlight">{{ @$quote->carMake->text }} {{ @$quote->carModel->text }}</span>
+                    Car type: <span class="header-text-highlight">{{ @$quote->vehicleType->text }}</span>
                     <span class="separator">|</span>
                     Year: <span class="header-text-highlight">{{ @$quote->year_of_manufacture }}</span>
                 </div>
