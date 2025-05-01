@@ -15,6 +15,8 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const isSendUpdateListView = ref(false);
@@ -293,6 +295,21 @@ function checkMemberOrCompanyFilter() {
 }
 
 function onSubmit() {
+  let userHasEngineeringRole = hasAnyRole([rolesEnum.Engineering]);
+  let isUniversalSearchEnabled = page.props.isUniversalSearchEnabled == 1;
+  console.log(
+    'Search Submit , userHasEngineeringRole',
+    userHasEngineeringRole,
+    'isUniversalSearchEnabled',
+    isUniversalSearchEnabled,
+  );
+  if (!userHasEngineeringRole && !isUniversalSearchEnabled) {
+    notification.error({
+      title: 'Search is disabled as data migration is not completed yet!',
+      position: 'top',
+    });
+    return;
+  }
   const filtersCleaned = cleanObj(availableFilters);
   if (filterValidation(filtersCleaned)) {
     filtersCleaned.list = isSendUpdateListView.value ? 'endorsements' : 'leads';
