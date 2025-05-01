@@ -48,22 +48,6 @@ class HomeAllocation extends BaseAllocation
         return $advisor;
     }
 
-    private function getValueAdvisors()
-    {
-        $advisors = explode(',', getAppStorageValueByKey(ApplicationStorageEnums::HOME_VALUE_ADVISORS, useCache: true));
-        Log::info('HomeAllocation: Value Advisors fetched', ['count' => count($advisors), 'advisors' => $advisors]);
-
-        return $advisors;
-    }
-
-    private function getVolumeAdvisors()
-    {
-        $advisors = explode(',', getAppStorageValueByKey(ApplicationStorageEnums::HOME_VOLUME_ADVISORS, useCache: true));
-        Log::info('HomeAllocation: Volume Advisors fetched', ['count' => count($advisors), 'advisors' => $advisors]);
-
-        return $advisors;
-    }
-
     private function getHomeQuoteData(string $uuid): ?HomeQuote
     {
         Log::info('HomeAllocation: Fetching HomeQuote data', ['uuid' => $uuid]);
@@ -204,11 +188,11 @@ class HomeAllocation extends BaseAllocation
         if ($this->isValueLead($homeQuote)) {
             Log::info('HomeAllocation: Lead is a value lead, fetching value advisors');
 
-            return $this->getValueAdvisors();
+            return $this->getAdvisorEmails(ApplicationStorageEnums::HOME_VALUE_ADVISORS);
         } elseif ($this->isVolumeLead($homeQuote)) {
             Log::info('HomeAllocation: Lead is a volume lead, fetching volume advisors');
 
-            return $this->getVolumeAdvisors();
+            return $this->getAdvisorEmails(ApplicationStorageEnums::HOME_VOLUME_ADVISORS);
         }
 
         Log::warning('HomeAllocation: Lead is neither value nor volume, returning empty array');

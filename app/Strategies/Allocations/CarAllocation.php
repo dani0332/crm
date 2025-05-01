@@ -3,14 +3,17 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
+use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
+use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
 
@@ -45,13 +48,12 @@ class CarAllocation implements Allocation
             $lead = $this->fetchLead();
 
             if (! $lead) {
-                LoggerService::info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
+                LoggerService::info('Lead not found or not under fetch criteria');
 
                 return $this->carAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
-            LoggerService::info('Processing record for Quote Allocation', [
-                'uuid' => $lead->uuid,
+            LoggerService::debug('Processing record for Quote Allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,
                 'source' => $lead->source,
                 'is_renewal_tier_email_sent' => $lead->is_renewal_tier_email_sent,
@@ -62,32 +64,46 @@ class CarAllocation implements Allocation
             ]);
 
             if ($lead->isAllocationInProgress()) {
-                LoggerService::info("Allocation is already started at {$lead->allocation_started_at}");
+                LoggerService::warning("Allocation is already started at {$lead->allocation_started_at}");
 
                 return $this->carAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
+            }
+
+            if (isLeadSic($lead->uuid) && $lead->registration_type == CarRegistrationType::COMPANY) {
+                info(self::class." - Lead is SIC and Registration type Company Webform. Skipping allocation for Ref-ID: {$lead->uuid} | Time: ".now());
+                $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
+                return $this->carAllocationService->createResponse(0, 'Lead is SIC and the registration type is Company. Skipping allocation.', Response::HTTP_OK);
             }
 
             $lead->startAllocation();
 
             $tier = $this->determineTier($lead);
 
-            if ($tier) {
-                $response = $this->processTier($lead, $tier);
-            } else {
-                LoggerService::warning('Tier not found. Skipping for now.');
+            if ($tier->name == TiersEnum::TIER_R) {
+                info(self::class." - Lead is Tier R and from Company Webform. Skipping allocation for Ref-ID: {$lead->uuid} | Time: ".now());
 
                 $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
 
-                $response = $this->carAllocationService->createResponse(0, 'Tier not found', Response::HTTP_NOT_FOUND);
+                return $this->carAllocationService->createResponse(0, 'Lead is Tier R Skipping allocation.', Response::HTTP_OK);
             }
-        } catch (\Throwable $th) {
+
+            if ($tier) {
+                $response = $this->processTier($lead, $tier);
+            } else {
+                LoggerService::info('Tier not found. Skipping for now.');
+
+                $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
+                $response = $this->carAllocationService->createResponse(0, 'Tier not found', Response::HTTP_OK);
+            }
+        } catch (Exception $th) {
             $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
             $this->carAllocationService->endBuyLeadProcessing();
 
             $message = $th->getMessage() ?? '';
-            LoggerService::error('exception occurred in car lead allocation with error : '.$message);
-            LoggerService::error('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
-            $response = $this->carAllocationService->createResponse(0, 'exception occurred in car lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            LoggerService::error('exception occurred in car lead allocation', exception: $th);
+            $response = $this->carAllocationService->createResponse(0, "exception occurred in car lead allocation with error : {$message}", Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return $response;
@@ -133,10 +149,9 @@ class CarAllocation implements Allocation
 
     private function processTier($lead, $tier)
     {
-        LoggerService::info('Tier identified. Proceeding to finalize the tier and tier name : '.$tier->name);
+        LoggerService::info("Tier identified. Proceeding to finalize the tier and tier name : {$tier->name}");
 
         if ($this->evaluateTierOnly) {
-            LoggerService::info('Evaluate tier only. Tier finalized : '.$tier->name);
             $lead->tier_id = $tier->id;
             $lead->save();
 
@@ -147,7 +162,6 @@ class CarAllocation implements Allocation
 
         $this->evaluateTeamId($lead);
 
-        LoggerService::info('Tier finalized is : '.$tier->name);
         $availableUsers = $this->findAvailableUsers($tier, $lead->source, $lead);
         $rules = $this->findRules($lead);
         $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
@@ -162,6 +176,7 @@ class CarAllocation implements Allocation
         }
 
         if ($advisorId && $advisorId != 0) {
+
             $this->assignLead($lead, $advisorId, $tier);
 
             if ($lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
@@ -173,10 +188,10 @@ class CarAllocation implements Allocation
             $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
             $this->carAllocationService->endBuyLeadProcessing();
 
-            LoggerService::warning('Advisor not found. Skipping for now.');
+            LoggerService::info('Advisor not found. Skipping for now.');
             $this->updateLeadTier($lead, $tier);
 
-            return $this->carAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
+            return $this->carAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_OK);
         }
     }
 
@@ -190,7 +205,7 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getTier($tierId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findTier($lead): ?Tier
     {
         if ($lead->tier_id == null) {
             return $this->carAllocationService->findTier($lead);
