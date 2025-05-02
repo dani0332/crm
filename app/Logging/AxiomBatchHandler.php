@@ -2,10 +2,14 @@
 
 namespace App\Logging;
 
-use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Context;
+use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
-use Monolog\Logger;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Handler\StreamHandler;
+use Monolog\Level;
 use Monolog\LogRecord;
 
 class AxiomBatchHandler extends AbstractProcessingHandler
@@ -13,17 +17,17 @@ class AxiomBatchHandler extends AbstractProcessingHandler
     protected $apiToken;
     protected $dataset;
     protected $batch = [];
+    protected $singleHandler;
+    protected $dailyHandler;
     protected $batchSize;
+    protected bool $batchSent = false;
 
-    public function __construct($level = Logger::DEBUG, bool $bubble = true)
+    public function __construct($level = Level::Debug, bool $bubble = true)
     {
         $this->apiToken = env('AXIOM_API_TOKEN');
         $this->dataset = env('AXIOM_DATASET');
-        $this->batchSize = cache()->remember('axiom_batch_size', 3600, function () {
-            $storage = ApplicationStorage::where('key_name', 'AXIOM_BATCH_SIZE')->first();
 
-            return $storage ? (int) $storage->value : 100;
-        });
+        $this->batchSize = getAppStorageValueByKey(ApplicationStorageEnums::AXIOM_BATCH_SIZE, useCache: true);
 
         if (empty($this->apiToken) || empty($this->dataset)) {
             throw new \InvalidArgumentException('AXIOM_API_TOKEN and AXIOM_DATASET environment variables are required');
@@ -32,15 +36,63 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         parent::__construct($level, $bubble);
         $this->setFormatter(new AxiomFormatter);
 
+        // Initialize handlers for Laravel's default logging
+        $this->singleHandler = new StreamHandler(
+            storage_path('logs/laravel.log'),
+            $level,
+            $bubble
+        );
+
+        $this->dailyHandler = new RotatingFileHandler(
+            storage_path('logs/laravel.log'),
+            14, // Keep logs for 14 days
+            $level,
+            $bubble
+        );
+
+        // Use Laravel's default log format for file handlers
+        $fileFormatter = new LineFormatter(
+            "[%datetime%] %channel%.%level_name%: %message% %context% %extra%\n",
+            'Y-m-d H:i:s',
+            true,
+            true
+        );
+
+        $this->singleHandler->setFormatter($fileFormatter);
+        $this->dailyHandler->setFormatter($fileFormatter);
+
         // Ensure batch is sent on shutdown
         register_shutdown_function([$this, 'sendBatch']);
     }
 
     protected function write(LogRecord $record): void
     {
+        $this->batchSent = false;
         try {
-            $data = $this->formatRecord($record);
-            $this->batch[] = $data;
+            $extra = Context::pullHidden('__extra') ?? null;
+
+            $logContext = [...$record->context];
+
+            if ($extra) {
+                $logContext['extra'] = $extra;
+            }
+
+            // Create a new record for file logging to ensure clean format
+            $fileRecord = new LogRecord(
+                $record->datetime,
+                $record->channel,
+                $record->level,
+                $record->message,
+                $logContext,
+                $record->extra
+            );
+
+            // Write to Laravel's default log files with original format
+            $this->singleHandler->handle($fileRecord);
+            $this->dailyHandler->handle($fileRecord);
+
+            // Add to Axiom batch with original Axiom format
+            $this->batch[] = $this->formatRecord($record, $extra);
 
             if (count($this->batch) >= $this->batchSize) {
                 $this->sendBatch();
@@ -51,24 +103,31 @@ class AxiomBatchHandler extends AbstractProcessingHandler
         }
     }
 
-    protected function formatRecord(LogRecord $record): array
+    protected function formatRecord(LogRecord $record, $extra = null): array
     {
-        return [
+        $record = [
             'message' => $record->message,
             'context' => $record->context,
             'level' => strtoupper($record->level->getName()),
-            'extra' => $record->extra,
-            'timestamp' => $record->datetime->format('c'),
+            'timestamp' => $record->datetime->format('Y-m-d H:i:s'),
             'environment' => app()->environment(),
             'service' => 'IMCRM',
         ];
+
+        if ($extra) {
+            $record['extra'] = $extra;
+        }
+
+        return $record;
     }
 
-    protected function sendBatch()
+    public function sendBatch()
     {
-        if (empty($this->batch)) {
+        if (empty($this->batch) || $this->batchSent || app()->environment('local')) {
             return;
         }
+
+        $this->batchSent = true;
 
         try {
             $client = new Client;
@@ -87,6 +146,7 @@ class AxiomBatchHandler extends AbstractProcessingHandler
                     count($this->batch)
                 ));
                 $this->batch = [];
+                $this->batchSent = true;
             } else {
                 error_log(sprintf(
                     'Failed to send logs to Axiom. Status code: %d, Response: %s',

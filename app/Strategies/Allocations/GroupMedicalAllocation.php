@@ -19,6 +19,13 @@ class GroupMedicalAllocation extends BaseAllocation
     const TEAM_MICRO = 'micro';
     const TEAM_NON_MICRO = 'non_micro';
 
+    protected function resolveLead(): void
+    {
+        $this->lead = $this->getLeadBaseQuery()
+            ->whereNotNull('health_plan_type_id')
+            ->whereNotNull('number_of_employees')
+            ->first();
+    }
     protected function fetchAdvisor(int $onlineStatus)
     {
         $emails = [];
@@ -28,7 +35,11 @@ class GroupMedicalAllocation extends BaseAllocation
             return null;
         }
         $planType = HealthPlanTypeEnum::typeName($this->lead->health_plan_type_id)?->label();
+        if (empty($this->lead->number_of_employees)) {
+            LoggerService::warning(self::class." - Number of employees is empty | quote Ref-ID: {$this->lead->uuid} | time: ".now());
 
+            return null;
+        }
         $team = $this->getTeamByCriteria($planType, $this->lead->number_of_employees);
 
         LoggerService::info(self::class." - group medical team: {$team} | plan type: {$planType} | number of employees: {$this->lead->number_of_employees} | online status: $onlineStatus |

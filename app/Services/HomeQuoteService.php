@@ -242,6 +242,8 @@ class HomeQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HomeQuote, $request, $response);
+
+            $this->selfAssign(QuoteTypes::HOME, $response->quoteUID);
         }
 
         return $response;
@@ -815,8 +817,19 @@ class HomeQuoteService extends BaseService
             'quoteUID' => $quoteUuId,
             'lang' => 'en',
             'callSource' => 'imcrm',
-            ...$extraData,
         ];
+
+        // Add getLatestRating flag if it exists in extraData
+        if (isset($extraData['getLatestRating'])) {
+            $plansDataArr['getLatestRating'] = $extraData['getLatestRating'];
+        }
+
+        // Add any other extraData parameters
+        foreach ($extraData as $key => $value) {
+            if ($key !== 'getLatestRating') {
+                $plansDataArr[$key] = $value;
+            }
+        }
 
         $client = new \GuzzleHttp\Client;
 
@@ -1025,7 +1038,7 @@ class HomeQuoteService extends BaseService
     {
         $logPrefix = self::class.' fn: isPlanModifyAllowed ';
         $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
-        LoggerService::startQuoteLogging($quote->uuid);
+        LoggerService::startQuoteLogging($quote);
 
         $isAllowed = false;
 
