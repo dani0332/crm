@@ -246,6 +246,7 @@ const onAddUpdate = autoSubmit => {
         childCategory: childCatgeory,
         option_id: option?.id || null,
         quote_uuid: props.reportable.uuid,
+        quote_code: props.reportable.code,
         status: page.props.sendUpdateEnum.NEW_REQUEST,
         ref_id: props.reportable.id,
       };
