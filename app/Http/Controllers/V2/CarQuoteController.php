@@ -19,6 +19,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use PDF;
 
 class CarQuoteController extends Controller
 {
@@ -254,27 +255,6 @@ class CarQuoteController extends Controller
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer', 'vehicleType']);
 
-        // Configure DomPDF options
-        $options = new \Dompdf\Options;
-        $options->set('isRemoteEnabled', true);
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('isPhpEnabled', true);
-        $options->set('defaultFont', 'Prompt');
-        $options->set('defaultMediaType', 'print');
-        $options->set('isFontSubsettingEnabled', true);
-        $options->set('defaultPaperSize', 'A4');
-        $options->set('defaultPaperOrientation', 'portrait');
-        $options->set('chroot', public_path()); // Set root directory for image access
-        $options->set('isJavascriptEnabled', true);
-        $options->set('enable_css_float', true);
-        $options->set('enable_html5_parser', true);
-        $options->set('enable_font_subsetting', true);
-        $options->set('dpi', 150);
-        $options->set('enable_remote', true);
-
-        // Create DomPDF instance with options
-        $dompdf = new \Dompdf\Dompdf($options);
-
         // Convert public_path image references to base64 for embedding
         $imagePaths = [
             'car-banner-pdf-1.png',
@@ -297,19 +277,34 @@ class CarQuoteController extends Controller
                 $imageData[$path] = 'data:image/'.$type.';base64,'.base64_encode(file_get_contents($fullPath));
             }
         }
-
-        // Generate PDF view content using the DOM template (which includes header and footer)
+        
+        // Generate PDF view content using the DOM template
         $html = view('pdf.car_comparision.commercial_car_pdf', compact('quotePlans', 'planIds', 'quote', 'addons', 'imageData'))->render();
-
-        // Load the HTML into DomPDF
+        
+        // Create instance of Dompdf with options
+        $options = new \Dompdf\Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isPhpEnabled', true);
+        $options->set('defaultMediaType', 'print');
+        $options->set('isFontSubsettingEnabled', true);
+        $options->set('defaultPaperSize', 'A4');
+        $options->set('defaultPaperOrientation', 'portrait');
+        $options->set('chroot', public_path());
+        $options->set('isJavascriptEnabled', true);
+        $options->set('enable_css_float', true);
+        $options->set('enable_html5_parser', true);
+        $options->set('enable_font_subsetting', true);
+        $options->set('dpi', 150);
+        $options->set('enable_remote', true);
+        
+        $dompdf = new \Dompdf\Dompdf($options);
         $dompdf->loadHtml($html);
-
-        // Render PDF
         $dompdf->render();
 
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
-        // For JSON response (alternative approach)
+        // For JSON response
         $pdfContent = $dompdf->output();
 
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdfContent), 'name' => $pdfName]);
