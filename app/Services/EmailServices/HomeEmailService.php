@@ -321,9 +321,9 @@ class HomeEmailService extends BaseService
      * OCB date is 30 days before expiry, adjusted for weekends
      * 
      * @param string|Carbon $expiryDate The policy expiry date
-     * @return int Timestamp for the OCB trigger date
+     * @return string Timestamp for the OCB trigger date
      */
-    private function getOCBTriggerTimestamp($expiryDate): int
+    private function getOCBTriggerTimestamp($expiryDate): string
     {
         // Ensure Carbon instance
         $expiry = Carbon::parse($expiryDate);
@@ -351,10 +351,10 @@ class HomeEmailService extends BaseService
     
         // If OCB date is already in the past, return timestamp for 10 minutes from now
         if ($ocbDate->lessThanOrEqualTo($now)) {
-            return strtotime('+10 minutes'); 
+            return (string)strtotime('+10 minutes'); 
         }
     
         // Return timestamp for the OCB date
-        return $ocbDate->timestamp;
+        return (string)$ocbDate->timestamp;
     }
 }

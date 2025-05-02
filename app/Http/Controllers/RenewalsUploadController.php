@@ -32,6 +32,7 @@ use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Jobs\ScheduleHomeRenewalOcbEmails;
+use App\Services\Logger\LoggerService;
 class RenewalsUploadController extends Controller
 {
     private $renewalsUploadFileService;
@@ -108,6 +109,9 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
+
+
+        LoggerService::info(message: 'FetchPlansNonMotor FN: fetchPlansNonMotor'.' Fetch plans started for batch '.$batch.' and quoteType '.$quoteType);
 
         $totalPending = RenewalQuoteProcess::where([
             'quote_type' => $quoteType,
