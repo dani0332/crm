@@ -163,6 +163,9 @@ return [
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_DB', '0'),
             'read_write_timeout' => env('REDIS_RW_TIMEOUT', '0'),
+            'timeout' => env('REDIS_RW_TIMEOUT', '0'),
+            'persistent' => env('REDIS_PERSISTENT', true),
+            'persistent_id' => env('REDIS_PERSISTENT_ID', 'laravel_redis_cache_pool'),
         ],
 
         'cache' => [
