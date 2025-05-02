@@ -278,34 +278,18 @@ class CarQuoteController extends Controller
             }
         }
 
-        // Generate PDF view content using the DOM template
-        $html = view('pdf.car_comparision.commercial_car_pdf', compact('quotePlans', 'planIds', 'quote', 'addons', 'imageData'))->render();
-
-        // Create instance of Dompdf with options
-        $options = new \Dompdf\Options;
-        $options->set('isRemoteEnabled', true);
-        $options->set('isHtml5ParserEnabled', true);
-        $options->set('isPhpEnabled', true);
-        $options->set('defaultMediaType', 'print');
-        $options->set('isFontSubsettingEnabled', true);
-        $options->set('defaultPaperSize', 'A4');
-        $options->set('defaultPaperOrientation', 'portrait');
-        $options->set('chroot', public_path());
-        $options->set('isJavascriptEnabled', true);
-        $options->set('enable_css_float', true);
-        $options->set('enable_html5_parser', true);
-        $options->set('enable_font_subsetting', true);
-        $options->set('dpi', 150);
-        $options->set('enable_remote', true);
-
-        $dompdf = new \Dompdf\Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->render();
-
-        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+        // Generate PDF using the service
+        $result = app(CarQuoteService::class)->exportCompanyCarPdf($quoteType, $data, $quotePlans, $imageData);
+        
+        if (isset($result['error'])) {
+            return response()->json($result);
+        }
+        
+        $pdf = $result['pdf'];
+        $pdfName = $result['name'];
 
         // For JSON response
-        $pdfContent = $dompdf->output();
+        $pdfContent = $pdf->output();
 
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdfContent), 'name' => $pdfName]);
     }

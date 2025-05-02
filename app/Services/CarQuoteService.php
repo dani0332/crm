@@ -2093,4 +2093,32 @@ class CarQuoteService extends BaseService
 
         return response()->json(['success' => true]);
     }
+
+    public function exportCompanyCarPdf($quoteType, $data, $quotePlans = null, $imageData = [])
+    {
+        $planIds = $data['plan_ids'];
+        $addons = (isset($data['addons'])) ? $data['addons'] : null;
+
+        if ($quotePlans == null) {
+            $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        }
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
+
+        $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }, 'customer', 'vehicleType']);
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isRemoteEnabled' => true])
+            ->loadView('pdf.car_comparision.commercial_car_pdf', compact('quotePlans', 'planIds', 'quote', 'addons', 'imageData'));
+
+        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
+    }
 }
