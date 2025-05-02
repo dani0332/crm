@@ -469,6 +469,11 @@ function screeningFormValidate() {
     isValid = false;
   }
   // Individual customer validation
+  document.getElementById("customer-type-field").scrollIntoView({
+    behavior: "smooth",
+    block: "nearest",
+    inline: "start"
+  });
   if (
     screeningFormDetails.customer_type == customerTypeEnum.Individual ||
     screeningFormDetails.customer_type == null
@@ -711,7 +716,7 @@ const handleModalClose = () => {
   >
     <x-form @submit="submitScreeningForm" :auto-focus="false">
       <x-field label="Customer Type" required>
-        <div class="grid md:grid-cols-3">
+        <div class="grid md:grid-cols-3" id="customer-type-field">
           <x-select
             v-model="screeningFormDetails.customer_type"
             :options="customerTypeOptions"
