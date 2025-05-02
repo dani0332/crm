@@ -280,11 +280,11 @@ class CarQuoteController extends Controller
 
         // Generate PDF using the service
         $result = app(CarQuoteService::class)->exportCompanyCarPdf($quoteType, $data, $quotePlans, $imageData);
-        
+
         if (isset($result['error'])) {
             return response()->json($result);
         }
-        
+
         $pdf = $result['pdf'];
         $pdfName = $result['name'];
 
