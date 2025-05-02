@@ -1268,7 +1268,7 @@ class CentralService extends BaseService
 
         return ['status' => true, 'message' => 'Insurer payment link removed'];
     }
-    
+
     // Todo: This method will remove in future if Business confirm we will enable capture of all providers
     private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
     {
