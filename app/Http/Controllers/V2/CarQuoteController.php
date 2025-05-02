@@ -16,13 +16,10 @@ use App\Repositories\UserRepository;
 use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
 use App\Traits\GenericQueriesAllLobs;
-use Barryvdh\Snappy\Facades\SnappyPdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Knp\Snappy\Pdf;
-
-// use Barryvdh\Snappy\Facades\SnappyPdf;
+use PDF;
 
 class CarQuoteController extends Controller
 {
@@ -234,9 +231,8 @@ class CarQuoteController extends Controller
         return back()->with('success', 'Event Followup sending successful');
     }
 
-    public function generatePdfwithSnappy(Request $request)
+    public function generateCompanyCarPdf(Request $request)
     {
-
         $data = [
             'quote_uuid' => $request->quote_uuid,
             'plan_ids' => $request->plan_ids,
@@ -256,35 +252,46 @@ class CarQuoteController extends Controller
         $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
 
         $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
-            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
-        }, 'customer']);
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }, 'customer', 'vehicleType']);
 
-        // Define consistent PDF options for both documents
-        $pdfOptions = [
-            'disable-external-links' => false,
-            'enable-local-file-access' => true,
-            'enable-internal-links' => true,
-            'enable-javascript' => true,
-            'javascript-delay' => 1000,
-            'no-stop-slow-scripts' => true,
-            'page-size' => 'A4',
-            'margin-top' => 20,
-            'margin-right' => 0,
-            'margin-bottom' => 33,
-            'margin-left' => 0,
-            'encoding' => 'UTF-8',
+        // Convert public_path image references to base64 for embedding
+        $imagePaths = [
+            'car-banner-pdf-1.png',
+            'car-pdf-banner-2.png',
+            'home_pdf_second_last_page_with_header.jpg',
+            'car-comparision-4-image-1.png',
+            'quote_plans_pages/ecom_home/open_in_new_icon.png',
+            'quote_plans_pages/ecom_home/mail_icon.png',
+            'quote_plans_pages/ecom_home/smartphone_icon.png',
+            'whatsapp-small.png',
+            'quote_plans_pages/ecom_home/phone_callback_icon.png',
+            'quote_plans_pages/ecom_home/call_icon.png',
         ];
 
-        // Generate main PDF in memory with header and footer
-        $mainPdfContent = SnappyPdf::loadView('pdf.car_comparision.main', compact('quotePlans', 'planIds', 'quote', 'addons'))
-            ->setOption('header-html', view('pdf.car_comparision.header', []))
-            ->setOption('footer-html', view('pdf.car_comparision.footer', compact('quote')))
-            ->setOptions($pdfOptions)
-            ->download();
+        $imageData = [];
+        foreach ($imagePaths as $path) {
+            $fullPath = public_path('images/'.$path);
+            if (file_exists($fullPath)) {
+                $type = pathinfo($fullPath, PATHINFO_EXTENSION);
+                $imageData[$path] = 'data:image/'.$type.';base64,'.base64_encode(file_get_contents($fullPath));
+            }
+        }
 
-        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+        // Generate PDF using the service
+        $result = app(CarQuoteService::class)->exportCompanyCarPdf($quoteType, $data, $quotePlans, $imageData);
 
-        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($mainPdfContent), 'name' => $pdfName]);
+        if (isset($result['error'])) {
+            return response()->json($result);
+        }
 
+        $pdf = $result['pdf'];
+        $pdfName = $result['name'];
+
+        // For JSON response
+        $pdfContent = $pdf->output();
+
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdfContent), 'name' => $pdfName]);
     }
+
 }
