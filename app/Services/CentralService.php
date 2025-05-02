@@ -1005,6 +1005,7 @@ class CentralService extends BaseService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
+        LoggerService::info('fn:checkStatusSUStatusLogs - Start - CentralService');
         $sendUpdateStatusArray = is_string($sendUpdateStatus) ? [$sendUpdateStatus] : $sendUpdateStatus;
 
         $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatusArray) {

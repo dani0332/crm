@@ -44,6 +44,7 @@ use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -358,6 +359,7 @@ class SendUpdateLogService
 
     public function createChildLead($quoteModel, $requestData, $quoteTypeCode)
     {
+        LoggerService::info('fn:createChildLead - Start - SendUpdateLogService');
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
 
@@ -366,6 +368,10 @@ class SendUpdateLogService
         if ($quoteTypeCode == quoteTypeCode::Travel && (! is_null($quoteObject->child))) {
             $countChildRecords += 1;
         }
+        LoggerService::info('child lead counting', extra: [
+            'countChildRecords' => $countChildRecords,
+            'quoteCode' => $quoteObject->code,
+        ]);
 
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
@@ -391,6 +397,9 @@ class SendUpdateLogService
                 'quote_link' => implode('/', $explodeQuoteLink),
                 'renewal_batch' => $quoteObject->renewal_batch ?? null,
             ];
+            LoggerService::info('child lead created', extra: [
+                'code' => $quoteObject->code.'-'.$countChildRecords,
+            ]);
 
             if ($quoteTypeCode == quoteTypeCode::Travel) {
                 $updateReplicateDetails['parent_id'] = null;
@@ -419,6 +428,8 @@ class SendUpdateLogService
 
     public function linkedQuoteDetails($quoteTypeCode, $quote)
     {
+        LoggerService::info('fn:linkedQuoteDetails - Start - SendUpdateLogService');
+
         $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
         $quoteModel = $this->getModelObject($quoteTypeCode);
         $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get();
@@ -447,6 +458,8 @@ class SendUpdateLogService
 
     public function isNegativeValue($sendUpdateLog): bool
     {
+        LoggerService::info('fn:isNegativeValue - Start - SendUpdateLogService');
+
         $category = $sendUpdateLog->category->code;
 
         if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
@@ -514,6 +527,8 @@ class SendUpdateLogService
 
     public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType): array
     {
+        LoggerService::info('fn:getInvoiceDescription - Start - SendUpdateLogService');
+
         [$insuranceProviderId, $planId] = $this->getEndorsementProviderDetails($sendUpdateLog);
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
@@ -560,6 +575,8 @@ class SendUpdateLogService
 
     public function getPayments($quoteId, $quoteUuid, $quoteType)
     {
+        LoggerService::info('fn:getPayments - Start - SendUpdateLogService');
+
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
             $payments = $repository::getBy('uuid', $quoteUuid)->payments;
@@ -593,6 +610,8 @@ class SendUpdateLogService
 
     public function getUpdateButtonStatus($sendUpdateLog): string
     {
+        LoggerService::info('fn:getUpdateButtonStatus - Start - SendUpdateLogService');
+
         $category = $sendUpdateLog->category->code;
         $option = $sendUpdateLog?->option?->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
@@ -663,6 +682,8 @@ class SendUpdateLogService
 
     public function isPaymentVisible($categoryCode, $optionCode): bool
     {
+        LoggerService::info('fn:isPaymentVisible - Start - SendUpdateLogService');
+
         // categories in which we have to show manage payments.
         $categories = [
             SendUpdateLogStatusEnum::EF,
@@ -690,12 +711,16 @@ class SendUpdateLogService
 
     public function isPolicyDetailsVisible($categoryCode, $optionCode): bool
     {
+        LoggerService::info('fn:isPolicyDetailsVisible - Start - SendUpdateLogService');
+
         return $categoryCode == SendUpdateLogStatusEnum::CPD ||
                ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE);
     }
 
     public function getSendUpdatePayments($sendUpdateLog, $quoteType)
     {
+        LoggerService::info('fn:getSendUpdatePayments - Start - SendUpdateLogService');
+
         $payments = $sendUpdateLog->payments;
         if ($payments) {
             $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser', 'paymentSplits.processJob', 'paymentSplits.paymentCharges']);
@@ -1130,26 +1155,23 @@ class SendUpdateLogService
 
     public function checkSendUpdatePermission($sendUpdateType): bool
     {
-        switch ($sendUpdateType) {
-            case SendUpdateLogStatusEnum::EF:
-                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD);
-            case SendUpdateLogStatusEnum::EN:
-                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD);
-            case SendUpdateLogStatusEnum::CI:
-                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD);
-            case SendUpdateLogStatusEnum::CIR:
-                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD);
-            case SendUpdateLogStatusEnum::CPU:
-                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD);
-            case SendUpdateLogStatusEnum::CPD:
-                return ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD);
-            default:
-                return false;
-        }
+        LoggerService::info('fn:checkSendUpdatePermission - Start - SendUpdateLogService');
+
+        return match ($sendUpdateType) {
+            SendUpdateLogStatusEnum::EF => ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_FIN_ADD),
+            SendUpdateLogStatusEnum::EN => ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_ENDO_NON_FIN_ADD),
+            SendUpdateLogStatusEnum::CI => ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD),
+            SendUpdateLogStatusEnum::CIR => ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD),
+            SendUpdateLogStatusEnum::CPU => ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD),
+            SendUpdateLogStatusEnum::CPD => ! auth()->user()->can(PermissionsEnum::SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD),
+            default => false,
+        };
     }
 
     public function getAdditionalOptionsForCar($sendUpdateLog): array
     {
+        LoggerService::info('fn:getAdditionalOptionsForCar - Start - SendUpdateLogService');
+
         $data = [];
         switch ($sendUpdateLog->category->code) {
             case SendUpdateLogStatusEnum::EF:
@@ -1269,6 +1291,8 @@ class SendUpdateLogService
      */
     public function isPlanDetailAvailable($sendUpdateLog): bool
     {
+        LoggerService::info('fn:isPlanDetailAvailable - Start - SendUpdateLogService');
+
         if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
             in_array($sendUpdateLog->option?->code, [
                 SendUpdateLogStatusEnum::MDOM,
@@ -1292,6 +1316,8 @@ class SendUpdateLogService
 
     public function getSendUpdateDocuments($category, $option): array
     {
+        LoggerService::info('fn:getSendUpdateDocuments - Start - SendUpdateLogService');
+
         $documentTypesByCategory = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
 
         foreach ($documentTypesByCategory as $documentCategory => $documentTypes) {
@@ -1549,6 +1575,8 @@ class SendUpdateLogService
 
     public function isEditDisabledForQueuedBooking($sendUpdateLog): bool
     {
+        LoggerService::info('fn:isEditDisabledForQueuedBooking - Start - SendUpdateLogService');
+
         $sendUpdateLogStatus = $sendUpdateLog->status;
         if ($sendUpdateLogStatus == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
             return true;
@@ -1573,6 +1601,8 @@ class SendUpdateLogService
      */
     public function commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId): bool
     {
+        LoggerService::info('fn:commissionVatNotApplicableEnabled - Start - SendUpdateLogService');
+
         return app(CentralService::class)->commissionVatNotApplicableEnabled($quoteType, $businessTypeOfInsuranceId);
     }
 
@@ -1599,6 +1629,8 @@ class SendUpdateLogService
      */
     public function disableMainBtn($sendUpdateLog, $payment = [], $brokerCommission = null): string
     {
+        LoggerService::info('fn:disableMainBtn - Start - SendUpdateLogService');
+
         if (in_array($sendUpdateLog->category?->code, [
             SendUpdateLogStatusEnum::EF,
             SendUpdateLogStatusEnum::CI,

@@ -34,6 +34,7 @@ use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -54,6 +55,8 @@ class SendUpdateLogController extends Controller
      */
     public function store(Request $request)
     {
+        LoggerService::startQuoteLogging($request->quote_code);
+        LoggerService::info('fn:store - Start - SendUpdateLogController');
         try {
             DB::beginTransaction();
 
@@ -70,6 +73,7 @@ class SendUpdateLogController extends Controller
 
             $this->updateQuoteLeadStatus($requestData, 'create');
             if ($categoryCode == SendUpdateLogStatusEnum::CIR) {
+                LoggerService::startQuoteLogging($response->code);
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
@@ -79,7 +83,7 @@ class SendUpdateLogController extends Controller
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            info('Create send update - Failed - Error : '.$exception->getMessage());
+            LoggerService::error('Create send update - Failed', extra: ['exception' => $exception->getMessage()]);
 
             return redirect()->back()->with('error', 'Failed to create send update');
         }
@@ -116,6 +120,8 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        LoggerService::startQuoteLogging($sendUpdateLog->code);
+        LoggerService::info('fn:show - Start - SendUpdateLogController');
         $isSentOrBooked = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             SendUpdateLogStatusEnum::UPDATE_BOOKED]) || in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED]);
 
@@ -293,6 +299,7 @@ class SendUpdateLogController extends Controller
 
     public function updateQuoteLeadStatus($data, $type)
     {
+        LoggerService::info('fn:updateQuoteLeadStatus - Start - SendUpdateLogController');
         $quoteUuid = $data['quote_uuid'];
 
         $quoteTypeId = $data['quote_type_id'];
@@ -326,7 +333,6 @@ class SendUpdateLogController extends Controller
                     break;
             }
         } else {
-
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                 case SendUpdateLogStatusEnum::CI:

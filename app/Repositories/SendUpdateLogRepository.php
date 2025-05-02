@@ -18,6 +18,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -35,11 +36,13 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchCreate($data)
     {
+        LoggerService::info('fn:fetchCreate - Start - SendUpdateLogRepository');
         try {
             $category = $data['childCategory']['slug']; // EF, EN, CI, CIR, CPU, CPD.
             $count = $this->fetchGetCount($category); // get count of send update log by category.
             $baseCode = $category.'-'.date('m').date('y').'-'; // CPD-0824- or EF-0824- etc.
             $code = $baseCode.($count + 1); // CPD-0824-48 or EF-0824-48 etc.
+            LoggerService::info('Code generated for new send update log', extra: ['code' => $code]);
             $quoteServiceFile = $insuranceProviderId = $plan_id = null;
 
             $attempts = 0;
@@ -50,10 +53,12 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             if ($attempts >= 10) {
+                LoggerService::info('Send Update Log Code generation failed after 10 attempts');
                 vAbort('Send Update Log Code generation failed.');
             }
 
             $uuid = strtoupper(Str::random(6));
+            LoggerService::info('UUID generated for new send update log', extra: ['code' => $code, 'uuid' => $uuid]);
 
             $personalQuote = $this->updatePersonalQuote($data['quote_uuid'], $data['quote_type_id'], []);
 
@@ -79,7 +84,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $category, $plan_id);
             } elseif ($quote->insly_id || $quote->insly_migrated) {
                 $insuranceProviderId = $quote?->insurance_provider_id ?? null;
-                info('Insurance Provider ID: '.$insuranceProviderId.' selected for Send Update (Legacy) - uuid: '.$uuid.' quote_uuid: '.$data['quote_uuid']);
+                LoggerService::info('Insurance Provider ID: '.$insuranceProviderId.' selected for Send Update (Legacy) - uuid: '.$uuid.' quote_uuid: '.$data['quote_uuid']);
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
@@ -94,6 +99,12 @@ class SendUpdateLogRepository extends BaseRepository
                 QuoteStatusLog::create([
                     'quote_type_id' => $data['quote_type_id'],
                     'quote_request_id' => $data['personal_quote_id'],
+                    'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
+                ]);
+
+                LoggerService::info('Quote status changed', extra: [
+                    'code' => $code,
+                    'uuid' => $uuid,
                     'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
                 ]);
 
@@ -114,7 +125,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'created_by' => auth()->user()->id,
             ], $policyDetails));
 
-            info('Send Update Log created successfully - uuid: '.$sendUpdate->uuid.' quote_uuid: '.$sendUpdate->quote_uuid);
+            LoggerService::info('Send Update Log created successfully - uuid: '.$sendUpdate->uuid.' quote_uuid: '.$sendUpdate->quote_uuid);
         } catch (\Exception $ex) {
             $sendUpdate = (object) [
                 'message' => $ex->getMessage(),
@@ -136,6 +147,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchUpdateLog($id, $data)
     {
+        LoggerService::info('fn:fetchUpdateLog - Start - SendUpdateLogRepository');
+
         try {
             $sendUpdate = $this->find($id)->update([
                 'notes' => $data['notes'],
@@ -154,9 +167,17 @@ class SendUpdateLogRepository extends BaseRepository
         return $sendUpdate;
     }
 
+    /**
+     * Fetches and returns the count of records with a specific code pattern for the current month
+     * in code where clause, added - hyphen sign to get actual difference like CI and CIR.
+     *
+     * @param  string  $code  The code prefix to search for (will be matched with a trailing hyphen)
+     * @return int The count of matching records for the current month
+     */
     public function fetchGetCount($code)
     {
-        // in code where clause, added - hyphen sign to get actual difference like CI and CIR.
+        LoggerService::info('fn:fetchGetCount - Start - SendUpdateLogRepository');
+
         return $this->where('code', 'like', "%$code-%")->whereMonth('created_at', '=', date('m'))->count();
     }
 
@@ -397,6 +418,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSendUpdateOptions($quoteTypeId, $parentId, $status, $businessInsuranceTypeId = null)
     {
+        LoggerService::info('fn:fetchSendUpdateOptions - Start - SendUpdateLogRepository');
+
         $query = Lookup::where('quote_type_id', $quoteTypeId)->where('parent_id', $parentId);
         if ($quoteTypeId == QuoteTypeId::Business && in_array($status, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN])) {
             if (! in_array($businessInsuranceTypeId, [quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet), quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)])) {
@@ -446,6 +469,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchGetSendUpdateLogInvoices($quoteTypeId, $quoteUuid)
     {
+        LoggerService::info('fn:fetchGetSendUpdateLogInvoices - Start - SendUpdateLogRepository');
+
         return $this->query()
             ->where('quote_uuid', $quoteUuid)
             ->where('quote_type_id', $quoteTypeId)
