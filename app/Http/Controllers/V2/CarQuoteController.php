@@ -277,12 +277,12 @@ class CarQuoteController extends Controller
                 $imageData[$path] = 'data:image/'.$type.';base64,'.base64_encode(file_get_contents($fullPath));
             }
         }
-        
+
         // Generate PDF view content using the DOM template
         $html = view('pdf.car_comparision.commercial_car_pdf', compact('quotePlans', 'planIds', 'quote', 'addons', 'imageData'))->render();
-        
+
         // Create instance of Dompdf with options
-        $options = new \Dompdf\Options();
+        $options = new \Dompdf\Options;
         $options->set('isRemoteEnabled', true);
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isPhpEnabled', true);
@@ -297,7 +297,7 @@ class CarQuoteController extends Controller
         $options->set('enable_font_subsetting', true);
         $options->set('dpi', 150);
         $options->set('enable_remote', true);
-        
+
         $dompdf = new \Dompdf\Dompdf($options);
         $dompdf->loadHtml($html);
         $dompdf->render();
