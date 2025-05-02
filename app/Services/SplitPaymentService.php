@@ -604,7 +604,7 @@ class SplitPaymentService
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 
         $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
-        $paymentLinkURL = $paymentLink.'/redirect/'.$quoteTypeId.'/'.$quoteModel->uuid.'/'.$quoteModel->plan?->id ?? '' . '?uuid='. $ftcEmailLog->uuid;
+        $paymentLinkURL = $paymentLink.'/redirect/'.$quoteTypeId.'/'.$quoteModel->uuid.'/'.$quoteModel->plan?->id ?? ''.'?uuid='.$ftcEmailLog->uuid;
 
         return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
     }
