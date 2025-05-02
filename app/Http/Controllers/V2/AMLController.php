@@ -496,6 +496,8 @@ class AMLController extends Controller
                     'insured_id' => $insuredPersonDetails->id,
                 ]);
 
+                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredPersonDetails);
+
                 if ($customer->isDirty() ||
                     ! isset($getLastScreening->created_at) ||
                     Carbon::parse($customer->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')
@@ -660,6 +662,8 @@ class AMLController extends Controller
                     'insured_id' => $insuredEntityDetails->id,
                 ]);
 
+                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredPersonDetails);
+
                 if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
                     $updateQuote->company_address = $AMLCheckRequest->company_address;
@@ -684,6 +688,17 @@ class AMLController extends Controller
         }
 
         return $this->handleResponse(false, 'Something went wrong', $isAutomation);
+    }
+
+    private function updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredPersonDetails)
+    {
+        $getPersonalQuote = PersonalQuote::where(['uuid' => $updateQuote->uuid, 'quote_type_id' => $quoteTypeId])->first();
+        if ($getPersonalQuote) {
+            $getPersonalQuote->insured_id = $insuredPersonDetails->id;
+            $getPersonalQuote->save();
+        }
+
+        return $getPersonalQuote;
     }
 
     public function fetchEntity(Request $request)
