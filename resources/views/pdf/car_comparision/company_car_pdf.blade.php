@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Plans Comparison PDF</title>
+    <title>Car Insurance Comparison PDF</title>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
@@ -33,6 +33,7 @@
         padding: 0;
         font-size: 12px;
         font-weight: 400;
+        color: #333333;
     }
 
     div,
@@ -400,8 +401,6 @@
         height: 150px;
     }
 
-
-
     /* Bottom Header Container */
     .header-bottom {
         width: 100%;
@@ -455,16 +454,16 @@
         width: 100%;
         background-color: #1d83bc;
         color: #ffffff;
-        padding: 10px;
+        padding: 10px 10px 15px 10px;
         text-align: center;
-        height: 160px;
+        height: 140px;
     }
 
     .footer-table {
         width: 100%;
         table-layout: fixed;
         border-collapse: collapse;
-        color: #ffffff
+        color: #ffffff;
     }
 
     .footer-td {
@@ -509,8 +508,6 @@
     .footer-content-2{
         font-size: 13px !important;
     }
-
-
 
     .advisor-section {
         display: table;
@@ -560,126 +557,134 @@
         vertical-align: baseline;
         display: inline-block;
     }
+
+    .section-header {
+        background-color: #1D83BC !important;
+        color: white !important;
+        font-family: 'Raleway', sans-serif !important;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 5px;
+        width: 100% !important;
+        text-align: left;
+    }
 </style>
 </head>
 
 <body>
-    {{-- First Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_first_page_with_header_and_footer.jpg') }}" class="full-page-image" style="height: 100%;"/>
-    <div style="page-break-after: always;"></div>
-    {{-- Second Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_page_with_header.jpg') }}" class="full-page-image" />
-    <div style="page-break-after: always;"></div>
+@php
+    $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
+    $plans = [];
 
-    @php
-        $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
-        $plans = [];
-        $benefits = ['exclusion', 'inclusion', 'content', 'personalBelonging', 'building', 'additionalCover'];
-        $vatPercentage =
-            \App\Models\ApplicationStorage::where('key_name', \App\Enums\ApplicationStorageEnums::VAT_VALUE)->first()
-                ->value ?? 0;
+    foreach ($quotePlans->quotes->plans as &$quotePlan)
+    {
+        $addonsPrice = 0;
+        $addonsVat   = 0;
 
-        $buyNow = 'Buy Now';
-        $buyNowLink = $websiteURL . '/home-insurance/quote/' . $quote->uuid . '/payment/';
-        if (isset($selectedPlanIds)) {
-        } else {
-            $selectedPlanIds = [];
+        if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
+            continue;
         }
 
-        foreach ($quotePlans->quotes->plans as &$quotePlan) {
-            if (!isset($quotePlan->id) || !in_array($quotePlan->id, $planIds)) {
-                continue;
-            }
+        $quotePlan->exclusion = json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson());
+        $quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
+        $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
+        $quotePlan->roadSideAssistance = json_decode(collect($quotePlan->benefits->roadSideAssistance)->keyBy('code')->toJson());
+        $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
-            $plans[$quotePlan->id] = $quotePlan;
-            $quotePlan->total = 0;
-            if (!isset($quotePlan->vat)) {
-                $quotePlan->vat = 0;
-            }
+        foreach ($quotePlan->addons as &$addon) {
 
-            foreach ($benefits as $benefit) {
-                $quotePlan->{$benefit} = [];
-                if (isset($quotePlan->benefits->{$benefit})) {
-                    $quotePlan->{$benefit} = json_decode(
-                        collect(@$quotePlan->benefits->{$benefit})
-                            ->keyBy('code')
-                            ->toJson(),
-                    );
+            $addon = (object) $addon;
+            //set default value to excluded
+            $addon->value = "Excluded";
+
+            //set default values
+            $addon->price = 0;
+            $addon->vat = 0;
+
+            if(sizeof($addon->carAddonOption))
+            {
+                //replace exclude with selected value if found
+
+                foreach ($addon->carAddonOption as $index =>  $carAddonOption) {
+
+                    $carAddonOption = (object) $carAddonOption;
+
+                    if($carAddonOption->isSelected) {
+                        $addon->value = 'Included';
+                        $addonsPrice += $carAddonOption->price;
+                        $addonsVat += $carAddonOption->vat;
+                        $addon->price = $carAddonOption->price;
+                        $addon->vat   = $carAddonOption->vat;
+                        break;//only one value will be selected
+                    }
                 }
             }
-
-            $quotePlan->exclusion = isset($quotePlan->benefits->exclusion)
-                ? json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson())
-                : [];
-
-            $quotePlan->inclusion = isset($quotePlan->benefits->inclusion)
-                ? json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson())
-                : [];
-
-            $quotePlan->content = isset($quotePlan->benefits->content)
-                ? json_decode(collect($quotePlan->benefits->content)->keyBy('code')->toJson())
-                : [];
-
-            $quotePlan->personalBelonging = isset($quotePlan->benefits->personalBelonging)
-                ? json_decode(collect($quotePlan->benefits->personalBelonging)->keyBy('code')->toJson())
-                : [];
-
-            $quotePlan->additionalCover = isset($quotePlan->benefits->additionalCover)
-                ? json_decode(collect($quotePlan->benefits->additionalCover)->keyBy('code')->toJson())
-                : [];
-
-            $quotePlan->building = isset($quotePlan->benefits->building)
-                ? json_decode(collect($quotePlan->benefits->building)->keyBy('code')->toJson())
-                : [];
-
-            $quotePlan->contentAndPersonalBelonging = isset($quotePlan->benefits->contentAndPersonalBelonging)
-                ? json_decode(collect($quotePlan->benefits->contentAndPersonalBelonging)->keyBy('code')->toJson())
-                : [];
-
-            $quotePlan->fineArtAndCollectible = isset($quotePlan->benefits->fineArtAndCollectible)
-                ? json_decode(collect($quotePlan->benefits->fineArtAndCollectible)->keyBy('code')->toJson())
-                : [];
-
-            $quotePlan->jewelleryAndValuable = isset($quotePlan->benefits->jewelleryAndValuable)
-                ? json_decode(collect($quotePlan->benefits->jewelleryAndValuable)->keyBy('code')->toJson())
-                : [];
-
-            $discountPremium = $vat = [];
-
-            $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
-
-            foreach ($quotePlan->benefits as &$benefit) {
-                $benefit = (object) $benefit;
-                $benefit->value = 'Excluded';
-                $benefit->price = 0;
-                $benefit->vat = 0;
-            }
         }
 
-        $plans = array_filter(
-            $plans,
-            function ($planId) use ($planIds) {
-                return in_array($planId, $planIds);
-            },
-            ARRAY_FILTER_USE_KEY,
-        );
+        $quotePlan->repairTypeInfo = ($quotePlan->repairType == \App\Enums\CarPlanType::COMP) ? \App\Enums\CarPlanType::NONAGENCY : $quotePlan->repairType;
+        $quotePlan->discountPremium += $addonsPrice;
+        $quotePlan->vat += $addonsVat;
+        $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat;
+        $plans[$quotePlan->id] = $quotePlan;
+    }
 
-        $planIds = collect($plans)
-            ->filter(function ($plan) {
-                return !$plan->isDisabled && $plan->isRatingAvailable;
-            })
-            ->sortByDesc('isRenewal')
-            ->pluck('id')
-            ->toArray();
+    $plans = collect($plans);
+
+    if(!isset($quotePlans->isDataSorted)) {
+        $plans->sortByDesc('isRenewal');
+    }
+
+    $planIds = $plans->pluck('id')->toArray();
 
 
-            if(count($planIds) == 5){
-                $tableClass = 'is-full';
-            }
-            else{
-                $tableClass = 'not-full';
-            }
-    @endphp
+    $features = [
+        ["code" => "heading", "title" => "Benefits"],
+        ["code" => "damage", "title" => "Loss or damage to the insured vehicle", "type" => ["feature", "inclusion", "exclusion"]],
+        ["code" => "damageLimit", "title" => "Third party property liability", "type" => "feature"],
+        ["code" => "bloodMoney", "title" => "Blood money", "type" => ["inclusion", "exclusion"]],
+        ["code" => "fireAndTheft", "title" => "Fire and theft cover", "type" => ["inclusion", "exclusion"]],
+        ["code" => "stormAndFlood", "title" => "Storm, flood", "type" => ["inclusion", "exclusion"]],
+        ["code" => "riotAndStrike", "title" => "Natural perils riot and strike", "type" => ["inclusion", "exclusion"]],
+        ["code" => "repairTypeInfo", "title" => "Repairs", "type" => "prop"],
+        ["code" => "emergencyMedicalExpenses", "title" => "Emergency medical expenses", "type" => ["inclusion", "exclusion"]],
+        ["code" => "personalBelongings", "title" => "Personal belongings", "type" => ["inclusion", "exclusion"]],
+        ["code" => "omanCover", "title" => "Oman cover (orange card not included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
+        ["code" => "offRoadCover", "title" => "Off-road cover", "type" => ["addons", "inclusion", "inclusion", "roadSideAssistance"]],
+        ["code" => "guaranteedRepairs", "title" => "Guaranteed repairs", "type" => ["inclusion", "exclusion"]],
+        ["code" => "breakdownCover", "title" => "24 hour accident and breakdown recovery", "type" => "addons"],
+        ["code" => "ambulanceCover", "title" => "Ambulance cover", "type" => ["inclusion", "exclusion"]],
+        ["code" => "excessForWindscreenDamage", "title" => "Excess for windscreen damage", "type" => ["inclusion", "exclusion"]],
+        ["code" => "heading", "title" => "Optional covers", "type" => ""],
+        ["code" => "driverCover", "title" => "Driver cover", "type" => "addons"],
+        ["code" => "passengerCover", "title" => "Passengers cover", "type" => "addons"],
+        ["code" => "carHire", "title" => "Hire car benefit", "type" => "addons"],
+        ["code" => "spacer"],
+        ["code" => "discountPremium", "title" => "Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "spacer"],
+        ["code" => "vat", "title" => "Vat amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "spacer"],
+        ["code" => "total", "title" => "Payable amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "spacer"],
+        ["type" => "buy", "heading_class" => "no-border"],
+        ["code" => "spacer"],
+        ["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "spacer"],
+        ["code" => "ancillaryExcess", "title" => "Ancillary excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+    ];
+
+    if(count($planIds) == 5){
+        $tableClass = 'is-full';
+} else {
+        $tableClass = 'not-full';
+    }
+@endphp
+
+    {{-- First Page --}}
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_first_page.jpg') }}" class="full-page-image" style="height: 100%;"/>
+    <div style="page-break-after: always;"></div>
+    {{-- Second Page --}}
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_page.jpg') }}" class="full-page-image" />
+    <div style="page-break-after: always;"></div>
 
     {{-- PDF Page Header --}}
     <header>
@@ -690,26 +695,30 @@
             <div class="header-bottom">
                 <!-- Left Side Text -->
                 <div class="header-text">
-                    <strong class="raleway-font" style="font-weight: 600 !important;">Home insurance comparison table</strong>
+                    <strong class="raleway-font" style="font-weight: 600 !important;">Car Insurance comparison Table</strong>
                     <span class="separator">|</span>
-                    Name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span>
+                    Company name: <span class="header-text-highlight">{{ $quote->company_name }}</span>
                     <span class="separator">|</span>
-                    Property type: <span class="header-text-highlight">{{ $accommodationText }}</span>
+                    Car type: <span class="header-text-highlight">{{ @$quote->vehicleType->text }}</span>
                     <span class="separator">|</span>
-                    Coverage type: <span class="header-text-highlight">{{ $coverageText }}</span>
+                    Year: <span class="header-text-highlight">{{ @$quote->year_of_manufacture }}</span>
                 </div>
             
                 <!-- Right Side Quote Number -->
                 <div class="quote-number">
-                    Quote reference number: <strong>{{ $quote->code }}</strong>
+                    Quote reference number: <strong>CAR-{{ $quote->uuid }}</strong>
                 </div>
             </div>
-            
         </div>
     </header>
     
     {{-- PDF Page Inner Content --}}
     <main>
+        @if(count($planIds) > 0)
+        @php
+            // Limit to maximum 5 plans
+            $displayPlans = array_slice($planIds, 0, 5);
+        @endphp
         <table class="main-table {{ $tableClass }}">
             <thead>
                 <p style="margin-top:200px"></p>
@@ -718,17 +727,17 @@
                         <p class="quote-info raleway-font" style="font-weight:700;">Insurance company
                         </p>
                     </th>
-                    @foreach ($planIds as $planId)
+                    @foreach($displayPlans as $planId)
                         <th class="provider" style="border: solid 1px #bfbfbf;">
                             <div class="rounded-full">
                                 <p class="relative top-[40%] m-auto text-xs">
                                     @php
-                                        $providerLogoImage = public_path(
-                                            'images/insurance_providers/' .
-                                                strtolower($plans[$planId]->providerCode) .
-                                                '.png',
-                                        );
-                                        if (!file_exists($providerLogoImage)) {
+                                        $providerCode = strtolower($plans[$planId]->providerCode);
+                                        $providerLogoImage = "https://cdn.alfred.ae/assets/logo/partners/{$providerCode}.png";
+
+                                        // Check if the image exists
+                                        $headers = @get_headers($providerLogoImage);
+                                        if (!$headers || strpos($headers[0], '404') !== false) {
                                             $providerLogoImage = public_path('images/insurance_providers/default.png');
                                         }
                                     @endphp
@@ -739,7 +748,7 @@
                     @endforeach
                 </tr>
                 <tr>
-                    @foreach ($planIds as $planId)
+                    @foreach($displayPlans as $planId)
                         <th style="border: solid 1px #bfbfbf; text-align: center;">
                             <p class="text-center" style="font-size: 14px">
                                 {{ $plans[$planId]->providerName ?? '' }}
@@ -752,85 +761,37 @@
                         <p class="quote-info raleway-font" style="font-weight:700;">Plan name
                         </p>
                     </th>
-                    @foreach ($planIds as $planId)
+                    @foreach($displayPlans as $planId)
                         <th>
                             <p class="text-center" style="font-size: 14px">
                                 {{ $plans[$planId]->name ?? '' }}
-                            </p>
-                        </th>
-                    @endforeach
-                </tr>
-
-                {{-- rows for building, content and personal belonging value --}}
-                @isset($homeQuoteFlags['contents_value_flag'])
-                    @if($homeQuoteFlags['contents_value_flag'])
-                        <tr>
-                            <th class="bg-light-blue">
-                                <p class="quote-info raleway-font" style="font-weight:700;">Contents value</p>
-                            </th>
-                            @foreach ($planIds as $planId)
-                                <th>
-                                    <p class="text-center" style="font-size: 14px">
-                                        {{ $flagValues['contents_value'] }}
-                                    </p>
-                                </th>
-                            @endforeach
-                        </tr>
-                    @endif
-                @endisset
-                @isset($homeQuoteFlags['personal_belongings_flag'])
-                    @if($homeQuoteFlags['personal_belongings_flag'])
-                        <tr>
-                            <th class="bg-light-blue">
-                                <p class="quote-info raleway-font" style="font-weight:700;">Personal belongings value</p>
-                            </th>
-                            @foreach ($planIds as $planId)
-                                <th>
-                                    <p class="text-center" style="font-size: 14px">
-                                        {{ $flagValues['personal_belongings_value'] }}
-                                    </p>
-                                </th>
-                            @endforeach
-                        </tr>
-                    @endif
-                @endisset
-                @isset($homeQuoteFlags['building_value_flag'])
-                    @if($homeQuoteFlags['building_value_flag'])
-                        <tr>
-                            <th class="bg-light-blue">
-                                <p class="quote-info raleway-font" style="font-weight:700;">Building value</p>
-                            </th>
-                            @foreach ($planIds as $planId)
-                                <th>
-                                    <p class="text-center" style="font-size: 14px">
-                                        {{ $flagValues['building_value'] }}
-                                    </p>
-                                </th>
-                            @endforeach
-                        </tr>
-                    @endif
-                @endisset
-                {{-- rows for building, content and personal belonging value --}}
-                <tr>
-                    <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-weight:700;">Gross price</p>
-                    </th>
-                    @foreach ($planIds as $planId)
-                        <th>
-                            <p class="text-center" style="font-size: 14px">
-                                AED {{ number_format($plans[$planId]->actualPremium ?? 0, 2) }}
+                                @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)
+                                    <span class="badge badge-success">Renewal Quote</span>
+                                @endif
                             </p>
                         </th>
                     @endforeach
                 </tr>
                 <tr>
                     <th class="bg-light-blue">
-                        <p class="quote-info raleway-font" style="font-weight:700;">Vat</p>
+                        <p class="quote-info raleway-font" style="font-weight:700;">Price</p>
                     </th>
-                    @foreach ($planIds as $planId)
+                    @foreach($displayPlans as $planId)
                         <th>
                             <p class="text-center" style="font-size: 14px">
-                                AED {{ number_format($plans[$planId]->vat ?? 0, 2) }}
+                                {{ formatAmount($plans[$planId]->discountPremium) }}
+                            </p>
+                        </th>
+                    @endforeach
+                </tr>
+                <tr>
+                    <th class="bg-light-blue">
+                        <p class="quote-info raleway-font" style="font-weight:700;">VAT</p>
+                    </th>
+                    @foreach($displayPlans as $planId)
+                        <th>
+                            <p class="text-center" style="font-size: 14px">
+                                {{ formatAmount($plans[$planId]->vat) }}
                             </p>
                         </th>
                     @endforeach
@@ -839,141 +800,154 @@
                     <th class="bg-light-blue">
                         <p class="quote-info raleway-font" style="font-size: 14px; font-weight:700;">Total price (with VAT)</p>
                     </th>
-                    @foreach ($planIds as $planId)
+                    @foreach($displayPlans as $planId)
                         <th>
                             <p class="text-center" style="text-align: center; margin: 0; padding: 2px;">
-                                @php
-                                    if (isset($plans[$planId])) {
-                                        if (isset($selectedPlanIds) && in_array($planId, $selectedPlanIds)) {
-                                            $buyNowFullLink = '#';
-                                            $buyNowText = 'Selected';
-                                        } else {
-                                            $buyNowFullLink =
-                                                $buyNowLink .
-                                                '?providerCode=' .
-                                                $plans[$planId]->providerCode .
-                                                '&planId=' .
-                                                $planId;
-                                            $buyNowText = $buyNow;
-                                        }
-
-                                        $totalPrice =
-                                            ($plans[$planId]->actualPremium ?? 0) + ($plans[$planId]->vat ?? 0);
-                                        $totalPriceFormatted = number_format($totalPrice, 2);
-
-                                        if ($plans[$planId]->actualPremium) {
-                                            echo '<a target="_blank" class="btn-buy" href="' .
-                                                $buyNowFullLink .
-                                                '">' .
-                                                $buyNowText .
-                                                '<br>' .
-                                                '<small style="font-size: 10px; font-weight: normal;">AED </small>' .
-                                                '<strong style="font-size: 14px; font-weight: bold;">' .
-                                                $totalPriceFormatted .
-                                                '</strong>' .
-                                                '</a>';
-                                        } else {
-                                            echo 'N/A';
-                                        }
-                                    } else {
-                                        // Handle the case where $plans[$planId] does not exist
-                                        echo 'N/A';
-                                    }
-                                @endphp
+                                <a class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}">
+                                    BUY NOW<br />
+                                    <span style="font-size: 10px; font-weight: normal">AED</span> <strong>{{ number_format($plans[$planId]->total ?? '0.0', 2) }}</strong>
+                                </a>
                             </p>
                         </th>
                     @endforeach
                 </tr>
                 <tr style="page-break-inside: avoid;">
-                    <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
+                    <td class="no-border" colspan="{{ count($displayPlans) + 1 }}">
                         <div class="spacer"></div>
                     </td>
                 </tr>
             </thead>
             <tbody>
-                {{-- Loop through the plan benefits only once --}}
-                {{-- Sort benefits based on the order in $planCovers --}}
-                @php
-                    // plan covers for sorting order as they are not sorted in API as per Excel Sheet
-                    $planCovers = [
-                        'content',
-                        'personalBelonging',
-                        'contentAndPersonalBelonging',
-                        'fineArtAndCollectible',
-                        'jewelleryAndValuable',
-                        'building',
-                        'additionalCover',
-                    ];
-                @endphp
-                @foreach ($planCovers as $cover)
-                    {{-- Collect all benefit items for the current cover across all plans --}}
-                    @php
-                        $benefitItems = [];
-                        foreach ($plans as $planId => $plan) {
-                            if (isset($plan->benefits->$cover)) {
-                                foreach ($plan->benefits->$cover as $benefit) {
-                                    if (is_object($benefit) && property_exists($benefit, 'code')) {
-                                        $benefitItems[$benefit->code] = $benefit;
-                                    }
-                                }
-                            }
-                        }
-                    @endphp
+                {{-- Vehicle Detail Section --}}
+                <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #1D83BC;">
+                    <td colspan="{{ count($displayPlans) + 1 }}">
+                        <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 2px; font-weight: 700;">
+                            Vehicle detail
+                        </p>
+                    </td>
+                </tr>
+                <tr style="page-break-inside: avoid;">
+                    <td style="background-color: #DBEEFF; color: #5B5F60">
+                        <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
+                            Excess (Deductible)
+                        </p>
+                    </td>
+                    @foreach($displayPlans as $planId)
+                        <td>
+                            <p class="text-center">{{ formatAmount($plans[$planId]->excess) }}</p>
+                        </td>
+                    @endforeach
+                </tr>
+                <tr style="page-break-inside: avoid;">
+                    <td style="background-color: #DBEEFF; color: #5B5F60">
+                        <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
+                            Ancillary excess
+                        </p>
+                    </td>
+                    @foreach($displayPlans as $planId)
+                        <td>
+                            <p class="text-center">{!! $plans[$planId]->ancillaryExcess ? ($plans[$planId]->ancillaryExcess . '%') : 'TBD' !!}</p>
+                        </td>
+                    @endforeach
+                </tr>
+                <tr style="page-break-inside: avoid;">
+                    <td style="background-color: #DBEEFF; color: #5B5F60">
+                        <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
+                            Vehicle value
+                        </p>
+                    </td>
+                    @foreach($displayPlans as $planId)
+                        <td>
+                            <p class="text-center">
+                                @php
+                                    $carValue = formatAmount($plans[$planId]->carValue, 0);
+                                    if($plans[$planId]->repairType == \App\Enums\CarPlanType::TPL) $carValue = 'N/A';
+                                @endphp
+                                {{ $carValue }}
+                            </p>
+                        </td>
+                    @endforeach
+                </tr>
+                <tr style="page-break-inside: avoid;">
+                    <td class="no-border" colspan="{{ count($displayPlans) + 1 }}">
+                        <div class="spacer"></div>
+                    </td>
+                </tr>
 
-                    {{-- Only display the heading and benefit items if there are any benefit items --}}
-                    @if (!empty($benefitItems))
-                        {{-- Benefit Title Row (appears only once for each benefit) --}}
-                        <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #1D83BC;">
-                            <td colspan="{{ count($planIds) + 1 }}">
-                                <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 2px; font-weight: 700;">
-                                    @php
-                                        $firstBenefit = reset($benefitItems);
-                                        echo $firstBenefit->heading ?? $cover;
+                {{-- Contents Section --}}
+                <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #1D83BC;">
+                    <td colspan="{{ count($displayPlans) + 1 }}">
+                        <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 2px; font-weight: 700;">
+                            Contents
+                        </p>
+                    </td>
+                </tr>
+                
+                @foreach($features as $feature)
+                    @if(@$feature['code'] == 'heading' || @$feature['code'] == 'spacer')
+                        @continue
+                    @endif
+                    
+                    @if(isset($feature['title']))
+                    <tr style="page-break-inside: avoid;">
+                        <td style="background-color: #DBEEFF; color: #5B5F60">
+                            <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
+                                {{ $feature['title'] }}
+                            </p>
+                        </td>
+                        @foreach($displayPlans as $planId)
+                        <td>
+                            <p class="text-center">
+                                @if($feature['type'] == 'info')
+                                    @if($feature['code'] == 'ancillaryExcess')
+                                        {!! $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%') : '<span style="color:red">Not applicable</span>' !!}
+                                    @else
+                                        {!! $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']}) : '<span style="color:red">Not applicable</span>' !!}
+                                    @endif
+                                @elseif($feature['type'] == 'prop')
+                                    {{ $plans[$planId]->{$feature['code']} }}
+                                @elseif($feature['type'] == 'buy')
+                                    @if($plans[$planId]->discountPremium)
+                                        <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >
+                                            Buy Now
+                                        </a>
+                                    @else
+                                        N/A
+                                    @endif
+                                @elseif(is_array($feature['type']))
+                                    @php 
+                                        $value = "Excluded"; 
+                                        foreach($feature['type'] as $type) {
+                                            if(isset($plans[$planId]->{$type}->{$feature['code']}->value)) {
+                                                $value = $plans[$planId]->{$type}->{$feature['code']}->value; 
+                                                break;
+                                            }
+                                        }
                                     @endphp
-                                </p>
-                            </td>
-                        </tr>
-
-                        {{-- Iterate through unique benefit items and display the benefit once with values for each plan --}}
-                        @foreach ($benefitItems as $code => $item)
-                            <tr style="page-break-inside: avoid;">
-                                {{-- First column: Benefit Code --}}
-                                <td style="background-color: #DBEEFF; color: #5B5F60">
-                                    <p class="text-left font-bold raleway-font" style="padding-left: 2px; font-weight: 700;">
-                                        {{ $item->text }}
-                                    </p>
-                                </td>
-
-                                {{-- Display values for each plan in subsequent columns --}}
-                                @foreach ($planIds as $planId)
-                                    @php
-                                        $planBenefitCollection = collect($plans[$planId]->benefits->$cover ?? []);
-                                        $matchingBenefit = $planBenefitCollection->firstWhere('code', $code);
-                                        $planValue = $matchingBenefit->value ?? 'Excluded';
-                                    @endphp
-                                    <td>
-                                        <p class="text-center">{{ $planValue }}</p>
-                                    </td>
-                                @endforeach
-                            </tr>
+                                    {{ $value }}
+                                @else
+                                    {{ $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' }}
+                                @endif
+                            </p>
+                        </td>
                         @endforeach
-
-                        <tr style="page-break-inside: avoid;">
-                            <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
-                                <div class="spacer"></div>
-                            </td>
-                        </tr>
+                    </tr>
                     @endif
                 @endforeach
 
+                <tr style="page-break-inside: avoid;">
+                    <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}">
+                        <div class="spacer"></div>
+                    </td>
+                </tr>
 
                 <tr>
-                    <td colspan="{{ sizeof($planIds) + 1 }}" class="no-border text-center">
+                    <td colspan="{{ count($displayPlans) + 1 }}" class="no-border text-center">
                         <a target="_blank" class="btn-all-quotes"
-                            href="{{ $websiteURL . '/home-insurance/quote/' . $quote->uuid }}">
+                            href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid }}">
                             View all quotes
                             <div style="position: absolute; right: 50px; top: 8px;">
-                                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
+                                <img src="{{ isset($imageData['quote_plans_pages/ecom_home/open_in_new_icon.png']) ? $imageData['quote_plans_pages/ecom_home/open_in_new_icon.png'] : public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" 
                                     style="width: 16px; height: 16px; vertical-align: baseline; display: block;">
                             </div>
                         </a>
@@ -981,19 +955,18 @@
                 </tr>
 
                 <tr>
-                    <td class="disclaimer-td" colspan="{{ sizeof($planIds) + 1 }}">
+                    <td class="disclaimer-td" colspan="{{ count($displayPlans) + 1 }}">
                         <p class="disclaimer-text">
-                            <strong>Disclaimer: </strong>Quotes are based on the details you provided and may change after the insurer reviews
-                            you profile. If there are differences, the insurer's policy terms will apply.
-                            Please check your policy once issued to ensure it meets your needs.
+                            <strong>Disclaimer: </strong>This is a comparison table for illustrative purposes only. The prices and benefits are subject to change without prior notice. Please refer to the official terms and conditions of the insurance provider for the most accurate and current information.
                         </p>
                     </td>
                 </tr>
             </tbody>
         </table>
+        @endif
     </main>
 
-    {{-- PDF Page Footer --}}
+     {{-- PDF Page Footer --}}
     <div class="footer">
         <h4 class="footer-header">
             InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
@@ -1061,9 +1034,6 @@
                                         <a href="tel:{{ removeSpaces($quote->advisor->landline_no) }}" class="text-white" style="color: #ffffff; text-decoration: none;">
                                             <span>{{ $quote->advisor->landline_no }}</span>
                                         </a>
-                                        <br>
-                                        <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
-                                        <span>800 ALFRED (800 253 733)</span>
                                     </p>
                                 </div>
                             @else
@@ -1084,14 +1054,13 @@
         </table>
     </div>
 
-    {{-- Second Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}"
-        class="full-page-image" />
+    {{-- Third Page --}}
     <div style="page-break-after: always;"></div>
-
-    {{-- Last Page --}}
-    <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}"
-    class="full-page-image" />
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_second_last_page.jpg') }}" class="full-page-image" />
+    
+    {{-- Fourth Page --}}
+    <div style="page-break-after: always;"></div>
+    <img src="{{ public_path('images/quote_plans_pages/commercial_car/commercial_car_last_page.jpg') }}"  class="full-page-image" />
 </body>
 
 </html>
