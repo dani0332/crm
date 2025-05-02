@@ -69,17 +69,16 @@ class FtcEmailLogController extends Controller
             $payload = [
                 'status' => strtolower($request->status),
             ];
-            $trackEmail = $this->ftcEmailLogService->updateTrackEmail($payload, '', $request->link);
+            $trackEmail = $this->ftcEmailLogService->updateTrackEmail($payload, '', $request->uuid);
             if ($trackEmail == null) {
-                return response()->json(['message' => 'Email track not found.'], Response::HTTP_NOT_FOUND);
+                return response()->json(['message' => 'Email log not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            return response()->json(['message' => 'Email track updated successfully.', 'data' => $trackEmail], Response::HTTP_OK);
+            return response()->json(['message' => 'Email log updated successfully.', 'data' => $trackEmail], Response::HTTP_OK);
         } catch (\Exception $th) {
             LoggerService::error('Error updating FTC email log', [
                 'request' => $request->all(),
             ], $th, ['feature' => 'ftc_email_log']);
-
             return response()->json(['message' => 'Internal server error.'], 500);
         }
     }
