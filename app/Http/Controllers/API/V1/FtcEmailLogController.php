@@ -79,6 +79,7 @@ class FtcEmailLogController extends Controller
             LoggerService::error('Error updating FTC email log', [
                 'request' => $request->all(),
             ], $th, ['feature' => 'ftc_email_log']);
+
             return response()->json(['message' => 'Internal server error.'], 500);
         }
     }
