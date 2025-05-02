@@ -308,14 +308,15 @@ class SageApiService
             unset($extraDetails['paymentFrequency']);
         }
 
-        if ($preparedData['sendUpdateLog']?->category?->code == SendUpdateLogStatusEnum::CPD || (isset($preparedData['sendUpdateLog']?->option?->code) && 
+        // TODO : Finance said they don't need it any more
+        /*if ($preparedData['sendUpdateLog']?->category?->code == SendUpdateLogStatusEnum::CPD || (isset($preparedData['sendUpdateLog']?->option?->code) &&
             ! in_array($preparedData['sendUpdateLog']?->option?->code, [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATCRNB]))
         ) {
             $createPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment']]);
             if (! $createPrepayment['status']) {
                 return $createPrepayment;
             }
-        }
+        }*/
 
         LoggerService::info('fn bookStraightEndorsementOnSage - Upfront Endorsement Booking Completed on Sage - SendUpdateCode: '.$preparedData['sendUpdateLog']?->code);
 
@@ -758,10 +759,11 @@ class SageApiService
             }
 
             // create AR Prepayment Commission Receipt
-            $createCommissionPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequest, $quote, $payment]);
+            // TODO : Finance said they don't need it any more
+           /* $createCommissionPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequest, $quote, $payment]);
             if (! $createCommissionPrepayment['status']) {
                 return $createCommissionPrepayment;
-            }
+            }*/
 
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,
