@@ -40,7 +40,11 @@ class AuditRepository extends BaseRepository
             ->select('audits.*', 'users.name')
             ->leftJoin('users', 'audits.user_id', 'users.id')
             ->where(function ($q) use ($auditables) {
-                $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
+                if (request()->has('auditable_id') && request()->auditable_id) {
+                    $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
+                } else {
+                    $q->where('auditable_type', $auditables['auditable_type']);
+                }
             });
         /*if ($code != '') {
             $query->orWhere(function ($query) use ($code, $auditableTypes) {

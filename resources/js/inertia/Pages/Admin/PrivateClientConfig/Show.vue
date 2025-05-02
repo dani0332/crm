@@ -409,7 +409,7 @@ const onSubmit = isValid => {
       <!-- Add divider between insurance types unless it's the last one -->
       <x-divider class="my-4" v-if="index < insuranceTypes.length - 1" />
     </template>
-
+    <AuditLogs :quoteType="'PrivateClientConfig'" />
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">
       <x-button size="md" color="emerald" type="submit" :loading="loader" :disabled="loader">

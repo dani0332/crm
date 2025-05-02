@@ -90,6 +90,10 @@ const permissionsEnum = page.props.permissionsEnum;
             <dt class="font-medium">Updated At</dt>
             <dd>{{ customer.updated_at }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">(Private Clients) PC Customer</dt>
+            <dd>{{ customer.pc_customer }}</dd>
+          </div>
         </dl>
       </div>
     </div>

@@ -34,7 +34,7 @@ class PrivateClientConfigController extends Controller
         // Location areas
         $locationAreas = SubArea::select('code as value', 'text as label')->get()->toArray();
 
-        return Inertia::render('Admin/PrivateClientConfig/Config/Show', [
+        return Inertia::render('Admin/PrivateClientConfig/Show', [
             'configurations' => $configurations,
             'carMakes' => $carMakes,
             'insurers' => $insurers,
