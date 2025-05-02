@@ -760,10 +760,10 @@ class SageApiService
 
             // create AR Prepayment Commission Receipt
             // TODO : Finance said they don't need it any more
-           /* $createCommissionPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequest, $quote, $payment]);
-            if (! $createCommissionPrepayment['status']) {
-                return $createCommissionPrepayment;
-            }*/
+            /* $createCommissionPrepayment = $this->createARPrepaymentCommissionReceipts([$sageRequest, $quote, $payment]);
+             if (! $createCommissionPrepayment['status']) {
+                 return $createCommissionPrepayment;
+             }*/
 
             QuoteTag::create([
                 'quote_type_id' => $quoteTypeId,
