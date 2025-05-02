@@ -153,7 +153,7 @@ class JetskiQuoteRepository extends BaseRepository
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
     }
 
 }

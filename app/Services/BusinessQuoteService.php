@@ -258,6 +258,8 @@ class BusinessQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::BusinessQuote, $request, $response);
+
+            $this->selfAssign(QuoteTypes::BUSINESS, $response->quoteUID);
         }
 
         return $response;

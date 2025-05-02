@@ -275,10 +275,10 @@ class QuoteDocumentController extends Controller
     public function destroy(Request $request)
     {
         request()->validate([
-            'docName' => 'required|string',
-            'quoteId' => 'required|integer',
+            'doc_id' => 'required|integer',
+            'doc_uuid' => 'required|string',
         ]);
-        $document = QuoteDocument::where('doc_name', $request->docName)->where('quote_documentable_id', $request->quoteId)->first();
+        $document = QuoteDocument::where('id', $request->doc_id)->where('doc_uuid', $request->doc_uuid)->first();
         if (! $document) {
             return redirect()->back()->with('message', 'Document not found');
         }
