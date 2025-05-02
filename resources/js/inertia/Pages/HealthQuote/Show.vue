@@ -3,6 +3,7 @@ import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 
 const props = defineProps({
   quote: Object,
@@ -259,10 +260,21 @@ const genderSelect = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return page.props.leadStatuses.map(status => {
+    var statusDisabled = false;
+    // below status are not editable by advisor
+    if (status.id == page.props.quoteStatusEnum.PaymentLinkSentToCustomer) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    if (status.id == page.props.quoteStatusEnum.PaymentInitiated) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    return {
+      value: status.id,
+      label: status.text,
+      disabled: statusDisabled,
+    };
+  });
 });
 
 const nationalityOptions = computed(() => {
@@ -684,6 +696,7 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+
       getSmallestCopayRateAsDefaultValue();
       plansTable.data.forEach(plan => {
         if (plan.isManualPlan) {
@@ -1007,9 +1020,16 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
   let smallestCopayLoadingPrice = 0;
+  let smallestCopayAdjustedPrice = 0;
   plansTable.data.forEach(element => {
     defaultCopayId = element.selectedCopayId;
     element.ratesPerCopay?.forEach(function callback(value, index) {
+      const safeNumber = val => {
+        if (val === null || val === undefined) return 0;
+        const num = Number(val);
+        return isNaN(num) ? 0 : num;
+      };
+
       if (
         element.selectedCopayId &&
         defaultCopayId == value.healthPlanCoPaymentId
@@ -1018,6 +1038,9 @@ const getSmallestCopayRateAsDefaultValue = () => {
         smallestCopayVAT = Number(value.vat);
         smallestCopayLoadingPrice = Number(
           value.loadingPrice ? value.loadingPrice : 0,
+        );
+        smallestCopayAdjustedPrice = safeNumber(
+          value.adjustedPrice ? value.adjustedPrice : 0,
         );
         defaultCopayId = element.selectedCopayId;
       } else if (
@@ -1030,12 +1053,18 @@ const getSmallestCopayRateAsDefaultValue = () => {
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
           );
+          smallestCopayAdjustedPrice = safeNumber(
+            value.adjustedPrice ? value.adjustedPrice : 0,
+          );
           defaultCopayId = value.healthPlanCoPaymentId;
         } else if (value.discountPremium < smallestCopayValue) {
           smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
+          );
+          smallestCopayAdjustedPrice = safeNumber(
+            value.adjustedPrice ? value.adjustedPrice : 0,
           );
           defaultCopayId = value.healthPlanCoPaymentId;
         }
@@ -1063,11 +1092,13 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
       element.selectedCopayId = selectedCoPay.id;
       element.loadingPrice = smallestCopayLoadingPrice;
+      element.adjustedPrice = smallestCopayAdjustedPrice;
     } else {
       element.selectedCopayId = defaultCopayId;
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
       element.loadingPrice = smallestCopayLoadingPrice;
+      element.adjustedPrice = smallestCopayAdjustedPrice;
     }
     element.coPayments.forEach(function callback(value, index) {
       if (value.id == element.selectedCopayId) {
@@ -3026,10 +3057,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
-    <div
-      class="p-4 rounded shadow mb-6 bg-white"
-      v-if="!$page.props.can.isAdvisor"
-    >
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -3411,6 +3439,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   basmah,
                   vat,
                   loadingPrice,
+                  adjustedPrice,
                 }"
               >
                 {{
@@ -3419,7 +3448,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       (policyFee || 0) +
                       (basmah || 0) +
                       vat +
-                      (loadingPrice || 0),
+                      (loadingPrice || 0) +
+                      (adjustedPrice || 0),
                   )
                 }}
               </template>
@@ -3988,6 +4018,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
       :expanded="sectionExpanded"
+    />
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
     />
 
     <AuditLogs

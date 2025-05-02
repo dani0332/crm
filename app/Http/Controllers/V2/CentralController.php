@@ -434,6 +434,11 @@ class CentralController extends Controller
         return (new SplitPaymentService)->generateSplitPaymentLink($request);
     }
 
+    public function generateInsurerPaymentLink(GeneratePaymentLinkRequest $request)
+    {
+        return (new SplitPaymentService)->generateInsurerPaymentLink($request);
+    }
+
     public function saveQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
     {
         $notes = new QuoteNote([
@@ -695,6 +700,16 @@ class CentralController extends Controller
         }
 
         return $response;
+    }
+
+    public function removeInsurerPaymentLink(Request $request)
+    {
+        $response = app(CentralService::class)->removeInsurerPaymentLink($request);
+        if ($response['status']) {
+            return redirect()->back()->with('success', $response['message']);
+        }
+
+        return redirect()->back()->with('error', $response['message']);
     }
 
     public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
