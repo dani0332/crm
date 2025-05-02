@@ -48,7 +48,7 @@ const onLoadFtcEmailLogData = async () => {
 
   ftcEmailLogs.loading = true;
 
-  let url = props.url ?? '/ftc/email-tracks?' + updatedQuery.toString();
+  let url = props.url ?? '/ftc/email-logs?' + updatedQuery.toString();
 
   axios
     .get(url)
