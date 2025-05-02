@@ -1050,13 +1050,17 @@
                                         @endif
                                         <br>
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/smartphone_icon.png') }}" alt="" class="icon"> 
-                                        <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
+                                        <a href="tel:{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}">
+                                            <span>{{ formatMobileNumber($quote->advisor->mobile_no) }}</span>
+                                        </a>
                                         <a href="https://wa.me/{{ removeSpaces(formatMobileNoDisplay($quote->advisor->mobile_no)) }}">
                                             <img src="{{ public_path('images/whatsapp-small.png') }}" alt="" class="icon" style="margin-left: 1px;">
                                         </a>
                                         <br>
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/phone_callback_icon.png') }}" alt="" class="icon"> 
-                                        <span>{{ $quote->advisor->landline_no }}</span>
+                                        <a href="tel:{{ removeSpaces($quote->advisor->landline_no) }}">
+                                            <span>{{ $quote->advisor->landline_no }}</span>
+                                        </a>
                                         <br>
                                         <img src="{{ public_path('images/quote_plans_pages/ecom_home/call_icon.png') }}" alt="" class="icon"> 
                                         <span>800 ALFRED (800 253 733)</span>
