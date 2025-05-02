@@ -26,6 +26,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
+use App\Models\FtcEmailLog;
 use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -592,6 +593,10 @@ class SplitPaymentService
         if (! $splitPayment) {
             return response()->json(['success' => false]);
         }
+        $ftcEmailLog = FtcEmailLog::where('link', $splitPayment->insurer_payment_link)->first();
+        if (! $ftcEmailLog) {
+            return response()->json(['success' => false]);
+        }
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
         $quoteId = $request->quoteId;
@@ -599,7 +604,7 @@ class SplitPaymentService
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 
         $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
-        $paymentLinkURL = $paymentLink.'/redirect/'.$quoteTypeId.'/'.$quoteModel->uuid.'/'.$quoteModel->plan?->id ?? '';
+        $paymentLinkURL = $paymentLink.'/redirect/'.$quoteTypeId.'/'.$quoteModel->uuid.'/'.$quoteModel->plan?->id ?? '' . '?uuid='. $ftcEmailLog->uuid;
 
         return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
     }
