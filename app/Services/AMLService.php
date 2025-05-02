@@ -394,6 +394,35 @@ class AMLService
         return app(AMLController::class)->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
     }
 
+    public function saveManualAuditLog($quoteDetails, User $processByUser): bool
+    {
+        if (! $quoteDetails instanceof TravelQuote) {
+            return false;
+        }
+
+        $dirty = $quoteDetails->getDirty();
+
+        if (empty($dirty)) {
+            return false;
+        }
+
+        $changes = [];
+        foreach ($dirty as $attribute => $value) {
+            $changes['old_values'][$attribute] = $quoteDetails->getOriginal($attribute);
+            $changes['new_values'][$attribute] = $value;
+        }
+
+        $quoteDetails->audits()->create([
+            'user_type' => get_class($processByUser),
+            'user_id' => $processByUser->id ?? null,
+            'event' => 'updated',
+            'old_values' => $changes['old_values'],
+            'new_values' => $changes['new_values'],
+        ]);
+
+        return true;
+    }
+
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;

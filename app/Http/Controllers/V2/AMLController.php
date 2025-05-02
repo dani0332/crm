@@ -65,6 +65,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 class AMLController extends Controller
@@ -763,6 +764,7 @@ class AMLController extends Controller
             }
 
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
+            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();
             // this event only working for travel lob
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
@@ -780,6 +782,7 @@ class AMLController extends Controller
             ]);
 
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
+            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 $isPassportDocumentExist = app(QuoteDocumentService::class)->isDocumentExists(quoteTypeCode::Travel, $quoteDetails->id, DocumentTypeCode::TRVLPAS);
