@@ -662,7 +662,7 @@ class AMLController extends Controller
                     'insured_id' => $insuredEntityDetails->id,
                 ]);
 
-                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredPersonDetails);
+                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredEntityDetails);
 
                 if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
@@ -690,11 +690,11 @@ class AMLController extends Controller
         return $this->handleResponse(false, 'Something went wrong', $isAutomation);
     }
 
-    private function updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredPersonDetails)
+    private function updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insured)
     {
         $getPersonalQuote = PersonalQuote::where(['uuid' => $updateQuote->uuid, 'quote_type_id' => $quoteTypeId])->first();
         if ($getPersonalQuote) {
-            $getPersonalQuote->insured_id = $insuredPersonDetails->id;
+            $getPersonalQuote->insured_id = $insured->id;
             $getPersonalQuote->save();
         }
 
