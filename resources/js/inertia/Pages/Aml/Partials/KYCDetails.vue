@@ -250,8 +250,13 @@ const submitInsuredKycForm = isValid => {
           kycFormDetails.processing = false;
         }
       })
-      .catch(error => {
-        console.error(error);
+      .catch(errors => {
+        Object.keys(errors.response.data.errors).forEach(function (key) {
+          notification.error({
+            title: errors.response.data.errors[key],
+            position: 'top',
+          });
+        });
       })
       .finally(() => (kycFormDetails.processing = false));
   } else {
