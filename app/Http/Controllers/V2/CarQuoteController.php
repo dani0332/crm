@@ -265,18 +265,7 @@ class CarQuoteController extends Controller
         $options->set('defaultPaperSize', 'A4');
         $options->set('defaultPaperOrientation', 'portrait');
         $options->set('chroot', public_path()); // Set root directory for image access
-
-        // Disable debug options to prevent debug output
-        $options->set('debugKeepTemp', false);
-        $options->set('debugCss', false);
-        $options->set('debugLayout', false);
-
-        // Enable CSS floating to ensure proper layout
         $options->set('isJavascriptEnabled', true);
-        $options->set('fontCache', storage_path('fonts'));
-        $options->set('tempDir', storage_path('app/dompdf'));
-
-        // Additional rendering settings
         $options->set('enable_css_float', true);
         $options->set('enable_html5_parser', true);
         $options->set('enable_font_subsetting', true);
