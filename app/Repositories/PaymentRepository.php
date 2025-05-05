@@ -81,6 +81,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchCreateNewPayment($request)
     {
         try {
+            // dd($request->all());
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             info('Starting payment creation process for Quote: '.$quoteModel->code);
             $masterPayment = (object) $request->payment;
@@ -110,6 +111,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'created_by' => $request->user()->id,
                 'updated_by' => $request->user()->id,
+                'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
             ];
 
             $count = $quoteModel->payments->count();
@@ -217,6 +219,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
                 'updated_by' => $request->user()->id,
+                'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
             ];
 
             if ($masterPayment->reference) {
@@ -292,6 +295,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'due_date' => $splitPayment['due_date'],
                     'payment_status_id' => PaymentStatusEnum::NEW,
                     'discount_value' => $discount,
+                    'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
+                    'cc_payment_gateway' => ! empty($request->cc_payment_gateway) ? $request->cc_payment_gateway : null,
                 ];
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
 
@@ -413,6 +418,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         'due_date' => $splitPayment['due_date'],
                         'discount_value' => $discount,
                         'insurer_payment_link' => $splitPayment['insurer_payment_link'] ?? null,
+                        'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
+                        'cc_payment_gateway' => ! empty($request->cc_payment_gateway) ? $request->cc_payment_gateway : null,
                     ];
                 }
 
