@@ -1388,6 +1388,7 @@ class RenewalsUploadService
                 $quoteData['coverage_type_id'] = $homeCoverageTypeId;
                 $quoteData['contents_aed'] = $homeContents;
                 $quoteData['personal_belongings_aed'] = $homePersonalBelongings;
+                $quoteData['building_value'] = $homeBuildingAed;
                 $quoteData['building_aed'] = $homeBuildingAed;
                 $quoteData['renewal_upload_insurance_provider_id'] = $homeInsuranceProvider;
                 $quoteData['renewal_upload_plan_code'] = $homePlanName;
@@ -1395,6 +1396,8 @@ class RenewalsUploadService
                 $quoteData['renewal_upload_renewal_premium'] = $homePremium;
                 $quoteData['insurer_quote_number'] = $homeInsurerQuoteNumber;
                 $quoteData['previous_advisor_id'] = $homePreviousAdvisorId;
+                $quoteData['additional_notes'] = $data['notes'];
+                
 
                 
                 $homeQuote = HomeQuote::updateOrCreate(
