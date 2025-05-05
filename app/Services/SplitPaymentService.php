@@ -866,6 +866,8 @@ class SplitPaymentService
             $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
         }
 
+        $successMessage = '';
+
         DB::beginTransaction();
         try {
 

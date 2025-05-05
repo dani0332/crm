@@ -513,6 +513,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         info("Payment approval process initiated: {$request->payment_code}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
         if ($request->is_capture) { // update collected amount in childs
+            // Check if the payment_status_capture session key is set and not equal to CAPTURE_VALIDATION_CLEARED
+            if (session()->has("payment_capture_status_{$request->payment_code}") && session("payment_capture_status_{$request->payment_code}") != 'CAPTURE_VALIDATION_CLEARED') {
+                info("Payment approval failed: capture validation not cleared. Key: " . "payment_capture_status_{$request->payment_code}" . ", Value: " . session("payment_capture_status_{$request->payment_code}"));
+                return ['status' => 'error', 'message' => 'Payment validation failed. Please try again.'];
+            }
             foreach ($request->collection_amount as $key => $splitAmount) {
                 $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
@@ -531,8 +536,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         info('Master payment code: '.$request->payment_code.' processing master payment approval called');
 
         // process master payment approve
-        return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
-
+        $message = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
+        return ['status' => 'success', 'message' => $message];
     }
 
     // This method handles the approval or decline of split payments based on the request.

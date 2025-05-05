@@ -1961,6 +1961,7 @@ const editPaymentModal = async (
       props.quoteType === quoteTypeCodeEnum.Car ||
       props.quoteType === quoteTypeCodeEnum.Home)
   ) {
+    isTransactionCaptureButtonEnabled.value = false;
     await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
 
@@ -1992,6 +1993,7 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
     .then(res => {
       if (res?.data?.response?.status == 'CAPTURE_VALIDATION_CLEARED') {
         premiumToCapture.value = res?.data?.response?.premiumAmount;
+        isTransactionCaptureButtonEnabled.value = true;
       } else {
         isTransactionCaptureButtonEnabled.value = false;
         capturePaymentValidationErrorMessage.value =
