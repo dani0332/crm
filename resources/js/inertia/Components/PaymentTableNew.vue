@@ -901,8 +901,7 @@ const handleCollectionTypeChange = () => {
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
       page.props.paymentMethodsEnum?.Cash,
-      checkCondition &&
-        page.props.paymentMethodsEnum?.InsurerPaymentLink,
+      checkCondition && page.props.paymentMethodsEnum?.InsurerPaymentLink,
     ];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item => !excludedPaymentMethods.includes(item.value),
