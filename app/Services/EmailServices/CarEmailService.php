@@ -612,7 +612,7 @@ class CarEmailService extends BaseService
             }
 
             if (empty($planIds)) {
-                LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - No plans found');
+                LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - No plans found for Ref-ID: '.$quoteUID);
 
                 return '';
             }
@@ -621,7 +621,6 @@ class CarEmailService extends BaseService
 
             $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
 
-            LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - Storing PDF temporarily');
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/'.uniqid().'.pdf';

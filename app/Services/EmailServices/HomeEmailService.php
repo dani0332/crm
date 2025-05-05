@@ -175,7 +175,7 @@ class HomeEmailService extends BaseService
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Public URL generated');
+            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Public URL generated ');
 
             return $publicUrl;
         } catch (\Exception $e) {
