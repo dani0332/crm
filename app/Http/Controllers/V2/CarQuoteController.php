@@ -19,7 +19,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use PDF;
 
 class CarQuoteController extends Controller
 {
