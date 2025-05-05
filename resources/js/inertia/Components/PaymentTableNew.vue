@@ -7,6 +7,7 @@ import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { time } from 'highcharts';
 import ImageGalleryModal from './../Components/ImageGalleryModal.vue';
+import AmlApprovalModal from './../Components/AmlApprovalModal.vue';
 
 // New Flow Implementation
 import { usePayment } from '../Composables/usePayment';
@@ -5724,59 +5725,13 @@ onBeforeMount(() => {
         </x-modal>
 
         <!--  Clear AML KYC Screening         -->
-        <x-modal v-model="isAmlApprovalRequired" size="lg">
-          <div class="flex items-center justify-end space-x-2">
-            <span
-              @click="closeAmlConfirmModal"
-              class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
-            >
-              <!-- Cross icon -->
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                tabindex="0"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                class="w-4 h-4 text-gray-800"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              </svg>
-            </span>
-          </div>
-          <x-form :auto-focus="false">
-            <div class="text-lg text-center">
-              <span>Please complete the AML screening to proceed.</span>
-            </div>
-            <div class="mt-2 text-center">
-              <Link
-                :href="`/kyc/aml/${
-                  page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
-                }/details/${props.quoteRequest.id}`"
-              >
-                <x-tooltip>
-                  <x-button
-                    v-if="can(permissionEnum.AMLList)"
-                    size="lg"
-                    color="orange"
-                    class="px-4 py-4 mt-4"
-                    :loading="paymentMethodsForm.processing"
-                  >
-                    <span>Go to AML & KYC page</span></x-button
-                  >
-                  <template #tooltip>
-                    <span>{{ paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE }}</span>
-                  </template>
-                </x-tooltip>
-              </Link>
-            </div>
-          </x-form>
-        </x-modal>
-
+        <AmlApprovalModal
+          v-model="isAmlApprovalRequired"
+          :quote-type-id="page.props.quoteTypeId ?? props.sendUpdate.quote_type_id"
+          :quote-request-id="props.quoteRequest.id"
+          :is-processing="paymentMethodsForm.processing"
+          @update:model-value="closeAmlConfirmModal"
+        />
         <!--  Clear AML KYC Screening         -->
 
         <div
