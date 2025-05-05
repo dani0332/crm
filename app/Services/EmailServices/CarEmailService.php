@@ -14,6 +14,7 @@ use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\CompanyCarFollowupJob;
 use App\Jobs\CompanyCarOCBJob;
+use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Jobs\NBMotorFollowupEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -23,13 +24,12 @@ use App\Models\QuoteFlowDetails;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
+use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
-use App\Services\CarQuoteService;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\DeleteTempOCBPDFFileJob;
 
 class CarEmailService extends BaseService
 {
@@ -409,7 +409,7 @@ class CarEmailService extends BaseService
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
             'createdAt' => $lead->created_at,
-            'pdfUrl' => $pdfUrl ,
+            'pdfUrl' => $pdfUrl,
         ];
     }
 
@@ -620,7 +620,6 @@ class CarEmailService extends BaseService
             $pdfFile = app(CarQuoteService::class)->exportPlansPdf(QuoteTypes::CAR->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
 
             $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
-
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/'.uniqid().'.pdf';
