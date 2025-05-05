@@ -109,6 +109,11 @@ class QuoteStatusSeeder extends Seeder
                 'quote_type_id' => $quoteType->id,
                 'quote_status_id' => QuoteStatusEnum::PaymentInitiated,
             ], $commonData);
+
+            QuoteStatusMap::firstOrCreate([
+                'quote_type_id' => $quoteType->id,
+                'quote_status_id' => QuoteStatusEnum::PaymentLinkSentToCustomer,
+            ], $commonData);
         }
     }
 }
