@@ -162,7 +162,7 @@ trait OcrFillable
 
             return true;
         } catch (Exception $e) {
-            info(self::class." - Exception occurred during data fill: {$e->getMessage()}");
+            LoggerService::error(self::class.' - Exception occurred during data fill', exception: $e);
 
             return false;
         }
