@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\FilterTypes;
-use App\Enums\InsurerProviderEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
@@ -494,30 +493,5 @@ class CarQuote extends BaseModel
     public function isProvider($code)
     {
         return $this->payment?->insuranceProvider?->isProvider($code) ?? false;
-    }
-
-    public function isGIG()
-    {
-        return $this->isProvider(InsurerProviderEnum::GIG_INSURANCE);
-    }
-
-    public function isSukoon()
-    {
-        return $this->isProvider(InsurerProviderEnum::SUKOON_OMAN_INSURANCE);
-    }
-
-    public function isQatar()
-    {
-        return $this->isProvider(InsurerProviderEnum::QATAR_INSURANCE);
-    }
-
-    public function isLivana()
-    {
-        return $this->isProvider(InsurerProviderEnum::LIVANA_INSURANCE);
-    }
-
-    public function isTokio()
-    {
-        return $this->isProvider(InsurerProviderEnum::TOKIO_MARINE);
     }
 }
