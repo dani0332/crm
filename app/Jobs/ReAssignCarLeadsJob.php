@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 use App\Services\Logger\LoggerService;
@@ -47,7 +48,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
             return false; // when lead is not on criteria or not found
         }
         foreach ($leads as $lead) {
-            LoggerService::startQuoteLogging($lead);
+            LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
             info('--------------- ReAssignment processing ---------------');
 
@@ -91,7 +92,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
                 }
             } else {
                 // Log that tier was not found for the lead and skip processing
-                info('Tier not found. Skipping for now.');
+                LoggerService::info('Tier not found. Skipping for now.');
             }
 
             $lead->endAllocation();
@@ -113,7 +114,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
         return $this->carAllocationService->fetchLeadsForReAssignment($this->advisorId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findTier($lead): ?Tier
     {
         if ($lead->tier_id == null) {
             return $this->carAllocationService->findTier($lead);
