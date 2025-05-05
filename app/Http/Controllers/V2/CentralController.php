@@ -42,6 +42,7 @@ use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PaymentCaptureValidtionRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\PostPrepaymentToSageRequest;
 use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
@@ -64,8 +65,11 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\Insured;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\SendUpdateLog;
+use App\Repositories\CarQuoteRepository;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\AMLService;
@@ -79,6 +83,7 @@ use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -203,6 +208,13 @@ class CentralController extends Controller
                 'quote_type_id' => $customerProfileRequest->quote_type_id,
                 'quote_request_id' => $customerProfileRequest->quote_request_id,
             ], ['entity_id' => $entity->id, 'entity_type_code' => $customerProfileRequest->entity_type_code]);
+
+            if ($customerProfileRequest->quote_type_id === QuoteTypeId::Car) {
+                CarQuoteRepository::where('id', $customerProfileRequest->quote_request_id)->update([
+                    'company_name' => $customerProfileRequest->company_name,
+                    'company_address' => $customerProfileRequest->company_address,
+                ]);
+            }
         }
 
         return redirect()->back();
@@ -309,7 +321,9 @@ class CentralController extends Controller
 
     public function loadAvailablePlans($type, $id)
     {
-        return (new CentralService)->loadAvailablePlans($type, $id);
+        $getLatestRating = request()->input('getLatestRating', false);
+
+        return (new CentralService)->loadAvailablePlans($type, $id, false, false, $getLatestRating);
     }
 
     /**
@@ -352,6 +366,8 @@ class CentralController extends Controller
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
+        info("Processing split payment approve {$request->payment_code}");
+
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
         if (! $successMessage) {
             return back()->with('error', 'Error in approving payment');
@@ -381,7 +397,11 @@ class CentralController extends Controller
 
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
-        return $successMessage;
+        if ($successMessage) {
+            return redirect()->back()->with('success', 'Payment has been retried');
+        } else {
+            return redirect()->back()->with('error', 'Payment retry failed');
+        }
     }
 
     // Delete split payment
@@ -416,6 +436,11 @@ class CentralController extends Controller
     public function generatePaymentLink(GeneratePaymentLinkRequest $request)
     {
         return (new SplitPaymentService)->generateSplitPaymentLink($request);
+    }
+
+    public function generateInsurerPaymentLink(GeneratePaymentLinkRequest $request)
+    {
+        return (new SplitPaymentService)->generateInsurerPaymentLink($request);
     }
 
     public function saveQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
@@ -681,6 +706,16 @@ class CentralController extends Controller
         return $response;
     }
 
+    public function removeInsurerPaymentLink(Request $request)
+    {
+        $response = app(CentralService::class)->removeInsurerPaymentLink($request);
+        if ($response['status']) {
+            return redirect()->back()->with('success', $response['message']);
+        }
+
+        return redirect()->back()->with('error', $response['message']);
+    }
+
     public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
@@ -698,6 +733,42 @@ class CentralController extends Controller
         info('paymentsCaptureValidation', $logPayload);
 
         return response()->json(['response' => $response]);
+    }
+
+    public function postPrepaymentToSage(PostPrepaymentToSageRequest $postPrepaymentToSageRequest)
+    {
+        try {
+            $request = $postPrepaymentToSageRequest->safe();
+            $quote = $this->getQuoteObject($request->quoteType, $request->quoteRequestId);
+            $paymentSplit = PaymentSplits::whereId($request->paymentSplitId)->first();
+            $sendUpdateLog = null;
+            if ($request->sendUpdateId) {
+                $sendUpdateLog = SendUpdateLog::whereId(request()->sendUpdateId)->first();
+            }
+
+            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Prepayment Posting of Payment split.');
+
+            $schedulePostPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->quoteType, $paymentSplit, $sendUpdateLog]);
+
+            if (! $schedulePostPrepayment['status']) {
+                $errors = count($schedulePostPrepayment['errors']) > 0 ? $schedulePostPrepayment['errors'] : ['message' => $schedulePostPrepayment['message']];
+                info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' -  Start Prepayment Posting of Payment split -  Error : ', $errors);
+
+                return response()->json(['errors' => $errors], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Prepayment posting to Sage has been scheduled and will be processed in the background.',
+            ], 200);
+        } catch (Exception $exception) {
+            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', $exception->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Prepayment posting is failed, please try again later.',
+            ], 500);
+        }
     }
 
     public function deletePayment(Request $request): \Illuminate\Http\JsonResponse

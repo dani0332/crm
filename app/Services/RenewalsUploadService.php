@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanType;
 use App\Enums\carTypeInsuranceCode;
@@ -70,6 +71,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Models\VehicleType;
 use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
@@ -426,8 +428,9 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix) {
+                    ->finally(function () use ($logPrefix, $batch) {
                         LoggerService::info($logPrefix.' everything done');
+                        EmbeddedProductRepository::generateEPRenewal($batch);
                     })
                     ->allowFailures()
                     ->withDelay(10)
@@ -766,11 +769,13 @@ class RenewalsUploadService
                 'code' => strtoupper($renewalQuoteProcess->quote_type).'-'.$quoteUuid,
                 'source' => LeadSourceEnum::RENEWAL_UPLOAD,
                 'advisor_id' => $advisorId,
+                'assignment_type' => $advisorId ? AssignmentTypeEnum::SYSTEM_ASSIGNED : null,
                 'renewal_batch' => $data['batch'],
                 'renewal_batch_id' => $renewalBatchId ?? null,
                 'quote_status_id' => $transApprovedId,
                 'renewal_import_code' => $renewalUploadLead->renewal_import_code,
                 'previous_quote_policy_number' => $data['policy_number'],
+                'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'previous_policy_expiry_date' => $this->formatDate($data['end_date']),
                 'previous_quote_policy_premium' => $data['premium'],
             ];
@@ -1024,6 +1029,8 @@ class RenewalsUploadService
                 $isNameChanged = true;
             }
 
+            $isReAssignment = $quote->advisor_id != $advisorId;
+
             $this->updateCustomer($quote, $customerData);
             $quoteData = $this->getNonEmptyValues([
                 'first_name' => $customerData['first_name'],
@@ -1039,7 +1046,9 @@ class RenewalsUploadService
                 'car_value' => $data['car_value'],
                 'car_value_tier' => $data['car_value'],
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
+                'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'advisor_id' => $advisorId,
+                'assignment_type' => $advisorId ? ($isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED) : null,
                 'renewal_batch' => $data['batch'],
                 'renewal_batch_id' => null,
                 'additional_notes' => $data['notes'],
@@ -2175,6 +2184,7 @@ class RenewalsUploadService
                 'uuid' => $quoteUuid,
                 'policy_number' => trim($data['policy_number']),
                 'advisor_id' => $advisorId,
+                'assignment_type' => $advisorId ? AssignmentTypeEnum::SYSTEM_ASSIGNED : null,
                 'premium' => trim($data['premium']),
                 'is_ecommerce' => trim($data['is_ecommerce']) == GenericRequestEnum::Yes ? 1 : 0,
                 'renewal_batch' => trim($data['renewal_batch']),

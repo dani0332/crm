@@ -2,7 +2,6 @@
 
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
-use Monolog\Handler\SyslogUdpHandler;
 
 return [
 
@@ -42,7 +41,7 @@ return [
         ],
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['single', 'papertrail'],
+            'channels' => ['single', 'axiom'],
             'ignore_exceptions' => false,
         ],
 
@@ -70,16 +69,6 @@ return [
             'username' => 'Laravel Log',
             'emoji' => ':boom:',
             'level' => env('LOG_LEVEL', 'critical'),
-        ],
-
-        'papertrail' => [
-            'driver' => 'monolog',
-            'level' => env('LOG_LEVEL', 'debug'),
-            'handler' => SyslogUdpHandler::class,
-            'handler_with' => [
-                'host' => env('PAPERTRAIL_URL'),
-                'port' => env('PAPERTRAIL_PORT'),
-            ],
         ],
 
         'stderr' => [
@@ -113,11 +102,11 @@ return [
 
         'axiom' => [
             'driver' => 'monolog',
-            'handler' => App\Logging\AxiomHandler::class,
+            'handler' => App\Logging\AxiomBatchHandler::class,
             'level' => env('LOG_LEVEL', 'debug'),
             'with' => [
-                'apiToken' => env('AXIOM_API_TOKEN', 'xaat-453f67be-7614-4156-a495-b45fd4e7252e'),
-                'dataset' => env('AXIOM_DATASET', 'insurancemarket_dev'),
+                'apiToken' => env('AXIOM_API_TOKEN'),
+                'dataset' => env('AXIOM_DATASET'),
             ],
         ],
     ],

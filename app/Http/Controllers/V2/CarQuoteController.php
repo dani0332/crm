@@ -15,12 +15,15 @@ use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
 use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class CarQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */

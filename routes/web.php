@@ -7,6 +7,7 @@ use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
+use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
@@ -51,6 +52,7 @@ use App\Http\Controllers\TravelLeadAllocationController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\Admin\AllocationAuditController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
@@ -298,6 +300,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
+    Route::post('/payment-split/post-to-sage', [CentralController::class, 'postPrepaymentToSage'])->name('can-post-premium-prepayment')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::post('/payments/{quoteType}/split-update', [CentralController::class, 'splitPaymentUpdate'])->name('approve-payments')->middleware('check_route_access');
@@ -309,6 +312,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/retry-payment', [CentralController::class, 'retrySplitPayment'])->name('approve-payments')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/delete-split-payment', [CentralController::class, 'deleteSplitPayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/void-payment', [CentralController::class, 'voidPayment'])->name('payments-void')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/remove-insurer-payment-link', [CentralController::class, 'removeInsurerPaymentLink'])->name('payments-remove-insurer-payment-link');
+
     Route::post('/payments/{quoteType}/payments-capture-validation', [CentralController::class, 'paymentsCaptureValidtion'])->name('capture-validation');
     Route::post('/payments/{quoteType}/delete-payment', [CentralController::class, 'deletePayment'])->name('payments-delete');
 
@@ -483,6 +488,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::post('process', [QueryBenchmarkerController::class, 'process'])->name('admin.benchmarker.query.process');
             });
         });
+
+        Route::get('/allocation-audit', [AllocationAuditController::class, 'index'])->name('admin.allocation-audit.index');
     });
 
     Route::prefix('buy-leads')->group(function () {
@@ -510,7 +517,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
         Route::resource('business', BusinessQuoteController::class);
 
-        Route::resource('travel', CRUDController::class);
+        // Route::resource('travel', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
@@ -560,6 +567,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
+    });
+
+    Route::group(['prefix' => 'ftc'], function () {
+        Route::get('email-logs', [FtcEmailLogController::class, 'index']);
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
@@ -696,6 +707,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
     Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);
+    Route::post('/generate-insurer-payment-link-new', [CentralController::class, 'generateInsurerPaymentLink']);
 
     Route::resource('members', MembersDetailController::class);
     Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
@@ -709,6 +721,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::post('/bike-plan-manual-update-process', [BikeQuoteController::class, 'bikePlanUpdateManualProcess']);
     Route::post('/car-plan-manual-update-process', [CarQuoteController::class, 'carPlanUpdateManualProcess']);
+
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
     Route::post('/travel-plan-manual-update-process', [TravelController::class, 'travelPlanUpdateManualProcess']);
@@ -738,6 +751,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
+    Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
 });
 
 Route::get('/add-batch-number', function () {
