@@ -410,7 +410,9 @@ class SendUpdateLogService
                     }
                 }
                 // Set previous_policy_expiry_date based on conditions
-                $updateReplicateDetails['previous_policy_expiry_date'] = $shouldCopyPreviousPolicyExpiry ? $replicateObject->previous_policy_expiry_date : null;
+                $updateReplicateDetails['previous_policy_expiry_date'] = $shouldCopyPreviousPolicyExpiry ?
+                    Carbon::parse($replicateObject->previous_policy_expiry_date)->format(config('constants.DB_DATE_FORMAT_MATCH')) :
+                    null;
             }
 
             $replicateObject->fill($updateReplicateDetails)->save();
