@@ -491,7 +491,15 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $docName = time().'_'.$docName;
+        $docName = uniqid().'_'.$docName;
+
+        // Check if file already exists, generate new name if it does
+        $filePath = storage_path('app/public/documents/' . $docName);
+        while (file_exists($filePath)) {
+            $docName = uniqid().'_'.$docName;
+            $filePath = storage_path('app/public/documents/' . $docName);
+        }
+
         $outputPath = storage_path('temp/'.$docName);
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
