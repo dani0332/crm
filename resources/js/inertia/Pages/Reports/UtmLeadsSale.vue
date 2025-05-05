@@ -170,7 +170,24 @@ function exportToExcel() {
             { value: 'utm_medium', label: 'UTM Medium' },
             { value: 'utm_campaign', label: 'UTM Campaign' },
           ]"
-        />
+        >
+        <template #content-footer>
+            <div class="p-2">
+              
+              <x-button
+                size="xs"
+                block
+                light
+                color="red"
+                @click="filters.group_by_one = ''"
+              >
+                Clear Selection
+              </x-button>
+          </div>
+
+          </template>
+        </x-select>
+        
         <x-select
           v-model="filters.group_by_two"
           label="Group by Two"
@@ -180,17 +197,25 @@ function exportToExcel() {
             { value: 'utm_medium', label: 'UTM Medium' },
             { value: 'utm_campaign', label: 'UTM Campaign' },
           ]"
-        />
+        >
+          <template #content-footer>
+              <div class="p-2">
+                
+                <x-button
+                  size="xs"
+                  block
+                  light
+                  color="red"
+                  @click="filters.group_by_two = ''"
+                >
+                  Clear Selection
+                </x-button>
+            </div>
+
+            </template>
+        </x-select>
 
         
-        <ComboBox
-          v-model="filters.quote_status_id"
-          label="Lead Status"
-          name="quote_status_id"
-          placeholder="Search by Lead Status"
-          :options="leadStatusOptions"
-          multiple
-        />
         
       </div>
 

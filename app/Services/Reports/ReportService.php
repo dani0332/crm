@@ -96,10 +96,6 @@ class ReportService extends BaseService
             ->join($quoteRequestTable.'_detail', $quoteRequestTable.'.id', $quoteRequestTable.'_detail.'.$quoteRequestTable.'_id')->groupBy($groupBy)
             ->whereNotIn($quoteRequestTable.'.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
 
-            
-            if (isset($request->quote_status_id) && !empty($request->quote_status_id)) {
-                $query->whereIn('quote_status_id', $request->quote_status_id);
-            }
             if ($isGroupMedical) {
                 $query->where('business_type_of_insurance_id', QuoteTypeId::Business);
             }
