@@ -350,6 +350,49 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
+    public function listRenewalBatchesNonMotor(Request $request){
+
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
+        }       
+        
+        $query = RenewalQuoteProcess::query()
+            ->select('renewal_quote_processes.batch as renewal_batch', 'renewal_quote_processes.quote_type as quote_type')
+            ->join('personal_quotes', 'renewal_quote_processes.batch', '=', 'personal_quotes.renewal_batch')
+            ->where([
+                'renewal_quote_processes.quote_type' => ! empty($request->lob) ? $request->lob : QuoteTypeShortCode::HOM,
+                'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
+            ])
+            ->whereYear('personal_quotes.previous_policy_expiry_date', ! empty($request->year) ? $request->year : date('Y'))
+            ->whereMonth('personal_quotes.previous_policy_expiry_date', ! empty($request->month) ? $request->month : date('m'));
+
+        if (! empty($request->batch)) {
+            $query->where('renewal_quote_processes.batch', $request->batch);
+        }
+
+        $renewalQuotes = $query->distinct()
+            ->simplePaginate();
+
+        $lobs = [
+            quoteTypeCode::Home => QuoteTypeShortCode::HOM,
+            quoteTypeCode::Health => QuoteTypeShortCode::HEA,
+        ];
+
+        $years = array_combine(range(date("Y"), 2010), range(date("Y"), 2010));
+
+        $months = [];
+        for ($m=1; $m<=12; $m++) {
+            $months[date('F', mktime(0,0,0,$m, 1, date('Y')))] = $m;
+        }
+
+        return inertia('Renewals/NonMotorBatches', [
+            'lobs' => $lobs,
+            'years' => $years,
+            'months' => $months,
+            'batches' => $renewalQuotes
+        ]);
+    }
+
     /**
      * fetch plans for all pending quotes.
      *
@@ -596,10 +639,12 @@ class RenewalsUploadController extends Controller
     {
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
+        
 
         // Now Only allowed for Home
         $lobs = [
             quoteTypeCode::Home => QuoteTypeShortCode::HOM,
+            quoteTypeCode::Health => QuoteTypeShortCode::HEA,
         ];
 
         return inertia('Renewals/NonMotorUploadUpdate', [

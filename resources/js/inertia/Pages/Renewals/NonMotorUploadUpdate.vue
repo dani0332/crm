@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 const notification = useToast();
 const page = usePage();
 const uploadForm = useForm({
@@ -21,6 +21,8 @@ let errors = {
   type: '',
   step: '',
 };
+
+// table for home
 const tableData = [
   {
     id: 1,
@@ -191,6 +193,138 @@ const tableData = [
     maxSize: 100,
   },
 ];
+
+// table for health
+const tableDataHealth = [
+  {
+    id: 1,
+    name: 'Customer Name',
+    description: 'Customer Name',
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 2,
+    name: 'Customer Email',
+    description: 'Customer Email',
+    required: 'No',
+    maxSize: 255,
+  },
+  {
+    id: 3,
+    name: 'Customer Mobile',
+    description: 'Customer Mobile Number',
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 4,
+    name: 'Plan',
+    description: 'Insurer Plan Code',
+    required: 'Yes',
+    maxSize: 50,
+  },
+  {
+    id: 5,
+    name: 'Previous Policy Number',
+    description: 'Expiring policy number',
+    required: 'Yes',
+    maxSize: 50,
+  },
+  {
+    id: 6,
+    name: 'Previous Policy Expiry Date',
+    description:
+      'End date of the expiring policy - Format should be DD/MM/YYYY',
+    required: 'Yes',
+    maxSize: 10,
+  },
+  {
+    id: 7,
+    name: 'Advisor Email',
+    description: "Renewal advisor's email",
+    required: 'No',
+    maxSize: 100,
+  },
+  {
+    id: 8,
+    name: 'Renewal Premium',
+    description: 'Renewal Premium',
+    required: 'No',
+    maxSize: 150,
+  },
+  {
+    id: 9,
+    name: 'Renewal Co-Pay',
+    description: 'Renewal copay code',
+    required: 'Yes',
+    maxSize: 300,
+  },
+  {
+    id: 10,
+    name: 'Member Names',
+    description: 'Member Names',
+    required: 'No',
+    maxSize: 500,
+  },
+  {
+    id: 11,
+    name: 'DOB',
+    description: "Customer's DOB",
+    required: 'Yes',
+    maxSize: 100,
+  },
+  {
+    id: 12,
+    name: 'Nationality',
+    description: "Customer's Nationality",
+    required: 'Yes',
+    maxSize: 300,
+  },
+  {
+    id: 13,
+    name: 'Gender',
+    description: "Customer's Gender",
+    required: 'Yes',
+    maxSize: 50,
+  },
+  {
+    id: 14,
+    name: 'Member Category',
+    description: 'Member Category',
+    required: 'Yes',
+    maxSize: 300,
+  },
+  {
+    id: 15,
+    name: 'Emirate of Visa',
+    description: 'Emirate of visa specified in expiring policy',
+    required: 'Yes',
+    maxSize: 100,
+  },
+  {
+    id: 16,
+    name: 'Payment Link',
+    description: 'Payment link from insurer',
+    required: 'No',
+    maxSize: 400,
+  },
+  {
+    id: 17,
+    name: 'Previous Policy Premium',
+    description: 'Expiring premium',
+    required: 'Yes',
+    maxSize: 15,
+  },
+  {
+    id: 18,
+    name: 'Notes',
+    description: 'Any other information',
+    required: 'No',
+    maxSize: 500,
+  },
+];
+
 function handleFileUpload(event) {
   files = event;
   file = event[0].file;
@@ -249,6 +383,12 @@ const quoteTypesOptions = computed(() => {
   return quoteTypesOptions;
 });
 
+// Computed property to determine which table data to display based on selected LoB
+const currentTableData = computed(() => {
+  return uploadForm.lob === page.props.lobs.Health ? tableDataHealth : tableData;
+});
+
+// Set default LoB
 uploadForm.lob = page.props.lobs.Home;
 </script>
 
@@ -337,11 +477,26 @@ uploadForm.lob = page.props.lobs.Home;
         </x-button>
       </div>
       <div class="flex items-center my-4">
+        <!-- Home LOB download button -->
         <x-button
+          v-if="uploadForm.lob === page.props.lobs.Home"
           :href="
             azureStorageUrl +
             azureStorageContainer +
             '/renewals/renewals_home_upload_update_m4.xlsx'
+          "
+          color="green"
+          icon-right="cells"
+        >
+          Download Sample XLSX
+        </x-button>
+        <!-- Health LOB download button -->
+        <x-button
+          v-if="uploadForm.lob === page.props.lobs.Health"
+          :href="
+            azureStorageUrl +
+            azureStorageContainer +
+            '/renewals/renewals_health_upload_update_m4.xlsx'
           "
           color="green"
           icon-right="cells"
@@ -364,7 +519,7 @@ uploadForm.lob = page.props.lobs.Home;
               </tr>
             </thead>
             <tbody class="vue3-easy-data-table__body">
-              <tr v-for="(row, index) in tableData" :key="index">
+              <tr v-for="(row, index) in currentTableData" :key="index">
                 <td>{{ row.id }}</td>
                 <td>{{ row.name }}</td>
                 <td>{{ row.description }}</td>

@@ -252,6 +252,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('uploaded-leads', [RenewalsUploadController::class, 'index'])->name('renewals-uploaded-leads-list');
             Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
+            Route::get('non-motor-batches', [RenewalsUploadController::class, 'listRenewalBatchesNonMotor'])->name('renewals-batches-nonmotor');
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
             Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export')->middleware(SetReadDbConnection::class)->name('renewal-search-export');
 

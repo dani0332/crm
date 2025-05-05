@@ -1308,9 +1308,9 @@ class RenewalsUploadService
                 'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'advisor_id' => $advisorId,
                 'assignment_type' => $advisorId ? ($isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED) : null,
-                'renewal_batch' => $data['batch'],
+                'renewal_batch' => $data['batch'] ?? null,
                 'renewal_batch_id' => null,
-                'additional_notes' => $data['notes'],
+                // 'additional_notes' => $data['notes'],
             ];
 
             if ($isQuoteTypeCar) {
@@ -2254,7 +2254,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->current_insurance_provider) {
-                                if (! InsuranceProvider::where('code', $leadData->current_insurance_provider)->first()) {
+                                if (!InsuranceProvider::where('code', $leadData->current_insurance_provider)->first()) {
                                     $leadValidationErrors->push('Invalid Current Insurance Provider Text');
                                     break;
                                 }

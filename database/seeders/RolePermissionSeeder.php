@@ -21,10 +21,12 @@ class RolePermissionSeeder extends Seeder
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
-        $this->addBridgerSkipPermission();
-        $this->addPostPrepaymentButtonPermission();
-        $this->sendUpdateCancelPermission();
-        $this->addPolicyDetailsAddVatPermission();
+        // $this->addBridgerSkipPermission();
+        // $this->addPostPrepaymentButtonPermission();
+        // $this->sendUpdateCancelPermission();
+        // $this->addPolicyDetailsAddVatPermission();
+
+        $this->addRenewalsUploadPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -201,6 +203,19 @@ class RolePermissionSeeder extends Seeder
         ], [
             'created_at' => now(),
             'updated_at' => now(),
+        ]);
+    }
+
+    private function addRenewalsUploadPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR,
+            'guard_name' => 'web',
+        ]);
+
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::RENEWALS_BATCHES_NONMOTOR,
+            'guard_name' => 'web',
         ]);
     }
 }

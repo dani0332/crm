@@ -43,7 +43,7 @@ const permissionsEnum = page.props.permissionsEnum;
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Plans Processes</h2>
       <div class="space-x-3">
-        <x-button color="#ff5e00" href="/renewals/batches" class="btn-2"
+        <x-button color="#ff5e00" :href="route('renewals-batches-nonmotor')" class="btn-2"
           >Batches List</x-button
         >
         <x-button

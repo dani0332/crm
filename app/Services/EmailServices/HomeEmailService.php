@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\DB;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalQuoteProcess;
 use App\Services\HomeQuoteService;
-use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use App\Models\PersonalQuote; 
