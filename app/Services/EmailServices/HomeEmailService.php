@@ -135,7 +135,7 @@ class HomeEmailService extends BaseService
     public function attachHomeOCBPDFToEmail($quoteUID)
     {
         try {
-            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Generating PDF for Ref-ID: '.$quoteUID);
+            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Generating PDF');
 
             $quotePlans = app(HomeQuoteService::class)->getQuotePlans($quoteUID);
 
@@ -153,13 +153,15 @@ class HomeEmailService extends BaseService
             }
 
             if (empty($planIds)) {
-                LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - No plans found for Ref-ID: '.$quoteUID);
+                LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - No plans found');
 
                 return '';
             }
 
             $pdfFile = app(HomeQuoteService::class)->exportPlansPdf(QuoteTypes::HOME->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
             $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
+
+            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Storing PDF temporarily');
 
             // Generate a unique temporary file path
             $tempFilePath = 'temp/'.uniqid().'.pdf';
@@ -173,7 +175,7 @@ class HomeEmailService extends BaseService
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
 
-            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Public URL generated: ' . $publicUrl);
+            LoggerService::info(self::class.' - attachHomeOCBPDFToEmail - Public URL generated');
 
             return $publicUrl;
         } catch (\Exception $e) {
