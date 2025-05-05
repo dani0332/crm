@@ -158,6 +158,7 @@ class CentralService extends BaseService
                         $update = [
                             'parent_duplicate_quote_id' => $parentRecord->code,
                             'advisor_id' => auth()->user()->id,
+                            'assignment_type' => AssignmentTypeEnum::SELF_ASSIGNED,
                         ];
                         if (strtolower($lob) == strtolower(quoteTypeCode::Health)) {
                             $subTeam = null;
@@ -1247,6 +1248,25 @@ class CentralService extends BaseService
         LoggerService::info('fn:voidPayment - Void authorized payment process completed');
 
         return ['status' => true, 'message' => 'Void payment processed'];
+    }
+
+    public function removeInsurerPaymentLink($request)
+    {
+        $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
+        if (! $quote) {
+            return ['status' => false, 'message' => 'Quote not found'];
+        }
+
+        $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
+        $quote->save();
+
+        $paymentSplits = $quote->getAllInsurerPaymentLinkSplits();
+        foreach ($paymentSplits as $ps) {
+            $ps->insurer_payment_link = null;
+            $ps->save();
+        }
+
+        return ['status' => true, 'message' => 'Insurer payment link removed'];
     }
 
     // Todo: This method will remove in future if Business confirm we will enable capture of all providers

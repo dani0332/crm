@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
@@ -38,6 +39,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
+use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -391,6 +393,35 @@ class AMLService
         return app(AMLController::class)->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
     }
 
+    public function saveManualAuditLog($quoteDetails, User $processByUser): bool
+    {
+        if (! $quoteDetails instanceof TravelQuote) {
+            return false;
+        }
+
+        $dirty = $quoteDetails->getDirty();
+
+        if (empty($dirty)) {
+            return false;
+        }
+
+        $changes = [];
+        foreach ($dirty as $attribute => $value) {
+            $changes['old_values'][$attribute] = $quoteDetails->getOriginal($attribute);
+            $changes['new_values'][$attribute] = $value;
+        }
+
+        $quoteDetails->audits()->create([
+            'user_type' => get_class($processByUser),
+            'user_id' => $processByUser->id ?? null,
+            'event' => 'updated',
+            'old_values' => $changes['old_values'],
+            'new_values' => $changes['new_values'],
+        ]);
+
+        return true;
+    }
+
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
@@ -439,6 +470,15 @@ class AMLService
 
         if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::EntityShort;
+        } elseif ($status == null && $quoteTypeId == QuoteTypes::CAR->id()) {
+
+            $quote = CarQuoteRepository::where('id', $quoteRequestId)->select('registration_type')->first();
+            if ($quote->registration_type == CarRegistrationType::COMPANY) {
+                $status = CustomerTypeEnum::EntityShort;
+            } else {
+                $status = CustomerTypeEnum::IndividualShort;
+            }
+
         } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::IndividualShort;
         }

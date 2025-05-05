@@ -7,6 +7,7 @@ const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
+const paymentMethodsEnums = page.props.paymentMethodsEnum;
 
 const {
   formatDate,
@@ -22,6 +23,7 @@ const props = defineProps({
   linkedQuoteDetails: Object,
   quoteRequest: Object,
   paymentMethodsForm: Object,
+  quoteType: String,
   sendUpdate: {
     type: Object,
     default: null,
@@ -152,6 +154,53 @@ const enablePostPrepaymentButton = computed(() => {
   }
   return false;
 });
+
+
+
+const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
+  if (paymentStatus == paymentStatusEnum.PAID) {
+    notification.error({
+      title: "Payment already 'Paid', button deactivated for this transaction",
+      position: 'top',
+    });
+  } else {
+    try {
+      const response = await axios.post('/generate-insurer-payment-link-new', {
+        quoteId: props.quoteRequest.id,
+        modelType: props.quoteType,
+        paymentCode: code,
+        splitPaymentId: splitPaymentId,
+        isInertia: true,
+        new_payment_structure: true,
+      });
+
+      if (response.data.success) {
+        const el = document.createElement('textarea');
+        el.value = response.data.payment_link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        notification.success({
+          title: 'Link copied to clipboard',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Payment Link Generation Failed',
+          position: 'top',
+        });
+      }
+    } catch (err) {
+      notification.error({
+        title: 'Payment Link Generation Failed',
+        position: 'top',
+      });
+    }
+  }
+};
+
 </script>
 
 <template>
@@ -236,6 +285,25 @@ const enablePostPrepaymentButton = computed(() => {
           outlined
           >Copy Payment Link</x-button
         >
+
+        <x-button
+          v-if="
+            splitPayment.payment_method.code ==
+            paymentMethodsEnums.InsurerPaymentLink
+          "
+          class="ml-2"
+          size="xs"
+          color="emerald"
+          @click.prevent="
+            generateInsurerLink(
+              splitPayment.code,
+              splitPayment.sr_no,
+              splitPayment.payment_status_id,
+            )
+          "
+          outlined
+          >Copy Insurer Payment Link
+        </x-button>
 
         <x-button
           v-if="canDeleteSplitPayment(parentPayment, splitIndex, splitPayment)"
