@@ -397,7 +397,11 @@ class CentralController extends Controller
 
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
-        return $successMessage;
+        if ($successMessage) {
+            return redirect()->back()->with('success', 'Payment has been retried');
+        } else {
+            return redirect()->back()->with('error', 'Payment retry failed');
+        }
     }
 
     // Delete split payment
