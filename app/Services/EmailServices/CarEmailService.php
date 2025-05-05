@@ -646,6 +646,6 @@ class CarEmailService extends BaseService
     protected function scheduleFileDeletion($filePath)
     {
         // Use a job to handle file deletion
-        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(10));
+        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(5));
     }
 }
