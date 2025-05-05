@@ -150,6 +150,10 @@ class QuoteDocumentController extends Controller
             $this->quoteDocumentService->uploadQuoteDocument($file['file'], $request->all(), $quote);
         }
 
+        if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink() && $request->document_type_code === DocumentTypeCode::HPD) {
+            $this->quoteDocumentService->updateQuoteAndPaymentStatusToPaymentPending($quote);
+        }
+
         return redirect()->back()->with('success', 'Document Uploaded Successfully');
     }
 

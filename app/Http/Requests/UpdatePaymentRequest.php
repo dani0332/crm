@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
+use App\Models\FtcEmailLog;
 use App\Models\Payment;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -65,6 +66,17 @@ class UpdatePaymentRequest extends FormRequest
             // check if the user is authorized to apply credit approval
             if (request()->input('payment.credit_approval') != '' && $payment->credit_approval != request()->input('payment.credit_approval') && auth()->user()->cannot(PermissionsEnum::PAYMENTS_CREDIT_APPROVAL_ADD)) {
                 $validator->errors()->add('value', 'Not Authorized to Add Credit Approval');
+            }
+            if (request()->input('payment.collection_type') == 'insurer' && request()->input('sendFTCEmail') == true) {
+                $paymentSplit = request()->input('payment.payment_splits');
+                foreach ($paymentSplit as $split) {
+                    if ($split['insurer_payment_link']) {
+                        $linkUsed = FtcEmailLog::where('quote_trackable_id', '!=', $payment->paymentable_id)->where('link', $split['insurer_payment_link'])->exists();
+                        if ($linkUsed) {
+                            $validator->errors()->add('insurer_payment_link', 'You have already sent this payment link for another lead. Please verify and ensure each lead is sent a unique link to avoid processing errors');
+                        }
+                    }
+                }
             }
 
             if (request()->input('isPolicyIssuanceDiscount') && auth()->user()->cannot(PermissionsEnum::PAYMENTS_DISCOUNT_EDIT)) {

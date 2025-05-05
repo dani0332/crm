@@ -1384,8 +1384,8 @@ class HealthQuoteService extends BaseService
                         if (isset($plan['ratesPerCopay'])) {
                             foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
                                 if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
-                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
-                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
+                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
+                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
                                 }
                             }
                         }
@@ -1463,6 +1463,7 @@ class HealthQuoteService extends BaseService
     public function healthPlanModifyV2($request)
     {
         $loadingPrices = $request->get('loadingPrice');
+        $adjustingPrices = $request->get('adjustingPrice');
         $manualPremiumPrices = $request->get('manualPremiumPrice');
 
         if (empty($request->get('selectedCopay'))) {
@@ -1490,6 +1491,12 @@ class HealthQuoteService extends BaseService
                                 (int) $loadingPrices[$key]['memberId'] == $value['memberId']
                             ) {
                                 $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
+                            }
+                            if (
+                                isset($adjustingPrices[$key]) &&
+                                (int) $adjustingPrices[$key]['memberId'] == $value['memberId']
+                            ) {
+                                $copay['adjustedPrice'] = (float) $adjustingPrices[$key]['price'];
                             }
                             if (
                                 isset($manualPremiumPrices[$key]) &&
