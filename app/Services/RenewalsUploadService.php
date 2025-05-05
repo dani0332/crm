@@ -26,6 +26,7 @@ use App\Enums\ThirdPartyTagEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Exports\RenewalQuotesExport;
+use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Imports\TravelUploadAndCreateImport;
 use App\Imports\UploadAndCreateImport;
@@ -1271,6 +1272,10 @@ class RenewalsUploadService
         info('Renewal: Health Plan Modify V2 Request Data: '.json_encode($dataArray));
         $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
+        if($response) {
+            $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id);
+        }
+
         return $response;
     }
 
@@ -1395,6 +1400,31 @@ class RenewalsUploadService
             info(' Health Members added/updated successfully for UUID: '.$quote->uuid);
             $this->updateBasePricePlan($quote, $data);
         }
+    }
+
+    /**
+     * This function is used to select plan.
+     *
+     * @param [type] $quote
+     * @param [type] $data
+     * @return void
+     */
+    private function selectHealthPlan($quote, $healthPlanId, $healthCoPaymentId)
+    {
+        $endpoint = '/api/v1-process-booking';
+        $data = [
+            'planId' => intval($healthPlanId),
+            'quoteTypeId' => QuoteTypeId::Health,
+            'addonOptionIds' => [],
+            'healthPlanCoPaymentId' => intval($healthCoPaymentId),
+            'quoteUID' => $quote->uuid,
+            'callSource' => strtolower(LeadSourceEnum::IMCRM),
+            'url' => request()->url(),
+        ];
+
+        $response = Capi::request($endpoint, 'post', $data);
+
+        return $response;
     }
 
     /**
