@@ -1876,7 +1876,7 @@ const handleRetryPayment = async () => {
       preserveScroll: true,
       onSuccess: () => {
         isRetryModalOpen.value = false;
-      }
+      },
     });
 };
 
