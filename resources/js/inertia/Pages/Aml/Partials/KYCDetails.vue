@@ -114,8 +114,8 @@ const kycFormDetails = useForm({
   quote_uuid: page.props.quoteRequest.uuid,
   quote_type_id: page.props.quoteType.id,
   insured_id: insuredDetails?.insured?.id,
-  first_name: insuredDetails?.insured.first_name ?? null,
-  last_name: insuredDetails?.insured?.last_name ?? null,
+  first_name: insuredDetails?.insured?.insured_kyc?.first_name ?? null,
+  last_name: insuredDetails?.insured?.insured_kyc?.last_name ?? null,
   residential_address:
     (isScreeningIndividual
       ? insuredDetails?.insured?.insured_kyc?.residential_address
@@ -406,7 +406,6 @@ watch(
           placeholder="First Name"
           type="text"
           class="w-full"
-          :disabled="true"
         />
       </x-field>
       <x-field label="Last Name">
@@ -415,7 +414,6 @@ watch(
           placeholder="Last Name"
           type="text"
           class="w-full"
-          :disabled="true"
         />
       </x-field>
       <template v-if="isScreeningIndividual">
@@ -424,7 +422,6 @@ watch(
             v-model="kycFormDetails.dob"
             placeholder="Date of Birth"
             class="w-full"
-            :disabled="true"
           />
         </x-field>
         <x-field label="Nationality">
@@ -434,7 +431,6 @@ watch(
             :single="true"
             placeholder="Select Nationality"
             class="w-full"
-            :disabled="true"
           />
         </x-field>
         <x-field label="Country of Residence">
