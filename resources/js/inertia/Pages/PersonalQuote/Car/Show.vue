@@ -1218,7 +1218,7 @@ const downloadCompanyPdf = () => {
   });
   axios
     .post(
-      '/personal-quotes/car/pdf',
+      '/api/v1/company-car-pdf',
       {
         plan_ids: planIds,
         quote_uuid: page.props.record.uuid,
