@@ -43,6 +43,7 @@ class FtcEmailLogController extends Controller
                     'subject' => $request->subject,
                     'status' => strtolower($request->status),
                     'link' => $request->link,
+                    'uuid' => $request->uuid ?? generateUUID(),
                     'quote_trackable_id' => $quote->id,
                     'quote_trackable_type' => get_class($quote),
                 ];
