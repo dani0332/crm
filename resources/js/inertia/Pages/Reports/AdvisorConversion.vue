@@ -29,7 +29,8 @@ const isDirty = ref(false);
 const isMounted = ref(false);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const toast = useToast();
-
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 const {
   currentPageFirstIndex,
   currentPageLastIndex,
@@ -246,6 +247,8 @@ const getFiltersObject = () => {
     insurance_for: '',
     travel_coverage: '',
     segment_filter: 'all',
+    registration_type: '',
+    vehicle_use: '',
   };
 };
 
@@ -826,6 +829,31 @@ const getAdvisorLabel = () => {
   return label;
 };
 
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const commericalOptions = [
+  { value: 'All', label: 'All' },
+  { value: true, label: 'Yes' },
+  { value: false, label: 'No' },
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
 const getRouteByLob = computed(() => {
   const routeMap = {
     [quoteTypeCodeEnum.Car]: 'car.show',
@@ -1011,15 +1039,26 @@ function sortPremium(order) {
         />
         <x-select
           v-if="canShow('isCommercial')"
-          v-model="filters.isCommercial"
-          label="Commercial"
+          v-model="filters.registration_type"
+          label="Registration Type"
           placeholder="Select any option"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
+          :options="registrationTypeOptions"
         />
+        <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
+        <x-select
+          v-if="canShow('isCommercial')"
+          v-model="filters.isCommercial"
+          label="Commercial Rule"
+          placeholder="Select any option"
+          :options="commericalOptions"
+        />
+
         <x-select
           v-if="canShow('insurance_type')"
           v-model="filters.insurance_type"
@@ -1072,6 +1111,24 @@ function sortPremium(order) {
           "
           :single="true"
         />
+        <x-tooltip placement="top" v-if="canShow('tiers')">
+          <template #tooltip> Select Tiers </template>
+          <ComboBox
+            :disabled="filters.lob === quoteTypeCodeEnum.Car"
+            :class="{
+              'opacity-50': filters.lob === quoteTypeCodeEnum.Car,
+            }"
+            v-model="filters.tiers"
+            label="Tiers"
+            placeholder="Search by Tiers"
+            :options="
+              Object.keys(filterOptions.tiers).map(key => ({
+                value: key,
+                label: filterOptions.tiers[key],
+              }))
+            "
+          />
+        </x-tooltip>
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">

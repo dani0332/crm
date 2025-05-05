@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -128,6 +129,7 @@ class QuoteDocumentService extends BaseService
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
+        // dd($documentType);
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
@@ -407,6 +409,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Yacht => ['YPD', 'YPDR', 'YDPDR'],
             QuoteTypeId::Business => ['GMQPD', 'GMQPDR', 'GMQDPDR'],
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
+            QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
         ];
 
         return $mapping[$quoteTypeId] ?? [];
@@ -771,4 +774,22 @@ class QuoteDocumentService extends BaseService
             ->exists();
     }
 
+    /**
+     * This function use update payment statuses on payments and payment_split table
+     *
+     * @param [type] $quote
+     * @return void
+     */
+    public function updateQuoteAndPaymentStatusToPaymentPending($quote)
+    {
+        $quote->quote_status_id = QuoteStatusEnum::PaymentPending;
+        $quote->save();
+        $payment = $quote->getLastPaymentWithInsurerPaymentLink();
+        $payment->payment_status_id = PaymentStatusEnum::PENDING;
+        foreach ($payment->paymentSplits as $split) {
+            $split->payment_status_id = PaymentStatusEnum::PENDING;
+            $split->save();
+        }
+        $payment->save();
+    }
 }

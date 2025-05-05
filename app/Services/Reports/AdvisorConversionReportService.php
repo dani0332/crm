@@ -69,6 +69,8 @@ class AdvisorConversionReportService extends BaseService
             'insurance_for' => $request->insurance_for,
             'travel_coverage' => $request->travel_coverage,
             'segment_filter' => $request->segment_filter,
+            'registration_type' => $request->registration_type,
+            'vehicle_use' => $request->vehicle_use,
         ];
 
         if ($lob === quoteTypeCode::Car) {
@@ -739,6 +741,12 @@ class AdvisorConversionReportService extends BaseService
                     ->when($isPopup, function ($sq) {
                         $sq->whereNull('car_quote_request.renewal_import_code');
                     });
+            })
+            ->when(! empty($filters->registration_type) && $filters->registration_type != 'All', function ($q) use ($filters) {
+                $q->where('car_quote_request.registration_type', '=', $filters->registration_type);
+            })
+            ->when(! empty($filters->vehicle_use) && $filters->vehicle_use != 'All', function ($q) use ($filters) {
+                $q->where('car_quote_request.vehicle_use', $filters->vehicle_use);
             });
 
         $this->applyLeadTypeFilter($query, 'car_quote_request', $filters);

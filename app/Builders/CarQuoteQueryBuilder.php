@@ -2,6 +2,7 @@
 
 namespace App\Builders;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -46,6 +47,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'currently_insured_with',
             'claim_history_id',
             'previous_policy_expiry_date',
+            'previous_policy_start_date',
             'quote_status_id',
             'payment_status_id',
             'advisor_id',
@@ -67,6 +69,9 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'policy_expiry_date',
             'insurer_aml_status',
             'aml_status',
+            'registration_type',
+            'vehicle_use',
+            'company_name as car_company_name',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -138,7 +143,17 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
                 request()->filled('sortBy'),
                 fn ($q) => $q->orderBy($this->getOrderByColumn(), request('sortType')),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
-            );
+            )
+            ->when(request()->filled('registration_type'), function ($query) {
+                $query->where('registration_type', request('registration_type'));
+            })
+            ->when(request()->filled('vehicle_use'), function ($query) {
+                $query->where('registration_type', CarRegistrationType::COMPANY);
+                $query->whereIn('vehicle_use', request('vehicle_use'));
+            })
+            ->when(request()->filled('company_name'), function ($query) {
+                $query->where('company_name', request('company_name'));
+            });
     }
 
     public function processGridData(): Builder
