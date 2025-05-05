@@ -13,12 +13,10 @@ use App\Models\QuoteStatus;
 use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;
 use App\Services\QuoteStatusService;
-use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
 {
-    use GenericQueriesAllLobs;
     /**
      * @return void
      */
