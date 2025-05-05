@@ -3,6 +3,7 @@
 namespace App\Services\OCR;
 
 use App\Enums\OCRDocumentTypeEnum;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -33,45 +34,102 @@ trait OcrFillable
     {
         $price = $this->resolveProp($data, 'price');
 
-        $quote->update([
-            'price_vat_applicable' => $this->resolveProp($price, 'baseAmount') ?? $quote->price_vat_applicable,
-            'vat' => $this->resolveProp($price, 'VAT') ?? $quote->vat,
-            'price_with_vat' => $this->resolveProp($price, 'totalAmount') ?? $quote->price_with_vat,
-            'policy_issuance_date' => $this->parseDate($this->resolveProp($data, 'issuanceDate'), $quote->policy_issuance_date),
-        ]);
+        $dataToUpdate = [];
 
-        $quote->payment?->update([
-            'insurer_invoice_date' => $this->parseDate($this->resolveProp($data, 'invoiceDate'), $quote->payment?->insurer_invoice_date),
-            'insurer_tax_number' => $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_tax_number,
-        ]);
+        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+            $data['price_vat_applicable'] = $this->resolveProp($price, 'baseAmount') ?? $quote->price_vat_applicable;
+        }
+
+        // if($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        //     $data['vat'] = $this->resolveProp($price, 'VAT') ?? $quote->vat;
+        // }
+
+        // if($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        //     $data['price_with_vat'] = $this->resolveProp($price, 'totalAmount') ?? $quote->price_with_vat;
+        // }
+
+        // if($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        //     $dataToUpdate['policy_issuance_date'] = $this->parseDate($this->resolveProp($data, 'issuanceDate'), $quote->policy_issuance_date);
+        // }
+
+        if (! empty($dataToUpdate)) {
+            $quote->update($dataToUpdate);
+        }
+
+        $paymentDataToUpdate = [];
+
+        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+            $paymentDataToUpdate['insurer_invoice_date'] = $this->parseDate($this->resolveProp($data, 'invoiceDate'), $quote->payment?->insurer_invoice_date);
+        }
+
+        if ($quote->isGIG() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+            $paymentDataToUpdate['insurer_tax_number'] = $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_tax_number;
+        }
+
+        if (! empty($paymentDataToUpdate)) {
+            $quote->payment?->update($paymentDataToUpdate);
+        }
     }
 
     private function fillTaxInvoiceRaisedByBuyer(Model $quote, object $data)
     {
         $commission = $this->resolveProp($data, 'commission');
 
-        $quote->payment?->update([
-            'commission_vat' => $this->resolveProp($commission, 'VAT') ?? $quote->payment?->comission_vat,
-            'commission' => $this->resolveProp($commission, 'totalAmount') ?? $quote->payment?->comission,
-            'insurer_commmission_invoice_number' => $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_commmission_invoice_number,
-            'commission_vat_applicable' => $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->comission_vat_applicable,
-        ]);
+        $dataToUpdate = [];
+
+        // if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        //     $dataToUpdate['commission_vat'] = $this->resolveProp($commission, 'VAT') ?? $quote->payment?->comission_vat;
+        // }
+
+        // if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        //     $dataToUpdate['commission'] = $this->resolveProp($commission, 'totalAmount') ?? $quote->payment?->comission;
+        // }
+
+        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+            $dataToUpdate['insurer_commmission_invoice_number'] = $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_commmission_invoice_number;
+        }
+
+        if ($quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+            $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->comission_vat_applicable;
+        }
+
+        if (! empty($dataToUpdate)) {
+            $quote->payment?->update($dataToUpdate);
+        }
     }
 
     private function fillCertificateOfIssuance(Model $quote, object $data)
     {
-        $quote->update([
-            'policy_number' => $this->resolveProp($data, 'policyNumber') ?? $quote->policy_number,
-            'policy_start_date' => $this->parseDate($this->resolveProp($data, 'policyStartDate'), $quote->policy_start_date),
-            'policy_expiry_date' => $this->parseDate($this->resolveProp($data, 'policyExpiryDate'), $quote->policy_expiry_date),
-        ]);
+        $dataToUpdate = [];
+
+        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+            $dataToUpdate['policy_number'] = $this->resolveProp($data, 'policyNumber') ?? $quote->policy_number;
+        }
+
+        if ($quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+            $dataToUpdate['policy_start_date'] = $this->parseDate($this->resolveProp($data, 'policyStartDate'), $quote->policy_start_date);
+        }
+
+        if ($quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+            $dataToUpdate['policy_expiry_date'] = $this->parseDate($this->resolveProp($data, 'policyExpiryDate'), $quote->policy_expiry_date);
+        }
+
+        if (! empty($dataToUpdate)) {
+            $quote->update($dataToUpdate);
+        }
     }
 
     private function fillMotorInsurancePolicySchedule(Model $quote, object $data)
     {
-        $quote->update([
-            'insurer_quote_number' => $this->resolveProp($data, 'insurerQuoteNumber') ?? $quote->insurer_quote_number,
-        ]);
+        $dataToUpdate = [];
+
+        // if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        //     $dataToUpdate['insurer_quote_number'] = $this->resolveProp($data, 'insurerQuoteNumber') ?? $quote->insurer_quote_number;
+        // }
+
+        if (! empty($dataToUpdate)) {
+            $quote->update($dataToUpdate);
+        }
     }
 
     private function fill(
@@ -79,6 +137,12 @@ trait OcrFillable
         OCRDocumentTypeEnum $documentType,
         object $data
     ) {
+        if (! ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio())) {
+            LoggerService::info(self::class.' - Not a Valid Provider');
+
+            return false;
+        }
+
         try {
             if ($documentType === OCRDocumentTypeEnum::TAX_INVOICE) {
                 $this->fillTaxInvoice($quote, $data);
