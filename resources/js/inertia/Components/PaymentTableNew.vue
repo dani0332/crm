@@ -1795,18 +1795,8 @@ const handleRetryPayment = async () => {
     .post('/payments/' + props.quoteType + '/retry-payment', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Payment has been retried',
-          position: 'top',
-        });
         isRetryModalOpen.value = false;
-      },
-      onError: () => {
-        notification.error({
-          title: 'Payment retry failed',
-          position: 'top',
-        });
-      },
+      }
     });
 };
 
