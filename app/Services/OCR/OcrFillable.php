@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Model;
 
 trait OcrFillable
 {
+    private function isSupportedProvider(Model $quote): bool
+    {
+        return $quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio();
+    }
+
     private function resolveProp($object, $prop)
     {
         if (is_object($object) && property_exists($object, $prop)) {
@@ -137,9 +142,8 @@ trait OcrFillable
         OCRDocumentTypeEnum $documentType,
         object $data
     ) {
-        if (! ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio())) {
+        if (!$this->isSupportedProvider($quote)) {
             LoggerService::info(self::class.' - Not a Valid Provider');
-
             return false;
         }
 
@@ -163,7 +167,6 @@ trait OcrFillable
             return true;
         } catch (Exception $e) {
             LoggerService::error(self::class.' - Exception occurred during data fill', exception: $e);
-
             return false;
         }
     }
