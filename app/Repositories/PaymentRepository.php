@@ -515,7 +515,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         if ($request->is_capture) { // update collected amount in childs
             // Check if the payment_status_capture session key is set and not equal to CAPTURE_VALIDATION_CLEARED
             if (session()->has("payment_capture_status_{$request->payment_code}") && session("payment_capture_status_{$request->payment_code}") != 'CAPTURE_VALIDATION_CLEARED') {
-                info("Payment approval failed: capture validation not cleared. Key: " . "payment_capture_status_{$request->payment_code}" . ", Value: " . session("payment_capture_status_{$request->payment_code}"));
+                info('Payment approval failed: capture validation not cleared. Key: '."payment_capture_status_{$request->payment_code}".', Value: '.session("payment_capture_status_{$request->payment_code}"));
+
                 return ['status' => 'error', 'message' => 'Payment validation failed. Please try again.'];
             }
             foreach ($request->collection_amount as $key => $splitAmount) {
@@ -537,6 +538,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         // process master payment approve
         $message = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
+
         return ['status' => 'success', 'message' => $message];
     }
 

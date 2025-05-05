@@ -367,9 +367,9 @@ class CentralController extends Controller
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
         info("Processing split payment approve {$request->payment_code}");
-        
+
         $response = PaymentRepository::updateSplitPaymentsApprove($request);
-        if (!is_array($response) || empty($response['message'])) {
+        if (! is_array($response) || empty($response['message'])) {
             return back()->with('error', 'Error in approving payment');
         }
 
@@ -734,7 +734,7 @@ class CentralController extends Controller
         ];
 
         info('paymentsCaptureValidation', $logPayload);
-        
+
         // Store status in session against paymentCode
         $sessionKey = "payment_capture_status_{$request->paymentCode}";
         session([$sessionKey => $response['status'] ?? null]);
