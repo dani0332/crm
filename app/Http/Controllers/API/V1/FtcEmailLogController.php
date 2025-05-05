@@ -43,6 +43,7 @@ class FtcEmailLogController extends Controller
                     'subject' => $request->subject,
                     'status' => strtolower($request->status),
                     'link' => $request->link,
+                    'uuid' => $request->uuid ?? generateUUID(),
                     'quote_trackable_id' => $quote->id,
                     'quote_trackable_type' => get_class($quote),
                 ];
@@ -69,12 +70,12 @@ class FtcEmailLogController extends Controller
             $payload = [
                 'status' => strtolower($request->status),
             ];
-            $trackEmail = $this->ftcEmailLogService->updateTrackEmail($payload, '', $request->link);
+            $trackEmail = $this->ftcEmailLogService->updateTrackEmail($payload, '', $request->uuid);
             if ($trackEmail == null) {
-                return response()->json(['message' => 'Email track not found.'], Response::HTTP_NOT_FOUND);
+                return response()->json(['message' => 'Email log not found.'], Response::HTTP_NOT_FOUND);
             }
 
-            return response()->json(['message' => 'Email track updated successfully.', 'data' => $trackEmail], Response::HTTP_OK);
+            return response()->json(['message' => 'Email log updated successfully.', 'data' => $trackEmail], Response::HTTP_OK);
         } catch (\Exception $th) {
             LoggerService::error('Error updating FTC email log', [
                 'request' => $request->all(),
