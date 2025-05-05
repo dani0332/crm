@@ -81,7 +81,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchCreateNewPayment($request)
     {
         try {
-            // dd($request->all());
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             info('Starting payment creation process for Quote: '.$quoteModel->code);
             $masterPayment = (object) $request->payment;
