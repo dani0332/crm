@@ -55,12 +55,12 @@ class SyncCustomerJob implements ShouldQueue
 
         }
 
-        info('----------- SyncCustomerJob Started ----------- '.$this->newCustomerId.' - '.$this->email);
+        // info('----------- SyncCustomerJob Started ----------- '.$this->newCustomerId.' - '.$this->email);
         $modelClasses = $this->getQuoteModels();
         foreach ($modelClasses as $modelClass) {
             try {
-
                 $modelClass::where('email', $this->email)
+                    ->select(['id', 'customer_id'])
                     ->chunk(1000, function ($entries) use ($modelClass) {
                         $auditsToCreate = [];
                         $entriesToSkip = [];

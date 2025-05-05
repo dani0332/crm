@@ -161,7 +161,7 @@ class PetQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchGetBy($column, $value)
@@ -268,7 +268,7 @@ class PetQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider']
+            ['advisor', 'nationality', 'insuranceProvider', 'quoteDetail']
         )->orderBy('created_at', 'desc');
     }
 }

@@ -36,19 +36,19 @@ trait OcrFillable
 
         $dataToUpdate = [];
 
-        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
             $data['price_vat_applicable'] = $this->resolveProp($price, 'baseAmount') ?? $quote->price_vat_applicable;
         }
 
-        // if($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        // if($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
         //     $data['vat'] = $this->resolveProp($price, 'VAT') ?? $quote->vat;
         // }
 
-        // if($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        // if($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
         //     $data['price_with_vat'] = $this->resolveProp($price, 'totalAmount') ?? $quote->price_with_vat;
         // }
 
-        // if($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        // if($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
         //     $dataToUpdate['policy_issuance_date'] = $this->parseDate($this->resolveProp($data, 'issuanceDate'), $quote->policy_issuance_date);
         // }
 
@@ -58,11 +58,11 @@ trait OcrFillable
 
         $paymentDataToUpdate = [];
 
-        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
             $paymentDataToUpdate['insurer_invoice_date'] = $this->parseDate($this->resolveProp($data, 'invoiceDate'), $quote->payment?->insurer_invoice_date);
         }
 
-        if ($quote->isGIG() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        if ($quote->isGIG() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
             $paymentDataToUpdate['insurer_tax_number'] = $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_tax_number;
         }
 
@@ -77,19 +77,19 @@ trait OcrFillable
 
         $dataToUpdate = [];
 
-        // if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        // if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
         //     $dataToUpdate['commission_vat'] = $this->resolveProp($commission, 'VAT') ?? $quote->payment?->comission_vat;
         // }
 
-        // if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        // if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
         //     $dataToUpdate['commission'] = $this->resolveProp($commission, 'totalAmount') ?? $quote->payment?->comission;
         // }
 
-        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
             $dataToUpdate['insurer_commmission_invoice_number'] = $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_commmission_invoice_number;
         }
 
-        if ($quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        if ($quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
             $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->comission_vat_applicable;
         }
 
@@ -102,15 +102,15 @@ trait OcrFillable
     {
         $dataToUpdate = [];
 
-        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
             $dataToUpdate['policy_number'] = $this->resolveProp($data, 'policyNumber') ?? $quote->policy_number;
         }
 
-        if ($quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        if ($quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
             $dataToUpdate['policy_start_date'] = $this->parseDate($this->resolveProp($data, 'policyStartDate'), $quote->policy_start_date);
         }
 
-        if ($quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        if ($quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
             $dataToUpdate['policy_expiry_date'] = $this->parseDate($this->resolveProp($data, 'policyExpiryDate'), $quote->policy_expiry_date);
         }
 
@@ -123,7 +123,7 @@ trait OcrFillable
     {
         $dataToUpdate = [];
 
-        // if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio()) {
+        // if ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio()) {
         //     $dataToUpdate['insurer_quote_number'] = $this->resolveProp($data, 'insurerQuoteNumber') ?? $quote->insurer_quote_number;
         // }
 
@@ -137,7 +137,7 @@ trait OcrFillable
         OCRDocumentTypeEnum $documentType,
         object $data
     ) {
-        if (! ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isRSA() || $quote->isTokio())) {
+        if (! ($quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio())) {
             LoggerService::info(self::class.' - Not a Valid Provider');
 
             return false;

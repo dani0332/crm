@@ -12,6 +12,8 @@ class RDX extends MDX
             'product.embeddedProduct',
             'quoteRequest.customer',
             'quoteRequest.customer.nationality',
+            'quoteRequest.customer.customerInsured',
+            'quoteRequest.customer.customerInsured.insured',
             'quoteRequest.bikeQuote.bikeMake',
             'quoteRequest.bikeQuote.bikeModel',
             'quoteRequest.quoteStatus',

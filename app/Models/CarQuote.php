@@ -237,11 +237,6 @@ class CarQuote extends BaseModel
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
-    public function payment()
-    {
-        return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
-    }
-
     public function embeddedTransactions()
     {
         return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
@@ -516,9 +511,9 @@ class CarQuote extends BaseModel
         return $this->isProvider(InsurerProviderEnum::QATAR_INSURANCE);
     }
 
-    public function isRSA()
+    public function isLivana()
     {
-        return $this->isProvider(InsurerProviderEnum::RSA_INSURANCE);
+        return $this->isProvider(InsurerProviderEnum::LIVANA_INSURANCE);
     }
 
     public function isTokio()

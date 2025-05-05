@@ -504,7 +504,7 @@ class ManagementReport
     {
         $types = [
             1 => 'car.show',
-            2 => 'home.show',
+            2 => 'home-quotes-show',
             3 => 'health.show',
             4 => 'life-quotes-show',
             5 => 'business.show',

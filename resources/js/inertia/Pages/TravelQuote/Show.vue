@@ -1,9 +1,9 @@
 <script setup>
+import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 
 const page = usePage();
 defineProps({
@@ -741,6 +741,7 @@ const onExportPlans = () => {
 };
 
 const onLoadAvailablePlansData = async () => {
+  availablePlansTable.isLoading = true;
   let data = {
     jsonData: true,
   };
@@ -756,6 +757,9 @@ const onLoadAvailablePlansData = async () => {
     })
     .catch(err => {
       console.log(err);
+    })
+    .finally(() => {
+      availablePlansTable.isLoading = false;
     });
 };
 
@@ -764,6 +768,7 @@ const selectedPlanType = ref(null);
 const updateSelectedPlan = async selectedPlanData => {
   let data = {
     plan_id: selectedPlanData.plan.id,
+    code: page.props.quote.code,
   };
 
   data.planType = selectedPlanData.extraDetails?.planType;
@@ -895,6 +900,7 @@ const emailStatusesTableColumns = computed(() => {
 
 const availablePlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -929,6 +935,7 @@ const availablePlansTable = reactive({
 
 const availableSeniorPlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -1178,16 +1185,16 @@ const onCopyText = text => {
     });
 };
 
-const getAddonVat = item => {
+const totalPremiumWithVat = (discountPremium, vat, addons) => {
   let addonVat = 0;
-  item.addons.forEach(addon => {
-    addon.addonOptions.forEach(option => {
+  addons.forEach(item => {
+    item.addonOptions.forEach(option => {
       if (option.isSelected && option.price != 0) {
-        addonVat += parseInt(option.price) + option.vat;
+        addonVat += useRoundIt(option.price) + useRoundIt(option.vat);
       }
     });
   });
-  return addonVat;
+  return useRoundIt(discountPremium + addonVat + vat);
 };
 
 const isProfileUpdateAllow = computed(() => {
@@ -1417,7 +1424,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'bookPolicyDetails'],
+    only: ['payments', 'quoteRequest', 'bookPolicyDetails', 'quote'],
   });
 };
 
@@ -3136,7 +3143,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
             </p>
           </div>
           <div v-else>
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
+              <x-spinner size="lg" />
+            </div>
             <DataTable
+              v-else
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed"
               :headers="availablePlansTable.columns"
@@ -3169,9 +3183,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
               <template #item-premiumWithVat="item">
                 {{
-                  parseFloat(
-                    item.discountPremium + item.vat + getAddonVat(item),
-                  ).toFixed(2)
+                  totalPremiumWithVat(
+                    item.discountPremium,
+                    item.vat,
+                    item.addons,
+                  )
                 }}
               </template>
               <template #item-action="item">
@@ -3227,7 +3243,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </h6>
             </div>
             <div>
+              <div
+                v-if="availableSeniorPlansTable.isLoading"
+                class="flex justify-center my-8"
+              >
+                <x-spinner size="lg" />
+              </div>
               <DataTable
+                v-else
                 v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed"
                 :headers="availableSeniorPlansTable.columns"
@@ -3262,9 +3285,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </template>
                 <template #item-premiumWithVat="item">
                   {{
-                    parseFloat(
-                      item.discountPremium + item.vat + getAddonVat(item),
-                    ).toFixed(2)
+                    totalPremiumWithVat(
+                      item.discountPremium,
+                      item.vat,
+                      item.addons,
+                    )
                   }}
                 </template>
                 <template #item-action="item">
@@ -3726,7 +3751,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
     <lead-raw-data
       :modelType="'Travel'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

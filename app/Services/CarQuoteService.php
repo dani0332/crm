@@ -7,6 +7,8 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BirdFlowStatusEnum;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
@@ -24,8 +26,11 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
+use App\Models\Entity;
 use App\Models\QuoteBatches;
+use App\Models\QuoteRequestEntityMapping;
 use App\Models\Tier;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -34,7 +39,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use PDF;
 
 class CarQuoteService extends BaseService
@@ -67,23 +71,41 @@ class CarQuoteService extends BaseService
 
     public function saveCarQuote(Request $request)
     {
+        $registrationType = $request->registration_type ?? CarRegistrationType::PERSONAL;
+        $vehicleUse = $request->vehicle_use ?? CarVehicleUse::PRIVATE;
+        $firstName = $request->first_name ?? null;
+        $lastName = $request->last_name ?? null;
+        $driverName = $request->driver_name ?? null;
+
+        if ($registrationType == CarRegistrationType::COMPANY) {
+            if ($vehicleUse == CarVehicleUse::PRIVATE) {
+                $name = explode(' ', $driverName);
+                $firstName = reset($name);
+                unset($name[0]);
+                $lastName = implode(' ', $name) ?? null;
+            } else {
+                $name = explode(' ', $request->company_contact_name);
+                $firstName = reset($name);
+                unset($name[0]);
+                $lastName = implode(' ', $name) ?? null;
+            }
+        }
+
         $dataArr = [
-            'firstName' => $request->first_name,
-            'lastName' => $request->last_name,
+            'firstName' => $firstName,
+            'lastName' => $lastName,
             'email' => $request->email,
             'address' => $request->address,
             'mobileNo' => $request->mobile_no,
-            'companyName' => $request->company_name,
-            'companyAddress' => $request->company_address,
-            'dob' => $request->dob,
-            'nationalityId' => $request->nationality_id,
-            'uaeLicenseHeldForId' => $request->uae_license_held_for_id,
-            'backHomeLicenseHeldForId' => $request->back_home_license_held_for_id,
+            'dob' => $request->dob ?? null,
+            'nationalityId' => $request->nationality_id ?? null,
+            'uaeLicenseHeldForId' => $request->uae_license_held_for_id ?? null,
+            'backHomeLicenseHeldForId' => $request->back_home_license_held_for_id ?? null,
             'yearOfManufacture' => $request->year_of_manufacture,
             'emirateOfRegistrationId' => $request->emirate_of_registration_id,
             'carTypeInsuranceId' => $request->car_type_insurance_id,
             'claimHistoryId' => $request->claim_history_id,
-            'hasNcdSupportingDocuments' => $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
+            'hasNcdSupportingDocuments' => $request->has_ncd_supporting_documents,
             'additionalNotes' => $request->additional_notes,
             'carValue' => $request->car_value_tier,
             'carValueTier' => $request->car_value_tier,
@@ -99,14 +121,26 @@ class CarQuoteService extends BaseService
             'referenceUrl' => config('constants.APP_URL'),
             'gender' => $request->gender ?? null,
             'chassisNumber' => $request->chassis_number,
+            'registrationType' => $registrationType,
+            'vehicleUse' => $vehicleUse,
+            'companyName' => $request->company_name ?? null,
+            'companyAddress' => $request->company_address ?? null,
+            'pointOfContactName' => $request->company_contact_name ?? null,
+            'businessActivityId' => $request->business_activity_id ?? null,
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-        info('Create triggered from IMCRM for Car Quote request with email : '.$request->email.' and sending request to CAPI');
+        LoggerService::info('Create triggered from IMCRM for Car Quote request with email : '.$request->email.' and sending request to CAPI');
 
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr, CarQuote::class);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr, CarQuote::class);
+
+        if (isset($response->quoteUID)) {
+            $this->selfAssign(QuoteTypes::CAR, $response->quoteUID);
+        }
+
+        return $response;
     }
 
     public function updateCarQuote(Request $request, $id)
@@ -116,32 +150,77 @@ class CarQuoteService extends BaseService
         $oldCarValue = $carQuote->car_value;
         $oldDob = $carQuote->dob;
         $oldBodyType = $carQuote->vehicle_type_id;
-        info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
+        LoggerService::info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
 
-        if ($request->first_name) {
-            $carQuote->first_name = $request->first_name;
+        $registrationType = $request->registration_type;
+        $vehicleUse = $request->vehicle_use ?? CarVehicleUse::PRIVATE;
+        $carQuote->registration_type = $registrationType;
+        $carQuote->vehicle_use = $vehicleUse;
+        $carQuote->business_activity_id = $request->business_activity_id ?? null;
+        $carQuote->company_name = $request->company_name ?? null;
+        $carQuote->company_address = $request->company_address ?? null;
+
+        if ($request->company_contact_name) {
+            $name = explode(' ', $request->company_contact_name);
+            $companyFirstName = reset($name);
+            unset($name[0]);
+            $companyLastName = implode(' ', $name) ?? ' ';
+            $carQuote->customer->update([
+                'first_name' => $companyFirstName,
+                'last_name' => $companyLastName,
+            ]);
         }
-        if ($request->last_name) {
-            $carQuote->last_name = $request->last_name;
+
+        $driverName = $request->driver_name ?? null;
+        $firstName = $request->first_name ?? null;
+        $lastName = $request->last_name ?? null;
+
+        $entityMapping = QuoteRequestEntityMapping::with('entity')
+            ->where('quote_type_id', QuoteTypeId::Car)
+            ->where('quote_request_id', $carQuote->id)
+            ->first();
+        if ($registrationType == CarRegistrationType::COMPANY) {
+            if ($vehicleUse == CarVehicleUse::PRIVATE) {
+                $name = explode(' ', $driverName);
+                $firstName = reset($name);
+                unset($name[0]);
+                $lastName = implode(' ', $name) ?? null;
+            } else {
+                $name = explode(' ', $request->company_contact_name);
+                $firstName = reset($name);
+                unset($name[0]);
+                $lastName = implode(' ', $name) ?? null;
+            }
+
+            if (! $entityMapping) {
+
+                $entity = Entity::create([
+                    'company_name' => $carQuote->company_name,
+                ]);
+                $entity->refresh();
+                $entityId = $entity->id;
+                $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);
+
+                QuoteRequestEntityMapping::updateOrCreate([
+                    'quote_type_id' => QuoteTypeId::Car,
+                    'quote_request_id' => $carQuote->id,
+                ], ['entity_id' => $entityId]);
+            }
+
+        } else {
+            if ($entityMapping) {
+                $entityMapping->entity->delete();
+                $entityMapping->delete();
+            }
         }
-        if ($request->dob) {
-            $carQuote->dob = $request->dob;
-        }
-        if ($request->company_name) {
-            $carQuote->company_name = $request->company_name;
-        }
-        if ($request->company_address) {
-            $carQuote->company_address = $request->company_address;
-        }
-        if ($request->nationality_id) {
-            $carQuote->nationality_id = $request->nationality_id;
-        }
-        if ($request->uae_license_held_for_id) {
-            $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
-        }
-        if ($request->back_home_license_held_for_id) {
-            $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
-        }
+
+        $carQuote->first_name = $firstName;
+        $carQuote->last_name = $lastName;
+        $carQuote->dob = $request->dob ?? null;
+        $carQuote->nationality_id = $request->nationality_id ?? null;
+        $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id ?? null;
+        $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id ?? null;
+
         if ($request->year_of_manufacture) {
             $carQuote->year_of_manufacture = $request->year_of_manufacture;
         }
@@ -154,8 +233,8 @@ class CarQuoteService extends BaseService
         if ($request->claim_history_id) {
             $carQuote->claim_history_id = $request->claim_history_id;
         }
-        if ($request->has_ncd_supporting_documents) {
-            $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
+        if (isset($request->has_ncd_supporting_documents)) {
+            $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents;
         }
         if ($request->premium) {
             $carQuote->premium = $request->premium;
@@ -337,6 +416,7 @@ class CarQuoteService extends BaseService
                 'ls.text as lost_reason',
                 'cqr.previous_quote_policy_number',
                 DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+                DB::raw('DATE_FORMAT(cqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
                 'cqr.previous_quote_policy_premium',
                 'cqr.car_model_detail_id',
                 'cmd.text as car_model_detail_id_text',
@@ -402,6 +482,8 @@ class CarQuoteService extends BaseService
                 'cqr.insurer_aml_status',
                 'cqrd.chassis_number',
                 'c.gender',
+                'c.first_name as customer_first_name',
+                'c.last_name as customer_last_name',
                 DB::raw('
                     CASE
                         WHEN insurer_aml_status = "'.AMLStatusCode::InsurerAMLScreeningPending.'" THEN "'.AMLStatusCode::getName(AMLStatusCode::InsurerAMLScreeningPending).'"
@@ -412,7 +494,10 @@ class CarQuoteService extends BaseService
                     END AS insurer_aml_status_display
                 '),
                 'cqr.email',
-                'cqr.mobile_no'
+                'cqr.mobile_no',
+                'cqr.registration_type',
+                'cqr.vehicle_use',
+                'cqr.business_activity_id',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -476,7 +561,7 @@ class CarQuoteService extends BaseService
             ]
         );
 
-        info('updateChildRecord - leadId : '.$id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
+        LoggerService::info('updateChildRecord - leadId : '.$id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
 
         return $oldAdvisorAssignedDate;
     }
@@ -498,6 +583,7 @@ class CarQuoteService extends BaseService
             PaymentStatusEnum::DISPUTED,
             PaymentStatusEnum::FAILED,
             PaymentStatusEnum::DRAFT,
+            PaymentStatusEnum::PAYMENT_LINK_REQUESTED,
         ];
 
         if ($paymentEntityModel->payments) {
@@ -927,7 +1013,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'policy_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads', 'assignment_type'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'policy_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads', 'assignment_type', 'registration_type', 'vehicle_use', 'company_name'];
 
         return $searchProperties;
     }
@@ -991,7 +1077,7 @@ class CarQuoteService extends BaseService
 
             $pdf = $this->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
-                info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
+                LoggerService::info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
             } else {
                 $carQuote->pdf = (object) [
                     'content' => base64_encode(($pdf['pdf'])->stream()),
@@ -1072,7 +1158,7 @@ class CarQuoteService extends BaseService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            Log::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
+            LoggerService::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
 
             if (isset($response->message)) {
                 $responseBodyAsString = $response->message;
@@ -1208,7 +1294,7 @@ class CarQuoteService extends BaseService
     {
         if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
             if (! $enablePlanValidation->value) {
-                info('plan modification validation is disabled from backend');
+                LoggerService::info('plan modification validation is disabled from backend');
 
                 return true;
             }
@@ -1232,6 +1318,21 @@ class CarQuoteService extends BaseService
             PaymentStatusEnum::DRAFT,
         ];
 
+        $quoteStatuses = [
+            QuoteStatusEnum::NewLead,
+            QuoteStatusEnum::PaymentLinkRequestedByCustomer,
+            QuoteStatusEnum::PaymentLinkInprogress,
+            QuoteStatusEnum::PaymentLinkSentToCustomer,
+            QuoteStatusEnum::Quoted,
+            QuoteStatusEnum::FollowedUp,
+            QuoteStatusEnum::PaymentPending,
+            QuoteStatusEnum::SentForTransactionApproval,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::Stale,
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+        ];
+
         if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
             if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
                 info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
@@ -1245,7 +1346,7 @@ class CarQuoteService extends BaseService
         }
 
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
-            if (in_array($quote->payment_status_id, $paymentStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
+            if (in_array($quote->payment_status_id, $paymentStatuses) || in_array($quote->quote_status_id, $quoteStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
                 info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
                 return true;
@@ -1319,7 +1420,7 @@ class CarQuoteService extends BaseService
 
             $quoteBatch = QuoteBatches::latest()->first();
 
-            info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
+            LoggerService::info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
 
             $lead->quote_batch_id = $quoteBatch->id;
 
@@ -1327,7 +1428,7 @@ class CarQuoteService extends BaseService
 
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
-            info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
+            LoggerService::info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType); // update new and previous (if applicable) advisor counts in lead allocation table
 
@@ -1349,7 +1450,7 @@ class CarQuoteService extends BaseService
                 $lead->tier_id = $selectedTier->id;
                 $lead->cost_per_lead = $selectedTier->cost_per_lead;
             } else {
-                info('Unable to find tier against lead : '.$lead->code);
+                LoggerService::info('Unable to find tier against lead : '.$lead->code);
             }
         } else {
             $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
@@ -1496,20 +1597,15 @@ class CarQuoteService extends BaseService
                 return true;
             }
         } catch (\Exception $exception) {
-            Log::info('Delete Valuation API Error: '.$exception->getMessage());
+            LoggerService::error('Delete Valuation API Error: '.$exception->getMessage());
 
             return false;
         }
     }
 
-    public function getValidationArray(): array
+    public function getValidationArray($request): array
     {
-        return [
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'dob' => 'required',
-            'nationality_id' => 'required',
-            'uae_license_held_for_id' => 'required',
+        $validationArray = [
             'back_home_license_held_for_id' => 'nullable',
             'year_of_manufacture' => 'required',
             'emirate_of_registration_id' => 'required',
@@ -1524,7 +1620,36 @@ class CarQuoteService extends BaseService
             'car_model_id' => 'required', // ID
             'currently_insured_with' => 'required|string',
             'chassis_number' => 'nullable|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/',
+            'registration_type' => 'required',
         ];
+
+        if ($request->registration_type == CarRegistrationType::COMPANY) {
+            $validationArray = array_merge($validationArray, [
+                'vehicle_use' => 'required|string',
+                'company_name' => 'required|string',
+                'company_contact_name' => 'required|string',
+                'business_activity_id' => 'required',
+            ]);
+
+            if ($request->vehicle_use == CarVehicleUse::PRIVATE) {
+                $validationArray = array_merge($validationArray, [
+                    'driver_name' => 'required|string|between:1,70',
+                    'dob' => 'required',
+                    'nationality_id' => 'required',
+                    'uae_license_held_for_id' => 'required',
+                ]);
+            }
+        } else {
+            $validationArray = array_merge($validationArray, [
+                'first_name' => 'required|string|between:1,20',
+                'last_name' => 'required|string|between:1,50',
+                'dob' => 'required',
+                'nationality_id' => 'required',
+                'uae_license_held_for_id' => 'required',
+            ]);
+        }
+
+        return $validationArray;
     }
 
     /**
@@ -1576,7 +1701,7 @@ class CarQuoteService extends BaseService
             return;
         }
 
-        info('Previous assignment type is : '.$previousAssignmentType);
+        LoggerService::info('Previous assignment type is : '.$previousAssignmentType);
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
 
@@ -1885,6 +2010,10 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
             ->whereNotNull('cqp.pua_premium')
+            ->whereNot(function ($q) {
+                $q->where('cqp.is_renewal', true)
+                    ->whereNotNull('cqp.pua_type');
+            })
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
             ->whereColumn('cqp.plan_id', 'cqr.plan_id');
@@ -1892,7 +2021,7 @@ class CarQuoteService extends BaseService
 
     public function sendAddressNotificationToCustomer($lead, $address)
     {
-        info('Checking for sending courier notification : '.$lead->uuid);
+        LoggerService::info('Checking for sending courier notification : '.$lead->uuid);
 
         // Use a different variable name for the result of the query
         $existingAddress = CustomerAddress::where([
@@ -1901,7 +2030,7 @@ class CarQuoteService extends BaseService
         ])->first();
 
         if (empty($existingAddress?->type)) {
-            info('Sending address notification to customer for lead : '.$lead->uuid);
+            LoggerService::info('Sending address notification to customer for lead : '.$lead->uuid);
             // only trigger bird flow if address is not already added
             $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);
         }
@@ -1910,7 +2039,7 @@ class CarQuoteService extends BaseService
     public function triggerBirdFlow($lead, $address, $actionType)
     {
         if ($lead->embeddedTransactions()->exists()) {
-            info('Checking for courier transaction for lead : '.$lead->uuid);
+            LoggerService::info('Checking for courier transaction for lead : '.$lead->uuid);
             $courierEmbeddedTransaction = $lead->embeddedTransactions
                 ->filter(function ($transaction) {
                     return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
@@ -1921,7 +2050,7 @@ class CarQuoteService extends BaseService
             ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
             in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
         ) {
-            info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
+            LoggerService::info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
             $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
             $address = app(CustomerAddressService::class)->fetchFormattedAddress($address);
             $customerAdditionalContact = CustomerAdditionalContact::select('value')
@@ -1937,11 +2066,11 @@ class CarQuoteService extends BaseService
                 'address' => $address,
                 'alternateNumber' => $customerAdditionalContact->value ?? '',
             ];
-            info('Payload for Bird Courier Flow : '.json_encode($payload));
+            LoggerService::info('Payload for Bird Courier Flow : '.json_encode($payload));
 
             Ken::request('/trigger-bird-courier-flow', 'post', $payload);
         } else {
-            info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
+            LoggerService::info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
         }
     }
 
