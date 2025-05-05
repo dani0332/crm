@@ -74,9 +74,6 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
     Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
     Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
-
-    // company car pdf
-    Route::post('/company-car-pdf', [CarQuoteController::class, 'generateCompanyCarPdf']);
 });
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
 
