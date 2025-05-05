@@ -10,14 +10,17 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Jobs\SendFTCEmailJob;
 use App\Models\BrokerInvoiceNumber;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\PaymentLinkService;
 use App\Services\SageApiService;
@@ -128,6 +131,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($masterPayment->reference) {
                 $paymentInformation['reference'] = $masterPayment->reference;
             }
+
             if ($masterPayment->payment_methods != PaymentMethodsEnum::CreditCard && $masterPayment->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
                 $paymentInformation['authorized_at'] = now();
             }
@@ -141,10 +145,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         try {
             $payment = $quoteModel->payments()->create($paymentInformation);
             info('Payment created with Code: '.$paymentInformation['code']);
+
+            $quoteUUID = $quoteModel instanceof SendUpdateLog ? null : $quoteModel->uuid;
             // Add split payments start
-            $this->addPaymentSplits($request, $payment);
+            $this->addPaymentSplits($request, $payment, $quoteUUID);
             // Add split payments ends
-            info('Payment splits added for Payment Code: '.$paymentInformation['code']);
 
             $paymentLog = new PaymentStatusLog([
                 'current_payment_status_id' => PaymentStatusEnum::NEW,
@@ -153,11 +158,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_at' => now(),
             ]);
             $paymentLog->save();
-            if (! $request->send_update_id) { // it will check if the payment is added from send update.
+
+            if (! $request->send_update_id && $masterPayment->payment_methods !== PaymentMethodsEnum::InsurerPaymentLink) { // it will check if the payment is added from send update.
                 $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
             }
             $quoteModel->save();
             DB::commit();
+
             info('Payment creation process completed successfully for Payment Code: '.$paymentInformation['code']);
 
             return ['status' => 'success', 'message' => 'Payment Added'];
@@ -225,6 +232,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $maxRetries = 2;
 
         return $this->handleWithDeadlockRetries(function () use ($request, $payment, $paymentInformation) {
+            $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             $payment->update($paymentInformation);
             // Log payment update
             info('Payment updated successfully for Payment Code: '.$request->paymentCode);
@@ -233,7 +241,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if (! empty($request->trashedFilesModal)) {
                 QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
-            $this->updatePaymentSplits($request, $payment);
+            $quoteUUID = $quoteModel instanceof SendUpdateLog || $payment->send_update_log_id != null ? null : $quoteModel->uuid;
+
+            $this->updatePaymentSplits($request, $payment, $quoteUUID);
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
         }, $maxRetries);
@@ -253,10 +263,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     // Add split payments
-    public function addPaymentSplits($request, $payment)
+    public function addPaymentSplits($request, $payment, $quoteUUID)
     {
         $quoteID = $payment->code;
         $masterPayment = (object) $request->payment;
+        $isInsurerPaymentLink = collect($masterPayment->payment_splits)->contains('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+        $isPaymentLinkNotNull = collect($masterPayment->payment_splits)->filter(function ($split) {
+            return isset($split['insurer_payment_link']) && $split['insurer_payment_link'] !== null;
+        })->isNotEmpty();
+        $sendFTCEmail = $isInsurerPaymentLink && $isPaymentLinkNotNull;
         $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
         if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0) {
@@ -270,6 +285,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
+                    'insurer_payment_link' => $splitPayment['insurer_payment_link'] ?? null,
                     'payment_method' => $splitPayment['payment_method'],
                     'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
                     'payment_amount' => $splitPayment['payment_amount'],
@@ -301,6 +317,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
         // Update parent payment status
         $this->setMasterPaymentStatus($payment);
+        if ($sendFTCEmail && $quoteUUID != null) {
+            $modelType = $request->modelType;
+            $quoteType = QuoteTypes::from($modelType);
+            SendFTCEmailJob::dispatch($quoteUUID, $quoteType, true)->delay(now()->addSeconds(5));
+        }
+
         $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
         if ($discountDocuments && count($discountDocuments)) {
             $firstPaymentSplit = $firstPaymentSplit ?? PaymentSplits::where(['code' => $quoteID])->first();
@@ -308,9 +330,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
     }
 
-    public function updatePaymentSplits($request, $payment)
+    public function updatePaymentSplits($request, $payment, $quoteUUID)
     {
         $masterPayment = (object) $request->payment;
+        $isInsurerPaymentLink = collect($masterPayment->payment_splits)->contains('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
+        $insurerPaymentLinkIndex = collect($masterPayment->payment_splits)->search(function ($item) {
+            return isset($item['insurer_payment_link']) && $item['insurer_payment_link'] !== null;
+        });
+        $sendFTCEmail = $isInsurerPaymentLink && $insurerPaymentLinkIndex !== false && $request->sendFTCEmail;
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
@@ -353,7 +380,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         $firstPaymentSplit = null;
 
-        foreach ($masterPayment->payment_splits as $splitPayment) {
+        foreach ($masterPayment->payment_splits as $index => $splitPayment) {
             $serialNo = $splitPayment['sr_no'];
             // update payment amount for paid payments
             if (isset($request->isPaidEditable) && $request->isPaidEditable && count($paymentPaidSerialNo) === $totalSplitPayments) {
@@ -385,6 +412,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         'payment_status_id' => PaymentStatusEnum::NEW, // reset status to 'NEW
                         'due_date' => $splitPayment['due_date'],
                         'discount_value' => $discount,
+                        'insurer_payment_link' => $splitPayment['insurer_payment_link'] ?? null,
                     ];
                 }
 
@@ -392,6 +420,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if (! $paymentSplitRecord) {
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
+                    $index == $insurerPaymentLinkIndex && $sendFTCEmail = $splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink && $splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link ? true : false;
                     $paymentSplitRecord->update($splitPaymentInformation);
                 }
                 // add document references
@@ -417,7 +446,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
         }
-
+        ($sendFTCEmail && $quoteUUID != null) && SendFTCEmailJob::dispatch($quoteUUID, QuoteTypes::from($request->modelType), true)->delay(now()->addSeconds(5));
+        $payment = Payment::where('code', $request->paymentCode)->first();
         $this->setMasterPaymentStatus($payment);
         $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
         if ($discountDocuments && count($discountDocuments)) {

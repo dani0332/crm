@@ -586,6 +586,24 @@ class SplitPaymentService
         }
     }
 
+    public function generateInsurerPaymentLink($request)
+    {
+        $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
+        if (! $splitPayment) {
+            return response()->json(['success' => false]);
+        }
+        $payment = $splitPayment->payment;
+        $modelType = $request->modelType;
+        $quoteId = $request->quoteId;
+        $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+
+        $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
+        $paymentLinkURL = $paymentLink.'/redirect/'.$quoteTypeId.'/'.$quoteModel->uuid.'/'.$quoteModel->plan?->id ?? '';
+
+        return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
+    }
+
     // function to get the payment lookups
     public function getPaymentLookups()
     {

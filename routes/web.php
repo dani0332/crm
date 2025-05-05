@@ -7,6 +7,7 @@ use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
+use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
@@ -51,6 +52,7 @@ use App\Http\Controllers\TravelLeadAllocationController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\Admin\AllocationAuditController;
 use App\Http\Controllers\V2\Admin\ProcessTrackerController;
 use App\Http\Controllers\V2\Admin\QuadrantController;
 use App\Http\Controllers\V2\Admin\QueryBenchmarkerController;
@@ -196,6 +198,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/total-premium', [ReportsController::class, 'totalPremiumLeadsSaleReport'])->name('total-premium-leads-sales-report');
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
 
+        Route::post('/personal-quotes/car/pdf', [CarQuoteController::class, 'generateCompanyCarPdf']);
+
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
         Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
 
@@ -310,6 +314,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/retry-payment', [CentralController::class, 'retrySplitPayment'])->name('approve-payments')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/delete-split-payment', [CentralController::class, 'deleteSplitPayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/void-payment', [CentralController::class, 'voidPayment'])->name('payments-void')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/remove-insurer-payment-link', [CentralController::class, 'removeInsurerPaymentLink'])->name('payments-remove-insurer-payment-link');
+
     Route::post('/payments/{quoteType}/payments-capture-validation', [CentralController::class, 'paymentsCaptureValidtion'])->name('capture-validation');
     Route::post('/payments/{quoteType}/delete-payment', [CentralController::class, 'deletePayment'])->name('payments-delete');
 
@@ -484,6 +490,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
                 Route::post('process', [QueryBenchmarkerController::class, 'process'])->name('admin.benchmarker.query.process');
             });
         });
+
+        Route::get('/allocation-audit', [AllocationAuditController::class, 'index'])->name('admin.allocation-audit.index');
     });
 
     Route::prefix('buy-leads')->group(function () {
@@ -561,6 +569,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
+    });
+
+    Route::group(['prefix' => 'ftc'], function () {
+        Route::get('email-logs', [FtcEmailLogController::class, 'index']);
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
@@ -697,6 +709,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
     Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);
+    Route::post('/generate-insurer-payment-link-new', [CentralController::class, 'generateInsurerPaymentLink']);
 
     Route::resource('members', MembersDetailController::class);
     Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
@@ -710,6 +723,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::post('/bike-plan-manual-update-process', [BikeQuoteController::class, 'bikePlanUpdateManualProcess']);
     Route::post('/car-plan-manual-update-process', [CarQuoteController::class, 'carPlanUpdateManualProcess']);
+
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
     Route::post('/travel-plan-manual-update-process', [TravelController::class, 'travelPlanUpdateManualProcess']);
