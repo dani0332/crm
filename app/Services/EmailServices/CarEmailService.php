@@ -628,7 +628,7 @@ class CarEmailService extends BaseService
             // Generate a public URL
             $publicUrl = Storage::disk('azureIM')->temporaryUrl(
                 $tempFilePath,
-                now()->addMinutes(60)
+                now()->addMinutes(10)
             );
             // Schedule deletion after 5 minutes
             $this->scheduleFileDeletion($tempFilePath);
@@ -646,6 +646,6 @@ class CarEmailService extends BaseService
     protected function scheduleFileDeletion($filePath)
     {
         // Use a job to handle file deletion
-        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(60));
+        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(10));
     }
 }
