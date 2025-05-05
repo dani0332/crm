@@ -119,6 +119,7 @@ const filledExpiryDate = computed(() => {
 });
 
 const policyDetailsForm = useForm({
+  code: props.sendUpdateLog?.code,
   first_name:
     props.sendUpdateLog?.first_name || props.quote?.first_name || null,
   last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,

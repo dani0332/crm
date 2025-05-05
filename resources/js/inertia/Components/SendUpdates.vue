@@ -133,6 +133,7 @@ const getSendUpdateOptions = () => {
       businessInsuranceTypeId:
         props.reportable?.business_type_of_insurance_id || null,
       status: form.childCategory?.slug || null,
+      quote_uuid: props.reportable.uuid,
     })
     .then(response => {
       if (response.status == 200) {

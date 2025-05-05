@@ -37,6 +37,7 @@ const providerDetailsForm = useForm({
     props?.insuranceProviderId ||
     null,
   send_update_log_id: props.sendUpdateLog.id,
+  code: props.sendUpdateLog.code,
 });
 
 const onUpdate = () => {

@@ -2169,6 +2169,8 @@ class SageApiService
 
     public function scheduleSageProcesses($insurerId = null): void
     {
+        LoggerService::info('fn:scheduleSageProcesses - Start - SageApiService');
+
         $processLockKey = SageEnum::SAGE_PROCESS_LOCK_KEY;
         $status[] = SageEnum::SAGE_PROCESS_PENDING_STATUS;
         if ((new SageApiService)->isSageRetryTimeoutEnabled()) {

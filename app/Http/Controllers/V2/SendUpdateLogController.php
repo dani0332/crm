@@ -360,6 +360,9 @@ class SendUpdateLogController extends Controller
 
     public function savePriceDetails(Request $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:savePriceDetails - Start - SendUpdateLogController');
+
         $data = $request->all();
 
         SendUpdateLogRepository::updateLogPriceDetails($data);
@@ -369,6 +372,9 @@ class SendUpdateLogController extends Controller
 
     public function savePolicyDetails(SavePolicyDetailsRequest $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:savePolicyDetails - Start - SendUpdateLogController');
+
         SendUpdateLogRepository::savePolicyDetails($request->validated());
 
         return redirect()->back();
@@ -376,6 +382,9 @@ class SendUpdateLogController extends Controller
 
     public function saveBookingDetails(SaveBookingDetailsRequest $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:saveBookingDetails - Start - SendUpdateLogController');
+
         SendUpdateLogRepository::saveBookingDetails($request->validated());
 
         return redirect()->back();
@@ -383,6 +392,9 @@ class SendUpdateLogController extends Controller
 
     public function getReversalEntries(ReversalEntriesRequest $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:getReversalEntries - Start - SendUpdateLogController');
+
         $reversalEntries = app(SendUpdateLogService::class)->getReversalEntries($request->validated());
 
         return response()->json($reversalEntries);
@@ -390,6 +402,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startQuoteLogging($sendUpdateCustomerValidationRequest->code);
+        LoggerService::info('fn:sendUpdateCustomerValidation - Start - SendUpdateLogController');
+
         $sendUpdateCustomerValidatedRequest = $sendUpdateCustomerValidationRequest->validated();
         $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($sendUpdateCustomerValidatedRequest);
         $response = ['message' => $message];
@@ -406,6 +421,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startQuoteLogging($updateToCustomerRequest->code);
+        LoggerService::info('fn:sendUpdateToCustomer - Start - SendUpdateLogController');
+
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
         if (isset($suEmailProcess['status']) && $suEmailProcess['status'] == 500) {
@@ -417,6 +435,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateValidation(SendUpdateValidationRequest $sendUpdateValidationRequest)
     {
+        LoggerService::startQuoteLogging($sendUpdateValidationRequest->code);
+        LoggerService::info('fn:sendUpdateValidation - Start - SendUpdateLogController');
+
         $sendUpdateFirstPayment = Payment::where('send_update_log_id', $sendUpdateValidationRequest->sendUpdateId)->first();
         if (! isset($sendUpdateValidationRequest->paymentValidated)) {
             $insufficientPaymentCheck = false;
@@ -437,6 +458,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startQuoteLogging($sendUpdateRequest->code);
+        LoggerService::info('fn:sendUpdate - Start - SendUpdateLogController');
+
         $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
         $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
 
@@ -446,17 +470,20 @@ class SendUpdateLogController extends Controller
             return response()->json(['message' => $responseMessage], 500);
         }
 
-        info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
+        LoggerService::info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate');
         app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
 
         (new SageApiService)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
-        info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
+        LoggerService::info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
 
         return response()->json(['message' => $endorsementResponse['message'] ?? 'Something went wrong'], $endorsementResponse['status'] ? 200 : 500);
     }
 
     public function getOptions(Request $request)
     {
+        LoggerService::startQuoteLogging($request->quote_uuid);
+        LoggerService::info('fn:getOptions - Start - SendUpdateLogController');
+
         $options = SendUpdateLogRepository::sendUpdateOptions($request->quoteTypeId, $request->parentId, $request->status, $request->businessInsuranceTypeId);
 
         return response()->json([
@@ -466,6 +493,9 @@ class SendUpdateLogController extends Controller
 
     public function saveProviderDetails(SaveProviderDetailsRequest $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:saveProviderDetails - Start - SendUpdateLogController');
+
         SendUpdateLogRepository::saveProviderDetails($request->validated());
 
         return redirect()->back();
@@ -473,6 +503,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateCancel(SendUpdateCancelRequest $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:sendUpdateCancel - Start - SendUpdateLogController');
+
         $response = SendUpdateLogRepository::cancelSendUpdate($request->send_update_log_id, $request->cancel_reason);
 
         return response()->json(['message' => $response['message']], $response['status']);

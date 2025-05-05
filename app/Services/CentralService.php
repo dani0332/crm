@@ -993,6 +993,8 @@ class CentralService extends BaseService
 
     public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
     {
+        LoggerService::info('fn:updateSendUpdateStatusLogs - Start - CentralService');
+
         SendUpdateStatusLog::updateOrCreate([
             'send_update_log_id' => $sendUpdateLogId,
             'previous_status' => $previousStatus,
@@ -1000,6 +1002,11 @@ class CentralService extends BaseService
         ], [
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
+        ]);
+
+        LoggerService::info('SendUpdateLog status changed', extra: [
+            'previousStatus' => $previousStatus,
+            'current_status' => $currentStatus,
         ]);
     }
 

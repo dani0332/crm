@@ -452,6 +452,7 @@ trait GenericQueriesAllLobs
      */
     private function isLackingPayment($payment)
     {
+        LoggerService::info('fn:isLackingPayment - GenericQueriesAllLobs');
         if ($this->isSplitPaymentFullyPaid($payment)) {
             return true;
         }
