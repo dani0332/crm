@@ -638,7 +638,7 @@ class CarEmailService extends BaseService
             return $publicUrl;
         } catch (\Exception $e) {
             // Log the error details
-            LoggerService::error(self::class." - Error: attachCarCompanyOCBPDFToEmail - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}",context:['ref_id' => $quoteUID]);
+            LoggerService::error(self::class." - Error: attachCarCompanyOCBPDFToEmail - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $quoteUID]);
 
             return false;
         }
