@@ -895,13 +895,13 @@ const handleCollectionTypeChange = () => {
 
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isIPLPermission = can(permissionEnum.INSURER_PAYMENT_LINK);
-
+    let isHealthQuote = props.quoteType === quoteTypeCodeEnum.Health;
+    let checkCondition = !isHealthQuote || !isIPLPermission;
     const excludedPaymentMethods = [
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
       page.props.paymentMethodsEnum?.Cash,
-      !isIPLPermission &&
-        props.quoteType === quoteTypeCodeEnum.Health &&
+      checkCondition &&
         page.props.paymentMethodsEnum?.InsurerPaymentLink,
     ];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
