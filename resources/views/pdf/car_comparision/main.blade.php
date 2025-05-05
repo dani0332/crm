@@ -702,7 +702,7 @@
         <div style="width: 100%; text-align: center; margin-top: 15px;">
             <a href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid }}" style="background-color: #1D83BC; color: white; border-radius: 5px; font-weight: 500; padding: 6px 20px; font-size: 16px; display: inline-block; width: 250px; text-align: center; text-decoration: none; line-height: 1.5;">
                 View all quotes
-                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" style="width: 16px; height: 16px; vertical-align: middle; margin-left: 5px;">
+                <img src="{{ public_path('images/quote_plans_pages/ecom_home/open_in_new_icon.png') }}" style="width: 16px; height: 16px; vertical-align: middle; margin-left: 5px;margin-top: -4px;">
             </a>
         </div>
 
@@ -722,11 +722,12 @@
 
     <!-- fourth page with second banner image -->
     <div class="page">
-        <div class="hero-image" style="height: auto; max-height: 1150px;">
-            <img src="{{ public_path('images/car-comparision-4-image.png') }}" alt="Car Banner 2" style="height: auto; max-height: 1150px;">
+        <div class="hero-image" style="height: auto; max-height: 1170px;">
+            <img src="{{ public_path('images/car-comparision-4-image-1.png') }}" alt="Car Banner 2" style="height: auto; max-height: 1170px;">
         </div>
     </div>
     
+
 </div>
 </body>
 </html>

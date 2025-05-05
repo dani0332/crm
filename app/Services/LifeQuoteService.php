@@ -141,6 +141,8 @@ class LifeQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::LifeQuote, $request, $response);
+
+            $this->selfAssign(QuoteTypes::LIFE, $response->quoteUID);
         }
 
         return $response;

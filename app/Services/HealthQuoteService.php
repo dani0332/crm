@@ -45,11 +45,11 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
@@ -335,6 +335,8 @@ class HealthQuoteService extends BaseService
                 $subTeam = auth()->user()->subTeam->name;
             }
             HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => $subTeam]);
+
+            $this->selfAssign(QuoteTypes::HEALTH, $response->quoteUID);
         }
 
         return $response;
@@ -1195,6 +1197,7 @@ class HealthQuoteService extends BaseService
             $this->leadAllocationService->removeLeadAllocationForOldAdvisor($entity);
         }
         $entity->advisor_id = null;
+        $entity->assignment_type = null;
         $entity->quote_status_id = $quoteStatusId;
         $entity->save();
     }
@@ -1214,6 +1217,7 @@ class HealthQuoteService extends BaseService
                 continue;
             } elseif ($lead) {
                 $lead->advisor_id = null;
+                $lead->assignment_type = null;
                 $lead->quote_status_id = QuoteStatusEnum::NewLead;
                 $lead->wcu_id = $userId;
                 $lead->health_team_type = $request->assign_team;
@@ -1380,8 +1384,8 @@ class HealthQuoteService extends BaseService
                         if (isset($plan['ratesPerCopay'])) {
                             foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
                                 if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
-                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
-                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0));
+                                    $response['priceWithVAT'] = (float) $ratePerCopay['discountPremium'] + (float) $ratePerCopay['vat'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
+                                    $response['priceWithLP'] = (float) $ratePerCopay['discountPremium'] + ((float) ($ratePerCopay['loadingPrice'] ?? 0)) + ((float) ($ratePerCopay['adjustedPrice'] ?? 0));
                                 }
                             }
                         }
@@ -1459,6 +1463,7 @@ class HealthQuoteService extends BaseService
     public function healthPlanModifyV2($request)
     {
         $loadingPrices = $request->get('loadingPrice');
+        $adjustingPrices = $request->get('adjustingPrice');
         $manualPremiumPrices = $request->get('manualPremiumPrice');
 
         if (empty($request->get('selectedCopay'))) {
@@ -1486,6 +1491,12 @@ class HealthQuoteService extends BaseService
                                 (int) $loadingPrices[$key]['memberId'] == $value['memberId']
                             ) {
                                 $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
+                            }
+                            if (
+                                isset($adjustingPrices[$key]) &&
+                                (int) $adjustingPrices[$key]['memberId'] == $value['memberId']
+                            ) {
+                                $copay['adjustedPrice'] = (float) $adjustingPrices[$key]['price'];
                             }
                             if (
                                 isset($manualPremiumPrices[$key]) &&
@@ -1846,6 +1857,7 @@ class HealthQuoteService extends BaseService
     {
         LoggerService::info('inside the check for manual assignment QA');
         $lead->advisor_id = $userId;
+        $lead->assignment_type = AssignmentTypeEnum::MANUAL_ASSIGNED;
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
