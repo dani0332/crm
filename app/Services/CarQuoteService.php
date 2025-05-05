@@ -1881,14 +1881,11 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
-            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
-            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
             ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
             ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
             ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
-            ->where('t.parent_team_id', $carTeam->id)
             ->whereNotIn('q.uuid', function ($query) {
             $query->select('q.uuid')
                 ->from('car_quote_plan_details as cqp')
@@ -1931,8 +1928,6 @@ class CarQuoteService extends BaseService
         $countByStatus = DB::table('car_quote_request as q')
             ->join('quote_status as qst', 'q.quote_status_id', '=', 'qst.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
-            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
-            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->select(
                 'qst.id as quote_status_id',
                 'qst.text',
@@ -1954,7 +1949,6 @@ class CarQuoteService extends BaseService
                 QuoteStatusEnum::PaymentLinkRequestedByCustomer,
                 QuoteStatusEnum::PaymentLinkSentToCustomer
             ])
-            ->where('t.parent_team_id', $carTeam->id)
             ->groupBy('qst.id', 'qst.text')
             ->get();
 
@@ -1983,8 +1977,6 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
-            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
-            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
             ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
@@ -1992,7 +1984,6 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
-            ->where('t.parent_team_id', '=', $carTeam->id)
             ->orderBy('q.paid_at', 'desc')
             ->get();
 
@@ -2019,8 +2010,6 @@ class CarQuoteService extends BaseService
             ->join('quote_status as qst', 'q.quote_status_id', '=', 'qst.id')
             ->join('car_quote_plan_details as cqp', 'q.uuid', '=', 'cqp.quote_uuid')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
-            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
-            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->select(
                 'qst.id as quote_status_id',
                 'qst.text',
@@ -2039,7 +2028,6 @@ class CarQuoteService extends BaseService
             ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
             ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
             ->whereNotNull('cqp.pua_premium')
-            ->where('t.parent_team_id', '=', $carTeam->id)
             ->whereColumn('cqp.plan_id', '=', 'q.plan_id')
             ->groupBy('qst.id', 'qst.text')
             ->get(); 
