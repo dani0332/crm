@@ -142,8 +142,9 @@ trait OcrFillable
         OCRDocumentTypeEnum $documentType,
         object $data
     ) {
-        if (!$this->isSupportedProvider($quote)) {
+        if (! $this->isSupportedProvider($quote)) {
             LoggerService::info(self::class.' - Not a Valid Provider');
+
             return false;
         }
 
@@ -167,6 +168,7 @@ trait OcrFillable
             return true;
         } catch (Exception $e) {
             LoggerService::error(self::class.' - Exception occurred during data fill', exception: $e);
+
             return false;
         }
     }
