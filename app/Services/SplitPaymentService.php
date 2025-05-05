@@ -26,6 +26,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
+use App\Models\FtcEmailLog;
 use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -40,12 +41,12 @@ use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\CentralTrait;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class SplitPaymentService
 {
@@ -585,6 +586,28 @@ class SplitPaymentService
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
+    }
+
+    public function generateInsurerPaymentLink($request)
+    {
+        $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
+        if (! $splitPayment) {
+            return response()->json(['success' => false]);
+        }
+        $ftcEmailLog = FtcEmailLog::where('link', $splitPayment->insurer_payment_link)->first();
+        if (! $ftcEmailLog) {
+            return response()->json(['success' => false]);
+        }
+        $payment = $splitPayment->payment;
+        $modelType = $request->modelType;
+        $quoteId = $request->quoteId;
+        $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+
+        $paymentLink = config('constants.AFIA_WEBSITE_DOMAIN');
+        $paymentLinkURL = $paymentLink.'/redirect/'.$quoteTypeId.'/'.$quoteModel->uuid.'/'.$quoteModel->plan?->id.'?uid='.$ftcEmailLog->uuid ?? ''.'?uid='.$ftcEmailLog->uuid;
+
+        return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
     }
 
     // function to get the payment lookups
