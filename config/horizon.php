@@ -203,24 +203,24 @@ return [
                 'timeout' => 60,
             ],
         ],
-        // 'uat2' => [
-        //     'supervisor-uat2' => [
-        //         'connection' => 'redis',
-        //         'queue' => ['default', 'renewals'],
-        //         'balance' => 'auto',
-        //         'minProcesses' => 1,
-        //         'maxProcesses' => 3,
-        //         'tries' => 3,
-        //         'timeout' => 60,
-        //     ],
-        //     'supervisor-uat2-shared' => [
-        //         'connection' => 'redis',
-        //         'queue' => ['shared'],
-        //         'balance' => 'auto',
-        //         'minProcesses' => 1,
-        //         'maxProcesses' => 3,
-        //     ],
-        // ],
+        'uat2' => [
+            'supervisor-uat2' => [
+                'connection' => 'redis',
+                'queue' => ['default', 'renewals'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+                'tries' => 3,
+                'timeout' => 60,
+            ],
+            'supervisor-uat2-shared' => [
+                'connection' => 'redis',
+                'queue' => ['shared'],
+                'balance' => 'auto',
+                'minProcesses' => 1,
+                'maxProcesses' => 3,
+            ],
+        ],
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
@@ -239,7 +239,7 @@ return [
                 'maxProcesses' => 3,
             ],
         ],
-        'development' => [
+        'dev02' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
                 'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],

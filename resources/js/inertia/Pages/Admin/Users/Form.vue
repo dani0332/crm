@@ -313,113 +313,192 @@ watch(
       <x-field label="PASSWORD" required v-if="isAllowed">
         <x-input v-model="userForm.password" class="w-full" type="password" />
       </x-field>
-      <x-field label="ROLES" required>
-        <ComboBox
-          v-model="userForm.roles"
-          :options="
-            roles.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :rules="[isRequired]"
-          :hasError="validRole"
-          autocomplete
-          @update:model-value="resolveBusinessCategoriesShowHide"
-        />
-      </x-field>
-      <x-field
-        label="Busineess Categories"
-        v-if="hasRole(rolesEnum.Admin) && showBusinessCategories"
+      <x-select
+        label="ROLES"
+        v-model="userForm.roles"
+        :options="
+          roles.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :rules="[isRequired]"
+        @update:model-value="resolveBusinessCategoriesShowHide"
+        filterable
+        multiple
+        truncate
+        placeholder="Select Roles"
+        filterPlaceholder="Filter roles...."
+        required
       >
-        <ComboBox
-          :multiple="true"
-          v-model="userForm.businessTypes"
-          :options="businessTypes"
-          class="w-full"
-          autocomplete
-        />
-      </x-field>
-      <x-field label="PRODUCTS" required>
-        <ComboBox
-          v-model="userForm.products"
-          :rules="[isRequired]"
-          :hasError="validProducts"
-          :options="
-            props.products.map(item => ({
-              value: item.id,
-              label: item.name,
-            }))
-          "
-          autocomplete
-          @update:modelValue="loadTeamsByProduct"
-        />
-      </x-field>
-      <x-field label="TEAMS" required>
-        <ComboBox
-          v-model="userForm.teams"
-          :options="computedTeams"
-          :loading="loader.teamLoader"
-          :rules="[isRequired]"
-          :hasError="validTeams"
-          autocomplete
-        />
-      </x-field>
-      <x-field label="SUB TEAM">
-        <ComboBox
-          v-model="userForm.sub_team_id"
-          placeholder="Select sub team"
-          :options="computedSubTeams"
-          :single="true"
-          :loading="loader.subTeamLoader"
-        />
-      </x-field>
-      <x-field label="DEPARTMENT">
-        <ComboBox
-          v-model="userForm.department_id"
-          placeholder="Select Department"
-          :options="computedDepartments"
-          :single="true"
-        />
-      </x-field>
-      <x-field label="DEPARTMENTS VISIBILITY">
-        <ComboBox
-          v-model="userForm.department_ids"
-          :loading="loader.departLoader"
-          placeholder="Select Department"
-          :options="computedDepartments"
-          :multiple="true"
-        />
-      </x-field>
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="userForm.roles = roles.map(item => item.id)"
+            @clear="userForm.roles = []"
+          />
+        </template>
+      </x-select>
 
-      <x-field label="LOB VISIBILITY">
-        <ComboBox
-          :multiple="true"
-          v-model="userForm.additionalTeams"
-          :options="
-            props.products.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-          class="w-full"
-          autocomplete
-        />
-      </x-field>
-      <x-field label="PERMISSIONS" v-if="hasRole(rolesEnum.Admin)">
-        <ComboBox
-          :multiple="true"
-          v-model="userForm.permissions"
-          :options="
-            props.permissions.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-          class="w-full"
-          autocomplete
-        />
-      </x-field>
+      <x-select
+        v-if="hasRole(rolesEnum.Admin) && showBusinessCategories"
+        label="Busineess Categories"
+        v-model="userForm.businessTypes"
+        :options="businessTypes"
+        :rules="[isRequired]"
+        multiple
+        placeholder="Select Business Categories"
+        filterPlaceholder="Filter business categories...."
+        truncate
+        filterable
+        required
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              userForm.businessTypes = businessTypes.map(item => item.value)
+            "
+            @clear="userForm.businessTypes = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        label="PRODUCTS"
+        v-model="userForm.products"
+        :options="
+          products.map(item => ({
+            value: item.id,
+            label: item.name,
+          }))
+        "
+        @update:modelValue="loadTeamsByProduct"
+        multiple
+        truncate
+        filterable
+        placeholder="Select Products"
+        filterPlaceholder="Filter products...."
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="userForm.products = products.map(item => item.id)"
+            @clear="userForm.products = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        label="TEAMS"
+        v-model="userForm.teams"
+        :options="computedTeams"
+        :rules="[isRequired]"
+        :loading="loader.teamLoader"
+        multiple
+        truncate
+        filterable
+        placeholder="Select Teams"
+        filterPlaceholder="Filter teams...."
+        required
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="userForm.teams = computedTeams.map(item => item.value)"
+            @clear="userForm.teams = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        label="SUB TEAM"
+        v-model="userForm.sub_team_id"
+        :options="computedSubTeams"
+        :loading="loader.subTeamLoader"
+        placeholder="Select Sub Team"
+        filterPlaceholder="Filter sub teams...."
+      />
+
+      <x-select
+        label="DEPARTMENT"
+        v-model="userForm.department_id"
+        :options="computedDepartments"
+        placeholder="Select Department"
+        filterPlaceholder="Filter departments...."
+      />
+
+      <x-select
+        v-model="userForm.department_ids"
+        :loading="loader.departLoader"
+        placeholder="Select Department"
+        :options="computedDepartments"
+        multiple
+        truncate
+        filterable
+        required
+        filterPlaceholder="Filter departments...."
+        label="DEPARTMENTS VISIBILITY"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              userForm.department_ids = computedDepartments.map(
+                item => item.value,
+              )
+            "
+            @clear="userForm.department_ids = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        label="LOB VISIBILITY"
+        v-model="userForm.additionalTeams"
+        :options="
+          props.products.map(x => ({
+            value: x.id,
+            label: x.name,
+          }))
+        "
+        multiple
+        truncate
+        filterable
+        placeholder="Select LOB"
+        filterPlaceholder="Filter LOB...."
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              userForm.additionalTeams = props.products.map(item => item.id)
+            "
+            @clear="userForm.additionalTeams = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-if="hasRole(rolesEnum.Admin)"
+        label="PERMISSIONS"
+        v-model="userForm.permissions"
+        :options="
+          props.permissions.map(x => ({
+            value: x.id,
+            label: x.name,
+          }))
+        "
+        multiple
+        truncate
+        filterable
+        placeholder="Select Permissions"
+        filterPlaceholder="Filter permissions...."
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              userForm.permissions = props.permissions.map(item => item.id)
+            "
+            @clear="userForm.permissions = []"
+          />
+        </template>
+      </x-select>
+
       <x-field label="ACTIVE">
         <x-select
           v-model="userForm.is_active"
@@ -431,19 +510,31 @@ watch(
         >
         </x-select>
       </x-field>
-      <x-field label="MANAGER" v-if="hasRole(rolesEnum.Admin)">
-        <ComboBox
-          v-model="userForm.manager"
-          :options="
-            managers.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-          :loading="loader.managers"
-          autocomplete
-        />
-      </x-field>
+
+      <x-select
+        v-if="hasRole(rolesEnum.Admin)"
+        v-model="userForm.manager"
+        :options="
+          managers.map(x => ({
+            value: x.id,
+            label: x.name,
+          }))
+        "
+        :loading="loader.managers"
+        multiple
+        truncate
+        filterable
+        placeholder="Select Manager"
+        filterPlaceholder="Filter managers...."
+        label="MANAGER"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="userForm.manager = managers.map(item => item.id)"
+            @clear="userForm.manager = []"
+          />
+        </template>
+      </x-select>
     </div>
     <div class="grid sm:grid-cols-2 gap-4 mt-2">
       <x-field

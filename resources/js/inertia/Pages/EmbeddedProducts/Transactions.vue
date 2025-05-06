@@ -329,12 +329,13 @@ watch(
             label="Sync Status"
             v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
           >
-            <ComboBox
+            <x-select
               v-model="filters.sync_status"
               placeholder="Select Sync Status"
               :options="sync_statuses"
               class="w-full"
-              :single="true"
+              filterable
+              filterPlaceholder="Filter Sync Status...."
             />
           </x-field>
         </div>
