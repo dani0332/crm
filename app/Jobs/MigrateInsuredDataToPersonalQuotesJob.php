@@ -1,0 +1,207 @@
+<?php
+
+namespace App\Jobs;
+
+ini_set('memory_limit', '2048M');
+
+use App\Enums\QuoteTypes;
+use App\Models\Insured;
+use App\Models\PersonalQuote;
+use App\Models\QuoteRequestEntityMapping;
+use App\Services\Logger\LoggerService;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
+
+class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
+{
+    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 3;
+
+    /**
+     * The maximum number of unhandled exceptions to allow before failing.
+     *
+     * @var int
+     */
+    public $maxExceptions = 3;
+
+    /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public $timeout = 3600; // 1 hour
+
+    /**
+     * The number of seconds to wait before retrying the job.
+     *
+     * @var array
+     */
+    public $backoff = [60, 300, 600]; // 1 minute, 5 minutes, 10 minutes
+
+    /**
+     * Indicates if the job should be marked as failed on timeout.
+     *
+     * @var bool
+     */
+    public $failOnTimeout = true;
+
+    /**
+     * Whether to force process all entries, including previously processed ones
+     *
+     * @var bool
+     */
+    protected $forceProcess;
+
+    /**
+     * Cache key for tracking processed IDs
+     *
+     * @var string
+     */
+    protected $cacheKey = 'processed_personal_quote_ids';
+
+    /**
+     * Class name for logging
+     *
+     * @var string
+     */
+    const CLASS_NAME = 'migrateInsuredDataToPersonalQuotesJob';
+
+    /**
+     * Create a new job instance.
+     *
+     * @param  bool  $forceProcess  Whether to force processing of all entries
+     * @return void
+     */
+    public function __construct(bool $forceProcess = false)
+    {
+        $this->forceProcess = $forceProcess;
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        $funName = __FUNCTION__;
+        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' PersonalQuotes - Update Insured and Quote ID - Starting to update personal quotes with insured_id and quote_id...');
+
+        $totalUpdated = 0;
+
+        // Get already processed IDs from cache or initialize empty array
+        $lastProcessedId = Cache::get($this->cacheKey, null);
+
+        // Clear the cache if force option is used
+        if ($this->forceProcess) {
+            $lastProcessedId = null;
+            Cache::forget($this->cacheKey);
+            LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Force option used. Clearing processed records cache.');
+        } else {
+            LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' previously processed record id :  '.$lastProcessedId.' in cache.');
+        }
+
+        // Use chunk to process records in batches to avoid memory issues
+        PersonalQuote::when($lastProcessedId, function ($q) use ($lastProcessedId) {
+            $q->where('id', '>', $lastProcessedId);
+        })
+            ->where(function ($q) {
+                $q->whereNull('quote_id')
+                    ->orWhereNull('insured_id');
+            })
+            ->orderBy('id')
+            ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$lastProcessedId, $funName) {
+                foreach ($personalQuotes as $personalQuote) {
+                    $personalQuoteUpdateData = [];
+
+                    LoggerService::startQuoteLogging($personalQuote);
+
+                    $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
+                    $quote = $this->getQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
+
+                    if (! $quote) {
+                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote not found.');
+                        $lastProcessedId = $personalQuote->id;
+
+                        continue;
+                    }
+
+                    // Update the personal quote with quote_id
+                    if ($quote->getMorphClass() != PersonalQuote::class) {
+                        $personalQuoteUpdateData['quote_id'] = $quote->id;
+                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', ['quote_id' => $quote->id]);
+                    } else {
+                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote is of Personal QuoteTable.');
+                    }
+
+                    // Find the entity mapping for this quote
+                    $entityMapping = QuoteRequestEntityMapping::where('quote_request_id', $quote->id)
+                        ->where('quote_type_id', $personalQuote->quote_type_id)
+                        ->first();
+
+                    if ($entityMapping) {
+                        // Get insured record using entity_id
+                        $insured = Insured::where('entity_id', $entityMapping->entity_id)->first();
+
+                        if ($insured) {
+                            $personalQuoteUpdateData['insured_id'] = $insured->id;
+                        } else {
+                            LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.');
+                            $lastProcessedId = $personalQuote->id;
+                        }
+
+                    } else {
+                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity mapping not found.');
+                        $lastProcessedId = $personalQuote->id;
+                    }
+
+                    // Update the personal quote
+                    if (! empty($personalQuoteUpdateData)) {
+                        $personalQuote->update($personalQuoteUpdateData);
+
+                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', extra: $personalQuoteUpdateData);
+                    }
+
+                    $lastProcessedId = $personalQuote->id;
+                    $totalUpdated++;
+                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' with ', extra: $personalQuoteUpdateData);
+                }
+
+                // Update the cache after each chunk to avoid losing progress
+                Cache::put($this->cacheKey, $lastProcessedId, now()->addDays(30));
+
+                // Report progress
+                LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Processed a chunk. Last processed ID in cache: '.$lastProcessedId);
+            });
+
+        // Get final id from cache for reporting
+        $finalProcessedId = Cache::get($this->cacheKey, null);
+
+        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' PersonalQuotes - Update Insured and Quote ID - Job completed. Last cached IDs: '.$finalProcessedId);
+    }
+
+    /**
+     * Handle a job failure.
+     *
+     * @param  \Throwable  $exception
+     * @return void
+     */
+    public function failed(\Throwable $exception)
+    {
+        LoggerService::error(self::CLASS_NAME.' Job failed with exception: '.$exception->getMessage(), extra: [
+            'trace' => $exception->getTraceAsString(),
+            'last_processed_id' => Cache::get($this->cacheKey, null),
+        ]);
+    }
+}
