@@ -585,6 +585,7 @@ function capitalizeString(str) {
 
 const availablePlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -627,6 +628,7 @@ const selectedPlanIds = computed(() => {
 const availableAllPlans = ref([]);
 
 const onLoadAvailablePlansData = async () => {
+  availablePlansTable.isLoading = true;
   const url = `/quotes/home/available-plans/${page.props.quote.uuid}`;
   const data = {
     jsonData: true,
@@ -645,7 +647,11 @@ const onLoadAvailablePlansData = async () => {
       homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
     } else {
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+  } finally {
+    availablePlansTable.isLoading = false;
+  }
 };
 
 const onTogglePlans = toggle => {
@@ -1054,7 +1060,9 @@ const shouldShowPlanDetailsSection = computed(() => {
   const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
   const str = page.props.quote.created_at;
 
-  const match = str.match(/(\d+)-([A-Za-z]+)-(\d+)\s+(\d+):(\d+)(am|pm)/i);
+  const match = str.match(
+    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
+  );
   if (!match) return false;
 
   const [_, day, monthStr, year, hour, min, ampm] = match;
@@ -2044,7 +2052,14 @@ const shouldShowPlanDetailsSection = computed(() => {
             </p>
           </div>
           <div v-else>
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
+              <x-spinner size="lg" />
+            </div>
             <DataTable
+              v-else
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed"
               :headers="availablePlansTable.columns"

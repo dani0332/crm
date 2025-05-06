@@ -23,6 +23,8 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const tableHeader = ref([]);
 const canShowFooterColumn = ref([]);
 const toast = useToast();
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 
 const { maxSelections } = useRules();
 
@@ -43,6 +45,8 @@ const filters = reactive({
   insurance_type: '',
   insurance_for: '',
   travel_coverage: '',
+  registration_type: 'All',
+  vehicle_use: 'All',
   assignmentType: 'All',
 });
 
@@ -285,6 +289,7 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.insurance_for = '';
     filters.travel_coverage = '';
     filters.isCommercial = '';
+
     (filters.isEmbeddedProducts = ''), (filters.is_ecommerce = '');
     filters.tiers = [];
   } else {
@@ -558,6 +563,26 @@ const travelCoverageOptions = computed(() => {
 
   return [];
 });
+
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
 </script>
 
 <template>
@@ -715,8 +740,22 @@ const travelCoverageOptions = computed(() => {
         />
         <x-select
           v-if="canShow('isCommercial')"
+          v-model="filters.registration_type"
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
+        />
+        <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
+        <x-select
+          v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
-          label="Commercial"
+          label="Commercial Rule"
           placeholder="Select any option"
           :options="[
             { value: 'All', label: 'All' },

@@ -39,7 +39,7 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
         </div>
 
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Rule Type</dt>
+          <dt class="font-medium">Rule Users</dt>
           <dd>{{ rule.rule_users.map(x => x.name).toString() }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">

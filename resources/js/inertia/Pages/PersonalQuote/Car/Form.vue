@@ -13,6 +13,7 @@ const props = defineProps({
 
 const { isRequired, isEmail, maxValue } = useRules();
 const isEmptyField = ref(false);
+const isCommercialCar = ref(false);
 const isError = ref(false);
 const page = usePage();
 const hasRole = role => useHasRole(role);
@@ -20,6 +21,10 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
+const amlStatusEnum = page.props.amlStatusEnum;
+const kycStatusEnum = page.props.kycEnums;
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -39,10 +44,19 @@ const carModelOptions = computed(() => {
   }));
 });
 
+const bussinessActivityOptions = computed(() => {
+  return props.dropdownSource.business_activities.map(item => ({
+    value: item.id,
+    label: item.name,
+  }));
+});
+
 const quoteForm = useForm({
   modelType: '"Car"',
   model: props.model,
   renewal_batch: props.quote?.renewal_batch || '',
+  driver_name:
+    `${props.quote?.first_name || ''} ${props.quote?.last_name || ''}`.trim(),
   first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
@@ -69,8 +83,7 @@ const quoteForm = useForm({
   car_type_insurance_id: props.quote?.car_type_insurance_id || null,
   claim_history_id: props.quote?.claim_history_id || null,
   seat_capacity: props.quote?.seat_capacity || '',
-  has_ncd_supporting_documents:
-    props.quote?.has_ncd_supporting_documents || null,
+  has_ncd_supporting_documents: props.quote?.has_ncd_supporting_documents,
   car_value_tier: props.quote?.car_value_tier || '',
   car_value: props.quote?.car_value || '',
   addressObj: {
@@ -85,6 +98,26 @@ const quoteForm = useForm({
     landmark: page.props.customerAddressData?.landmark || null,
   },
   courierQuoteStatus: page.props.courierQuoteStatus || 'Pending',
+  registration_type:
+    props.quote?.registration_type || carRegistrationTypeEnum.PERSONAL,
+  vehicle_use: props.quote?.vehicle_use || '',
+  company_contact_name:
+    `${props.quote.customer_first_name || ''} ${props.quote.customer_last_name || ''}`.trim(),
+  business_activity_id: props.quote?.business_activity_id || '',
+});
+
+const isCompanyCar = computed(() => {
+  return quoteForm.registration_type === carRegistrationTypeEnum.COMPANY;
+});
+
+const isPersonalCar = computed(() => {
+  return quoteForm.registration_type === carRegistrationTypeEnum.PERSONAL;
+});
+
+const isPrivateCar = computed(() => {
+  return (
+    isCompanyCar.value && quoteForm.vehicle_use == carVehicleUseEnum.PRIVATE
+  );
 });
 
 const isDisbaled =
@@ -92,6 +125,18 @@ const isDisbaled =
   (!can(permissionEnum.RenewalBatchUpdate) && !!quoteForm.renewal_batch);
 
 const trimOptions = ref([]);
+
+const validateCompanyCar = () => {
+  const filteredCarModel = props.dropdownSource.car_model_id.filter(
+    item => item.id === quoteForm.car_model_id,
+  );
+  if (filteredCarModel && filteredCarModel[0]?.is_commercial == 1) {
+    quoteForm.vehicle_use = carVehicleUseEnum.COMMERCIAL;
+    isCommercialCar.value = true;
+  } else {
+    isCommercialCar.value = false;
+  }
+};
 
 const getCarModel = reset => {
   if (reset) {
@@ -109,6 +154,7 @@ const getCarModel = reset => {
 };
 
 const getModelDetails = onchange => {
+  validateCompanyCar();
   axios
     .get(`/getCarModelDetails?car_model_id=${quoteForm.car_model_id}`)
     .then(({ data }) => {
@@ -171,6 +217,7 @@ function onSubmit(isValid) {
 
   if (!isValid) return;
 
+  clearFormValues();
   quoteForm.clearErrors();
 
   const method = isEdit.value ? 'put' : 'post';
@@ -191,9 +238,42 @@ function onSubmit(isValid) {
     .submit(method, url, options);
 }
 
+const clearFormValues = () => {
+  if (quoteForm.registration_type === carRegistrationTypeEnum.PERSONAL) {
+    delete quoteForm.vehicle_use;
+    delete quoteForm.company_name;
+    delete quoteForm.company_contact_name;
+    delete quoteForm.business_activity_id;
+    delete quoteForm.driver_name;
+  } else {
+    delete quoteForm.first_name;
+    delete quoteForm.last_name;
+
+    if (quoteForm.vehicle_use === carVehicleUseEnum.COMMERCIAL) {
+      delete quoteForm.driver_name;
+      delete quoteForm.dob;
+      delete quoteForm.nationality_id;
+      delete quoteForm.uae_license_held_for_id;
+      delete quoteForm.back_home_license_held_for_id;
+    }
+  }
+};
+
 onMounted(() => {
+  setFormValues();
   setCarMakeAndModalValues();
 });
+
+const setFormValues = () => {
+  if (isEdit.value) {
+    if (isPrivateCar.value) {
+      quoteForm.first_name = props.quote.customer_first_name || '';
+      quoteForm.last_name = props.quote.customer_last_name || '';
+    } else {
+      quoteForm.driver_name = '';
+    }
+  }
+};
 
 const setCarMakeAndModalValues = () => {
   if (quoteForm.car_make_id !== null) {
@@ -224,6 +304,18 @@ const addressTypes = [
   { value: 'Home', label: 'Home' },
   { value: 'Office', label: 'Office' },
 ];
+
+const registrationTypeOptions = Object.values(carRegistrationTypeEnum).map(
+  item => ({
+    value: item,
+    label: item,
+  }),
+);
+
+const vehicleUseOptions = Object.values(carVehicleUseEnum).map(item => ({
+  value: item,
+  label: item,
+}));
 
 const villaApartmentOfficeLabel = computed(() => {
   let label;
@@ -326,6 +418,15 @@ const gender = computed(() => {
     { value: 'F', label: 'Female' },
   ];
 });
+
+const isAmlOrKycUpdated = computed(() => {
+  return (
+    isEdit.value &&
+    (props.quote?.aml_status !== amlStatusEnum.AMLPending ||
+      (props.quote?.kyc_decision !== kycStatusEnum.PENDING &&
+        props.quote?.kyc_decision !== null))
+  );
+});
 </script>
 
 <template>
@@ -357,27 +458,51 @@ const gender = computed(() => {
 						/>
 				</x-field> -->
 
-        <x-field label="FIRST NAME" required>
+        <x-field label="REGISTRATION TYPE" required>
+          <x-select
+            v-model="quoteForm.registration_type"
+            :options="registrationTypeOptions"
+            class="w-full"
+            :rules="[isRequired]"
+            :disabled="isAmlOrKycUpdated"
+          />
+        </x-field>
+
+        <x-field v-if="isCompanyCar" label="VEHICLE USE" required>
+          <x-select
+            v-model="quoteForm.vehicle_use"
+            :options="vehicleUseOptions"
+            placeholder="Please select vehicle use"
+            :rules="[isRequired]"
+            class="w-full"
+            :disabled="isCommercialCar"
+          />
+        </x-field>
+
+        <x-field v-if="isCompanyCar" label="YOUR COMPANY NAME" required>
+          <x-input
+            maxLength="200"
+            v-model="quoteForm.company_name"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.company_name"
+          />
+        </x-field>
+
+        <x-field v-if="isCompanyCar" label="POINT OF CONTACT NAME" required>
           <x-input
             maxLength="20"
-            v-model="quoteForm.first_name"
-            :rules="[isRequired]"
+            v-model="quoteForm.company_contact_name"
+            :rules="[
+              isRequired,
+              v => v.trim().split(' ').length >= 2 || 'Please enter full name',
+            ]"
             class="w-full"
-            :error="quoteForm.errors.first_name"
+            :error="quoteForm.errors.company_contact_name"
           />
         </x-field>
 
-        <x-field label="LAST NAME" required>
-          <x-input
-            maxLength="50"
-            v-model="quoteForm.last_name"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-          />
-        </x-field>
-
-        <x-field label="EMAIL" required>
+        <x-field v-if="isCompanyCar" label="POINT OF CONTACT EMAIL" required>
           <x-input
             v-model="quoteForm.email"
             type="email"
@@ -388,7 +513,11 @@ const gender = computed(() => {
           />
         </x-field>
 
-        <x-field label="PHONE NUMBER" required>
+        <x-field
+          v-if="isCompanyCar"
+          label="POINT OF CONTACT PHONE NUMBER"
+          required
+        >
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
@@ -399,21 +528,69 @@ const gender = computed(() => {
           />
         </x-field>
 
-        <x-field label="COMPANY NAME">
-          <x-input
-            v-model="quoteForm.company_name"
-            type="text"
-            class="w-full"
-            :error="quoteForm?.errors?.company_name"
+        <x-field v-if="isCompanyCar" label="BUSINESS ACTIVITY" required>
+          <ComboBox
+            v-model="quoteForm.business_activity_id"
+            placeholder="Select bussiness activity"
+            :options="bussinessActivityOptions"
+            :rules="[isRequired]"
+            :single="true"
+            :error="quoteForm.errors.business_activity_id"
+            :hasError="quoteForm.errors.business_activity_id"
           />
         </x-field>
 
-        <x-field label="COMPANY ADDRESS">
+        <x-field v-if="isPersonalCar" label="FIRST NAME" required>
           <x-input
-            v-model="quoteForm.company_address"
-            type="text"
+            maxLength="20"
+            v-model="quoteForm.first_name"
+            :rules="[isRequired]"
             class="w-full"
-            :error="quoteForm?.errors?.company_address"
+            :error="quoteForm.errors.first_name"
+          />
+        </x-field>
+
+        <x-field v-if="isPersonalCar" label="LAST NAME" required>
+          <x-input
+            maxLength="50"
+            v-model="quoteForm.last_name"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.last_name"
+          />
+        </x-field>
+
+        <x-field v-if="isPrivateCar" label="DRIVER'S NAME" required>
+          <x-input
+            maxLength="20"
+            v-model="quoteForm.driver_name"
+            :rules="[
+              v => v.trim().split(' ').length >= 2 || 'Please enter full name',
+            ]"
+            class="w-full"
+            :error="quoteForm.errors.driver_name"
+          />
+        </x-field>
+
+        <x-field v-if="isPersonalCar" label="EMAIL" required>
+          <x-input
+            v-model="quoteForm.email"
+            type="email"
+            :disabled="isEdit"
+            :rules="[isRequired, isEmail]"
+            class="w-full"
+            :error="quoteForm.errors.email"
+          />
+        </x-field>
+
+        <x-field v-if="isPersonalCar" label="PHONE NUMBER" required>
+          <x-input
+            v-model="quoteForm.mobile_no"
+            type="tel"
+            :rules="[isRequired]"
+            class="w-full"
+            :disabled="isEdit"
+            :error="quoteForm.errors.mobile_no"
           />
         </x-field>
 
@@ -507,7 +684,11 @@ const gender = computed(() => {
           </div>
         </x-field>
 
-        <x-field label="DATE OF BIRTH" required>
+        <x-field
+          v-if="isPrivateCar || isPersonalCar"
+          :label="isPrivateCar ? 'DRIVER\'S DATE OF BIRTH' : 'DATE OF BIRTH'"
+          required
+        >
           <DatePicker
             v-model="quoteForm.dob"
             :rules="[isRequired]"
@@ -516,7 +697,11 @@ const gender = computed(() => {
           />
         </x-field>
 
-        <x-field label="NATIONALITY" required>
+        <x-field
+          v-if="isPrivateCar || isPersonalCar"
+          :label="isPrivateCar ? 'DRIVER\'S NATIONALITY' : 'NATIONALITY'"
+          required
+        >
           <x-select
             v-model="quoteForm.nationality_id"
             :options="
@@ -542,7 +727,11 @@ const gender = computed(() => {
           />
         </x-field>
 
-        <x-field label="UAE LICENCE HELD FOR" required>
+        <x-field
+          v-if="isPrivateCar || isPersonalCar"
+          label="UAE LICENCE HELD FOR"
+          required
+        >
           <x-select
             v-model="quoteForm.uae_license_held_for_id"
             :options="
@@ -561,7 +750,10 @@ const gender = computed(() => {
           />
         </x-field>
 
-        <x-field label="HOME COUNTRY DRIVING LICENSE HELD FOR">
+        <x-field
+          v-if="isPrivateCar || isPersonalCar"
+          label="HOME COUNTRY DRIVING LICENSE HELD FOR"
+        >
           <x-select
             v-model="quoteForm.back_home_license_held_for_id"
             :options="
