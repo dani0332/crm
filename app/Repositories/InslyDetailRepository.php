@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
@@ -20,6 +21,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\InslyDataService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
@@ -35,6 +37,155 @@ class InslyDetailRepository extends BaseRepository
     {
         return InslyDetail::class;
     }
+
+    public function buildSearchClause(string $field, mixed $value, string $type = FilterTypes::EXACT)
+    {
+        if (is_null($value) || $value === '' || empty($value)) {
+            return null;
+        }
+
+        switch ($type) {
+            case FilterTypes::EXACT:
+                return [
+                    'phrase' => [
+                        'query' => $value,
+                        'path' => $field,
+                    ],
+                ];
+
+            case FilterTypes::FREE:
+                // For email and other simple like matches (e.g., for policy_no)
+                return [
+                    'wildcard' => [
+                        'query' => '*'.strtolower($value).'*',
+                        'path' => $field,
+                        'allowAnalyzedField' => true,
+                    ],
+                ];
+
+            case FilterTypes::FREE_REGEX:
+                // For fields where we want both LIKE (wildcard) and regex searches
+                return [
+                    'compound' => [
+                        'should' => [
+                            [
+                                'wildcard' => [
+                                    'query' => '*'.strtolower($value).'*',
+                                    'path' => $field,
+                                    'allowAnalyzedField' => true,
+                                ],
+                            ],
+                            [
+                                'regex' => [
+                                    'query' => $this->searchPhoneNumberRegexPattern($value),
+                                    'path' => $field,
+                                    'allowAnalyzedField' => true,
+                                ],
+                            ],
+                        ],
+                        'minimumShouldMatch' => 1, // Either wildcard or regex will match
+                    ],
+                ];
+
+            case FilterTypes::IN:
+                $values = is_array($value) ? $value : explode(',', $value);
+                $should = array_map(fn ($v) => [
+                    'text' => [
+                        'query' => trim($v),
+                        'path' => $field,
+                    ],
+                ], $values);
+
+                return [
+                    'compound' => [
+                        'should' => $should,
+                        'minimumShouldMatch' => 1,
+                    ],
+                ];
+
+            default:
+                return null;
+        }
+    }
+
+    public function fetchGetDataByIndex()
+    {
+        $coverage = $this->getCoverageList(auth()->user());
+
+        $page = max((int) request()->get('page', 1), 1);
+        $perPage = 15;
+        $skip = ($page - 1) * $perPage;
+
+        LoggerService::info('InslyDetailRepository - getDataByIndex.', extra: request()->only(['policy_number', 'email', 'mobile_no']));
+
+        $must = array_values(array_filter([
+            $this->buildSearchClause('policy_no', request()->get('policy_number'), FilterTypes::EXACT),
+            $this->buildSearchClause('policy.coverage', $coverage, FilterTypes::IN),
+            $this->buildSearchClause('customer.email', request()->get('email'), FilterTypes::FREE),
+            $this->buildSearchClause('customer.mobile_phone', request()->get('mobile_no'), FilterTypes::FREE_REGEX),
+        ]));
+
+        $pipeline = [];
+
+        if (! empty($must)) {
+            $pipeline[] = [
+                '$search' => [
+                    'index' => 'insly_search_index',
+                    'compound' => [
+                        'must' => $must,
+                    ],
+                ],
+            ];
+        }
+
+        $pipeline[] = [
+            '$project' => [
+                '_id' => 1,
+                'policy_oid' => 1,
+                'policy.coverage' => 1,
+                'policy_no' => 1,
+                'customer.name' => 1,
+                'policy.policy_no' => 1,
+                'policy.start_date' => 1,
+                'policy.end_date' => 1,
+                'policy.insurer' => 1,
+                'policy.issue_date' => 1,
+            ],
+        ];
+
+        $pipeline[] = ['$skip' => $skip];
+        $pipeline[] = ['$limit' => $perPage + 1];
+
+        $results = $this->raw(fn ($collection) => $collection->aggregate($pipeline));
+
+        $items = iterator_to_array($results);
+
+        $hasMore = count($items) > $perPage;
+        $items = array_slice($items, 0, $perPage);
+
+        $data = $items;
+
+        $baseUrl = request()->url();
+        $queryParams = request()->except('page');
+
+        $buildPageUrl = function ($pageNumber) use ($baseUrl, $queryParams) {
+            return $baseUrl.'?'.http_build_query(array_merge($queryParams, ['page' => $pageNumber]));
+        };
+
+        return [
+            'current_page' => $page,
+            'data' => $data,
+            'per_page' => $perPage,
+            'from' => $skip + 1,
+            'to' => $skip + count($data),
+            'next_page_url' => $hasMore ? $buildPageUrl($page + 1) : null,
+            'prev_page_url' => $page > 1 ? $buildPageUrl($page - 1) : null,
+        ];
+    }
+
+    /**
+     * @deprecated keeping this for fallback option for now
+     */
     public function fetchGetData()
     {
         $coverage = $this->getCoverageList(auth()->user());
@@ -523,7 +674,8 @@ class InslyDetailRepository extends BaseRepository
         // Creating a regex pattern to match phone numbers ignoring spaces
         $regexPattern = implode('.*', str_split($phoneNumber));
 
-        return new Regex("$regexPattern", 'i');
+        // Return regex as a string instead of Regex object
+        return $regexPattern;
     }
 
     private function getBusinessTypeOfInsuranceIDFromCoverage($coverage)

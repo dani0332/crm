@@ -37,6 +37,7 @@ const canDrag = computed(() => {
     props.id == quoteStatusEnum?.TransactionApproved ||
     props.id == quoteStatusEnum?.PolicyBooked ||
     props.id == quoteStatusEnum?.PolicyIssued ||
+    props.id == quoteStatusEnum?.PaymentLinkSentToCustomer ||
     props.id == quoteStatusEnum?.PolicySentToCustomer
     ? false
     : true;
@@ -117,6 +118,13 @@ useSortable(`#${props.title}`, leads.value, {
       } else {
         data.to['lost_reason'] = leadForm.lostreason;
       }
+    }
+
+    // todo add condition for PaymentLinkSentToCustomer
+    if (data.to.quote_status_id == quoteStatusEnum?.PaymentLinkSentToCustomer) {
+      moveElemToOriginalList(e);
+      showModal.value = false;
+      return;
     }
     let listResponse = await updateList(data);
 

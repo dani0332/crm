@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
 use App\Enums\Traits\QuoteTypable;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
@@ -119,7 +120,7 @@ enum QuoteTypes: string
 
     public static function getIdFromValue(string $value): ?int
     {
-        return self::getId(match (ucfirst($value)) {
+        $quoteTypeEnum = match (ucfirst($value)) {
             'Car' => QuoteTypes::CAR,
             'Home' => QuoteTypes::HOME,
             'Health' => QuoteTypes::HEALTH,
@@ -134,7 +135,9 @@ enum QuoteTypes: string
             'CorpLine' => QuoteTypes::CORPLINE,
             'Group Medical' => QuoteTypes::GROUP_MEDICAL,
             default => null,
-        });
+        };
+
+        return $quoteTypeEnum ? self::getId($quoteTypeEnum) : null;
     }
 
     public function model(): Model
@@ -264,10 +267,7 @@ enum QuoteTypes: string
 
     public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false, bool $isReAssignment = false, bool $sicAdvisorRequested = false)
     {
-        $lead = $this->model()->where('uuid', $uuid)->first();
-        if ($lead) {
-            LoggerService::startQuoteLogging($lead);
-        }
+        LoggerService::startQuoteLogging($this->refId($uuid), LoggerFeatureEnum::ALLOCATION);
 
         $allocationService = match ($this) {
             self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId, sicAdvisorRequested: $sicAdvisorRequested),

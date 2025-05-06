@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
@@ -163,6 +164,7 @@ trait GenericQueriesAllLobs
             if ($record) {
                 $record->parent_duplicate_quote_id = $parentRecord->code;
                 $record->advisor_id = auth()->user()->id;
+                $record->assignment_type = AssignmentTypeEnum::SELF_ASSIGNED;
                 if (strtolower($lob) == strtolower(quoteTypeCode::Health)) {
                     $subTeam = null;
                     if (auth()->user()->subTeam) {

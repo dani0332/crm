@@ -23,7 +23,9 @@ class RolePermissionSeeder extends Seeder
         // $this->paymentsVoid();
         $this->addBridgerSkipPermission();
         $this->addPostPrepaymentButtonPermission();
+        $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
+        $this->addPolicyDetailsAddVatPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -146,6 +148,17 @@ class RolePermissionSeeder extends Seeder
         ]);
     }
 
+    private function addInsurerPaymentLinkPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::INSURER_PAYMENT_LINK,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
     private function addPostPrepaymentButtonPermission(): void
     {
         Permission::firstOrCreate([
@@ -185,6 +198,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::CANCEL_SEND_UPDATE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPolicyDetailsAddVatPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::POLICY_DETAILS_ADD_VAT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

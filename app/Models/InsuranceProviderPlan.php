@@ -3,8 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-class InsuranceProviderPlan extends BaseModel
+class InsuranceProviderPlan extends Model
 {
     use HasFactory;
 
@@ -13,4 +14,5 @@ class InsuranceProviderPlan extends BaseModel
     function scopeActive($query){
         return $query->where('is_active', 1);
     }
+    protected $guarded = [];
 }

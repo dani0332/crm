@@ -159,6 +159,7 @@ class CentralService extends BaseService
                         $update = [
                             'parent_duplicate_quote_id' => $parentRecord->code,
                             'advisor_id' => auth()->user()->id,
+                            'assignment_type' => AssignmentTypeEnum::SELF_ASSIGNED,
                         ];
                         if (strtolower($lob) == strtolower(quoteTypeCode::Health)) {
                             $subTeam = null;
@@ -235,7 +236,7 @@ class CentralService extends BaseService
         });
     }
 
-    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false)
+    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false, $getLatestRating = false)
     {
         $type = ucfirst($type);
         switch ($type) {
@@ -282,7 +283,7 @@ class CentralService extends BaseService
             case quoteTypeCode::Bike:
                 return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
             case quoteTypeCode::Home:
-                return app(HomeQuoteService::class)->getQuotePlans($id);
+                return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
             default:
                 return [];
         }
@@ -508,7 +509,10 @@ class CentralService extends BaseService
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
 
         if ($plandId) {
-            return $planModel::find($plandId);
+            // Home Plans are fetching from home-quote-plan-details mongodb collection.
+            $key = $quoteType == QuoteTypes::HOME->value ? 'planId' : 'id';
+
+            return $planModel::where($key, (int) $plandId)->first();
         }
 
         return $planModel::where('provider_id', $providerId)->get();
@@ -1260,6 +1264,28 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
+    public function removeInsurerPaymentLink($request)
+    {
+        $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
+        if (! $quote) {
+            return ['status' => false, 'message' => 'Quote not found'];
+        }
+
+        $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
+        $quote->save();
+
+        if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink()) {
+            app(QuoteDocumentService::class)->updateQuoteAndPaymentStatusToPaymentPending($quote);
+        }
+        $paymentSplits = method_exists($quote, 'getAllInsurerPaymentLinkSplits') ? $quote->getAllInsurerPaymentLinkSplits() : [];
+        foreach ($paymentSplits as $ps) {
+            $ps->insurer_payment_link = null;
+            $ps->save();
+        }
+
+        return ['status' => true, 'message' => 'Insurer payment link removed'];
+    }
+
     // Todo: This method will remove in future if Business confirm we will enable capture of all providers
     private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
     {
@@ -1345,6 +1371,10 @@ class CentralService extends BaseService
         try {
             $maxAttempts = 2;
             $this->handleWithDeadlockRetries(function () use ($request) {
+                $paymentSplits = PaymentSplits::where('code', $request->payment_code)->get();
+                foreach ($paymentSplits as $paymentSplit) {
+                    $paymentSplit->documents()->forceDelete();
+                }
                 PaymentSplits::where('code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
