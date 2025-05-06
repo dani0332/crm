@@ -181,6 +181,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             $columns['driving_experience']['rules'][] = 'required';
             $columns['nationality']['rules'][] = 'required';
             $columns['registration_location']['rules'][] = 'required';
+
         }
 
         return $columns;
@@ -225,4 +226,5 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             },
         ];
     }
+
 }

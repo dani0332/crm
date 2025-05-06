@@ -29,7 +29,9 @@ class GenericLobController extends Controller
 
             $pdf = $response['pdf'];
 
-            return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $response['name']]);
+            // return $pdf->stream();
+
+            return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->download()), 'name' => $response['name']]);
         } catch (ValidationException $e) {
             return response()->json([
                 'message' => $e->getMessage() ?: 'Validation error occurred',

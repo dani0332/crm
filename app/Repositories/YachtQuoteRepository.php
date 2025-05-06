@@ -148,7 +148,6 @@ class YachtQuoteRepository extends BaseRepository
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
-                'dob AS unformatted_dob',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -172,8 +171,14 @@ class YachtQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
             'quoteStatus',
@@ -183,8 +188,8 @@ class YachtQuoteRepository extends BaseRepository
             'payments',
             'quoteDetail',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
             ->when(! empty(request()->advisor_assigned_date), function ($query) {
                 $dateArray = request()->advisor_assigned_date;
@@ -220,7 +225,7 @@ class YachtQuoteRepository extends BaseRepository
             return 0;
         }
 
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()

@@ -27,6 +27,8 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 const quoteSegments = page.props.quoteSegments;
 const cleanObj = obj => useCleanObj(obj);
 const exportLoader = ref(false);
@@ -44,6 +46,8 @@ const serverOptions = ref({
 const tableHeader = [
   { text: 'REF-ID', value: 'code' },
   { text: 'BATCH', value: 'batch.name' },
+  { text: 'Vehicle Use', value: 'vehicle_use' },
+  { text: 'Company Name', value: 'car_company_name' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at_formatted' },
@@ -110,15 +114,31 @@ const ecommerceOptions = [
 ];
 
 const filteredTableHeader = computed(() => {
-  if (!hasRole(rolesEnum.CarAdvisor)) {
-    // If the user does not have the "CarAdvisor" role, include all columns
-    return tableHeader;
-  } else {
-    // If the user has the "CarAdvisor" role, exclude "Lead Source" and "Assignment Type" columns
-    return tableHeader.filter(
+  let filteredHeader = [...tableHeader];
+  if (hasRole(rolesEnum.CarAdvisor)) {
+    filteredHeader = filteredHeader.filter(
       column => column.value !== 'source' && column.value !== 'assignment_type',
     );
   }
+
+  if (filters.registration_type === carRegistrationTypeEnum.COMPANY) {
+    // If the registration type is "Company", exclude "First Name" and "Last Name" columns
+    filteredHeader = filteredHeader.filter(
+      column =>
+        column.value !== 'first_name' &&
+        column.value !== 'last_name' &&
+        column.value !== 'dob' &&
+        column.value !== 'nationality_id_text' &&
+        column.value !== 'uae_license_held_for_id_text',
+    );
+  } else {
+    filteredHeader = filteredHeader.filter(
+      column =>
+        column.value !== 'vehicle_use' && column.value !== 'car_company_name',
+    );
+  }
+
+  return filteredHeader;
 });
 
 const advisorOptions = computed(() => {
@@ -134,6 +154,18 @@ const advisorOptions = computed(() => {
 
   return options;
 });
+
+const registrationTypeOptions = Object.values(carRegistrationTypeEnum).map(
+  item => ({
+    value: item,
+    label: item,
+  }),
+);
+
+const vehicleUseOptions = Object.values(carVehicleUseEnum).map(item => ({
+  value: item,
+  label: item,
+}));
 
 const leadStatuses = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(status => ({
@@ -255,6 +287,9 @@ const filters = reactive({
   policy_expiry_date_end: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  registration_type: carRegistrationTypeEnum.PERSONAL,
+  vehicle_use: '',
+  company_name: '',
 });
 
 const teamUsers =
@@ -286,6 +321,7 @@ watch(
       filters.booking_date
     ) {
       canExport.value = true;
+      // Export buttons will be visible when date filters are set
     } else {
       canExport.value = false;
     }
@@ -293,6 +329,14 @@ watch(
       canExportLeadsAndPlan.value = true;
     } else {
       canExportLeadsAndPlan.value = false;
+    }
+
+    if (filters.registration_type == carRegistrationTypeEnum.COMPANY) {
+      filters.first_name = '';
+      filters.last_name = '';
+    } else {
+      filters.vehicle_use = '';
+      filters.company_name = '';
     }
   },
   { deep: true, immediate: true },
@@ -539,18 +583,45 @@ watch(
   { deep: true },
 );
 
-const onExport = (url, isLoading = false) => {
+const onExport = (url, isLoading = false, exportType = 'download') => {
   exportLoader.value = isLoading;
+
+  // Add exportType to URL parameters if it's not already there
+  const separator = url.includes('?') ? '&' : '?';
+  const exportTypeParam = `exportType=${exportType}`;
+
+  // Only add exportType if it's not already in the URL
+  if (!url.includes('exportType=')) {
+    url = `${url}${separator}${exportTypeParam}`;
+  }
+
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
+    exportType: exportType,
     url: `${window.location.origin}${url}`,
   };
-  logAndExportQuotes(payload).then(result => {
-    if (result)
-      setTimeout(() => {
-        exportLoader.value = false;
-      }, 1000);
-  });
+
+  console.log('onexport', payload);
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result.data.message) {
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: 'Unable to start an export',
+        position: 'top',
+      });
+      throw err;
+    });
 };
 
 const insurerAMLStatusOption = computed(() => {
@@ -589,6 +660,23 @@ const insurerAMLStatusOption = computed(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <x-select
+          v-model="filters.registration_type"
+          label="Registration Type"
+          name="registration_type"
+          placeholder="Please select registration type"
+          :options="registrationTypeOptions"
+          class="w-full"
+        />
+        <ComboBox
+          v-if="filters.registration_type == carRegistrationTypeEnum.COMPANY"
+          v-model="filters.vehicle_use"
+          label="Vehicle use"
+          name="vehicle_ue"
+          placeholder="Please select vehicle use"
+          :options="vehicleUseOptions"
+        />
+
         <x-input
           v-model="filters.code"
           type="search"
@@ -597,14 +685,37 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Search by REF-ID"
         />
-        <ComboBox
+        <x-select
           v-model="filters.quote_batch_id"
           label="Batch"
           name="quote_batch_id"
-          placeholder="Please select batch"
           :options="batchOptions"
+          placeholder="Please select batch"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_batch_id = batchOptions.map(item => item.value)
+              "
+              @clear="filters.quote_batch_id = []"
+            />
+          </template>
+        </x-select>
+        <x-input
+          v-if="filters.registration_type == carRegistrationTypeEnum.COMPANY"
+          v-model="filters.company_name"
+          type="search"
+          name="company_name"
+          label="Company Name"
+          class="w-full"
+          placeholder="Search by Company Name"
         />
         <x-input
+          v-if="filters.registration_type == carRegistrationTypeEnum.PERSONAL"
           v-model="filters.first_name"
           type="search"
           name="first_name"
@@ -613,6 +724,7 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Search by First Name"
         />
         <x-input
+          v-if="filters.registration_type == carRegistrationTypeEnum.PERSONAL"
           v-model="filters.last_name"
           type="search"
           name="last_name"
@@ -682,14 +794,14 @@ const insurerAMLStatusOption = computed(() => {
           name="advisor_assigned_date_end"
           label="Advisor Assigned Date End"
         />
-        <ComboBox
+        <x-select
           v-model="filters.payment_status_id"
           label="Payment Status"
           name="payment_status_id"
           :options="paymentStatusOptions"
           placeholder="Please select payment status"
           class="w-full"
-          :single="true"
+          filterable
         />
         <x-select
           v-model="filters.is_ecommerce"
@@ -699,42 +811,83 @@ const insurerAMLStatusOption = computed(() => {
           placeholder="Please select is ecommerce"
           class="w-full"
         />
-        <ComboBox
+        <x-select
           v-model="filters.quote_status_id"
           label="Lead Status"
           name="quote_status_id"
           :options="leadStatuses"
-        />
-        <ComboBox
+          placeholder="Please select lead status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = leadStatuses.map(item => item.value)
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.insurer_aml_status"
           label="Insurer AML Status"
           name="insurer_aml_status"
           :options="insurerAMLStatusOption"
-        />
-        <ComboBox
+          placeholder="Please select status"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.tier_id"
           label="Tier Name"
           name="tier_id"
-          placeholder="Please select batch"
           :options="leadTiers"
-        />
-        <ComboBox
-          :single="true"
+          placeholder="Please select tier"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.tier_id = leadTiers.map(item => item.value)"
+              @clear="filters.tier_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.vehicle_type_id"
           label="Vehicle Type"
           name="vehicle_type_id"
           :options="vehicleTypes"
           placeholder="Please select an option"
           class="w-full"
+          filterable
         />
-        <ComboBox
-          :single="true"
+        <x-select
           v-model="filters.car_type_insurance_id"
           label="Type of Car Insurance"
           name="car_type_insurance_id"
           :options="carTypeInsurances"
           placeholder="Please select an option"
           class="w-full"
+          filterable
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -744,14 +897,14 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
-        <ComboBox
-          :single="true"
+        <x-select
           v-model="filters.currently_insured_with"
           label="Currently Insured with"
           name="currently_insured_with"
           :options="providers"
           placeholder="Please select an option"
           class="w-full"
+          filterable
         />
         <x-input
           v-model="filters.previous_quote_policy_number"
@@ -771,37 +924,61 @@ const insurerAMLStatusOption = computed(() => {
           name="policy_expiry_date_end"
           label="Policy Expiry End Date"
         />
-        <ComboBox
+        <x-select
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.advisor_id"
           label="Advisors (select teams first)"
           name="advisor_id"
-          placeholder="Please select Advisor"
           :options="
             teamUsers.map(user => ({
               value: user.id,
               label: user.name,
             }))
           "
+          placeholder="Please select Advisor"
           :loading="loader.advisorTeamOptions"
-        />
-        <ComboBox
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.advisor_id = teamUsers.map(user => user.id)"
+              @clear="filters.advisor_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.assignment_type"
           label="Assignment Type"
-          placeholder="Please select assignment type"
+          name="assignment_type"
           :options="assignmentTypes"
-          :single="true"
+          placeholder="Please select assignment type"
           class="w-full"
+          filterable
         />
-        <ComboBox
+        <x-select
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.teams"
           label="Teams"
-          placeholder="Search by Teams"
+          name="teams"
           :options="teamOptions"
+          placeholder="Search by Teams"
+          filterable
+          multiple
+          truncate
+          multipleCheckbox
           @update:modelValue="fetchTeamUsers"
-        />
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(item => item.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
         <DatePicker
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.transaction_approved_dates"
@@ -825,25 +1002,28 @@ const insurerAMLStatusOption = computed(() => {
           label="Paid Date End"
         />
 
-        <ComboBox
+        <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
-          placeholder="Select Segment"
+          name="segment_filter"
           :options="quoteSegments"
-          :single="true"
+          placeholder="Select Segment"
+          class="w-full"
+          filterable
         />
-        <ComboBox
+        <x-select
           v-model="filters.sic_advisor_requested"
           label="Advisor Requested"
-          placeholder="Select any option"
+          name="sic_advisor_requested"
           :options="[
             { value: 'All', label: 'All' },
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
+          placeholder="Select any option"
           class="w-full"
-          :single="true"
+          filterable
         />
         <DatePicker
           v-model="filters.payment_due_date"
@@ -889,10 +1069,36 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             :loading="exportLoader"
-            @click="onExport(`/car/leads-export?${objToUrl(filters)}`, true)"
+            @click="
+              () => {
+                onExport(
+                  `/car/leads-export?${objToUrl(filters)}`,
+                  true,
+                  'download',
+                );
+              }
+            "
             class="justify-self-start mr-3"
           >
             Export
+          </x-button>
+          <x-button
+            v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click="
+              () => {
+                onExport(
+                  `/car/leads-export?${objToUrl(filters)}`,
+                  true,
+                  'email',
+                );
+              }
+            "
+            class="justify-self-start mr-3"
+          >
+            Export via email
           </x-button>
           <x-tooltip
             v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)"
@@ -901,6 +1107,9 @@ const insurerAMLStatusOption = computed(() => {
             <x-button tag="div" size="sm" color="emerald" class="mr-3">
               Export
             </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"
+              >Export via email</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Created dates or payment due date or booking date are required

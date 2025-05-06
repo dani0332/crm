@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
@@ -38,12 +39,14 @@ use App\Models\QuoteStatusLog;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
+use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
@@ -391,6 +394,35 @@ class AMLService
         return app(AMLController::class)->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
     }
 
+    public function saveManualAuditLog($quoteDetails, User $processByUser): bool
+    {
+        if (! $quoteDetails instanceof TravelQuote) {
+            return false;
+        }
+
+        $dirty = $quoteDetails->getDirty();
+
+        if (empty($dirty)) {
+            return false;
+        }
+
+        $changes = [];
+        foreach ($dirty as $attribute => $value) {
+            $changes['old_values'][$attribute] = $quoteDetails->getOriginal($attribute);
+            $changes['new_values'][$attribute] = $value;
+        }
+
+        $quoteDetails->audits()->create([
+            'user_type' => get_class($processByUser),
+            'user_id' => $processByUser->id ?? null,
+            'event' => 'updated',
+            'old_values' => $changes['old_values'],
+            'new_values' => $changes['new_values'],
+        ]);
+
+        return true;
+    }
+
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
@@ -439,6 +471,15 @@ class AMLService
 
         if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::EntityShort;
+        } elseif ($status == null && $quoteTypeId == QuoteTypes::CAR->id()) {
+
+            $quote = CarQuoteRepository::where('id', $quoteRequestId)->select('registration_type')->first();
+            if ($quote->registration_type == CarRegistrationType::COMPANY) {
+                $status = CustomerTypeEnum::EntityShort;
+            } else {
+                $status = CustomerTypeEnum::IndividualShort;
+            }
+
         } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::IndividualShort;
         }
@@ -809,5 +850,55 @@ class AMLService
         }
 
         return true;
+    }
+
+    public function getAMLData($requestParams = [])
+    {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
+        }
+
+        $query = AML::select([
+            'id',
+            'quote_request_id',
+            'quote_type_id',
+            'input',
+            'search_type',
+            'match_found',
+            'results_found',
+            'created_at',
+            'decision',
+        ])
+            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
+            ->whereBetween('created_at', dateQueryFilter(request('amlCreatedStartDate'), request('amlCreatedEndDate')));
+
+        LoggerService::endLogging();
+        logger()->debug('rawSql: '.$query->toRawSql());
+        $data = collect();
+
+        $query->chunk(1000, function ($chunk) use (&$data) {
+            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
+            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
+                $quoteType = QuoteTypes::getName($quoteTypeId);
+                $nameSpace = '\\App\\Models\\';
+                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
+
+                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
+                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
+                foreach ($quoteRequestData as $quoteRequest) {
+                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
+                    foreach ($amlData as $index => $value) {
+                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
+                        $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
+                    }
+                }
+            }
+            $data = $data->merge($chunk);
+        });
+
+        return $data;
     }
 }

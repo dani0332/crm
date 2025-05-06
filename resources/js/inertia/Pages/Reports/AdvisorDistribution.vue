@@ -23,6 +23,10 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const tableHeader = ref([]);
 const canShowFooterColumn = ref([]);
 const toast = useToast();
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
+
+const { maxSelections } = useRules();
 
 const params = useUrlSearchParams('history');
 const filters = reactive({
@@ -41,6 +45,8 @@ const filters = reactive({
   insurance_type: '',
   insurance_for: '',
   travel_coverage: '',
+  registration_type: 'All',
+  vehicle_use: 'All',
   assignmentType: 'All',
 });
 
@@ -283,6 +289,7 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.insurance_for = '';
     filters.travel_coverage = '';
     filters.isCommercial = '';
+
     (filters.isEmbeddedProducts = ''), (filters.is_ecommerce = '');
     filters.tiers = [];
   } else {
@@ -556,6 +563,26 @@ const travelCoverageOptions = computed(() => {
 
   return [];
 });
+
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item,
+  })),
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
 </script>
 
 <template>
@@ -568,14 +595,15 @@ const travelCoverageOptions = computed(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.lob"
           label="LOB"
           placeholder="Select LOB"
           :options="quoteTypesOptions"
           class="w-full"
-          :single="true"
           @update:modelValue="onLobChange"
+          filterable
+          filterPlaceholder="Filter LOB...."
         />
 
         <DatePicker
@@ -592,7 +620,7 @@ const travelCoverageOptions = computed(() => {
             Development for Bike Tiers still in progress
           </template>
           <template #tooltip v-else> Select Tiers </template>
-          <ComboBox
+          <x-select
             :disabled="filters.lob === quoteTypeCodeEnum.Bike"
             :class="{
               'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
@@ -606,9 +634,24 @@ const travelCoverageOptions = computed(() => {
                 label: filterOptions.tiers[key],
               }))
             "
-          />
+            filterable
+            filterPlaceholder="Filter Tiers...."
+            truncate
+            multiple
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.tiers = Object.keys(filterOptions.tiers).map(
+                    tier => tier,
+                  )
+                "
+                @clear="filters.tiers = []"
+              />
+            </template>
+          </x-select>
         </x-tooltip>
-        <ComboBox
+        <x-select
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
           :class="{
@@ -620,9 +663,20 @@ const travelCoverageOptions = computed(() => {
           :options="teamOptions"
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(team => team.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('sub_teams')"
           :disabled="!isDisabled('sub_teams')"
           :class="{
@@ -634,9 +688,22 @@ const travelCoverageOptions = computed(() => {
           :options="subteamOptions"
           @update:model-value="onSubTeamChange"
           :loading="loaders.subteamOptions"
-        />
+          filterable
+          filterPlaceholder="Filter SubTeams...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_teams = subteamOptions.map(subteam => subteam.value)
+              "
+              @clear="filters.sub_teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('advisors')"
           :disabled="!isDisabled('advisors')"
           :class="{
@@ -646,7 +713,21 @@ const travelCoverageOptions = computed(() => {
           :label="getAdvisorLabel()"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          placeholder="Search by Advisors"
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-if="canShow('isEmbeddedProducts')"
           v-model="filters.isEmbeddedProducts"
@@ -659,8 +740,22 @@ const travelCoverageOptions = computed(() => {
         />
         <x-select
           v-if="canShow('isCommercial')"
+          v-model="filters.registration_type"
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
+        />
+        <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
+        <x-select
+          v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
-          label="Commercial"
+          label="Commercial Rule"
           placeholder="Select any option"
           :options="[
             { value: 'All', label: 'All' },
@@ -669,18 +764,37 @@ const travelCoverageOptions = computed(() => {
           ]"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
+          virtualList
+          :virtual-list-item-height="34"
+          :virtual-list-overscan="10"
           :options="
             Object.keys(filterOptions.leadSources).map(key => ({
               value: key,
               label: filterOptions.leadSources[key],
             }))
           "
-          :max-limit="3"
-        />
+          :rules="[maxSelections(3)]"
+          filterable
+          filterPlaceholder="Filter Lead Source...."
+          truncate
+          multiple
+          helper="You can select up to 3 lead sources"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.leadSources = Object.keys(
+                  filterOptions.leadSources,
+                ).map(leadSource => leadSource)
+              "
+              @clear="filters.leadSources = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-if="canShow('insurance_type')"
           v-model="filters.insurance_type"
@@ -719,7 +833,7 @@ const travelCoverageOptions = computed(() => {
           placeholder="Select travel coverage"
           class="w-full"
         />
-        <ComboBox
+        <x-select
           v-if="
             can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
           "
@@ -727,10 +841,11 @@ const travelCoverageOptions = computed(() => {
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Segment...."
         />
 
-        <ComboBox
+        <x-select
           v-if="
             filters.lob === quoteTypeCodeEnum.Car ||
             filters.lob === quoteTypeCodeEnum.Health ||
@@ -744,19 +859,21 @@ const travelCoverageOptions = computed(() => {
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Advisor Requested...."
         />
 
-        <ComboBox
+        <x-select
           v-if="
             filters.lob === quoteTypeCodeEnum.Car ||
             filters.lob === quoteTypeCodeEnum.Health
           "
           v-model="filters.assignmentType"
           label="Assignment Type"
-          placeholder="Select any option"
+          placeholder="Search by Assignment Type"
           :options="assignmentTypes"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Assignment Type...."
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">

@@ -113,8 +113,14 @@ class JetskiQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with([
             'quoteStatus',
@@ -123,19 +129,19 @@ class JetskiQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
-        ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
-            $query->where('advisor_id', auth()->user()->id);
+        ])->when(auth()->user() && auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
+            $query->where('advisor_id', auth()->id());
         })
-            ->when(! empty(request()->advisor_assigned_date), function ($query) {
-                $dateArray = request()->advisor_assigned_date;
+            ->when(request()->filled('advisor_assigned_date'), function ($query) {
+                $dateArray = request('advisor_assigned_date');
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',
                 DB::raw('
@@ -149,11 +155,12 @@ class JetskiQuoteRepository extends BaseRepository
                 '),
             ]);
 
-        $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
-
         $this->adjustQueryByInsurerInvoiceFilters($query);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        $query->orderBy('personal_quotes.'.(request()->get('sortBy') ?? 'created_at'), request()->get('sortType') ?? 'desc');
+
+        return ($forExport) ? $query->get() : $query;
     }
 
 }
