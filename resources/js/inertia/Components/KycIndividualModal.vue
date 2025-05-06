@@ -470,6 +470,7 @@ onMounted(() => {
         v-model="kycForm.id_expiry_date"
         label="ID expiry date"
         :rules="[isRequired]"
+        :min-date="new Date()"
       />
     </div>
 
