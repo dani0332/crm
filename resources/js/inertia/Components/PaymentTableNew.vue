@@ -6,8 +6,7 @@ import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { time } from 'highcharts';
-import ImageGalleryModal from './../Components/ImageGalleryModal.vue';
-import AmlApprovalModal from './../Components/AmlApprovalModal.vue';
+import { ImageGalleryModal, AmlApprovalModal, RetryPaymentModal } from './PaymentComponents/PaymentModal/index.js';
 
 // New Flow Implementation
 import { usePayment } from '../Composables/usePayment';
@@ -5732,69 +5731,14 @@ onBeforeMount(() => {
           :is-processing="paymentMethodsForm.processing"
           @update:model-value="closeAmlConfirmModal"
         />
-        <!--  Clear AML KYC Screening         -->
 
-        <div
-          class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
-          v-if="isRetryModalOpen"
-        >
-          <div
-            class="modal-retry-container bg-white w-full max-w-full overflow-hidden rounded-lg"
-          >
-            <div class="modal-confirm-header text-base text-white bg-white">
-              <div
-                class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
-              >
-                <div class="flex items-center space-x-2">
-                  Retry Payment Verification
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span
-                    @click="closeRetryModal"
-                    class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      class="w-4 h-4 text-gray-800"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      ></path>
-                    </svg>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <x-form @submit="handleRetryPayment" :auto-focus="false">
-              <div class="w-full h-full mt-2 flex flex-col">
-                <div
-                  class="text-lg px-6 py-4 border-b flex justify-between items-start"
-                >
-                  <div class="text-left">
-                    <span> {{ retryPaymentErrorMessage }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="w-full h-full mt-2 flex flex-col items-center">
-                <x-button
-                  size="lg"
-                  type="submit"
-                  color="orange"
-                  class="px-4 py-2 mt-4 mb-4"
-                  :loading="retryForm.processing"
-                >
-                  <span>Retry</span></x-button
-                >
-              </div>
-            </x-form>
-          </div>
-        </div>
+        <RetryPaymentModal
+          v-model="isRetryModalOpen"
+          :error-message="retryPaymentErrorMessage"
+          :is-processing="retryForm.processing"
+          @update:model-value="closeRetryModal"
+          @retry="handleRetryPayment"
+        />
 
         <div
           class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
