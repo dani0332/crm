@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Models\FtcEmailLog;
+use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -74,6 +76,13 @@ class UpdatePaymentRequest extends FormRequest
                         $linkUsed = FtcEmailLog::where('quote_trackable_id', '!=', $payment->paymentable_id)->where('link', $split['insurer_payment_link'])->exists();
                         if ($linkUsed) {
                             $validator->errors()->add('insurer_payment_link', 'You have already sent this payment link for another lead. Please verify and ensure each lead is sent a unique link to avoid processing errors');
+                        }
+                        $insurerProvider = InsuranceProvider::where('id', request()->input('insurance_provider_id'))->first();
+                        if ($insurerProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL) {
+                            $validator->errors()->add('insurer_payment_link', 'Current insurance provider is not supported for this payment gateway. Please verify that the insurance provider is supported for this payment gateway.');
+                        } else {
+                            request()->merge(['payment_gateway_id' => PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL]);
+                            request()->merge(['cc_payment_gateway' => strtoupper(PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL_TEXT)]);
                         }
                     }
                 }

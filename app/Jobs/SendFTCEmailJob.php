@@ -43,7 +43,7 @@ class SendFTCEmailJob implements ShouldQueue
         $nonEligibleSICTypes = [QuoteTypes::BIKE->id(), QuoteTypes::HOME->id(), QuoteTypes::HEALTH->id()];
 
         try {
-            LoggerService::info('Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid', '', ['feature' => 'SendFTCEmailJob']);
+            LoggerService::info('Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid', '', ['feature' => 'SendFTCEmailJob', 'ref_id' => $this->quoteUUID]);
             $isSic = false;
             $leadQuery = $this->quoteType->model()::with('payments')
                 ->whereNotNull('advisor_id')
@@ -70,12 +70,12 @@ class SendFTCEmailJob implements ShouldQueue
                     ];
 
                     Marshall::request('/payment/send-payment-auth-email', 'post', $data);
-                    LoggerService::info('Email Sent Successfully for uuid', '', ['feature' => 'SendFTCEmailJob']);
+                    LoggerService::info('Email Sent Successfully for uuid', '', ['feature' => 'SendFTCEmailJob', 'ref_id' => $this->quoteUUID]);
                 } else {
-                    LoggerService::info('Payment not authorized for uuid', '', ['feature' => 'SendFTCEmailJob']);
+                    LoggerService::info('Payment not authorized for uuid', '', ['feature' => 'SendFTCEmailJob', 'ref_id' => $this->quoteUUID]);
                 }
             } else {
-                LoggerService::info('Quote not found for uuid', '', ['feature' => 'SendFTCEmailJob']);
+                LoggerService::info('Quote not found for uuid', '', ['feature' => 'SendFTCEmailJob', 'ref_id' => $this->quoteUUID]);
             }
         } catch (Exception $e) {
             LoggerService::error('Error sending FTC email', [
