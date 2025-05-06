@@ -119,10 +119,9 @@ const onSubmit = isValid => {
 
       } else {
         notification.success({
-          title: res?.data?.message ?? '',
+          title: res?.data?.msg ?? '',
           position: 'top',
         });
-        // emit('error', res.data);
       }
     })
     .catch(err => {
@@ -170,8 +169,14 @@ const fetchProviderPlans = () => {
                 options.providerPlans = res.data.plans.filter(
                   plan => !props.plans.some(existingPlan => existingPlan.planId === plan.id)
                 );
-              } else {
-                options.providerPlans = res.data.plans; 
+              } else if(createForm.isUW) {
+                
+                options.providerPlans = res.data.plans.filter(
+                  plan => !props.plans.some(existingPlan => 
+                    existingPlan.planId === plan.id && existingPlan.isUW
+                  )
+                );
+
               }
             } else {
               options.providerPlans = [];
