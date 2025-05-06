@@ -68,7 +68,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
             ->orderBy('id')
             ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$lastProcessedId, $funName) {
                 foreach ($personalQuotes as $personalQuote) {
-                    $personalQuoteUpdateDate = [];
+                    $personalQuoteUpdateData = [];
 
                     LoggerService::startQuoteLogging($personalQuote);
 
@@ -84,7 +84,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
 
                     // Update the personal quote with quote_id
                     if ($quote->getMorphClass() != PersonalQuote::class) {
-                        $personalQuoteUpdateDate['quote_id'] = $quote->id;
+                        $personalQuoteUpdateData['quote_id'] = $quote->id;
                         LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', ['quote_id' => $quote->id]);
                     } else {
                         LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote is of Personal QuoteTable.');
@@ -100,7 +100,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                         $insured = Insured::where('entity_id', $entityMapping->entity_id)->first();
 
                         if ($insured) {
-                            $personalQuoteUpdateDate['insured_id'] = $insured->id;
+                            $personalQuoteUpdateData['insured_id'] = $insured->id;
                         } else {
                             LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.');
                             $lastProcessedId = $personalQuote->id;
@@ -112,15 +112,15 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                     }
 
                     // Update the personal quote
-                    if (! empty($personalQuoteUpdateDate)) {
-                        $personalQuote->update($personalQuoteUpdateDate);
+                    if (! empty($personalQuoteUpdateData)) {
+                        $personalQuote->update($personalQuoteUpdateData);
 
-                        LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', extra: $personalQuoteUpdateDate);
+                        LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', extra: $personalQuoteUpdateData);
                     }
 
                     $lastProcessedId = $personalQuote->id;
                     $totalUpdated++;
-                    LoggerService::info(self::className.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' with Insured ID: '.$insured->id.' and Quote ID: '.$quote->id);
+                    LoggerService::info(self::className.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' with ' , extra:  $personalQuoteUpdateData);
                 }
 
                 // Update the cache after each chunk to avoid losing progress

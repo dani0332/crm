@@ -446,9 +446,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             if ($force) {
                 $options['--force'] = true;
             }
-            Artisan::call('personal-quotes:update-insured-and-quote-id', $options);
+            Artisan::queue('personal-quotes:update-insured-and-quote-id', $options);
 
-            return '<h3>Quote and Insured ID migration command has successfully been executed. Please check the logs for detailed progress and completion status.</h3>';
+            return '<h3>Quote and Insured ID migration command has successfully been started. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-insured-and-quote-id-to-personal-quote');
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');

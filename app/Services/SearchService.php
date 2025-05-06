@@ -324,25 +324,15 @@ class SearchService extends BaseService
             RolesEnum::JetskiAdvisor,
         ];
 
-        // Find the role IDs
-        $advisorRoleIds = Role::whereIn('name', $advisorRoles)->pluck('id')->toArray();
-
-        if (empty($advisorRoleIds)) {
-            return false;
-        }
-
         // Check if user has any of these roles
-        $userId = Auth::id();
+        $user = Auth::user();
 
-        if (! $userId) {
+        if (! $user) {
             return false;
         }
 
-        return DB::table('model_has_roles')
-            ->where('model_id', $userId)
-            ->where('model_type', 'App\\Models\\User')
-            ->whereIn('role_id', $advisorRoleIds)
-            ->exists();
+        return $user->hasAnyRole($advisorRoles);
+
     }
 
     /**
