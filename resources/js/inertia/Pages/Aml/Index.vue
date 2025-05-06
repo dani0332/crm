@@ -155,7 +155,7 @@ const onDataExport = async (exportType = 'download') => {
   };
 
   loader.export = true;
-  if(exportType == 'email'){
+  if (exportType == 'email') {
     const exportResponse = await axios
       .get(payload.url)
       .then(resp => {
@@ -181,12 +181,11 @@ const onDataExport = async (exportType = 'download') => {
         });
         throw err;
       });
-  }else{
+  } else {
     setTimeout(() => {
       loader.export = false;
     }, 1000);
     window.open(url + '?' + useObjToUrl(exportData));
-
   }
 };
 
