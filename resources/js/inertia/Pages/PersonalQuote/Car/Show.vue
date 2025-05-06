@@ -16,7 +16,6 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
-  listQuotePlans: { Array, String },
   quoteDocuments: Array,
   documentTypes: Object,
   cdnPath: String,
@@ -642,12 +641,6 @@ const policyDetailsState = reactive({
   isEditing: false,
 });
 
-const planQuoteInsurerNumber = computed(() => {
-  let quotePlanList = page.props?.listQuotePlans;
-  if (!quotePlanList || typeof quotePlanList === 'string') return null;
-  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
-  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
-});
 const vatAmount = computed(() => {
   return (page.props.record.premium * 0.05).toFixed(2);
 });
@@ -668,7 +661,7 @@ const policyDetailsForm = useForm({
   quote_policy_expiry_date:
     dateToYMD(page.props.record.policy_expiry_date) || '',
   quote_premium: page.props.record.premium || null,
-  quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
+  quote_plan_insurer_quote_number: null,
   quote_policy_issuance_status: null,
   modelType: 'Car',
   quote_id: page.props.record.id,
