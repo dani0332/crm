@@ -1801,7 +1801,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   </x-button>
                   <span>
                     <x-button
-                    v-if="selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0)"
+                    v-if="selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0) && !item.isDisabled"
                       size="xs"
                       color="orange"
                       outlined

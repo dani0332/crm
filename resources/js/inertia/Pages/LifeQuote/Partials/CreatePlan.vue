@@ -90,7 +90,6 @@ const onSubmit = isValid => {
       formData: createForm,
     })
     .then(res => {
-      console.log(res)
       if (res.status == 200) {
         // emit('success');
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 
 const props = defineProps({
   uuid: String,
@@ -7,6 +7,7 @@ const props = defineProps({
   currencies: Array,
   lifeRiders: Array,
   plan: Object,
+  modelValue: Boolean,
 });
 
 const notification = useNotifications('toast');
@@ -79,13 +80,27 @@ watch(() => props.plan, (newVal) => {
     createForm.insurerQuoteNo = null;
     errorMessage = null;
 
-    ridersData.value = props.lifeRiders.map(rider => ({
-        riderId: rider.id,
-        active: 0,
-        price: 0,
-        coverValue: 0,
-        text: rider.text,
-    }));
+    // Handle rider data on plan change
+    if (props.plan?.riders && props.plan.riders.length > 0) {
+        console.log('Watch - Using riders from plan:', props.plan.riders);
+        ridersData.value = props.plan.riders.map(rider => ({
+            riderId: rider.id,
+            active: rider.active ?? 0,
+            price: parseFloat(rider.price) || 0,
+            coverValue: parseFloat(rider.coverValue) || 0,
+            text: rider.text,
+        }));
+    } else {
+        console.log('Watch - No riders in plan, using lifeRiders');
+        ridersData.value = props.lifeRiders.map(rider => ({
+            riderId: rider.id,
+            active: 0,
+            price: 0,
+            coverValue: 0,
+            text: rider.text,
+        }));
+    }
+    console.log('Watch - Final rider data:', ridersData.value);
 }, { deep: true });
 
 const getQuote = () => {
@@ -140,19 +155,16 @@ const onSubmit = isValid => {
       formData: createForm,
     })
     .then(res => {
-      // emit('success');
 
-      if(res?.data?.code ==  400) {
+      if(res?.data?.msg) {
         alreadyQuoted = res.data.msg;
         return;  
-      } else {
-        notification.success({
+      } 
+
+      notification.success({
           title: res.data.message,
           position: 'top',
-        });
-      }
-
-      shown.value = false;
+      });
 
       setTimeout(() => {
         location.reload();
@@ -178,6 +190,56 @@ const onSubmit = isValid => {
       createForm.loading = false;
     });
 };
+
+// Add onMounted hook to load rider data when component is mounted
+onMounted(() => {
+  if (props.plan) {
+    console.log('Plan data:', props.plan);
+    
+    // Initialize form data from plan
+    createForm.providerId = props.plan.providerId;
+    createForm.planId = props.plan.planId;
+    createForm.currency = props.plan.currency;
+    createForm.sumAssured = props.plan.sumInsured;
+    createForm.policyTerm = props.plan.policyTerm;
+    createForm.paymentTerm = props.plan.paymentTerm;
+    createForm.actualPremium = null;
+    if (!props.plan.isApi) {
+      createForm.actualPremium = props.plan.actualPremium;
+    }
+    
+    // Handle rider data initialization
+    if (props.plan.riders && Array.isArray(props.plan.riders) && props.plan.riders.length > 0) {
+      console.log('Using riders from plan:', JSON.stringify(props.plan.riders));
+      ridersData.value = props.plan.riders.map(rider => {
+        const mappedRider = {
+          riderId: rider.id,
+          active: rider.active ?? 0,
+          price: parseFloat(rider.price) || 0,
+          coverValue: parseFloat(rider.coverValue) || 0,
+          text: rider.text || rider.name,
+        };
+        console.log('Mapped rider:', mappedRider);
+        return mappedRider;
+      });
+    } else {
+      console.log('No riders in plan, using lifeRiders:', JSON.stringify(props.lifeRiders));
+      ridersData.value = props.lifeRiders.map(rider => {
+        const mappedRider = {
+          riderId: rider.id,
+          active: 0,
+          price: 0,
+          coverValue: 0,
+          text: rider.text || rider.name,
+        };
+        console.log('Mapped lifeRider:', mappedRider);
+        return mappedRider;
+      });
+    }
+    
+    console.log('Final rider data:', JSON.stringify(ridersData.value));
+  }
+});
 
 </script>
 
@@ -293,7 +355,7 @@ const onSubmit = isValid => {
               :rules="[isRequired]"
               class="w-full"
               type="number"
-              min="0"
+              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
               :disabled="plan.isApi"
           />
         </div>
@@ -315,6 +377,7 @@ const onSubmit = isValid => {
 
       <div class="mt-6">
         <h3 class="font-semibold bg-gray-100 p-4 rounded-md text-gray-700">RIDERS</h3>
+        
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
           <span class="text-gray-700 col-span-2">Life Cover</span>
           <span class="text-gray-700">Included</span>
@@ -324,7 +387,7 @@ const onSubmit = isValid => {
           <x-toggle color="emerald" size="lg" disabled/>
           <x-input type="number" min="0"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"  class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
         </div>
-        <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.id">
+        <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.riderId">
           <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
           <span class="text-gray-700">{{rider.active ? 'Included' : 'Optional'}}</span>
           <x-input type="number" min="0" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" :disabled="!rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />

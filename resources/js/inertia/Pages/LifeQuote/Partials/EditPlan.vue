@@ -116,10 +116,18 @@ const onSubmit = isValid => {
     return;
   }
   extraAttr.loading = true;
-  editForm.riders = ridersData.value;
+  
+  // Ensure riders have numeric values by converting strings to floats
+  const processedRiders = ridersData.value.map(rider => ({
+    ...rider,
+    price: parseFloat(rider.price) || 0,
+    loading: parseFloat(rider.loading) || 0,
+    final_price: parseFloat(rider.final_price) || 0,
+    coverValue: parseFloat(rider.coverValue) || 0
+  }));
+  
+  editForm.riders = processedRiders;
 
-  // remove loading from editForm
-  // const data  = editForm.filter((item) => item !== 'loading');
   axios
     .post('/personal-quotes/life-plan-manual-create', {
       quoteUID: props.uuid,
@@ -127,27 +135,27 @@ const onSubmit = isValid => {
     })
     .then(res => {
       extraAttr.loading = false;
-      if (res.status == 200) {
-        
-        notification.success({
+      
+      if(res?.data?.code) {
+        notification.error({
+          title: res.data.msg,
+          position: 'top',
+        });
+
+        return;  
+      } 
+      
+      notification.success({
           title: res.data.message,
           position: 'top',
-        });
+      });
+      
+      shown.value = false;
 
-        shown.value = false;
+      setTimeout(() => {
+        location.reload();
+      }, 2000);
 
-        setTimeout(() => {
-          location.reload();
-        }, 2000);
-
-      } else {
-
-        emit('error', res.data);
-        notification.error({
-          title: 'Something went wrong',
-          position: 'top',
-        });
-      }
     })
     .catch(err => {
       emit('error');
@@ -167,6 +175,16 @@ const onSubmit = isValid => {
 
 const getQuote = () => {
     extraAttr.getQuoteLoading = true;
+    
+    // Ensure riders have numeric values by converting strings to floats
+    const processedRiders = ridersData.value.map(rider => ({
+        ...rider,
+        price: parseFloat(rider.price) || 0,
+        loading: parseFloat(rider.loading) || 0,
+        final_price: parseFloat(rider.final_price) || 0,
+        coverValue: parseFloat(rider.coverValue) || 0
+    }));
+    
     axios
     .post(`/personal-quotes/get-life-provider-plan`, {
         data: {
@@ -179,7 +197,7 @@ const getQuote = () => {
             sumAssured: editForm.sumAssured,
             policyTerm: editForm.policyTerm,
             paymentTerm: editForm.paymentTerm,
-            riders: ridersData.value,
+            riders: processedRiders,
         },
         lang: "en"
         }
@@ -218,13 +236,13 @@ const getQuote = () => {
 onMounted(() => {
   if (editForm.providerId) {
     ridersData.value = props.selectedPlan.riders.map(rider => ({
-            riderId: rider.id,
-            active: rider.active ?? 0,
-            price: rider.price ?? 0,
-            coverValue: rider.coverValue ?? 0,
-            text: rider.text,
-            loading:rider?.loading ?? 0,
-            final_price: rider?.final_price ?? 0,
+    riderId: rider.id,
+    active: rider.active ?? 0,
+    price: (parseInt(rider.price) || 0),
+    coverValue: rider.coverValue ?? 0,
+    text: rider.text,
+    loading:  parseInt(rider?.loading) ?? 0,
+    final_price: parseInt(rider?.final_price) ?? 0,
     }));
 
     console.log(ridersData.value);
@@ -696,6 +714,7 @@ const closeModal = ()  => {
 
       <!-- Buttons section aligned to the right -->
       <div class="flex justify-end gap-4 mt-4">
+        
         <div v-if="showSaveButton">
           <x-button type="submit" color="blue" :loading="extraAttr.loading">
             Save
@@ -714,6 +733,7 @@ const closeModal = ()  => {
     <x-divider></x-divider>
     <div class="flex justify-between gap-4 mt-4 items-center">
       <!-- Main container pushed to the right -->
+     
       <div class="ml-auto flex items-center gap-4">
         <!-- Overall Loading input field -->
         <div class="flex items-center" v-if="props.selectedPlan.isUnderwritten">
