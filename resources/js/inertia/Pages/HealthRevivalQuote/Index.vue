@@ -292,14 +292,30 @@ onMounted(() => {});
           class="w-full"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.quote_status"
           label="Lead Status"
           name="quote_status"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
-        />
-        <ComboBox
+          filterable
+          filterPlaceholder="Filter Lead Status...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status = leadStatusOptions.map(
+                  status => status.value,
+                )
+              "
+              @clear="filters.quote_status = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-if="
             !hasAnyRole([
               rolesEnum.RMAdvisor,
@@ -311,7 +327,21 @@ onMounted(() => {});
           label="Advisor"
           placeholder="Search by Advisor"
           :options="modifiedAdvisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisor...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-model="filters.is_ecommerce"
           label="Is Ecommerce"
