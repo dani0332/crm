@@ -79,8 +79,21 @@ const onSubmit = isValid => {
     return;
   }
   createForm.loading = true;
-  createForm.riders = ridersData.value;
-  createForm.initialPrice = createForm.actualPremium;
+  
+  // Convert riders' price and coverValue to floats
+  const processedRiders = ridersData.value.map(rider => ({
+    ...rider,
+    price: parseFloat(rider.price) || 0,
+    coverValue: parseFloat(rider.coverValue) || 0
+  }));
+  
+  // Ensure numeric form values are properly converted
+  createForm.sumAssured = parseFloat(createForm.sumAssured) || 0;
+  createForm.actualPremium = parseFloat(createForm.actualPremium) || 0;
+  createForm.policyTerm = parseInt(createForm.policyTerm) || 0;
+  
+  createForm.riders = processedRiders;
+  createForm.initialPrice = parseFloat(createForm.actualPremium) || 0;
 
   // remove loading from createForm
   // const data  = createForm.filter((item) => item !== 'loading');
@@ -128,12 +141,30 @@ watch(
   () => createForm?.providerId,
   value => {
     if (value) {
-      options.loading = true;
-      options.providerPlans = [];
-      axios
-        .get(`/personal-quotes/life/provider-plans/${value}`)
-        .then(res => {
-       
+      fetchProviderPlans()
+    }
+  },
+);
+
+watch(
+  () => createForm?.isUW,
+  value => {
+    if (createForm.providerId) {
+      fetchProviderPlans()
+    }
+  }
+);
+
+const fetchProviderPlans = () => {
+  if (!createForm.providerId) {
+    return;
+  }
+
+  options.loading = true;
+  options.providerPlans = [];
+  axios.get(`/personal-quotes/life/provider-plans/${createForm.providerId}`)
+    .then(res => {
+         
             if (res.data.plans) {
               if (!createForm.isUW) {
                 options.providerPlans = res.data.plans.filter(
@@ -145,17 +176,14 @@ watch(
             } else {
               options.providerPlans = [];
             }
-        })
-        .catch(err => {
-          emit('error');
-        })
-        .finally(() => {
-          options.loading = false;
-        });
-    }
-  },
-);
-
+    })
+    .catch(err => {
+      emit('error');
+    })
+    .finally(() => {
+      options.loading = false;
+    });
+};
 </script>
 
 <template>

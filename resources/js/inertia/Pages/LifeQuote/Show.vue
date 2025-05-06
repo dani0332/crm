@@ -1710,7 +1710,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
 
               <template #item-totalAnnualPremium="item">
-                <span class="copay-max">{{ getTotalAnnualPremium(item.paymentTerm, item.actualPremium) }}</span>
+                <span class="copay-max">{{ getTotalAnnualPremium(item.paymentTerm, item.totalPrice) }}</span>
               </template>
 
               <template
