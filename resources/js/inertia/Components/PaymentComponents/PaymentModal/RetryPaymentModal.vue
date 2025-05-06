@@ -24,7 +24,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue', 'success']);
+const emit = defineEmits(['update:modelValue']);
 
 const notification = useNotifications('toast');
 
@@ -56,7 +56,6 @@ const handleRetry = async () => {
           title: 'Payment has been retried',
           position: 'top',
         });
-        emit('success');
         closeModal();
       },
       onError: () => {

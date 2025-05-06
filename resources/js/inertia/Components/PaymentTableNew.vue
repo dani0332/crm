@@ -1666,10 +1666,6 @@ const closeRetryModal = () => {
   isRetryModalOpen.value = false;
 };
 
-const handleRetrySuccess = () => {
-  isRetryModalOpen.value = false;
-};
-
 const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
   deleteSplitPaymentId.value = payment_split_id;
   deleteSplitPaymentStatus.value = payment_status_id;
@@ -5685,7 +5681,7 @@ onBeforeMount(() => {
             </div>
           </x-form>
 
-          <!-- Image Gallery Modal - Renders document preview with navigation and zoom controls -->
+          <!-- Image Gallery Modal -->
           <ImageGalleryModal
             v-model="isGalleryModelOpen"
             :files="filesTest"
@@ -5705,6 +5701,7 @@ onBeforeMount(() => {
           @update:model-value="closeAmlConfirmModal"
         />
 
+        <!-- Retry Payment Modal -->
         <RetryPaymentModal
           v-model="isRetryModalOpen"
           :error-message="retryPaymentErrorMessage"
@@ -5712,7 +5709,6 @@ onBeforeMount(() => {
           :quote-type="props.quoteType"
           :quote-id="props.quoteRequest.id"
           @update:model-value="closeRetryModal"
-          @success="handleRetrySuccess"
         />
 
         <div
