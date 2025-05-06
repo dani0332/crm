@@ -649,33 +649,6 @@ const priceWithoutVat = computed(() => {
   return page.props.record.premium - vatAmount.value;
 });
 
-const policyDetailsForm = useForm({
-  quote_policy_number: page.props.record.policy_number || null,
-
-  quote_policy_issuance_date:
-    dateToYMD(page.props.record.policy_issuance_date) || '',
-  quote_policy_price_vat_notapplicable: null,
-  quote_policy_price_vat_applicable: priceWithoutVat || '',
-  quote_policy_vat_total_amount: vatAmount.value || null,
-  quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
-  quote_policy_expiry_date:
-    dateToYMD(page.props.record.policy_expiry_date) || '',
-  quote_premium: page.props.record.premium || null,
-  quote_plan_insurer_quote_number: null,
-  quote_policy_issuance_status: null,
-  modelType: 'Car',
-  quote_id: page.props.record.id,
-});
-
-const onUpdatePolicyDetails = () => {
-  policyDetailsForm.post('/quotes/Car/update-quote-policy', {
-    preserveScroll: true,
-    onSuccess: () => {
-      policyDetailsState.isEditing = false;
-    },
-  });
-};
-
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
