@@ -2647,7 +2647,7 @@ $('#dataTableCarQuotePlans').DataTable({
   bLengthChange: false,
   scrollX: true,
 });
-
+// Delete Quote Document OLD File We are not using this function anymore
 function deleteQuoteDocument(el) {
   if (confirm('Are you sure to delete this document?')) {
     var quoteId = $(el).attr('data-quote-id');

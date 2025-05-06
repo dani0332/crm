@@ -18,6 +18,7 @@ defineProps({
 const toggleLoader = ref(false);
 const selectedPlans = ref([]);
 const exportLoader = ref(false);
+const isLoadingAvailablePlans = ref(false);
 const selectedPlan = ref({});
 
 const changeInsurerForm = useForm({
@@ -126,6 +127,7 @@ const availablePlansTable = reactive({
 });
 
 const onLoadAvailablePlansData = async () => {
+  isLoadingAvailablePlans.value = true;
   let data = {
     jsonData: true,
   };
@@ -137,6 +139,9 @@ const onLoadAvailablePlansData = async () => {
     })
     .catch(err => {
       console.log(err);
+    })
+    .finally(() => {
+      isLoadingAvailablePlans.value = false;
     });
 };
 
@@ -435,7 +440,11 @@ onMounted(() => {
         </x-button>
       </div>
     </div>
+    <div v-if="isLoadingAvailablePlans" class="flex justify-center my-8">
+      <x-spinner size="lg" />
+    </div>
     <DataTable
+      v-else
       table-class-name="compact"
       v-model:items-selected="selectedPlans"
       :headers="availablePlansTable.columns"

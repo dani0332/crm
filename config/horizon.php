@@ -239,7 +239,7 @@ return [
                 'maxProcesses' => 3,
             ],
         ],
-        'development' => [
+        'dev02' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
                 'queue' => ['default', 'renewals', 'insly', 'policy-issuance-automation'],

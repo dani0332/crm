@@ -23,6 +23,7 @@ class RolePermissionSeeder extends Seeder
         // $this->paymentsVoid();
         $this->addBridgerSkipPermission();
         $this->addPostPrepaymentButtonPermission();
+        $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
         $this->addPolicyDetailsAddVatPermission();
     }
@@ -140,6 +141,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::SKIP_BRIDGER_AML,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addInsurerPaymentLinkPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::INSURER_PAYMENT_LINK,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

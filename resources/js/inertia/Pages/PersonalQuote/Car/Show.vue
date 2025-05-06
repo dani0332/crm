@@ -429,8 +429,9 @@ const onLoadHistoryData = async () => {
   historyData.value = finalRes;
   historyLoading.value = false;
 };
-``;
+
 const onLoadAvailablePlansData = async () => {
+  isLoadingAvailablePlans.value = true;
   let data = {
     jsonData: true,
   };
@@ -439,11 +440,13 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       availablePlansTable.data = res.data;
-
       loadEmbeddedProducts();
     })
     .catch(err => {
       console.log(err);
+    })
+    .finally(() => {
+      isLoadingAvailablePlans.value = false;
     });
 };
 
@@ -1118,6 +1121,8 @@ const onLeadStatus = () => {
     });
 };
 const toggleLoader = ref(false);
+const exportLoader = ref(false);
+const isLoadingAvailablePlans = ref(false);
 
 const onTogglePlans = toggle => {
   toggleLoader.value = true;
@@ -1153,7 +1158,7 @@ const onTogglePlans = toggle => {
       selectedPlans.value = [];
     });
 };
-const exportLoader = ref(false);
+
 const onExportPlans = () => {
   if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
     notification.error({
@@ -1169,51 +1174,6 @@ const onExportPlans = () => {
   axios
     .post(
       '/api/v1/quotes/car/export-plans-pdf',
-      {
-        plan_ids: planIds,
-        quote_uuid: page.props.record.uuid,
-      },
-      {
-        responseType: 'json',
-      },
-    )
-    .then(response => {
-      const link = document.createElement('a');
-      let fileName = response.data.name;
-      link.href = response.data.data;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      notification.success({
-        title: 'Plans Exported',
-        position: 'top',
-      });
-    })
-    .catch(error => {
-      console.log(error);
-    })
-    .finally(() => {
-      exportLoader.value = false;
-    });
-};
-
-const downloadCompanyPdf = () => {
-  console.log('Testing');
-
-  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
-    notification.error({
-      title: 'Please select 1 to 5 plans to download PDF.',
-      position: 'top',
-    });
-    return;
-  }
-  exportLoader.value = true;
-  const planIds = selectedPlans.value.map(p => {
-    return p.id;
-  });
-  axios
-    .post(
-      '/personal-quotes/car/pdf',
       {
         plan_ids: planIds,
         quote_uuid: page.props.record.uuid,
@@ -2501,12 +2461,13 @@ const isCommercialVehicle = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Emirates of Registration...."
                     />
                   </dd>
                 </div>
@@ -2524,21 +2485,21 @@ const isCommercialVehicle = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
                       placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Industry Type...."
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       @update:modelValue="entityTypeChange($event)"
-                      :single="true"
                       v-model:modelValue="customerProfileForm.entity_type_code"
                       placeholder="SELECT ENTITY TYPE"
                       :options="[
@@ -2546,6 +2507,8 @@ const isCommercialVehicle = computed(() => {
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Entity Type...."
                     />
                   </dd>
                 </div>
@@ -2708,9 +2671,8 @@ const isCommercialVehicle = computed(() => {
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                <ComboBox
+                <x-select
                   v-model="leadStatusForm.leadStatus"
-                  :single="true"
                   label="Status"
                   class="w-full uppercase"
                   placeholder="Please select Lead Status"
@@ -3237,402 +3199,395 @@ const isCommercialVehicle = computed(() => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex mb-4 justify-end">
-            <template v-if="!hasRole(rolesEnum.PA)">
-              <x-tooltip
-                v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
-              >
-                <x-button
-                  class="ml-2 mr-2"
-                  :disabled="disableFollowUp"
-                  size="sm"
-                  color="rose"
-                  @click="showfollowup = !showfollowup"
-                  v-if="readOnlyMode.isDisable === true"
+          <div v-if="isLoadingAvailablePlans" class="flex justify-center my-8">
+            <x-spinner size="lg" />
+          </div>
+          <template v-else>
+            <div class="flex mb-4 justify-end">
+              <template v-if="!hasRole(rolesEnum.PA)">
+                <x-tooltip
+                  v-if="
+                    !hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)
+                  "
                 >
-                  Pause Follow-up to customer
-                </x-button>
-                <template #tooltip>
-                  <span
-                    >When Activated, The button temporarily suspends the
-                    automatic sending of follow-up emails to clients</span
+                  <x-button
+                    class="ml-2 mr-2"
+                    :disabled="disableFollowUp"
+                    size="sm"
+                    color="rose"
+                    @click="showfollowup = !showfollowup"
+                    v-if="readOnlyMode.isDisable === true"
                   >
-                </template>
-              </x-tooltip>
-              <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                    Pause Follow-up to customer
+                  </x-button>
+                  <template #tooltip>
+                    <span
+                      >When Activated, The button temporarily suspends the
+                      automatic sending of follow-up emails to clients</span
+                    >
+                  </template>
+                </x-tooltip>
+                <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                  <x-button
+                    @click.prevent="onTogglePlans(false)"
+                    :disabled="
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
+                    :loading="toggleLoader"
+                    v-if="readOnlyMode.isDisable === true"
+                  >
+                    Show
+                  </x-button>
+                  <x-button
+                    @click.prevent="onTogglePlans(true)"
+                    :loading="toggleLoader"
+                    v-if="readOnlyMode.isDisable === true"
+                  >
+                    Hide
+                  </x-button>
+                </x-button-group>
+
                 <x-button
-                  @click.prevent="onTogglePlans(false)"
+                  v-if="selectedPlans.length > 0"
+                  size="sm"
+                  color="emerald"
+                  class="ml-2 mr-2"
+                  @click.prevent="onExportPlans"
+                  :loading="exportLoader"
                   :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-                  :loading="toggleLoader"
-                  v-if="readOnlyMode.isDisable === true"
                 >
-                  Show
+                  Download PDF
                 </x-button>
-                <x-button
-                  @click.prevent="onTogglePlans(true)"
-                  :loading="toggleLoader"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Hide
-                </x-button>
-              </x-button-group>
-              <x-button
-                v-if="
-                  selectedPlans.length > 0 &&
-                  page.props.record.registration_type ==
-                    page.props.carRegistrationType.COMPANY
-                "
-                size="sm"
-                color="emerald"
-                class="ml-2 mr-2"
-                @click.prevent="downloadCompanyPdf"
-                :loading="exportLoader"
-                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-              >
-                Download Company
-              </x-button>
 
-              <x-button
-                v-if="
-                  selectedPlans.length > 0 &&
-                  page.props.record.registration_type !=
-                    page.props.carRegistrationType.COMPANY
-                "
-                size="sm"
-                color="emerald"
-                class="ml-2 mr-2"
-                @click.prevent="onExportPlans"
-                :loading="exportLoader"
-                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-              >
-                Download PDF
-              </x-button>
+                <x-tooltip placement="top" align="left">
+                  <x-button
+                    @click.prevent="modals.sendConfirm = true"
+                    size="sm"
+                    color="orange"
+                    class="mr-2"
+                    :disabled="
+                      record.advisor_id != $page.props.auth.user.id ||
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
+                    v-if="readOnlyMode.isDisable === true"
+                  >
+                    Send OCB Email to Customer
+                  </x-button>
+                  <template #tooltip>
+                    <div>
+                      When clicked, this button sends the One Click Buy (OCB)
+                      email to the customer with updated rates and coverage
+                      options, helping them finalize their purchase with ease.
+                    </div>
+                  </template>
+                </x-tooltip>
+              </template>
 
-              <x-tooltip placement="top" align="left">
+              <AddPlanButtonTemplate v-slot="{ isDisabled }">
                 <x-button
-                  @click.prevent="modals.sendConfirm = true"
+                  @click.prevent="modals.createPlan = true"
                   size="sm"
                   color="orange"
                   class="mr-2"
-                  :disabled="
-                    record.advisor_id != $page.props.auth.user.id ||
-                    page.props.linkedQuoteDetails.childLeadsCount > 0
+                  v-if="
+                    can(permissionEnum.CarQuotesPlansCreate) &&
+                    (access.carManagerCanEdit ||
+                      access.carAdvisorCanEdi ||
+                      hasRole(rolesEnum.Admin))
                   "
-                  v-if="readOnlyMode.isDisable === true"
+                  :disabled="isDisabled"
                 >
-                  Send OCB Email to Customer
+                  Add Plan
                 </x-button>
-                <template #tooltip>
-                  <div>
-                    When clicked, this button sends the One Click Buy (OCB)
-                    email to the customer with updated rates and coverage
-                    options, helping them finalize their purchase with ease.
-                  </div>
-                </template>
+              </AddPlanButtonTemplate>
+
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.plan_selection"
+                placement="bottom"
+              >
+                <AddPlanButtonReuseTemplate :isDisabled="true" />
+                <template #tooltip
+                  >No further actions can be taken on an issued policy. For
+                  changes, such as a change in insurer, go to 'Send Update',
+                  select 'Add Update', and choose 'Cancellation from inception
+                  and reissuance.</template
+                >
               </x-tooltip>
-            </template>
+              <AddPlanButtonReuseTemplate
+                v-else
+                :isDisabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+              />
 
-            <AddPlanButtonTemplate v-slot="{ isDisabled }">
-              <x-button
-                @click.prevent="modals.createPlan = true"
-                size="sm"
-                color="orange"
-                class="mr-2"
-                v-if="
-                  can(permissionEnum.CarQuotesPlansCreate) &&
-                  (access.carManagerCanEdit ||
-                    access.carAdvisorCanEdi ||
-                    hasRole(rolesEnum.Admin))
-                "
-                :disabled="isDisabled"
-              >
-                Add Plan
-              </x-button>
-            </AddPlanButtonTemplate>
-
-            <x-tooltip
-              v-if="page.props.lockLeadSectionsDetails.plan_selection"
-              placement="bottom"
+              <template v-if="!hasRole(rolesEnum.PA)">
+                <x-button
+                  @click.prevent="copyLink"
+                  size="sm"
+                  color="emerald"
+                  v-if="
+                    typeof availablePlansTable.data !== 'string' &&
+                    availablePlansTable.data.length > 0
+                  "
+                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                >
+                  Copy Link
+                </x-button>
+              </template>
+            </div>
+            <DataTable
+              table-class-name="compact"
+              v-model:items-selected="selectedPlans"
+              :headers="availablePlansTable.columns"
+              :items="availablePlansItems || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              :hide-footer="availablePlansItems.length < 15"
             >
-              <AddPlanButtonReuseTemplate :isDisabled="true" />
-              <template #tooltip
-                >No further actions can be taken on an issued policy. For
-                changes, such as a change in insurer, go to 'Send Update',
-                select 'Add Update', and choose 'Cancellation from inception and
-                reissuance.</template
+              <template
+                #item-providerName="{
+                  providerName,
+                  isManualUpdate,
+                  isRenewal,
+                  isDisabled,
+                  puaPremium,
+                  puaType,
+                  isSystemDiscountPrice,
+                }"
               >
-            </x-tooltip>
-            <AddPlanButtonReuseTemplate
-              v-else
-              :isDisabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-            />
-
-            <template v-if="!hasRole(rolesEnum.PA)">
-              <x-button
-                @click.prevent="copyLink"
-                size="sm"
-                color="emerald"
-                v-if="
-                  typeof availablePlansTable.data !== 'string' &&
-                  availablePlansTable.data.length > 0
-                "
-                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-              >
-                Copy Link
-              </x-button>
-            </template>
-          </div>
-          <DataTable
-            table-class-name="compact"
-            v-model:items-selected="selectedPlans"
-            :headers="availablePlansTable.columns"
-            :items="availablePlansItems || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="availablePlansItems.length < 15"
-          >
-            <template
-              #item-providerName="{
-                providerName,
-                isManualUpdate,
-                isRenewal,
-                isDisabled,
-                puaPremium,
-                puaType,
-                isSystemDiscountPrice,
-              }"
-            >
-              <p>{{ providerName }}</p>
-              <div class="flex gap-1">
-                <x-tag
-                  v-if="isManualUpdate"
-                  size="xs"
-                  color="primary"
-                  class="mt-0.5 text-[10px]"
+                <p>{{ providerName }}</p>
+                <div class="flex gap-1">
+                  <x-tag
+                    v-if="isManualUpdate"
+                    size="xs"
+                    color="primary"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Manual
+                  </x-tag>
+                  <x-tag
+                    v-if="isRenewal"
+                    size="xs"
+                    color="success"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Renewal
+                  </x-tag>
+                  <x-tag
+                    v-if="isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Hidden
+                  </x-tag>
+                  <x-tag
+                    v-if="isSystemDiscountPrice"
+                    size="xs"
+                    color="danger"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    SDP
+                  </x-tag>
+                  <x-tag
+                    v-if="puaType"
+                    size="xs"
+                    class="mt-0.5 text-[10px] text-white"
+                    style="background-color: #e00000"
+                  >
+                    <x-tooltip placement="right">
+                      <template #tooltip>
+                        <span
+                          class="font-medium"
+                          v-if="puaType == puaTypeEnum.PPUA"
+                        >
+                          {{ puaTypeEnum.PPUA_TOOLTIP }}
+                        </span>
+                        <span class="font-medium" v-else>
+                          {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
+                        </span>
+                      </template>
+                      {{ puaType }}
+                    </x-tooltip>
+                  </x-tag>
+                </div>
+              </template>
+              <template #item-name="item">
+                <span
+                  class="text-primary-600 cursor-pointer"
+                  @click.prevent="selectPlan(item)"
+                  >{{ item.name }}</span
                 >
-                  Manual
-                </x-tag>
-                <x-tag
-                  v-if="isRenewal"
-                  size="xs"
-                  color="success"
-                  class="mt-0.5 text-[10px]"
-                >
-                  Renewal
-                </x-tag>
-                <x-tag
-                  v-if="isDisabled"
-                  size="xs"
-                  color="error"
-                  class="mt-0.5 text-[10px]"
-                >
-                  Hidden
-                </x-tag>
-                <x-tag
-                  v-if="isSystemDiscountPrice"
-                  size="xs"
-                  color="danger"
-                  class="mt-0.5 text-[10px]"
-                >
-                  SDP
-                </x-tag>
-                <x-tag
-                  v-if="puaType"
-                  size="xs"
-                  class="mt-0.5 text-[10px] text-white"
-                  style="background-color: #e00000"
-                >
-                  <x-tooltip placement="right">
-                    <template #tooltip>
-                      <span
-                        class="font-medium"
-                        v-if="puaType == puaTypeEnum.PPUA"
-                      >
-                        {{ puaTypeEnum.PPUA_TOOLTIP }}
-                      </span>
-                      <span class="font-medium" v-else>
-                        {{ puaTypeEnum.PENDING_UNDERWRITER_APPROVAL_TOOLTIP }}
-                      </span>
-                    </template>
-                    {{ puaType }}
-                  </x-tooltip>
-                </x-tag>
-              </div>
-            </template>
-            <template #item-name="item">
-              <span
-                class="text-primary-600 cursor-pointer"
-                @click.prevent="selectPlan(item)"
-                >{{ item.name }}</span
-              >
-            </template>
-            <template #item-repairType="repairType">
-              <span>{{ repairTypeCheck(repairType) }}</span>
-            </template>
-            <template #item-benefits="{ benefits }">
-              <!-- <span>{{ benefits.feature }}</span> -->
-              <template v-for="feature in benefits.feature" :key="feature">
-                <template v-if="feature.code">
+              </template>
+              <template #item-repairType="repairType">
+                <span>{{ repairTypeCheck(repairType) }}</span>
+              </template>
+              <template #item-benefits="{ benefits }">
+                <!-- <span>{{ benefits.feature }}</span> -->
+                <template v-for="feature in benefits.feature" :key="feature">
+                  <template v-if="feature.code">
+                    <span
+                      v-if="
+                        feature.code ===
+                          carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT ||
+                        feature.code === carPlanFeaturesCodeEnum.DAMAGE_LIMIT
+                      "
+                    >
+                      {{ feature.value }}
+                    </span>
+                  </template>
                   <span
-                    v-if="
-                      feature.code ===
-                        carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT ||
-                      feature.code === carPlanFeaturesCodeEnum.DAMAGE_LIMIT
+                    v-else-if="
+                      feature.text ===
+                      carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT_TEXT
                     "
                   >
                     {{ feature.value }}
                   </span>
                 </template>
-                <span
-                  v-else-if="
-                    feature.text ===
-                    carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT_TEXT
-                  "
-                >
-                  {{ feature.value }}
-                </span>
               </template>
-            </template>
-            <template #item-addons="{ addons }">
-              <template v-for="addon in addons" :key="addon">
-                <template v-for="option in addon.carAddonOption" :key="option">
-                  <span v-if="addon.code">
+              <template #item-addons="{ addons }">
+                <template v-for="addon in addons" :key="addon">
+                  <template
+                    v-for="option in addon.carAddonOption"
+                    :key="option"
+                  >
+                    <span v-if="addon.code">
+                      <template
+                        v-if="
+                          addon.code.toLowerCase() ===
+                            carPlanAddonsCodeEnum.DRIVER_COVER.toLowerCase() ||
+                          addon.code.toLowerCase() ===
+                            carPlanAddonsCodeEnum.PASSENGER_COVER.toLowerCase()
+                        "
+                      >
+                        {{ addon.text }}: {{ option.value }} <br />
+                      </template>
+                    </span>
                     <template
-                      v-if="
-                        addon.code.toLowerCase() ===
-                          carPlanAddonsCodeEnum.DRIVER_COVER.toLowerCase() ||
-                        addon.code.toLowerCase() ===
-                          carPlanAddonsCodeEnum.PASSENGER_COVER.toLowerCase()
+                      v-else-if="
+                        addon.text.toLowerCase() ===
+                          carPlanAddonsCodeEnum.DRIVER_COVER_TEXT.toLowerCase() ||
+                        addon.text.toLowerCase() ===
+                          carPlanAddonsCodeEnum.PASSENGER_COVER_TEXT.toLowerCase()
                       "
                     >
                       {{ addon.text }}: {{ option.value }} <br />
                     </template>
-                  </span>
-                  <template
-                    v-else-if="
-                      addon.text.toLowerCase() ===
-                        carPlanAddonsCodeEnum.DRIVER_COVER_TEXT.toLowerCase() ||
-                      addon.text.toLowerCase() ===
-                        carPlanAddonsCodeEnum.PASSENGER_COVER_TEXT.toLowerCase()
-                    "
-                  >
-                    {{ addon.text }}: {{ option.value }} <br />
                   </template>
                 </template>
               </template>
-            </template>
-            <template #item-omanCoverTPL="{ benefits }">
-              <template v-for="planExc in benefits.exclusion" :key="planExc">
-                <span
-                  v-if="
-                    planExc.code &&
-                    (planExc.code.toLowerCase() ===
-                      carPlanExclusionsCodeEnum.TPL_OMAN_COVER.toLowerCase() ||
-                      planExc.code.toLowerCase() ===
-                        carPlanExclusionsCodeEnum.OMAN_COVER.toLowerCase())
-                  "
-                >
-                  {{ planExc.text }}: {{ planExc.value }}
-                </span>
-              </template>
-              <template v-for="planInc in benefits.inclusion" :key="planInc">
-                <span
-                  v-if="
-                    planInc.code &&
-                    (planInc.code.toLowerCase() ===
-                      carPlanExclusionsCodeEnum.TPL_OMAN_COVER.toLowerCase() ||
-                      planInc.code.toLowerCase() ===
-                        carPlanExclusionsCodeEnum.OMAN_COVER.toLowerCase())
-                  "
-                >
-                  {{ planInc.text }}: {{ planInc.value }}
-                </span>
-              </template>
-            </template>
-            <template #item-roadSideAssistance="{ benefits }">
-              <template
-                v-for="planAss in benefits.roadSideAssistance"
-                :key="planAss.text"
-              >
-                {{ planAss.text }}: {{ planAss.value }} <br />
-              </template>
-            </template>
-            <template #item-actualPremium="{ actualPremium }">
-              {{
-                actualPremium ? parseFloat(actualPremium).toFixed(2) : '0.00'
-              }}
-            </template>
-            <template #item-discountPremium="{ discountPremium }">
-              {{
-                discountPremium
-                  ? parseFloat(discountPremium).toFixed(2)
-                  : '0.00'
-              }}
-            </template>
-            <template #item-premiumWithVat="item">
-              {{
-                convertToNumber(
-                  item.discountPremium + item.vat + getAddonVat(item),
-                )
-              }}
-            </template>
-            <template #item-action="item">
-              <div class="flex gap-2">
-                <x-button
-                  v-if="
-                    quote.quote_status_id !=
-                      page.props.quoteStatusEnum.PolicyCancelled ||
-                    page.props.linkedQuoteDetails.childLeadsCount == 0
-                  "
-                  size="xs"
-                  color="primary"
-                  outlined
-                  @click.prevent="selectPlan(item)"
-                >
-                  View
-                </x-button>
-                <div v-if="readOnlyMode.isDisable === true">
-                  <x-button
-                    size="xs"
-                    color="error"
-                    outlined
-                    @click.prevent="copyPlanURL(item)"
-                    v-if="item.discountPremium + item.vat + totalPriceVAT > 0"
-                    :disabled="
-                      page.props.linkedQuoteDetails.childLeadsCount > 0
+              <template #item-omanCoverTPL="{ benefits }">
+                <template v-for="planExc in benefits.exclusion" :key="planExc">
+                  <span
+                    v-if="
+                      planExc.code &&
+                      (planExc.code.toLowerCase() ===
+                        carPlanExclusionsCodeEnum.TPL_OMAN_COVER.toLowerCase() ||
+                        planExc.code.toLowerCase() ===
+                          carPlanExclusionsCodeEnum.OMAN_COVER.toLowerCase())
                     "
                   >
-                    Copy
-                  </x-button>
-                </div>
-                <span>
-                  <SelectPlan
-                    v-if="selectedProviderPlan.id != item.id"
-                    @update:selectedPlanChanged="handlePlanSelected"
-                    :plan="item"
-                    :quoteType="quoteType"
-                    :has-child-lead="
-                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    {{ planExc.text }}: {{ planExc.value }}
+                  </span>
+                </template>
+                <template v-for="planInc in benefits.inclusion" :key="planInc">
+                  <span
+                    v-if="
+                      planInc.code &&
+                      (planInc.code.toLowerCase() ===
+                        carPlanExclusionsCodeEnum.TPL_OMAN_COVER.toLowerCase() ||
+                        planInc.code.toLowerCase() ===
+                          carPlanExclusionsCodeEnum.OMAN_COVER.toLowerCase())
                     "
-                    :uuid="quote.uuid"
-                    :insuranceProviderId="item.id"
-                    :code="quote.code"
-                  />
+                  >
+                    {{ planInc.text }}: {{ planInc.value }}
+                  </span>
+                </template>
+              </template>
+              <template #item-roadSideAssistance="{ benefits }">
+                <template
+                  v-for="planAss in benefits.roadSideAssistance"
+                  :key="planAss.text"
+                >
+                  {{ planAss.text }}: {{ planAss.value }} <br />
+                </template>
+              </template>
+              <template #item-actualPremium="{ actualPremium }">
+                {{
+                  actualPremium ? parseFloat(actualPremium).toFixed(2) : '0.00'
+                }}
+              </template>
+              <template #item-discountPremium="{ discountPremium }">
+                {{
+                  discountPremium
+                    ? parseFloat(discountPremium).toFixed(2)
+                    : '0.00'
+                }}
+              </template>
+              <template #item-premiumWithVat="item">
+                {{
+                  convertToNumber(
+                    item.discountPremium + item.vat + getAddonVat(item),
+                  )
+                }}
+              </template>
+              <template #item-action="item">
+                <div class="flex gap-2">
+                  <x-button
+                    v-if="
+                      quote.quote_status_id !=
+                        page.props.quoteStatusEnum.PolicyCancelled ||
+                      page.props.linkedQuoteDetails.childLeadsCount == 0
+                    "
+                    size="xs"
+                    color="primary"
+                    outlined
+                    @click.prevent="selectPlan(item)"
+                  >
+                    View
+                  </x-button>
+                  <div v-if="readOnlyMode.isDisable === true">
+                    <x-button
+                      size="xs"
+                      color="error"
+                      outlined
+                      @click.prevent="copyPlanURL(item)"
+                      v-if="item.discountPremium + item.vat + totalPriceVAT > 0"
+                      :disabled="
+                        page.props.linkedQuoteDetails.childLeadsCount > 0
+                      "
+                    >
+                      Copy
+                    </x-button>
+                  </div>
+                  <span>
+                    <SelectPlan
+                      v-if="selectedProviderPlan.id != item.id"
+                      @update:selectedPlanChanged="handlePlanSelected"
+                      :plan="item"
+                      :quoteType="quoteType"
+                      :has-child-lead="
+                        page.props.linkedQuoteDetails.childLeadsCount > 0
+                      "
+                      :uuid="quote.uuid"
+                      :insuranceProviderId="item.id"
+                      :code="quote.code"
+                    />
 
-                  <x-button
-                    v-else
-                    size="xs"
-                    color="orange"
-                    outlined
-                    :disabled="true"
-                  >
-                    Selected
-                  </x-button>
-                </span>
-              </div>
-            </template>
-          </DataTable>
+                    <x-button
+                      v-else
+                      size="xs"
+                      color="orange"
+                      outlined
+                      :disabled="true"
+                    >
+                      Selected
+                    </x-button>
+                  </span>
+                </div>
+              </template>
+            </DataTable>
+          </template>
         </template>
       </Collapsible>
 
