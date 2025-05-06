@@ -334,7 +334,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const exportLoader = ref(false);
-const onDataExport = () => {
+const onDataExport = (exportType = 'download') => {
   let copyFilters = JSON.parse(JSON.stringify(cleanObj(filters)));
 
   if (copyFilters.created_at_start && copyFilters.created_at_end) {
@@ -352,20 +352,37 @@ const onDataExport = () => {
       return;
     }
   }
-
+  filters.exportType = exportType;
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Business'),
+    exportType: exportType,
     url: url + '?' + new URLSearchParams(data).toString(),
   };
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-    if (result)
-      setTimeout(() => {
-        exportLoader.value = false;
-      }, 1000);
-  });
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result.data.message) {
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response.data.message
+          ? err.response.data.message
+          : 'Unable to start an export',
+        position: 'top',
+      });
+      throw err;
+    });
 };
 
 function setQueryStringFilters() {
@@ -836,13 +853,28 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             @click.prevent="onDataExport"
-            class="justify-self-start"
+            class="justify-self-start mr-3"
             :loading="exportLoader"
           >
             Export
           </x-button>
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click.prevent="onDataExport('email')"
+            class="justify-self-start"
+          >
+            Export via email
+          </x-button>
           <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"
+              >Export via email</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Created dates or policy expiry dates or payment due date or
