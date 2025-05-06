@@ -450,9 +450,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // Add route to trigger individual KYC details migration
         Route::get('/migrate-individual-kyc-details', function () {
-            Artisan::call('migrate:individual-kyc-details');
+            App\Jobs\IndividualKycDetailsMigrationJob::dispatch();
 
-            return '<h3>Individual KYC Details migration command has successfully been executed. Please check the logs for detailed progress and completion status.</h3>';
+            return '<h3>Individual KYC Details migration job has been queued. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-individual-kyc-details');
 
         Route::group(['prefix' => 'commerical-keywords'], function () {
