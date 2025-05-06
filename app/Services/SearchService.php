@@ -293,25 +293,14 @@ class SearchService extends BaseService
             ->map(fn ($lob) => strtoupper($lob).'_MANAGER')
             ->toArray();
 
-        // Find the roles
-        $managerRoleIds = Role::whereIn('name', $managerRoles)->pluck('id')->toArray();
-
-        if (empty($managerRoleIds)) {
-            return false;
-        }
-
         // Check if user has any of these roles
-        $userId = Auth::id();
+        $user = Auth::user();
 
-        if (! $userId) {
+        if (! $user) {
             return false;
         }
 
-        return DB::table('model_has_roles')
-            ->where('model_id', $userId)
-            ->where('model_type', 'App\\Models\\User')
-            ->whereIn('role_id', $managerRoleIds)
-            ->exists();
+        return  $user->hasRole($managerRoles);;
     }
 
     /**
