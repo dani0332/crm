@@ -2,8 +2,6 @@
 
 namespace App\Jobs;
 
-ini_set('memory_limit', '2048M');
-
 use App\Enums\QuoteTypes;
 use App\Models\Insured;
 use App\Models\PersonalQuote;
