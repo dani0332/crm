@@ -10,20 +10,62 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  isProcessing: {
-    type: Boolean,
-    default: false,
+  paymentProcessJobId: {
+    type: [Number, String],
+    required: true,
   },
+  quoteType: {
+    type: String,
+    required: true,
+  },
+  quoteId: {
+    type: [Number, String],
+    required: true,
+  }
 });
 
-const emit = defineEmits(['update:modelValue', 'retry']);
+const emit = defineEmits(['update:modelValue', 'success']);
+
+const notification = useNotifications('toast');
+
+const retryForm = useForm({
+  payment_process_job_id: null,
+});
 
 const closeModal = () => {
   emit('update:modelValue', false);
 };
 
-const handleRetry = () => {
-  emit('retry');
+/**
+ * Handles the retry payment submission
+ * Makes an API call to retry the payment process 
+ */
+const handleRetry = async () => {
+  const retryData = {
+    payment_process_job_id: props.paymentProcessJobId,
+    model_type: props.quoteType,
+    quote_id: props.quoteId,
+  };
+
+  retryForm
+    .transform(data => retryData)
+    .post('/payments/' + props.quoteType + '/retry-payment', {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Payment has been retried',
+          position: 'top',
+        });
+        emit('success');
+        closeModal();
+      },
+      onError: () => {
+        notification.error({
+          title: 'Payment retry failed',
+          position: 'top',
+        });
+      },
+    });
 };
 </script>
 
@@ -81,7 +123,7 @@ const handleRetry = () => {
             type="submit"
             color="orange"
             class="px-4 py-2 mt-4 mb-4"
-            :loading="isProcessing"
+            :loading="retryForm.processing"
           >
             <span>Retry</span></x-button
           >

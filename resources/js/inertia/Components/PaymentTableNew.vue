@@ -1667,30 +1667,8 @@ const closeRetryModal = () => {
   isRetryModalOpen.value = false;
 };
 
-const handleRetryPayment = async () => {
-  let retryData = {
-    payment_process_job_id: retryProcessJobId.value,
-    model_type: props.quoteType,
-    quote_id: props.quoteRequest.id,
-  };
-  retryForm
-    .transform(data => retryData)
-    .post('/payments/' + props.quoteType + '/retry-payment', {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Payment has been retried',
-          position: 'top',
-        });
-        isRetryModalOpen.value = false;
-      },
-      onError: () => {
-        notification.error({
-          title: 'Payment retry failed',
-          position: 'top',
-        });
-      },
-    });
+const handleRetrySuccess = () => {
+  isRetryModalOpen.value = false;
 };
 
 const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
@@ -2652,10 +2630,6 @@ const documentForm = useForm({
   quote_type_id: null,
   document_type_code: null,
   file: null,
-});
-
-const retryForm = useForm({
-  payment_process_job_id: null,
 });
 
 const deleteForm = useForm({
@@ -5735,9 +5709,11 @@ onBeforeMount(() => {
         <RetryPaymentModal
           v-model="isRetryModalOpen"
           :error-message="retryPaymentErrorMessage"
-          :is-processing="retryForm.processing"
+          :payment-process-job-id="retryProcessJobId"
+          :quote-type="props.quoteType"
+          :quote-id="props.quoteRequest.id"
           @update:model-value="closeRetryModal"
-          @retry="handleRetryPayment"
+          @success="handleRetrySuccess"
         />
 
         <div
