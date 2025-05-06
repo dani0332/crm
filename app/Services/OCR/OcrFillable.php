@@ -13,7 +13,11 @@ trait OcrFillable
 {
     private function isSupportedProvider(Model $quote): bool
     {
-        return $quote->isGIG() || $quote->isSukoon() || $quote->isQatar() || $quote->isLivana() || $quote->isTokio();
+        return $quote->isProvider(InsurerProviderEnum::GIG_INSURANCE) ||
+            $quote->isProvider(InsurerProviderEnum::SUKOON_OMAN_INSURANCE) ||
+            $quote->isProvider(InsurerProviderEnum::QATAR_INSURANCE) ||
+            $quote->isProvider(InsurerProviderEnum::LIVANA_INSURANCE) ||
+            $quote->isProvider(InsurerProviderEnum::TOKIO_MARINE);
     }
 
     private function isEnabled(Model $quote, array $providers): bool
