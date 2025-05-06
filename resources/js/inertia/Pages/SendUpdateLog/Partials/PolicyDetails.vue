@@ -361,14 +361,16 @@ const rules = {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <ComboBox
+                  <x-select
                     v-if="isCPD"
                     v-model="policyDetailsForm.insurance_provider_id"
                     :options="insuranceProvidersOptions"
                     placeholder="Provider Name"
-                    :single="true"
                     :disabled="!state.isEdit"
+                    filterable
+                    filterPlaceholder="Filter Provider Name...."
                   />
+
                   <span v-else>{{ policyDetailsForm.provider_name }}</span>
                 </dd>
               </div>
@@ -389,13 +391,14 @@ const rules = {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <ComboBox
+                  <x-select
                     v-if="isCPD && isEcom"
                     v-model="policyDetailsForm.plan_id"
                     :options="plansOptions"
                     placeholder="Plan Name"
-                    :single="true"
                     :disabled="!state.isEdit"
+                    filterable
+                    filterPlaceholder="Filter Plan Name...."
                   />
                 </dd>
               </div>
@@ -561,14 +564,15 @@ const rules = {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <ComboBox
+                  <x-select
                     v-if="isCPD"
                     v-model="policyDetailsForm.issuance_status_id"
                     :options="issuanceStatusOptions"
                     placeholder="Select Status"
-                    :single="true"
                     :disabled="!state.isEdit"
                     class="w-fit"
+                    filterable
+                    filterPlaceholder="Filter Status...."
                   />
                   <span v-else>{{
                     issuanceStatusText(policyDetailsForm.issuance_status_id) ??

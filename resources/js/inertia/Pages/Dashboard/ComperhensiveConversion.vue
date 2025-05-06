@@ -428,7 +428,7 @@ const insuranceForOptions = computed(() => {
       </x-field>
 
       <x-field label="Teams" v-if="canShow('teams')">
-        <ComboBox
+        <x-select
           v-model="filters.teams"
           name="team_name"
           placeholder="Select Teams"
@@ -436,10 +436,21 @@ const insuranceForOptions = computed(() => {
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
           :disabled="can(permissionsEnum.ViewTeamsFilters)"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(item => item.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
       </x-field>
       <x-field label="Sub Teams" v-if="canShow('sub_teams')">
-        <ComboBox
+        <x-select
           v-model="filters.sub_teams"
           name="team_name"
           placeholder="Select Sub Teams"
@@ -447,15 +458,41 @@ const insuranceForOptions = computed(() => {
           @update:model-value="onSubTeamChange"
           :loading="loaders.subteamOptions"
           :disabled="can(permissionsEnum.ViewTeamsFilters)"
-        />
+          filterable
+          filterPlaceholder="Filter Sub Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_teams = subteamOptions.map(item => item.value)
+              "
+              @clear="filters.sub_teams = []"
+            />
+          </template>
+        </x-select>
       </x-field>
       <x-field :label="getAdvisorLabel()">
-        <ComboBox
+        <x-select
           v-model="filters.advisors"
           placeholder="Select Advisor"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisor...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
       </x-field>
       <x-tooltip placement="top" v-if="canShow('tiers')">
         <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike">
@@ -464,7 +501,7 @@ const insuranceForOptions = computed(() => {
         <template #tooltip v-else> Select Tiers </template>
 
         <x-field class="w-full" label="Tiers">
-          <ComboBox
+          <x-select
             :disabled="filters.lob === quoteTypeCodeEnum.Bike"
             :class="{
               'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
@@ -478,7 +515,20 @@ const insuranceForOptions = computed(() => {
                 label: filterOptions.tiers[key],
               }))
             "
-          />
+            filterable
+            filterPlaceholder="Filter Tiers...."
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.tiers = filterOptions.tiers.map(item => item.value)
+                "
+                @clear="filters.tiers = []"
+              />
+            </template>
+          </x-select>
         </x-field>
       </x-tooltip>
       <x-select
@@ -530,12 +580,13 @@ const insuranceForOptions = computed(() => {
         label="Segment"
         v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')"
       >
-        <ComboBox
+        <x-select
           v-model="filters.segment_filter"
           placeholder="Select Segment"
           :options="quoteSegments"
           class="w-full"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Segment...."
         />
       </x-field>
     </div>
