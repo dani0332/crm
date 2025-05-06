@@ -302,7 +302,11 @@ const getInputRules = (rider) => {
   return parseInt(rider.active) == 1 ? [isRequired] : [];
 };
 
-const computedFinalPrice = (rider) => computed(() => (parseFloat(rider.price) + parseFloat(rider.loading)));
+const computedFinalPrice = (rider) => computed(() => {
+  const price = (!rider.price || rider.price === '') ? 0 : parseFloat(rider.price);
+  const loading = (!rider.loading || rider.loading === '') ? 0 : parseFloat(rider.loading);
+  return price + loading;
+});
 
 const closeModal = ()  => {
     this.shown = false; 

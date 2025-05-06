@@ -142,17 +142,21 @@ const onSubmit = isValid => {
     .then(res => {
       // emit('success');
 
-      notification.success({
-        title: res.data.message,
-        position: 'top',
-      });
+      if(res?.data?.code ==  400) {
+        alreadyQuoted = res.data.msg;
+        return;  
+      } else {
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      }
 
       shown.value = false;
 
       setTimeout(() => {
         location.reload();
       }, 2000);
-
     
     })
     .catch(err => {
@@ -163,6 +167,11 @@ const onSubmit = isValid => {
         alreadyQuoted = 'This plan detail is already quoted';
         return;
       }
+
+      notification.error({
+        title: res.data.msg,
+        position: 'top',
+      });
       
     })
     .finally(() => {

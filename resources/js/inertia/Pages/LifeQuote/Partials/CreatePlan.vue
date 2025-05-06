@@ -277,6 +277,8 @@ watch(
               placeholder="Enter Price"
               :rules="[isRequired]"
               class="w-full"
+              type="number"
+              @keydown="e => e.key === 'e' && e.preventDefault()" 
           />
         </div>
 
