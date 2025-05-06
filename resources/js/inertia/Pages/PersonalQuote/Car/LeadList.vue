@@ -158,13 +158,13 @@ const advisorOptions = computed(() => {
 const registrationTypeOptions = Object.values(carRegistrationTypeEnum).map(
   item => ({
     value: item,
-    label: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
   }),
 );
 
 const vehicleUseOptions = Object.values(carVehicleUseEnum).map(item => ({
   value: item,
-  label: item,
+  label: item.charAt(0).toUpperCase() + item.slice(1),
 }));
 
 const leadStatuses = computed(() => {
@@ -1115,6 +1115,12 @@ const insurerAMLStatusOption = computed(() => {
         >
           {{ code }}
         </Link>
+      </template>
+
+      <template #item-vehicle_use="{ vehicle_use }">
+        <div class="text-center">
+            {{ vehicle_use ? vehicle_use.charAt(0).toUpperCase() + vehicle_use.slice(1) : '' }}
+        </div>
       </template>
 
       <template #item-is_ecommerce="{ is_ecommerce }">
