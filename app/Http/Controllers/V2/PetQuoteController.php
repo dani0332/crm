@@ -75,7 +75,7 @@ class PetQuoteController extends Controller
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('PetQuote/Index', [
-            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
+            'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'renewalBatches' => $renewalBatches,

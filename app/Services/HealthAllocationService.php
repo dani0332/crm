@@ -285,6 +285,7 @@ class HealthAllocationService extends AllocationService
         $lead->assignment_type = $assignmentType;
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
+        $lead->quote_status_id = QuoteStatusEnum::Quoted;
         $lead->save();
 
         $lead->endAllocation();
