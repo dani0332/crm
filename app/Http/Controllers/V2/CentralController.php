@@ -104,6 +104,8 @@ class CentralController extends Controller
 
     public function exportLeads(ExportValidationRequest $request, $quoteType, $exportTye = null)
     {
+        $request->merge(['quoteType' => $quoteType]);
+
         // For Personal Quotes
         if (in_array(ucfirst($quoteType), [
             QuoteTypes::BIKE->value,
@@ -113,6 +115,10 @@ class CentralController extends Controller
             QuoteTypes::JETSKI->value,
             QuoteTypes::HOME->value,
         ])) {
+            if ($request['exportType'] == 'email') {
+                return app(PersonalQuotesExport::class)->emailCSV($quoteType.'-List', $request->all());
+            }
+
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
 
@@ -128,24 +134,53 @@ class CentralController extends Controller
 
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
+
+                if ($request['exportType'] == 'email') {
+                    return app(LifeQuotesExport::class)->emailCSV('Life-List', $request->all());
+                }
+
                 return app(LifeQuotesExport::class)->download('life_leads');
 
             case QuoteTypes::HOME->value:
+                if ($request['exportType'] == 'email') {
+                    return app(HomeQuoteExport::class)->emailCSV('Home-List', $request->all());
+                }
+
                 return app(HomeQuoteExport::class)->download('home_leads');
 
             case QuoteTypes::AMT->value:
+                if ($request['exportType'] == 'email') {
+                    return app(AmtQuoteExport::class)->emailCSV('AMT-List', $request->all());
+                }
+
                 return app(AmtQuoteExport::class)->download('amt_leads');
 
             case QuoteTypes::BUSINESS->value:
+                if ($request['exportType'] == 'email') {
+                    return app(BusinessQuoteExport::class)->emailCSV('Business-List', $request->all());
+                }
+
                 return app(BusinessQuoteExport::class)->download('business_leads');
 
             case QuoteTypes::TRAVEL->value:
+                if ($request['exportType'] == 'email') {
+                    return app(TravelQuoteExport::class)->emailCSV('Travel-List', $request->all());
+                }
+
                 return app(TravelQuoteExport::class)->download('travel_leads');
 
             case QuoteTypes::CAR->value:
+                if ($request['exportType'] == 'email') {
+                    return app(CarQuoteExport::class)->emailCSV('Car-List', $request->all());
+                }
+
                 return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:
+                if ($request['exportType'] == 'email') {
+                    return app(HealthQuotesExport::class)->emailCSV('Health-List', $request->all());
+                }
+
                 return app(HealthQuotesExport::class)->download('Health-List');
 
             case RetentionReportEnum::RETENTION:

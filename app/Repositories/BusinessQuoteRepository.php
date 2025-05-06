@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
 use App\Traits\CentralTrait;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BusinessQuoteRepository extends BaseRepository
@@ -30,8 +31,15 @@ class BusinessQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($quoteType, $forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
+        }
+
         $query = $this->with([
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
@@ -49,14 +57,14 @@ class BusinessQuoteRepository extends BaseRepository
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
         )), function ($query) {
-            $query->where('advisor_id', \auth()->user()->id);
+            $query->where('advisor_id', auth()->id());
         })->when(($quoteType == quoteTypeCode::CORPLINE && (
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) ||
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
             auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
         )), function ($query) {
-            $query->where('advisor_id', auth()->user()->id);
+            $query->where('advisor_id', auth()->id());
         })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
