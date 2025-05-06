@@ -77,8 +77,9 @@ const setQuoteInsurerNumber = () => {
   if (!quotePlanList || typeof quotePlanList === 'string') return null;
   let obj = quotePlanList?.filter(item => item.id == page.props.quote.plan_id);
 
-  policyDetailsForm.quote_plan_insurer_quote_number = (obj === undefined ? null : obj[0]?.insurerQuoteNo || null);
-}
+  policyDetailsForm.quote_plan_insurer_quote_number =
+    obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
+};
 
 const policyDetailsState = reactive({
   isEditing: false,
@@ -99,7 +100,8 @@ const policyDetailsForm = useForm({
   quote_policy_expiry_date:
     dateToYMD(page.props.quote.policy_expiry_date) || '',
   amount_with_vat: 0,
-  quote_plan_insurer_quote_number: page.props.quote.insurer_quote_number ?? null,
+  quote_plan_insurer_quote_number:
+    page.props.quote.insurer_quote_number ?? null,
   quote_policy_issuance_status: page.props.quote.policy_issuance_status_id,
   quote_policy_issuance_status_other:
     page.props.quote.policy_issuance_status_other || '',
@@ -437,7 +439,8 @@ watch(
   () => props.availablePlans,
   availablePlans => {
     // setQuotePlanInsurerNumber();
-    if (! policyDetailsForm.quote_plan_insurer_quote_number) setQuoteInsurerNumber();
+    if (!policyDetailsForm.quote_plan_insurer_quote_number)
+      setQuoteInsurerNumber();
   },
 );
 const readOnlyMode = reactive({
