@@ -113,17 +113,20 @@ const ecommerceOptions = [
   { value: 0, label: 'No' },
 ];
 
-const filteredTableHeader = computed(() => {
-  let filteredHeader = [...tableHeader];
+const filteredTableHeader = ref([]);
+
+const filterTableHeaders = () => {
+  let filtered = [...tableHeader];
+
   if (hasRole(rolesEnum.CarAdvisor)) {
-    filteredHeader = filteredHeader.filter(
+    filtered = filtered.filter(
       column => column.value !== 'source' && column.value !== 'assignment_type',
     );
   }
 
   if (filters.registration_type === carRegistrationTypeEnum.COMPANY) {
     // If the registration type is "Company", exclude "First Name" and "Last Name" columns
-    filteredHeader = filteredHeader.filter(
+    filtered = filtered.filter(
       column =>
         column.value !== 'first_name' &&
         column.value !== 'last_name' &&
@@ -132,14 +135,14 @@ const filteredTableHeader = computed(() => {
         column.value !== 'uae_license_held_for_id_text',
     );
   } else {
-    filteredHeader = filteredHeader.filter(
+    filtered = filtered.filter(
       column =>
         column.value !== 'vehicle_use' && column.value !== 'car_company_name',
     );
   }
 
-  return filteredHeader;
-});
+  filteredTableHeader.value = filtered;
+};
 
 const advisorOptions = computed(() => {
   let options = page.props.advisors.map(advisor => ({
@@ -367,7 +370,10 @@ function onSubmit(isValid) {
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
-      onFinish: () => (loader.table = false),
+      onFinish: () => {
+        loader.table = false
+        filterTableHeaders();
+      },
     });
   } else {
     console.log('Invalid');
@@ -514,6 +520,9 @@ onMounted(() => {
     serverOptions.value.page = filtersCleaned.page;
     delete filtersCleaned.page;
   }
+
+  filterTableHeaders();
+
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
