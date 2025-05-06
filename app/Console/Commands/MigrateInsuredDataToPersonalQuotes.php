@@ -120,7 +120,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
 
                     $lastProcessedId = $personalQuote->id;
                     $totalUpdated++;
-                    LoggerService::info(self::className.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' with ' , extra:  $personalQuoteUpdateData);
+                    LoggerService::info(self::className.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' with ', extra: $personalQuoteUpdateData);
                 }
 
                 // Update the cache after each chunk to avoid losing progress
