@@ -417,6 +417,7 @@ const validateDateRange = () => {
             placeholder="Search by Lead Status"
             :options="leadStatusOptions"
             class="w-full"
+            filterable
           />
         </x-field>
         <x-field label="Policy Expiry Start Date">
@@ -437,15 +438,30 @@ const validateDateRange = () => {
             placeholder="INSURANCE TYPE"
             :options="insuranceTypeOptions"
             class="w-full"
+            filterable
           />
         </x-field>
-        <x-field label="Advisor" v-if="isAllowed">
-          <ComboBox
-            v-model="filters.advisors"
-            placeholder="Search by Advisor"
-            :options="advisorOptions"
-          />
-        </x-field>
+
+        <x-select
+          v-if="isAllowed"
+          v-model="filters.advisors"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          class="w-full"
+          label="Advisor"
+          filterable
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(option => option.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
