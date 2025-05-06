@@ -171,9 +171,10 @@ const fetchProviderPlans = () => {
                 );
               } else if(createForm.isUW) {
                 
+                console.log('inside UW');
                 options.providerPlans = res.data.plans.filter(
                   plan => !props.plans.some(existingPlan => 
-                    existingPlan.planId === plan.id && existingPlan.isUW
+                    existingPlan.planId === plan.id && existingPlan.isUnderwritten
                   )
                 );
 

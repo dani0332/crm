@@ -757,16 +757,16 @@ const confirmSendEmail = () => {
   const last_name = page.props.quote.last_name || '';
 };
 
-const selectPlan = (planId, quoteId, version) => {
+const selectPlan = (planId, quoteId, version, planUuid) => {
   const loaderKey = `${planId}-${version}`; 
-  selectPlanLoader.value[loaderKey] = true;
+  selectPlanLoader.value[planUuid] = true;
   axios.post('/personal-quotes/life-plan-selected', {
     planId: planId,
     quoteId: quoteId, 
     version: version
   })
   .then(response => {
-    selectPlanLoader.value[loaderKey] = false;
+    selectPlanLoader.value[planUuid] = false;
     notification.success({
         title: 'Plan selected successfully',
         position: 'top',
@@ -789,7 +789,7 @@ const selectPlan = (planId, quoteId, version) => {
       });
       console.log('error', error)
       emit('error'); 
-      selectPlanLoader.value[loaderKey] = true;
+      selectPlanLoader.value[planUuid] = true;
     });
   
 }
@@ -1818,8 +1818,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       size="xs"
                       color="emerald"
                       outlined
-                      :loading="selectPlanLoader[`${item.planId}-${item.version}`]"                     
-                       @click.prevent="selectPlan(item.planId, page.props.quote.uuid, item.version)"
+                      :loading="selectPlanLoader[`${item._id}`]"                     
+                       @click.prevent="selectPlan(item.planId, page.props.quote.uuid, item.version, item._id)"
                     >
                       Select
                     </x-button>
