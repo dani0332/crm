@@ -10,9 +10,9 @@ class TravelQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return app(TravelQuoteService::class)->getGridData()->get();
+        return app(TravelQuoteService::class)->getGridData(requestParams: $requestParams)->get();
     }
 
     public function headings(): array

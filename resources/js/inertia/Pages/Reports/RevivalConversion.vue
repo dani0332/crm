@@ -205,7 +205,7 @@ const transactionApprovedRateTableHeader = [
     <Head title="Revival Conversion Report" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.lob"
           label="LOB"
           placeholder="Select LOB"
@@ -216,8 +216,10 @@ const transactionApprovedRateTableHeader = [
             }))
           "
           class="w-full"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter LOB...."
         />
+
         <x-select
           v-model="filters.lead_source"
           label="Lead Source"

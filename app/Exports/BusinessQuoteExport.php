@@ -10,9 +10,9 @@ class BusinessQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true);
+        return BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true, requestParams: $requestParams);
     }
 
     public function headings(): array

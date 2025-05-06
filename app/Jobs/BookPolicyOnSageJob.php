@@ -46,9 +46,8 @@ class BookPolicyOnSageJob implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Started');
-
         LoggerService::startQuoteLogging($this->quote);
+        LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Started');
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
 

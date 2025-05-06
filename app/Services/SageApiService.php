@@ -2430,7 +2430,7 @@ class SageApiService
         if (! $preChecksForPostingPrepaymentOnSage['status']) {
             $response['errors'] = $preChecksForPostingPrepaymentOnSage['errors'];
 
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Schedule Sage Process for Prepayment Posting of Payment split -  Error : ', $response['errors']);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Schedule Sage Process for Prepayment Posting of Payment split -  Error : ', extra: $response['errors']);
 
             return $response;
         }
@@ -2476,7 +2476,7 @@ class SageApiService
         } else {
             $sageProcess = SageProcess::create(array_merge($sageProcessData, $sageProcessWhereClause));
         }
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Sage Process Scheduled for Prepayment Posting of Payment split.', [
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Sage Process Scheduled for Prepayment Posting of Payment split.', extra : [
             'data' => json_encode(['sageProcessId' => $sageProcess->id,  'sageProcessStatus' => $sageProcess->status]),
         ]);
 
@@ -2509,7 +2509,7 @@ class SageApiService
         }
 
         $prepaymentReceiptStatus = $paymentSplit->prepayment_receipt_status;
-        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy and prepayment receipt status', [
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - Policy and prepayment receipt status', extra: [
             'data' => json_encode(['quote' => $quote?->quote_status_id, 'prepayment_receipt_status' => $paymentSplit->prepayment_receipt_status]),
         ]);
         if (! $prepaymentReceiptStatus['batchNumber']) {
@@ -2544,14 +2544,14 @@ class SageApiService
 
             $response = $this->executeSingleARPrepaymentReceiptPost([$sageRequest, $quote, $paymentSplit]);
 
-            LoggerService::info("Completed postPrepaymentToSage for payment split ID: {$paymentSplit->id}", [
+            LoggerService::info("Completed postPrepaymentToSage for payment split ID: {$paymentSplit->id}", extra: [
                 'status' => $response['status'],
                 'message' => $response['message'],
             ]);
 
             return $response;
         } catch (\Exception $e) {
-            LoggerService::info(self::class.' fn: '.__FUNCTION__." Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", [
+            LoggerService::info(self::class.' fn: '.__FUNCTION__." Error in postPrepaymentToSage for payment split ID: {$paymentSplit->id}", extra : [
                 'error' => $e->getMessage(),
             ]);
 
