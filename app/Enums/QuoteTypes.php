@@ -355,6 +355,14 @@ enum QuoteTypes: string
                 return BusinessQuote::class;
             case self::getId(self::TRAVEL):
                 return TravelQuote::class;
+            case self::getId(self::YACHT):
+                return YachtQuote::class;
+            case self::getId(self::BIKE):
+                return BikeQuote::class;
+            case self::getId(self::CYCLE):
+                return CycleQuote::class;
+            case self::getId(self::JETSKI):
+                return JetskiQuote::class;
             default:
                 return PersonalQuote::class;
         }

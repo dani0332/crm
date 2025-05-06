@@ -3,11 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class Insured extends Model
+class Insured extends Model implements AuditableContract
 {
+    use Auditable;
+
     protected $table = 'insured';
     protected $guarded = [];
+
+    public function getAuditables()
+    {
+        return [
+            'pcp_tag',
+        ];
+    }
 
     public function nationality()
     {
