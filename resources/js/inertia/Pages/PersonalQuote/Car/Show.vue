@@ -1887,7 +1887,12 @@ const isCommercialVehicle = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">REGISTRATION TYPE</dt>
-                <dd>{{ quote.registration_type.charAt(0).toUpperCase() + quote.registration_type.slice(1) }}</dd>
+                <dd>
+                  {{
+                    quote.registration_type.charAt(0).toUpperCase() +
+                    quote.registration_type.slice(1)
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
@@ -1915,7 +1920,14 @@ const isCommercialVehicle = computed(() => {
               </div>
               <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">Vehicle use</dt>
-                <dd>{{ record.vehicle_use ? record.vehicle_use.charAt(0).toUpperCase() + record.vehicle_use.slice(1) : '' }}</dd>
+                <dd>
+                  {{
+                    record.vehicle_use
+                      ? record.vehicle_use.charAt(0).toUpperCase() +
+                        record.vehicle_use.slice(1)
+                      : ''
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CAR MAKE</dt>

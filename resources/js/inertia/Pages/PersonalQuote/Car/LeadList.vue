@@ -1119,7 +1119,11 @@ const insurerAMLStatusOption = computed(() => {
 
       <template #item-vehicle_use="{ vehicle_use }">
         <div class="text-center">
-            {{ vehicle_use ? vehicle_use.charAt(0).toUpperCase() + vehicle_use.slice(1) : '' }}
+          {{
+            vehicle_use
+              ? vehicle_use.charAt(0).toUpperCase() + vehicle_use.slice(1)
+              : ''
+          }}
         </div>
       </template>
 
