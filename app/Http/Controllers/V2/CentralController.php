@@ -368,15 +368,12 @@ class CentralController extends Controller
     {
         info("Processing split payment approve {$request->payment_code}");
 
-        $response = PaymentRepository::updateSplitPaymentsApprove($request);
-        if (! is_array($response) || empty($response['message'])) {
+        $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+        if (! $successMessage) {
             return back()->with('error', 'Error in approving payment');
         }
 
-        $message = $response['message'];
-        $status = $response['status'];
-
-        return back()->with($status, $message);
+        return back()->with('success', $successMessage);
     }
 
     public function getQuoteWisePlans($quoteType, $providerId, $plandId = null): object
@@ -734,10 +731,6 @@ class CentralController extends Controller
         ];
 
         info('paymentsCaptureValidation', $logPayload);
-
-        // Store status in session against paymentCode
-        $sessionKey = "payment_capture_status_{$request->paymentCode}";
-        session([$sessionKey => $response['status'] ?? null]);
 
         return response()->json(['response' => $response]);
     }
