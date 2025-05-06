@@ -400,42 +400,54 @@ watch(
           :preset-dates="presetDates"
         />
       </x-field>
-      <x-field label="Line Of Bussiness">
-        <ComboBox
-          v-model="filters.lob"
-          placeholder="Search by Bussiness"
-          :options="lobs"
-          class="w-full"
-          :single="true"
-          @update:modelValue="onLobChange"
-        />
-      </x-field>
-      <x-field label="Teams">
-        <ComboBox
-          v-model="filters.team"
-          placeholder="Select Team"
-          :options="teamOptions"
-          :loading="loaders.advisorOptions"
-          class="w-full"
-          :single="true"
-          @update:modelValue="onTeamChange"
-        />
-      </x-field>
-      <x-field
+
+      <x-select
+        v-model="filters.lob"
+        label="Line Of Bussiness"
+        placeholder="Search by Bussiness"
+        :options="lobs"
+        class="w-full"
+        filterable
+        filterPlaceholder="Filter Bussiness...."
+        @update:modelValue="onLobChange"
+      ></x-select>
+
+      <x-select
+        v-model="filters.team"
+        label="Teams"
+        placeholder="Search by Teams"
+        :options="teamOptions"
+        class="w-full"
+        filterable
+        filterPlaceholder="Filter Teams...."
+        @update:modelValue="onTeamChange"
+      ></x-select>
+
+      <x-select
+        v-model="filters.advisors"
         :label="
           !filters.team || filters.team.length == 0
             ? `Advisors (select teams first)`
             : `Advisors`
         "
+        placeholder="Search by Advisors"
+        :options="advisorOptions"
+        class="w-full"
+        filterable
+        filterPlaceholder="Filter Advisors...."
+        multiple
+        truncate
       >
-        <ComboBox
-          v-model="filters.advisors"
-          placeholder="Search by Advisor Name"
-          :options="advisorOptions"
-          class="w-full"
-          :loading="loaders.advisorOptions"
-        />
-      </x-field>
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.advisors = advisorOptions.map(advisor => advisor.value)
+            "
+            @clear="filters.advisors = []"
+          />
+        </template>
+      </x-select>
+
       <x-field label="Filter By">
         <x-select
           v-model="filters.filter_by"

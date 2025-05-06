@@ -2461,12 +2461,13 @@ const isCommercialVehicle = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Emirates of Registration...."
                     />
                   </dd>
                 </div>
@@ -2484,21 +2485,21 @@ const isCommercialVehicle = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
                       placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Industry Type...."
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       @update:modelValue="entityTypeChange($event)"
-                      :single="true"
                       v-model:modelValue="customerProfileForm.entity_type_code"
                       placeholder="SELECT ENTITY TYPE"
                       :options="[
@@ -2506,6 +2507,8 @@ const isCommercialVehicle = computed(() => {
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Entity Type...."
                     />
                   </dd>
                 </div>
@@ -2668,9 +2671,8 @@ const isCommercialVehicle = computed(() => {
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                <ComboBox
+                <x-select
                   v-model="leadStatusForm.leadStatus"
-                  :single="true"
                   label="Status"
                   class="w-full uppercase"
                   placeholder="Please select Lead Status"

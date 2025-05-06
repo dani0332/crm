@@ -1,7 +1,7 @@
 <script setup>
-import UBODetailsModels from './UBODetailsModels.vue';
 import MemberDetailsModel from './MemberDetailsModel.vue';
 import PayerDetails from './PayerDetails.vue';
+import UBODetailsModels from './UBODetailsModels.vue';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -458,12 +458,13 @@ const uboNationality = computed(() => {
         </x-field>
 
         <x-field label="Nationality">
-          <ComboBox
-            :single="true"
+          <x-select
             v-model="insuredFormDetails.nationality_id"
             placeholder="Select Nationality"
             :options="nationalitiesOptions"
             class="w-full"
+            filterable
+            filterPlaceholder="Filter Nationality...."
           />
         </x-field>
         <x-field label="Date of Birth">
