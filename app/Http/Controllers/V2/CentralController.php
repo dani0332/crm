@@ -432,7 +432,11 @@ class CentralController extends Controller
 
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
-        return $successMessage;
+        if ($successMessage) {
+            return redirect()->back()->with('success', 'Payment has been retried');
+        } else {
+            return redirect()->back()->with('error', 'Payment retry failed');
+        }
     }
 
     // Delete split payment
@@ -467,6 +471,11 @@ class CentralController extends Controller
     public function generatePaymentLink(GeneratePaymentLinkRequest $request)
     {
         return (new SplitPaymentService)->generateSplitPaymentLink($request);
+    }
+
+    public function generateInsurerPaymentLink(GeneratePaymentLinkRequest $request)
+    {
+        return (new SplitPaymentService)->generateInsurerPaymentLink($request);
     }
 
     public function saveQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
@@ -730,6 +739,16 @@ class CentralController extends Controller
         }
 
         return $response;
+    }
+
+    public function removeInsurerPaymentLink(Request $request)
+    {
+        $response = app(CentralService::class)->removeInsurerPaymentLink($request);
+        if ($response['status']) {
+            return redirect()->back()->with('success', $response['message']);
+        }
+
+        return redirect()->back()->with('error', $response['message']);
     }
 
     public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
