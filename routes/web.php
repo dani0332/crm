@@ -443,9 +443,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // Add route to trigger entity-insured migration, this should remove when migration was done
         Route::get('/migrate-entities-insured', function () {
-            Artisan::call('migrate:entities-insured');
+            App\Jobs\EntitiesInsuredMigrationJob::dispatch();
 
-            return '<h3>Entities and Entities KYC Details migration command has successfully been executed. Please check the logs for detailed progress and completion status.</h3>';
+            return '<h3>Entities and Entities KYC Details migration job has been queued. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-entities-insured');
 
         // Add route to trigger individual KYC details migration
