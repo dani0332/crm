@@ -532,7 +532,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         // process master payment approve
         return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
-        
+
     }
 
     // This method handles the approval or decline of split payments based on the request.
