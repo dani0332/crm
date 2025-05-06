@@ -382,7 +382,8 @@ class ApiService
 
     public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
     {
-        info('------ Travel AIG workflow trigger request received for lead : '.($request->quoteUuid ?? '').' ------');
+        LoggerService::startQuoteLogging(QuoteTypes::TRAVEL->refId($request->quoteUuid));
+        LoggerService::info('------ Travel AIG workflow trigger request received ------');
 
         try {
             $quoteTypeId = $request->quoteTypeId;
@@ -401,29 +402,25 @@ class ApiService
             }
             
             if (! $quoteType) {
-                info("Invalid Quote Type ID {$quoteTypeId} for uuid : {$quoteUuid}");
-
+                LoggerService::info("Invalid Quote Type");
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
             }
 
             // Verify the quote exists
             $quote = $quoteType->model()->where('uuid', $quoteUuid)->first();
             if (! $quote) {
-                info("Quote not found with uuid: {$quoteUuid} for quoteTypeId: {$quoteTypeId}");
-
+                LoggerService::info("Quote not found");
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
             }
 
             // Dispatch the travel AIG workflow job
-            info("------ Dispatching Travel AIG workflow job for lead : {$quoteUuid} ------");
-            dispatch(new \App\Jobs\TravelAIGWorkflowJob($quoteUuid, $quoteTypeId));
-            info("------ Travel AIG workflow trigger request completed for lead : {$quoteUuid} ------");
+            LoggerService::info("------ Dispatching Travel AIG workflow job ------");
+            // dispatch(new \App\Jobs\TravelAIGWorkflowJob($quoteUuid, $quoteTypeId));
+            LoggerService::info("------ Travel AIG workflow trigger request completed ------");
 
             return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow triggered successfully!');
         } catch (\Exception $e) {
-            info("------ Travel AIG workflow trigger failed: {$e->getMessage()} ------");
-            Log::error($e);
-
+            LoggerService::error("Travel AIG workflow trigger failed", exception: $e);
             return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Travel AIG workflow trigger failed!');
         }
     }

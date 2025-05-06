@@ -39,16 +39,14 @@ class TravelAIGWorkflowJob implements ShouldQueue
     public function handle(TravelEmailService $travelEmailService): void
     {
         try {
-            info("TravelAIGWorkflowJob - Starting workflow for Ref ID: {$this->quoteUuid} | Time: ".now());
-
-            LoggerService::startQuoteLogging($this->quoteUuid);
+            LoggerService::info("TravelAIGWorkflowJob - Starting workflow");
 
             // Use provided quote type or default to Travel if not specified
             $quoteTypeId = $this->quoteTypeId ?? QuoteTypeId::Travel;
             $quoteType = QuoteTypes::getName($quoteTypeId);
 
             if (! $quoteType) {
-                info("TravelAIGWorkflowJob - Invalid Quote Type ID: {$quoteTypeId} for Ref ID: {$this->quoteUuid} | Time: ".now());
+                LoggerService::info("TravelAIGWorkflowJob - Invalid Quote Type");
 
                 return;
             }
@@ -56,19 +54,18 @@ class TravelAIGWorkflowJob implements ShouldQueue
             $quote = $quoteType->model()->where('uuid', $this->quoteUuid)->first();
 
             if (! $quote) {
-                info("TravelAIGWorkflowJob - Quote not found - Ref ID: {$this->quoteUuid} | Time: ".now());
+                LoggerService::info("TravelAIGWorkflowJob - Quote not found");
 
                 return;
             }
 
             // Use the TravelEmailService to send the AIG workflow
-            $travelEmailService->sendAIGWorkflow($quote);
+            $travelEmailService->sendTravelAIGWorkflow($quote);
 
-            info("TravelAIGWorkflowJob - Completed successfully for Ref ID: {$this->quoteUuid} | Time: ".now());
+            LoggerService::info("TravelAIGWorkflowJob - Completed successfully");
 
         } catch (\Throwable $th) {
-            info("TravelAIGWorkflowJob - Exception encountered: '{$th->getMessage()}' - Ref ID: {$this->quoteUuid} | Time: ".now());
-            Log::error($th);
+            LoggerService::error("TravelAIGWorkflowJob - Exception encountered", exception: $th);
             throw $th;
         }
     }
