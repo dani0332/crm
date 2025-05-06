@@ -337,4 +337,59 @@ class TravelEmailService extends BaseService
 
         return null;
     }
+
+    public function sendAIGWorkflow($lead)
+    {
+        try {
+            info('Sending AIGWorkflow for travel lead: '.$lead->uuid.' | Time: '.now());
+            if (empty($lead->aig_flow_executed_at)) {
+                $advisor = User::where('id', $lead->advisor_id)->first();
+                $emailData = $this->buildCommonEmailData($lead, $advisor, null, WorkflowTypeEnum::AIG_WORKFLOW);
+                // using the same event for AIG and NB Motor and have a AIG branch in that event workflow
+                $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+
+                if ($birdAIGEvent) {
+                    $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent->value, $emailData);
+                    info("AIGWorkflow event triggered for travel lead Ref-ID: {$lead->uuid} | Time: ".now());
+                    info("AIGWorkflow response: {$response->status_code} | Ref-ID: {$lead->uuid} | Time: ".now());
+
+                    $lead->aig_flow_executed_at = now();
+                    info("AIGWorkflow travel lead ref-id: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+                    $lead->save();
+
+                    if (! empty($response->headers['Run-Id'])) {
+                        $this->createQuoteFlowDetails($lead, $response);
+                    }
+                } else {
+                    info("AIGWorkflow key not found for travel lead: Ref-ID: {$lead->uuid} | Time: ".now());
+                }
+            } else {
+                info("AIGWorkflow already executed: {$lead->aig_flow_executed_at} for travel lead Ref-ID: {$lead->uuid} | Time: ".now());
+            }
+
+            return $response ?? null;
+        } catch (\Throwable $th) {
+            $errorMessage = "AIGWorkflow-Error: while sending workflow for travel lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            info($errorMessage);
+            info("AIGWorkflow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            throw $th;
+        }
+    }
+
+    /**
+     * Creates quote flow details for tracking email campaigns
+     */
+    private function createQuoteFlowDetails($lead, $response)
+    {
+        try {
+            $quoteFlowDetails = new \App\Models\QuoteFlowDetails();
+            $quoteFlowDetails->quote_uuid = $lead->uuid;
+            $quoteFlowDetails->flow_id = $response->headers['Run-Id'];
+            $quoteFlowDetails->flow_type = WorkflowTypeEnum::AIG_WORKFLOW;
+            $quoteFlowDetails->save();
+            info("QuoteFlowDetails created for travel lead: {$lead->uuid} | Flow ID: {$response->headers['Run-Id']} | Time: ".now());
+        } catch (\Throwable $th) {
+            info("Error creating QuoteFlowDetails for travel lead: {$lead->uuid} | Error: {$th->getMessage()} | Time: ".now());
+        }
+    }
 }

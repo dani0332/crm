@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Http\Requests\AIGWorkflowRequest;
+use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
@@ -376,6 +377,54 @@ class ApiService
             Log::error($e);
 
             return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'AIG workflow trigger failed!');
+        }
+    }
+
+    public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
+    {
+        info('------ Travel AIG workflow trigger request received for lead : '.($request->quoteUuid ?? '').' ------');
+
+        try {
+            $quoteTypeId = $request->quoteTypeId;
+            $quoteUuid = $request->quoteUuid;
+
+            if (! $quoteUuid) {
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Quote UUID is required!');
+            }
+
+            // Get the quote type if provided, or default to Travel
+            if ($quoteTypeId) {
+                $quoteType = QuoteTypes::getName($quoteTypeId);
+            } else {
+                $quoteType = QuoteTypes::TRAVEL;
+                $quoteTypeId = QuoteTypes::TRAVEL->id();
+            }
+            
+            if (! $quoteType) {
+                info("Invalid Quote Type ID {$quoteTypeId} for uuid : {$quoteUuid}");
+
+                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+            }
+
+            // Verify the quote exists
+            $quote = $quoteType->model()->where('uuid', $quoteUuid)->first();
+            if (! $quote) {
+                info("Quote not found with uuid: {$quoteUuid} for quoteTypeId: {$quoteTypeId}");
+
+                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+            }
+
+            // Dispatch the travel AIG workflow job
+            info("------ Dispatching Travel AIG workflow job for lead : {$quoteUuid} ------");
+            dispatch(new \App\Jobs\TravelAIGWorkflowJob($quoteUuid, $quoteTypeId));
+            info("------ Travel AIG workflow trigger request completed for lead : {$quoteUuid} ------");
+
+            return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow triggered successfully!');
+        } catch (\Exception $e) {
+            info("------ Travel AIG workflow trigger failed: {$e->getMessage()} ------");
+            Log::error($e);
+
+            return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Travel AIG workflow trigger failed!');
         }
     }
 }

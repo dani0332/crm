@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AIGWorkflowRequest;
+use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Http\Requests\Api\ClearCacheRequest;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
@@ -330,5 +331,10 @@ class ApiController extends Controller
     public function triggerAIGWorkflow(AIGWorkflowRequest $request)
     {
         return $this->apiService->triggerAIGWorkflow($request);
+    }
+
+    public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerTravelAIGWorkflow($request);
     }
 }
