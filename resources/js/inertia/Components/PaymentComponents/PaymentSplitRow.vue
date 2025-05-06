@@ -16,6 +16,8 @@ const {
   paymentAllocationStatusTooltip,
 } = usePayment();
 
+const notification = useNotifications('toast');
+
 const props = defineProps({
   splitPayment: Object,
   parentPayment: Object,
