@@ -371,7 +371,7 @@ function onSubmit(isValid) {
       preserveScroll: true,
       onBefore: () => (loader.table = true),
       onFinish: () => {
-        loader.table = false
+        loader.table = false;
         filterTableHeaders();
       },
     });
