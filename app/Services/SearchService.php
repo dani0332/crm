@@ -300,7 +300,7 @@ class SearchService extends BaseService
             return false;
         }
 
-        return  $user->hasRole($managerRoles);;
+        return $user->hasRole($managerRoles);
     }
 
     /**
