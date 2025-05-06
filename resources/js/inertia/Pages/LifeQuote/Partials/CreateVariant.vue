@@ -255,8 +255,9 @@ const onSubmit = isValid => {
               :rules="[isRequired]"
               class="w-full"
               type="number"
-               @keydown="e => e.key === 'e' && e.preventDefault()"
-            />
+              min="0"
+              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
+              />
           </div>
         </div>
 
@@ -268,8 +269,9 @@ const onSubmit = isValid => {
               :rules="[isRequired]"
               class="w-full"
               type="number"
-               @keydown="e => e.key === 'e' && e.preventDefault()"
-            />
+              min="0"
+              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
+              />
         </div>
 
         <div>
@@ -290,6 +292,8 @@ const onSubmit = isValid => {
               placeholder="Enter Price"
               :rules="[isRequired]"
               class="w-full"
+              type="number"
+              min="0"
               :disabled="plan.isApi"
           />
         </div>
@@ -314,19 +318,19 @@ const onSubmit = isValid => {
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
           <span class="text-gray-700 col-span-2">Life Cover</span>
           <span class="text-gray-700">Included</span>
-          <x-input type="number" @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" 
+          <x-input type="number" min="0"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" 
           v-model="createForm.sumAssured" disabled />
 
           <x-toggle color="emerald" size="lg" disabled/>
-          <x-input type="number"  @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
+          <x-input type="number" min="0"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"  class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
         </div>
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.id">
           <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
           <span class="text-gray-700">{{rider.active ? 'Included' : 'Optional'}}</span>
-          <x-input type="number"  @keydown="e => e.key === 'e' && e.preventDefault()" :disabled="!rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
+          <x-input type="number" min="0" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" :disabled="!rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
           <x-toggle v-model="rider.active" color="success" size="lg" />
-          <x-input type="number"  
-          @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" :disabled="!rider.active || !props.plan.isManualPlan" v-model="rider.price"/>
+          <x-input type="number" min="0" 
+          @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" :disabled="!rider.active || !props.plan.isManualPlan" v-model="rider.price"/>
         </div>
       </div>
     </div>

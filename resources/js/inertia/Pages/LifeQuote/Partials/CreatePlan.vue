@@ -242,8 +242,7 @@ watch(
               :rules="[isRequired]"
               class="w-full"
               type="number"
-               @keydown="e => e.key === 'e' && e.preventDefault()"
-            />
+              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"             />
           </div>
         </div>
 
@@ -255,7 +254,7 @@ watch(
               :rules="[isRequired]"
               class="w-full"
               type="number"
-              @keydown="e => e.key === 'e' && e.preventDefault()"
+              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
             />
         </div>
 
@@ -278,8 +277,7 @@ watch(
               :rules="[isRequired]"
               class="w-full"
               type="number"
-              @keydown="e => e.key === 'e' && e.preventDefault()" 
-          />
+              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"           />
         </div>
 
         <div>
@@ -298,17 +296,17 @@ watch(
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
           <span class="text-gray-700 col-span-2">Life Cover</span>
           <span class="text-gray-700">Included</span>
-          <x-input type="number"  @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="createForm.sumAssured" disabled />
+          <x-input type="number"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="createForm.sumAssured" disabled />
 
           <x-toggle v-model="lifeCoverToggled" color="emerald" size="lg" disabled/>
-          <x-input type="number"  @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
+          <x-input type="number"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
         </div>
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.id">
           <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
           <span class="text-gray-700">{{ rider.active ? 'Included' : 'Optional'}}</span>
-          <x-input type="number" :disabled="!rider.active" @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
+          <x-input type="number" :disabled="!rider.active" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
           <x-toggle v-model="rider.active" color="success" size="lg" />
-          <x-input type="number" :disabled="!rider.active" @keydown="e => e.key === 'e' && e.preventDefault()"  class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
+          <x-input type="number" :disabled="!rider.active" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"  class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
         </div>
       </div>
     </div>

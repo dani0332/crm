@@ -428,7 +428,8 @@ const closeModal = ()  => {
                 @input="handleActualPremium"
                 size="sm"
                 type="number"
-                 @keydown="e => e.key === 'e' && e.preventDefault()"
+                min="0"
+                @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
               />
             </div>
 
@@ -457,7 +458,8 @@ const closeModal = ()  => {
                 :rules="[isRequired]"
                 size="sm"
                 type="number"
-                 @keydown="e => e.key === 'e' && e.preventDefault()"
+                min="0"
+                @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
               />
             </div>
 
@@ -469,7 +471,8 @@ const closeModal = ()  => {
                 :rules="[isRequired]"
                 size="sm"
                 type="number"
-                 @keydown="e => e.key === 'e' && e.preventDefault()"
+                min="0"
+                @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
               />
             </div>
 
@@ -526,22 +529,20 @@ const closeModal = ()  => {
                           </div>
                           
                           <div class="col-span-2">
-                            <x-input type="number"  @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="editForm.sumAssured" disabled />
+                            <x-input type="number" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="editForm.sumAssured" min="0" disabled />
                           </div>
                           
                           <div>
                             <x-toggle v-model="lifeCoverToggled" color="emerald" size="lg" disabled/>
                           </div>
                           <div class="col-span-2">
-                            <x-input type="number" 
-                             @keydown="e => e.key === 'e' && e.preventDefault()"
-                            class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
+                            <x-input type="number" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" min="0" disabled />
                           </div>
                           <div class="col-span-2" v-if="props.selectedPlan.isUnderwritten">
-                            <x-input type="number"  @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" disabled />
+                            <x-input type="number" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" disabled />
                           </div>
                           <div class="col-span-1">
-                            <x-input type="number"  @keydown="e => e.key === 'e' && e.preventDefault()" v-if="props.selectedPlan.isUnderwritten" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" disabled />
+                            <x-input type="number" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" v-if="props.selectedPlan.isUnderwritten" class="w-full h-10 p-2 rounded-md" v-model="editForm.actualPremium" min="0" disabled />
                           </div>
                         </div>
                         <div class="grid grid-cols-10 items-center gap-4 p-2" 
@@ -556,7 +557,9 @@ const closeModal = ()  => {
                             <div class="col-span-2">
                               <x-input :disabled="!rider.active" 
                               :rules="parseInt(rider.active) == 1 ? isRequired : []" 
-                              type="number"  @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
+                              type="number" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
+                              min="0"
+                              class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
                             </div>
 
                             <div>
@@ -564,23 +567,27 @@ const closeModal = ()  => {
                             </div>
 
                             <div class="col-span-2">
-                              <x-input type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active"  @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
+                              <x-input type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" min="0" class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
                             </div>
 
                             <div class="col-span-2" v-if="props.selectedPlan.isUnderwritten">
                               <x-input type="number" 
                               :disabled="!props.selectedPlan.isManualPlan || !rider.active || editForm.overallLoading > 0 || rider.final_price > 0" 
-                              @keydown="e => e.key === 'e' && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="rider.loading"/>
+                              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
+                              min="0" 
+                              class="w-full h-10 p-2 rounded-md" v-model="rider.loading"/>
                             </div>
 
                             <div class="col-span-1" v-if="props.selectedPlan.isUnderwritten">
                                 
-                                <x-input v-if="parseFloat(rider.loading) == 0" type="number" :disabled="!props.selectedPlan.isManualPlan || !rider.active || editForm.overallLoading > 0 || rider.loading > 0" 
-                                  class="w-full h-10 p-2 rounded-md" v-model="rider.final_price" 
+                                <x-input v-if="parseFloat(rider.loading) == 0" type="number" 
+                                :disabled="!props.selectedPlan.isManualPlan || !rider.active || editForm.overallLoading > 0 || rider.loading > 0" 
+                                @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
+                                min="0"
+                                class="w-full h-10 p-2 rounded-md" v-model="rider.final_price" 
                                 />
-                               
-                                <div v-else type="number"
-                                @keydown="e => e.key === 'e' && e.preventDefault()" class="appearance-none block w-16 ml-2 placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]"  
+                                                               
+                                <div v-else type="number" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="appearance-none block w-16 ml-2 placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]"  
                                 >{{ computedFinalPrice(rider) }}</div>
                               </div>
                         </div>
@@ -711,8 +718,9 @@ const closeModal = ()  => {
         <!-- Overall Loading input field -->
         <div class="flex items-center" v-if="props.selectedPlan.isUnderwritten">
           <span class="mr-2">Overall Loading:</span>
-          <x-input type="number"  @keydown="e => e.key === 'e' && e.preventDefault()" @input="updatePriceWithOverloading()" 
+          <x-input type="number" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" @input="updatePriceWithOverloading()" 
           :disabled="overallLoadingState"
+          min="0"
           v-model="editForm.overallLoading" 
           class="w-32 h-10 pt-3" /> <!-- Adjust width as needed -->
         </div>
