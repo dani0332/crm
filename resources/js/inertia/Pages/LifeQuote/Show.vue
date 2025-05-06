@@ -165,7 +165,7 @@ const plansTable = reactive({
     },
     {
       text: 'Price',
-      value: 'actualPremium',
+      value: 'totalPrice',
       sortable: true,
     },
     {
@@ -1698,6 +1698,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </p>
               </template> -->
 
+              <template #item-totalPrice="item">
+                <span class="copay-max">{{ item.isManualPlan ? item.totalPrice : item.actualPremium }}</span>
+              </template>
+
               <template #item-planTypeId="item">
                 <span class="copay-max">{{ item.planType }}</span>
               </template>
@@ -1710,7 +1714,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
 
               <template #item-totalAnnualPremium="item">
-                <span class="copay-max">{{ getTotalAnnualPremium(item.paymentTerm, item.totalPrice) }}</span>
+                <span class="copay-max">{{ item.isManualPlan ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice) : item.actualPremium }}</span>
               </template>
 
               <template
