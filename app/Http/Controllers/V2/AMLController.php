@@ -51,7 +51,6 @@ use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
-use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
@@ -60,8 +59,8 @@ use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
-use App\Services\QuoteStatusService;
 use App\Services\QuoteDocumentService;
+use App\Services\QuoteStatusService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -746,13 +745,13 @@ class AMLController extends Controller
 
     private function saveManualAuditLog($quoteDetails, User $processByUser)
     {
-        if(! $quoteDetails instanceof TravelQuote) {
+        if (! $quoteDetails instanceof TravelQuote) {
             return false;
         }
 
         $dirty = $quoteDetails->getDirty();
 
-        if(empty($dirty)) {
+        if (empty($dirty)) {
             return false;
         }
 
@@ -767,12 +766,11 @@ class AMLController extends Controller
             'user_id' => $processByUser->id ?? null,
             'event' => 'updated',
             'old_values' => $changes['old_values'],
-            'new_values' => $changes['new_values']
+            'new_values' => $changes['new_values'],
         ]);
 
         return true;
     }
-
 
     public function getInsuredDetails(Request $request): \Illuminate\Http\JsonResponse
     {
