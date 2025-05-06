@@ -194,7 +194,7 @@ class CustomerRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->with(['nationality'])->where($column, $value)->firstOrFail();
+        return $this->with(['nationality', 'insured'])->where($column, $value)->firstOrFail();
     }
 
     /**

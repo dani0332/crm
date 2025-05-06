@@ -25,6 +25,9 @@ class Customer extends Model implements AuditableContract
     {
         return [
             'auditable_type' => self::class,
+            'relations' => [
+                ['auditable_type' => Insured::class, 'key' => 'customer_insured_customer_id'],
+            ],
         ];
     }
     public function detail()

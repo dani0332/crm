@@ -13,6 +13,15 @@ class Insured extends Model implements AuditableContract
     protected $table = 'insured';
     protected $guarded = [];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'pcp_tag' => 'boolean',
+    ];
+
     public function getAuditables()
     {
         return [
@@ -23,5 +32,11 @@ class Insured extends Model implements AuditableContract
     public function nationality()
     {
         return $this->belongsTo(Nationality::class);
+    }
+
+    public function getPcpTagAttribute()
+    {
+        return $this->attributes['pcp_tag'] === true || $this->attributes['pcp_tag'] === 1 ? 'Yes' :
+               ($this->attributes['pcp_tag'] === false || $this->attributes['pcp_tag'] === 0 ? 'Ex-PC' : 'No');
     }
 }
