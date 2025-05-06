@@ -68,6 +68,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
             ->orderBy('id')
             ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$lastProcessedId, $funName) {
                 foreach ($personalQuotes as $personalQuote) {
+                    $personalQuoteUpdateDate = [];
 
                     LoggerService::startQuoteLogging($personalQuote);
 
@@ -83,7 +84,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
 
                     // Update the personal quote with quote_id
                     if ($quote->getMorphClass() != PersonalQuote::class) {
-                        $personalQuote->update(['quote_id' => $quote->id]);
+                        $personalQuoteUpdateDate['quote_id'] = $quote->id;
                         LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', ['quote_id' => $quote->id]);
                     } else {
                         LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote is of Personal QuoteTable.');
@@ -94,30 +95,28 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                         ->where('quote_type_id', $personalQuote->quote_type_id)
                         ->first();
 
-                    if (! $entityMapping) {
+                    if ($entityMapping) {
+                        // Get insured record using entity_id
+                        $insured = Insured::where('entity_id', $entityMapping->entity_id)->first();
+
+                        if ($insured) {
+                            $personalQuoteUpdateDate['insured_id'] = $insured->id;
+                        } else {
+                            LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.');
+                            $lastProcessedId = $personalQuote->id;
+                        }
+
+                    } else {
                         LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity mapping not found.');
                         $lastProcessedId = $personalQuote->id;
-
-                        continue;
                     }
 
-                    /*if ($entityMapping->entity_type_code) {
-                        $personalQuote->update(['insured_type_code' => $entityMapping->entity_type_code]);
-                    }*/
+                    // Update the personal quote
+                    if (! empty($personalQuoteUpdateDate)) {
+                        $personalQuote->update($personalQuoteUpdateDate);
 
-                    // Get insured record using entity_id
-                    $insured = Insured::where('entity_id', $entityMapping->entity_id)->first();
-
-                    if (! $insured) {
-                        LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.');
-                        $lastProcessedId = $personalQuote->id;
-
-                        continue;
+                        LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', extra: $personalQuoteUpdateDate);
                     }
-
-                    // Update the personal quote with insured_id
-                    $personalQuote->update(['insured_id' => $insured->id]);
-                    LoggerService::info(self::className.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', ['insured_id' => $insured->id]);
 
                     $lastProcessedId = $personalQuote->id;
                     $totalUpdated++;
@@ -131,7 +130,7 @@ class MigrateInsuredDataToPersonalQuotes extends Command
                 LoggerService::info(self::className.' fn:'.$funName.' Processed a chunk. Last processed ID in cache: '.$lastProcessedId);
             });
 
-        // Get final count from cache for reporting
+        // Get final id from cache for reporting
         $finalProcessedId = Cache::get($this->cacheKey, null);
 
         LoggerService::info(self::className.' fn:'.$funName.' PersonalQuotes - Update Insured and Quote ID - Command completed. Last cached IDs: '.$finalProcessedId);
