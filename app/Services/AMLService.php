@@ -875,9 +875,8 @@ class AMLService
             ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
             ->whereBetween('created_at', dateQueryFilter(request('amlCreatedStartDate'), request('amlCreatedEndDate')));
 
-
         LoggerService::endLogging();
-        logger()->debug("rawSql: ".$query->toRawSql());
+        logger()->debug('rawSql: '.$query->toRawSql());
         $data = collect();
 
         $query->chunk(1000, function ($chunk) use (&$data) {
