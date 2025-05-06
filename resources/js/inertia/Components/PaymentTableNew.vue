@@ -5572,16 +5572,16 @@ onBeforeMount(() => {
                     can(permissionEnum.INSURER_PAYMENT_LINK)
                   "
                 >
-                  <InsurerPaymentLink
-                    ref="insurerPaymentComponent"
-                    :modelType="props.quoteType"
-                    :insurerPaymentLinkIndex="insurerPaymentLinkIndex"
-                    :paymentForm="paymentMethodsForm"
-                    :payments="payments"
-                    @updateOnParent="
-                      (e, f, g) => updateFromInsurerPaymentLink(e, f, g)
-                    "
-                  />
+                <InsurerPaymentLink
+                  ref="insurerPaymentComponent"
+                  :modelType="props.quoteType"
+                  :insurerPaymentLinkIndex="insurerPaymentLinkIndex"
+                  :paymentForm="paymentMethodsForm"
+                  :payments="payments"
+                  @updateOnParent="
+                    (e, f, g) => updateFromInsurerPaymentLink(e, f, g)
+                  "
+                />
                 </template>
               </div>
             </template>
