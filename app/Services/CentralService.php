@@ -1261,7 +1261,13 @@ class CentralService extends BaseService
         $quote->save();
 
         if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink()) {
-            app(QuoteDocumentService::class)->updateQuoteAndPaymentStatusToPaymentPending($quote);
+            $payment = $quote->getLastPaymentWithInsurerPaymentLink();
+            $payment->payment_status_id = PaymentStatusEnum::PENDING;
+            foreach ($payment->paymentSplits as $split) {
+                $split->payment_status_id = PaymentStatusEnum::PENDING;
+                $split->save();
+            }
+            $payment->save();
         }
         $paymentSplits = method_exists($quote, 'getAllInsurerPaymentLinkSplits') ? $quote->getAllInsurerPaymentLinkSplits() : [];
         foreach ($paymentSplits as $ps) {
