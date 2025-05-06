@@ -1,6 +1,7 @@
 <script setup>
 import { defineProps, defineEmits } from 'vue';
 import { useAMLKYC } from '../../../Composables/useAMLKYC';
+import InsurerPaymentLink from '../../InsurerPaymentLink.vue'
 
 const { isAmlVerified } = useAMLKYC();
 
@@ -87,6 +88,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  insurerPaymentLinkIndex: {
+    type: Number,
+    default: 0,
+  },
+  paymentMethodsForm: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
 const emit = defineEmits([
@@ -95,6 +104,7 @@ const emit = defineEmits([
   'approve',
   'cancel-modal',
   'aml-verification',
+  'update-from-insurer-payment-link'
 ]);
 
 const handleCancelClick = () => {
@@ -239,7 +249,7 @@ const handleCancelModalClick = () => {
     </template>
     <template v-else>
       <div class="w-full md:col-span-4 flex justify-end">
-        <div v-if="formStatus === 'edit'" class="mr-4">
+        <div v-if="formStatus === 'edit' && insurerPaymentLinkIndex < 0" class="mr-4">
           <x-button
             @click="handleCancelModalClick"
             tabindex="0"
@@ -248,7 +258,7 @@ const handleCancelModalClick = () => {
             Cancel
           </x-button>
         </div>
-        <div v-if="formStatus === 'create' || formStatus === 'edit'">
+        <div v-if="insurerPaymentLinkIndex < 0 && (formStatus === 'create' || formStatus === 'edit')">
           <x-button
             color="emerald"
             type="submit"
@@ -259,6 +269,24 @@ const handleCancelModalClick = () => {
             {{ formStatus === 'create' ? 'Add Manual Payment' : 'Update' }}
           </x-button>
         </div>
+        <template
+          v-if="
+            paymentMethodsModels[insurerPaymentLinkIndex] ===
+              paymentMethodsEnum?.InsurerPaymentLink &&
+            can(permissionEnum.INSURER_PAYMENT_LINK)
+          "
+        >
+          <InsurerPaymentLink
+            ref="insurerPaymentComponent"
+            :modelType="quoteType"
+            :insurerPaymentLinkIndex="insurerPaymentLinkIndex"
+            :paymentForm="paymentMethodsForm"
+            :payments="payments"
+            @updateOnParent="
+              (e, f, g) => emit('update-from-insurer-payment-link', e, f, g)
+            "
+          />
+        </template>
       </div>
     </template>
   </div>

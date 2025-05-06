@@ -2,7 +2,9 @@
 	import { usePayment } from '../../../Composables/usePayment';
 
 	const page = usePage();
+	const can = permission => useCan(permission);
 	const paymentTooltipEnum = page.props.paymentTooltipEnum;
+	const permissionEnum = page.props.permissionsEnum;
 	const {
 		formatDate,
 		formatAmount,
@@ -23,6 +25,7 @@
 		'delete-document',
 		'calculate-total-amount',
 		'handle-discount-value-change',
+		'validate-insurer-payment-link'
 	]);
 
 	const lookupsEnum = page.props.lookupsEnum;
@@ -63,6 +66,10 @@
 		discountError: String,
 		totalAmount: Number,
 		documentForm: Object,
+		insurerPaymentLinkIndex: Number,
+		paymentMethodsModels: Array,
+		payments: Array,
+		paymentStatusEnum: Object,
 	});
 
 	const totalPriceFormat = computed(() => {
@@ -95,9 +102,15 @@
 		emit('handle-discount-value-change', localDiscountValue.value);
 	}
 
-	setTimeout(() => {
-		console.log("===totalPayments", props.totalPayments);
-	}, 2000);
+	const isMasterPaymentPaid = computed(() => {
+		if (
+			props.payments.length > 0 &&
+			props.payments[0].payment_status_id === page.props.paymentStatusEnum.PAID
+		) {
+			return true;
+		}
+		return false;
+	});
 
 </script>
 
@@ -757,6 +770,46 @@
 					<span v-if="isFieldReadonly">
 						{{ formatAmount(totalAmount) }}
 					</span>
+				</x-field>
+			</div>
+			<div
+				class="col-span-2"
+				v-if="
+					insurerPaymentLinkIndex >= 0 &&
+					can(permissionEnum.INSURER_PAYMENT_LINK)
+				"
+			>
+				<x-tooltip>
+					<span class="border-b-2 border-dotted border-black text-sm"
+						>INSURER PAYMENT LINK -
+						{{ paymentMethodsModels[insurerPaymentLinkIndex] }}</span
+					>
+					<template #tooltip>
+						<span>{{ paymentTooltipEnum.PAYMENT_LIST_IPL }}</span>
+					</template>
+				</x-tooltip>
+				<x-field class="w-full">
+					<span v-if="isFieldReadonly">
+						{{ paymentMethodsModels[insurerPaymentLinkIndex] }}
+					</span>
+					<x-input
+						v-if="!isFieldReadonly"
+						class="w-full"
+						:class="{
+							'custom-select-error':
+								paymentMethodsForm.errors.insurerPaymentLink,
+						}"
+						placeholder="Enter valid url e.g: https://imcrm.alfred.ae/login"
+						v-model="paymentMethodsForm.insurerPaymentLink"
+						:disabled="isMasterPaymentPaid"
+						@input="emit('validate-insurer-payment-link')"
+					/>
+					<p
+						v-if="paymentMethodsForm.errors.insurerPaymentLink"
+						class="text-sm text-red-500 dark:text-red-400 mt-1"
+					>
+						{{ paymentMethodsForm.errors.insurerPaymentLink }}
+					</p>
 				</x-field>
 			</div>
 		</div>

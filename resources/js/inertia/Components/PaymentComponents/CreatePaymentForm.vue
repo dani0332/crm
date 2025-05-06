@@ -109,6 +109,7 @@
 		isApproveConfirmed: Boolean,
 		processing: Boolean,
 		formStatus: String,
+		insurerPaymentLinkIndex: Number,
 	});
 
 	const emit = defineEmits([
@@ -176,6 +177,10 @@
 		:discountError="discountError"
 		:totalAmount="totalAmount"
 		:documentForm="documentForm"
+		:insurerPaymentLinkIndex="insurerPaymentLinkIndex"
+		:paymentMethodsModels="paymentMethodsModels"
+		:payments="payments"
+		:paymentStatusEnum="paymentStatusEnum"
 		@handle-collection-type-change="emit('handle-collection-type-change')"
 		@handle-frequency-change="emit('handle-frequency-change')"
 		@calculate-payment-breakup="emit('calculate-payment-breakup')"
@@ -189,6 +194,7 @@
 		@delete-document="(docName, count, docId) => emit('delete-document', docName, count, docId)"
 		@calculate-total-amount="emit('calculate-total-amount')"
 		@handle-discount-value-change="(value) => emit('handle-discount-value-change', value)"
+		@validate-insurer-payment-link="emit('validate-insurer-payment-link')"
 	/>
 
 	<x-divider class="mb-4 mt-10" />
@@ -317,10 +323,13 @@
 		:quoteRequest="props.quoteRequest"
 		:quoteType="props.quoteType"
 		:payments="props.payments"
+		:insurerPaymentLinkIndex="insurerPaymentLinkIndex"
+		:paymentMethodsForm="paymentMethodsForm"
 		@cancel="emit('cancel')"
 		@decline="emit('decline')"
 		@approve="emit('approve')"
 		@cancel-modal="emit('cancel-modal')"
 		@aml-verification="emit('aml-verification')"
+		@update-from-insurer-payment-link="(e, f, g) => emit('update-from-insurer-payment-link', e, f, g)"
 	/>
 </template>

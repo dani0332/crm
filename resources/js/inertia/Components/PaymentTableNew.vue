@@ -3026,17 +3026,6 @@ watch(
   },
 );
 
-// verify if master payment is paid
-const isMasterPaymentPaid = computed(() => {
-  if (
-    props.payments.length > 0 &&
-    props.payments[0].payment_status_id === page.props.paymentStatusEnum.PAID
-  ) {
-    return true;
-  }
-  return false;
-});
-
 const is_lacking_payment = ref(
   page.props?.bookPolicyDetails?.isLackingOfPayment || false,
 );
@@ -3578,13 +3567,14 @@ onBeforeMount(() => {
               :approvedDocumentModel="approvedDocumentModel"
               :paymentStatusEnum="paymentStatusEnum"
               :permissionEnum="permissionEnum"
-              :paymentMethodsEnum="paymentMethodsEnum"
+              :paymentMethodsEnum="paymentMethodsEnums"
               :isVerificationAllowed="isVerificationAllowed"
               :isProformaPaymentRequest="isProformaPaymentRequest"
               :isTransactionCaptureButtonEnabled="isTransactionCaptureButtonEnabled"
               :isApproveConfirmed="isApproveConfirmed"
               :processing="paymentMethodsForm.processing"
               :formStatus="paymentMethodsForm.status"
+              :insurerPaymentLinkIndex="insurerPaymentLinkIndex"
               @handle-declined-reason-change="handleDeclinedReasonChange"
               @handle-collection-type-change="handleCollectionTypeChange"
               @handle-frequency-change="handleFrequencyChange"
@@ -3605,6 +3595,8 @@ onBeforeMount(() => {
               @aml-verification="openAmlVerificationModal"
               @handle-payment-options="handlePaymentOptions"
               @handle-discount-value-change="(value) => discountValue = value"
+              @validate-insurer-payment-link="validateInsurerPaymentLink"
+              @update-from-insurer-payment-link="(e, f, g) => updateFromInsurerPaymentLink(e, f, g)"
             />
             <div
             class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
