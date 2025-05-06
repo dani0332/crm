@@ -157,6 +157,5 @@ return [
     'ALLIANCE_AGENCY_CODE' => env('ALLIANCE_AGENCY_CODE', ''),
     'OCR_API_ENDPOINT' => env('OCR_API_ENDPOINT', ''),
     'OCR_API_KEY' => env('OCR_API_KEY', ''),
-    'OCR_API_AI_PROVIDER' => env('OCR_API_AI_PROVIDER', 'openai'),
-    'OCR_API_AI_MODEL' => env('OCR_API_AI_MODEL', 'gpt-4o-mini'),
+    'OCR_API_TIMEOUT' => env('OCR_API_TIMEOUT', 90),
 ];

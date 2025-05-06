@@ -42,7 +42,7 @@ class PopulateDocumentData implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::startQuoteLogging($this->quote?->uuid);
+        LoggerService::startQuoteLogging($this->quote);
 
         if (! $this->validateMimeType()) {
             info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");

@@ -25,7 +25,7 @@ class OCRService
             $response = Http::baseUrl(config('constants.OCR_API_ENDPOINT'))
                 ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
                 ->withHeader('x-api-key', config('constants.OCR_API_KEY'))
-                ->timeout(60)
+                ->timeout(config('constants.OCR_API_TIMEOUT'))
                 ->beforeSending(fn () => info(self::class."::sendRequest - Calling OCR API via {$method} request to {$endpoint}", $data))
                 ->when(
                     $method === 'GET',
@@ -54,10 +54,6 @@ class OCRService
 
             // for now image would be false on the basis of Hamas Request
             'image' => false,
-
-            // Disabled for now
-            // 'provider' => config('constants.OCR_API_AI_PROVIDER'),
-            // 'model' => config('constants.OCR_API_AI_MODEL'),
         ]);
 
         if ($response['ok']) {
