@@ -212,8 +212,14 @@ class BikeQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
             'quoteStatus',
@@ -223,8 +229,8 @@ class BikeQuoteRepository extends BaseRepository
             'payments',
             'renewalBatchModel',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
             ->filter(! $forExport)
             ->withFakeLeadCriteria()
@@ -246,7 +252,7 @@ class BikeQuoteRepository extends BaseRepository
 
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchExport()

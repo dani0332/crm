@@ -141,18 +141,22 @@ const gender = computed(() => {
             name="created_at_start"
           />
         </x-field>
-        <x-field label="Nationality">
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="
-              nationalities.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :rules="[isRequired]"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.nationality_id"
+          label="NATIONALITY"
+          filterable
+          placeholder="Search by Nationality"
+          required
+        ></x-select>
         <x-field label="Gender">
           <x-select
             v-model="quoteForm.gender"

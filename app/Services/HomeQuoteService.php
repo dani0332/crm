@@ -242,6 +242,8 @@ class HomeQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HomeQuote, $request, $response);
+
+            $this->selfAssign(QuoteTypes::HOME, $response->quoteUID);
         }
 
         return $response;

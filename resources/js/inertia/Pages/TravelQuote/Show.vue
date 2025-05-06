@@ -741,6 +741,7 @@ const onExportPlans = () => {
 };
 
 const onLoadAvailablePlansData = async () => {
+  availablePlansTable.isLoading = true;
   let data = {
     jsonData: true,
   };
@@ -756,6 +757,9 @@ const onLoadAvailablePlansData = async () => {
     })
     .catch(err => {
       console.log(err);
+    })
+    .finally(() => {
+      availablePlansTable.isLoading = false;
     });
 };
 
@@ -896,6 +900,7 @@ const emailStatusesTableColumns = computed(() => {
 
 const availablePlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -930,6 +935,7 @@ const availablePlansTable = reactive({
 
 const availableSeniorPlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -2291,12 +2297,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -2314,28 +2320,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
-                      placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      placeholder="SELECT INDUSTRY TYPE"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      placeholder="SELECT ENTITY TYPE"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="[
                         { label: 'Parent', value: 'Parent' },
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      placeholder="SELECT ENTITY TYPE"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>
@@ -2600,13 +2606,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
             :rules="[isRequired, maxCharacters(40)]"
             :hasError="travelerForm.errors.first_name"
           />
-          <ComboBox
+
+          <x-select
             v-model="travelerForm.nationality_id"
             label="Nationality"
             :options="nationalityOptions"
             placeholder="Select Nationality"
-            :single="true"
-            :hasError="travelerFieldReq.nationality"
+            filterable
+            class="w-full"
+            :rules="[isRequired]"
           />
           <DatePicker
             v-model="travelerForm.dob"
@@ -3137,7 +3145,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
             </p>
           </div>
           <div v-else>
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
+              <x-spinner size="lg" />
+            </div>
             <DataTable
+              v-else
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed"
               :headers="availablePlansTable.columns"
@@ -3230,7 +3245,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </h6>
             </div>
             <div>
+              <div
+                v-if="availableSeniorPlansTable.isLoading"
+                class="flex justify-center my-8"
+              >
+                <x-spinner size="lg" />
+              </div>
               <DataTable
+                v-else
                 v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed"
                 :headers="availableSeniorPlansTable.columns"

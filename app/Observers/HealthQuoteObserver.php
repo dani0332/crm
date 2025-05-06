@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\Health\HealthTransactionApproved;
 use App\Events\HealthQuoteAdvisorUpdated;
+use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
@@ -45,7 +46,6 @@ class HealthQuoteObserver
         ) {
             // Trigger the event for transaction approval
             HealthTransactionApproved::dispatch($healthQuote);
-
             $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
         }
 
@@ -55,6 +55,9 @@ class HealthQuoteObserver
                     'current_advisor_id' => $healthQuote->advisor_id,
                     'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),
                 ]);
+
+                LogAllocation::dispatch($healthQuote, QuoteTypes::HEALTH);
+
                 HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
                 $healthQuote->markLeadAllocationPassed();
             } catch (Exception $e) {

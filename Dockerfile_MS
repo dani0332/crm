@@ -3,10 +3,6 @@ RUN apt update && apt upgrade curl wget -y
 ARG IMCRM_TOKEN
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 RUN doppler configure set token ${IMCRM_TOKEN}
-# Install papertrail
-RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz && \
-tar xzf ./remote_syslog*.tar.gz && \
-cp remote_syslog/remote_syslog /usr/local/bin
 
 FROM node:22.12.0 as frontend
 WORKDIR /var/www
@@ -43,7 +39,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     ghostscript \
-    libwebp-dev
+    libwebp-dev \
+    pdftk
 
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
@@ -58,7 +55,6 @@ RUN composer install --optimize-autoloader --no-dev
 
 FROM php:8.2-fpm
 COPY --from=dependencies /root/.doppler/.doppler.yaml /root/.doppler/.doppler.yaml
-COPY --from=dependencies remote_syslog/remote_syslog /usr/local/bin/remote_syslog
 COPY --from=dependencies /usr/bin/doppler /usr/bin/doppler
 COPY --from=build /app/vendor/ /var/www/vendor
 COPY --from=frontend /var/www/ /var/www
@@ -83,7 +79,8 @@ zlib1g \
 libicu-dev \
 libmemcached11 \
 ghostscript \
-libwebp-dev
+libwebp-dev \
+pdftk
 
 # Set working directory
 WORKDIR /var/www
@@ -109,8 +106,7 @@ RUN chmod -R ugo+w /var/www/storage
 RUN cp docker/supervisor.conf /etc/supervisord.conf && \
 cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini && \
 cp docker/nginx.conf /etc/nginx/sites-enabled/default && \
-cp -r docker/*.pem /etc/nginx/conf.d/ && \
-cp docker/log_files.yml /etc/
+cp -r docker/*.pem /etc/nginx/conf.d/
 
 RUN chmod +x /var/www/docker/run.sh
 RUN usermod -aG root www-data

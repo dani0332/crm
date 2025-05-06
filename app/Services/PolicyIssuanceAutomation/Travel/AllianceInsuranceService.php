@@ -770,4 +770,18 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $customerMembers->first();
     }
 
+    public function getInsurerAPIStatusByStep($policyIssuance)
+    {
+        $lastCompletedStep = $policyIssuance->completed_step;
+        $step = $this->getNextStep($lastCompletedStep);
+        $insurerApiStatus = [
+            PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::ALLIANCE_TRAVEL_PURCHASE_POLICY => PolicyIssuanceEnum::POLICY_DETAIL_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::ALLIANCE_TRAVEL_UPLOAD_POLICY_DOCUMENTS => PolicyIssuanceEnum::UPLOAD_POLICY_DOCUMENTS_API_FAILED_STATUS_ID,
+            PolicyIssuanceEnum::ALLIANCE_TRAVEL_FILL_POLICY_BOOKING_DETAILS => PolicyIssuanceEnum::BOOKING_DETAILS_API_FAILED_STATUS_ID,
+        ];
+
+        return $insurerApiStatus[$step] ?? null;
+    }
+
 }

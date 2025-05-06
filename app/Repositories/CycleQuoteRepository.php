@@ -67,8 +67,14 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            request()->merge($requestParams);
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
@@ -79,8 +85,8 @@ class CycleQuoteRepository extends BaseRepository
             'quoteDetail',
             'renewalBatchModel',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
             ->when(isset(request()->advisors) && ! empty(request()->advisors), function ($query) {
                 $advisors = request()->advisors;
@@ -120,7 +126,7 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()
