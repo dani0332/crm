@@ -504,6 +504,8 @@ class AMLService
 
     public static function checkAMLStatusFailed($quoteTypeId, $quoteRequestId)
     {
+        LoggerService::info('fn:checkAMLStatusFailed - AMLService');
+
         $failedScreeningDecisions = [
             null,
             AMLDecisionStatusEnum::ESCALATED,
@@ -859,7 +861,7 @@ class AMLService
 
     public function prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType): bool
     {
-        LoggerService::info('fn: prepareInsuredKycFormData');
+        LoggerService::info('fn:prepareInsuredKycFormData - AMLService');
         try {
             if ($insuredKycRequest->customer_type == CustomerTypeEnum::Entity) {
                 $data['corporation_country'] = Nationality::where('id', $insuredKycRequest['country_of_corporation'])->value('country_name');

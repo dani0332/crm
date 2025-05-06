@@ -481,7 +481,7 @@ class AMLController extends Controller
 
             // Process members (UBO or regular members)
             if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
-                info('AML Screening Bridger - No Member Found, AML Screening Cleared - Ref-ID: '.$updateQuote->code);
+                LoggerService::info('AML Screening Bridger - No Member Found, AML Screening Cleared');
                 $response = $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
                 if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
                     $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
@@ -494,7 +494,7 @@ class AMLController extends Controller
             $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
             // Job dispatch for all members including customer
-            info('AML Screening Bridger - AML Screening Job Dispatched for Members - Ref-ID: '.$updateQuote->code);
+            LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched for Members');
             $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
 
             $response = $this->handleResponse(true, 'Quote is updated', $isAutomation);
@@ -618,6 +618,8 @@ class AMLController extends Controller
 
     private function InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote)
     {
+        LoggerService::info('fn:InsurerScreening - AMLController');
+
         if (isTapEnabled()) {
             LoggerService::info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start');
             $enableInsurerScreening = [
@@ -914,19 +916,23 @@ class AMLController extends Controller
         }
 
         return response()->json(['success' => false]);
-
     }
 
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
-        info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
+        LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped', extra: [
+            'quoteUUID' => $quote->uuid,
+            'time' => now(),
+        ]);
 
         return true;
     }
 
     public function mapHapexMailPayload($quote)
     {
+        LoggerService::info('fn:mapHapexMailPayload - AMLController');
+
         $directionCode = $quote['direction_code'] == TravelQuoteEnum::TRAVEL_UAE_INBOUND ? TravelQuoteEnum::IN_BOUND : TravelQuoteEnum::OUT_BOUND;
 
         return [
@@ -967,7 +973,10 @@ class AMLController extends Controller
     public function sendHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
-        info(self::class.'- sendHapexReminder Hapex reminder sent for Quote UUID: '.$quote->uuid.' | Time - '.now());
+        LoggerService::info(self::class.'- sendHapexReminder Hapex reminder sent', extra: [
+            'quoteUUID' => $quote->uuid,
+            'time' => now(),
+        ]);
 
         return true;
     }

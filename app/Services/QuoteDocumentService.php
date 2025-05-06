@@ -125,6 +125,8 @@ class QuoteDocumentService extends BaseService
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false)
     {
+        LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
+
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
