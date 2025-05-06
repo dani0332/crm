@@ -308,13 +308,13 @@ const addressTypes = [
 const registrationTypeOptions = Object.values(carRegistrationTypeEnum).map(
   item => ({
     value: item,
-    label: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
   }),
 );
 
 const vehicleUseOptions = Object.values(carVehicleUseEnum).map(item => ({
   value: item,
-  label: item,
+  label: item.charAt(0).toUpperCase() + item.slice(1),
 }));
 
 const villaApartmentOfficeLabel = computed(() => {
@@ -422,7 +422,8 @@ const gender = computed(() => {
 const isAmlOrKycUpdated = computed(() => {
   return (
     isEdit.value &&
-    (props.quote?.aml_status !== amlStatusEnum.AMLPending ||
+    ((props.quote?.aml_status !== amlStatusEnum.AMLPending &&
+      props.quote?.aml_status !== null) ||
       (props.quote?.kyc_decision !== kycStatusEnum.PENDING &&
         props.quote?.kyc_decision !== null))
   );
