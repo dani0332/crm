@@ -163,6 +163,7 @@ const showModal = computed({
   set: val => emit('update:modelValue', val),
 });
 const customerTypeEnum = page.props.customerTypeEnum;
+const quoteRequest = page.props.quoteRequest;
 
 const customerTypeOptions = computed(() => {
   return [
@@ -173,7 +174,7 @@ const customerTypeOptions = computed(() => {
 
 const screeningFormDetails = useForm({
   customer_type: null,
-  customer_id: page.props.quoteRequest.customer_id,
+  customer_id: quoteRequest.customer_id,
   quote_type: page.props.quoteType.code,
   // Individual Type
   screening_id_type: page.props.insuredDetails?.insured?.id_type ?? null,
@@ -193,13 +194,13 @@ const screeningFormDetails = useForm({
   screening_gender: page.props.insuredDetails?.insured?.gender ?? null,
   get_quote_email_gig:
     (page.props.quoteType.code === page.props.quoteTypeCodeEnum.Car
-      ? page.props.quoteRequest?.car_quote_request_detail?.insurer_quote_email
-      : page.props.quoteRequest?.quote_detail?.insurer_quote_email) ??
+      ? quoteRequest?.car_quote_request_detail?.insurer_quote_email
+      : quoteRequest?.quote_detail?.insurer_quote_email) ??
     page.props.gigInsurerDefaultEmail,
   chassis_number:
     (page.props.quoteType.code === props.quoteTypeCodeEnum.Car
-      ? page.props.quoteRequest?.car_quote_request_detail?.chassis_number
-      : page.props.quoteRequest?.bike_quote?.chassis_number) ?? null,
+      ? quoteRequest?.car_quote_request_detail?.chassis_number
+      : quoteRequest?.bike_quote?.chassis_number) ?? null,
   // Entity Type
   // entity_id: page.props.entityDetails?.entity?.id ?? null,
   entity_type: page.props.entityDetails?.entity?.entity_type_code ?? 'Parent',
@@ -388,7 +389,7 @@ const searchInsuredDetails = customerType => {
     : entitySearchValidation.value;
   if (searchInsuredValidation) {
     loader.insuredSearch = true;
-    let url = `/kyc/get-insured-details?customer_type=${customerType}&id_type=${screeningFormDetails.screening_id_type}&id_number=${screeningFormDetails.screening_id_number}&trade_license=${screeningFormDetails.trade_license_no}`;
+    let url = `/kyc/get-insured-details?customer_type=${customerType}&id_type=${screeningFormDetails.screening_id_type}&id_number=${screeningFormDetails.screening_id_number}&trade_license=${screeningFormDetails.trade_license_no}&quote_code=${quoteRequest.code}`;
     axios
       .get(url)
       .then(res => {
@@ -630,7 +631,7 @@ function screeningFormValidate() {
 const submitScreeningForm = isValid => {
   if (screeningFormValidate()) {
     // updateFormDetails();
-    screeningFormDetails.get(`${page.props.quoteRequest.id}/quoteUpdate`, {
+    screeningFormDetails.get(`${quoteRequest.id}/quoteUpdate`, {
       preserveScroll: true,
       onError: errors => {
         notification.error({
@@ -682,7 +683,7 @@ watch(() => {
   ) {
     screeningFormDetails.screening_id_type =
       page.props.quoteType.id === page.props.quoteTypeIdEnum.Travel &&
-      page.props.quoteRequest.direction_code === 'travelUaeInbound'
+      quoteRequest.direction_code === 'travelUaeInbound'
         ? 'passport'
         : 'emiratesId';
   }

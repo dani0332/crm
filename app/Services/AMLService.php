@@ -106,6 +106,8 @@ class AMLService
 
     public static function updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, $isMigrated, $updateData = '')
     {
+        LoggerService::info('fn:updatePaIdForPersonalQuotes - AMLService');
+
         $filterColumn = $isMigrated ? 'personal_quote_id' : 'id';
         $updateData = empty($updateData) ? ['pa_id' => auth()->id()] : $updateData;
 
@@ -436,6 +438,8 @@ class AMLService
 
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
+        LoggerService::info('fn:getMemberOrUBODetails - AMLService');
+
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
 
         return CustomerMembersRepository::getBy($quoteRequestId, $quoteType->code, $membersFor);
@@ -671,6 +675,8 @@ class AMLService
 
     public function amlScreeningGIG($request, $quoteTypeId, $quoteDetails, $customerType)
     {
+        LoggerService::info('fn:amlScreeningGIG - AMLService');
+
         $modelObjectAgainstQuoteType = $this->getModelObject(QuoteTypes::getName($quoteTypeId)->value);
         $paymentDetails = Payment::with('insuranceProvider')->where([
             'paymentable_type' => $quoteDetails->getMorphClass(),
@@ -795,6 +801,8 @@ class AMLService
 
     public function getKYCLogs($quoteTypeId, $quoteRequestId)
     {
+        LoggerService::info('fn:getKYCLogs - AMLService');
+
         return AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
             ->where(function ($aml) {
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
@@ -805,6 +813,8 @@ class AMLService
 
     public function getAMLLookups()
     {
+        LoggerService::info('fn:getAMLLookups - AMLService');
+
         $lookupsForAML = [
             LookupsEnum::RESIDENT_STATUS,
             LookupsEnum::DOCUMENT_ID_TYPE,
@@ -828,6 +838,8 @@ class AMLService
 
     public function getInsuredDetails($customerId, $quoteTypeId, $quoteRequestId)
     {
+        LoggerService::info('fn:getInsuredDetails - AMLService');
+
         return CustomerInsured::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
@@ -838,6 +850,8 @@ class AMLService
     // TODO:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data
     public function getEntityDetails($quoteTypeId, $quoteRequestId)
     {
+        LoggerService::info('fn:getEntityDetails - AMLService');
+
         return QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
             ->first() ?? [];
