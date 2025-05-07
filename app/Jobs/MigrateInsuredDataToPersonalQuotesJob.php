@@ -197,7 +197,6 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
 
     public function middleware()
     {
-        // release the WithoutOverlapping lock 5 minutes after the job has processed
         return [(new WithoutOverlapping($this->cacheKey.'-'.$this->lockPostfix))->dontRelease()];
     }
 }

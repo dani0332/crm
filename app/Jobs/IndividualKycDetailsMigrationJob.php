@@ -258,7 +258,6 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
 
     public function middleware()
     {
-        // release the WithoutOverlapping lock 5 minutes after the job has processed
         return [(new WithoutOverlapping(self::CLASS_NAME.'-'.$this->lockPostfix))->dontRelease()];
     }
 }
