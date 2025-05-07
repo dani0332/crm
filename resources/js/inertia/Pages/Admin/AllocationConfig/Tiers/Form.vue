@@ -84,15 +84,27 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Tiers Users">
-        <ComboBox
-          v-model="tierForm.tier_user"
-          :multiple="true"
-          :options="tierUsers"
-          :selected="selectedUsers"
-          :error="tierForm.errors.tier_user"
-        />
-      </x-field>
+      <x-select
+        v-model="tierForm.tier_user"
+        label="Tiers Users"
+        :options="tierUsers"
+        multiple
+        filterable
+        filterPlaceholder="Filter Tiers Users...."
+        placeholder="Select Tiers Users"
+        required
+        :rules="[isRequired]"
+        :error="tierForm.errors.tier_user"
+        truncate
+        class="w-full"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="tierForm.tier_user = tierUsers.map(item => item.value)"
+            @clear="tierForm.tier_user = []"
+          />
+        </template>
+      </x-select>
       <x-field label="Is Ecommerce?">
         <x-select
           v-model="tierForm.can_handle_ecommerce"

@@ -122,12 +122,28 @@ const quotesSelected = ref([]),
           placeholder="Search by Renewal Batch"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptionsFilter"
-        />
+          class="w-full"
+          filterable
+          filterPlaceholder="Filter Advisor...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisor_id = advisorOptionsFilter.map(
+                  advisor => advisor.value,
+                )
+              "
+              @clear="filters.advisor_id = []"
+            />
+          </template>
+        </x-select>
 
         <x-select
           v-model="filters.approval_status"

@@ -122,9 +122,8 @@ const gender = computed(() => {
           />
         </x-field>
         <x-field label="NATIONALITY">
-          <ComboBox
+          <x-select
             v-model="quoteForm.nationality_id"
-            :single="true"
             :options="
               nationalities.map(item => ({
                 value: item.id,
@@ -132,6 +131,7 @@ const gender = computed(() => {
               }))
             "
             placeholder="Nationality"
+            filterable
           />
         </x-field>
         <x-field label="GENDER">
