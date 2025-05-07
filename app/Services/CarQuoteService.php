@@ -209,7 +209,11 @@ class CarQuoteService extends BaseService
 
         } else {
             if ($entityMapping) {
-                $entityMapping->entity->delete();
+
+                $entityMappingCount = $entityMapping->entity->quoteRequestEntityMapping->count();
+                if($entityMappingCount == 1) {
+                    $entityMapping->entity->delete();
+                }
                 $entityMapping->delete();
             }
         }
