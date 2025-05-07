@@ -56,16 +56,14 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
         $failedDetails = [];
 
         // Query only customer details that haven't been migrated yet using subqueries
-        $customerDetailsQuery = CustomerDetail::with('customer')->whereNotExists(function ($query) {
-            $query->select(DB::raw(1))
+        $customerDetailsQuery = CustomerDetail::with('customer')->whereNotIn('id', function ($query) {
+            $query->select('insured.customer_details_id')
                 ->from('insured')
-                ->whereColumn('insured.customer_details_id', 'customer_details.id')
                 ->whereNotNull('insured.customer_details_id');
         })
-            ->whereNotExists(function ($query) {
-                $query->select(DB::raw(1))
+            ->whereNotIn('id', function ($query) {
+                $query->select('insured_kyc.customer_details_id')
                     ->from('insured_kyc')
-                    ->whereColumn('insured_kyc.customer_details_id', 'customer_details.id')
                     ->whereNotNull('insured_kyc.customer_details_id');
             });
 
