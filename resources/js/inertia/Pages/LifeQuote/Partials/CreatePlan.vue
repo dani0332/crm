@@ -9,6 +9,12 @@ const props = defineProps({
 
 const { isRequired } = useRules();
 
+// Add validation for non-negative numbers
+const isNonNegative = (value) => {
+  if (value === null || value === undefined || value === '') return true;
+  return parseFloat(value) >= 0 || 'Value must be non-negative';
+};
+
 const shown = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
@@ -23,6 +29,14 @@ const riders = props.lifeRiders.map(rider => ({
 }));
 
 const ridersData = ref(riders);
+
+// Ensure rider values are always non-negative
+watch(ridersData, (newValue) => {
+  newValue.forEach(rider => {
+    if (parseFloat(rider.price) < 0) rider.price = 0;
+    if (parseFloat(rider.coverValue) < 0) rider.coverValue = 0;
+  });
+}, { deep: true });
 
 const page = usePage();
 
@@ -71,6 +85,13 @@ const createForm = reactive({
   isVariant: false,
   update: false,
   initialPrice: 0
+});
+
+// Ensure form numeric values are always non-negative
+watch(() => [createForm.sumAssured, createForm.actualPremium, createForm.policyTerm], ([sumAssured, actualPremium, policyTerm]) => {
+  if (parseFloat(sumAssured) < 0) createForm.sumAssured = 0;
+  if (parseFloat(actualPremium) < 0) createForm.actualPremium = 0;
+  if (parseFloat(policyTerm) < 0) createForm.policyTerm = 0;
 });
 
 const onSubmit = isValid => {
@@ -171,7 +192,6 @@ const fetchProviderPlans = () => {
                 );
               } else if(createForm.isUW) {
                 
-                console.log('inside UW');
                 options.providerPlans = res.data.plans.filter(
                   plan => !props.plans.some(existingPlan => 
                     existingPlan.planId === plan.id && existingPlan.isUnderwritten
@@ -272,10 +292,12 @@ const fetchProviderPlans = () => {
             <x-input
               v-model="createForm.sumAssured"
               placeholder="Enter Sum Assured"
-              :rules="[isRequired]"
+              :rules="[isRequired, isNonNegative]"
               class="w-full"
               type="number"
-              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"             />
+              min="0"
+              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"             
+            />
           </div>
         </div>
 
@@ -284,9 +306,10 @@ const fetchProviderPlans = () => {
            <x-input
               v-model="createForm.policyTerm"
               placeholder="Enter Policy Term"
-              :rules="[isRequired]"
+              :rules="[isRequired, isNonNegative]"
               class="w-full"
               type="number"
+              min="0"
               @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
             />
         </div>
@@ -307,10 +330,12 @@ const fetchProviderPlans = () => {
           <x-input
               v-model="createForm.actualPremium"
               placeholder="Enter Price"
-              :rules="[isRequired]"
+              :rules="[isRequired, isNonNegative]"
               class="w-full"
               type="number"
-              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"           />
+              min="0"
+              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"          
+           />
         </div>
 
         <div>
@@ -329,17 +354,47 @@ const fetchProviderPlans = () => {
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
           <span class="text-gray-700 col-span-2">Life Cover</span>
           <span class="text-gray-700">Included</span>
-          <x-input type="number"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="createForm.sumAssured" disabled />
+          <x-input 
+            type="number"  
+            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
+            class="w-full h-10 p-2 rounded-md" 
+            v-model="createForm.sumAssured" 
+            min="0"
+            disabled 
+          />
 
           <x-toggle v-model="lifeCoverToggled" color="emerald" size="lg" disabled/>
-          <x-input type="number"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
+          <x-input 
+            type="number"  
+            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
+            class="w-full h-10 p-2 rounded-md" 
+            v-model="createForm.actualPremium" 
+            min="0"
+            disabled 
+          />
         </div>
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.id">
           <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
           <span class="text-gray-700">{{ rider.active ? 'Included' : 'Optional'}}</span>
-          <x-input type="number" :disabled="!rider.active" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
+          <x-input 
+            type="number" 
+            :disabled="!rider.active" 
+            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
+            class="w-full h-10 p-2 rounded-md" 
+            v-model="rider.coverValue"
+            min="0"
+            :rules="[isNonNegative]"
+          />
           <x-toggle v-model="rider.active" color="success" size="lg" />
-          <x-input type="number" :disabled="!rider.active" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"  class="w-full h-10 p-2 rounded-md" v-model="rider.price"/>
+          <x-input 
+            type="number" 
+            :disabled="!rider.active" 
+            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"  
+            class="w-full h-10 p-2 rounded-md" 
+            v-model="rider.price"
+            min="0"
+            :rules="[isNonNegative]"
+          />
         </div>
       </div>
     </div>

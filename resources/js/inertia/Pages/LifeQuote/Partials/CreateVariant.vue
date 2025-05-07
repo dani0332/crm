@@ -15,6 +15,12 @@ const notification = useNotifications('toast');
 
 const { isRequired } = useRules();
 
+// Custom rule to validate non-negative numbers
+const isNonNegative = (value) => {
+  if (value === null || value === undefined || value === '') return true;
+  return Number(value) >= 0 || 'Value cannot be negative';
+};
+
 const shown = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
@@ -66,16 +72,43 @@ const createForm = reactive({
   getQuoteLoading: false,
 });
 
+// Ensure numeric fields are never negative
+watch(() => createForm.sumAssured, (val) => {
+  if (val !== null && val !== undefined && Number(val) < 0) {
+    createForm.sumAssured = 0;
+  }
+});
+
+watch(() => createForm.policyTerm, (val) => {
+  if (val !== null && val !== undefined && Number(val) < 0) {
+    createForm.policyTerm = 0;
+  }
+});
+
+watch(() => createForm.actualPremium, (val) => {
+  if (val !== null && val !== undefined && Number(val) < 0) {
+    createForm.actualPremium = 0;
+  }
+});
+
+// Watch for negative values in riders
+watch(() => ridersData.value, (newRiders) => {
+  newRiders.forEach(rider => {
+    if (Number(rider.price) < 0) rider.price = 0;
+    if (Number(rider.coverValue) < 0) rider.coverValue = 0;
+  });
+}, { deep: true });
+
 watch(() => props.plan, (newVal) => {
     createForm.providerId = props.plan?.providerId;
     createForm.planId = props.plan?.planId;
     createForm.currency = props.plan?.currency;
-    createForm.sumAssured = props.plan?.sumInsured;
-    createForm.policyTerm = props.plan?.policyTerm;
+    createForm.sumAssured = props.plan?.sumInsured ? Math.max(0, Number(props.plan.sumInsured)) : null;
+    createForm.policyTerm = props.plan?.policyTerm ? Math.max(0, Number(props.plan.policyTerm)) : null;
     createForm.paymentTerm = props.plan?.paymentTerm;
     createForm.actualPremium = null;
     if(!props.plan?.isApi) {
-        createForm.actualPremium = props.plan?.actualPremium;
+        createForm.actualPremium = props.plan?.actualPremium ? Math.max(0, Number(props.plan.actualPremium)) : null;
     }
     createForm.insurerQuoteNo = null;
     errorMessage = null;
@@ -86,8 +119,8 @@ watch(() => props.plan, (newVal) => {
         ridersData.value = props.plan.riders.map(rider => ({
             riderId: rider.id,
             active: rider.active ?? 0,
-            price: parseFloat(rider.price) || 0,
-            coverValue: parseFloat(rider.coverValue) || 0,
+            price: Math.max(0, parseFloat(rider.price) || 0),
+            coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
             text: rider.text,
         }));
     } else {
@@ -128,7 +161,7 @@ const getQuote = () => {
            return; 
         }
         if (res.data) {
-            createForm.actualPremium = res.data.providerPlan.plan.actualPremium;
+            createForm.actualPremium = Math.max(0, Number(res.data.providerPlan.plan.actualPremium));
             errorMessage = null;
         }
     })
@@ -200,12 +233,12 @@ onMounted(() => {
     createForm.providerId = props.plan.providerId;
     createForm.planId = props.plan.planId;
     createForm.currency = props.plan.currency;
-    createForm.sumAssured = props.plan.sumInsured;
-    createForm.policyTerm = props.plan.policyTerm;
+    createForm.sumAssured = props.plan.sumInsured ? Math.max(0, Number(props.plan.sumInsured)) : null;
+    createForm.policyTerm = props.plan.policyTerm ? Math.max(0, Number(props.plan.policyTerm)) : null;
     createForm.paymentTerm = props.plan.paymentTerm;
     createForm.actualPremium = null;
     if (!props.plan.isApi) {
-      createForm.actualPremium = props.plan.actualPremium;
+      createForm.actualPremium = props.plan.actualPremium ? Math.max(0, Number(props.plan.actualPremium)) : null;
     }
     
     // Handle rider data initialization
@@ -215,8 +248,8 @@ onMounted(() => {
         const mappedRider = {
           riderId: rider.id,
           active: rider.active ?? 0,
-          price: parseFloat(rider.price) || 0,
-          coverValue: parseFloat(rider.coverValue) || 0,
+          price: Math.max(0, parseFloat(rider.price) || 0),
+          coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
           text: rider.text || rider.name,
         };
         console.log('Mapped rider:', mappedRider);
@@ -314,11 +347,13 @@ onMounted(() => {
             <x-input
               v-model="createForm.sumAssured"
               placeholder="Enter Sum Assured"
-              :rules="[isRequired]"
+              :rules="[isRequired, isNonNegative]"
               class="w-full"
               type="number"
               min="0"
+              step="any"
               @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
+              @input="val => createForm.sumAssured = Math.max(0, Number(val) || 0)"
               />
           </div>
         </div>
@@ -328,11 +363,13 @@ onMounted(() => {
            <x-input
               v-model="createForm.policyTerm"
               placeholder="Enter Policy Term"
-              :rules="[isRequired]"
+              :rules="[isRequired, isNonNegative]"
               class="w-full"
               type="number"
               min="0"
+              step="any"
               @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
+              @input="val => createForm.policyTerm = Math.max(0, Number(val) || 0)"
               />
         </div>
 
@@ -352,10 +389,13 @@ onMounted(() => {
           <x-input
               v-model="createForm.actualPremium"
               placeholder="Enter Price"
-              :rules="[isRequired]"
+              :rules="[isRequired, isNonNegative]"
               class="w-full"
               type="number"
+              min="0"
+              step="any"
               @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
+              @input="val => createForm.actualPremium = Math.max(0, Number(val) || 0)"
               :disabled="plan.isApi"
           />
         </div>
@@ -381,19 +421,36 @@ onMounted(() => {
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
           <span class="text-gray-700 col-span-2">Life Cover</span>
           <span class="text-gray-700">Included</span>
-          <x-input type="number" min="0"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" 
+          <x-input type="number" min="0" step="any" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" 
           v-model="createForm.sumAssured" disabled />
 
           <x-toggle color="emerald" size="lg" disabled/>
-          <x-input type="number" min="0"  @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"  class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
+          <x-input type="number" min="0" step="any" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"  class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
         </div>
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.riderId">
           <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
           <span class="text-gray-700">{{rider.active ? 'Included' : 'Optional'}}</span>
-          <x-input type="number" min="0" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" :disabled="!rider.active" class="w-full h-10 p-2 rounded-md" v-model="rider.coverValue" />
+          <x-input 
+            type="number" 
+            min="0" 
+            step="any"
+            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
+            @input="val => rider.coverValue = Math.max(0, Number(val) || 0)"
+            :disabled="!rider.active" 
+            class="w-full h-10 p-2 rounded-md" 
+            v-model="rider.coverValue" 
+          />
           <x-toggle v-model="rider.active" color="success" size="lg" />
-          <x-input type="number" min="0" 
-          @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" :disabled="!rider.active || !props.plan.isManualPlan" v-model="rider.price"/>
+          <x-input 
+            type="number" 
+            min="0" 
+            step="any"
+            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
+            @input="val => rider.price = Math.max(0, Number(val) || 0)"
+            class="w-full h-10 p-2 rounded-md" 
+            :disabled="!rider.active || !props.plan.isManualPlan" 
+            v-model="rider.price"
+          />
         </div>
       </div>
     </div>

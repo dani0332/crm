@@ -117,13 +117,13 @@ const onSubmit = isValid => {
   }
   extraAttr.loading = true;
   
-  // Ensure riders have numeric values by converting strings to floats
+  // Ensure riders have numeric values by converting strings to floats and preventing negative values
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
-    price: parseFloat(rider.price) || 0,
-    loading: parseFloat(rider.loading) || 0,
-    final_price: parseFloat(rider.final_price) || 0,
-    coverValue: parseFloat(rider.coverValue) || 0
+    price: Math.max(0, parseFloat(rider.price) || 0),
+    loading: Math.max(0, parseFloat(rider.loading) || 0),
+    final_price: Math.max(0, parseFloat(rider.final_price) || 0),
+    coverValue: Math.max(0, parseFloat(rider.coverValue) || 0)
   }));
   
   editForm.riders = processedRiders;
@@ -176,13 +176,13 @@ const onSubmit = isValid => {
 const getQuote = () => {
     extraAttr.getQuoteLoading = true;
     
-    // Ensure riders have numeric values by converting strings to floats
+    // Ensure riders have numeric values by converting strings to floats and preventing negative values
     const processedRiders = ridersData.value.map(rider => ({
         ...rider,
-        price: parseFloat(rider.price) || 0,
-        loading: parseFloat(rider.loading) || 0,
-        final_price: parseFloat(rider.final_price) || 0,
-        coverValue: parseFloat(rider.coverValue) || 0
+        price: Math.max(0, parseFloat(rider.price) || 0),
+        loading: Math.max(0, parseFloat(rider.loading) || 0),
+        final_price: Math.max(0, parseFloat(rider.final_price) || 0),
+        coverValue: Math.max(0, parseFloat(rider.coverValue) || 0)
     }));
     
     axios
@@ -251,24 +251,24 @@ onMounted(() => {
 
 const getRiderPrice = () => {
   // Calculate the total price for active riders
-  const totalActivePrice =  ridersData.value.filter(rider => rider.active == 1) 
-    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.price) || 0), 0);
+  const totalActivePrice = ridersData.value.filter(rider => rider.active == 1) 
+    .reduce((sum, rider) => Math.max(0, parseFloat(sum)) + Math.max(0, parseFloat(rider.price) || 0), 0);
     
   const totalRiderLoading = ridersData.value
     .filter(rider => rider.active == parseInt(1))  // Filter active riders
-    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.loading) || 0), 0);
+    .reduce((sum, rider) => Math.max(0, parseFloat(sum)) + Math.max(0, parseFloat(rider.loading) || 0), 0);
 
   const totalFinalPrice = ridersData.value
     .filter(rider => rider.active == parseInt(1))  // Filter active riders
-    .reduce((sum, rider) => parseFloat(sum) + (parseFloat(rider.final_price) || 0), 0);
+    .reduce((sum, rider) => Math.max(0, parseFloat(sum)) + Math.max(0, parseFloat(rider.final_price) || 0), 0);
 
-  let totalRiderPrice = parseFloat(totalActivePrice); 
+  let totalRiderPrice = Math.max(0, parseFloat(totalActivePrice)); 
   // Disable Overall Loading if there is rider loading added on rider level
   if(totalRiderLoading > 0){
     overallLoadingState = true;
-    totalRiderPrice  = totalRiderPrice + totalRiderLoading;   
+    totalRiderPrice = Math.max(0, totalRiderPrice + totalRiderLoading);   
   }else if(totalFinalPrice > 0){
-    totalRiderPrice = totalRiderPrice + totalFinalPrice; 
+    totalRiderPrice = Math.max(0, totalRiderPrice + totalFinalPrice); 
     overallLoadingState = true; 
   }
   return totalRiderPrice; 
@@ -276,7 +276,7 @@ const getRiderPrice = () => {
 
 watch(ridersData, (newRidersData) => {
   let price = getRiderPrice();  
-  actualPremium.value = parseFloat(editForm.actualPremium) + price;
+  actualPremium.value = Math.max(0, parseFloat(editForm.actualPremium)) + price;
 }, { deep: true });
 
 // EditForm Overloading
@@ -289,12 +289,12 @@ const updatePriceWithOverloading = () => {
     console.log('Is Nan')
   } 
   console.log('price', price)
-  actualPremium.value = parseFloat(editForm.actualPremium) + parseFloat(price) + parseFloat(totalRider);
+  actualPremium.value = Math.max(0, parseFloat(editForm.actualPremium)) + Math.max(0, parseFloat(price)) + Math.max(0, parseFloat(totalRider));
 } 
 
 const handleActualPremium = () => {
   const totalRider = getRiderPrice();
-  actualPremium.value = parseFloat(editForm.actualPremium) + parseFloat(totalRider);
+  actualPremium.value = Math.max(0, parseFloat(editForm.actualPremium)) + Math.max(0, parseFloat(totalRider));
 }
 
 // tabs 
@@ -321,8 +321,8 @@ const getInputRules = (rider) => {
 };
 
 const computedFinalPrice = (rider) => computed(() => {
-  const price = (!rider.price || rider.price === '') ? 0 : parseFloat(rider.price);
-  const loading = (!rider.loading || rider.loading === '') ? 0 : parseFloat(rider.loading);
+  const price = (!rider.price || rider.price === '') ? 0 : Math.max(0, parseFloat(rider.price));
+  const loading = (!rider.loading || rider.loading === '') ? 0 : Math.max(0, parseFloat(rider.loading));
   return price + loading;
 });
 

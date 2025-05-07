@@ -219,7 +219,7 @@ if (props.sendUpdate) {
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
 }
-else if (props.quoteType === 'Life') {
+else if (props.quoteType === quoteTypeCodeEnum.Life) {
   initialAmount.value = props.quoteRequest.premium;
 }
 else if (props.isPlanDetailEnabled) {
@@ -2063,6 +2063,7 @@ const initializePaymentForm = (
   sr_no,
   capture_approval,
 ) => {
+
   if (sr_no > 0) {
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -2539,6 +2540,7 @@ const addPayment = isValid => {
     total_price: totalPrice.value,
     discount_value: discountValue.value, // discount amount
   };
+  
   let splitPayments = [];
   for (let i = 1; i < splitAmountModels.value.length; i++) {
     if (i <= paymentMethodsForm.payment_no) {
@@ -3447,7 +3449,11 @@ const setPaymentInitialPrice = () => {
       props.quoteType === quoteTypeCodeEnum.Home
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
-    } else {
+    }
+    else if (props.quoteType === quoteTypeCodeEnum.Life) {
+      initialAmount.value = props.quoteRequest.premium;
+    } 
+    else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
         : props.quoteRequest.price_with_vat;

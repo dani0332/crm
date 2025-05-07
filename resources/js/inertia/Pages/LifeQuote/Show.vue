@@ -734,13 +734,13 @@ const onLoadAvailablePlansData = async () => {
 
       const foundPlan = planData.find(plan => 
         plan.planId === selectedProviderPlan && 
-        plan.version === selectedProviderPlanVersion
+        plan.version === selectedProviderPlanVersion && 
+        !plan.isDisabled
       );
 
       ecomDetail.value = foundPlan;
 
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
-      console.log('Plan data', plansTable.data); 
     })
     .catch(err => {
       console.log(err);
@@ -1860,7 +1860,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Price</dt>
-                <dd>{{ ecomDetail?.actualPremium ?? 'N/A' }}</dd>
+                <dd>{{ ecomDetail?.totalPrice ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Authorised AT</dt>
@@ -1872,7 +1872,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{ quote.payment_status ?? 'N/A' }}</dd>
+                <dd>{{ quote?.payment_status?.text ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
