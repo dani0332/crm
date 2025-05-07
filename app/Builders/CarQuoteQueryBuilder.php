@@ -148,7 +148,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             })
             ->when(
                 request()->filled('sortBy'),
-                fn ($q) => $q->orderBy(request('sortBy'), request('sortType')),
+                fn ($q) => $q->orderBy($this->getOrderByColumn(), request('sortType')),
                 fn ($q) => $q->orderBy('created_at', 'DESC'),
             )
             ->when(request()->filled('registration_type'), function ($query) {

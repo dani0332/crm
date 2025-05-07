@@ -155,7 +155,7 @@ const onDataExport = async (exportType = 'download') => {
   };
 
   loader.export = true;
-  if(exportType == 'email'){
+  if (exportType == 'email') {
     const exportResponse = await axios
       .get(payload.url)
       .then(resp => {
@@ -181,12 +181,11 @@ const onDataExport = async (exportType = 'download') => {
         });
         throw err;
       });
-  }else{
+  } else {
     setTimeout(() => {
       loader.export = false;
     }, 1000);
     window.open(url + '?' + useObjToUrl(exportData));
-
   }
 };
 
@@ -246,7 +245,7 @@ onMounted(() => {
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-        <ComboBox
+        <x-select
           v-model="filtersForm.quoteType"
           label="Quote Type"
           placeholder="Search by Quote Type"
@@ -254,8 +253,9 @@ onMounted(() => {
             { value: '', label: 'Select Quote Type' },
             ...quoteTypeOptions.value,
           ]"
-          :single="true"
-          :hasError="isQuoteTypeEmpty"
+          filterable
+          filterPlaceholder="Filter Quote Type...."
+          :rules="[isRequired]"
         />
 
         <x-select

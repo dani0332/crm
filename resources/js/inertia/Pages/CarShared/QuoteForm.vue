@@ -285,12 +285,13 @@ onMounted(() => {
         </x-field>
 
         <x-field label="Nationality" required>
-          <ComboBox
+          <x-select
             v-model="quoteForm.nationality_id"
-            :single="true"
             :rules="[isRequired]"
             :options="nationalities"
             :error="quoteForm.errors.nationality_id"
+            filterable
+            filterPlaceholder="Filter Nationality...."
           />
         </x-field>
 

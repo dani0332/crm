@@ -1250,6 +1250,25 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
+    public function removeInsurerPaymentLink($request)
+    {
+        $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
+        if (! $quote) {
+            return ['status' => false, 'message' => 'Quote not found'];
+        }
+
+        $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
+        $quote->save();
+
+        $paymentSplits = method_exists($quote, 'getAllInsurerPaymentLinkSplits') ? $quote->getAllInsurerPaymentLinkSplits() : [];
+        foreach ($paymentSplits as $ps) {
+            $ps->insurer_payment_link = null;
+            $ps->save();
+        }
+
+        return ['status' => true, 'message' => 'Insurer payment link removed'];
+    }
+
     // Todo: This method will remove in future if Business confirm we will enable capture of all providers
     private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
     {
