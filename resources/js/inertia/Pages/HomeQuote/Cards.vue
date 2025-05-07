@@ -340,14 +340,29 @@ const validateDateRange = () => {
         <x-field label="Created Date End">
           <DatePicker v-model="filters.created_at_end" name="created_at_end" />
         </x-field>
-        <x-field label="Lead Status" v-if="isAllowed">
-          <ComboBox
-            v-model="filters.quote_status_id"
-            name="quote_status_id"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-          />
-        </x-field>
+        <x-select
+          v-if="isAllowed"
+          v-model="filters.quote_status_id"
+          name="quote_status_id"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
+          class="w-full"
+          filterable
+          label="Lead Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = leadStatusOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -360,14 +375,27 @@ const validateDateRange = () => {
             name="policy_expiry_date_end"
           />
         </x-field>
-        <x-field label="Advisor" v-if="isAllowed">
-          <ComboBox
-            v-if="!hasRole(rolesEnum.Advisor)"
-            v-model="filters.advisors"
-            placeholder="Search by Advisor"
-            :options="advisorOptions"
-          />
-        </x-field>
+        <x-select
+          v-if="isAllowed"
+          v-model="filters.advisors"
+          name="advisor_id"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          class="w-full"
+          filterable
+          label="Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-field label="Renewal">
           <x-select
             :disabled="!props.areBothTeamsPresent"

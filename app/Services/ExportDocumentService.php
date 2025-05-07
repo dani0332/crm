@@ -10,7 +10,7 @@ use App\Interfaces\ExportDocumentInterface;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Storage;
-use Pdf;
+use PDF;
 
 class ExportDocumentService extends BaseService implements ExportDocumentInterface
 {

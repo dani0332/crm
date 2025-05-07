@@ -96,7 +96,7 @@ class TravelController extends Controller
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
         $insurerApiStatus = PolicyIssuanceEnum::getInsurerAPIStatuses();
         $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
-        $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
+        $gridData = $this->travelQuoteService->getGridData();
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManager = auth()->user()->isManagerOrDeputy();

@@ -1245,14 +1245,14 @@ watch(
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <ComboBox
+                <x-select
                   v-model="bookingDetailsForm.reversal_invoice"
-                  class="w-full"
-                  placeholder="Select Tax invoice number"
-                  @update:model-value="selectedInvoice"
                   :options="paymentInvoiceNumberOptions"
-                  :single="true"
+                  placeholder="Select Tax invoice number"
                   :disabled="!state.reversalSectionEdit"
+                  filterable
+                  filterPlaceholder="Filter Tax invoice number...."
+                  @update:modelValue="selectedInvoice"
                 />
               </div>
             </div>
