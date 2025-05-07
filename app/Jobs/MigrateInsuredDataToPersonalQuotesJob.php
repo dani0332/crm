@@ -168,12 +168,11 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     if (! empty($personalQuoteUpdateData)) {
                         $personalQuote->update($personalQuoteUpdateData);
 
-                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', extra: $personalQuoteUpdateData);
+                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' - Quote Code: '.$personalQuote->code.' updated.', extra: $personalQuoteUpdateData);
                     }
 
                     $lastProcessedId = $personalQuote->id;
                     $totalUpdated++;
-                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' with ', extra: $personalQuoteUpdateData);
                 }
 
                 // Update the cache after each chunk to avoid losing progress
