@@ -66,7 +66,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      *
      * @var string
      */
-    protected $cacheKey = 'processed_personal_quote_ids';
+    protected $cacheKey = 'last_processed_personal_quote_id';
 
     /**
      * Class name for logging
