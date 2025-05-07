@@ -735,13 +735,17 @@ watch(
           </x-field>
 
           <x-field label="Nationality">
-            <ComboBox
-              :single="true"
+            <x-select
               v-model="insuredFormDetails.nationality_id"
-              :hasError="isEmptyNationality"
+              filterable
+              filterPlaceholder="Filter Nationality...."
               placeholder="Select Nationality"
+              virtualList
+              :virtualListItemHeight="32"
+              :virtualListOverscan="10"
               :options="nationalitiesOptions"
               class="w-full"
+              :rules="[isRequired]"
             />
           </x-field>
           <x-field label="Date of Birth">
@@ -979,8 +983,7 @@ watch(
             />
           </x-field>
           <x-field label="Entity Type">
-            <ComboBox
-              :single="true"
+            <x-select
               v-model="insuredFormDetails.entity_type_code"
               :rules="[isRequired]"
               placeholder="Select Entity Type"
@@ -989,29 +992,31 @@ watch(
                 { label: 'Sub Entity', value: 'SubEntity' },
               ]"
               class="w-full"
+              filterable
+              filterPlaceholder="Filter Entity Type...."
             />
           </x-field>
           <x-field label="Industry Type">
-            <ComboBox
-              :single="true"
+            <x-select
               v-model="insuredFormDetails.industry_type_code"
               :rules="[isRequired]"
               placeholder="Select Industry Type"
               :options="industryTypeOptions"
               class="w-full"
-              :hasError="industryTypeCode"
+              filterable
+              filterPlaceholder="Filter Industry Type...."
             />
           </x-field>
 
           <x-field label="Emirate of Registration">
-            <ComboBox
-              :single="true"
+            <x-select
               v-model="insuredFormDetails.emirate_of_registration_id"
               :rules="[isRequired]"
               placeholder="Select Emirate of Registration"
               :options="emirateRegistrationOptions"
               class="w-full"
-              :hasError="emirateRegistrationId"
+              filterable
+              filterPlaceholder="Filter Emirate of Registration...."
             />
           </x-field>
         </dl>

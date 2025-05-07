@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             CommercialCarPlanSeeder::class,
             RuleNameSeeder::class,
             BusinessActivitiesSeeder::class,
+            PaymentMethodsAddSeeder::class,
         ]);
     }
 }

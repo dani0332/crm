@@ -80,6 +80,7 @@ const filters = reactive({
   advisor_assigned_date: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  advisors: [],
 });
 
 watch(
@@ -727,19 +728,52 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-        <x-field label="Lead Status">
-          <ComboBox
-            v-model="filters.quote_status_id"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-          />
-        </x-field>
-        <ComboBox
+        <x-select
+          v-model="filters.quote_status_id"
+          name="quote_status_id"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
+          class="w-full"
+          filterable
+          label="Lead Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = leadStatusOptions.map(
+                  option => option.value,
+                )
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
           v-model="filters.insurer_aml_status"
-          label="Insurer AML Status"
           name="insurer_aml_status"
+          placeholder="Search by Insurer AML Status"
           :options="insurerAMLStatusOption"
-        />
+          class="w-full"
+          filterable
+          label="Insurer AML Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  option => option.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
+
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -752,28 +786,75 @@ const insurerAMLStatusOption = computed(() => {
             name="policy_expiry_date_end"
           />
         </x-field>
-        <x-field label="BUSINESS INSURANCE TYPE">
-          <ComboBox
-            v-model="filters.business_type_of_insurance_id"
-            placeholder="Search by Insurance Type"
-            :options="insuranceTypeOptions"
-          />
-        </x-field>
-        <x-field
+        <x-select
+          v-model="filters.business_type_of_insurance_id"
+          name="business_type_of_insurance_id"
+          placeholder="Search by Business Type of Insurance"
+          :options="insuranceTypeOptions"
+          class="w-full"
+          filterable
+          label="Business Type of Insurance"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.business_type_of_insurance_id =
+                  insuranceTypeOptions.map(option => option.value)
+              "
+              @clear="filters.business_type_of_insurance_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.advisor_id"
+          name="advisors"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          class="w-full"
+          filterable
           label="Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisor_id = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.advisor_id = []"
+            />
+          </template>
+        </x-select>
+
+        <!-- <x-select
           v-if="
             !hasAnyRole([
               rolesEnum.CorpLineRenewalAdvisor,
               rolesEnum.CorpLineAdvisor,
             ])
           "
+          v-model="filters.advisor_id"
+          name="advisor_id"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          label="Advisor"
+          class="w-full"
+          filterable
+          multiple
+          truncate
         >
-          <ComboBox
-            v-model="filters.advisor_id"
-            placeholder="Search by Advisor"
-            :options="advisorOptions"
-          />
-        </x-field>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisor_id = advisorOptions.map(option => option.value)
+              "
+              @clear="filters.advisor_id = []"
+            />
+          </template>
+        </x-select> -->
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
@@ -782,13 +863,30 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <x-field label="Renewal Batch">
-          <ComboBox
-            v-model="filters.renewal_batches"
-            placeholder="Search by Renewal Batch"
-            :options="renewalBatchOptions"
-          />
-        </x-field>
+
+        <x-select
+          v-model="filters.renewal_batches"
+          name="renewal_batches"
+          placeholder="Search by Renewal Batch"
+          :options="renewalBatchOptions"
+          class="w-full"
+          label="Renewal Batch"
+          filterable
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.renewal_batches = renewalBatchOptions.map(
+                  option => option.value,
+                )
+              "
+              @clear="filters.renewal_batches = []"
+            />
+          </template>
+        </x-select>
+
         <x-select
           v-model="filters.is_renewal"
           label="Renewal"
@@ -916,7 +1014,12 @@ const insurerAMLStatusOption = computed(() => {
               <x-select
                 v-model="assignForm.assigned_to_id_new"
                 label="Assign Advisor"
-                :options="advisorOptions"
+                :options="
+                  dropdownSource.advisor_id.map(advisor => ({
+                    label: advisor.name,
+                    value: advisor.id,
+                  }))
+                "
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
