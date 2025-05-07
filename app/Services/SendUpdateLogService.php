@@ -1366,7 +1366,8 @@ class SendUpdateLogService
     {
         info('fn:generateBrokerInvoiceNumberForSU - SendUpdateLog - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
         $response = ['status' => false, 'message' => ''];
-        $generateBrokerInvoice = true;
+        $generateBrokerInvoice = $generateBrokerInvoiceForReversal = true;
+        $isCPD = ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD);
 
         if (! empty($sendUpdateLog->broker_invoice_number) && ! $updateReversalBIN) {
             info('SendUpdateLog - Broker Invoice Number already exists - BIN: '.$sendUpdateLog->broker_invoice_number.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
@@ -1374,9 +1375,9 @@ class SendUpdateLogService
             $response['status'] = true;
         }
 
-        if ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD && ! empty($sendUpdateLog->reversal_broker_invoice_number)) {
+        if ($isCPD && ! empty($sendUpdateLog->reversal_broker_invoice_number)) {
             info('SendUpdateLog - Reversal Broker Invoice Number already exists - BIN: '.$sendUpdateLog->notes.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-            $generateBrokerInvoice = false;
+            $generateBrokerInvoiceForReversal = false;
             $response['status'] = true;
         }
 
@@ -1401,7 +1402,7 @@ class SendUpdateLogService
         $reversalLog = $updateReversalBIN ? 'Reversal ' : '';
 
         try {
-            if ($generateBrokerInvoice) {
+            if ($generateBrokerInvoice || ($isCPD && $generateBrokerInvoiceForReversal)) {
                 $currentDate = Carbon::now();
                 DB::transaction(function () use ($insuranceProvider, $updateReversalBIN, $currentDate, $reversalLog, $sendUpdateLog, &$response) {
                     $invoiceBrokerSequence = BrokerInvoiceNumber::where([
@@ -1473,16 +1474,12 @@ class SendUpdateLogService
     {
         info('fn: getProviderDetails start for Send Update - code: '.$quote->code);
         $insuranceProviderId = $plan_id = null;
-        $isCommercial = false;
-        if ($quoteTypeId == QuoteTypeId::Car) {
-            $isCommercial = app(LeadAllocationService::class)->isCommercialVehicles($quote);
-        }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
             info('fn: getProviderDetails end for Send Update - code: '.$quote->code.', in case of creation legacy policy.');
 
             return [$quote?->insurance_provider_id, $plan_id];
         }
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quoteServiceFile = getServiceObject($quoteType);
             $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);
