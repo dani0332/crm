@@ -66,8 +66,8 @@ trait OcrFillable
         $dataToUpdate = [];
 
         $price = $this->resolveProp($data, 'price');
-        if ($this->isEnabled($quote, $providersWithPriceVatApplicable)) {
-            $data['price_vat_applicable'] = $this->resolveProp($price, 'baseAmount') ?? $quote->price_vat_applicable;
+        if ($this->isEnabled($quote, $providersWithPriceVatApplicable) && $quote->payment) {
+            $paymentDataToUpdate['price_vat_applicable'] = $this->resolveProp($price, 'baseAmount') ?? $quote->payment->price_vat_applicable;
         }
 
         if ($this->isEnabled($quote, $providersWithPolicyIssuanceDate)) {
@@ -95,7 +95,7 @@ trait OcrFillable
             InsurerProviderEnum::TOKIO_MARINE,
         ];
 
-        $paymentDataToUpdate = [];
+        $paymentDataToUpdate = $paymentDataToUpdate ?? [];
 
         if ($this->isEnabled($quote, $providersWithInsurerInvoiceDate)) {
             $paymentDataToUpdate['insurer_invoice_date'] = $this->parseDate($this->resolveProp($data, 'invoiceDate'), $quote->payment?->insurer_invoice_date);
@@ -103,6 +103,11 @@ trait OcrFillable
 
         if ($this->isEnabled($quote, $providersWithInsurerTaxNumber)) {
             $paymentDataToUpdate['insurer_tax_number'] = $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_tax_number;
+        }
+
+        $taxInvoiceNumber = $this->resolveProp($data, 'taxInvoiceNumber');
+        if ($taxInvoiceNumber !== null && $quote->payment) {
+            $paymentDataToUpdate['tax_invoice_number'] = $taxInvoiceNumber;
         }
 
         if (! empty($paymentDataToUpdate) && $quote->payment) {
