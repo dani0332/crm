@@ -11,12 +11,12 @@ use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
+use App\Services\DTOs\FetchCarLeadResult;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
-use App\Services\DTOs\FetchCarLeadResult;
 
 class CarAllocation implements Allocation
 {

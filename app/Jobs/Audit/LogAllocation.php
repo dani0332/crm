@@ -5,12 +5,12 @@ namespace App\Jobs\Audit;
 use App\Enums\QuoteTypes;
 use App\Models\Audit\AllocationAudit;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Attributes\WithoutRelations;
 use Illuminate\Support\Facades\Auth;
-use App\Services\Logger\LoggerService;
 
 class LogAllocation implements ShouldQueue
 {

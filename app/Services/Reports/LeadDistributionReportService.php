@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
@@ -24,7 +25,6 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Enums\CarRegistrationType;
 
 class LeadDistributionReportService extends BaseService
 {
