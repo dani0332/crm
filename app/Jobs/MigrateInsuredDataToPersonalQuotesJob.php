@@ -13,7 +13,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
@@ -55,6 +57,8 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      */
     protected $cacheKey = 'last_processed_personal_quote_id';
 
+    private $lockPostfix;
+
     /**
      * Class name for logging
      *
@@ -71,6 +75,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
     public function __construct(bool $forceProcess = false)
     {
         $this->forceProcess = $forceProcess;
+        $this->lockPostfix = Carbon::now()->format('YmdHi');
     }
 
     /**
@@ -188,5 +193,10 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
             'trace' => $exception->getTraceAsString(),
             'last_processed_id' => Cache::get($this->cacheKey, null),
         ]);
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->cacheKey.'-'.$this->lockPostfix))->dontRelease()];
     }
 }

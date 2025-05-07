@@ -12,7 +12,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -33,6 +35,13 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
     public $timeout = 3600;
 
     const CLASS_NAME = 'IndividualKycDetailsMigrationJob';
+
+    private $lockPostfix;
+
+    public function __construct()
+    {
+        $this->lockPostfix = Carbon::now()->format('YmdHi');
+    }
 
     /**
      * Execute the job.
@@ -245,5 +254,10 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
     {
         LoggerService::error(self::CLASS_NAME.' - Individual KYC Details Migration Job failed with exception: '.$exception->getMessage(), extra: [
             'trace' => $exception->getTraceAsString()]);
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping(self::CLASS_NAME.'-'.$this->lockPostfix))->dontRelease()];
     }
 }
