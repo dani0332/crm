@@ -221,15 +221,17 @@ const onLobChange = (e, isOnMounted = false) => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <label> Line of Business <span class="text-red-500">*</span> </label>
-          <ComboBox
+          <x-select
             v-model="filters.lob"
-            placeholder="Select Line of Business"
+            label="Line of Business"
+            required
             :options="quoteTypesOptions"
             class="w-full"
-            :single="true"
             @update:modelValue="onLobChange"
             :rules="[isRequired]"
+            filterable
+            filterPlaceholder="Filter LOB...."
+            placeholder="Select Line of Business"
           />
         </div>
 
@@ -253,7 +255,7 @@ const onLobChange = (e, isOnMounted = false) => {
           />
         </div>
 
-        <ComboBox
+        <x-select
           v-if="filters.lob === quoteTypeCodeEnum.Car"
           v-model="filters.tiers"
           label="Tiers"
@@ -264,7 +266,22 @@ const onLobChange = (e, isOnMounted = false) => {
               label: filterOptions.tiers[key],
             }))
           "
-        />
+          multiple
+          truncate
+          filterable
+          filterPlaceholder="Filter Tiers...."
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.tiers = Object.keys(filterOptions.tiers).map(
+                  tier => tier.value,
+                )
+              "
+              @clear="filters.tiers = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-model="filters.registration_type"
           label="Registration Type"
@@ -291,15 +308,16 @@ const onLobChange = (e, isOnMounted = false) => {
           ]"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.assignmentTypes"
           label="Assignment Type"
           placeholder="Select any option"
           :options="filterOptions?.assignmentTypes"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Assignment Types...."
         />
 
-        <ComboBox
+        <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
@@ -313,9 +331,10 @@ const onLobChange = (e, isOnMounted = false) => {
                 : true,
             )
           "
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Segments...."
         />
-        <ComboBox
+        <x-select
           v-if="filters.lob === quoteTypeCodeEnum.Car"
           v-model="filters.sic_advisor_requested"
           label="Advisor Requested"
@@ -325,7 +344,8 @@ const onLobChange = (e, isOnMounted = false) => {
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Advisor Requested...."
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">

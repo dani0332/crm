@@ -228,14 +228,16 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="NATIONALITY" required>
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="nationalitiesOptions"
-            :hasError="isEmptyField"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :options="nationalitiesOptions"
+          :hasError="isEmptyField"
+          :rules="[isRequired]"
+          filterable
+          filterPlaceholder="Filter Nationality...."
+          required
+          label="NATIONALITY"
+        />
 
         <x-field label="EMIRATE OF YOUR VISA" required>
           <x-select

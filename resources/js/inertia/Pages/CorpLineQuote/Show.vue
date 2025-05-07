@@ -973,12 +973,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -999,22 +999,23 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   <dd>
                     <x-select
                       v-model="customerProfileForm.industry_type_code"
-                      :options="companyTypeOptions"
-                      placeholder="SELECT COMPANY TYPE"
+                      :options="industryTypeOptions"
                       class="w-full"
+                      placeholder="SELECT COMPANY TYPE"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="companyConcernOptions"
-                      placeholder="SELECT COMPANY CONCERN"
                       class="w-full"
+                      placeholder="SELECT COMPANY CONCERN"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>

@@ -1148,14 +1148,16 @@ const historyDataTable = [
 // selected tab
 
 const planDetails = ref(null);
-
+const viewButtonLoading = ref(false);
 const getPlanDetails = id => {
+  viewButtonLoading.value = true;
   try {
     axios
       .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
       .then(res => {
         planDetails.value = res.data;
         modals.planDetails = true;
+        viewButtonLoading.value = false;
       })
       .catch(err => {
         notification.error({
@@ -1164,6 +1166,7 @@ const getPlanDetails = id => {
           position: 'top',
         });
         console.log(err);
+        viewButtonLoading.value = false;
       });
   } catch (err) {
     console.log(err);
@@ -1172,6 +1175,7 @@ const getPlanDetails = id => {
       message: 'Something went wrong',
       position: 'top',
     });
+    viewButtonLoading.value = false;
   }
 };
 
@@ -2297,12 +2301,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -2320,28 +2324,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
-                      placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      placeholder="SELECT INDUSTRY TYPE"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      placeholder="SELECT ENTITY TYPE"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="[
                         { label: 'Parent', value: 'Parent' },
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      placeholder="SELECT ENTITY TYPE"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>
@@ -2606,13 +2610,15 @@ const applyEmiratesIdNumMasking = emiratesId =>
             :rules="[isRequired, maxCharacters(40)]"
             :hasError="travelerForm.errors.first_name"
           />
-          <ComboBox
+
+          <x-select
             v-model="travelerForm.nationality_id"
             label="Nationality"
             :options="nationalityOptions"
             placeholder="Select Nationality"
-            :single="true"
-            :hasError="travelerFieldReq.nationality"
+            filterable
+            class="w-full"
+            :rules="[isRequired]"
           />
           <DatePicker
             v-model="travelerForm.dob"
@@ -3200,6 +3206,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       selectedPlanType = 'normalPlans';
                       getPlanDetails(item.id);
                     "
+                    :loading="viewButtonLoading"
                   >
                     View
                   </x-button>
@@ -3302,6 +3309,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         selectedPlanType = 'seniorPlans';
                         getPlanDetails(item.id);
                       "
+                      :loading="viewButtonLoading"
                     >
                       View
                     </x-button>

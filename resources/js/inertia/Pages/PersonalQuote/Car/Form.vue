@@ -1,6 +1,4 @@
 <script setup>
-import QuoteStatus from '@/inertia/Pages/PersonalQuote/Partials/QuoteStatus.vue';
-
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -598,12 +596,13 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field label="Address Type">
-          <ComboBox
+          <x-select
             v-model="quoteForm.addressObj.address_type"
             placeholder="Select address type"
             :options="addressTypes"
-            :single="true"
             :disabled="isCourierStatusPending"
+            filterable
+            filterPlaceholder="Filter Address Type...."
           />
         </x-field>
         <x-field
@@ -704,9 +703,8 @@ const isAmlOrKycUpdated = computed(() => {
           :label="isPrivateCar ? 'DRIVER\'S NATIONALITY' : 'NATIONALITY'"
           required
         >
-          <ComboBox
+          <x-select
             v-model="quoteForm.nationality_id"
-            :single="true"
             :options="
               dropdownSource.nationality_id.map(item => ({
                 value: item.id,
@@ -716,6 +714,9 @@ const isAmlOrKycUpdated = computed(() => {
             :hasError="quoteForm.errors.nationality_id"
             :error="quoteForm.errors.nationality_id"
             :rules="[isRequired]"
+            filterable
+            filterPlaceholder="Filter Nationality...."
+            placeholder="Select Nationality"
           />
         </x-field>
 
@@ -732,9 +733,8 @@ const isAmlOrKycUpdated = computed(() => {
           label="UAE LICENCE HELD FOR"
           required
         >
-          <ComboBox
+          <x-select
             v-model="quoteForm.uae_license_held_for_id"
-            :single="true"
             :options="
               dropdownSource.uae_license_held_for_id.map(item => ({
                 value: item.id,
@@ -745,6 +745,9 @@ const isAmlOrKycUpdated = computed(() => {
             :rules="[isRequired]"
             :error="quoteForm.errors.uae_license_held_for_id"
             :hasError="quoteForm.errors.uae_license_held_for_id"
+            filterable
+            filterPlaceholder="Filter UAE License Held For...."
+            placeholder="Select UAE License Held For"
           />
         </x-field>
 
@@ -765,26 +768,30 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field label="CAR MAKE" required>
-          <ComboBox
+          <x-select
             v-model="quoteForm.car_make_id"
-            :single="true"
             :options="carMakeOptions"
             @update:modelValue="getCarModel(true)"
             class="w-full"
             :rules="[isRequired]"
             :hasError="quoteForm.errors.car_make_id"
             :error="quoteForm.errors.car_make_id"
+            filterable
+            filterPlaceholder="Filter Car Make...."
+            placeholder="Select Car Make"
           />
         </x-field>
 
         <x-field label="CAR MODEL" required>
-          <ComboBox
+          <x-select
             v-model="quoteForm.car_model_id"
-            :single="true"
             :options="carModelOptions"
             @update:modelValue="getModelDetails(true)"
             class="w-full"
             :rules="[isRequired]"
+            filterable
+            filterPlaceholder="Filter Car Model...."
+            placeholder="Select Car Model"
             :error="quoteForm.errors.car_model_id"
             :hasError="quoteForm.errors.car_model_id"
           />
@@ -840,18 +847,19 @@ const isAmlOrKycUpdated = computed(() => {
         </div>
 
         <x-field label="TRIM">
-          <ComboBox
+          <x-select
             v-model="quoteForm.trim"
-            :single="true"
             :options="trimOptions"
             class="w-full"
+            filterable
+            filterPlaceholder="Filter Trim...."
+            placeholder="Select Trim"
           />
         </x-field>
 
         <x-field label="CAR MODEL YEAR" required>
-          <ComboBox
+          <x-select
             v-model="quoteForm.year_of_manufacture"
-            :single="true"
             :options="
               dropdownSource.year_of_manufacture.map(item => ({
                 value: item.text,
@@ -862,6 +870,9 @@ const isAmlOrKycUpdated = computed(() => {
             :error="quoteForm.errors.year_of_manufacture"
             :rules="[isRequired]"
             :hasError="quoteForm.errors.year_of_manufacture"
+            filterable
+            filterPlaceholder="Filter Car Model Year...."
+            placeholder="Select Car Model Year"
           />
         </x-field>
 
@@ -888,9 +899,8 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field label="VEHICLE TYPE" required>
-          <ComboBox
+          <x-select
             v-model="quoteForm.vehicle_type_id"
-            :single="true"
             :options="
               dropdownSource.vehicle_type_id.map(item => ({
                 value: item.id,
@@ -901,6 +911,9 @@ const isAmlOrKycUpdated = computed(() => {
             :rules="[isRequired]"
             :error="quoteForm.errors.vehicle_type_id"
             :hasError="quoteForm.errors.vehicle_type_id"
+            filterable
+            filterPlaceholder="Filter Vehicle Type...."
+            placeholder="Select Vehicle Type"
           />
         </x-field>
 
@@ -945,9 +958,8 @@ const isAmlOrKycUpdated = computed(() => {
         </x-field>
 
         <x-field label="CURRENTLY INSURED WITH" required>
-          <ComboBox
+          <x-select
             v-model="quoteForm.currently_insured_with"
-            :single="true"
             :options="
               dropdownSource.currently_insured_with.map(item => ({
                 value: item.text,
@@ -958,6 +970,9 @@ const isAmlOrKycUpdated = computed(() => {
             :rules="[isRequired]"
             :error="quoteForm.errors.currently_insured_with"
             :hasError="quoteForm.errors.currently_insured_with"
+            filterable
+            filterPlaceholder="Filter Currently Insured With...."
+            placeholder="Select Currently Insured With"
           />
         </x-field>
 
