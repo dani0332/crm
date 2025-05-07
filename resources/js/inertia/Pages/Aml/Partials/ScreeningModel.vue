@@ -470,10 +470,10 @@ function screeningFormValidate() {
     isValid = false;
   }
   // Individual customer validation
-  document.getElementById("customer-type-field").scrollIntoView({
-    behavior: "smooth",
-    block: "nearest",
-    inline: "start"
+  document.getElementById('customer-type-field').scrollIntoView({
+    behavior: 'smooth',
+    block: 'nearest',
+    inline: 'start',
   });
   if (
     screeningFormDetails.customer_type == customerTypeEnum.Individual ||
