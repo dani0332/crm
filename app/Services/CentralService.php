@@ -319,11 +319,15 @@ class CentralService extends BaseService
         $priceVatApp = $data->price_vat_applicable ?? 0;
         $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
 
+        $vatAmount = formatAmount(($priceVatApp / 100) * $vatPercentage, 2, false);
+
         if ($quoteType == QuoteTypes::BUSINESS->value) {
-            $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
+            $data->price_with_vat = $priceVatApp + $priceVatNotApp + $vatAmount;
         } else {
-            $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
+            $data->price_with_vat = $priceVatApp ? ($priceVatApp + $vatAmount) : $priceVatNotApp;
         }
+
+        $data->vat = $vatAmount;
 
         $quote = $repository::where('code', $code)->firstOrFail();
 

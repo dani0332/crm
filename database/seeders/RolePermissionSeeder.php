@@ -25,7 +25,7 @@ class RolePermissionSeeder extends Seeder
         $this->addPostPrepaymentButtonPermission();
         $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
-        $this->addPolicyDetailsAddVatPermission();
+        // $this->addPolicyDetailsAddVatPermission();
     }
 
     private function addReceiveNotificationsPermission()
