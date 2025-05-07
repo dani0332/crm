@@ -771,27 +771,60 @@ const insurerAMLStatusOption = computed(() => {
           name="assigned_to_date_end"
           label="Advisor Assigned Date End"
         />
-        <ComboBox
+        <x-select
           v-model="filters.sub_team"
           label="Sub Team"
           placeholder="Search by Sub Team"
           :options="subTeamOptions"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Sub Team...."
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.quote_status"
           label="Lead Status"
           name="quote_status"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
-        />
-        <ComboBox
+          filterable
+          filterPlaceholder="Filter Lead Status...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status = leadStatusOptions.map(
+                  leadStatus => leadStatus.value,
+                )
+              "
+              @clear="filters.quote_status = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.insurer_aml_status"
           label="Insurer AML Status"
           name="insurer_aml_status"
           :options="insurerAMLStatusOption"
-        />
+          filterable
+          filterPlaceholder="Filter Insurer AML Status...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  insurerAMLStatus => insurerAMLStatus.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
         <DatePicker
           v-model="filters.policy_expiry_date"
           name="policy_expiry_date"
@@ -802,7 +835,7 @@ const insurerAMLStatusOption = computed(() => {
           name="policy_expiry_date_end"
           label="Policy Expiry End Date"
         />
-        <ComboBox
+        <x-select
           v-if="
             !hasAnyRole([
               rolesEnum.RMAdvisor,
@@ -816,7 +849,23 @@ const insurerAMLStatusOption = computed(() => {
           label="Advisor"
           placeholder="Search by Advisor"
           :options="modifiedAdvisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisor...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = modifiedAdvisorOptions.map(
+                  advisor => advisor.value,
+                )
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-model="filters.is_ecommerce"
           label="Is Ecommerce"
@@ -840,7 +889,7 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
         />
 
-        <ComboBox
+        <x-select
           v-if="
             !hasAnyRole([
               rolesEnum.RMAdvisor,
@@ -852,7 +901,8 @@ const insurerAMLStatusOption = computed(() => {
           label="Assignment Type"
           placeholder="Search by Assignment Type"
           :options="assignmentTypes"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Assignment Type...."
         />
         <x-input
           v-model="filters.previous_quote_policy_number"
@@ -862,12 +912,28 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <ComboBox
+        <x-select
           v-model="filters.renewal_batches"
           label="Renewal Batch"
           placeholder="Search by Renewal Batch"
           :options="renewalBatchOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Renewal Batch...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.renewal_batches = renewalBatchOptions.map(
+                  renewalBatch => renewalBatch.value,
+                )
+              "
+              @clear="filters.renewal_batches = []"
+            />
+          </template>
+        </x-select>
 
         <DatePicker
           v-model="filters.payment_due_date"
@@ -886,15 +952,17 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
-        <ComboBox
+        <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          filterable
+          filterPlaceholder="Filter Segment...."
           :single="true"
         />
-        <ComboBox
+        <x-select
           v-model="filters.sic_advisor_requested"
           label="Advisor Requested"
           placeholder="Select any option"
@@ -904,7 +972,7 @@ const insurerAMLStatusOption = computed(() => {
             { value: 0, label: 'No' },
           ]"
           class="w-full"
-          :single="true"
+          filterPlaceholder="Filter Advisor Requested...."
         />
         <DatePicker
           v-model="filters.transaction_approved_dates"

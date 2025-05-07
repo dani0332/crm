@@ -235,19 +235,18 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="NATIONALITY" required>
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="
-              dropdownSource.nationality_id.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            :hasError="isEmptyField"
-          />
-        </x-field>
+        <x-select
+          label="NATIONALITY"
+          v-model="quoteForm.nationality_id"
+          :options="
+            dropdownSource.nationality_id.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          :rules="[isRequired]"
+          required
+        />
 
         <x-field label="EMIRATE OF YOUR VISA" required>
           <x-select

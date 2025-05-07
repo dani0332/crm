@@ -353,17 +353,27 @@ const validateDateRange = () => {
           />
         </x-field>
         <x-field label="Lead Status" v-if="isAllowed">
-          <ComboBox
+          <x-select
             v-model="filters.quote_status_id"
             name="quote_status"
             placeholder="Search by Lead Status"
-            :options="
-              leadStatusOptions.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-          />
+            :options="leadStatusOptions"
+            multiple
+            class="w-full"
+            filterable
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.quote_status_id = leadStatusOptions.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.quote_status_id = []"
+              />
+            </template>
+          </x-select>
         </x-field>
         <x-field label="Policy Expiry Start Date">
           <DatePicker
@@ -378,11 +388,25 @@ const validateDateRange = () => {
           />
         </x-field>
         <x-field label="Advisor" v-if="isAllowed">
-          <ComboBox
+          <x-select
             v-model="filters.advisors"
+            name="advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-          />
+            multiple
+            class="w-full"
+            filterable
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.advisors = advisorOptions.map(item => item.value)
+                "
+                @clear="filters.advisors = []"
+              />
+            </template>
+          </x-select>
         </x-field>
         <x-field label="Is E-Commerce">
           <x-select

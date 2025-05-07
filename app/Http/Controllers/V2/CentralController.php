@@ -75,6 +75,7 @@ use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -277,7 +278,7 @@ class CentralController extends Controller
     {
         try {
             $validatedData = $bookPolicyRequest->validated();
-            info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
             $paymentInformation = [
                 'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
@@ -306,13 +307,13 @@ class CentralController extends Controller
             }
 
             $payment->update($paymentInformation);
-            info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
             $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
             if (! $response['status']) {
                 return back()->with('error', $response['message']);
             }
-            info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
         } catch (\Exception $e) {
@@ -326,7 +327,7 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
-        info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
+        LoggerService::info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
@@ -337,7 +338,7 @@ class CentralController extends Controller
             ];
             $quote->update($quoteData);
 
-            info('Quote Code: '.$quote->code.' Policy send to customer');
+            LoggerService::info('Quote Code: '.$quote->code.' Policy send to customer');
 
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
@@ -401,7 +402,7 @@ class CentralController extends Controller
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
-        info("Processing split payment approve {$request->payment_code}");
+        LoggerService::info("Processing split payment approve {$request->payment_code}");
 
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
         if (! $successMessage) {
@@ -428,11 +429,15 @@ class CentralController extends Controller
     public function retrySplitPayment(RetrySplitPaymentRequest $request)
     {
         $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
-        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+        LoggerService::info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
 
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
-        return $successMessage;
+        if ($successMessage) {
+            return redirect()->back()->with('success', 'Payment has been retried');
+        } else {
+            return redirect()->back()->with('error', 'Payment retry failed');
+        }
     }
 
     // Delete split payment
@@ -467,6 +472,11 @@ class CentralController extends Controller
     public function generatePaymentLink(GeneratePaymentLinkRequest $request)
     {
         return (new SplitPaymentService)->generateSplitPaymentLink($request);
+    }
+
+    public function generateInsurerPaymentLink(GeneratePaymentLinkRequest $request)
+    {
+        return (new SplitPaymentService)->generateInsurerPaymentLink($request);
     }
 
     public function saveQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
@@ -614,7 +624,7 @@ class CentralController extends Controller
             $listQuotePlans = $randomPlans;
         }
 
-        info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
+        LoggerService::info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
 
         $emailTemplateId = (int) ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->value('value');
 
@@ -636,14 +646,14 @@ class CentralController extends Controller
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
                     OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
-                    info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
+                    LoggerService::info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
                 }
             }
-            info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
+            LoggerService::info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-            info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
+            LoggerService::info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
@@ -685,7 +695,7 @@ class CentralController extends Controller
                 if (file_exists($file['path'])) {
                     $zip->addFile($file['path'], $file['name']);
                 } else {
-                    info("File does not exist: {$file['path']}");
+                    LoggerService::info("File does not exist: {$file['path']}");
                 }
             }
         } catch (\Exception $e) {
@@ -732,6 +742,16 @@ class CentralController extends Controller
         return $response;
     }
 
+    public function removeInsurerPaymentLink(Request $request)
+    {
+        $response = app(CentralService::class)->removeInsurerPaymentLink($request);
+        if ($response['status']) {
+            return redirect()->back()->with('success', $response['message']);
+        }
+
+        return redirect()->back()->with('error', $response['message']);
+    }
+
     public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
@@ -746,7 +766,7 @@ class CentralController extends Controller
             'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
         ];
 
-        info('paymentsCaptureValidation', $logPayload);
+        LoggerService::info('paymentsCaptureValidation', extra: ['payload' => $logPayload]);
 
         return response()->json(['response' => $response]);
     }
@@ -762,13 +782,13 @@ class CentralController extends Controller
                 $sendUpdateLog = SendUpdateLog::whereId(request()->sendUpdateId)->first();
             }
 
-            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Prepayment Posting of Payment split.');
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Prepayment Posting of Payment split.');
 
             $schedulePostPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->quoteType, $paymentSplit, $sendUpdateLog]);
 
             if (! $schedulePostPrepayment['status']) {
                 $errors = count($schedulePostPrepayment['errors']) > 0 ? $schedulePostPrepayment['errors'] : ['message' => $schedulePostPrepayment['message']];
-                info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' -  Start Prepayment Posting of Payment split -  Error : ', $errors);
+                LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' -  Start Prepayment Posting of Payment split -  Error : ', extra: ['errors' => $errors]);
 
                 return response()->json(['errors' => $errors], 422);
             }
@@ -778,7 +798,7 @@ class CentralController extends Controller
                 'message' => 'Prepayment posting to Sage has been scheduled and will be processed in the background.',
             ], 200);
         } catch (Exception $exception) {
-            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', $exception->getMessage());
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', extra: ['Exception' => $exception->getMessage()]);
 
             return response()->json([
                 'success' => false,
