@@ -315,11 +315,12 @@ class CentralService extends BaseService
     {
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $repository = getRepositoryObject($quoteType);
+        $quote = $repository::where('code', $code)->firstOrFail();
 
         $priceVatApp = $data->price_vat_applicable ?? 0;
         $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
-
-        $vatAmount = formatAmount(($priceVatApp / 100) * $vatPercentage, 2, false);
+        $vatAmount = ($priceVatApp / 100) * $vatPercentage;
+        LoggerService::info("Quote {$code} - VAT values: priceVatApp: {$priceVatApp}, priceVatNotApp: {$priceVatNotApp}, vatAmount: {$vatAmount}");
 
         if ($quoteType == QuoteTypes::BUSINESS->value) {
             $data->price_with_vat = $priceVatApp + $priceVatNotApp + $vatAmount;
@@ -328,8 +329,6 @@ class CentralService extends BaseService
         }
 
         $data->vat = $vatAmount;
-
-        $quote = $repository::where('code', $code)->firstOrFail();
 
         $oldInsuranceProviderId = $quote->insurance_provider_id;
         $newInsuranceProviderId = $data->insurance_provider_id;
