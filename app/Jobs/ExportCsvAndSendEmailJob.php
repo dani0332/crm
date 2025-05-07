@@ -44,8 +44,6 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         Log::info('CSV export job started for '.$this->requestParams['fileName'].' attempt: '.$this->attempts());
 
         try {
-            DB::setDefaultConnection('mysql_read');
-
             // Instantiate the export class that uses the ExcelExportable trait
             $exportInstance = app($this->exportClass);
 
