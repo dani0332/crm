@@ -98,13 +98,13 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
                     LoggerService::info(self::CLASS_NAME.' - *********************** Migrated entity details against ID: '.$entity->id.' **********************');
                 }
                 DB::commit();
-                LoggerService::info(self::CLASS_NAME . " - Successfully processed chunk of {$entitiesToProcess->count()} records");
+                LoggerService::info(self::CLASS_NAME." - Successfully processed chunk of {$entitiesToProcess->count()} records");
             } catch (\Exception $e) {
                 DB::rollBack();
                 $failedCount++;
-                
+
                 $entityIds = json_encode(array_column($entitiesToProcess->toArray(), 'id'));
-                
+
                 $failedDetails['entity_id'][] = $entityIds;
                 $failedDetails['message'][] = "Failed to process chunk: {$e->getMessage()}";
 
