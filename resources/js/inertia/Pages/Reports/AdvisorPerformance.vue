@@ -11,6 +11,7 @@ const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
+const { maxSelections } = useRules();
 const carRegistrationTypeEnum = page.props.carRegistrationType;
 const carVehicleUseEnum = page.props.carVehicleUse;
 
@@ -181,7 +182,7 @@ onMounted(() => {
           size="sm"
           model-type="yyyy-MM-dd"
         />
-        <ComboBox
+        <x-select
           v-model="filters.tiers"
           label="Tiers"
           placeholder="Search by Tiers"
@@ -191,8 +192,23 @@ onMounted(() => {
               label: filterOptions.tiers[key],
             }))
           "
-        />
-        <ComboBox
+          filterable
+          filterPlaceholder="Filter Tiers...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.tiers = Object.keys(filterOptions.tiers).map(
+                  tier => tier,
+                )
+              "
+              @clear="filters.tiers = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.teams"
           label="Teams"
           placeholder="Search by Teams"
@@ -202,19 +218,53 @@ onMounted(() => {
               label: filterOptions.teams[key],
             }))
           "
-        />
-        <ComboBox
+          filterable
+          filterPlaceholder="Filter Teams...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.teams = Object.keys(filterOptions.teams).map(
+                  team => team,
+                )
+              "
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
+          virtualList
+          :virtual-list-item-height="34"
+          :virtual-list-overscan="10"
           :options="
             Object.keys(filterOptions.leadSources).map(key => ({
               value: key,
               label: filterOptions.leadSources[key],
             }))
           "
-          :max-limit="3"
-        />
+          filterable
+          filterPlaceholder="Filter Lead Source...."
+          truncate
+          multiple
+          :rules="[maxSelections(3)]"
+          helper="You can select up to 3 lead sources"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.leadSources = Object.keys(
+                  filterOptions.leadSources,
+                ).map(leadSource => leadSource)
+              "
+              @clear="filters.leadSources = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-model="filters.registration_type"
           label="Registration Type"
@@ -252,13 +302,14 @@ onMounted(() => {
             { value: 4, label: 'Manual ReAssigned' },
           ]"
         />
-        <ComboBox
+        <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Segment...."
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">

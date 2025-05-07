@@ -232,13 +232,14 @@ function onMemberSubmit(isValid) {
           />
         </x-field>
         <x-field label="Nationality" required>
-          <ComboBox
-            :single="true"
+          <x-select
             v-model="memberForm.nationality_id"
             placeholder="Select Nationality"
             :options="nationalitiesOptions"
             class="w-full"
-            :hasError="isEmptyField"
+            :rules="[isRequired]"
+            filterable
+            filterPlaceholder="Filter Nationality...."
           />
         </x-field>
         <x-field label="Date of Birth" required>

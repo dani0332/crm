@@ -253,13 +253,26 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by CDB ID"
         />
-        <ComboBox
+        <x-select
           v-model="filters.quote_batch_id"
           label="Batch"
           name="quote_batch_id"
           placeholder="Search by Batch"
           :options="batchOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Batch...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_batch_id = batchOptions.map(item => item.value)
+              "
+              @clear="filters.quote_batch_id = []"
+            />
+          </template>
+        </x-select>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -312,13 +325,28 @@ onMounted(() => {
           name="advisor_assigned_date_end"
           label="Advisor Assign Date End"
         />
-        <ComboBox
+        <x-select
           v-model="filters.payment_status_id"
           label="Payment Status"
           name="payment_status_id"
           placeholder="Search by Payment Status"
           :options="paymentStatusOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Payment Status...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.payment_status_id = paymentStatusOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.payment_status_id = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-model="filters.is_ecommerce"
           name="is_ecommerce"
@@ -331,40 +359,71 @@ onMounted(() => {
           ]"
           class="w-full"
         />
-        <ComboBox
+        <x-select
           v-model="filters.quote_status_id"
           label="Lead Status"
           name="quote_status_id"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
-        />
-        <ComboBox
+          filterable
+          filterPlaceholder="Filter Lead Status...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = leadStatusOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.tier_id"
           label="Tier Name"
           name="tier_id"
           placeholder="Search by Tier"
           :options="tierOptions"
-        />
-        <ComboBox
+          filterable
+          filterPlaceholder="Filter Tier...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.tier_id = tierOptions.map(item => item.value)
+              "
+              @clear="filters.tier_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.vehicle_type_id"
           label="Vehicle Type"
           placeholder="Search by Vehicle Type"
           :options="vehicleTypeOptions"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Vehicle Type...."
         />
-        <ComboBox
+        <x-select
           v-model="filters.car_type_insurance_id"
           label="Type of Car Insurance"
           placeholder="Search by Type of Car Insurance"
           :options="typeOfInsuranceOptions"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Type of Car Insurance...."
         />
-        <ComboBox
+        <x-select
           v-model="filters.currently_insured_with"
           label="Currently Insured With"
           placeholder="Search by Currently Insured With"
           :options="currentlyInsuredWith"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Currently Insured With...."
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -392,14 +451,27 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Previous Policy Number"
         />
-        <ComboBox
+        <x-select
           v-if="!hasRole(rolesEnum.Advisor)"
           v-model="filters.advisor_id"
           name="advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisor...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisor_id = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.advisor_id = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

@@ -18,9 +18,9 @@ class HealthQuotesExport
         $this->genderOptions = app(CRUDService::class)->getGenderOptions();
     }
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return app(HealthQuoteService::class)->getGridData()->get();
+        return app(HealthQuoteService::class)->getGridData(requestParams: $requestParams)->get();
     }
 
     public function headings(): array
