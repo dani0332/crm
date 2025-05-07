@@ -1279,7 +1279,7 @@ class RenewalsUploadService
         info('Renewal: Health Plan Modify V2 Request Data: '.json_encode($dataArray));
         $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
-        if($response) {
+        if ($response) {
             $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id);
         }
 
