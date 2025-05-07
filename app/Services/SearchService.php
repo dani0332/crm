@@ -665,66 +665,21 @@ class SearchService extends BaseService
             $query->join('payments', 'personal_quotes.code', 'payments.code');
 
             if ($request->has('insurer_tax_invoice_number')) {
-                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM payments WHERE Key_name = 'index_payments_insurer_tax_invoice_number_fulltext'");
-
-                if (! empty($taxInvoiceIndexExists)) {
-                    // Use FULLTEXT search
-                    $query->whereRaw('MATCH(payments.insurer_tax_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insurer_tax_invoice_number.'*']);
-                } else {
-                    // Fallback to  search
-                    $query->where('payments.insurer_tax_number', $request->insurer_tax_invoice_number);
-
-                    // Log that we're using slower search
-                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for payments insurer_tax_invoice_number. Consider adding FULLTEXT index for better performance.');
-                }
+                $query->where('payments.insurer_tax_number', $request->insurer_tax_invoice_number);
             }
 
             if ($request->has('insurer_commission_tax_invoice_number')) {
-                $comTaxInvoiceIndexExists = DB::select("SHOW INDEX FROM payments WHERE Key_name = 'index_payments_insurer_com_tax_invoice_number_fulltext'");
-
-                if (! empty($comTaxInvoiceIndexExists)) {
-                    // Use FULLTEXT search
-                    $query->whereRaw('MATCH(payments.insurer_commmission_invoice_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insurer_commission_tax_invoice_number.'*']);
-                } else {
-                    // Fallback to search
-                    $query->where('payments.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
-
-                    // Log that we're using slower search
-                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for payments insurer_tax_invoice_number. Consider adding FULLTEXT index for better performance.');
-                }
-
+                $query->where('payments.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
             }
         } else {
             $query->leftJoin('payments', 'send_update_logs.id', 'payments.send_update_log_id');
 
             if ($request->has('insurer_tax_invoice_number')) {
-                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM send_update_logs WHERE Key_name = 'index_send_update_logs_insurer_tax_invoice_number_fulltext'");
-
-                if (! empty($taxInvoiceIndexExists)) {
-                    // Use FULLTEXT search
-                    $query->whereRaw('MATCH(send_update_logs.insurer_tax_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insurer_tax_invoice_number.'*']);
-                } else {
-                    // Fallback to  search
-                    $query->where('send_update_logs.insurer_tax_invoice_number', $request->insurer_tax_invoice_number);
-
-                    // Log that we're using slower search
-                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for send_update_logs insurer_tax_invoice_number. Consider adding FULLTEXT index for better performance.');
-                }
+                $query->where('send_update_logs.insurer_tax_invoice_number', $request->insurer_tax_invoice_number);
             }
 
             if ($request->has('insurer_commission_tax_invoice_number')) {
-                $taxInvoiceIndexExists = DB::select("SHOW INDEX FROM send_update_logs WHERE Key_name = 'index_send_update_logs_insurer_com_tax_invoice_number_fulltext'");
-
-                if (! empty($taxInvoiceIndexExists)) {
-                    // Use FULLTEXT search
-                    $query->whereRaw('MATCH(send_update_logs.insurer_commission_invoice_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insurer_commission_tax_invoice_number.'*']);
-                } else {
-                    // Fallback to  search
-                    $query->where('send_update_logs.insurer_commission_invoice_number', $request->insurer_commission_tax_invoice_number);
-
-                    // Log that we're using slower search
-                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for send_update_logs insurer_commission_invoice_number. Consider adding FULLTEXT index for better performance.');
-                }
+                $query->where('send_update_logs.insurer_commission_invoice_number', $request->insurer_commission_tax_invoice_number);
             }
         }
     }
