@@ -26,14 +26,7 @@ use Illuminate\Support\Facades\Log;
  */
 class EntitiesInsuredMigrationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
-    public $tries = 3;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, GenericQueriesAllLobs;
 
     /**
      * The number of seconds the job can run before timing out.
@@ -41,27 +34,14 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
      * @var int
      */
     public $timeout = 3600;
-
-    /**
-     * Create a new job instance.
-     */
-    public function __construct()
-    {
-        //
-    }
-
+    
     /**
      * Execute the job.
      */
     public function handle()
     {
         Log::info('------------------- Entities Insured Migration Job Started At: '.now().' -------------------');
-
-        $genericQueriesAllLobs = new class
-        {
-            use GenericQueriesAllLobs;
-        };
-
+        
         $this->updateExistingRecords();
 
         $totalEntities = Entity::count();
@@ -80,27 +60,20 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
         $failedDetails = [];
         $migratedCount = $skippedCount = $failedCount = 0;
 
-        // Get IDs of already migrated entities
-        $alreadyMigratedEntityIds = Insured::whereNotNull('entity_id')->pluck('entity_id')->toArray();
+        // Using a subquery instead of plucking all IDs
+        $entities = Entity::whereNotExists(function ($query) {
+            $query->select(DB::raw(1))
+                ->from('insured')
+                ->whereColumn('insured.entity_id', 'entities.id')
+                ->whereNotNull('insured.entity_id');
+        });
 
-        // Query only entities that haven't been migrated yet
-        $entities = Entity::whereNotIn('id', $alreadyMigratedEntityIds);
-
-        $entities->chunk(1000, function ($entitiesToProcess) use (&$migratedCount, &$skippedCount, &$failedCount, &$failedDetails, $genericQueriesAllLobs) {
-            foreach ($entitiesToProcess as $entity) {
-                $isEntityAlreadyCreated = Insured::where('entity_id', $entity->id)->exists();
-                if ($isEntityAlreadyCreated) {
-                    Log::info('EntitiesInsuredMigrationJob - Entity '.$entity->id.' already exists in the insured table');
-                    $skippedCount++;
-
-                    continue;
-                }
-
-                Log::info('*********************** Migrating entity details against ID: '.$entity->id.' **********************');
-                Log::info('Creating new insured record for entity '.$entity->id);
-
-                try {
-                    DB::beginTransaction();
+        $entities->chunk(50, function ($entitiesToProcess) use (&$migratedCount, &$failedCount, &$failedDetails) {
+            DB::beginTransaction();
+            try {
+                foreach ($entitiesToProcess as $entity) {
+                    info('*********************** Migrating entity details against ID: '.$entity->id.' **********************');
+                    info('Creating new insured record for entity '.$entity->id);
 
                     $insured = Insured::create([
                         'customer_type' => CustomerTypeEnum::Entity,
@@ -118,19 +91,17 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
                         'entity_id' => $entity->id,
                     ]);
 
-                    $this->createCustomerInsuredMappingsForEntity($insured, $entity, $genericQueriesAllLobs);
-
-                    DB::commit();
+                    $this->createCustomerInsuredMappingsForEntity($insured, $entity);
                     $migratedCount++;
                     Log::info('*********************** Migrated entity details against ID: '.$entity->id.' **********************');
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    $failedCount++;
-                    $failedDetails['entity_id'][] = $entity->id;
-                    $failedDetails['message'][] = 'failed to migrate entity. message: '.$e->getMessage();
-                    Log::info("Failed to migrate entity {$entity->id}: {$e->getMessage()}");
-                    Log::info('*********************** Failed to migrate entity details against ID: '.$entity->id.' **********************');
                 }
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $failedCount++;
+                $failedDetails['entity_id'][] = $entity->id ?? 'Unknown entity';
+                $failedDetails['message'][] = 'Failed to migrate chunk: '.$e->getMessage();
+                info("Failed to migrate chunk: {$e->getMessage()}");
             }
         });
 
@@ -167,34 +138,35 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
         Log::info('EntitiesInsuredMigrationJob - Existing insured table records updated as Individual successfully at '.now());
     }
 
-    private function createCustomerInsuredMappingsForEntity(Insured $insured, Entity $entity, $genericQueriesAllLobs)
+    private function createCustomerInsuredMappingsForEntity(Insured $insured, Entity $entity)
     {
         Log::info('Creating customer-insured mappings for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
         $quoteRequestEntityMappings = QuoteRequestEntityMapping::where('entity_id', $entity->id)->get();
 
         if (empty($quoteRequestEntityMappings->toArray())) {
             Log::info('##################### Entity '.$entity->id.' quote request mapping not found ##############################');
-        }
+        } else {
+            // Only process mappings if they exist
+            foreach ($quoteRequestEntityMappings as $quoteRequestEntityMapping) {
+                $quoteObject = $this->getQuoteObject(
+                    QuoteTypes::getName($quoteRequestEntityMapping->quote_type_id)?->value,
+                    $quoteRequestEntityMapping->quote_request_id
+                );
 
-        foreach ($quoteRequestEntityMappings as $quoteRequestEntityMapping) {
-            $quoteObject = $genericQueriesAllLobs->getQuoteObject(
-                QuoteTypes::getName($quoteRequestEntityMapping->quote_type_id)?->value,
-                $quoteRequestEntityMapping->quote_request_id
-            );
-
-            if (! $quoteObject) {
-                throw new \Exception('Quote object not found for quote request entity mapping. Quote Type ID: '.
-                    $quoteRequestEntityMapping->quote_type_id.' Quote Request ID: '.$quoteRequestEntityMapping->quote_request_id);
+                if (! $quoteObject) {
+                    throw new \Exception('Quote object not found for quote request entity mapping. Quote Type ID: '.
+                        $quoteRequestEntityMapping->quote_type_id.' Quote Request ID: '.$quoteRequestEntityMapping->quote_request_id);
+                }
+                CustomerInsured::updateOrCreate([
+                    'customer_id' => $quoteObject->customer_id,
+                    'insured_id' => $insured->id,
+                    'quote_type_id' => $quoteRequestEntityMapping->quote_type_id,
+                    'quote_request_id' => $quoteRequestEntityMapping->quote_request_id,
+                ], []);
             }
-
-            CustomerInsured::updateOrCreate([
-                'customer_id' => $quoteObject->customer_id,
-                'insured_id' => $insured->id,
-                'quote_type_id' => $quoteRequestEntityMapping->quote_type_id,
-                'quote_request_id' => $quoteRequestEntityMapping->quote_request_id,
-            ], []);
         }
 
+        // Always migrate KYC details regardless of mappings
         $this->migrateEntityKycDetailsToInsuredKyc($insured, $entity);
 
         Log::info('End creating customer-insured mappings for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
