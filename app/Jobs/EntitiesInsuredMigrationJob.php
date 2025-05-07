@@ -63,14 +63,13 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
         $migratedCount = $skippedCount = $failedCount = 0;
 
         // Using a subquery instead of plucking all IDs
-        $entities = Entity::whereNotExists(function ($query) {
-            $query->select(DB::raw(1))
+        $entities = Entity::whereNotIn('id', function ($query) {
+            $query->select('insured.entity_id')
                 ->from('insured')
-                ->whereColumn('insured.entity_id', 'entities.id')
                 ->whereNotNull('insured.entity_id');
         });
 
-        $entities->chunk(50, function ($entitiesToProcess) use (&$migratedCount, &$failedCount, &$failedDetails) {
+        $entities->chunkById(50, function ($entitiesToProcess) use (&$migratedCount, &$failedCount, &$failedDetails) {
             DB::beginTransaction();
             try {
                 foreach ($entitiesToProcess as $entity) {
