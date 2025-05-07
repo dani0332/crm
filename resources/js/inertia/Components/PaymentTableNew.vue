@@ -11,6 +11,7 @@ import {
   AmlApprovalModal, 
   RetryPaymentModal,
   DeleteSplitPaymentModal,
+  DeleteParentPaymentModal,
   VoidPaymentModal
 } from './PaymentComponents/PaymentModal/index.js';
 
@@ -5661,6 +5662,15 @@ const closeVoidPaymentModal = () => {
           @update:model-value="closeDeleteModal"
         />
 
+        <!-- Delete Parent Payment Modal -->
+        <DeleteParentPaymentModal
+          v-model="deletePaymentModelPopup"
+          :payment-id="deletePaymentObject?.id"
+          :payment-code="deletePaymentObject?.code"
+          :quote-type="props.quoteType"
+          :quote-id="props.quoteRequest.id"
+        />
+
         <!-- Void Payment Modal -->
         <VoidPaymentModal
           v-model="voidPaymentModelPopup"
@@ -5673,31 +5683,6 @@ const closeVoidPaymentModal = () => {
           :send-update-id="props.sendUpdate?.id"
           @update:model-value="closeVoidPaymentModal"
         />
-
-        <x-modal
-          v-model="deletePaymentModelPopup"
-          size="lg"
-          title="Delete Payment"
-          show-close
-          backdrop
-        >
-          <x-form :auto-focus="false">
-            <div class="text-lg text-center">
-              <span> Are you sure to Delete this payment?</span>
-            </div>
-            <div class="mt-2 text-center">
-              <x-button
-                size="sm"
-                color="orange"
-                class="mt-4 text-center"
-                :loading="deletePaymentProcess"
-                @click="deletePayment"
-              >
-                <span>Delete</span>
-              </x-button>
-            </div>
-          </x-form>
-        </x-modal>
       </template>
     </Collapsible>
   </div>
