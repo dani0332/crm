@@ -698,7 +698,7 @@ if (! function_exists('getIMLogo')) {
         $imLogo = 'images/logo-new.png';
 
         if ($latest) {
-            $imLogo = 'images/im_logo_23k-hi.png';
+            $imLogo = 'images/im_logo_24k-hi.png';
         }
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
@@ -1230,6 +1230,9 @@ if (! function_exists('getAssignmentTypeText')) {
                 break;
             case 6:
                 $assignmentText = 'ReAssigned as Bought Lead';
+                break;
+            case 7:
+                $assignmentText = 'Self Assigned';
                 break;
             default:
                 break;

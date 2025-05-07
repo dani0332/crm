@@ -84,9 +84,10 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-const onDocDelete = name => {
+const onDocDelete = (doc_id, doc_uuid) => {
   modals.docConfirm = true;
-  confirmDeleteData.docs = name;
+  confirmDeleteData.doc_id = doc_id;
+  confirmDeleteData.doc_uuid = doc_uuid;
 };
 
 const confirmDeleteDoc = () => {
@@ -94,8 +95,8 @@ const confirmDeleteDoc = () => {
   router.post(
     `/documents/delete`,
     {
-      docName: confirmDeleteData.docs,
-      quoteId: isSendUpdatePage ? props.extras.sendLogId : page.props.quote.id,
+      doc_id: confirmDeleteData.doc_id,
+      doc_uuid: confirmDeleteData.doc_uuid,
     },
     {
       preserveScroll: true,
@@ -414,7 +415,7 @@ const getS3TempUrl = async docURL => {
             </a>
           </template>
           <template
-            #item-action="{ doc_name }"
+            #item-action="{ doc_name, id, doc_uuid }"
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
           >
             <div>
@@ -434,7 +435,7 @@ const getS3TempUrl = async docURL => {
                 size="xs"
                 color="error"
                 outlined
-                @click.prevent="onDocDelete(doc_name)"
+                @click.prevent="onDocDelete(id, doc_uuid)"
                 class="focus:ring-2 focus:ring-black"
               >
                 Delete
