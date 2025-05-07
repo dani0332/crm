@@ -1148,14 +1148,16 @@ const historyDataTable = [
 // selected tab
 
 const planDetails = ref(null);
-
+const viewButtonLoading = ref(false);
 const getPlanDetails = id => {
+  viewButtonLoading.value = true;
   try {
     axios
       .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
       .then(res => {
         planDetails.value = res.data;
         modals.planDetails = true;
+        viewButtonLoading.value = false;
       })
       .catch(err => {
         notification.error({
@@ -1164,6 +1166,7 @@ const getPlanDetails = id => {
           position: 'top',
         });
         console.log(err);
+        viewButtonLoading.value = false;
       });
   } catch (err) {
     console.log(err);
@@ -1172,6 +1175,7 @@ const getPlanDetails = id => {
       message: 'Something went wrong',
       position: 'top',
     });
+    viewButtonLoading.value = false;
   }
 };
 
@@ -3202,6 +3206,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       selectedPlanType = 'normalPlans';
                       getPlanDetails(item.id);
                     "
+                    :loading="viewButtonLoading"
                   >
                     View
                   </x-button>
@@ -3304,6 +3309,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         selectedPlanType = 'seniorPlans';
                         getPlanDetails(item.id);
                       "
+                      :loading="viewButtonLoading"
                     >
                       View
                     </x-button>
