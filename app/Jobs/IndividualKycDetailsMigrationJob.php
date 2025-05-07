@@ -208,7 +208,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                 }
                 // Commit transaction for the entire chunk
                 DB::commit();
-                LoggerService::info(self::CLASS_NAME . " - Successfully processed chunk of {$customerDetails->count()} records");
+                LoggerService::info(self::CLASS_NAME." - Successfully processed chunk of {$customerDetails->count()} records");
 
             } catch (\Exception $e) {
                 // Rollback the entire chunk
