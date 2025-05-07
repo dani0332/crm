@@ -60,7 +60,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             );
 
             Log::info('CSV export job completed for '.$this->requestParams['fileName']);
-
+            DB::setDefaultConnection('mysql');
             Auth::logout();
         } catch (\Throwable $e) {
             Log::error('CSV export job failed for '.$this->requestParams['fileName'].' attempt: '.$this->attempts().' Exception: '.$e->getMessage().', '.$e->getFile().':'.$e->getLine(), [
@@ -69,7 +69,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
                     // return isset($trace['file']) && str_contains($trace['file'], '/app');
                 })->all(),
             ]);
-
+            DB::setDefaultConnection('mysql');
             Auth::logout();
 
             if ($this->attempts() >= $this->tries) {
