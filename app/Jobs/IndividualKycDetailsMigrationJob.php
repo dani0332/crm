@@ -215,13 +215,13 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                 DB::rollBack();
                 $failedCount++;
 
-                // Get IDs of all customer details in this chunk
-                $customerDetailIds = $customerDetails->pluck('id')->implode(',');
+                // Get IDs of all customer details in this chunk using array_column
+                $customerDetailIds = json_encode(array_column($customerDetails->toArray(), 'id'));
 
-                $failedDetails['entity_id'][] = $customerDetailIds;
+                $failedDetails['customer_detail_id'][] = $customerDetailIds;
                 $failedDetails['message'][] = "Failed to process chunk: {$e->getMessage()}";
 
-                LoggerService::warning(self::CLASS_NAME . ' - Failed to process chunk with customer detail IDs: '.$customerDetailIds.' - Error: '.$e->getMessage(), extra: [
+                LoggerService::warning(self::CLASS_NAME . ' - Failed to process chunk - Error: '.$e->getMessage(), extra: [
                     'trace' => $e->getTraceAsString()]);
             }
         });
