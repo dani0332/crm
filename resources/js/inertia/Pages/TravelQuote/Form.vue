@@ -361,6 +361,16 @@ watch(mappedDestinationIds, newVal => {
   if (newVal.length < 1) return;
   quoteForm.destination_ids = newVal;
 });
+
+watch(
+  [() => quoteForm.start_date, () => quoteForm.end_date],
+  ([newStartDate, newEndDate]) => {
+    if (newStartDate && newEndDate) {
+      quoteForm.days_cover_for =
+        calculateDaysDifference(newStartDate, newEndDate) + 1; // +1 to include both start and end days
+    }
+  },
+);
 </script>
 
 <template>
@@ -558,11 +568,7 @@ watch(mappedDestinationIds, newVal => {
           :error="quoteForm.errors.nationality_id"
         />
         <x-field v-if="editMode" label="Days Cover">
-          <x-input
-            :value="quoteForm.days_cover_for"
-            :disabled="true"
-            class="w-full"
-          />
+          <x-input disabled v-model="quoteForm.days_cover_for" class="w-full" />
         </x-field>
 
         <x-field label="Email">
