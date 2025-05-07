@@ -1505,7 +1505,6 @@ class CentralService extends BaseService
         }
     }
 
-    
     public function removeInsurerPaymentLink($request)
     {
         $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
