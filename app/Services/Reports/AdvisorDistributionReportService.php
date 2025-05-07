@@ -26,6 +26,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\CarRegistrationType;
 
 class AdvisorDistributionReportService extends BaseService
 {
@@ -467,7 +468,7 @@ class AdvisorDistributionReportService extends BaseService
 
             $query->where('car_quote_request.registration_type', $filters->registration_type);
         }
-        if (isset($filters->vehicle_use) && $filters->vehicle_use != 'All') {
+        if (isset($filters->vehicle_use) && $filters->vehicle_use != 'All' && $filters->registration_type == CarRegistrationType::COMPANY) {
             $query->where('car_quote_request.vehicle_use', $filters->vehicle_use);
         }
         if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {

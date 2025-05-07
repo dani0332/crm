@@ -24,6 +24,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\CarRegistrationType;
 
 class ConversionAsAtReportService extends BaseService
 {
@@ -90,6 +91,8 @@ class ConversionAsAtReportService extends BaseService
                 'lob' => $request->lob,
                 'displayBy' => $request->displayBy,
                 'tag' => $request->tag,
+                'registration_type' => $request->registration_type,
+                'vehicle_use' => $request->vehicle_use,
                 'page' => $request->page,
             ];
 
@@ -221,6 +224,16 @@ class ConversionAsAtReportService extends BaseService
                 $query->where('quote_tags.name', ucwords(QuoteSegmentEnum::SIC->value));
             } else {
                 $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
+            }
+        }
+
+        if (isset($filters->lob) && $filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+            if (isset($filters->registration_type) && $filters->registration_type != 'All') {
+                $query->where("{$alias}.registration_type", $filters->registration_type);
+            }
+
+            if (isset($filters->vehicle_use) && $filters->vehicle_use != 'All' && isset($filters->registration_type) && $filters->registration_type == CarRegistrationType::COMPANY) {
+                $query->where("{$alias}.vehicle_use", $filters->vehicle_use);
             }
         }
 

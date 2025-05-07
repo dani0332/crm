@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Attributes\WithoutRelations;
 use Illuminate\Support\Facades\Auth;
+use App\Services\Logger\LoggerService;
 
 class LogAllocation implements ShouldQueue
 {
@@ -39,6 +40,11 @@ class LogAllocation implements ShouldQueue
      */
     public function handle(): void
     {
+        if (app()->environment('local')) {
+            LoggerService::info(self::class.' - Skipping allocation log in local environment');
+
+            return;
+        }
         AllocationAudit::log(
             $this->model,
             $this->quoteType,

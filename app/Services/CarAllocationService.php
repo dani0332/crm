@@ -39,6 +39,7 @@ use App\Models\UserTeams;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Services\DTOs\FetchCarLeadResult;
 
 class CarAllocationService extends AllocationService
 {
@@ -114,7 +115,7 @@ class CarAllocationService extends AllocationService
         return $continueAssignment;
     }
 
-    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false)
+    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false): FetchCarLeadResult
     {
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -129,15 +130,19 @@ class CarAllocationService extends AllocationService
 
         $lead = CarQuote::where('uuid', $quoteId)->first();
 
-        if ($lead && $getLeadWithoutCriteria) {
-            return $lead;
+        if (!$lead) {
+            return new FetchCarLeadResult(null, true);
         }
 
-        if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
-            return null;
+        if ($getLeadWithoutCriteria) {
+            return new FetchCarLeadResult($lead, false);
         }
 
-        return $lead;
+        if (! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
+            return new FetchCarLeadResult(null, false);
+        }
+
+        return new FetchCarLeadResult($lead, false);
     }
 
     public function getTier($tierId)
@@ -439,8 +444,14 @@ class CarAllocationService extends AllocationService
         $rules = $this->getRules($lead);
 
         if ($rules->isEmpty()) {
-            $ruleUserIds = $this->getRuleUsers();
-            LoggerService::info('No rules found, excluding rule users: '.json_encode($ruleUserIds));
+
+            if ($lead->registration_type == CarRegistrationType::PERSONAL) {
+                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: true);
+            } else {
+                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: false);
+            }
+
+            LoggerService::info('No rules found, excluding rule users: ', json_encode($ruleUserIds));
 
             return array_diff(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $ruleUserIds);
         }
@@ -789,13 +800,16 @@ class CarAllocationService extends AllocationService
         return $userIds;
     }
 
-    private function getRuleUsers(): mixed
+    private function getRuleUsers($excludeVehicleUseRule = true): mixed
     {
         // Join the RuleLeadSource table with the Rules table where the rule is active (is_active = 1).
         // Select distinct user IDs associated with these rules and convert the result to an array.
         return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->where('rules.is_active', 1)
+            ->when($excludeVehicleUseRule, function ($query) {
+                $query->where('rule_type', '!=', RuleTypeEnum::VEHICLE_USE);
+            })
             ->distinct()
             ->pluck('rule_users.user_id')
             ->toArray();

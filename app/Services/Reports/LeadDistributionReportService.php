@@ -24,6 +24,7 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Enums\CarRegistrationType;
 
 class LeadDistributionReportService extends BaseService
 {
@@ -56,6 +57,8 @@ class LeadDistributionReportService extends BaseService
             'page' => $request->page,
             'tiers' => $request->tiers,
             'isCommercial' => $request->isCommercial,
+            'registration_type' => $request->registration_type,
+            'vehicle_use' => $request->vehicle_use,
         ];
     }
 
@@ -319,6 +322,12 @@ class LeadDistributionReportService extends BaseService
             })
             ->when(isset($filters->isCommercial) && $filters->isCommercial !== 'All', function ($q) use ($filters) {
                 $q->where('car_model.is_commercial', $filters->isCommercial === 'true');
+            })
+            ->when(isset($filters->registration_type) && $filters->registration_type !== 'All', function ($q) use ($filters) {
+                $q->where('car_quote_request.registration_type', $filters->registration_type);
+            })
+            ->when(isset($filters->vehicle_use) && $filters->vehicle_use !== 'All' && $filters->registration_type == CarRegistrationType::COMPANY, function ($q) use ($filters) {
+                $q->where('car_quote_request.vehicle_use', $filters->vehicle_use);
             })
             ->when(! empty($filters->sic_advisor_requested) && $filters->sic_advisor_requested !== 'All', function ($q) use ($filters) {
                 $q->where('car_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
