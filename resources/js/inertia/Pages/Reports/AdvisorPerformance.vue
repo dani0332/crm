@@ -146,6 +146,13 @@ const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
 
+const showCommercialRule = computed(() => {
+  if (filters.registration_type !==  carRegistrationTypeEnum.PERSONAL) {
+    filters.isCommercial = '';
+  }
+  return filters.registration_type === carRegistrationTypeEnum.PERSONAL;
+});
+
 onMounted(() => {
   if (page.props.defaultFilters) {
     filters.advisorAssignedDates =
@@ -222,6 +229,7 @@ onMounted(() => {
           :options="vehicleUseOptions"
         />
         <x-select
+          v-if="showCommercialRule"
           v-model="filters.isCommercial"
           label="Commercial Rule"
           placeholder="Select any option"
