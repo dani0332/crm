@@ -583,6 +583,13 @@ const vehicleUseOptions = [
 const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
+
+const showCommercialRule = computed(() => {
+  if (filters.registration_type !== carRegistrationTypeEnum.PERSONAL) {
+    filters.isCommercial = '';
+  }
+  return filters.registration_type === carRegistrationTypeEnum.PERSONAL;
+});
 </script>
 
 <template>
@@ -753,7 +760,7 @@ const isVehicleUseDisabled = computed(() => {
           :options="vehicleUseOptions"
         />
         <x-select
-          v-if="canShow('isCommercial')"
+          v-if="canShow('isCommercial') && showCommercialRule"
           v-model="filters.isCommercial"
           label="Commercial Rule"
           placeholder="Select any option"
