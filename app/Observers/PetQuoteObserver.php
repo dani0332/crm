@@ -22,5 +22,11 @@ class PetQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $petQuote->transaction_approved_at];
         }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            in_array($petQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+        ) {
+            event(new PrivateClientUpdatedEvent($petQuote->id, QuoteTypeId::Pet));
     }
 }

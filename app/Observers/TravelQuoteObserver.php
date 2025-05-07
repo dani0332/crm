@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
@@ -94,6 +95,7 @@ class TravelQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+            event(new PrivateClientUpdatedEvent($travelQuote->id, QuoteTypeId::Travel));
         }
 
         if (
@@ -102,7 +104,7 @@ class TravelQuoteObserver
         ) {
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
-
+            event(new PrivateClientUpdatedEvent($travelQuote->id, QuoteTypeId::Travel));
         }
     }
 }

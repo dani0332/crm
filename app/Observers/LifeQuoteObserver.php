@@ -6,6 +6,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\LifeQuote;
@@ -83,6 +84,7 @@ class LifeQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+            event(new PrivateClientUpdatedEvent($lifeQuote->id, QuoteTypeId::Life));
         }
 
         if (
@@ -91,7 +93,7 @@ class LifeQuoteObserver
         ) {
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
-
+            event(new PrivateClientUpdatedEvent($lifeQuote->id, QuoteTypeId::Life));
         }
     }
 }

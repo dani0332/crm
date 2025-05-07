@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
@@ -43,6 +44,8 @@ class CarQuoteObserver
                 'new' => $value,
             ];
         }
+
+        event(new PrivateClientUpdatedEvent($lead->id, QuoteTypeId::Life));
 
         if (isset($dirty['advisor_id'])) {
             try {
@@ -112,6 +115,7 @@ class CarQuoteObserver
                     'uuid' => $lead->uuid,
                 ]);
             }
+            event(new PrivateClientUpdatedEvent($lead->id, QuoteTypeId::Car));
         }
         if (
             isset($dirty['quote_status_id']) &&
@@ -119,6 +123,7 @@ class CarQuoteObserver
         ) {
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
+            event(new PrivateClientUpdatedEvent($lead->id, QuoteTypeId::Car));
         }
     }
 }

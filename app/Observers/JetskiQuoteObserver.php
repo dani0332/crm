@@ -22,5 +22,11 @@ class JetskiQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $jetskiQuote->transaction_approved_at];
         }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            in_array($jetskiQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+        ) {
+            event(new PrivateClientUpdatedEvent($jetskiQuote->id, QuoteTypeId::Jetski));
     }
 }
