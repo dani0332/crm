@@ -104,7 +104,7 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
                 $failedDetails['entity_id'][] = $entity->id ?? 'Unknown entity';
                 $failedDetails['message'][] = 'Failed to migrate chunk: '.$e->getMessage();
 
-                LoggerService::warning(self::CLASS_NAME . ' - Failed to process chunk - Error: '.$e->getMessage(), extra: [
+                LoggerService::warning(self::CLASS_NAME.' - Failed to process chunk - Error: '.$e->getMessage(), extra: [
                     'trace' => $e->getTraceAsString()]);
             }
         });

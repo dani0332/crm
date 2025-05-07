@@ -208,7 +208,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                 }
                 // Commit transaction for the entire chunk
                 DB::commit();
-                LoggerService::info(self::CLASS_NAME . " - Successfully processed chunk of {$customerDetails->count()} records");
+                LoggerService::info(self::CLASS_NAME." - Successfully processed chunk of {$customerDetails->count()} records");
 
             } catch (\Exception $e) {
                 // Rollback the entire chunk
@@ -221,7 +221,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                 $failedDetails['entity_id'][] = $customerDetailIds;
                 $failedDetails['message'][] = "Failed to process chunk: {$e->getMessage()}";
 
-                LoggerService::warning(self::CLASS_NAME . ' - Failed to process chunk with customer detail IDs: '.$customerDetailIds.' - Error: '.$e->getMessage(), extra: [
+                LoggerService::warning(self::CLASS_NAME.' - Failed to process chunk with customer detail IDs: '.$customerDetailIds.' - Error: '.$e->getMessage(), extra: [
                     'trace' => $e->getTraceAsString()]);
             }
         });
