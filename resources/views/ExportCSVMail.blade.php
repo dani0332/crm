@@ -64,6 +64,9 @@
                     <li>Records: {{ $recordCount }}</li>
                     <li>File size: Approximately {{ $fileSize }} KB</li>
                     <li>Export date: {{ $currentDate }}</li>
+                    @if(isset($dateRangeStart) && isset($dateRangeEnd))
+                    <li>Date range: {{ \Carbon\Carbon::parse($dateRangeStart)->format('d M Y') }} to {{ \Carbon\Carbon::parse($dateRangeEnd)->format('d M Y') }} ({{ abs(\Carbon\Carbon::parse($dateRangeStart)->diffInDays(\Carbon\Carbon::parse($dateRangeEnd))) + 1 }} days)</li>
+                    @endif
                 </ul>
             </div>
 

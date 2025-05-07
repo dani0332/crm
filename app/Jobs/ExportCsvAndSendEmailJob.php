@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -59,6 +60,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             );
 
             Log::info('CSV export job completed for '.$this->requestParams['fileName']);
+
+            Auth::logout();
         } catch (\Throwable $e) {
             Log::error('CSV export job failed for '.$this->requestParams['fileName'].' attempt: '.$this->attempts().' Exception: '.$e->getMessage().', '.$e->getFile().':'.$e->getLine(), [
                 'trace' => collect($e->getTrace())->filter(function ($trace) {
@@ -66,6 +69,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
                     // return isset($trace['file']) && str_contains($trace['file'], '/app');
                 })->all(),
             ]);
+
+            Auth::logout();
 
             if ($this->attempts() >= $this->tries) {
                 throw $e; // Throw Exception ONLY after all tries have failed
