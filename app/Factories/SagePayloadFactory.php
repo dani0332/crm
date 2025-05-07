@@ -2,6 +2,7 @@
 
 namespace App\Factories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -10,6 +11,7 @@ use App\Enums\quoteStatusCode;
 use App\Enums\SageEnum;
 use App\Enums\SagePaymentMethodsEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
@@ -1236,7 +1238,12 @@ class SagePayloadFactory
         $sageRequest->advisorName = $advisorName;
         $sageRequest->manager = $managerName;
         $sageRequest->advisorDepartment = $advisorDepartment;
-        $sageRequest->vatOnPremium = $quote->vat;
+        if ($quote->vat > 0) {
+            $sageRequest->vatOnPremium = $quote->vat;
+        } else {
+            $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
+            $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
+        }
         $sageRequest->premiumWithoutTax = floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
         $sageRequest->vatOnCommission = floatval($payment->commission_vat);
