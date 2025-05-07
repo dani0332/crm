@@ -856,7 +856,7 @@ const isVehicleUseDisabled = computed(() => {
 });
 
 const showCommercialRule = computed(() => {
-  if (filters.registration_type !==  carRegistrationTypeEnum.PERSONAL) {
+  if (filters.registration_type !== carRegistrationTypeEnum.PERSONAL) {
     filters.isCommercial = '';
   }
   return filters.registration_type === carRegistrationTypeEnum.PERSONAL;
