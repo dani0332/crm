@@ -181,7 +181,7 @@ class AMLController extends Controller
         $request->merge([
             'exportTitle' => 'AML',
             'created_at_start' => $request->amlCreatedStartDate,
-            'created_at_end' => $request->amlCreatedEndDate
+            'created_at_end' => $request->amlCreatedEndDate,
         ]);
 
         if ($request->exportType == 'email') {
