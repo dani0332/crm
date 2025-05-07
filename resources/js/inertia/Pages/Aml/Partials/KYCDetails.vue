@@ -253,7 +253,7 @@ const submitInsuredKycForm = isValid => {
       .catch(errors => {
         Object.keys(errors.response.data.errors).forEach(function (key) {
           notification.error({
-            title: errors.response.data.errors[key],
+            title: errors.response.data.errors[key][0].replace(/^\["|"\]$/g, ''),
             position: 'top',
           });
         });

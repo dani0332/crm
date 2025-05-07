@@ -55,7 +55,7 @@ class InsuredKycRequest extends FormRequest
             'email' => 'required',
             'id_number' => 'required',
             'id_issue_date' => 'required',
-            'id_expiry_date' => 'required',
+            'id_expiry_date' => 'required|date|after:today',
             'pep' => 'sometimes',
             'financial_sanctions' => 'sometimes',
             'dual_nationality' => 'sometimes',
