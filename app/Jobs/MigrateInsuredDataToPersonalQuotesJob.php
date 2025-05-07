@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\Insured;
 use App\Models\PersonalQuote;
@@ -20,13 +21,6 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
     use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
-    public $tries = 3;
-
-    /**
      * The maximum number of unhandled exceptions to allow before failing.
      *
      * @var int
@@ -39,13 +33,6 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      * @var int
      */
     public $timeout = 3600; // 1 hour
-
-    /**
-     * The number of seconds to wait before retrying the job.
-     *
-     * @var array
-     */
-    public $backoff = [60, 300, 600]; // 1 minute, 5 minutes, 10 minutes
 
     /**
      * Indicates if the job should be marked as failed on timeout.
@@ -110,10 +97,12 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
             LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' previously processed record id :  '.$lastProcessedId.' in cache.');
         }
 
+        $excludedQuoteTypes = [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski];
         // Use chunk to process records in batches to avoid memory issues
-        PersonalQuote::when($lastProcessedId, function ($q) use ($lastProcessedId) {
-            $q->where('id', '>', $lastProcessedId);
-        })
+        PersonalQuote::whereNotIn('quote_type_id', $excludedQuoteTypes)
+            ->when($lastProcessedId, function ($q) use ($lastProcessedId) {
+                $q->where('id', '>', $lastProcessedId);
+            })
             ->where(function ($q) {
                 $q->whereNull('quote_id')
                     ->orWhereNull('insured_id');
