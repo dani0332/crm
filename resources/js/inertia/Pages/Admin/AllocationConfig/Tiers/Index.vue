@@ -111,15 +111,24 @@ onMounted(() => {
           placeholder="Created End Date"
         />
       </x-field>
-      <x-field label="Tire Name">
-        <x-input v-model="filters.name" type="text" class="w-full" />
-      </x-field>
-      <x-field label="Min Price">
-        <x-input v-model="filters.min_price" type="number" class="w-full" />
-      </x-field>
-      <x-field label="Max Price">
-        <x-input v-model="filters.max_price" type="number" class="w-full" />
-      </x-field>
+      <x-input
+        label="Tire Name"
+        v-model="filters.name"
+        type="text"
+        class="w-full"
+      />
+      <x-input
+        label="Min Price"
+        v-model="filters.min_price"
+        type="number"
+        class="w-full"
+      />
+      <x-input
+        label="Max Price"
+        v-model="filters.max_price"
+        type="number"
+        class="w-full"
+      />
     </div>
     <div class="flex justify-end gap-3">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

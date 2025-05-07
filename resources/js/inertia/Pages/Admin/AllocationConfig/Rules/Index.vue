@@ -109,9 +109,12 @@ onMounted(() => {
           placeholder="Created Date End"
         />
       </x-field>
-      <x-field label="Rule Name">
-        <x-input v-model="filters.name" type="text" class="w-full" />
-      </x-field>
+      <x-input
+        label="Rule Name"
+        v-model="filters.name"
+        type="text"
+        class="w-full"
+      />
     </div>
     <div class="flex justify-end gap-3">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

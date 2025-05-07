@@ -221,25 +221,24 @@ function onMemberSubmit(isValid) {
     <template #default>
       <x-form @submit="onMemberSubmit" :auto-focus="false">
         <div class="grid md:grid-cols-2 mb-5 gap-4">
-          <x-field label="Payer Name" required>
-            <x-input
-              v-model="memberForm.first_name"
-              :rules="[isRequired, rules.nameCheck]"
-              placeholder="Payer Name"
-              type="text"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Nationality">
-            <x-select
-              v-model="memberForm.nationality_id"
-              placeholder="Select Nationality"
-              :options="nationalitiesOptions"
-              class="w-full"
-              filterable
-              filterPlaceholder="Filter Nationality...."
-            />
-          </x-field>
+          <x-input
+            v-model="memberForm.first_name"
+            :rules="[isRequired, rules.nameCheck]"
+            placeholder="Payer Name"
+            type="text"
+            class="w-full"
+            label="Payer Name"
+            required
+          />
+          <x-select
+            v-model="memberForm.nationality_id"
+            placeholder="Select Nationality"
+            :options="nationalitiesOptions"
+            class="w-full"
+            filterable
+            filterPlaceholder="Filter Nationality...."
+            label="Nationality"
+          />
           <x-field label="Date Of Birth">
             <DatePicker
               v-model="memberForm.dob"

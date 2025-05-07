@@ -114,24 +114,24 @@ const ageRangeValid = computed(() => {
             class="grid sm:grid-cols-2 gap-4"
             v-if="sicConfigurableForm.is_age"
           >
-            <x-field label="Min Age" required>
-              <x-input
-                v-model="sicConfigurableForm.min_age"
-                placeholder="Min Age"
-                class="w-full"
-                :rules="[isRequired, ageRangeValid]"
-                :error="errors.min_age"
-              />
-            </x-field>
-            <x-field label="Max Age" required>
-              <x-input
-                v-model="sicConfigurableForm.max_age"
-                class="w-full"
-                placeholder="Max Age"
-                :rules="[isRequired]"
-                :error="errors.max_age"
-              />
-            </x-field>
+            <x-input
+              v-model="sicConfigurableForm.min_age"
+              placeholder="Min Age"
+              class="w-full"
+              :rules="[isRequired, ageRangeValid]"
+              :error="errors.min_age"
+              label="Min Age"
+              required
+            />
+            <x-input
+              v-model="sicConfigurableForm.max_age"
+              class="w-full"
+              placeholder="Max Age"
+              :rules="[isRequired]"
+              :error="errors.max_age"
+              label="Max Age"
+              required
+            />
           </div>
         </div>
         <div class="col-span-1 sm:col-span-1">
@@ -246,16 +246,15 @@ const ageRangeValid = computed(() => {
             class="grid sm:grid-cols-1 gap-4"
             v-if="sicConfigurableForm.is_price_starting_from"
           >
-            <x-field label="Price Starting From" required>
-              <x-input
-                v-model="sicConfigurableForm.price_starting_from"
-                required
-                placeholder="Price Starting From"
-                class="w-full"
-                :rules="[isRequired]"
-                :error="errors.price_starting_from"
-              />
-            </x-field>
+            <x-input
+              v-model="sicConfigurableForm.price_starting_from"
+              required
+              placeholder="Price Starting From"
+              class="w-full"
+              :rules="[isRequired]"
+              :error="errors.price_starting_from"
+              label="Price Starting From"
+            />
           </div>
         </div>
       </div>

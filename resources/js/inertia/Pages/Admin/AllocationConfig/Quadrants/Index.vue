@@ -99,9 +99,12 @@ const showDeleteModal = ref(false),
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-1 gap-4">
-      <x-field label="Quadrant Name" class="w-full">
-        <x-input v-model="filters.name" type="text" class="w-full" />
-      </x-field>
+      <x-input
+        label="Quadrant Name"
+        v-model="filters.name"
+        type="text"
+        class="w-full"
+      />
     </div>
     <div class="flex justify-end gap-3">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

@@ -206,14 +206,14 @@ onMounted(() => {
         <p class="text-xl text-white">Batch Details</p>
       </div>
       <div class="grid sm:grid-cols-2 gap-4 p-4">
-        <x-field label="Batch Name" required>
-          <x-input
-            v-model="batchForm.name"
-            :rules="[isRequired]"
-            class="w-full"
-            placeholder="Batch Name"
-          />
-        </x-field>
+        <x-input
+          label="Batch Name"
+          required
+          v-model="batchForm.name"
+          :rules="[isRequired]"
+          class="w-full"
+          placeholder="Batch Name"
+        />
         <x-field label="Batch Month" required>
           <DatePicker
             v-model="batchForm.batchMonth"
