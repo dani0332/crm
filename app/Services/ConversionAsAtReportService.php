@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\DisplayByEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -24,7 +25,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\CarRegistrationType;
 
 class ConversionAsAtReportService extends BaseService
 {
