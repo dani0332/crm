@@ -6,7 +6,12 @@ import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { time } from 'highcharts';
-import { ImageGalleryModal, AmlApprovalModal, RetryPaymentModal } from './PaymentComponents/PaymentModal/index.js';
+import { 
+  ImageGalleryModal, 
+  AmlApprovalModal, 
+  RetryPaymentModal,
+  DeleteSplitPaymentModal 
+} from './PaymentComponents/PaymentModal/index.js';
 
 // New Flow Implementation
 import { usePayment } from '../Composables/usePayment';
@@ -1674,33 +1679,6 @@ const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
 
 const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
-};
-
-const handleDeletePayment = async () => {
-  let retryData = {
-    payment_split_id: deleteSplitPaymentId.value,
-    payment_status_id: deleteSplitPaymentStatus.value,
-    model_type: props.quoteType,
-    quote_id: props.quoteRequest.id,
-  };
-  deleteForm
-    .transform(data => retryData)
-    .post('/payments/' + props.quoteType + '/delete-split-payment', {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Split Payment has been deleted',
-          position: 'top',
-        });
-        isDeleteModalOpen.value = false;
-      },
-      onError: () => {
-        notification.error({
-          title: 'Payment delete failed',
-          position: 'top',
-        });
-      },
-    });
 };
 
 /**
@@ -5711,67 +5689,15 @@ onBeforeMount(() => {
           @update:model-value="closeRetryModal"
         />
 
-        <div
-          class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
-          v-if="isDeleteModalOpen"
-        >
-          <div
-            class="modal-retry-container bg-white w-full max-w-full overflow-hidden rounded-lg"
-          >
-            <div class="modal-confirm-header text-base text-white bg-white">
-              <div
-                class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
-              >
-                <div class="flex items-center space-x-2">
-                  Delete Split Payment
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span
-                    @click="closeDeleteModal"
-                    class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      class="w-4 h-4 text-gray-800"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12"
-                      ></path>
-                    </svg>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <x-form @submit="handleDeletePayment" :auto-focus="false">
-              <div class="w-full h-full mt-2 flex flex-col">
-                <div
-                  class="text-lg px-6 py-4 border-b flex justify-between items-start"
-                >
-                  <div class="text-left">
-                    <span> Are you sure to delete this payment?</span>
-                  </div>
-                </div>
-              </div>
-              <div class="w-full h-full mt-2 flex flex-col items-center">
-                <x-button
-                  size="lg"
-                  type="submit"
-                  color="orange"
-                  class="px-4 py-2 mt-4 mb-4"
-                  :loading="deleteForm.processing"
-                >
-                  <span>Delete</span></x-button
-                >
-              </div>
-            </x-form>
-          </div>
-        </div>
+        <!-- Delete Split Payment Modal -->
+        <DeleteSplitPaymentModal
+          v-model="isDeleteModalOpen"
+          :payment-split-id="deleteSplitPaymentId"
+          :payment-status-id="deleteSplitPaymentStatus"
+          :quote-type="props.quoteType"
+          :quote-id="props.quoteRequest.id"
+          @update:model-value="closeDeleteModal"
+        />
 
         <x-modal
           v-model="voidPaymentModelPopup"
