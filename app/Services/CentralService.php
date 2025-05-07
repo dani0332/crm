@@ -315,17 +315,20 @@ class CentralService extends BaseService
     {
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $repository = getRepositoryObject($quoteType);
+        $quote = $repository::where('code', $code)->firstOrFail();
 
         $priceVatApp = $data->price_vat_applicable ?? 0;
         $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+        $vatAmount = ($priceVatApp / 100) * $vatPercentage;
+        LoggerService::info("Quote {$code} - VAT values: priceVatApp: {$priceVatApp}, priceVatNotApp: {$priceVatNotApp}, vatAmount: {$vatAmount}");
 
         if ($quoteType == QuoteTypes::BUSINESS->value) {
-            $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
+            $data->price_with_vat = $priceVatApp + $priceVatNotApp + $vatAmount;
         } else {
-            $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
+            $data->price_with_vat = $priceVatApp ? ($priceVatApp + $vatAmount) : $priceVatNotApp;
         }
 
-        $quote = $repository::where('code', $code)->firstOrFail();
+        $data->vat = $vatAmount;
 
         $oldInsuranceProviderId = $quote->insurance_provider_id;
         $newInsuranceProviderId = $data->insurance_provider_id;
@@ -1248,6 +1251,25 @@ class CentralService extends BaseService
         LoggerService::info('fn:voidPayment - Void authorized payment process completed');
 
         return ['status' => true, 'message' => 'Void payment processed'];
+    }
+
+    public function removeInsurerPaymentLink($request)
+    {
+        $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
+        if (! $quote) {
+            return ['status' => false, 'message' => 'Quote not found'];
+        }
+
+        $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
+        $quote->save();
+
+        $paymentSplits = method_exists($quote, 'getAllInsurerPaymentLinkSplits') ? $quote->getAllInsurerPaymentLinkSplits() : [];
+        foreach ($paymentSplits as $ps) {
+            $ps->insurer_payment_link = null;
+            $ps->save();
+        }
+
+        return ['status' => true, 'message' => 'Insurer payment link removed'];
     }
 
     // Todo: This method will remove in future if Business confirm we will enable capture of all providers

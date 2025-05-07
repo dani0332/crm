@@ -21,12 +21,12 @@ class RolePermissionSeeder extends Seeder
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
         // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
-        // $this->addBridgerSkipPermission();
-        // $this->addPostPrepaymentButtonPermission();
-        // $this->sendUpdateCancelPermission();
-        // $this->addPolicyDetailsAddVatPermission();
-
+        $this->addBridgerSkipPermission();
+        $this->addPostPrepaymentButtonPermission();
+        $this->addInsurerPaymentLinkPermission();
+        $this->sendUpdateCancelPermission();
         $this->addRenewalsUploadPermission();
+        // $this->addPolicyDetailsAddVatPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -142,6 +142,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::SKIP_BRIDGER_AML,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addInsurerPaymentLinkPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::INSURER_PAYMENT_LINK,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
