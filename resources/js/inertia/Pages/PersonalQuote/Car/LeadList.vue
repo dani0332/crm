@@ -629,6 +629,9 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
         title: 'Unable to start an export',
         position: 'top',
       });
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
       throw err;
     });
 };
