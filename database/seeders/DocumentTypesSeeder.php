@@ -606,7 +606,7 @@ class DocumentTypesSeeder extends Seeder
 
         foreach ($quoteDocuments as $document) {
             DocumentType::firstOrCreate(
-                ['code' => $document['code']],
+                ['code' => $document['code'], 'quote_type_id' => $document['quote_type_id']],
                 $document
             );
         }

@@ -336,48 +336,58 @@ watch(
           :preset-dates="presetDates"
         />
       </x-field>
-      <x-field label="Line Of Bussiness">
-        <ComboBox
-          v-model="filters.lob"
-          placeholder="Search by Bussiness"
-          :options="[
-            { value: 'Health', label: 'Health' },
-            { value: 'Pet', label: 'Pet' },
-            { value: 'Cycle', label: 'Cycle' },
-            { value: 'Home', label: 'Home' },
-            { value: 'CorpLine', label: 'Corpline' },
-          ]"
-          class="w-full"
-          :single="true"
-          @update:modelValue="onLobChange"
-        />
-      </x-field>
-      <x-field label="Teams">
-        <ComboBox
-          v-model="filters.team"
-          placeholder="Select Team"
-          :options="teamOptions"
-          class="w-full"
-          :single="true"
-          :loading="loaders.advisorOptions"
-          @update:modelValue="onTeamChange"
-        />
-      </x-field>
-      <x-field
+      <x-select
+        v-model="filters.lob"
+        placeholder="Search by Bussiness"
+        :options="[
+          { value: 'Health', label: 'Health' },
+          { value: 'Pet', label: 'Pet' },
+          { value: 'Cycle', label: 'Cycle' },
+          { value: 'Home', label: 'Home' },
+          { value: 'CorpLine', label: 'Corpline' },
+        ]"
+        class="w-full"
+        @update:modelValue="onLobChange"
+        filterable
+        filterPlaceholder="Filter LOB...."
+        label="Line Of Bussiness"
+      />
+      <x-select
+        label="Teams"
+        v-model="filters.team"
+        placeholder="Select Team"
+        :options="teamOptions"
+        class="w-full"
+        :loading="loaders.advisorOptions"
+        @update:modelValue="onTeamChange"
+        filterable
+        filterPlaceholder="Filter Teams...."
+      />
+      <x-select
+        v-model="filters.advisors"
+        placeholder="Search by Advisor Name"
+        :options="advisorOptions"
+        class="w-full"
+        :loading="loaders.advisorOptions"
+        filterable
+        filterPlaceholder="Filter Advisors...."
+        multiple
+        truncate
         :label="
           !filters.team || filters.team.length == 0
             ? `Advisors (select teams first)`
             : `Advisors`
         "
       >
-        <ComboBox
-          v-model="filters.advisors"
-          placeholder="Search by Advisor Name"
-          :options="advisorOptions"
-          class="w-full"
-          :loading="loaders.advisorOptions"
-        />
-      </x-field>
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.advisors = advisorOptions.map(advisor => advisor.value)
+            "
+            @clear="filters.advisors = []"
+          />
+        </template>
+      </x-select>
       <x-field label="Filter By">
         <x-select
           v-model="filters.filter_by"

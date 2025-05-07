@@ -97,25 +97,41 @@ function onSubmit(isValid) {
         />
       </x-field>
 
-      <x-field label="Rule Type" required>
-        <ComboBox
-          v-model="ruleForm.rule_type"
-          :single="true"
-          :options="ruleTypes"
-          :selected="selectedRuleType ? [selectedRuleType] : []"
-          :error="ruleForm.errors.rule_type"
-        />
-      </x-field>
+      <x-select
+        v-model="ruleForm.rule_type"
+        label="Rule Type"
+        :options="ruleTypes"
+        :error="ruleForm.errors.rule_type"
+        filterable
+        filterPlaceholder="Filter Rule Type...."
+        placeholder="Select Rule Type"
+        required
+        :rules="[isRequired]"
+      />
 
-      <x-field label="Rule Users" required>
-        <ComboBox
-          v-model="ruleForm.rule_users"
-          :multiple="true"
-          :options="ruleUsers"
-          :selected="selectedUsers"
-          :error="ruleForm.errors.rule_users"
-        />
-      </x-field>
+      <x-select
+        v-model="ruleForm.rule_users"
+        label="Rule Users"
+        :options="ruleUsers"
+        :error="ruleForm.errors.rule_users"
+        multiple
+        filterable
+        filterPlaceholder="Filter Rule Users...."
+        placeholder="Select Rule Users"
+        required
+        :rules="[isRequired]"
+        truncate
+        class="w-full"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              ruleForm.rule_users = ruleUsers.map(item => item.value)
+            "
+            @clear="ruleForm.rule_users = []"
+          />
+        </template>
+      </x-select>
 
       <x-field label="Is Active?">
         <x-select

@@ -335,7 +335,7 @@ onUnmounted(() => (isActive.value = false));
 
   <div>
     <x-field label="Teams" class="w-64">
-      <ComboBox
+      <x-select
         v-model="filters.teamFilter"
         name="team_name"
         placeholder="Select Teams"
@@ -347,7 +347,18 @@ onUnmounted(() => (isActive.value = false));
         "
         @update:model-value="getDataForAdvisor()"
         :loading="loader.bar"
-      />
+        filterable
+        filterPlaceholder="Filter Teams...."
+        multiple
+        truncate
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="filters.teamFilter = allTeams.map(item => item.id)"
+            @clear="filters.teamFilter = []"
+          />
+        </template>
+      </x-select>
     </x-field>
     <ChartsColumn
       :title="'Lead Assign Count Summary Per Advisor'"
