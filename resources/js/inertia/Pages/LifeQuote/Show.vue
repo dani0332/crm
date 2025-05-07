@@ -1714,7 +1714,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
 
               <template #item-totalAnnualPremium="item">
-                <span class="copay-max">{{ item.isManualPlan ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice) : item.actualPremium }}</span>
+                <span class="copay-max">{{ item.isManualPlan ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice) : getTotalAnnualPremium(item.paymentTerm, item.actualPremium) }}</span>
               </template>
 
               <template
@@ -1860,7 +1860,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Price</dt>
-                <dd>{{ ecomDetail?.totalPrice ?? 'N/A' }}</dd>
+                <dd>{{ ecomDetail?.isManualPlan ? ecomDetail?.totalPrice : ecomDetail?.actualPremium ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Authorised AT</dt>

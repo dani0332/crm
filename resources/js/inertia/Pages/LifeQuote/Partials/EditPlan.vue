@@ -89,7 +89,7 @@ const extraAttr = reactive({
 const editForm = reactive({
   providerId: props?.selectedPlan?.providerId ?? null,
   planId: props?.selectedPlan?.planId ?? null,
-  isUW: props.selectedPlan?.isUW ?? false,
+  isUW: props.selectedPlan?.isUnderwritten ?? false,
   currency: props.selectedPlan.currency,
   paymentTerm: props.selectedPlan?.paymentTerm ?? null,
   sumAssured: props.selectedPlan.sumInsured ?? 0, 
