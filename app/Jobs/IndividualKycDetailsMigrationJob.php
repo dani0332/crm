@@ -56,18 +56,18 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
         // Query only customer details that haven't been migrated yet using subqueries
         $customerDetailsQuery = CustomerDetail::with('customer')->whereNotExists(function ($query) {
             $query->select(DB::raw(1))
-                  ->from('insureds')
-                  ->whereColumn('insureds.customer_details_id', 'customer_details.id')
-                  ->whereNotNull('insureds.customer_details_id');
+                ->from('insureds')
+                ->whereColumn('insureds.customer_details_id', 'customer_details.id')
+                ->whereNotNull('insureds.customer_details_id');
         })
-        ->whereNotExists(function ($query) {
-            $query->select(DB::raw(1))
-                  ->from('insured_kycs')
-                  ->whereColumn('insured_kycs.customer_details_id', 'customer_details.id')
-                  ->whereNotNull('insured_kycs.customer_details_id');
-        });
+            ->whereNotExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('insured_kycs')
+                    ->whereColumn('insured_kycs.customer_details_id', 'customer_details.id')
+                    ->whereNotNull('insured_kycs.customer_details_id');
+            });
 
-        info('Remaining customer details to process: ' . $customerDetailsQuery->count());
+        info('Remaining customer details to process: '.$customerDetailsQuery->count());
 
         $customerDetailsQuery->chunk(50, function ($customerDetails) use (&$migratedCount, &$skippedCount, &$failedCount, &$failedDetails) {
             // Start a transaction for the entire chunk
@@ -78,6 +78,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                     if (! $customer) {
                         info('Command:IndividualKycDetailsMigration - No customer found against customer detail ID:'.$customerDetail->id);
                         $skippedCount++;
+
                         continue;
                     }
 
@@ -128,18 +129,19 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
 
                     // Double-check if KYC details already exist
                     $insuredKyc = InsuredKyc::where('insured_id', $insured->id)->first();
-                    
+
                     if ($insuredKyc) {
                         // If the existing KYC is for the same customer_details_id, skip
                         if ($insuredKyc->customer_details_id == $customerDetail->id) {
                             Log::info('Insured KYC details already exist against customer detail ID:'.$customerDetail->id.' and insured ID:'.$insured->id);
                             $skippedCount++;
+
                             continue;
                         }
-                        
+
                         // If the KYC exists but with a different customer_details_id, check the customer_id and add mapping
                         Log::info('Insured KYC exists for insured ID:'.$insured->id.' but with different customer detail ID. Current:'.$customerDetail->id.', Existing:'.$insuredKyc->customer_details_id);
-                        
+
                         // Get customer_id from the customer_details
                         $customerFromDetail = $customerDetail->customer;
                         if ($customerFromDetail) {
@@ -153,8 +155,9 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                                 []
                             );
                         }
-                        
+
                         $skippedCount++;
+
                         continue;
                     }
 

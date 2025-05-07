@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Log;
  */
 class EntitiesInsuredMigrationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, GenericQueriesAllLobs;
+    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * The number of seconds the job can run before timing out.
@@ -34,14 +34,14 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
      * @var int
      */
     public $timeout = 3600;
-    
+
     /**
      * Execute the job.
      */
     public function handle()
     {
         Log::info('------------------- Entities Insured Migration Job Started At: '.now().' -------------------');
-        
+
         $this->updateExistingRecords();
 
         $totalEntities = Entity::count();
