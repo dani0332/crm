@@ -10,7 +10,8 @@ import {
   ImageGalleryModal, 
   AmlApprovalModal, 
   RetryPaymentModal,
-  DeleteSplitPaymentModal 
+  DeleteSplitPaymentModal,
+  VoidPaymentModal
 } from './PaymentComponents/PaymentModal/index.js';
 
 // New Flow Implementation
@@ -3272,12 +3273,15 @@ const isEditPaymentEnabled = payment => {
 };
 
 let voidPaymentObject = {};
-const voidPaymentProcess = ref(false);
 const voidPaymentModelPopup = ref(false);
 const voidPaymentModel = payment => {
   voidPaymentModelPopup.value = true;
   voidPaymentObject = payment;
 };
+
+/**
+ * Void payment functionality is now handled in the VoidPaymentModal component
+ */
 
 let deletePaymentObject = {};
 const deletePaymentProcess = ref(false);
@@ -3285,54 +3289,6 @@ const deletePaymentModelPopup = ref(false);
 const deletePaymentModel = payment => {
   deletePaymentModelPopup.value = true;
   deletePaymentObject = payment;
-};
-
-const voidPayment = () => {
-  voidPaymentProcess.value = true;
-  let data = {
-    quote_type_id: page.props.quoteTypeId,
-    quote_id: props.quoteRequest.id,
-    quote_uuid: props.quoteRequest.uuid,
-    payment_id: voidPaymentObject.id,
-    payment_code: voidPaymentObject.code,
-    send_update_log_id: props.sendUpdate?.id ?? null,
-  };
-
-  axios
-    .post(`/payments/${props.quoteType}/void-payment`, data)
-    .then(res => {
-      voidPaymentProcess.value = false;
-      voidPaymentModelPopup.value = false;
-      if (res.data.status === false) {
-        notification.error({
-          title: res.data.message,
-          position: 'top',
-        });
-        return;
-      }
-      notification.success({
-        title: 'Processed',
-        position: 'top',
-      });
-
-      router.reload({
-        only: ['payments'],
-      });
-    })
-    .catch(err => {
-      voidPaymentProcess.value = false;
-      if (err.response.data) {
-        notification.error({
-          title: err.response.data[0],
-          position: 'top',
-        });
-      } else {
-        notification.error({
-          title: 'Void authorized payment process failed',
-          position: 'top',
-        });
-      }
-    });
 };
 
 const deletePayment = () => {
@@ -3444,6 +3400,12 @@ const triggerPostPrepayment = async splitPayment => {
 onBeforeMount(() => {
   fetchInsurerAMLStatus();
 });
+
+const closeVoidPaymentModal = () => {
+  voidPaymentModelPopup.value = false;
+};
+
+
 </script>
 
 <template>
@@ -5699,30 +5661,19 @@ onBeforeMount(() => {
           @update:model-value="closeDeleteModal"
         />
 
-        <x-modal
+        <!-- Void Payment Modal -->
+        <VoidPaymentModal
           v-model="voidPaymentModelPopup"
-          size="lg"
-          title="Void Authorized Payment"
-          show-close
-          backdrop
-        >
-          <x-form :auto-focus="false">
-            <div class="text-lg text-center">
-              <span> Are you sure to void this payment?</span>
-            </div>
-            <div class="mt-2 text-center">
-              <x-button
-                size="sm"
-                color="orange"
-                class="mt-4 text-center"
-                :loading="voidPaymentProcess"
-                @click="voidPayment"
-              >
-                <span>Confirm</span>
-              </x-button>
-            </div>
-          </x-form>
-        </x-modal>
+          :payment-id="voidPaymentObject.id"
+          :payment-code="voidPaymentObject.code"
+          :quote-type="props.quoteType"
+          :quote-id="props.quoteRequest.id"
+          :quote-uuid="props.quoteRequest.uuid"
+          :quote-type-id="page.props.quoteTypeId ?? props.sendUpdate.quote_type_id"
+          :send-update-id="props.sendUpdate?.id"
+          @update:model-value="closeVoidPaymentModal"
+        />
+
         <x-modal
           v-model="deletePaymentModelPopup"
           size="lg"
