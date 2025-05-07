@@ -178,9 +178,12 @@ class AMLController extends Controller
     {
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
-        $request->merge(['exportTitle' => 'AML']);
+        $request->merge([
+            'exportTitle' => 'AML',
+            'created_at_start' => $request->amlCreatedStartDate,
+            'created_at_end' => $request->amlCreatedEndDate,
+        ]);
 
-        logger()->debug('AMLController export: '.json_encode($request->all()));
         if ($request->exportType == 'email') {
             return app(KycLogs::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
         }
