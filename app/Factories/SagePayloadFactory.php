@@ -1240,7 +1240,7 @@ class SagePayloadFactory
         $sageRequest->advisorDepartment = $advisorDepartment;
         if ($quote->vat > 0) {
             $sageRequest->vatOnPremium = $quote->vat;
-        } else{
+        } else {
             $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
             $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
         }
