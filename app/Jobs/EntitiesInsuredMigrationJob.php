@@ -70,7 +70,7 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
                 ->whereNotNull('insured.entity_id');
         });
 
-        $entities->chunk(50, function ($entitiesToProcess) use (&$migratedCount, &$failedCount, &$failedDetails) {
+        $entities->chunkById(50, function ($entitiesToProcess) use (&$migratedCount, &$failedCount, &$failedDetails) {
             DB::beginTransaction();
             try {
                 foreach ($entitiesToProcess as $entity) {

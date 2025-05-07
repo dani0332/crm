@@ -71,7 +71,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
 
         LoggerService::info(self::CLASS_NAME.' - Remaining customer details to process: '.$customerDetailsQuery->count());
 
-        $customerDetailsQuery->chunk(50, function ($customerDetails) use (&$migratedCount, &$skippedCount, &$failedCount, &$failedDetails) {
+        $customerDetailsQuery->chunkById(50, function ($customerDetails) use (&$migratedCount, &$skippedCount, &$failedCount, &$failedDetails) {
             // Start a transaction for the entire chunk
             DB::beginTransaction();
             try {
