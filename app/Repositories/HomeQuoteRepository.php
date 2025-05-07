@@ -165,6 +165,7 @@ class HomeQuoteRepository extends BaseRepository
                     'paymentSplits.processJob',
                 ]);
             },
+            'insured',
         ];
     }
 

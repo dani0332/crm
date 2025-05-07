@@ -43,6 +43,8 @@ const serverOptions = ref({
 
 const tableHeader = [
   { text: 'REF-ID', value: 'code' },
+  { text: 'PC Customer', value: 'insured.pcp_tag' },
+  { text: 'PC Customer', value: 'insured.pcp_tag' },
   { text: 'BATCH', value: 'batch.name' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
@@ -255,6 +257,7 @@ const filters = reactive({
   policy_expiry_date_end: '',
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  private_client: 'all',
 });
 
 const teamUsers =
@@ -860,6 +863,19 @@ const insurerAMLStatusOption = computed(() => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"

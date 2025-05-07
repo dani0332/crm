@@ -222,6 +222,7 @@ class BikeQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'insured',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);

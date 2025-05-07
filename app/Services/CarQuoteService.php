@@ -24,6 +24,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
+use App\Models\Insured;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\Logger\LoggerService;
@@ -412,7 +413,9 @@ class CarQuoteService extends BaseService
                     END AS insurer_aml_status_display
                 '),
                 'cqr.email',
-                'cqr.mobile_no'
+                'cqr.mobile_no',
+                DB::raw(Insured::formattedPcpTagCase().' as pcp_tag_formatted')
+
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')

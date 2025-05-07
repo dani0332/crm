@@ -80,6 +80,7 @@ const loader = reactive({
 
 const tableHeader = reactive([
   { text: 'Ref-ID', value: 'code', is_active: true },
+  { text: 'PC Customer', value: 'insured.pcp_tag_formatted' },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
@@ -751,6 +752,9 @@ const insurerAMLStatusOption = computed(() => {
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
+      </template>
+      <template #item-insured.pcp_tag_formatted="{ insured }">
+        {{ insured?.pcp_tag_formatted || 'No' }}
       </template>
     </DataTable>
 

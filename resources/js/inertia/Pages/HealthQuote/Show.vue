@@ -1848,7 +1848,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
 <template>
   <div>
     <Head title="Health Detail" />
-
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Health Detail</h2>
@@ -1858,6 +1857,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
         >
           Stale for {{ countDays }}
         </p>
+        <x-button v-if="quote?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
+         Private Client
+        </x-button>
       </template>
 
       <template #default v-if="readOnlyMode.isDisable === true">
@@ -2355,6 +2357,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MEMBER CATEGORY</dt>
                   <dd>{{ quote.member_category_id_text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>

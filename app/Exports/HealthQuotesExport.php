@@ -64,6 +64,7 @@ class HealthQuotesExport
             'BOOKING DATE',
             'PAYMENT STATUS',
             'ADVISOR CAR TEAM(s)',
+            'PC CUSTOMER',
         ];
     }
 
@@ -108,6 +109,7 @@ class HealthQuotesExport
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             $quote->payment_status?->payment_status_text ?? 'N/A',
             $quote->car_teams ?? 'N/A',
+            $quote->insured?->pcp_tag ?? '',
         ];
     }
 }

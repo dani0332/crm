@@ -517,6 +517,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Life Detail</h2>
+      <x-button v-if="quote?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
+        Private Client
+      </x-button>
       <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
         <Link
           v-if="quote.life_quote_request_detail?.insly_id"
@@ -962,6 +965,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">IS SMOKER</dt>
                   <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Life'" />
               </dl>

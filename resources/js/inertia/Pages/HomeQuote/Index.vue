@@ -40,6 +40,7 @@ const serverOptions = ref({
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
+  { text: 'PC Customer', value: 'insured.pcp_tag_formatted', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
@@ -741,6 +742,9 @@ const formatDate = dateString =>
           <span>{{ code }}</span>
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
+      </template>
+      <template #item-insured.pcp_tag_formatted="{ insured }">
+        {{ insured?.pcp_tag_formatted || 'No' }}
       </template>
       <template #item-authorized_at="item">
         <p v-if="item?.payments[0]?.payment_status_id === 4">

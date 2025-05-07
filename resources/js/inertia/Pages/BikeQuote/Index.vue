@@ -152,6 +152,7 @@ onMounted(() => {
 
 const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
+  { text: 'PC Customer', value: 'insured.pcp_tag_formatted' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
@@ -555,6 +556,19 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -673,6 +687,9 @@ const insurerAMLStatusOption = computed(() => {
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
+      </template>
+      <template #item-insured.pcp_tag_formatted="{ insured }">
+        {{ insured?.pcp_tag_formatted || 'No' }}
       </template>
     </DataTable>
 

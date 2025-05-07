@@ -363,6 +363,11 @@ function capitalizeString(str) {
 
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Bike Detail</h2>
+      <div class="flex gap-">
+        <x-button v-if="quote?.insured?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
+              Private Client
+        </x-button>
+      </div>
       <div class="flex gap-2">
         <Link
           v-if="quote.quote_detail?.insly_id"
@@ -872,6 +877,10 @@ function capitalizeString(str) {
                 Home Country Driving License Held For
               </dt>
               <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.insured.pcp_tag_formatted ?? 'No' }}</dd>
             </div>
             <RiskRatingScoreDetails
               v-if="quote"

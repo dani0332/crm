@@ -123,6 +123,7 @@ class JetskiQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'insured',
         ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
         })

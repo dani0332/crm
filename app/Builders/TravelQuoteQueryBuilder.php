@@ -84,6 +84,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'plan:id,text',
             'currentlyLocatedIn:id,text',
             'renewalBatch:id,name',
+            'insured:pcp_tag',
         ]);
     }
 

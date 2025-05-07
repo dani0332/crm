@@ -302,6 +302,10 @@ const dateFormat = date =>
                   {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
                 </dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PRIVATE CLIENT</dt>
+                <dd>{{ quote.insured.pcp_tag_formatted ?? 'No' }}</dd>
+              </div>
               <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
             </dl>
           </div>

@@ -202,4 +202,17 @@ trait Filterable
     {
         $query->whereDate($column, today());
     }
+
+    public function scopeFilterByPrivateClient($query, $filter)
+    {
+        if ($filter != 'all') {
+            if ($filter == 'no') {
+                $query->whereRelation('insured', function ($q) {
+                    $q->WhereNull('pcp_tag');
+                });
+            } else {
+                $query->whereRelation('insured', 'insured.pcp_tag', $filter);
+            }
+        }
+    }
 }

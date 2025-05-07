@@ -21,6 +21,7 @@ use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
+use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\QuoteBatches;
 use App\Models\TravelDestination;
@@ -185,6 +186,8 @@ class TravelQuoteService extends BaseService
                     ELSE insurer_aml_status
                 END AS insurer_aml_status_display
             '),
+            'insured.pcp_tag',
+            DB::raw(Insured::formattedPcpTagCase().' as pcp_tag_formatted'),
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')

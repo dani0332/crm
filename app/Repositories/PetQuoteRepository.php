@@ -115,6 +115,7 @@ class PetQuoteRepository extends BaseRepository
             'payments',
             'renewalBatchModel',
             'quoteDetail',
+            'insured',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);

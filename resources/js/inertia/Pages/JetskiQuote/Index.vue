@@ -173,6 +173,7 @@ onMounted(() => {
 
 const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
+  { text: 'PC Customer', value: 'insured.pcp_tag_formatted', is_active: true },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
@@ -621,6 +622,9 @@ const insurerAMLStatusOption = computed(() => {
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
+      </template>
+      <template #item-insured.pcp_tag_formatted="{ insured }">
+        {{ insured?.pcp_tag_formatted || 'No' }}
       </template>
     </DataTable>
 

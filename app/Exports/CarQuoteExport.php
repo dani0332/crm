@@ -64,6 +64,7 @@ class CarQuoteExport
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'PC CUSTOMER',
         ];
     }
 
@@ -116,6 +117,7 @@ class CarQuoteExport
             $quote->previous_quote_policy_number ?? '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            $quote->insured?->pcp_tag ?? '',
         ];
     }
 

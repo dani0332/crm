@@ -1122,6 +1122,9 @@ const shouldShowPlanDetailsSection = computed(() => {
         >
           Stale for {{ countDays }}
         </p>
+        <x-button v-if="quote?.insured.pcp_tag == true" size="sm" color="#BFA100" tag="div">
+         Private Client
+        </x-button>
       </template>
       <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
@@ -1665,8 +1668,12 @@ const shouldShowPlanDetailsSection = computed(() => {
                   <dt class="font-medium">STREET NAME</dt>
                   <dd>{{ page?.props?.customerAddressData?.street }}</dd>
                 </div>
-
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">PRIVATE CLIENT</dt>
+                  <dd>{{ quote.insured.pcp_tag_formatted ?? 'No' }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
+                
               </dl>
               <dl
                 v-if="

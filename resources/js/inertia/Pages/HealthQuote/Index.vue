@@ -62,6 +62,7 @@ const assignForm = useForm({
 // adding comment
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
+  { text: 'PC Customer', value: 'insured.pcp_tag_formatted', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   {
@@ -1099,6 +1100,9 @@ const insurerAMLStatusOption = computed(() => {
         <p>
           {{ item.renewal_batch_text }}
         </p>
+      </template>
+      <template #item-insured.pcp_tag_formatted="{ insured }">
+        {{ insured?.pcp_tag_formatted || 'No' }}
       </template>
     </DataTable>
 
