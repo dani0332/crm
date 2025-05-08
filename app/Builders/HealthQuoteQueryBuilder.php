@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -103,6 +104,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
             Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
             request()->merge($requestParams);
         }
 
