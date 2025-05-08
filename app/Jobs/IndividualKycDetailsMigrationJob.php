@@ -79,7 +79,6 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
         LoggerService::info(self::CLASS_NAME.' - Remaining customer details to process: '.$customerDetailsQuery->count());
 
         $customerDetailsQuery->chunkById(50, function ($customerDetails) use (&$migratedCount, &$skippedCount, &$failedCount, &$failedDetails) {
-            // Start a transaction for the entire chunk
             DB::beginTransaction();
             try {
                 foreach ($customerDetails as $customerDetail) {
@@ -105,7 +104,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                     $insured = Insured::where(['id_type' => $customerDetail->id_type, 'id_number' => $normalizedIdNumber])->first();
 
                     if (! $insured) {
-                        LoggerService::info(self::CLASS_NAME.' - Creating new insured record against Customer ID: '.$customer->id.' and Customer Detail ID: '.$customerDetail->id);
+                        LoggerService::info(self::CLASS_NAME.' - Creating new insured record against Customer ID: '.$customer->id.' and customer detail ID: '.$customerDetail->id);
                         $insured = Insured::create([
                             'customer_type' => CustomerTypeEnum::Individual,
                             'first_name' => $customer->insured_first_name ?? $customer->first_name,
@@ -148,9 +147,6 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                             continue;
                         }
 
-                        // If the KYC exists but with a different customer_details_id, check the customer_id and add mapping
-                        LoggerService::info(self::CLASS_NAME.' - Insured KYC exists for insured ID:'.$insured->id.' but with different customer detail ID: - Current:'.$customerDetail->id.', Existing:'.$insuredKyc->customer_details_id);
-
                         // Get customer_id from the customer_details
                         $customerFromDetail = $customerDetail->customer;
                         if ($customerFromDetail) {
@@ -164,7 +160,6 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                                 []
                             );
                         }
-
                         $skippedCount++;
 
                         continue;
@@ -236,12 +231,11 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
         LoggerService::info(self::CLASS_NAME." - Migration completed: individual customer kyc details - Migrated:{$migratedCount}, Skipped: {$skippedCount} (already existed), Failed:{$failedCount}.");
 
         if ($failedCount > 0) {
-            LoggerService::info(self::CLASS_NAME.' - Migration failed for the following customer details', extra: [
+            LoggerService::info(self::CLASS_NAME.' - Migration failed for the following customer detail ID', extra: [
                 'failed_details' => json_encode($failedDetails),
             ]);
         }
 
-        LoggerService::info(self::CLASS_NAME.' - End migrating individual customer KYC details at '.now());
         LoggerService::info(self::CLASS_NAME.' - ------------------- Individual KYC Details from Customer Details to Insured KYC Migration Job Ended At: '.now().' -------------------');
     }
 
