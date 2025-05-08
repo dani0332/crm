@@ -38,9 +38,9 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
 
     private $lockPostfix;
 
-    public function __construct()
+    public function __construct($lockKey)
     {
-        $this->lockPostfix = Carbon::now()->format('YmdHi');
+        $this->lockPostfix = $lockKey;
     }
 
     /**

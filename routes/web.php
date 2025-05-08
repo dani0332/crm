@@ -451,7 +451,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         // Add route to trigger individual KYC details migration
         Route::get('/migrate-individual-kyc-details', function () {
-            App\Jobs\IndividualKycDetailsMigrationJob::dispatch()->onQueue('insly');
+            App\Jobs\IndividualKycDetailsMigrationJob::dispatch(Carbon::now()->format('YmdHi'))->onQueue('insly');
 
             return '<h3>Individual KYC Details migration job has been queued. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-individual-kyc-details');
