@@ -24,14 +24,46 @@ const sumAssuredEnabled = ref(false);
 // Helper function to validate at least one sum assured field is filled
 const validateAtLeastOneSum = value => {
   if (!sumAssuredEnabled.value) return true; // If not enabled, no validation needed
-  
+
+  // Check if we have at least one filled Sum Insured field
   const hasValue = 
-    configForm['life_sum_assured_usd'] || 
-    configForm['life_sum_assured_aed'] || 
-    configForm['life_sum_assured_gpb'] || 
-    configForm['life_sum_assured_eur'];
+    configForm['life_sum_insured_value_usd'] || 
+    configForm['life_sum_insured_value_aed'] || 
+    configForm['life_sum_insured_value_gbp'] || 
+    configForm['life_sum_insured_value_eur'];
   
-  return !!hasValue || 'At least one Sum Insured field must be filled';
+  if (!hasValue) {
+    return 'At least one Sum Insured field must be filled';
+  }
+  
+  // Validate that all filled fields are numeric
+  const fields = {
+    'USD': configForm['life_sum_insured_value_usd'],
+    'AED': configForm['life_sum_insured_value_aed'],
+    'GBP': configForm['life_sum_insured_value_gbp'],
+    'EUR': configForm['life_sum_insured_value_eur']
+  };
+  
+  // Check each field, if it has a value, validate it's numeric
+  for (const [currency, fieldValue] of Object.entries(fields)) {
+    if (fieldValue) {
+      // Check if value is numeric
+      if (isNaN(Number(fieldValue))) {
+        return `Sum Insured (${currency}) must be a number`;
+      }
+    }
+  }
+  
+  return true;
+};
+
+// Create individual validation rules for each sum assured field
+const validateIfEnabled = (fieldName) => (value) => {
+  // If the field's enabled checkbox is checked, make the field required
+  if (configForm[`${fieldName}_enabled`]) {
+    return value ? true : 'This field is required';
+  }
+  return true;
 };
 
 // Define insurance types with their respective fields
@@ -43,21 +75,24 @@ const insuranceTypes = [
     quote_type_id: 1,
     fields: [
       {
-        name: 'total_price',
+        name: 'premium',
+        uiName: 'car_premium',
         label: 'Total Price',
         type: 'price',
         currency: 'AED',
         operator: '>='
       },
       {
-        name: 'value',
+        name: 'car_value',
+        uiName: 'car_value',
         label: 'Car Value',
         type: 'price',
         currency: 'AED',
         operator: '>='
       },
       {
-        name: 'make',
+        name: 'car_make_id',
+        uiName: 'car_make_id',
         label: 'Car Make',
         type: 'select_multiple',
         options: 'carMakes',
@@ -65,6 +100,7 @@ const insuranceTypes = [
       },
       {
         name: 'insurer',
+        uiName: 'car_insurer',
         label: 'Insurer',
         type: 'select_multiple',
         options: 'insurers',
@@ -79,7 +115,8 @@ const insuranceTypes = [
     quote_type_id: 3,
     fields: [
       {
-        name: 'total_price',
+        name: 'premium',
+        uiName: 'health_premium',
         label: 'Total Price',
         type: 'price',
         currency: 'AED',
@@ -87,6 +124,7 @@ const insuranceTypes = [
       },
       {
         name: 'insurer',
+        uiName: 'health_insurer',
         label: 'Insurer',
         type: 'select_multiple',
         options: 'insurers',
@@ -101,36 +139,44 @@ const insuranceTypes = [
     quote_type_id: 4,
     fields: [
       {
-        name: 'sum_assured_usd',
-        label: 'Sum Insured',
+        name: 'sum_insured_value',
+        uiName: 'sum_insured_value_usd',
+        label: 'Sum Insured (USD)',
         currency: 'USD',
         type: 'numeric',
         operator: '>=',
         currency_type_id: 1,
       },
       {
-        name: 'sum_assured_aed',
-        type: 'numeric',
+        name: 'sum_insured_value',
+        uiName: 'sum_insured_value_aed',
+        label: 'Sum Insured (AED)',
         currency: 'AED',
+        type: 'numeric',
         operator: '>=',
-        currency_type_id: 1,
+        currency_type_id: 2,
       },
       {
-        name: 'sum_assured_gpb',
-        type: 'numeric',
+        name: 'sum_insured_value',
+        uiName: 'sum_insured_value_gbp',
+        label: 'Sum Insured (GBP)',
         currency: 'GBP',
+        type: 'numeric',
         operator: '>=',
-        currency_type_id: 1,
+        currency_type_id: 3,
       },
       {
-        name: 'sum_assured_eur',
-        type: 'numeric',
+        name: 'sum_insured_value',
+        uiName: 'sum_insured_value_eur',
+        label: 'Sum Insured (EUR)',
         currency: 'EUR',
+        type: 'numeric',
         operator: '>=',
-        currency_type_id: 1
+        currency_type_id: 4
       },
       {
         name: 'insurer',
+        uiName: 'life_insurer',
         label: 'Insurer',
         type: 'select_multiple',
         options: 'insurers',
@@ -145,7 +191,8 @@ const insuranceTypes = [
     quote_type_id: 2,
     fields: [
       {
-        name: 'total_price',
+        name: 'premium',
+        uiName: 'home_premium',
         label: 'Total Price',
         type: 'price',
         currency: 'AED',
@@ -153,6 +200,7 @@ const insuranceTypes = [
       },
       {
         name: 'insurer',
+        uiName: 'home_insurer',
         label: 'Insurer',
         type: 'select_multiple',
         options: 'insurers',
@@ -160,6 +208,7 @@ const insuranceTypes = [
       },
       {
         name: 'location_area',
+        uiName: 'home_location_area',
         label: 'Location Area',
         type: 'select_multiple',
         options: 'locationAreas',
@@ -174,7 +223,8 @@ const insuranceTypes = [
     quote_type_id: 7,
     fields: [
       {
-        name: 'total_price',
+        name: 'premium',
+        uiName: 'yacht_premium',
         label: 'Total Price',
         type: 'price',
         currency: 'AED',
@@ -182,6 +232,7 @@ const insuranceTypes = [
       },
       {
         name: 'insurer',
+        uiName: 'yacht_insurer',
         label: 'Insurer',
         type: 'select_multiple',
         options: 'insurers',
@@ -224,15 +275,31 @@ onMounted(() => {
     props.configurations.forEach(config => {
       insuranceTypes.forEach(type => {
         type.fields.forEach(field => {
-          if (config.field_name === `${type.name}_${field.name}`) {
+          // For life insurance sum_insured_value, we need to match by field name and currency
+          if (type.name === 'life' && field.name === 'sum_insured_value' && config.field_name === field.name) {
+            // Match by currency_type_id
+            if (config.currency_type_id === field.currency_type_id) {
+              const formFieldName = `${type.name}_${field.uiName || field.name}`;
+              configForm[formFieldName] = config.value;
+              configForm[`${formFieldName}_enabled`] = config.status == true;
+              
+              if (config.status) {
+                sumAssuredEnabled.value = true;
+              }
+            }
+          } 
+          // For all other fields
+          else if (config.field_name === field.name && config.quote_type_id === type.quote_type_id) {
+            const formFieldName = `${type.name}_${field.uiName || field.name}`;
+            
             if (field.type === 'select_multiple') {
               const values = config.value ? config.value.split(',') : [];
-              configForm[`${type.name}_${field.name}`] = values;
+              configForm[formFieldName] = values;
             } else {
-              configForm[`${type.name}_${field.name}`] = config.value;
+              configForm[formFieldName] = config.value;
             }
 
-            configForm[`${type.name}_${field.name}_enabled`] = config.status == true;
+            configForm[`${formFieldName}_enabled`] = config.status == true;
           }
         });
       });
@@ -250,8 +317,9 @@ const onSubmit = isValid => {
     // Loop through insurance types and their fields to create configurations
     insuranceTypes.forEach(type => {
       type.fields.forEach(field => {
-        const isEnabled = configForm[`${type.name}_${field.name}_enabled`];
-        let value = configForm[`${type.name}_${field.name}`];
+        const formFieldName = `${type.name}_${field.uiName || field.name}`;
+        const isEnabled = configForm[`${formFieldName}_enabled`];
+        let value = configForm[formFieldName];
 
         // Format value based on field type
         if (field.type === 'select_multiple' && Array.isArray(value)) {
@@ -264,7 +332,7 @@ const onSubmit = isValid => {
           const configItem = {
             quote_type_id: type.quote_type_id,
             name: `${type.label} ${field.label}`,
-            field_name: `${type.name}_${field.name}`,
+            field_name: field.name,
             operator: field.operator,
             value: value,
             currency_type_id: field.currency_type_id || null,
@@ -309,10 +377,10 @@ const onSubmit = isValid => {
               <input type="checkbox" v-model="sumAssuredEnabled" class="mr-2 h-4 w-4" 
                 @change="e => {
                   // Set all sum assured fields to the same enabled state
-                  configForm['life_sum_assured_usd_enabled'] = e.target.checked;
-                  configForm['life_sum_assured_aed_enabled'] = e.target.checked;
-                  configForm['life_sum_assured_gpb_enabled'] = e.target.checked;
-                  configForm['life_sum_assured_eur_enabled'] = e.target.checked;
+                  configForm['life_sum_insured_value_usd_enabled'] = e.target.checked;
+                  configForm['life_sum_insured_value_aed_enabled'] = e.target.checked;
+                  configForm['life_sum_insured_value_gbp_enabled'] = e.target.checked;
+                  configForm['life_sum_insured_value_eur_enabled'] = e.target.checked;
                 }" />
               <p class="mr-2">Sum Insured</p>
               <p class="text-gray-500">(At least one required)</p>
@@ -321,8 +389,8 @@ const onSubmit = isValid => {
             <!-- Grid for sum assured fields -->
             <div class="grid grid-cols-4 gap-4">
               <div>
-                <x-input v-model="configForm['life_sum_assured_usd']" class="!mb-0"
-                  :rules="sumAssuredEnabled ? [validateAtLeastOneSum] : []">
+                <x-input v-model="configForm['life_sum_insured_value_usd']" class="!mb-0"
+                  :rules="[validateAtLeastOneSum]">
                   <template #suffix>
                     <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                       <span>USD</span>
@@ -331,7 +399,8 @@ const onSubmit = isValid => {
                 </x-input>
               </div>
               <div>
-                <x-input v-model="configForm['life_sum_assured_aed']" class="!mb-0" :rules="sumAssuredEnabled ? [validateAtLeastOneSum] : []">
+                <x-input v-model="configForm['life_sum_insured_value_aed']" class="!mb-0" 
+                  :rules="[validateAtLeastOneSum]">
                   <template #suffix>
                     <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                       <span>AED</span>
@@ -340,7 +409,8 @@ const onSubmit = isValid => {
                 </x-input>
               </div>
               <div>
-                <x-input v-model="configForm['life_sum_assured_gpb']" class="!mb-0" :rules="sumAssuredEnabled ? [validateAtLeastOneSum] : []">
+                <x-input v-model="configForm['life_sum_insured_value_gbp']" class="!mb-0" 
+                  :rules="[validateAtLeastOneSum]">
                   <template #suffix>
                     <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                       <span>GBP</span>
@@ -349,7 +419,8 @@ const onSubmit = isValid => {
                 </x-input>
               </div>
               <div>
-                <x-input v-model="configForm['life_sum_assured_eur']" class="!mb-0" :rules="sumAssuredEnabled ? [validateAtLeastOneSum] : []">
+                <x-input v-model="configForm['life_sum_insured_value_eur']" class="!mb-0" 
+                  :rules="[validateAtLeastOneSum]">
                   <template #suffix>
                     <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                       <span>EUR</span>
@@ -357,7 +428,6 @@ const onSubmit = isValid => {
                   </template>
                 </x-input>
               </div>
-              <div></div>
             </div>
           </div>
         </template>
@@ -370,17 +440,17 @@ const onSubmit = isValid => {
             <template v-for="(field, fieldIndex) in fieldsChunk"
               :key="`${insuranceType.name}_${field.name}_${fieldIndex}`">
               <!-- Skip sum assured fields in life insurance as they're handled separately -->
-              <template v-if="!(insuranceType.name === 'life' && field.name.startsWith('sum_assured_'))">
+              <template v-if="!(insuranceType.name === 'life' && field.name === 'sum_insured_value')">
                 <div v-if="field.type !== 'select_multiple'">
                   <div v-if="field.label" class="flex items-center mb-2">
-                    <input type="checkbox" v-model="configForm[`${insuranceType.name}_${field.name}_enabled`]"
+                    <input type="checkbox" v-model="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`]"
                       class="mr-2 h-4 w-4" />
                     <p class="mr-2">{{ field.label }}</p>
                     <p v-if="field.operator === '>='" class="text-gray-500">(Greater than or equal to)</p>
                   </div>
                   <div v-else></div>
-                  <x-input v-model="configForm[`${insuranceType.name}_${field.name}`]" class="!mb-0"
-                    :rules="configForm[`${insuranceType.name}_${field.name}_enabled`] ? [isRequiredNumber] : []">
+                  <x-input v-model="configForm[`${insuranceType.name}_${field.uiName || field.name}`]" class="!mb-0"
+                    :rules="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`] ? [isRequired, isRequiredNumber] : []">
                     <template #suffix v-if="field.currency">
                       <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                         <span>{{ field.currency }}</span>
@@ -392,12 +462,13 @@ const onSubmit = isValid => {
                 <!-- Selection fields -->
                 <div v-else-if="field.type === 'select_multiple'">
                   <div class="flex items-center mb-2">
-                    <input type="checkbox" v-model="configForm[`${insuranceType.name}_${field.name}_enabled`]"
+                    <input type="checkbox" v-model="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`]"
                       class="mr-2 h-4 w-4" />
                     <p>{{ field.label }}</p>
                   </div>
                   <x-select :placeholder="`Select ${field.label}`" :options="props[field.options]" filterable multiple
-                    v-model="configForm[`${insuranceType.name}_${field.name}`]">
+                    v-model="configForm[`${insuranceType.name}_${field.uiName || field.name}`]"
+                    :rules="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`] ? [v => v && v.length ? true : 'This field is required'] : []">
                   </x-select>
                 </div>
               </template>
