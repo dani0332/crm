@@ -287,4 +287,12 @@ trait QuoteModelTrait
             }
         );
     }
+
+    public function hasOneOfPaidStatus(): bool
+    {
+        return $this->payments && $this->payments->count() > 0 && 
+               $this->payments->contains(function (Payment $payment) {
+                   return $payment->hasOneOfPaidStatus();
+               });
+    }
 }

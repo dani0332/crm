@@ -12,6 +12,7 @@ use App\Services\ProcessTracker\ProcessTrackerService;
 use App\Services\TravelAllocationService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use App\Enums\TeamNameEnum;
 
 class TravelAllocation implements Allocation
 {
@@ -53,6 +54,13 @@ class TravelAllocation implements Allocation
 
                 $response = $this->travelAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
+                LoggerService::debug('Processing record for Travel Allocation', extra: [
+                    'payment_status_id' => $lead->payment_status_id,
+                    'sic_flow_enabled' => $lead->sic_flow_enabled,
+                    'sic_advisor_requested' => $lead->sic_advisor_requested,
+                    'quote_status_id' => $lead->quote_status_id,
+                ]);
+                
                 if ($lead->isAllocationInProgress()) {
                     LoggerService::info("Allocation is already started at {$lead->allocation_started_at}");
 
@@ -60,6 +68,9 @@ class TravelAllocation implements Allocation
                 }
 
                 $lead->startAllocation();
+                
+                // Evaluate team ID before fetching advisor
+                $this->evaluateTeamId($lead);
 
                 $advisor = $this->fetchAvailableAdvisor($lead);
 
@@ -115,5 +126,54 @@ class TravelAllocation implements Allocation
 
             $this->tracker->saveResult(ProcessTrackerAllocationEnum::EXCEPTION_RAISED, summary: "Assign Lead Failed with error : {$e->getMessage()}");
         }
+    }
+
+    private function evaluateTeamId(TravelQuote $lead)
+    {
+        if (!$lead || !$lead->uuid) {
+            LoggerService::warning('Cannot evaluate team ID - invalid lead', extra: [
+                'allocationId' => $this->allocationId
+            ]);
+            return;
+        }
+        
+        // Extract lead properties with null safety
+        $isSIC = method_exists($lead, 'isSIC') ? $lead->isSIC(QuoteTypes::TRAVEL) : false;
+        $isAIG = method_exists($lead, 'isAIG') ? $lead->isAIG(QuoteTypes::TRAVEL) : false;
+        $hasPaidStatus = method_exists($lead, 'hasOneOfPaidStatus') ? $lead->hasOneOfPaidStatus() : false;
+        $isAdvisorRequested = isset($lead->sic_advisor_requested) ? (bool)$lead->sic_advisor_requested : false;
+        $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+        
+        // Determine team based on priority rules
+        if ($isSIC && !$isAIG && $hasPaidStatus) {
+            // Priority 1: SIC paid leads get SIC Unassisted team
+            $this->teamId = $sicUnassistedTeamId;
+            $reason = "SIC paid lead";
+        }
+        elseif ($isSIC && !$isAIG && $isAdvisorRequested) {
+            // Priority 2: SIC leads with advisor requested get SIC Unassisted team
+            $this->teamId = $sicUnassistedTeamId;
+            $reason = "SIC with advisor requested";
+        }
+        elseif ($isAIG && $isAdvisorRequested) {
+            // Priority 3: AIG leads with advisor requested get SIC Unassisted team
+            $this->teamId = $sicUnassistedTeamId;
+            $reason = "AIG with advisor requested";
+        }
+        else {
+            // Default: All other leads have no specific team
+            $this->teamId = false;
+            $reason = "Default case - no specific team";
+        }
+        
+        // Log the final team assignment using debug with extra parameter
+        LoggerService::debug('Team assigned for Travel Allocation', extra: [
+            'reason' => $reason,
+            'teamId' => $this->teamId,
+            'isSIC' => $isSIC,
+            'isAIG' => $isAIG,
+            'hasPaidStatus' => $hasPaidStatus,
+            'isAdvisorRequested' => $isAdvisorRequested,
+        ]);
     }
 }
