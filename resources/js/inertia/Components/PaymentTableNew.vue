@@ -3548,6 +3548,7 @@ onBeforeMount(() => {
                     :sendUpdate="sendUpdate"
                     :quoteType="quoteType"
                     :isCapBtnEnabled="isCapBtnEnabled"
+                    :isAllianceProvider="isAllianceProvider"
                     @toggle-expand="toggleExpand"
                     @edit-payment="editPaymentModal"
                     @delete-payment="deletePaymentModel"
