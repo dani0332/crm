@@ -237,14 +237,15 @@ function onMemberSubmit(isValid) {
           label="Nationality"
           required
         />
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="memberForm.dob"
-            placeholder="Date of Birth"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
+
+        <DatePicker
+          label="Date of Birth"
+          required
+          v-model="memberForm.dob"
+          placeholder="Date of Birth"
+          class="w-full"
+          :rules="[isRequired]"
+        />
         <x-select
           v-model="memberForm.relation_code"
           placeholder="Select Relation"

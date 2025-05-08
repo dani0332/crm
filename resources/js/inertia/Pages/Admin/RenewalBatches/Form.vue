@@ -214,36 +214,39 @@ onMounted(() => {
           class="w-full"
           placeholder="Batch Name"
         />
-        <x-field label="Batch Month" required>
-          <DatePicker
-            v-model="batchForm.batchMonth"
-            :rules="[isRequired]"
-            class="w-full"
-            :monthPicker="true"
-            placeholder="Batch Month"
-            format="MMM-yyyy"
-            :disableYear="true"
-            teleport
-          />
-        </x-field>
-        <x-field label="Start Date" required>
-          <DatePicker
-            v-model="batchForm.start_date"
-            :rules="[isRequired]"
-            class="w-full"
-            placeholder="Start Date"
-            teleport
-          />
-        </x-field>
-        <x-field label="End Date" required>
-          <DatePicker
-            v-model="batchForm.end_date"
-            :rules="[isRequired]"
-            class="w-full"
-            placeholder="End Date"
-            teleport
-          />
-        </x-field>
+
+        <DatePicker
+          label="Batch Month"
+          required
+          v-model="batchForm.batchMonth"
+          :rules="[isRequired]"
+          class="w-full"
+          :monthPicker="true"
+          placeholder="Batch Month"
+          format="MMM-yyyy"
+          :disableYear="true"
+          teleport
+        />
+
+        <DatePicker
+          label="Start Date"
+          required
+          v-model="batchForm.start_date"
+          :rules="[isRequired]"
+          class="w-full"
+          placeholder="Start Date"
+          teleport
+        />
+
+        <DatePicker
+          label="End Date"
+          required
+          v-model="batchForm.end_date"
+          :rules="[isRequired]"
+          class="w-full"
+          placeholder="End Date"
+          teleport
+        />
       </div>
     </x-card>
     <x-card class="rounded-lg mt-5">
@@ -251,15 +254,15 @@ onMounted(() => {
         <p class="text-xl text-white">Renewal Batch DeadLines</p>
       </div>
       <div class="grid sm:grid-cols-2 gap-4 p-4">
-        <x-field label="Car Sold Deadline" required>
-          <DatePicker
-            v-model="batchForm.dead_date"
-            :rules="[isRequired]"
-            class="w-full"
-            placeholder="Car Sold Deadline"
-            teleport
-          />
-        </x-field>
+        <DatePicker
+          v-model="batchForm.dead_date"
+          :rules="[isRequired]"
+          class="w-full"
+          placeholder="Car Sold Deadline"
+          teleport
+          label="Car Sold Deadline"
+          required
+        />
       </div>
     </x-card>
     <x-card class="rounded-lg mt-5">

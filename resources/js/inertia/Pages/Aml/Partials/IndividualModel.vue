@@ -753,15 +753,15 @@ watch(
             label="Nationality"
             required
           />
-          <x-field label="Date of Birth">
-            <DatePicker
-              v-model="insuredFormDetails.dob"
-              :key="dobValidationKey"
-              :rules="[isRequired]"
-              placeholder="Date of Birth"
-              class="w-full"
-            />
-          </x-field>
+
+          <DatePicker
+            label="Date of Birth"
+            v-model="insuredFormDetails.dob"
+            :key="dobValidationKey"
+            :rules="[isRequired]"
+            placeholder="Date of Birth"
+            class="w-full"
+          />
           <x-select
             v-model="insuredFormDetails.screening_gender"
             :key="validationKey"

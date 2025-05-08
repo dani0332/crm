@@ -239,14 +239,14 @@ function onMemberSubmit(isValid) {
             filterPlaceholder="Filter Nationality...."
             label="Nationality"
           />
-          <x-field label="Date Of Birth">
-            <DatePicker
-              v-model="memberForm.dob"
-              placeholder="Date of Birth"
-              class="w-full"
-              teleport
-            />
-          </x-field>
+
+          <DatePicker
+            label="Date Of Birth"
+            v-model="memberForm.dob"
+            placeholder="Date of Birth"
+            class="w-full"
+            teleport
+          />
         </div>
         <div class="flex justify-end">
           <x-button type="submit" size="sm" color="orange" :loading="isLoading">

@@ -212,14 +212,15 @@ const onUBOSubmit = isValid => {
           filterable
           filterPlaceholder="Filter Nationality...."
         />
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="uboForm.dob"
-            placeholder="Date of Birth"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
+
+        <DatePicker
+          label="Date of Birth"
+          required
+          v-model="uboForm.dob"
+          placeholder="Date of Birth"
+          class="w-full"
+          :rules="[isRequired]"
+        />
 
         <x-select
           label="Position"

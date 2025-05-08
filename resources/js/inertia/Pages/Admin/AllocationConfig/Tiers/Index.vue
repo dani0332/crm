@@ -99,18 +99,17 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-      <x-field label="Created Start Date">
-        <DatePicker
-          v-model="filters.created_at"
-          placeholder="Created Start Date"
-        />
-      </x-field>
-      <x-field label="Created End Date">
-        <DatePicker
-          v-model="filters.created_at_end"
-          placeholder="Created End Date"
-        />
-      </x-field>
+      <DatePicker
+        label="Created Start Date"
+        v-model="filters.created_at"
+        placeholder="Created Start Date"
+      />
+
+      <DatePicker
+        label="Created End Date"
+        v-model="filters.created_at_end"
+        placeholder="Created End Date"
+      />
       <x-input
         label="Tire Name"
         v-model="filters.name"

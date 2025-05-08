@@ -521,58 +521,52 @@ const insurerAMLStatusOption = computed(() => {
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="First Name">
-          <x-input
-            v-model="filters.first_name"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Search by First Name"
-          />
-        </x-field>
-        <x-field label="Last Name">
-          <x-input
-            v-model="filters.last_name"
-            type="search"
-            name="last_name"
-            class="w-full"
-            placeholder="Search by Last Name"
-          />
-        </x-field>
-        <x-field label="Email">
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="email"
-            class="w-full"
-            placeholder="Search by Email"
-          />
-        </x-field>
-        <x-field label="Mobile Number">
-          <x-input
-            v-model="filters.mobile_no"
-            type="search"
-            name="mobile_no"
-            class="w-full"
-            placeholder="Search by Mobile Number"
-          />
-        </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
-            v-model="filters.created_at_start"
-            type="date"
-            name="created_at_start"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker
-            v-model="filters.created_at_end"
-            type="date"
-            name="created_at_end"
-            class="w-full"
-          />
-        </x-field>
+        <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          class="w-full"
+          placeholder="Search by First Name"
+          label="First Name"
+        />
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          class="w-full"
+          placeholder="Search by Last Name"
+          label="Last Name"
+        />
+        <x-input
+          v-model="filters.email"
+          type="search"
+          name="email"
+          class="w-full"
+          placeholder="Search by Email"
+          label="Email"
+        />
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
+        />
+        <DatePicker
+          v-model="filters.created_at_start"
+          type="date"
+          name="created_at_start"
+          class="w-full"
+          label="Created Date Start"
+        />
+        <DatePicker
+          v-model="filters.created_at_end"
+          type="date"
+          name="created_at_end"
+          class="w-full"
+          label="Created Date End"
+        />
         <DatePicker
           v-model="filters.advisor_assigned_date"
           name="created_at_start"
@@ -580,68 +574,69 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-        <x-field label="Lead Status">
-          <x-select
-            v-model="filters.quote_status_id"
-            name="quote_status"
-            placeholder="Please select lead status"
-            :options="
-              quoteStatuses.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            filterable
-            multiple
-            truncate
-          >
-            <template #content-footer>
-              <ui-select-actions
-                @select-all="
-                  filters.quote_status_id = quoteStatuses.map(item => item.id)
-                "
-                @clear="filters.quote_status_id = []"
-              />
-            </template>
-          </x-select>
-        </x-field>
-        <x-field label="Insurer AML Status">
-          <x-select
-            v-model="filters.insurer_aml_status"
-            name="insurer_aml_status"
-            placeholder="Please select status"
-            :options="insurerAMLStatusOption"
-            class="w-full"
-            filterable
-            multiple
-            truncate
-          >
-            <template #content-footer>
-              <ui-select-actions
-                @select-all="
-                  filters.insurer_aml_status = insurerAMLStatusOption.map(
-                    item => item.value,
-                  )
-                "
-                @clear="filters.insurer_aml_status = []"
-              />
-            </template>
-          </x-select>
-        </x-field>
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
-        <x-field
+        <x-select
+          v-model="filters.quote_status_id"
+          name="quote_status"
+          placeholder="Please select lead status"
+          :options="
+            quoteStatuses.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          filterable
+          multiple
+          truncate
+          label="Lead Status"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = quoteStatuses.map(item => item.id)
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.insurer_aml_status"
+          name="insurer_aml_status"
+          placeholder="Please select status"
+          :options="insurerAMLStatusOption"
+          class="w-full"
+          filterable
+          multiple
+          truncate
+          label="Insurer AML Status"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
+        <x-select
+          v-model="filters.advisor_id"
+          placeholder="Please select advisor"
+          :options="advisorOptionsFilter"
+          class="w-full"
+          filterable
           label="Advisor"
           v-if="
             !hasAnyRole([
@@ -650,61 +645,50 @@ const insurerAMLStatusOption = computed(() => {
               rolesEnum.YachtRenewalAdvisor,
             ])
           "
+        />
+        <x-select
+          v-model="filters.is_ecommerce"
+          placeholder="Search by Ecommerce"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          label="Is E-Commerce"
+        />
+        <x-select
+          v-model="filters.renewal_batch_id"
+          placeholder="Please select renewal batch"
+          :options="renewalBatchOptions"
+          class="w-full"
+          filterable
+          multiple
+          truncate
+          label="Renewal Batch"
         >
-          <x-select
-            v-model="filters.advisor_id"
-            placeholder="Please select advisor"
-            :options="advisorOptionsFilter"
-            class="w-full"
-            filterable
-          />
-        </x-field>
-        <x-field label="Is E-Commerce">
-          <x-select
-            v-model="filters.is_ecommerce"
-            placeholder="Search by Ecommerce"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Renewal Batch">
-          <x-select
-            v-model="filters.renewal_batch_id"
-            placeholder="Please select renewal batch"
-            :options="renewalBatchOptions"
-            class="w-full"
-            filterable
-            multiple
-            truncate
-          >
-            <template #content-footer>
-              <ui-select-actions
-                @select-all="
-                  filters.renewal_batch_id = renewalBatchOptions.map(
-                    item => item.value,
-                  )
-                "
-                @clear="filters.renewal_batch_id = []"
-              />
-            </template>
-          </x-select>
-        </x-field>
-        <x-field label="Renewal">
-          <x-select
-            v-model="filters.previous_quote_policy_number"
-            placeholder="Search by Renewal"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 0, label: 'Yes' },
-              { value: 1, label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.renewal_batch_id = renewalBatchOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.renewal_batch_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.previous_quote_policy_number"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 0, label: 'Yes' },
+            { value: 1, label: 'No' },
+          ]"
+          class="w-full"
+          label="Renewal"
+        />
         <x-input
           v-model="filters.previous_quote_policy_number_text"
           type="text"

@@ -460,14 +460,14 @@ const uboNationality = computed(() => {
           filterPlaceholder="Filter Nationality...."
           label="Nationality"
         />
-        <x-field label="Date of Birth">
-          <DatePicker
-            v-model="insuredFormDetails.dob"
-            :rules="[isRequired]"
-            placeholder="Date of Birth"
-            class="w-full"
-          />
-        </x-field>
+
+        <DatePicker
+          label="Date of Birth"
+          v-model="insuredFormDetails.dob"
+          :rules="[isRequired]"
+          placeholder="Date of Birth"
+          class="w-full"
+        />
         <div class="flex gap-5 mb-5 align-center">
           <p>Is the insured the payer?</p>
           <x-form-group v-model="is_insured">
