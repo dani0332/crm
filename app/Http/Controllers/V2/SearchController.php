@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -15,6 +16,7 @@ use App\Models\PaymentStatus;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\UserRepository;
+use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\SearchService;
@@ -23,6 +25,7 @@ class SearchController extends Controller
 {
     public function index(): \Inertia\Response|\Inertia\ResponseFactory
     {
+        $isUniversalSearchEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_UNIVERSAL_SEARCH);
         $isEndorsementList = (request()->get('list') == 'endorsements');
         $sendUpdateTypes = $sendUpdateStatuses = [];
         $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList);
@@ -59,6 +62,7 @@ class SearchController extends Controller
             'sendUpdateTypes' => $sendUpdateTypes,
             'advisors' => $getAdvisorsList,
             'quoteTypeIdEnum' => $quoteTypeIdEnum,
+            'isUniversalSearchEnabled' => $isUniversalSearchEnabled,
         ]);
     }
 

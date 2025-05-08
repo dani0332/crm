@@ -8,6 +8,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Models\TravelQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -93,6 +94,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
             Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
             request()->merge($requestParams);
         }
 
