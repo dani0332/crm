@@ -117,8 +117,11 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
             ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$lastProcessedId, $funName) {
                 foreach ($personalQuotes as $personalQuote) {
                     $personalQuoteUpdateData = [];
+                    $iterationStartTime = microtime(true);
 
                     LoggerService::startQuoteLogging($personalQuote);
+                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - data : ',
+                        extra: ['insured_id' => $personalQuoteUpdateData->insured_id, 'quote_id' => $personalQuoteUpdateData->quote_id]);
 
                     $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
                     $quote = $this->getSelectedQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
@@ -131,7 +134,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     }
 
                     // Update the personal quote with quote_id
-                    if ($quote->getMorphClass() != PersonalQuote::class) {
+                    if ($quote->getMorphClass() != PersonalQuote::class && ! $personalQuote->quote_id) {
                         $personalQuoteUpdateData['quote_id'] = $quote->id;
                         LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', ['quote_id' => $quote->id]);
                     } else {
@@ -147,7 +150,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                         // Get insured record using entity_id
                         $insured = Insured::where('entity_id', $entityMapping->entity_id)->first();
 
-                        if ($insured) {
+                        if ($insured && ! $personalQuote->insured_id) {
                             $personalQuoteUpdateData['insured_id'] = $insured->id;
                         } else {
                             LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.');
@@ -165,6 +168,9 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
 
                         LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' - Quote Code: '.$personalQuote->code.' updated.', extra: $personalQuoteUpdateData);
                     }
+                    $iterationEndTime = microtime(true);
+                    $executionTime = $iterationEndTime - $iterationStartTime;
+                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' - Quote Code: '.$personalQuote->code.' iteration executuon time(seconds) : '.$executionTime);
 
                     $lastProcessedId = $personalQuote->id;
                     $totalUpdated++;
