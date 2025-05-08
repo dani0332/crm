@@ -13,17 +13,11 @@ use Illuminate\Support\Facades\Auth;
 
 class NationalityAllocationConfigurationController extends Controller
 {
-    protected $nationalityAllocationService;
-
-    public function __construct(NationalityAllocationService $nationalityAllocationService)
+    public function __construct(protected NationalityAllocationService $nationalityAllocationService)
     {
-        $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG);
-        $this->nationalityAllocationService = $nationalityAllocationService;
+        $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG); // TODO: change permission
     }
 
-    /**
-     * Display a paginated listing of the nationality allocation configurations.
-     */
     public function index(Request $request)
     {
         $query = NationalityAllocationConfiguration::with(['nationality', 'quoteType', 'users']);

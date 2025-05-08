@@ -11,8 +11,8 @@ class NationalityAllocationService
     /**
      * Find appropriate users for a given quote based on nationality and quote type.
      *
-     * @param int $quoteTypeId The quote type ID
-     * @param int $nationalityId The nationality ID
+     * @param  int  $quoteTypeId  The quote type ID
+     * @param  int  $nationalityId  The nationality ID
      * @return Collection<User> Collection of users who can handle this quote
      */
     public function findUsersForAllocation(int $quoteTypeId, int $nationalityId): Collection
@@ -24,7 +24,7 @@ class NationalityAllocationService
             ->first();
 
         // If no configuration found, return empty collection
-        if (!$config) {
+        if (! $config) {
             return collect();
         }
 
@@ -44,9 +44,8 @@ class NationalityAllocationService
     /**
      * Create a new nationality allocation configuration.
      *
-     * @param array $data Configuration data
-     * @param int $userId User creating the configuration
-     * @return NationalityAllocationConfiguration
+     * @param  array  $data  Configuration data
+     * @param  int  $userId  User creating the configuration
      */
     public function createConfiguration(array $data, int $userId): NationalityAllocationConfiguration
     {
@@ -67,18 +66,18 @@ class NationalityAllocationService
     /**
      * Delete a nationality allocation configuration.
      *
-     * @param int $configId Configuration ID to delete
-     * @return bool
+     * @param  int  $configId  Configuration ID to delete
      */
     public function deleteConfiguration(int $configId): bool
     {
         $config = NationalityAllocationConfiguration::find($configId);
 
-        if (!$config) {
+        if (! $config) {
             return false;
         }
 
         $config->users()->detach();
+
         return $config->delete();
     }
 }
