@@ -616,32 +616,32 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
-        <x-field label="LOBs" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            :options="
-              allowedDuplicateLOB.map((lob, index) => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-        </x-field>
-        <x-field label="Reason" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-        </x-field>
+        <x-select
+          v-model="leadDuplicateForm.lob_team"
+          :options="
+            allowedDuplicateLOB.map((lob, index) => ({
+              value: lob,
+              label: lob,
+            }))
+          "
+          :rules="[isRequired]"
+          placeholder="Select LOB For Duplication"
+          class="w-full"
+          multiple
+          label="LOBs"
+          required
+        />
+        <x-select
+          v-model="leadDuplicateForm.lob_team_sub_selection"
+          :rules="[isRequired]"
+          class="w-full"
+          :options="[
+            { value: 'new_enquiry', label: 'New enquiry' },
+            { value: 'record_only', label: 'Record purposes only' },
+          ]"
+          label="Reason"
+          required
+        />
       </div>
       <template #secondary-action>
         <x-button ghost tabindex="-1" @click="modalsDuplicate = false"
@@ -1221,61 +1221,55 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Status">
-                  <x-select
-                    v-model="leadStatusForm.leadStatus"
-                    :options="leadStatusOptions"
-                    :disabled="
-                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                    "
-                    placeholder="Lead Status"
-                    class="w-full"
-                    filterable
-                  />
-                </x-field>
-                <x-field label="Notes">
-                  <x-textarea
-                    v-model="leadStatusForm.notes"
-                    type="text"
-                    placeholder="Lead Notes"
-                    class="w-full"
-                    :disabled="
-                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
-                    "
-                  />
-                </x-field>
+                <x-select
+                  v-model="leadStatusForm.leadStatus"
+                  :options="leadStatusOptions"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
+                  placeholder="Lead Status"
+                  class="w-full"
+                  filterable
+                  label="Status"
+                />
+                <x-textarea
+                  v-model="leadStatusForm.notes"
+                  type="text"
+                  placeholder="Lead Notes"
+                  class="w-full"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
+                  label="Notes"
+                />
               </div>
             </div>
             <div class="w-full md:w-2/3">
               <div class="flex flex-col gap-4">
-                <x-field
-                  label="Lost Reason"
+                <x-select
                   v-if="
                     leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
                   "
-                >
-                  <x-select
-                    v-model="leadStatusForm.lostReason"
-                    :options="
-                      lostReasons?.map(item => ({
-                        value: item.id,
-                        label: item.text,
-                      }))
-                    "
-                    placeholder="Lost Reason is required"
-                    class="w-full"
-                    :error="leadStatusForm.errors.lostReason"
-                    :disabled="lockLeadSectionsDetails.lead_status"
-                  />
-                </x-field>
-                <x-field label="Transaction Type">
-                  <x-input
-                    type="text"
-                    v-model="quote.transaction_type_text"
-                    class="w-full"
-                    :disabled="true"
-                  />
-                </x-field>
+                  v-model="leadStatusForm.lostReason"
+                  :options="
+                    lostReasons?.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  placeholder="Lost Reason is required"
+                  class="w-full"
+                  :error="leadStatusForm.errors.lostReason"
+                  :disabled="lockLeadSectionsDetails.lead_status"
+                  label="Lost Reason"
+                />
+                <x-input
+                  type="text"
+                  v-model="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                  label="Transaction Type"
+                />
               </div>
             </div>
           </div>
@@ -1493,36 +1487,35 @@ const applyEmiratesIdNumMasking = emiratesId =>
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
-          <x-field label="Title" required>
-            <x-input
-              v-model="activityForm.title"
-              :rules="[rules.isRequired]"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Description">
-            <x-textarea
-              v-model="activityForm.description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Assignee" required>
-            <x-select
-              v-model="activityForm.assignee_id"
-              :options="advisorOptions"
-              :rules="[rules.isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Due Date" required>
-            <DatePicker
-              v-model="activityForm.due_date"
-              withTime
-              :rules="[rules.isRequired]"
-            />
-          </x-field>
+          <x-input
+            v-model="activityForm.title"
+            :rules="[rules.isRequired]"
+            class="w-full"
+            label="Title"
+            required
+          />
+          <x-textarea
+            v-model="activityForm.description"
+            :adjust-to-text="false"
+            class="w-full"
+            label="Description"
+          />
+          <x-select
+            v-model="activityForm.assignee_id"
+            :options="advisorOptions"
+            :rules="[rules.isRequired]"
+            placeholder="Select Assignee"
+            class="w-full"
+            label="Assignee"
+            required
+          />
+          <DatePicker
+            v-model="activityForm.due_date"
+            withTime
+            :rules="[rules.isRequired]"
+            label="Due Date"
+            required
+          />
         </div>
 
         <template #secondary-action>
