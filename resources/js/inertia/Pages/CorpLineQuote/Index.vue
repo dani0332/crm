@@ -638,89 +638,82 @@ const insurerAMLStatusOption = computed(() => {
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="First Name">
-          <x-input
-            v-model="filters.first_name"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Search by First Name"
-          />
-        </x-field>
-        <x-field label="Last Name">
-          <x-input
-            v-model="filters.last_name"
-            type="search"
-            name="last_name"
-            class="w-full"
-            placeholder="Search by Last Name"
-          />
-        </x-field>
-        <x-field label="Email">
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="email"
-            class="w-full"
-            placeholder="Search by Email"
-          />
-        </x-field>
-        <x-field label="Mobile Number">
-          <x-input
-            v-model="filters.mobile_no"
-            type="search"
-            name="mobile_no"
-            class="w-full"
-            placeholder="Search by Mobile Number"
-          />
-        </x-field>
-        <x-field label="Company Name">
-          <x-input
-            v-model="filters.company_name"
-            type="search"
-            name="company_name"
-            class="w-full"
-            placeholder="Search by Company Name"
-          />
-        </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
-            v-model="filters.created_at_start"
-            name="created_at_start"
-            :rules="
-              filters.previous_quote_policy_number ||
-              filters.code ||
-              filters.email ||
-              filters.renewal_batch ||
-              filters.payment_due_date ||
-              filters.booking_date ||
-              filters.company_name ||
-              filters.advisor_assigned_date ||
-              (filters.policy_expiry_date && filters.policy_expiry_date_end)
-                ? []
-                : [isRequired]
-            "
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker
-            v-model="filters.created_at_end"
-            name="created_at_end"
-            :rules="
-              filters.previous_quote_policy_number ||
-              filters.code ||
-              filters.email ||
-              filters.renewal_batch ||
-              filters.payment_due_date ||
-              filters.booking_date ||
-              filters.company_name ||
-              filters.advisor_assigned_date ||
-              (filters.policy_expiry_date && filters.policy_expiry_date_end)
-                ? []
-                : [isRequired]
-            "
-          />
-        </x-field>
+        <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          class="w-full"
+          placeholder="Search by First Name"
+          label="First Name"
+        />
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          class="w-full"
+          placeholder="Search by Last Name"
+          label="Last Name"
+        />
+        <x-input
+          v-model="filters.email"
+          type="search"
+          name="email"
+          class="w-full"
+          placeholder="Search by Email"
+          label="Email"
+        />
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
+        />
+        <x-input
+          v-model="filters.company_name"
+          type="search"
+          name="company_name"
+          class="w-full"
+          placeholder="Search by Company Name"
+          label="Company Name"
+        />
+        <DatePicker
+          v-model="filters.created_at_start"
+          name="created_at_start"
+          label="Created Date Start"
+          :rules="
+            filters.previous_quote_policy_number ||
+            filters.code ||
+            filters.email ||
+            filters.renewal_batch ||
+            filters.payment_due_date ||
+            filters.booking_date ||
+            filters.company_name ||
+            filters.advisor_assigned_date ||
+            (filters.policy_expiry_date && filters.policy_expiry_date_end)
+              ? []
+              : [isRequired]
+          "
+        />
+        <DatePicker
+          v-model="filters.created_at_end"
+          name="created_at_end"
+          label="Created Date End"
+          :rules="
+            filters.previous_quote_policy_number ||
+            filters.code ||
+            filters.email ||
+            filters.renewal_batch ||
+            filters.payment_due_date ||
+            filters.booking_date ||
+            filters.company_name ||
+            filters.advisor_assigned_date ||
+            (filters.policy_expiry_date && filters.policy_expiry_date_end)
+              ? []
+              : [isRequired]
+          "
+        />
         <DatePicker
           v-model="filters.advisor_assigned_date"
           name="created_at_start"
@@ -774,18 +767,16 @@ const insurerAMLStatusOption = computed(() => {
           </template>
         </x-select>
 
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
         <x-select
           v-model="filters.business_type_of_insurance_id"
           name="business_type_of_insurance_id"
