@@ -162,7 +162,7 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
         } else {
             // Only process mappings if they exist
             foreach ($quoteRequestEntityMappings as $quoteRequestEntityMapping) {
-                if($quoteRequestEntityMapping->quote_type_id == QuoteTypeId::Home) {
+                if ($quoteRequestEntityMapping->quote_type_id == QuoteTypeId::Home) {
                     $quoteObject = HomeQuote::where('id', $quoteRequestEntityMapping->quote_request_id)->first();
                 } else {
                     $quoteObject = $this->getQuoteObject(
@@ -175,7 +175,7 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
                     throw new \Exception('Quote object not found for quote request entity mapping. Quote Type ID: '.
                         $quoteRequestEntityMapping->quote_type_id.' Quote Request ID: '.$quoteRequestEntityMapping->quote_request_id);
                 }
-                
+
                 CustomerInsured::updateOrCreate([
                     'customer_id' => $quoteObject->customer_id,
                     'insured_id' => $insured->id,
