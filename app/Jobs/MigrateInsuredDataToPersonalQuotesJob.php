@@ -127,7 +127,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     $quote = $this->getSelectedQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
 
                     if (! $quote) {
-                        /*LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote not found.');*/
+                        /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote not found.'); */
                         $lastProcessedId = $personalQuote->id;
 
                         continue;
@@ -167,11 +167,11 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     if (! empty($personalQuoteUpdateData)) {
                         $personalQuote->updateQuietly($personalQuoteUpdateData);
 
-                        /*LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' - Quote Code: '.$personalQuote->code.' updated.', extra: ['data' => $personalQuoteUpdateData]);*/
+                        /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' - Quote Code: '.$personalQuote->code.' updated.', extra: ['data' => $personalQuoteUpdateData]); */
                     }
                     $iterationEndTime = microtime(true);
                     $iterationExecutionTime = $iterationEndTime - $iterationStartTime;
-                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' iteration execution time(seconds) : '.$iterationExecutionTime, extra: ['Data' =>$personalQuoteUpdateData]);
+                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' iteration execution time(seconds) : '.$iterationExecutionTime, extra: ['Data' => $personalQuoteUpdateData]);
 
                     $lastProcessedId = $personalQuote->id;
                     $totalUpdated++;
