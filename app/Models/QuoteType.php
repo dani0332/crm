@@ -34,12 +34,4 @@ class QuoteType extends Model
     {
         return $this->belongsToMany(InsuranceProvider::class, 'insurance_provider_quote_type');
     }
-
-    /**
-     * Get the nationality allocation configurations for this quote type.
-     */
-    public function nationalityAllocationConfigurations()
-    {
-        return $this->hasMany(NationalityAllocationConfiguration::class);
-    }
 }
