@@ -17,7 +17,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 
-class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
+class UniversalSearchDataMigration implements ShouldQueue
 {
     use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
 
