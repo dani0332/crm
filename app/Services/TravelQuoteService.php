@@ -317,7 +317,7 @@ class TravelQuoteService extends BaseService
         } else {
             $travelQuote['hasArrivedDestination'] = $request->has_arrived_destination;
             if ($request->has_arrived_destination == '0') {
-                if ($request->has('region_cover_for_id') && is_numeric($request->region_cover_for_id)) {
+                if ($request->has('region_cover_for_id')) {
                     $travelQuote['regionCoverForId'] = (int) $request->region_cover_for_id;
                 }
             }
