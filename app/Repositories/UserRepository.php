@@ -146,7 +146,7 @@ class UserRepository extends BaseRepository
                 $query->whereIn('name', $existingRoles);
             })
             ->where('is_active', 1)
-            ->select('name', 'id')            
+            ->select('name', 'id')
             ->orderBy('name')
             ->get()
             ->toArray();
