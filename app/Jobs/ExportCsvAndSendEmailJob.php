@@ -58,23 +58,26 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             );
 
             Log::info('CSV export job completed for '.$this->requestParams['fileName']);
-            DB::setDefaultConnection('mysql');
-            Auth::logout();
         } catch (\Throwable $e) {
-            Log::error('CSV export job failed for '.$this->requestParams['fileName'].' attempt: '.$this->attempts().' Exception: '.$e->getMessage().', '.$e->getFile().':'.$e->getLine(), [
+            Log::error('CSV export job failed for '.$this->requestParams['fileName'].'. attempt: '.$this->attempts().' Exception: '.$e->getMessage().', '.$e->getFile().':'.$e->getLine(), [
                 'trace' => collect($e->getTrace())->filter(function ($trace) {
-                    return $trace;
-                    // return isset($trace['file']) && str_contains($trace['file'], '/app');
+                    return isset($trace['file']) && str_contains($trace['file'], '/app');
                 })->all(),
             ]);
+
+            // Only retry if we haven't exceeded the maximum attempts
+            if ($this->attempts() < $this->tries) {
+                logger()->error("CSV export job failed: Attempts ({$this->attempts()}) <  tries ($this->tries) releasing it back after {$this->backoff} seconds.");
+                // Release back to queue for retry after backoff period
+                $this->release($this->backoff);
+                return;
+            }
+
+            throw $e; // Throw the exception after all retries have failed
+        } finally {
+            // Always clean up connections regardless of success or failure
             DB::setDefaultConnection('mysql');
             Auth::logout();
-
-            if ($this->attempts() >= $this->tries) {
-                throw $e; // Throw Exception ONLY after all tries have failed
-            } else {
-                $this->release(60); // Retry after 60 seconds
-            }
         }
     }
 }

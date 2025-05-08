@@ -115,7 +115,12 @@ trait ExcelExportable
         // Write CSV data
         fputcsv($stream, $this->headings());
         $data = $this->collection($requestParams);
-        logger()->debug("Fetch Complete, starting to write on csv file...");
+
+        $startDate  = \Carbon\Carbon::parse($requestParams['created_at_start'])->format('d M Y');
+        $endDate    = \Carbon\Carbon::parse($requestParams['created_at_end'])->format('d M Y');
+        $diff = abs(\Carbon\Carbon::parse($requestParams['created_at_start'])->diffInDays(\Carbon\Carbon::parse($requestParams['created_at_end']))) + 1;
+
+        logger()->debug("Fetch Complete between:{$startDate} - {$endDate} ({$diff} days), starting to write on csv file...");
         foreach ($data as $quote) {
             fputcsv($stream, $this->map($quote));
         }
