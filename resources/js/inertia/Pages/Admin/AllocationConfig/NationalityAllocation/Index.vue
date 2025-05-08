@@ -109,6 +109,47 @@ function setQueryStringFilters() {
 onMounted(() => {
   setQueryStringFilters();
 });
+
+// Define a set of good background colors for avatars
+const avatarColors = [
+  '#1e88e5', // Blue
+  '#43a047', // Green
+  '#e53935', // Red
+  '#5e35b1', // Deep Purple
+  '#fb8c00', // Orange
+  '#00897b', // Teal
+  '#d81b60', // Pink
+  '#8e24aa', // Purple
+  '#546e7a', // Blue Grey
+  '#f4511e', // Deep Orange
+];
+
+function getAvatarColor(name) {
+  // Generate a consistent hash from the name
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  // Use the hash to pick a color from our predefined set
+  const index = Math.abs(hash) % avatarColors.length;
+  return avatarColors[index];
+}
+
+function getUserInitials(name) {
+  if (!name) return '?';
+
+  const nameParts = name.split(' ').filter(part => part.length > 0);
+  if (nameParts.length === 0) return '?';
+
+  if (nameParts.length === 1) {
+    return nameParts[0].charAt(0).toUpperCase();
+  }
+
+  return (
+    nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)
+  ).toUpperCase();
+}
 </script>
 
 <template>
@@ -185,18 +226,49 @@ onMounted(() => {
     </template>
 
     <template #item-users="{ users }">
-      <div class="flex flex-wrap gap-1">
-        <x-badge
-          v-for="user in users.slice(0, 3)"
-          :key="user.id"
-          color="gray"
-          class="mr-1"
-        >
-          {{ user.name }}
-        </x-badge>
-        <span v-if="users.length > 3" class="text-xs text-gray-500 italic">
-          +{{ users.length - 3 }} more
-        </span>
+      <div class="overflow-hidden">
+        <div v-if="users.length === 0" class="text-gray-400 italic text-sm">
+          No assigned users
+        </div>
+        <div v-else>
+          <div class="flex -space-x-2 overflow-hidden">
+            <div
+              v-for="(user, index) in users.slice(0, 3)"
+              :key="user.id"
+              class="inline-block h-8 w-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-medium overflow-hidden"
+              :style="{
+                backgroundColor: getAvatarColor(user.name),
+                color: '#ffffff',
+              }"
+              :title="user.name"
+            >
+              <span>{{ getUserInitials(user.name) }}</span>
+            </div>
+
+            <div
+              v-if="users.length > 3"
+              class="inline-block h-8 w-8 rounded-full border-2 border-white bg-gray-500 text-white flex items-center justify-center text-xs font-medium cursor-default"
+            >
+              <x-tooltip position="top">
+                <span class="text-xs">+{{ users.length - 3 }}</span>
+                <template #tooltip>
+                  <div class="max-w-xs p-2">
+                    <div class="text-sm font-semibold pb-1 border-b mb-1">
+                      Additional Users
+                    </div>
+                    <div
+                      v-for="user in users.slice(3)"
+                      :key="user.id"
+                      class="whitespace-nowrap text-sm py-1"
+                    >
+                      {{ user.name }}
+                    </div>
+                  </div>
+                </template>
+              </x-tooltip>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
 

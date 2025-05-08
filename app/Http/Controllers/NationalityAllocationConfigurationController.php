@@ -143,7 +143,7 @@ class NationalityAllocationConfigurationController extends Controller
     {
         $validated = $request->validate([
             'quote_type_id' => 'required|exists:quote_type,id',
-            'nationality_id' => 'required|exists:nationalities,id',
+            'nationality_id' => 'required|exists:nationality,id',
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
         ]);
