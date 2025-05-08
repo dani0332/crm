@@ -83,8 +83,9 @@ const availableInsuranceProviders = computed(() => {
 
 const extraAttr = reactive({
   getQuoteLoading: false,
-  loading:false,
-})
+  loading: false,
+  generatePdfLoading: false
+});
 
 const editForm = reactive({
   providerId: props?.selectedPlan?.providerId ?? null,
@@ -174,6 +175,7 @@ const onSubmit = isValid => {
 // Geenerate Pdf
 
 const generatePdf = () => {
+  extraAttr.generatePdfLoading = true;
   axios.post('/personal-quotes/life-plan-selected', {
     planId: props.selectedPlan.planId,
     quoteId: props.uuid, 
@@ -206,7 +208,10 @@ const generatePdf = () => {
         position: 'top',
       });
       console.log('error', error)
-    });
+    })
+  .finally(() => {
+    extraAttr.generatePdfLoading = false;
+  });
   
 }
 
@@ -723,7 +728,7 @@ const closeModal = ()  => {
           <dd><strong>Updated at:</strong> {{ formatDate(props.selectedPlan.updated_at) }}</dd>
 
           <x-button v-if="editForm.isApi && editForm.providerId == 180 && !editForm.isUnderwritten" 
-          @click="generatePdf()" class="mt-2" color="orange" :loading="extraAttr.loading">
+          @click="generatePdf()" class="mt-2" color="orange" :loading="extraAttr.generatePdfLoading">
             Generate Pdf
           </x-button>
 
