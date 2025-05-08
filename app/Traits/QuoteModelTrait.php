@@ -159,6 +159,11 @@ trait QuoteModelTrait
         return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
     }
 
+    public function scopeIsSIC(QuoteTypes $quoteType): bool
+    {
+        return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
     public function isNonSIC(QuoteTypes $quoteType): bool
     {
         return ! $this->isSIC($quoteType);
