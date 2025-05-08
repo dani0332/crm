@@ -20,29 +20,22 @@ class NationalityAllocationConfigurationController extends Controller
 
     public function index(Request $request)
     {
-        $query = NationalityAllocationConfiguration::with(['nationality', 'quoteType', 'users']);
+        $configurations = NationalityAllocationConfiguration::with(['nationality', 'quoteType', 'users'])
+            ->when($request->filled('quote_type_id'), function ($query) use ($request) {
+                $query->where('quote_type_id', $request->quote_type_id);
+            })
+            ->when($request->filled('nationality_id'), function ($query) use ($request) {
+                $query->where('nationality_id', $request->nationality_id);
+            })
+            ->when($request->filled('created_at'), function ($query) use ($request) {
+                $query->whereDate('created_at', '>=', $request->created_at);
+            })
+            ->when($request->filled('created_at_end'), function ($query) use ($request) {
+                $query->whereDate('created_at', '<=', $request->created_at_end);
+            })
+            ->paginate(10)
+            ->withQueryString();
 
-        // Add filtering options
-        if ($request->filled('quote_type_id')) {
-            $query->where('quote_type_id', $request->quote_type_id);
-        }
-
-        if ($request->filled('nationality_id')) {
-            $query->where('nationality_id', $request->nationality_id);
-        }
-
-        if ($request->filled('created_at')) {
-            $query->whereDate('created_at', '>=', $request->created_at);
-        }
-
-        if ($request->filled('created_at_end')) {
-            $query->whereDate('created_at', '<=', $request->created_at_end);
-        }
-
-        // Paginate the results
-        $configurations = $query->paginate(10)->withQueryString();
-
-        // Get lookup data
         $nationalities = Nationality::where('is_active', 1)->get();
         $quoteTypes = QuoteType::where('is_active', 1)->get();
 
