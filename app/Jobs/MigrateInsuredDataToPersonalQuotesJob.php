@@ -102,9 +102,9 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
             LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' previously processed record id :  '.$lastProcessedId.' in cache.');
         }
 
-        $excludedQuoteTypes = [QuoteTypeId::Bike, QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Jetski];
+        $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
         // Use chunk to process records in batches to avoid memory issues
-        PersonalQuote::whereNotIn('quote_type_id', $excludedQuoteTypes)
+        PersonalQuote::whereIn('quote_type_id', $allowedQuoteTypes)
             ->when($lastProcessedId, function ($q) use ($lastProcessedId) {
                 $q->where('id', '>', $lastProcessedId);
             })
@@ -160,7 +160,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
 
                     // Update the personal quote
                     if (! empty($personalQuoteUpdateData)) {
-                        $personalQuote->update($personalQuoteUpdateData);
+                        $personalQuote->updateQuietly($personalQuoteUpdateData);
 
                         LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' - Quote Code: '.$personalQuote->code.' updated.', extra: $personalQuoteUpdateData);
                     }
