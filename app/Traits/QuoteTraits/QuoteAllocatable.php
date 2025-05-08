@@ -169,6 +169,8 @@ trait QuoteAllocatable
     /**
      * Filters leads that are eligible for allocation.
      * Includes both flow-based and AIG-specific filtering logic.
+     * Its being used in QuoteAllocation.php and for generic purpose for LOBs
+     * So kindly do not change the logic without discussing with team
      */
     public function scopeEligibleForAllocation(Builder $query, QuoteTypes $quoteType): Builder
     {
