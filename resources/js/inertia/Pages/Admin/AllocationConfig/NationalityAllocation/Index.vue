@@ -26,7 +26,7 @@ const tableHeader = [
   { text: 'ID', value: 'id' },
   { text: 'Quote Type', value: 'quote_type.text' },
   { text: 'Nationality', value: 'nationality.text' },
-  { text: 'Assigned Users', value: 'users' },
+  { text: 'No. of Assigned Users', value: 'users' },
   { text: 'Created Date', value: 'created_at' },
   { text: 'Actions', value: 'actions' },
 ];
@@ -226,48 +226,12 @@ function getUserInitials(name) {
     </template>
 
     <template #item-users="{ users }">
-      <div class="overflow-hidden">
-        <div v-if="users.length === 0" class="text-gray-400 italic text-sm">
+      <div>
+        <div v-if="users.length === 0" class="italic text-sm">
           No assigned users
         </div>
-        <div v-else>
-          <div class="flex -space-x-2 overflow-hidden">
-            <div
-              v-for="(user, index) in users.slice(0, 3)"
-              :key="user.id"
-              class="inline-block h-8 w-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-medium overflow-hidden"
-              :style="{
-                backgroundColor: getAvatarColor(user.name),
-                color: '#ffffff',
-              }"
-              :title="user.name"
-            >
-              <span>{{ getUserInitials(user.name) }}</span>
-            </div>
-
-            <div
-              v-if="users.length > 3"
-              class="inline-block h-8 w-8 rounded-full border-2 border-white bg-gray-500 text-white flex items-center justify-center text-xs font-medium cursor-default"
-            >
-              <x-tooltip position="top">
-                <span class="text-xs">+{{ users.length - 3 }}</span>
-                <template #tooltip>
-                  <div class="max-w-xs p-2">
-                    <div class="text-sm font-semibold pb-1 border-b mb-1">
-                      Additional Users
-                    </div>
-                    <div
-                      v-for="user in users.slice(3)"
-                      :key="user.id"
-                      class="whitespace-nowrap text-sm py-1"
-                    >
-                      {{ user.name }}
-                    </div>
-                  </div>
-                </template>
-              </x-tooltip>
-            </div>
-          </div>
+        <div v-else class="text-sm">
+          {{ users.length }}
         </div>
       </div>
     </template>
