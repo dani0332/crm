@@ -14,7 +14,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -34,13 +33,15 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
      */
     public $timeout = 3600;
 
+    public $tries = 1;
+
     const CLASS_NAME = 'IndividualKycDetailsMigrationJob';
 
     private $lockPostfix;
 
-    public function __construct()
+    public function __construct($lockKey)
     {
-        $this->lockPostfix = Carbon::now()->format('YmdHi');
+        $this->lockPostfix = $lockKey;
     }
 
     /**

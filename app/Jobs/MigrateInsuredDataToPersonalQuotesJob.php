@@ -15,19 +15,11 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
 {
     use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
-
-    /**
-     * The maximum number of unhandled exceptions to allow before failing.
-     *
-     * @var int
-     */
-    public $maxExceptions = 3;
 
     /**
      * The number of seconds the job can run before timing out.
@@ -36,12 +28,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      */
     public $timeout = 3600; // 1 hour
 
-    /**
-     * Indicates if the job should be marked as failed on timeout.
-     *
-     * @var bool
-     */
-    public $failOnTimeout = true;
+    public $tries = 1;
 
     /**
      * Whether to force process all entries, including previously processed ones
@@ -72,10 +59,10 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      * @param  bool  $forceProcess  Whether to force processing of all entries
      * @return void
      */
-    public function __construct(bool $forceProcess = false)
+    public function __construct(bool $forceProcess, $lockKey)
     {
         $this->forceProcess = $forceProcess;
-        $this->lockPostfix = Carbon::now()->format('YmdHi');
+        $this->lockPostfix = $lockKey;
     }
 
     /**
