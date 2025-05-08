@@ -115,6 +115,7 @@ trait ExcelExportable
         // Write CSV data
         fputcsv($stream, $this->headings());
         $data = $this->collection($requestParams);
+        logger()->debug("Fetch Complete, starting to write on csv file...");
         foreach ($data as $quote) {
             fputcsv($stream, $this->map($quote));
         }

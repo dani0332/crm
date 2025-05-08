@@ -76,7 +76,7 @@ class ExportValidationRequest extends FormRequest
     {
         $validator->after(function ($validator) {
 
-            if (! $validator->errors()->any()) {
+            if (/*! $validator->errors()->any()*/ FALSE) {
                 $diffInDays = 31;
                 $exportTye = $this->route('exportTye');
                 $quoteType = $this->route('quoteType');

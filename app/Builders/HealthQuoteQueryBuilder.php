@@ -108,6 +108,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             request()->merge($requestParams);
         }
 
+        logger()->debug("Starting the fetch...");
         $query
             ->filterBy('code')
             ->matchBy('first_name')
