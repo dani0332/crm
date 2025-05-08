@@ -99,7 +99,7 @@ class HomeEmailService extends BaseService
             $homeQuote = $lead->homeQuote; 
             
             
-            info('Home Renewals OCB Email started for uuid: '.$lead->uuid);
+            LoggerService::info('Home Renewals OCB Email started for uuid: '.$lead->uuid);
 
             // Get Lead Advisor
             $advisor = User::where('id', $lead->advisor_id)->first();
@@ -111,17 +111,17 @@ class HomeEmailService extends BaseService
             
             if($workflowUrl){
                 app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
-                info('Renewals OCB Email completed for uuid: '.$lead->uuid);
+                LoggerService::info('Renewals OCB Email completed for uuid: '.$lead->uuid);
 
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                 RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
 
             }else{
-                info('Home Renewals OCB Email failed error: Workflow URL not found');
+                LoggerService::info('Home Renewals OCB Email failed error: Workflow URL not found');
             }
             
         } catch (\Exception $exception) {
-            Log::info('Home Renewals OCB Email failed error: '.$exception->getMessage());
+            LoggerService::info('Home Renewals OCB Email failed error: '.$exception->getMessage());
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }

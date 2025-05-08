@@ -507,7 +507,7 @@ class RenewalsUploadService
 
 
     public function scheduleHomeOCB($batch, $renewalsBatchEmail){
-        $logPrefix = 'Home Renewals OCB email ';        
+        $logPrefix = 'fn: scheduleHomeOCB - Scheduling Home Renewals OCB email';        
 
         try {
             $jobs = null;
@@ -553,7 +553,7 @@ class RenewalsUploadService
 
     public function fetchRenewalPlansForNonMotor(RenewalStatusProcess $renewalStatusProcess, $batch, $quoteType)
     {
-        $logPrefix ="FetchPlans FN: fetchRenewalPlans Batch: $batch";
+        $logPrefix ="FetchPlans FN: fetchRenewalPlansForNonMotor Batch: $batch";
         LoggerService::info($logPrefix.'  Fetch plans started');
 
         $batchNumber = $batch; 
@@ -708,16 +708,16 @@ class RenewalsUploadService
 
             $plansResponse = $this->getPlansNonMotor($quote->uuid, $quoteType->code);
             if ($plansResponse) {
-                LoggerService::info('Non Motor FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
+                LoggerService::info('Non Motor FetchPlans FN: fetchHomeQuotePlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
                 // update status to plans fetched
                 $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
             } else {
-                LoggerService::info('Non Motors FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
+                LoggerService::info('Non Motors FetchPlans FN: fetchHomeQuotePlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
             }
         } else {
-            LoggerService::info('Non Motors FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
+            LoggerService::info('Non Motors FetchPlans FN: fetchHomeQuotePlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
             RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
@@ -1408,7 +1408,7 @@ class RenewalsUploadService
                 );
 
                 if($homeQuote){
-                    LoggerService:info('Home Quote Created/Update', [
+                    LoggerService:info('fn: updateQuote - Home Quote Created/Update', [
                         'ref-id' => $quote->uuid
                     ]); 
                 }
