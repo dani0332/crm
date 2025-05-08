@@ -1,6 +1,4 @@
 <script setup>
-import { options } from 'sanitize-html';
-
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -586,33 +584,39 @@ const onLoadAvailablePlansData = async () => {
             :error="quoteForm?.errors?.mobile_no"
           />
         </x-field>
-        <x-field label="LOCATION AREA" required>
-          <ComboBox
-            v-model="quoteForm.sub_area_id"
-            :rules="[isRequired]"
-            :single="true"
-            :options="locationAreaOptions"
-            class="w-full"
-            :hasError="formFieldReq.sub_area_id"
-            :error="quoteForm.errors.sub_area_id"
-          />
-        </x-field>
+
+        <x-select
+          v-model="quoteForm.sub_area_id"
+          :rules="[isRequired]"
+          :options="locationAreaOptions"
+          class="w-full"
+          :error="quoteForm.errors.sub_area_id"
+          label="LOCATION AREA"
+          filterable
+          placeholder="Search by Location Area"
+          required
+        />
 
         <x-field label="DATE OF BIRTH">
           <DatePicker v-model="quoteForm.dob" name="created_at_start" />
         </x-field>
-        <x-field label="NATIONALITY">
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="
-              nationalities.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-          />
-        </x-field>
+
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :rules="[isRequired]"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.nationality_id"
+          label="NATIONALITY"
+          filterable
+          placeholder="Search by Nationality"
+          required
+        ></x-select>
         <x-field label="GENDER">
           <x-select
             v-model="quoteForm.gender"

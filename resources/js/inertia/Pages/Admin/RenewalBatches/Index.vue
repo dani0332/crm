@@ -114,14 +114,28 @@ onMounted(() => {
             class="w-full"
           />
         </x-field>
-        <ComboBox
+
+        <x-select
           v-model="filters.name"
           label="Renewal Batch"
           name="name"
           placeholder="Please select Renewal Batch"
           :options="renewalBatchNames"
           :loading="loader.filters.name"
-        />
+          filterable
+          filterPlaceholder="Filter Renewal Batch...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.name = renewalBatchNames.map(item => item.value)
+              "
+              @clear="filters.name = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div class="flex justify-self-end gap-3 mb-4 mt-1">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

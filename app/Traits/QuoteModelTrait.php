@@ -44,7 +44,6 @@ trait QuoteModelTrait
         }
 
         if (! request()->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name', 'previous_quote_policy_number', 'renewal_batch', 'previous_quote_policy_number_text'])) {
-
             return $query->where('quote_status_id', '<>', QuoteStatusEnum::Fake);
         }
     }
@@ -195,7 +194,7 @@ trait QuoteModelTrait
 
     public static function applyRequestTableJoins($query, $request): void
     {
-        $applicableFilters = ['member_first_name', 'member_last_name', 'company_name'];
+        $applicableFilters = ['member_first_name', 'member_last_name'/* , 'company_name' */];
         $quoteTypes = [
             QuoteTypeId::Car => 'car_quote_request',
             QuoteTypeId::Home => 'home_quote_request',

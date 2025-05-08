@@ -80,8 +80,8 @@ class ExportSearchLeadsOrEndorsementsRequest extends FormRequest
             'insured_name',
             'member_first_name',
             'member_last_name',
-            'company_name',
-            'policy_number',
+            /*'company_name',
+            'policy_number',*/
             'quote_status',
             'payment_status',
             'line_of_business',

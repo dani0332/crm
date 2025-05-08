@@ -365,13 +365,15 @@ watch(
           placeholder="Member Name"
           :rules="[isRequired]"
         />
-        <ComboBox
+
+        <x-select
           v-model="memberForm.nationality_id"
           label="Nationality"
           :options="nationalitiesOptions"
           placeholder="Select Nationality"
-          :single="true"
-          :hasError="memberFieldReq.nationality"
+          :rules="[isRequired]"
+          filterable
+          filterPlaceholder="Filter Nationality...."
         />
         <DatePicker
           v-model="memberForm.dob"

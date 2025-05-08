@@ -212,7 +212,7 @@ watch(
     @submit="onSubmit"
   >
     <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4">
-      <ComboBox
+      <x-select
         v-model="createForm.provider_id"
         :options="
           $page.props.insuranceProviders?.map(item => ({
@@ -223,8 +223,9 @@ watch(
         label="Provider"
         placeholder="Please Select Provider"
         :disabled="$page.props.insuranceProviders?.length == 0"
-        single
-        :hasError="isEmptyField"
+        filterable
+        filterPlaceholder="Filter Provider...."
+        :rules="[isRequired]"
       />
 
       <x-select

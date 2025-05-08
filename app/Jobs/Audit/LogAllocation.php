@@ -5,6 +5,7 @@ namespace App\Jobs\Audit;
 use App\Enums\QuoteTypes;
 use App\Models\Audit\AllocationAudit;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
@@ -39,6 +40,11 @@ class LogAllocation implements ShouldQueue
      */
     public function handle(): void
     {
+        if (app()->environment('local')) {
+            LoggerService::info(self::class.' - Skipping allocation log in local environment');
+
+            return;
+        }
         AllocationAudit::log(
             $this->model,
             $this->quoteType,

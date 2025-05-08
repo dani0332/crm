@@ -16,6 +16,7 @@ use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
@@ -119,7 +120,11 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             if (! $carQuoteExists) {
                 $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
                 if (isset($capiResponse->errors) && empty($capiResponse->quoteUID)) {
-                    info($logPrefix.'Error Creating Revival Lead '.$this->lead->uuid);
+                    LoggerService::error('Error Creating Revival Lead '.$this->lead->uuid, extra: [
+                        'data' => $dataArr,
+                        'url' => '/api/v1-save-car-quote',
+                        'response' => $capiResponse,
+                    ]);
 
                     return false;
                 } else {
