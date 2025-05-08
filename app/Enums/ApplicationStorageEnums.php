@@ -218,4 +218,5 @@ final class ApplicationStorageEnums extends Enum
     public const YACHT_ADVISORS = 'YACHT_ADVISORS';
     public const PET_ADVISORS = 'PET_ADVISORS';
     public const HOME_ADVISORS_FOR_PET = 'HOME_ADVISORS_FOR_PET';
+    public const ENABLE_UNIVERSAL_SEARCH = 'ENABLE_UNIVERSAL_SEARCH';
 }
