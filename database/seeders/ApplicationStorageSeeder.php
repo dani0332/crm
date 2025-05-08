@@ -86,6 +86,8 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedAmlAutomation();
 
         $this->seedYachtAndPetAdvisors();
+
+        $this->seedOcrEnabled();
     }
 
     private function seedBirdWorkflowUrls()
@@ -360,6 +362,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::HOME_ADVISORS_FOR_PET],
             [
                 'value' => 'ghana.naeem@insurancemarket.ae,marialuisa.deguzman@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedOcrEnabled()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::OCR_ENABLED],
+            [
+                'value' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

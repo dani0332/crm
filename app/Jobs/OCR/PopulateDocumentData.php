@@ -2,6 +2,7 @@
 
 namespace App\Jobs\OCR;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
@@ -85,8 +86,10 @@ class PopulateDocumentData implements ShouldQueue
 
     public function middleware()
     {
+        $isOCREnabled = getAppStorageValueByKey(ApplicationStorageEnums::OCR_ENABLED, useCache: true) == '1';
+
         return [
-            Skip::unless(fn () => OCRDocumentTypeEnum::isOCREnabled($this->documentType, $this->quoteType)),
+            Skip::unless(fn () => $isOCREnabled && OCRDocumentTypeEnum::isOCREnabled($this->documentType, $this->quoteType)),
         ];
     }
 }
