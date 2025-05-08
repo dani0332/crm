@@ -775,6 +775,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
     Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
+
+    Route::resource('nationality-allocation-config', NationalityAllocationConfigurationController::class)->names([
+        'index' => 'admin.nationality-allocation-config.index',
+        'create' => 'admin.nationality-allocation-config.create',
+        'store' => 'admin.nationality-allocation-config.store',
+        'show' => 'admin.nationality-allocation-config.show',
+        'edit' => 'admin.nationality-allocation-config.edit',
+        'update' => 'admin.nationality-allocation-config.update',
+        'destroy' => 'admin.nationality-allocation-config.destroy',
+    ]);
 });
 
 Route::get('/add-batch-number', function () {
@@ -791,14 +801,3 @@ Route::get('/add-batch-number', function () {
 //     }
 
 // });
-
-// Nationality Allocation Configuration routes
-Route::resource('nationality-allocation-config', NationalityAllocationConfigurationController::class)->names([
-    'index' => 'admin.nationality-allocation-config.index',
-    'create' => 'admin.nationality-allocation-config.create',
-    'store' => 'admin.nationality-allocation-config.store',
-    'show' => 'admin.nationality-allocation-config.show',
-    'edit' => 'admin.nationality-allocation-config.edit',
-    'update' => 'admin.nationality-allocation-config.update',
-    'destroy' => 'admin.nationality-allocation-config.destroy',
-]);
