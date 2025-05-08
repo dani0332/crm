@@ -65,7 +65,7 @@ trait ExcelExportable
         }
 
         // Dispatch job to process CSV generation and email sending
-        ExportCsvAndSendEmailJob::dispatch(
+        ExportCsvAndSendEmailJob::dispatchSync(
             get_class($this),
             $requestParams['recipientEmail'],
             $requestParams
