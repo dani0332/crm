@@ -444,7 +444,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('departments', DepartmentController::class);
         Route::get('/migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
-            \App\Jobs\MigrateInsuredDataToPersonalQuotesJob::dispatch($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
+            \App\Jobs\UniversalSearchDataMigration::dispatch($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
 
             return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-insured-and-quote-id-to-personal-quote');
