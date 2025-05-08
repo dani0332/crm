@@ -121,7 +121,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
 
                     LoggerService::startQuoteLogging($personalQuote);
                     LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - data : ',
-                        extra: ['insured_id' => $personalQuoteUpdateData->insured_id, 'quote_id' => $personalQuoteUpdateData->quote_id]);
+                        extra: ['insured_id' => $personalQuote->insured_id, 'quote_id' => $personalQuote->quote_id]);
 
                     $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
                     $quote = $this->getSelectedQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
