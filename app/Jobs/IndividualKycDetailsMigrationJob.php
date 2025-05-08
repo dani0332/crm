@@ -33,6 +33,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
      * @var int
      */
     public $timeout = 3600;
+    public $tries = 1;
 
     const CLASS_NAME = 'IndividualKycDetailsMigrationJob';
 
