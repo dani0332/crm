@@ -236,8 +236,8 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
         LoggerService::info(self::CLASS_NAME." - Migration completed: individual customer kyc details - Migrated:{$migratedCount}, Skipped: {$skippedCount} (already existed), Failed:{$failedCount}.");
 
         if ($failedCount > 0) {
-            LoggerService::info(self::CLASS_NAME." - Migration failed for the following customer details", extra: [
-                'failed_details' => json_encode($failedDetails)
+            LoggerService::info(self::CLASS_NAME.' - Migration failed for the following customer details', extra: [
+                'failed_details' => json_encode($failedDetails),
             ]);
         }
 

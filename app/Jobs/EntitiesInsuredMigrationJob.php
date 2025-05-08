@@ -124,8 +124,8 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
         LoggerService::info(self::CLASS_NAME." - Migration completed: {$migratedCount} entities migrated, {$skippedCount} entities skipped (already existed), {$failedCount} entities failed.");
 
         if ($failedCount > 0) {
-            LoggerService::info(self::CLASS_NAME." - Migration failed for the following entities", extra: [
-                'failed_details' => json_encode($failedDetails)
+            LoggerService::info(self::CLASS_NAME.' - Migration failed for the following entities', extra: [
+                'failed_details' => json_encode($failedDetails),
             ]);
         }
 
