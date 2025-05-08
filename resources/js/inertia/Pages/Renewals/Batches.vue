@@ -1,11 +1,8 @@
 <script setup>
 defineProps({
   batches: Object,
-  lobs: Object,
-  years: Object,
-  months: Object,
 });
-const { isRequired } = useRules();
+
 const page = usePage();
 
 const hasRole = role => useHasRole(role);
@@ -16,8 +13,6 @@ const roleLeadPool = [rolesEnum.LeadPool];
 const hasAnyRole = role => useHasAnyRole(role);
 
 const filters = reactive({
-  lob: '',
-  year: '',
   batch: '',
   page: 1,
 });
@@ -63,42 +58,6 @@ const tableHeader = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-
-const quoteTypesOptions = computed(() => {
-  const quoteTypesOptions = [
-    ...Object.keys(page.props.lobs).map(text => ({
-      label: text,
-      value: page.props.lobs[text],
-    })),
-  ];
-  return quoteTypesOptions;
-});
-
-filters.lob = page.props.lobs.Home;
-
-const yearsOptions = computed(() => {
-  const yearsOptions = [
-    ...Object.keys(page.props.years).map(text => ({
-      label: text,
-      value: page.props.years[text],
-    })),
-  ];
-  return yearsOptions;
-});
-
-filters.year = new Date().getFullYear();
-
-const monthsOptions = computed(() => {
-  const monthsOptions = [
-    ...Object.keys(page.props.months).map(text => ({
-      label: text,
-      value: page.props.months[text],
-    })),
-  ];
-  return monthsOptions;
-});
-
-filters.month = new Date().getMonth() + 1;
 </script>
 
 <template>
@@ -113,45 +72,6 @@ filters.month = new Date().getMonth() + 1;
 
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div>
-          <x-select
-            v-model="filters.lob"
-            label="Line of business"
-            name="lob"
-            :options="quoteTypesOptions"
-            placeholder="Select line of business"
-            required
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </div>
-
-        <div>
-          <x-select
-            v-model="filters.year"
-            label="Year"
-            name="year"
-            :options="yearsOptions"
-            placeholder="Select Year"
-            required
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </div>
-
-        <div>
-          <x-select
-            v-model="filters.month"
-            label="Month"
-            name="month"
-            :options="monthsOptions"
-            placeholder="Select Month"
-            required
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </div>
-
         <div>
           <label
             class="font-medium text-gray-800 text-sm decoration-primary-600"
@@ -190,18 +110,9 @@ filters.month = new Date().getMonth() + 1;
       hide-rows-per-page
       hide-footer
     >
-      <template #item-action="{ action, renewal_batch, quote_type }">
+      <template #item-action="{ action, renewal_batch }">
         <x-button
-          v-if="quote_type === 'CAR'"
           :href="`/renewals/batches/${renewal_batch}/plans-processes`"
-          class="text-primary-500 btn-passed mr-2"
-          color="primary"
-        >
-          Fetch Plans 
-        </x-button>
-        <x-button
-          v-else
-          :href="`/renewals/batches/${renewal_batch}/${quote_type}/plans-processes`"
           class="text-primary-500 btn-passed mr-2"
           color="primary"
         >
