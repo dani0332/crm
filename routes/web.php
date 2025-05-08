@@ -444,21 +444,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('departments', DepartmentController::class);
         Route::get('/migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
-            \App\Jobs\MigrateInsuredDataToPersonalQuotesJob::dispatch($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('insly');
+            \App\Jobs\MigrateInsuredDataToPersonalQuotesJob::dispatch($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
 
             return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-insured-and-quote-id-to-personal-quote');
 
-        // Add route to trigger entity-insured migration, this should remove when migration was done
-        Route::get('/migrate-entities-insured', function () {
-            App\Jobs\EntitiesInsuredMigrationJob::dispatch();
-
-            return '<h3>Entities and Entities KYC Details migration job has been queued. Please check the logs for detailed progress and completion status.</h3>';
-        })->name('admin.migrate-entities-insured');
-
         // Add route to trigger individual KYC details migration
         Route::get('/migrate-individual-kyc-details', function () {
-            App\Jobs\IndividualKycDetailsMigrationJob::dispatch();
+            App\Jobs\IndividualKycDetailsMigrationJob::dispatch()->onQueue('insly');
 
             return '<h3>Individual KYC Details migration job has been queued. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-individual-kyc-details');
