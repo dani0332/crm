@@ -40,8 +40,9 @@ trait ExcelExportable
         if (empty($requestParams['recipientEmail'])) {
             // To will be currentUserID
             if (auth()->check()) {
-                $currentUserEmailId = User::where('id', '=', auth()->user()->id)->value('email');
-                $requestParams['recipientEmail'] = $currentUserEmailId;
+                $currentUser = User::where('id', '=', auth()->user()->id);
+                $requestParams['recipientEmail'] = $currentUser->value('email');
+                $requestParams['recipientName'] = $currentUser->value('name');
             } else {
                 return response()->json([
                     'error' => 'User not authenticated',
@@ -127,8 +128,8 @@ trait ExcelExportable
 
         // Get recipient name if available
         $recipientName = 'User';
-        if (! empty($requestParams['recipient_name'])) {
-            $recipientName = $requestParams['recipient_name'];
+        if (! empty($requestParams['recipientName'])) {
+            $recipientName = $requestParams['recipientName'];
         } elseif (auth()->check() && $recipientEmail === auth()->user()->email) {
             $recipientName = auth()->user()->name;
         }
@@ -141,6 +142,11 @@ trait ExcelExportable
             'recipientName' => $recipientName,
             'exportTitle' => $requestParams['exportTitle'],
             'currentDate' => $currentDate,
+
+            // Add date range parameters if they exist
+            'dateRangeStart' => $requestParams['created_at_start'] ?? ($requestParams['created_at_start'] ?? null),
+            'dateRangeEnd' => $requestParams['created_at_end'] ?? ($requestParams['created_at_end'] ?? null),
+
             'recordCount' => $recordCount,
             'fileSize' => $fileSize,
             'systemName' => config('constants.MAIL_FROM_NAME', 'The System'),

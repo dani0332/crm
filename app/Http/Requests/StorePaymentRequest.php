@@ -102,7 +102,7 @@ class StorePaymentRequest extends FormRequest
                 if (request()->input('payment.collection_type') == 'insurer' && request()->input('sendFTCEmail') == true) {
                     $paymentSplit = request()->input('payment.payment_splits');
                     foreach ($paymentSplit as $split) {
-                        if ($split['insurer_payment_link']) {
+                        if (isset($split['insurer_payment_link']) && $split['insurer_payment_link']) {
                             $linkUsed = FtcEmailLog::where('quote_trackable_id', '!=', request()->input('quote_id'))->where('link', $split['insurer_payment_link'])->exists();
                             if ($linkUsed) {
                                 $validator->errors()->add('insurer_payment_link', 'You have already sent this payment link for another lead. Please verify and ensure each lead is sent a unique link to avoid processing errors');
