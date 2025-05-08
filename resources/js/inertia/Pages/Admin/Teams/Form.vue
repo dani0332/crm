@@ -103,6 +103,7 @@ onMounted(() => setInitialState());
           :rules="[isRequired]"
           class="w-full"
           :error="$page.props.errors.name"
+          placeholder="Enter Team Name"
         />
       </x-field>
       <x-field label="RECORD TYPE" required>
@@ -120,16 +121,18 @@ onMounted(() => setInitialState());
       </x-field>
     </div>
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="PARENT">
-        <ComboBox
-          :single="true"
-          :rules="teamForm.type != 1 ? [isRequired] : []"
-          v-model="teamForm.parent_team_id"
-          :options="computedParent"
-          :disabled="teamForm.type == 1"
-          :hasError="validParentId"
-        />
-      </x-field>
+      <x-select
+        v-model="teamForm.parent_team_id"
+        :options="computedParent"
+        :rules="teamForm.type != 1 ? [isRequired] : []"
+        :disabled="teamForm.type == 1"
+        label="PARENT"
+        placeholder="Select Parent"
+        filterPlaceholder="Filter parent...."
+        :required="teamForm.type != 1 ? true : false"
+        filterable
+      />
+
       <x-field label="SLABS COUNT" required>
         <x-input
           v-model="teamForm.slabs_count"

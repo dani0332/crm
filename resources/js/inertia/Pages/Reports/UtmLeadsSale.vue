@@ -150,13 +150,15 @@ function exportToExcel() {
           multi-calendars-solo
           max-range="30"
         />
-        <ComboBox
+        <x-select
           v-model="filters.quote_type_id"
           label="Quote Type"
           placeholder="Search by Quote Type"
           :options="quoteTypesOptions"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Quote Type...."
           :hasError="isQuoteTypeEmpty"
+          :rules="[isRequired]"
         />
 
 
