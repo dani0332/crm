@@ -913,14 +913,13 @@ const handleCollectionTypeChange = () => {
 
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isIPLPermission = can(permissionEnum.INSURER_PAYMENT_LINK);
-
+    let isHealthQuote = props.quoteType === quoteTypeCodeEnum.Health;
+    let checkCondition = !isHealthQuote || !isIPLPermission;
     const excludedPaymentMethods = [
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
       page.props.paymentMethodsEnum?.Cash,
-      !isIPLPermission &&
-        props.quoteType === quoteTypeCodeEnum.Health &&
-        page.props.paymentMethodsEnum?.InsurerPaymentLink,
+      checkCondition && page.props.paymentMethodsEnum?.InsurerPaymentLink,
     ];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item => !excludedPaymentMethods.includes(item.value),
@@ -1610,17 +1609,7 @@ const handleRetryPayment = async () => {
     .post('/payments/' + props.quoteType + '/retry-payment', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Payment has been retried',
-          position: 'top',
-        });
         isRetryModalOpen.value = false;
-      },
-      onError: () => {
-        notification.error({
-          title: 'Payment retry failed',
-          position: 'top',
-        });
       },
     });
 };
@@ -3413,6 +3402,7 @@ onBeforeMount(() => {
                     :sendUpdate="sendUpdate"
                     :quoteType="quoteType"
                     :isCapBtnEnabled="isCapBtnEnabled"
+                    :isAllianceProvider="isAllianceProvider"
                     @toggle-expand="toggleExpand"
                     @edit-payment="editPaymentModal"
                     @delete-payment="deletePaymentModel"
