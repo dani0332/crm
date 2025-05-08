@@ -14,7 +14,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -33,6 +32,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
      * @var int
      */
     public $timeout = 3600;
+
     public $tries = 1;
 
     const CLASS_NAME = 'IndividualKycDetailsMigrationJob';

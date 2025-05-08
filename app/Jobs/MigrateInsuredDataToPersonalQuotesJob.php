@@ -15,7 +15,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
@@ -37,6 +36,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
     public $timeout = 3600; // 1 hour
 
     public $tries = 1;
+
     /**
      * Indicates if the job should be marked as failed on timeout.
      *
@@ -73,7 +73,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      * @param  bool  $forceProcess  Whether to force processing of all entries
      * @return void
      */
-    public function __construct(bool $forceProcess = false, $lockKey)
+    public function __construct(bool $forceProcess, $lockKey)
     {
         $this->forceProcess = $forceProcess;
         $this->lockPostfix = $lockKey;
