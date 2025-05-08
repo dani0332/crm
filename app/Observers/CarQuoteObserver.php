@@ -45,8 +45,6 @@ class CarQuoteObserver
             ];
         }
 
-        event(new PrivateClientUpdatedEvent($lead->id, QuoteTypeId::Life));
-
         if (isset($dirty['advisor_id'])) {
             try {
                 $lead->markLeadAllocationPassed();
