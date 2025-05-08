@@ -102,7 +102,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
             LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' previously processed record id :  '.$lastProcessedId.' in cache.');
         }
 
-        $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
+        $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Bike, QuoteTypeId::Yacht];
         // Use chunk to process records in batches to avoid memory issues
         PersonalQuote::select(['id', 'code', 'uuid', 'quote_type_id', 'quote_id', 'insured_id'])
             ->whereIn('quote_type_id', $allowedQuoteTypes)
@@ -120,7 +120,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     $iterationStartTime = microtime(true);
 
                     LoggerService::startQuoteLogging($personalQuote);
-                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - data : ',
+                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Start : ',
                         extra: ['insured_id' => $personalQuote->insured_id, 'quote_id' => $personalQuote->quote_id]);
 
                     $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
@@ -134,11 +134,12 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     }
 
                     // Update the personal quote with quote_id
-                    if ($quote->getMorphClass() != PersonalQuote::class && ! $personalQuote->quote_id) {
+                    $isPersonalQuote = $quote->getMorphClass() == PersonalQuote::class;
+                    if (! $isPersonalQuote && ! $personalQuote->quote_id) {
                         $personalQuoteUpdateData['quote_id'] = $quote->id;
                         LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', ['quote_id' => $quote->id]);
                     } else {
-                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote is of Personal QuoteTable.');
+                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote is of Personal Quote Table.');
                     }
 
                     // Find the entity mapping for this quote
