@@ -88,6 +88,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Services\AddBatchForNonMotors;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -443,7 +444,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('departments', DepartmentController::class);
         Route::get('/migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
-            \App\Jobs\MigrateInsuredDataToPersonalQuotesJob::dispatch($forceProcess);
+            \App\Jobs\MigrateInsuredDataToPersonalQuotesJob::dispatch($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('insly');
 
             return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.migrate-insured-and-quote-id-to-personal-quote');

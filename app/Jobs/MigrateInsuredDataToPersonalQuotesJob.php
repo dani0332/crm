@@ -36,6 +36,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      */
     public $timeout = 3600; // 1 hour
 
+    public $tries = 1;
     /**
      * Indicates if the job should be marked as failed on timeout.
      *
@@ -72,10 +73,10 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      * @param  bool  $forceProcess  Whether to force processing of all entries
      * @return void
      */
-    public function __construct(bool $forceProcess = false)
+    public function __construct(bool $forceProcess = false, $lockKey)
     {
         $this->forceProcess = $forceProcess;
-        $this->lockPostfix = Carbon::now()->format('YmdHi');
+        $this->lockPostfix = $lockKey;
     }
 
     /**
