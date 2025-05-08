@@ -106,6 +106,25 @@ trait GenericQueriesAllLobs
     }
 
     /**
+     * @return false|mixed
+     * TODO :
+     */
+    public function getSelectedQuoteObjectBy($quoteType, $id, $column = 'id')
+    {
+        $nameSpace = '\\App\\Models\\';
+
+        $model = (checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        $quote = $model::select(['id', 'uuid', 'code'])->where($column, $id)->first();
+
+        return (isset($quote->id)) ? $quote : false;
+    }
+
+    /**
      * get Quote Request Member Detail by Quote Type e.g health, travel etc
      *
      * @return false|mixed

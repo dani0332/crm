@@ -104,7 +104,8 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
 
         $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
         // Use chunk to process records in batches to avoid memory issues
-        PersonalQuote::whereIn('quote_type_id', $allowedQuoteTypes)
+        PersonalQuote::select(['id', 'code', 'uuid', 'quote_type_id', 'quote_id', 'insured_id'])
+            ->whereIn('quote_type_id', $allowedQuoteTypes)
             ->when($lastProcessedId, function ($q) use ($lastProcessedId) {
                 $q->where('id', '>', $lastProcessedId);
             })
@@ -120,7 +121,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     LoggerService::startQuoteLogging($personalQuote);
 
                     $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
-                    $quote = $this->getQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
+                    $quote = $this->getSelectedQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
 
                     if (! $quote) {
                         LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote not found.');
