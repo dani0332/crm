@@ -36,7 +36,7 @@ class EmbeddedProductReport
     /**
      * @return Illuminate\Support\Collection
      */
-    public function collection()
+    public function collection($requestParams = [])
     {
         $this->filters['excel_export'] = true;
 
