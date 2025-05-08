@@ -361,6 +361,16 @@ watch(mappedDestinationIds, newVal => {
   if (newVal.length < 1) return;
   quoteForm.destination_ids = newVal;
 });
+
+watch(
+  [() => quoteForm.start_date, () => quoteForm.end_date],
+  ([newStartDate, newEndDate]) => {
+    if (newStartDate && newEndDate) {
+      quoteForm.days_cover_for =
+        calculateDaysDifference(newStartDate, newEndDate) + 1; // +1 to include both start and end days
+    }
+  },
+);
 </script>
 
 <template>
