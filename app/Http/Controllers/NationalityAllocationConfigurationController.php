@@ -33,11 +33,12 @@ class NationalityAllocationConfigurationController extends Controller
             ->when($request->filled('created_at_end'), function ($query) use ($request) {
                 $query->whereDate('created_at', '<=', $request->created_at_end);
             })
+            ->latest()
             ->paginate(10)
             ->withQueryString();
 
-        $nationalities = Nationality::where('is_active', 1)->get();
-        $quoteTypes = QuoteType::where('is_active', 1)->get();
+        $nationalities = $this->getNationalities();
+        $quoteTypes = $this->getQuoteTypes();
 
         return inertia('Admin/AllocationConfig/NationalityAllocation/Index', [
             'configurations' => $configurations,
@@ -47,14 +48,11 @@ class NationalityAllocationConfigurationController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new nationality allocation configuration.
-     */
     public function create()
     {
-        $nationalities = Nationality::where('is_active', 1)->get();
-        $quoteTypes = QuoteType::where('is_active', 1)->get();
-        $users = User::where('is_active', 1)->get();
+        $nationalities = $this->getNationalities();
+        $quoteTypes = $this->getQuoteTypes();
+        $users = $this->getUsers();
 
         return inertia('Admin/AllocationConfig/NationalityAllocation/Form', [
             'nationalities' => $nationalities,
@@ -63,9 +61,6 @@ class NationalityAllocationConfigurationController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created nationality allocation configuration.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -75,7 +70,6 @@ class NationalityAllocationConfigurationController extends Controller
             'user_ids.*' => 'exists:users,id',
         ]);
 
-        // Check if a configuration with the same quote type and nationality already exists
         $existingConfig = NationalityAllocationConfiguration::where('quote_type_id', $validated['quote_type_id'])
             ->where('nationality_id', $validated['nationality_id'])
             ->first();
@@ -92,9 +86,6 @@ class NationalityAllocationConfigurationController extends Controller
             ->with('success', 'Nationality allocation configuration created successfully!');
     }
 
-    /**
-     * Display the specified nationality allocation configuration.
-     */
     public function show(NationalityAllocationConfiguration $nationalityAllocationConfig)
     {
         $nationalityAllocationConfig->load(['nationality', 'quoteType', 'users', 'createdBy', 'updatedBy']);
@@ -104,16 +95,13 @@ class NationalityAllocationConfigurationController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified nationality allocation configuration.
-     */
     public function edit(NationalityAllocationConfiguration $nationalityAllocationConfig)
     {
         $nationalityAllocationConfig->load(['nationality', 'quoteType', 'users']);
 
-        $nationalities = Nationality::where('is_active', 1)->get();
-        $quoteTypes = QuoteType::where('is_active', 1)->get();
-        $users = User::where('is_active', 1)->get();
+        $nationalities = $this->getNationalities();
+        $quoteTypes = $this->getQuoteTypes();
+        $users = $this->getUsers();
 
         return inertia('Admin/AllocationConfig/NationalityAllocation/Form', [
             'configuration' => $nationalityAllocationConfig,
@@ -123,9 +111,6 @@ class NationalityAllocationConfigurationController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified nationality allocation configuration.
-     */
     public function update(Request $request, NationalityAllocationConfiguration $nationalityAllocationConfig)
     {
         $validated = $request->validate([
@@ -135,7 +120,6 @@ class NationalityAllocationConfigurationController extends Controller
             'user_ids.*' => 'exists:users,id',
         ]);
 
-        // Check if another configuration with the same quote type and nationality already exists
         $existingConfig = NationalityAllocationConfiguration::where('quote_type_id', $validated['quote_type_id'])
             ->where('nationality_id', $validated['nationality_id'])
             ->where('id', '!=', $nationalityAllocationConfig->id)
@@ -159,14 +143,26 @@ class NationalityAllocationConfigurationController extends Controller
             ->with('success', 'Nationality allocation configuration updated successfully!');
     }
 
-    /**
-     * Remove the specified nationality allocation configuration.
-     */
     public function destroy(NationalityAllocationConfiguration $nationalityAllocationConfig)
     {
         $this->nationalityAllocationService->deleteConfiguration($nationalityAllocationConfig->id);
 
         return redirect()->route('admin.nationality-allocation-config.index')
             ->with('success', 'Nationality allocation configuration deleted successfully!');
+    }
+
+    private function getNationalities()
+    {
+        return Nationality::where('is_active', 1)->get();
+    }
+
+    private function getQuoteTypes()
+    {
+        return QuoteType::where('is_active', 1)->get();
+    }
+
+    private function getUsers()
+    {
+        return User::where('is_active', 1)->get();
     }
 }
