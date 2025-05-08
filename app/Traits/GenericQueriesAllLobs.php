@@ -107,7 +107,7 @@ trait GenericQueriesAllLobs
 
     /**
      * @return false|mixed
-     * TODO :
+     *                     TODO :
      */
     public function getSelectedQuoteObjectBy($quoteType, $id, $column = 'id')
     {
