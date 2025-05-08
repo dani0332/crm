@@ -77,7 +77,7 @@ const filters = reactive({
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   tenure_of_insurance_id: '',
-  sum_insured_currency_id: page.props.currency.find(item => item.text === 'AED')?.id || null,
+  sum_insured_currency_id: null,
   sum_insured_range: '',
 });
 
@@ -216,22 +216,18 @@ function filterQuotes(isValid) {
     });
     return;
   }
-  if(!filters['sum_insured_range'] || !filters['sum_insured_currency_id']) {
-    delete filters['sum_insured_range'];
-    delete filters['sum_insured_currency_id'];
-  }
+  
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
     }
   }
 
-  serverOptions.value.page = 1;
 
   const filtersCleaned = cleanObj(filters);
   filtersCount.value = Object.keys(filtersCleaned).length;
-
-  manageFilterCount(); 
+  
+  serverOptions.value.page = 1;
 
   router.visit(route('life-quotes-list'), {
     method: 'get',
@@ -245,7 +241,6 @@ function filterQuotes(isValid) {
       loader.table = false;
     },
     onBefore: () => {
-      filters.page = 1;
       loader.table = true;
     },
   });
@@ -443,7 +438,6 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
   filtersCount.value = Object.keys(filtersCleaned).length;
 
-  manageFilterCount()
 });
 
 const resetDateFilters = filterName => {

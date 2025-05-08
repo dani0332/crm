@@ -670,7 +670,6 @@ class LifeQuoteService extends BaseService
         if($saveQuote){
             $formData['saveQuote'] = true;
         }
-
        $request = app(KenService::class)->request('/process-life-quote-plan', 'post',$formData); 
        return $request;
     }

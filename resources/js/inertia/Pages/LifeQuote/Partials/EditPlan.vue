@@ -173,7 +173,6 @@ const onSubmit = isValid => {
 };
 
 // Geenerate Pdf
-
 const generatePdf = () => {
   extraAttr.generatePdfLoading = true;
   axios.post('/personal-quotes/life-plan-selected', {
@@ -211,8 +210,7 @@ const generatePdf = () => {
     })
   .finally(() => {
     extraAttr.generatePdfLoading = false;
-  });
-  
+  });  
 }
 
 
@@ -703,9 +701,7 @@ const closeModal = ()  => {
         </TabGroup>
 
     </div>
-
-
-    <div>
+<div>
   
   <template v-if="selectedTabIndex == 0">
     <x-divider></x-divider>
@@ -727,10 +723,8 @@ const closeModal = ()  => {
           <dd><strong>Created Date:</strong> {{ formatDate(props.selectedPlan.created_at) }}</dd>
           <dd><strong>Updated at:</strong> {{ formatDate(props.selectedPlan.updated_at) }}</dd>
 
-          <x-button v-if="editForm.isApi && editForm.providerId == 180 && !editForm.isUnderwritten" 
-          @click="generatePdf()" class="mt-2" color="orange" :loading="extraAttr.generatePdfLoading">
-            Generate Pdf
-          </x-button>
+          <x-button v-if="editForm.isApi && editForm.providerId == 180 && !editForm.isUnderwritten" @click="generatePdf()" 
+          class="mt-2" color="orange" :loading="extraAttr.generatePdfLoading">Generate Quote Pdf</x-button>
 
         </div>
       </div>
@@ -812,9 +806,6 @@ const closeModal = ()  => {
       </div>
     </div>
   </template>
-
-
-
 
   </div>
   </x-modal>
