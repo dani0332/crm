@@ -1,4 +1,6 @@
 <script setup>
+import { onMounted } from 'vue';
+
 const props = defineProps({
   configurations: Object,
   nationalities: Array,
@@ -14,13 +16,21 @@ const loader = ref({
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
 
+// Initialize filters directly from props with explicit type conversion
 const filters = reactive({
-  quote_type_id: props.filters?.quote_type_id || '',
-  nationality_id: props.filters?.nationality_id || '',
-  created_at: props.filters?.created_at || '',
-  created_at_end: props.filters?.created_at_end || '',
+  quote_type_id: props.filters?.quote_type_id
+    ? +props.filters.quote_type_id
+    : '',
+  nationality_id: props.filters?.nationality_id
+    ? +props.filters.nationality_id
+    : '',
+  created_at: props.filters?.created_at ?? '',
+  created_at_end: props.filters?.created_at_end ?? '',
   page: 1,
 });
+
+// Log the initial filter values
+console.log('Initial filters:', filters);
 
 const tableHeader = [
   { text: 'ID', value: 'id' },
@@ -47,17 +57,23 @@ const nationalityOptions = computed(() => {
 
 function onSubmit(isValid) {
   filters.page = 1;
+
+  // Format date values if needed
   if (filters.created_at) filters.created_at = filters.created_at.split('T')[0];
   if (filters.created_at_end)
     filters.created_at_end = filters.created_at_end.split('T')[0];
 
   router.visit(route('admin.nationality-allocation-config.index'), {
     method: 'get',
-    data: useGenerateQueryString(filters),
+    data: filters,
     preserveState: true,
     preserveScroll: true,
-    onBefore: () => (loader.table = true),
-    onFinish: () => (loader.table = false),
+    onBefore: () => {
+      loader.table = true;
+    },
+    onFinish: () => {
+      loader.table = false;
+    },
   });
 }
 
@@ -90,65 +106,6 @@ function onConfirmDelete() {
       },
     },
   );
-}
-
-function formatUsers(users) {
-  return users.map(user => user.name).join(', ');
-}
-
-function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
-    } else {
-      filters[key] = params[key];
-    }
-  }
-}
-
-onMounted(() => {
-  setQueryStringFilters();
-});
-
-// Define a set of good background colors for avatars
-const avatarColors = [
-  '#1e88e5', // Blue
-  '#43a047', // Green
-  '#e53935', // Red
-  '#5e35b1', // Deep Purple
-  '#fb8c00', // Orange
-  '#00897b', // Teal
-  '#d81b60', // Pink
-  '#8e24aa', // Purple
-  '#546e7a', // Blue Grey
-  '#f4511e', // Deep Orange
-];
-
-function getAvatarColor(name) {
-  // Generate a consistent hash from the name
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  // Use the hash to pick a color from our predefined set
-  const index = Math.abs(hash) % avatarColors.length;
-  return avatarColors[index];
-}
-
-function getUserInitials(name) {
-  if (!name) return '?';
-
-  const nameParts = name.split(' ').filter(part => part.length > 0);
-  if (nameParts.length === 0) return '?';
-
-  if (nameParts.length === 1) {
-    return nameParts[0].charAt(0).toUpperCase();
-  }
-
-  return (
-    nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)
-  ).toUpperCase();
 }
 </script>
 
@@ -267,13 +224,6 @@ function getUserInitials(name) {
       total: configurations.total,
     }"
   />
-
-  <div
-    v-else-if="!loader.table"
-    class="bg-white p-4 text-center rounded shadow mt-4"
-  >
-    <p class="text-gray-500">No nationality allocation configurations found.</p>
-  </div>
 
   <x-modal
     v-model="showDeleteModal"
