@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Config;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,5 +33,13 @@ class QuoteType extends Model
     public function insurerProviders()
     {
         return $this->belongsToMany(InsuranceProvider::class, 'insurance_provider_quote_type');
+    }
+
+    /**
+     * Get the nationality allocation configurations for this quote type.
+     */
+    public function nationalityAllocationConfigurations()
+    {
+        return $this->hasMany(NationalityAllocationConfiguration::class);
     }
 }
