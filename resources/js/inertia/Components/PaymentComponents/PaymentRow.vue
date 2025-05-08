@@ -197,7 +197,7 @@ const shouldProcessUpdate = () => {
   ];
 
   const captureOption = getCaptureOption.value;
-  
+
   if (
     isInsurer &&
     isGIGProvider &&
@@ -233,7 +233,7 @@ const shouldProcessUpdate = () => {
   if (captureOption === 'approve') {
     return hasPayments;
   }
-  
+
   return (
     hasPayments &&
     isTotalPriceMatching &&
@@ -251,7 +251,6 @@ const shouldProcessUpdate = () => {
 //     Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
 //   const hasPayments = props.payments.length > 0;
 //   const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
-
 
 //   // Check if it's a renewal upload condition
 //   if (
