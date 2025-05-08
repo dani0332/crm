@@ -171,7 +171,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     }
                     $iterationEndTime = microtime(true);
                     $iterationExecutionTime = $iterationEndTime - $iterationStartTime;
-                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' iteration execution time(seconds) : '.$iterationExecutionTime, extra: ['Data' => $personalQuoteUpdateData]);
+                    /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' iteration execution time(seconds) : '.$iterationExecutionTime, extra: ['Data' => $personalQuoteUpdateData]); */
 
                     $lastProcessedId = $personalQuote->id;
                     $totalUpdated++;
