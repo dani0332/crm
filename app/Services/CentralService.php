@@ -32,6 +32,7 @@ use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -1398,8 +1399,16 @@ class CentralService extends BaseService
         }
 
         if ($quoteTypeId == QuoteTypeId::Home) {
-            // need to confirm.
-            $emailData->homeDetails = $quote->address;
+            $customerAddress = CustomerAddress::where('customer_id', $quote->customer->id)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('quote_uuid', $quote->uuid)
+                ->first();
+
+            if ($customerAddress) {
+                $emailData->homeDetails = "$customerAddress->office_number, $customerAddress->floor_number, $customerAddress->building_name, $customerAddress->street, $customerAddress->area, $customerAddress->city, $customerAddress->landmark";
+            } else {
+                $emailData->homeDetails = 'NA';
+            }
         }
 
         if ($quoteTypeId == QuoteTypeId::Pet) {
