@@ -514,6 +514,15 @@ const manageFilterCount = () => {
   }
 }
 
+const quoteStatuses = computed(() => page.props.leadStatuses || []);
+
+const insurerAMLStatusOption = computed(() => 
+  (page.props.insurerAMLStatus || []).map(item => ({
+    value: item.id || item.value,
+    label: item.text || item.label
+  }))
+);
+
 </script>
 
 <template>

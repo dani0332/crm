@@ -171,8 +171,47 @@ const onSubmit = isValid => {
     });
 };
 
-// Get updated provider plan (API Mode only)
+// Geenerate Pdf
 
+const generatePdf = () => {
+  axios.post('/personal-quotes/life-plan-selected', {
+    planId: props.selectedPlan.planId,
+    quoteId: props.uuid, 
+    version: props.selectedPlan.version,
+    saveQuote: true,
+  })
+  .then(response => {
+    
+    if(response?.data?.code) {
+        notification.error({
+          title: response.data.msg,
+          position: 'top',
+        });
+
+      return;  
+    } 
+    
+    notification.success({
+        title: 'Pdf generated successfully',
+        position: 'top',
+    });
+    
+    setTimeout(() => {
+      location.reload();
+    }, 2000);
+  })
+  .catch(error => {
+      notification.error({
+        title: error?.response?.data?.message ?? 'something went wrong',
+        position: 'top',
+      });
+      console.log('error', error)
+    });
+  
+}
+
+
+// Get updated provider plan (API Mode only)
 const getQuote = () => {
     extraAttr.getQuoteLoading = true;
     
@@ -671,7 +710,7 @@ const closeModal = ()  => {
 
           </div>
       </div>
-      <div class="flex justify-between gap-4 mt-4">
+      <div class="flex justify-between gap-4">
         <!-- Price section aligned to the left -->
         <div class="flex flex-row">
           <dt class="font-bold text-lg ml-4">Total Price:</dt>
@@ -682,6 +721,12 @@ const closeModal = ()  => {
         <div class="flex flex-col items-end">
           <dd><strong>Created Date:</strong> {{ formatDate(props.selectedPlan.created_at) }}</dd>
           <dd><strong>Updated at:</strong> {{ formatDate(props.selectedPlan.updated_at) }}</dd>
+
+          <x-button v-if="editForm.isApi && editForm.providerId == 180 && !editForm.isUnderwritten" 
+          @click="generatePdf()" class="mt-2" color="orange" :loading="extraAttr.loading">
+            Generate Pdf
+          </x-button>
+
         </div>
       </div>
 

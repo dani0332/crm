@@ -658,14 +658,19 @@ class LifeQuoteService extends BaseService
     }
 
     /* This function will select the Plan details in the Quote */
-    function lifePlanSelected(String $quoteId, Int $planId, Int $version = 0){
+    function lifePlanSelected(String $quoteId, Int $planId, Int $version = 0, $saveQuote = false){
         // Creating Form Data
         $formData = [
             'quoteUID' => $quoteId,
             'planId' => $planId, 
             'version' => $version, 
-            'quoteTypeId' => 4,
+            'quoteTypeId' => QuoteTypes::getIdFromValue('Life'),
         ]; 
+        
+        if($saveQuote){
+            $formData['saveQuote'] = true;
+        }
+
        $request = app(KenService::class)->request('/process-life-quote-plan', 'post',$formData); 
        return $request;
     }
