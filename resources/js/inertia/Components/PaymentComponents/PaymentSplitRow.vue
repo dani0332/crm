@@ -16,6 +16,8 @@ const {
   paymentAllocationStatusTooltip,
 } = usePayment();
 
+const notification = useNotifications('toast');
+
 const props = defineProps({
   splitPayment: Object,
   parentPayment: Object,
@@ -155,8 +157,6 @@ const enablePostPrepaymentButton = computed(() => {
   return false;
 });
 
-
-
 const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
   if (paymentStatus == paymentStatusEnum.PAID) {
     notification.error({
@@ -200,7 +200,6 @@ const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
     }
   }
 };
-
 </script>
 
 <template>
