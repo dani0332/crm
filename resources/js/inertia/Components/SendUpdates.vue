@@ -517,9 +517,8 @@ const expandNotes = ref(false);
       >
         <div class="flex flex-col gap-2 flex-grow w-75">
           <x-field :label="form.childCategory.title" required>
-            <ComboBox
+            <x-select
               v-model="form.option"
-              :single="true"
               :hasError="optionError"
               :options="
                 sendUpdateOptions.map(item => ({
@@ -535,6 +534,8 @@ const expandNotes = ref(false);
                   : 'Select Reason'
               "
               class="w-full"
+              filterable
+              filterPlaceholder="Filter Reason...."
             />
             <!-- <x-select
               class="w-full"

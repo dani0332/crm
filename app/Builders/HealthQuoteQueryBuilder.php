@@ -5,10 +5,10 @@ namespace App\Builders;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Models\HealthQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -20,9 +20,9 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
     public function buildGrid(): Builder
     {
         return $this->baseQuery([
-            'id',
+            'health_quote_request.id',
             'uuid',
-            'code',
+            'health_quote_request.code',
             'first_name',
             'last_name',
             'source',
@@ -65,8 +65,8 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'dob',
             'nationality_id',
             'transaction_approved_at',
-            'created_at',
-            'updated_at',
+            'health_quote_request.created_at',
+            'health_quote_request.updated_at',
             'assignment_type',
             'gender',
         ], [
@@ -98,8 +98,16 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
         ]);
     }
 
-    public function applyFilters(Builder $query)
+    public function applyFilters(Builder $query, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
+
         $query
             ->filterBy('code')
             ->matchBy('first_name')
@@ -122,7 +130,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterBy('is_ecommerce', isBool: true)
             ->filterIn('insurer_aml_status')
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
-            ->filterBySegment('segment_filter', QuoteTypeId::Health)
+            ->filterBySegment()
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByDateRange('booking_date', 'policy_booking_date')
             ->filterByAdvisorAssignedDates('healthQuoteRequestDetail', ['assigned_to_date_start', 'assigned_to_date_end'], verifyQuoteStatus: true)
@@ -181,10 +189,10 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             );
     }
 
-    public function processGridData(): Builder
+    public function processGridData($requestParams = []): Builder
     {
         $query = $this->buildGrid();
-        $this->applyFilters($query);
+        $this->applyFilters($query, $requestParams);
 
         return $query;
     }
