@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class NationalityAllocationConfiguration extends Model
+class NationalityAllocationConfiguration extends Model implements AuditableContract
 {
+    use Auditable;
+
     protected $fillable = [
         'quote_type_id',
         'nationality_id',
@@ -21,6 +25,18 @@ class NationalityAllocationConfiguration extends Model
         'is_sic_enabled' => 'boolean',
         'activated_at' => 'datetime',
     ];
+
+    protected $auditInclude = [
+        'quote_type_id',
+        'nationality_id',
+        'is_sic_enabled',
+        'activated_at',
+    ];
+
+    public function generateTags(): array
+    {
+        return ['nationality-allocation', 'config'];
+    }
 
     public function users(): BelongsToMany
     {

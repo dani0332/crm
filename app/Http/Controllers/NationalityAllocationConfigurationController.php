@@ -98,11 +98,12 @@ class NationalityAllocationConfigurationController extends Controller
             'nationality_id' => $validated['nationality_id'],
             'is_sic_enabled' => $validated['is_sic_enabled'] ?? false,
             'activated_at' => $validated['is_active'] ? now() : null,
+            'user_ids' => $validated['user_ids']
         ];
 
-        $this->nationalityAllocationService->createConfiguration($data, Auth::id());
+        $configuration = $this->nationalityAllocationService->createConfiguration($data, Auth::id());
 
-        return redirect()->route('admin.nationality-allocation-config.index')
+        return redirect()->route('admin.nationality-allocation-config.show', $configuration->id)
             ->with('success', 'Nationality allocation configuration created successfully!');
     }
 
@@ -159,7 +160,7 @@ class NationalityAllocationConfigurationController extends Controller
 
         $nationalityAllocationConfig->users()->sync($validated['user_ids']);
 
-        return redirect()->route('admin.nationality-allocation-config.index')
+        return redirect()->route('admin.nationality-allocation-config.show', $nationalityAllocationConfig->id)
             ->with('success', 'Nationality allocation configuration updated successfully!');
     }
 
@@ -169,6 +170,14 @@ class NationalityAllocationConfigurationController extends Controller
 
         return redirect()->route('admin.nationality-allocation-config.index')
             ->with('success', 'Nationality allocation configuration deleted successfully!');
+    }
+
+    public function getAuditLogs(Request $request, NationalityAllocationConfiguration $nationalityAllocationConfig)
+    {
+        $perPage = $request->has('per_page') ? (int) $request->per_page : null;
+        $logs = $this->nationalityAllocationService->getAuditLogs($nationalityAllocationConfig->id, $perPage);
+
+        return response()->json($logs);
     }
 
     private function getNationalities()
