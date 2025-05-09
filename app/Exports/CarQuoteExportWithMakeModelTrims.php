@@ -9,7 +9,7 @@ class CarQuoteExportWithMakeModelTrims
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
         return app(CarQuoteService::class)->getExportDataWithMakeModelTrim();
     }

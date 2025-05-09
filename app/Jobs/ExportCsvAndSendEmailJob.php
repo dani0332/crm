@@ -15,9 +15,9 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 300; // 5 minutes
-    public $tries = 3;
-    public $backoff = 30;
+    public $timeout = 900; // 10 minutes
+    public $tries = 1;
+    public $backoff = 910;
     private $exportClass;
     private $recipientEmail;
     private $requestParams;
@@ -72,8 +72,6 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
             if ($this->attempts() >= $this->tries) {
                 throw $e; // Throw Exception ONLY after all tries have failed
-            } else {
-                $this->release(60); // Retry after 60 seconds
             }
         }
     }
