@@ -82,9 +82,7 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
             DB::beginTransaction();
             try {
                 foreach ($entitiesToProcess as $entity) {
-                    LoggerService::info(self::CLASS_NAME.' - *********************** Migrating entity details against ID: '.$entity->id.' **********************');
-                    LoggerService::info(self::CLASS_NAME.' - Creating new insured record for entity '.$entity->id);
-
+                    LoggerService::info(self::CLASS_NAME.' - *********************** Migrating entity details against entity id: '.$entity->id.' **********************');
                     $insured = Insured::create([
                         'customer_type' => CustomerTypeEnum::Entity,
                         'first_name' => $entity->kyc_first_name ?? null,
@@ -103,7 +101,7 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
 
                     $this->createCustomerInsuredMappingsForEntity($insured, $entity);
                     $migratedCount++;
-                    LoggerService::info(self::CLASS_NAME.' - *********************** Migrated entity details against ID: '.$entity->id.' **********************');
+                    LoggerService::info(self::CLASS_NAME.' - *********************** Migrated entity details against entity id: '.$entity->id.' **********************');
                 }
                 DB::commit();
                 LoggerService::info(self::CLASS_NAME." - Successfully processed chunk of {$entitiesToProcess->count()} records");
@@ -121,15 +119,13 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
             }
         });
 
-        $jsonEncodeFailedDetails = json_encode($failedDetails);
-
         LoggerService::info(self::CLASS_NAME." - Migration completed: {$migratedCount} entities migrated, {$skippedCount} entities skipped (already existed), {$failedCount} entities failed.");
 
         if ($failedCount > 0) {
-            LoggerService::info(self::CLASS_NAME." - Failed migration details: {$jsonEncodeFailedDetails}");
+            LoggerService::info(self::CLASS_NAME.' - Migration failed for the following entities', extra: [
+                'failed_details' => json_encode($failedDetails),
+            ]);
         }
-
-        LoggerService::info(self::CLASS_NAME.' - End creating new insured records for entities at '.now());
         LoggerService::info(self::CLASS_NAME.' - ------------------- Entities Insured Migration Job Ended At: '.now().' -------------------');
     }
 
@@ -156,11 +152,11 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
 
     private function createCustomerInsuredMappingsForEntity(Insured $insured, Entity $entity)
     {
-        LoggerService::info(self::CLASS_NAME.' - Creating customer-insured mappings for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
+        LoggerService::info(self::CLASS_NAME.' - Creating customer-insured mappings for entity id: '.$entity->id.' and insured id: '.$insured->id.' at '.now());
         $quoteRequestEntityMappings = QuoteRequestEntityMapping::where('entity_id', $entity->id)->get();
 
         if (empty($quoteRequestEntityMappings->toArray())) {
-            LoggerService::info(self::CLASS_NAME.' - ##################### Entity '.$entity->id.' quote request mapping not found ##############################');
+            LoggerService::info(self::CLASS_NAME.' - ##################### entity id: '.$entity->id.' quote request mapping not found ##############################');
         } else {
             // Only process mappings if they exist
             foreach ($quoteRequestEntityMappings as $quoteRequestEntityMapping) {
@@ -184,24 +180,20 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
 
         // Always migrate KYC details regardless of mappings
         $this->migrateEntityKycDetailsToInsuredKyc($insured, $entity);
-
-        LoggerService::info(self::CLASS_NAME.' - End creating customer-insured mappings for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
     }
 
     private function migrateEntityKycDetailsToInsuredKyc(Insured $insured, Entity $entity)
     {
-        LoggerService::info(self::CLASS_NAME.' - Migrating Entity KYC details to insured KYC for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
+        LoggerService::info(self::CLASS_NAME.' - Migrating Entity KYC details to insured KYC for entity id: '.$entity->id.' and insured id: '.$insured->id.' at '.now());
 
         // Skip if KYC details are already migrated
         $insuredKyc = InsuredKyc::where('insured_id', $insured->id)->first();
         if ($insuredKyc) {
-            LoggerService::info(self::CLASS_NAME.' - Insured KYC already exist for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
 
             return;
         }
 
         InsuredKyc::create([
-            // Contact info columns
             'insured_id' => $insured->id,
             'first_name' => $entity->kyc_first_name ?? null,
             'last_name' => $entity->kyc_last_name ?? null,
@@ -210,12 +202,10 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
             'website' => $entity->website ?? null,
             'legal_structure' => $entity->legal_structure ?? null,
 
-            // Country and address information
             'country_of_corporation' => $entity->country_of_corporation ?? null,
             'registered_address' => $entity->registered_address ?? null,
             'communication_address' => $entity->communication_address ?? null,
 
-            // ID related columns
             'id_type' => $entity->id_type ?? null,
             'id_number' => $entity->id_number ?? null,
             'id_issuance_date' => $entity->id_issuance_date ?? null,
@@ -223,12 +213,10 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
             'issuance_place' => $entity->issuance_place ?? null,
             'id_issuance_authority' => $entity->id_issuance_authority ?? null,
 
-            // Compliance columns
             'pep' => $entity->pep ?? null,
             'financial_sanctions' => $entity->financial_sanctions ?? null,
             'dual_nationality' => $entity->dual_nationality ?? null,
 
-            // FATF and sanctions columns
             'customer_tenure' => $entity->customer_tenure ?? null,
             'transaction_volume' => $entity->transaction_volume ?? null,
             'transaction_activities' => $entity->transaction_activities ?? null,
@@ -236,8 +224,7 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
             'mode_of_contact' => $entity->mode_of_contact ?? null,
             'mode_of_delivery' => $entity->mode_of_delivery ?? null,
             'in_sanction_list' => $entity->in_sanction_list ?? null,
-            'is_sanction_match' => $entity->is_sanction_match ?? null,
-            'in_fatf' => $entity->in_fatf ?? null,
+            'is_sanction_match' => $entity->is_sanction_match ?? null, +'in_fatf' => $entity->in_fatf ?? null,
             'is_owner_high_risk' => $entity->is_owner_high_risk ?? null,
             'deal_sanction_list' => $entity->deal_sanction_list ?? null,
             'is_operation_high_risk' => $entity->is_operation_high_risk ?? null,
@@ -247,8 +234,6 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
             'business_activity_id' => $entity->business_activity_id ?? null,
             'entity_id' => $entity->id,
         ]);
-
-        LoggerService::info(self::CLASS_NAME.' - End migrating Entity KYC details to insured KYC for entity '.$entity->id.' and insured '.$insured->id.' at '.now());
     }
 
     /**
