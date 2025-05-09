@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Models\CarMake;
 use App\Models\InsuranceProvider;
 use App\Models\PrivateClientConfig;
+use App\Models\PrivateClientConfigHistory;
 use App\Models\SubArea;
+use App\Traits\PrivateClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +17,8 @@ use Inertia\Inertia;
 
 class PrivateClientConfigController extends Controller
 {
+    use PrivateClient;
+
     public function __construct()
     {
         $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Engineering], '|'), ['only' => ['show']]);
@@ -59,19 +63,51 @@ class PrivateClientConfigController extends Controller
             DB::beginTransaction();
 
             foreach ($validated['configurations'] as $config) {
-                PrivateClientConfig::updateOrCreate(
-                    [
+                $existingConfig = PrivateClientConfig::where([
+                    'quote_type_id' => $config['quote_type_id'],
+                    'field_name' => $config['field_name'],
+                    'currency_type_id' => $config['currency_type_id'] ?? null,
+                ])->first();
+
+                if ($existingConfig) {
+                    $hasChanges = $existingConfig->operator != $config['operator'] ||
+                        $existingConfig->value != $config['value'] ||
+                        $existingConfig->status != $config['status'];
+
+                    if ($hasChanges) {
+                        PrivateClientConfigHistory::create([
+                            'pcp_config_id' => $existingConfig->id,
+                            'quote_type_id' => $existingConfig->quote_type_id,
+                            'field_name' => $existingConfig->field_name,
+                            'operator' => $existingConfig->operator,
+                            'value' => $existingConfig->value,
+                            'currency_type_id' => $existingConfig->currency_type_id,
+                            'status' => $existingConfig->status,
+                            'version' => $existingConfig->version,
+                        ]);
+
+                        // Update with incremented version
+                        $existingConfig->update([
+                            'operator' => $config['operator'],
+                            'field_name' => $config['field_name'],
+                            'operator' => $config['operator'],
+                            'value' => $config['value'],
+                            'status' => $config['status'],
+                            'currency_type_id' => $config['currency_type_id'] ?? null,
+                            'version' => $existingConfig->version + 1,
+                        ]);
+                    }
+                } else {
+                    PrivateClientConfig::create([
                         'quote_type_id' => $config['quote_type_id'],
-                        'field_name' => $config['field_name'],
-                        'currency_type_id' => $config['currency_type_id'] ?? null,
-                    ],
-                    [
                         'field_name' => $config['field_name'],
                         'operator' => $config['operator'],
                         'value' => $config['value'],
+                        'currency_type_id' => $config['currency_type_id'] ?? null,
                         'status' => $config['status'],
-                    ]
-                );
+                        'version' => 1,
+                    ]);
+                }
             }
 
             DB::commit();
