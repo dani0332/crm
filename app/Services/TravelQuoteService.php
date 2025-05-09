@@ -269,7 +269,7 @@ class TravelQuoteService extends BaseService
         $members = [];
         $travelQuote = [
             'directionCode' => $request->direction_code,
-            'regionCoverForId' => $request->region_cover_for_id ? (int) $request->region_cover_for_id : 3,
+            'regionCoverForId' => 3,
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
             'email' => $request->email,

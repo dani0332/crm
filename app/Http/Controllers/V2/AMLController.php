@@ -454,6 +454,7 @@ class AMLController extends Controller
                 $insuredPersonDetails = Insured::updateOrCreate([
                     'id_type' => $AMLCheckRequest->screening_id_type,
                     'id_number' => $AMLCheckRequest->screening_id_number,
+                    'customer_type' => CustomerTypeEnum::Individual,
                 ], [
                     'first_name' => $AMLCheckRequest->insured_first_name,
                     'last_name' => $AMLCheckRequest->insured_last_name,
@@ -469,6 +470,8 @@ class AMLController extends Controller
                     'customer_id' => $AMLCheckRequest->customer_id,
                     'insured_id' => $insuredPersonDetails->id,
                 ]);
+
+                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredPersonDetails);
 
                 if ($customer->isDirty() ||
                     ! isset($getLastScreening->created_at) ||
@@ -615,6 +618,27 @@ class AMLController extends Controller
                     ], ['entity_id' => $fetchEntity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
                 }
 
+                // Reminder:: this patch included because of new structure, Entity and Entity quote request mapping will be remove soon.
+                $insuredEntityDetails = Insured::updateOrCreate([
+                    'trade_license_no' => $AMLCheckRequest->trade_license_no,
+                    'customer_type' => CustomerTypeEnum::Entity,
+                ], [
+                    'company_name' => $AMLCheckRequest->company_name,
+                    'company_address' => $AMLCheckRequest->company_address,
+                    'industry_type_code' => $AMLCheckRequest->industry_type_code,
+                    'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration_id,
+                ]);
+                $insuredEntityDetails->refresh();
+                CustomerInsured::updateOrCreate([
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $updateQuote->id,
+                ], [
+                    'customer_id' => $AMLCheckRequest->customer_id,
+                    'insured_id' => $insuredEntityDetails->id,
+                ]);
+
+                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredEntityDetails);
+
                 if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
                     $updateQuote->company_address = $AMLCheckRequest->company_address;
@@ -639,6 +663,17 @@ class AMLController extends Controller
         }
 
         return $this->handleResponse(false, 'Something went wrong', $isAutomation);
+    }
+
+    private function updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insured)
+    {
+        $getPersonalQuote = PersonalQuote::where(['uuid' => $updateQuote->uuid, 'quote_type_id' => $quoteTypeId])->first();
+        if ($getPersonalQuote) {
+            $getPersonalQuote->insured_id = $insured->id;
+            $getPersonalQuote->save();
+        }
+
+        return $getPersonalQuote;
     }
 
     public function fetchEntity(Request $request)
