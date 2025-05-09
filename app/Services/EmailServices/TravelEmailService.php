@@ -400,7 +400,7 @@ class TravelEmailService extends BaseService
             LoggerService::info('Sending AIGWorkflow for travel');
             if (empty($lead->travel_aig_flow_executed_at)) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->buildAIGWorkflowData($lead, $advisor, null, WorkflowTypeEnum::TRAVEL_AIG_WORKFLOW);
+                $emailData = $this->buildAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::TRAVEL_AIG_WORKFLOW);
                 // using the same event for AIG and BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL and have a Travel AIG branch in that event workflow
                 $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL)->first();
 
