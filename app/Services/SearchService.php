@@ -382,38 +382,15 @@ class SearchService extends BaseService
             if ($request->has('company_name')) {
                 $query->join('insured', 'personal_quotes.insured_id', 'insured.id');
 
-                // Check if FULLTEXT index exists and use it for better performance
-                $companyNameFullTextIndexExists = DB::select("SHOW INDEX FROM insured WHERE Key_name = 'index_insured_company_name_fulltext'");
-
-                if (! empty($companyNameFullTextIndexExists)) {
-                    // Use FULLTEXT search
-                    $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->company_name.'"']);
-                } else {
-                    // Fallback to LIKE search
-                    $query->where(DB::raw('insured.company_name'), 'like', '%'.$request->company_name.'%');
-
-                    // Log that we're using slower search
-                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for insured company_name. Consider adding FULLTEXT index for better performance.');
-                }
+                // Use FULLTEXT search
+                $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->company_name.'"']);
 
             }
 
             // Search by policy number
             if ($request->has('policy_number') && ! isset($request->code)) {
-                // Check if FULLTEXT index exists and use it for better performance
-                $policyNameFullTextIndexExists = DB::select("SHOW INDEX FROM personal_quotes WHERE Key_name = 'index_personal_quotes_policy_number_fulltext'");
-
-                if (! empty($policyNameFullTextIndexExists)) {
-                    // Use FULLTEXT search
-                    $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->policy_number.'"']);
-                } else {
-                    // Fallback to LIKE search
-                    $query->where('personal_quotes.policy_number', 'like', '%'.$request->policy_number.'%');
-
-                    // Log that we're using slower search
-                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for personal_quotes policy_number. Consider adding FULLTEXT index for better performance.');
-                }
-
+                // Use FULLTEXT search
+                $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->policy_number.'"']);
             }
 
             // Search by mobile number (exact match)
@@ -513,19 +490,9 @@ class SearchService extends BaseService
     {
         $query->join('customer', 'personal_quotes.customer_id', 'customer.id');
 
-        // Check if FULLTEXT index exists and use it for better performance
-        $insuredFullNameFullTextIndexExists = DB::select("SHOW INDEX FROM customer WHERE Key_name = 'index_customer_insured_name_fulltext'");
+        // Use FULLTEXT search
+        $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->insured_name.'"']);
 
-        if (! empty($insuredFullNameFullTextIndexExists)) {
-            // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->insured_name.'"']);
-        } else {
-            // Fallback to LIKE search
-            $query->where(DB::raw("CONCAT(customer.insured_first_name, ' ', customer.insured_last_name)"), 'like', '%'.$request->insured_name.'%');
-
-            // Log that we're using slower search
-            LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for customer insured_name. Consider adding FULLTEXT index for better performance.');
-        }
     }
 
     /**
@@ -565,33 +532,13 @@ class SearchService extends BaseService
 
         // Apply first/last name filters
         if ($request->has('member_first_name')) {
-            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'index_customer_members_name_fulltext'");
-
-            if (! empty($fullNameIndexExists)) {
-                // Use FULLTEXT search
-                $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->member_first_name.'"']);
-            } else {
-                // Fallback to search
-                $query->where('customer_members.first_name', 'like', '%'.$request->member_first_name.'%');
-
-                // Log that we're using slower search
-                LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for customer_members first_name. Consider adding FULLTEXT index for better performance.');
-            }
+            // Use FULLTEXT search
+            $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->member_first_name.'"']);
         }
 
         if ($request->has('member_last_name')) {
-            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'index_customer_members_name_fulltext'");
-
-            if (! empty($fullNameIndexExists)) {
-                // Use FULLTEXT search
-                $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->member_last_name.'"']);
-            } else {
-                // Fallback to search
-                $query->where('customer_members.last_name', 'like', '%'.$request->member_last_name.'%');
-
-                // Log that we're using slower search
-                LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for customer_members last_name. Consider adding FULLTEXT index for better performance.');
-            }
+            // Use FULLTEXT search
+            $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->member_last_name.'"']);
 
         }
     }
