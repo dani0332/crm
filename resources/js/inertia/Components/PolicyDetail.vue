@@ -337,7 +337,7 @@ const onUpdatePolicyDetails = isValid => {
 };
 
 onBeforeMount(() => {
-  calculateVatAmount();
+  calculateVatAmount(true);
 });
 
 watch(

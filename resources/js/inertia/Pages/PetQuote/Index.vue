@@ -279,6 +279,9 @@ const onDataExport = (exportType = 'download') => {
           : 'Unable to start an export',
         position: 'top',
       });
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
       throw err;
     });
 };
