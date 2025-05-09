@@ -12,6 +12,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteSegmentEnum;
@@ -29,6 +30,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Exports\RenewalQuotesExport;
 use App\Facades\Capi;
 use App\Facades\Ken;
+use App\Http\Requests\StorePaymentRequest;
 use App\Imports\TravelUploadAndCreateImport;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateHealthImport;
@@ -79,15 +81,19 @@ use App\Models\VehicleType;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\PaymentRepository;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use DateTime;
+use Illuminate\Bus\Batch;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
+use Throwable;
 
 class RenewalsUploadService
 {
@@ -322,7 +328,7 @@ class RenewalsUploadService
         LoggerService::info($logPrefix.' Quote update started');
 
         try {
-            $jobs = null;
+            $jobs = [];
 
             RenewalQuoteProcess::where([
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
@@ -333,24 +339,22 @@ class RenewalsUploadService
                 }
             });
 
-            if ($jobs != null && count($jobs)) {
-                Haystack::build()
+            if (count($jobs) > 0) {
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
-                    ->then(function () use ($logPrefix, $renewalsUploadLead) {
-                        LoggerService::info($logPrefix.' all jobs completed successfully');
+                    ->then(function (Batch $batch) use ($logPrefix, $renewalsUploadLead) {
+                        LoggerService::info($logPrefix . ' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
-                    ->catch(function () use ($logPrefix, $renewalsUploadLead) {
-                        // Haystack failed
-                        LoggerService::info($logPrefix.' one of batch is failed. ');
+                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsUploadLead) {
+                        LoggerService::info($logPrefix . ' one of batch is failed. ');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
-                    ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix.' everything done');
+                    ->finally(function (Batch $batch) use ($logPrefix) {
+                        LoggerService::info($logPrefix . ' everything done');
                     })
                     ->allowFailures()
-                    ->withDelay(2)
+                    ->name('Renewals Upload Batch')  // Optional: give your batch a name
                     ->dispatch();
 
                 LoggerService::info($logPrefix.' jobs dispatched');
@@ -1060,7 +1064,6 @@ class RenewalsUploadService
                 'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'advisor_id' => $advisorId,
                 'assignment_type' => $advisorId ? ($isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED) : null,
-                'renewal_batch' => $data['batch'],
                 'renewal_batch_id' => null,
                 'additional_notes' => $data['notes'],
             ];
@@ -1280,7 +1283,10 @@ class RenewalsUploadService
         $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
         if ($response) {
-            $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id);
+            $selectResponse = $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id);
+            if ($selectResponse && ($data['payment_link'] != '' || $data['payment_link'] != null)) {
+                $this->createHealthPayment($quote, $data);
+            }
         }
 
         return $response;
@@ -1431,6 +1437,64 @@ class RenewalsUploadService
 
         $response = Capi::request($endpoint, 'post', $data);
 
+        return $response;
+    }
+
+    /**
+     * This function is used to create health payment.
+     *
+     * @param [type] $quote
+     * @param [type] $data
+     * @return void
+     */
+    private function createHealthPayment($quote, $data)
+    {
+        $payment = $quote->payments()->latest()
+            ->first();
+        $request = new StorePaymentRequest();
+        $request->user = auth()->user();
+        $quoteType = QuoteTypes::HEALTH->value;
+        $request->merge([
+            'quote_id' => $quote->id,
+            'code' => 'IP',
+            'paymentCode' => $payment ? $payment->code : null,
+            'plan_id' => $quote->plan_id,
+            'quote_type' => $quoteType,
+            'insurance_provider_id' => $quote->insurance_provider_id,
+            'modelType' => $quoteType,
+            'captured_amount' => null,
+            'new_payment_structure' => true,
+            'sendFTCEmail' => false,
+            "send_update_id" => null,
+            'payment_gateway_id' => PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL,
+            'cc_payment_gateway' => strtoupper(PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL_TEXT),
+            'payment' => [
+                "collection_type" => "insurer",
+                "payment_methods" => "IPL",
+                "discount_reason" => $payment ? $payment->discount_reason : null,
+                "discount_custom_reason" => $payment ? $payment->discount_custom_reason : null,
+                "reference" => null,
+                "payment_no" => "1",
+                "frequency" => "upfront",
+                "credit_approval" => null,
+                "discount" => null,
+                "collection_date" => "2025-05-07T08:44:14.013Z",
+                "total_amount" => $quote->premium,
+                "total_price" => $quote->premium,
+                "discount_value" => 0,
+                'payment_splits' => [
+                    [
+                        'sr_no' => 1,
+                        'payment_amount' => $quote->premium,
+                        'payment_method' => 'IPL',
+                        'due_date' => "2025-05-07T08:44:14.013Z",
+                        "discount_documents" => [],
+                        'insurer_payment_link' => $data['payment_link'],
+                    ]
+                ]
+            ]
+        ]);
+        $response = $payment ? PaymentRepository::updateNewPayment($request) : PaymentRepository::createNewPayment($request);
         return $response;
     }
 
