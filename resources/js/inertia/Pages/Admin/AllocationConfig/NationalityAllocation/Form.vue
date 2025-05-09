@@ -127,7 +127,7 @@ function onSubmit(isValid) {
       </x-field>
 
       <x-field label="SIC" class="sm:col-span-2">
-        <div class="flex items-center space-x-2">
+        <label class="flex items-center space-x-2 cursor-pointer">
           <x-toggle
             v-model="configForm.is_sic_enabled"
             color="success"
@@ -136,7 +136,7 @@ function onSubmit(isValid) {
           <span class="text-sm text-gray-600">
             {{ configForm.is_sic_enabled ? 'Enabled' : 'Disabled' }}
           </span>
-        </div>
+        </label>
       </x-field>
     </div>
     <x-divider class="my-4" />
