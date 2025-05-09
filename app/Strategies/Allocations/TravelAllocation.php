@@ -140,25 +140,19 @@ class TravelAllocation implements Allocation
         // Extract lead properties with null safety
         $isSIC = method_exists($lead, 'isSIC') ? $lead->isSIC(QuoteTypes::TRAVEL) : false;
         $isAIG = method_exists($lead, 'isAIG') ? $lead->isAIG(QuoteTypes::TRAVEL) : false;
-        $hasPaidStatus = method_exists($lead, 'hasOneOfPaidStatus') ? $lead->hasOneOfPaidStatus() : false;
-        $isAdvisorRequested = isset($lead->sic_advisor_requested) ? (bool)$lead->sic_advisor_requested : false;
+        $isRequestedAdvisorOrPaymentAuthorized = method_exists($lead, 'isRequestedAdvisorOrPaymentAuthorized') ? $lead->isRequestedAdvisorOrPaymentAuthorized() : false;
         $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         
-        // Determine team based on priority rules
-        if ($isSIC && !$isAIG && $hasPaidStatus) {
-            // Priority 1: SIC paid leads get SIC Unassisted team
+        // Determine team based on updated priority rules
+        if ($isSIC && !$isAIG && $isRequestedAdvisorOrPaymentAuthorized) {
+            // SIC leads with advisor requested or payment authorized get SIC Unassisted team
             $this->teamId = $sicUnassistedTeamId;
-            $reason = "SIC paid lead";
+            $reason = "SIC with advisor requested or payment authorized";
         }
-        elseif ($isSIC && !$isAIG && $isAdvisorRequested) {
-            // Priority 2: SIC leads with advisor requested get SIC Unassisted team
+        elseif ($isAIG && $isRequestedAdvisorOrPaymentAuthorized) {
+            // AIG leads with advisor requested or payment authorized get SIC Unassisted team
             $this->teamId = $sicUnassistedTeamId;
-            $reason = "SIC with advisor requested";
-        }
-        elseif ($isAIG && $isAdvisorRequested) {
-            // Priority 3: AIG leads with advisor requested get SIC Unassisted team
-            $this->teamId = $sicUnassistedTeamId;
-            $reason = "AIG with advisor requested";
+            $reason = "AIG with advisor requested or payment authorized";
         }
         else {
             // Default: All other leads have no specific team
@@ -172,8 +166,7 @@ class TravelAllocation implements Allocation
             'teamId' => $this->teamId,
             'isSIC' => $isSIC,
             'isAIG' => $isAIG,
-            'hasPaidStatus' => $hasPaidStatus,
-            'isAdvisorRequested' => $isAdvisorRequested,
+            'isRequestedAdvisorOrPaymentAuthorized' => $isRequestedAdvisorOrPaymentAuthorized
         ]);
     }
 }
