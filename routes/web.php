@@ -442,15 +442,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
-        
+
         Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
             \App\Jobs\UniversalSearchDataMigration::dispatchSync($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
 
             return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.sync-migrate-insured-and-quote-id-to-personal-quote');
-
-        
 
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
