@@ -41,17 +41,20 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
      */
     public function handle()
     {
+        // Increase memory limit for large exports
+        ini_set('memory_limit', '512M');
+
         $jobId = $this->job->getJobId() ?? 'unknown';
         $startTime = microtime(true);
+        $initialMemory = memory_get_usage(true) / 1024 / 1024;
 
-        Log::info("CSV export job [{$jobId}]  started for ".$this->requestParams['fileName'].' attempt: '.$this->attempts());
+        Log::info("CSV export job [{$jobId}] started for {$this->requestParams['fileName']}. Memory: {$initialMemory}MB, Attempt: {$this->attempts()}");
 
-//        try {
-            // Instantiate the export class that uses the ExcelExportable trait
+        try {
+            // Instantiate the export class
             $exportInstance = app($this->exportClass);
 
-            // Use the existing trait method to handle the email with CSV attachment
-            // sendEmailWithCSVAttachment(recipientEmail, emailSubject,  requestParams, ccRecipients = [], fileName = 'export')
+            // Process CSV and send email
             $exportInstance->sendEmailWithCSVAttachment(
                 $this->requestParams['recipientEmail'],
                 $this->requestParams['subject'],
@@ -61,38 +64,46 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             );
 
             $executionTime = round(microtime(true) - $startTime, 2);
-            Log::info("CSV export job [{$jobId}] completed successfully in {$executionTime}s");
-//        } catch (\Throwable $e) {
-//            $executionTime = round(microtime(true) - $startTime, 2);
-//
-//            Log::error("CSV export job failed in {$executionTime}s for ".$this->requestParams['fileName'].'. attempt: '.$this->attempts().' Exception: '.$e->getMessage().', '.$e->getFile().':'.$e->getLine(), [
-//                'trace' => collect($e->getTrace())->filter(function ($trace) {
-//                    return isset($trace['file']) && str_contains($trace['file'], '/app');
-//                })->all(),
-//            ]);
-//
-//            // Only retry if we haven't exceeded the maximum attempts
-//            if ($this->attempts() < $this->tries) {
-//                logger()->error("CSV export job failed: Attempts ({$this->attempts()}) <  tries ($this->tries) releasing it back after {$this->backoff} seconds.");
-//                // Release back to queue for retry after backoff period
-//                $this->release($this->backoff);
-//                return;
-//            }
-//
-//            throw $e; // Throw the exception after all retries have failed
-//        } finally {
-            // Always clean up connections regardless of success or failure
+            $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
+
+            Log::info("CSV export job [{$jobId}] completed successfully. Time: {$executionTime}s, Peak memory: {$peakMemory}MB");
+
+            // Explicitly mark as completed and delete the job
+            if ($this->job) {
+                $this->job->delete();
+            }
+
+        } catch (\Throwable $e) {
+            $executionTime = round(microtime(true) - $startTime, 2);
+            $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
+
+            Log::error("CSV export job [{$jobId}] failed after {$executionTime}s. Peak memory: {$peakMemory}MB. Exception: {$e->getMessage()}, {$e->getFile()}:{$e->getLine()}", [
+                'trace' => collect($e->getTrace())->filter(function ($trace) {
+                    return isset($trace['file']) && str_contains($trace['file'], '/app');
+                })->all(),
+            ]);
+
+            // Only retry if we haven't exceeded max attempts
+            if ($this->attempts() < $this->tries) {
+                Log::warning("CSV export job [{$jobId}] will be retried. Attempts: {$this->attempts()}/{$this->tries}");
+                $this->release($this->backoff);
+                return;
+            }
+
+            throw $e;
+        } finally {
+            // Clean up resources
             DB::setDefaultConnection('mysql');
             Auth::logout();
-//        }
+            gc_collect_cycles();
+        }
     }
 
     /**
-     * The job failed to process.
+     * Handle a job failure.
      */
     public function failed(\Throwable $exception)
     {
-        // This is called when the job fails completely
         Log::error("CSV export job for {$this->requestParams['fileName']} has permanently failed: {$exception->getMessage()}");
     }
 }

@@ -15,6 +15,9 @@ trait ExcelExportable
     abstract public function headings();
     abstract public function map($quote);
 
+    /**
+     * Download CSV file directly
+     */
     public function download($fileName)
     {
         $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
@@ -33,6 +36,9 @@ trait ExcelExportable
         ]);
     }
 
+    /**
+     * Queue a job to send the CSV as an email attachment
+     */
     public function emailCSV($fileName, $requestParams = [])
     {
         $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
@@ -79,21 +85,25 @@ trait ExcelExportable
     }
 
     /**
-     * Send email with CSV data as attachment using AML service style
+     * Send email with CSV data as attachment using memory-efficient chunking
      *
-     * @param  string  $templateName  Email template name
-     * @param  array  $requestParams  Parameters for the email template
-     * @param  string  $emailSubject  Email subject
      * @param  string|array  $recipientEmail  Recipient email(s)
+     * @param  string  $emailSubject  Email subject
+     * @param  array  $requestParams  Parameters for the email template
      * @param  array  $ccRecipients  CC recipients
      * @param  string  $fileName  Filename for the CSV attachment (without extension)
      * @return void
      */
     public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
     {
+        // Track memory usage during export
+        $initialMemory = memory_get_usage(true) / 1024 / 1024;
+        logger()->info("CSV export started. Initial memory: {$initialMemory}MB");
+
         if (! isset($this->quoteType)) {
             $this->quoteType = $requestParams['quoteType'] ?? null;
         }
+
         // Get environment variables for email configuration
         $emailL_sys = config('constants.APP_ENV');
 
@@ -106,78 +116,131 @@ trait ExcelExportable
             $fromName = config('constants.MAIL_FROM_NAME');
         }
 
-        // Generate CSV content in memory
+        // Generate CSV content in memory using chunking
         $csvFileName = $fileName.'.csv';
         $stream = fopen('php://temp', 'r+');
 
         $requestParams['user'] = User::where(['email' => $requestParams['recipientEmail']])->first();
 
-        // Write CSV data
+        // Write CSV headers
         fputcsv($stream, $this->headings());
-        $data = $this->collection($requestParams);
 
-        $startDate  = \Carbon\Carbon::parse($requestParams['created_at_start'])->format('d M Y');
-        $endDate    = \Carbon\Carbon::parse($requestParams['created_at_end'])->format('d M Y');
-        $diff = abs(\Carbon\Carbon::parse($requestParams['created_at_start'])->diffInDays(\Carbon\Carbon::parse($requestParams['created_at_end']))) + 1;
+        $startDate = isset($requestParams['created_at_start']) ? Carbon::parse($requestParams['created_at_start'])->format('d M Y') : '';
+        $endDate = isset($requestParams['created_at_end']) ? Carbon::parse($requestParams['created_at_end'])->format('d M Y') : '';
 
-        logger()->debug("Fetch Complete between:{$startDate} - {$endDate} ({$diff} days), starting to write on csv file...");
-        foreach ($data as $quote) {
-            fputcsv($stream, $this->map($quote));
+        if ($startDate && $endDate) {
+            $diff = abs(Carbon::parse($requestParams['created_at_start'])->diffInDays(Carbon::parse($requestParams['created_at_end']))) + 1;
+            logger()->debug("Processing export between: {$startDate} - {$endDate} ({$diff} days)");
         }
 
-        // Get CSV content
-        rewind($stream);
-        $csvContent = stream_get_contents($stream);
-        fclose($stream);
+        // Process data in memory-efficient chunks
+        logger()->info("Starting CSV data export with chunking");
 
-        $currentDate = Carbon::now()->format('d-m-Y');
+        $totalRecords = 0;
+        $chunkSize = 5000; // Adjust based on your data complexity
 
-        // Get recipient name if available
-        $recipientName = 'User';
-        if (! empty($requestParams['recipientName'])) {
-            $recipientName = $requestParams['recipientName'];
-        } elseif (auth()->check() && $recipientEmail === auth()->user()->email) {
-            $recipientName = auth()->user()->name;
-        }
+        try {
+            // Use the query builder version of collection if available
+            if (method_exists($this, 'getQuery')) {
+                $query = $this->getQuery($requestParams);
 
-        // Get the data collection and size information
-        $recordCount = count($data);
-        $fileSize = round(strlen($csvContent) / 1024, 2); // Size in KB
+                // Use database chunking for efficient memory usage
+                $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords) {
+                    foreach ($records as $record) {
+                        fputcsv($stream, $this->map($record));
+                        $totalRecords++;
+                    }
 
-        $emailParams = [
-            'recipientName' => $recipientName,
-            'exportTitle' => $requestParams['exportTitle'],
-            'currentDate' => $currentDate,
+                    $currentMemory = round(memory_get_usage(true) / 1024 / 1024, 2);
+                    logger()->debug("Processed {$totalRecords} records so far. Memory: {$currentMemory}MB");
 
-            // Add date range parameters if they exist
-            'dateRangeStart' => $requestParams['created_at_start'] ?? ($requestParams['created_at_start'] ?? null),
-            'dateRangeEnd' => $requestParams['created_at_end'] ?? ($requestParams['created_at_end'] ?? null),
+                    // Force garbage collection to free memory
+                    gc_collect_cycles();
+                });
+            } else {
+                // Fallback to less efficient memory approach if query builder not available
+                $data = $this->collection($requestParams);
+                logger()->debug("Using regular collection method - may use more memory");
 
-            'recordCount' => $recordCount,
-            'fileSize' => $fileSize,
-            'systemName' => config('constants.MAIL_FROM_NAME', 'The System'),
-        ];
+                foreach ($data as $record) {
+                    fputcsv($stream, $this->map($record));
+                    $totalRecords++;
 
-        // Send email with attachment
-        Mail::send(
-            ['html' => 'ExportCSVMail'],
-            $emailParams,
-            function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvContent, $csvFileName) {
-                $message->to($recipientEmail);
-
-                if (! empty($ccRecipients)) {
-                    $message->cc($ccRecipients);
+                    // Free up memory every 100 records
+                    if ($totalRecords % 100 === 0) {
+                        $currentMemory = round(memory_get_usage(true) / 1024 / 1024, 2);
+                        logger()->debug("Processed {$totalRecords} records. Memory: {$currentMemory}MB");
+                    }
                 }
-
-                $message->subject($emailSubject);
-                $message->from($fromEmail, $fromName);
-
-                // Attach the CSV file
-                $message->attachData($csvContent, $csvFileName, [
-                    'mime' => 'text/csv',
-                ]);
             }
-        );
 
+            logger()->info("Completed writing {$totalRecords} records to CSV");
+
+            // Get CSV content
+            rewind($stream);
+            $csvContent = stream_get_contents($stream);
+            fclose($stream);
+
+            $currentDate = Carbon::now()->format('d-m-Y');
+
+            // Get recipient name if available
+            $recipientName = 'User';
+            if (! empty($requestParams['recipientName'])) {
+                $recipientName = $requestParams['recipientName'];
+            } elseif (auth()->check() && $recipientEmail === auth()->user()->email) {
+                $recipientName = auth()->user()->name;
+            }
+
+            // Get the data collection and size information
+            $fileSize = round(strlen($csvContent) / 1024, 2); // Size in KB
+
+            $emailParams = [
+                'recipientName' => $recipientName,
+                'exportTitle' => $requestParams['exportTitle'],
+                'currentDate' => $currentDate,
+
+                // Add date range parameters if they exist
+                'dateRangeStart' => $requestParams['created_at_start'] ?? null,
+                'dateRangeEnd' => $requestParams['created_at_end'] ?? null,
+
+                'recordCount' => $totalRecords,
+                'fileSize' => $fileSize,
+                'systemName' => config('constants.MAIL_FROM_NAME', 'The System'),
+            ];
+
+            // Send email with attachment
+            Mail::send(
+                ['html' => 'ExportCSVMail'],
+                $emailParams,
+                function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvContent, $csvFileName) {
+                    $message->to($recipientEmail);
+
+                    if (! empty($ccRecipients)) {
+                        $message->cc($ccRecipients);
+                    }
+
+                    $message->subject($emailSubject);
+                    $message->from($fromEmail, $fromName);
+
+                    // Attach the CSV file
+                    $message->attachData($csvContent, $csvFileName, [
+                        'mime' => 'text/csv',
+                    ]);
+                }
+            );
+
+            // Clean up
+            gc_collect_cycles();
+
+            $finalMemory = round(memory_get_usage(true) / 1024 / 1024, 2);
+            $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
+            logger()->info("CSV export completed. Records: {$totalRecords}, Final memory: {$finalMemory}MB, Peak memory: {$peakMemory}MB");
+
+        } catch (\Throwable $e) {
+            logger()->error("Error in CSV export: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 }
