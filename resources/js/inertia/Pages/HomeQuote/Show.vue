@@ -640,7 +640,7 @@ const onLoadAvailablePlansData = async () => {
     if (response.status === 200) {
       // Assuming the normal plans are stored in `data` field
       const homePlans = response.data;
-      
+
       // If you need to update the table and store the ids
       availablePlansTable.data = homePlans.quotes.plans;
       availableAllPlans.value = homePlans.quotes.plans;
