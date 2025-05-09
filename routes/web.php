@@ -785,6 +785,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'update' => 'admin.nationality-allocation-config.update',
         'destroy' => 'admin.nationality-allocation-config.destroy',
     ]);
+
+    Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
+        [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
+        ->name('admin.nationality-allocation-config.audit-logs');
 });
 
 Route::get('/add-batch-number', function () {
