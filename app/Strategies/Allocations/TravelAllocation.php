@@ -143,18 +143,12 @@ class TravelAllocation implements Allocation
         $isRequestedAdvisorOrPaymentAuthorized = method_exists($lead, 'isRequestedAdvisorOrPaymentAuthorized') ? $lead->isRequestedAdvisorOrPaymentAuthorized() : false;
         $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         
-        // Determine team based on updated priority rules
-        if ($isSIC && !$isAIG && $isRequestedAdvisorOrPaymentAuthorized) {
-            // SIC leads with advisor requested or payment authorized get SIC Unassisted team
+        // Simplified condition: either (SIC but not AIG) OR (AIG) leads with advisor requested/payment authorized
+        if ((($isSIC && !$isAIG) || $isAIG) && $isRequestedAdvisorOrPaymentAuthorized) {
             $this->teamId = $sicUnassistedTeamId;
-            $reason = "SIC with advisor requested or payment authorized";
-        }
-        elseif ($isAIG && $isRequestedAdvisorOrPaymentAuthorized) {
-            // AIG leads with advisor requested or payment authorized get SIC Unassisted team
-            $this->teamId = $sicUnassistedTeamId;
-            $reason = "AIG with advisor requested or payment authorized";
-        }
-        else {
+            $reason = $isAIG ? "AIG with advisor requested or payment authorized" : 
+                              "SIC with advisor requested or payment authorized";
+        } else {
             // Default: All other leads have no specific team
             $this->teamId = false;
             $reason = "Default case - no specific team";
