@@ -160,7 +160,7 @@ class TravelAllocationService extends AllocationService
         }
 
         $teamName = null;
-        
+
         if ($lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
             $teamName = TeamNameEnum::SIC_UNASSISTED;
