@@ -132,16 +132,18 @@ const getAddonVat = item => {
     <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
       <div class="w-full md:w-1/2">
         <div class="flex flex-col gap-4">
-          <x-field label="Insurance Provider" required>
-            <ComboBox
-              v-model="addPlanForm.insurance_provider_id"
-              :single="true"
-              :options="insuranceProviderOptions"
-              :hasError="isEmptyField"
-              placeholder="Select Insurance provider"
-              @update:modelValue="setCarPlans"
-            />
-          </x-field>
+          <x-select
+            v-model="addPlanForm.insurance_provider_id"
+            label="Insurance Provider"
+            :options="insuranceProviderOptions"
+            :hasError="isEmptyField"
+            placeholder="Select Insurance provider"
+            @update:modelValue="setCarPlans"
+            :rules="[isRequired]"
+            filterable
+            filterPlaceholder="Filter Insurance Provider...."
+            required
+          />
         </div>
       </div>
       <div class="w-full md:w-1/2">

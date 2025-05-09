@@ -401,13 +401,14 @@ onMounted(() => {
         :rules="[isRequired]"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.country_of_corporation"
         label="Country of corporation"
         :options="countryList"
         placeholder="Country of corporation"
-        :single="true"
         :rules="[isRequired]"
+        filterable
+        filterPlaceholder="Filter Country of Corporation...."
       />
     </div>
     <div class="grid md:grid-cols-2">
@@ -568,12 +569,13 @@ onMounted(() => {
             Please select the license issuing authority as per trade license
           </template>
         </x-tooltip>
-        <ComboBox
+        <x-select
           v-model="kycForm.issuing_authority"
           :options="issuingAuthorityOptions"
           placeholder="ID issuing authority"
-          :single="true"
-          :hasError="isIssuingAuthorityEmpty"
+          :rules="[isRequired]"
+          filterable
+          filterPlaceholder="Filter ID issuing authority...."
         />
       </div>
       <div>
@@ -646,13 +648,17 @@ onMounted(() => {
         :rules="[isRequired]"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.manager_nationality"
         label="Nationality"
         :options="nationalityOptions"
         placeholder="Nationality"
-        :single="true"
-        :hasError="isNationalityEmpty"
+        :rules="[isRequired]"
+        filterable
+        filterPlaceholder="Filter Nationality...."
+        virtualList
+        :virtualListItemHeight="32"
+        :virtualListOverscan="10"
       />
 
       <DatePicker
@@ -661,13 +667,14 @@ onMounted(() => {
         :rules="[isRequired]"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.manager_position"
         label="Position"
         :options="uboRelationOptions"
         placeholder="Position"
-        :single="true"
-        :hasError="isPositionEmpty"
+        :rules="[isRequired]"
+        filterable
+        filterPlaceholder="Filter Position...."
       />
     </div>
 

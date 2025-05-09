@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -127,6 +128,7 @@ class QuoteDocumentService extends BaseService
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
+        // dd($documentType);
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
@@ -406,6 +408,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Yacht => ['YPD', 'YPDR', 'YDPDR'],
             QuoteTypeId::Business => ['GMQPD', 'GMQPDR', 'GMQDPDR'],
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
+            QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
         ];
 
         return $mapping[$quoteTypeId] ?? [];
@@ -433,10 +436,12 @@ class QuoteDocumentService extends BaseService
                 if (strpos($policyWording->link, $baseUrl) !== 0) {
                     $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
                 }
+                $link = preg_replace('/[\n\r\t]+/', '', $policyWording->link);
+                $extension = pathinfo($link, PATHINFO_EXTENSION); // Get extension first
 
                 return [
                     'url' => preg_replace('/\s+$/m', '', $policyWording->link),
-                    'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.pathinfo($policyWording->link, PATHINFO_EXTENSION),
+                    'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.trim($extension),
                 ];
             });
 
@@ -493,14 +498,12 @@ class QuoteDocumentService extends BaseService
 
         $docName = uniqid().'_'.$docName;
 
+        $outputFile = $outputPath = storage_path('temp/'.$docName);
         // Check if file already exists, generate new name if it does
-        $filePath = storage_path('app/public/documents/' . $docName);
-        while (file_exists($filePath)) {
+        while (file_exists($outputPath)) {
             $docName = uniqid().'_'.$docName;
-            $filePath = storage_path('app/public/documents/' . $docName);
+            $outputFile = $outputPath = storage_path('temp/'.$docName);
         }
-
-        $outputPath = storage_path('temp/'.$docName);
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
 
@@ -878,5 +881,24 @@ class QuoteDocumentService extends BaseService
             ->where('quote_documentable_id', $quoteId)
             ->where('document_type_code', $documentType)
             ->exists();
+    }
+
+    /**
+     * This function use update payment statuses on payments and payment_split table
+     *
+     * @param [type] $quote
+     * @return void
+     */
+    public function updateQuoteAndPaymentStatusToPaymentPending($quote)
+    {
+        $quote->quote_status_id = QuoteStatusEnum::PaymentPending;
+        $quote->save();
+        $payment = $quote->getLastPaymentWithInsurerPaymentLink();
+        $payment->payment_status_id = PaymentStatusEnum::PENDING;
+        foreach ($payment->paymentSplits as $split) {
+            $split->payment_status_id = PaymentStatusEnum::PENDING;
+            $split->save();
+        }
+        $payment->save();
     }
 }

@@ -80,28 +80,40 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="NAME" required>
-        <x-input
-          v-model="departmentForm.name"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="$page.props.errors.name"
-        />
-      </x-field>
-      <x-field label="teams" required>
-        <ComboBox
-          v-model="departmentForm.teams"
-          :options="
-            props.teams.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-          :rules="[isRequired]"
-          :hasError="validTeams"
-          autocomplete
-        />
-      </x-field>
+      <x-input
+        v-model="departmentForm.name"
+        :rules="[isRequired]"
+        class="w-full"
+        :error="$page.props.errors.name"
+        required
+        label="Name"
+      />
+
+      <x-select
+        v-model="departmentForm.teams"
+        :options="
+          teams.map(x => ({
+            value: x.id,
+            label: x.name,
+          }))
+        "
+        :rules="[isRequired]"
+        label="Teams"
+        multiple
+        truncate
+        filterable
+        placeholder="Select Teams"
+        filterPlaceholder="Filter teams...."
+        required
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="departmentForm.teams = teams.map(item => item.id)"
+            @clear="departmentForm.teams = []"
+          />
+        </template>
+      </x-select>
+
       <x-field :label="'Active'" required>
         <x-select
           v-model="departmentForm.is_active"

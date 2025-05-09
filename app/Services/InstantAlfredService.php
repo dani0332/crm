@@ -23,10 +23,13 @@ class InstantAlfredService extends BaseService
     {
         $aliases = [];
 
-        $subQuery = DB::table('quote_tags as qt1')
-            ->select('qt1.quote_uuid', 'qt1.id', 'qt1.name') // Selecting only needed fields
-            ->where('qt1.quote_type_id', $quoteTypeId)
-            ->whereRaw('qt1.updated_at = (SELECT MAX(qt2.updated_at) FROM quote_tags as qt2 WHERE qt2.quote_uuid = qt1.quote_uuid AND qt2.quote_type_id = ?)', [$quoteTypeId]);
+        $subQuery = DB::table('quote_tags as qt')
+            ->select(
+                'qt.quote_uuid',
+                DB::raw('GROUP_CONCAT(qt.name) as tags')
+            )
+            ->where('qt.quote_type_id', $quoteTypeId)
+            ->groupBy('qt.quote_uuid');
 
         $this->personalQuery = DB::table('personal_quotes as pqr')
             ->select(
@@ -50,22 +53,22 @@ class InstantAlfredService extends BaseService
                 DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
                 DB::raw("
                     CASE 
-                    WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
+                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' 
                         AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
                     THEN 'SIC-REVIVAL'
 
-                    WHEN qt.name = '".QuoteSegmentEnum::SIC_REVIVAL->tag()."'
+                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC_REVIVAL->tag()."%'
                         AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
                     THEN 'SIC-REVIVAL'
 
-                    WHEN qt.name = '".QuoteSegmentEnum::AIG->tag()."' THEN 'AIG'
+                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::AIG->tag()."%' THEN 'AIG'
                     
-                    WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
+                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN 'SIC'
                     
-                    WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
+                    WHEN qt.tags NOT LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN 'NON-SIC'
                     ELSE 'N/A'
                     END as segment
-            "),
+                "),
             )
             ->where('pqr.quote_type_id', $quoteTypeId)
             ->leftJoin('payments as py', function ($join) {

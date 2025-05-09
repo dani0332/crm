@@ -9,7 +9,7 @@ class RMQuotesExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
         return app(HealthQuoteService::class)->exportRmLeads()->get();
     }

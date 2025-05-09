@@ -6,6 +6,8 @@ use App\Enums\ActivityTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -140,10 +142,14 @@ class HandleInertiaRequests extends Middleware
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'embeddedProductTypeEnum' => EmbeddedProductTypeEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
+            'carRegistrationType' => CarRegistrationType::asArray(),
+            'carVehicleUse' => CarVehicleUse::asArray(),
             'isTapEnabled' => isTapEnabled(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'impersonatingUser' => app('impersonate')?->getImpersonatorId() ? User::find(app('impersonate')?->getImpersonatorId()) : null,
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
+            'carRegistrationType' => CarRegistrationType::asArray(),
+            'carVehicleUse' => CarVehicleUse::asArray(),
         ];
     }
 
@@ -653,6 +659,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::VIEW_PROCESS_TRACKER),
                         'Process Tracker',
                         route('process-tracker.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        'Allocation Audit',
+                        route('admin.allocation-audit.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

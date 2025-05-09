@@ -115,10 +115,6 @@ const onSearch = id => {
       quotes.searching = false;
     });
 };
-
-onMounted(() => {
-  console.log(quotes.data);
-});
 </script>
 
 <template>

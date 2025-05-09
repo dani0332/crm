@@ -140,15 +140,29 @@ const ageRangeValid = computed(() => {
             class="grid sm:grid-cols-1 gap-4"
             v-if="sicConfigurableForm.is_type"
           >
-            <x-field label="Types">
-              <ComboBox
-                v-model="sicConfigurableForm.plan_types"
-                :options="healthTypesOptions"
-                :multiple="true"
-                :autocomplete="true"
-                :error="sicConfigurableForm?.errors.plan_types"
-              />
-            </x-field>
+            <x-select
+              v-model="sicConfigurableForm.plan_types"
+              label="Types"
+              :options="healthTypesOptions"
+              placeholder="Select Types"
+              multiple
+              filterable
+              filterPlaceholder="Filter Types...."
+              required
+              :rules="[isRequired]"
+              :error="sicConfigurableForm?.errors.plan_types"
+            >
+              <template #content-footer>
+                <ui-select-actions
+                  @select-all="
+                    sicConfigurableForm.plan_types = healthTypesOptions.map(
+                      item => item.value,
+                    )
+                  "
+                  @clear="sicConfigurableForm.plan_types = []"
+                />
+              </template>
+            </x-select>
           </div>
         </div>
       </div>
@@ -164,15 +178,29 @@ const ageRangeValid = computed(() => {
             class="grid sm:grid-cols-1 gap-4"
             v-if="sicConfigurableForm.is_nationality"
           >
-            <x-field label="Nationalities">
-              <ComboBox
-                v-model="sicConfigurableForm.nationalities"
-                :options="nationalitiesOptions"
-                :multiple="true"
-                :autocomplete="true"
-                :error="sicConfigurableForm?.errors.nationalities"
-              />
-            </x-field>
+            <x-select
+              v-model="sicConfigurableForm.nationalities"
+              label="Nationalities"
+              :options="nationalitiesOptions"
+              placeholder="Select Nationalities"
+              multiple
+              filterable
+              filterPlaceholder="Filter Nationalities...."
+              required
+              :rules="[isRequired]"
+              truncate
+              :error="sicConfigurableForm?.errors.nationalities"
+            >
+              <template #content-footer>
+                <ui-select-actions
+                  @select-all="
+                    sicConfigurableForm.nationalities =
+                      nationalitiesOptions.map(item => item.value)
+                  "
+                  @clear="sicConfigurableForm.nationalities = []"
+                />
+              </template>
+            </x-select>
           </div>
         </div>
         <div class="col-span-1 sm:col-span-1">
@@ -184,15 +212,29 @@ const ageRangeValid = computed(() => {
             class="grid sm:grid-cols-1 gap-4"
             v-if="sicConfigurableForm.is_member_category"
           >
-            <x-field label="Member Categories">
-              <ComboBox
-                v-model="sicConfigurableForm.member_categories"
-                :options="memberCategoriesOptions"
-                :multiple="true"
-                :autocomplete="true"
-                :error="sicConfigurableForm?.errors.member_categories"
-              />
-            </x-field>
+            <x-select
+              v-model="sicConfigurableForm.member_categories"
+              label="Member Categories"
+              :options="memberCategoriesOptions"
+              placeholder="Select Member Categories"
+              multiple
+              filterable
+              filterPlaceholder="Filter Member Categories...."
+              required
+              :rules="[isRequired]"
+              :error="sicConfigurableForm?.errors.member_categories"
+              truncate
+            >
+              <template #content-footer>
+                <ui-select-actions
+                  @select-all="
+                    sicConfigurableForm.member_categories =
+                      memberCategoriesOptions.map(item => item.value)
+                  "
+                  @clear="sicConfigurableForm.member_categories = []"
+                />
+              </template>
+            </x-select>
           </div>
         </div>
         <div class="col-span-1 sm:col-span-1">
