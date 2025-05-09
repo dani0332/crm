@@ -442,13 +442,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
-        Route::get('/migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
-            $forceProcess = (bool) $force;
-            \App\Jobs\UniversalSearchDataMigration::dispatch($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
-
-            return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
-        })->name('admin.migrate-insured-and-quote-id-to-personal-quote');
-
+        
         Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
             \App\Jobs\UniversalSearchDataMigration::dispatchSync($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
@@ -456,12 +450,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
         })->name('admin.sync-migrate-insured-and-quote-id-to-personal-quote');
 
-        // Add route to trigger individual KYC details migration
-        Route::get('/migrate-individual-kyc-details', function () {
-            App\Jobs\IndividualKycDetailsMigrationJob::dispatch(Carbon::now()->format('YmdHi'))->onQueue('insly');
-
-            return '<h3>Individual KYC Details migration job has been queued. Please check the logs for detailed progress and completion status.</h3>';
-        })->name('admin.migrate-individual-kyc-details');
+        
 
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
