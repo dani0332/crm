@@ -1968,9 +1968,8 @@ class RenewalsUploadService
                     }
                 }
 
+                $quoteExist = $isQuotePersonal == 1 ? $quoteTypeObject->where('quote_type_id', $quoteType->id)->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first() : $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first();
                 if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number && $quoteTypeObject) {
-                    $quoteExist = $isQuotePersonal == 1 ? $quoteTypeObject->where('quote_type_id', $quoteType->id)->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first() : $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first();
-
                     if ($quoteExist != null && isset($quoteExist)) {
                         $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
                     }
@@ -2191,6 +2190,12 @@ class RenewalsUploadService
                                 } else {
                                     $coPlan = HealthPlanCoPayment::where('code', $leadData->copay)->where('health_plan_id', $healthPlan->id)->first();
                                     ! $coPlan && $leadValidationErrors->push('Invalid renewal copay plan provided');
+                                }
+                            }
+                            if ($quoteExist != null && isset($quoteExist)) {
+                                $insuranceProvider = $quoteExist->insuranceProvider;
+                                if($insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL) {
+                                    $leadValidationErrors->push('Payment Gateway is not supported for health quotes');
                                 }
                             }
                         }
