@@ -88,6 +88,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Services\AddBatchForNonMotors;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -441,6 +442,27 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
+        Route::get('/migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
+            $forceProcess = (bool) $force;
+            \App\Jobs\UniversalSearchDataMigration::dispatch($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
+
+            return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
+        })->name('admin.migrate-insured-and-quote-id-to-personal-quote');
+
+        Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
+            $forceProcess = (bool) $force;
+            \App\Jobs\UniversalSearchDataMigration::dispatchSync($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
+
+            return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
+        })->name('admin.sync-migrate-insured-and-quote-id-to-personal-quote');
+
+        // Add route to trigger individual KYC details migration
+        Route::get('/migrate-individual-kyc-details', function () {
+            App\Jobs\IndividualKycDetailsMigrationJob::dispatch(Carbon::now()->format('YmdHi'))->onQueue('insly');
+
+            return '<h3>Individual KYC Details migration job has been queued. Please check the logs for detailed progress and completion status.</h3>';
+        })->name('admin.migrate-individual-kyc-details');
+
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
             Route::get('/view/{commercialKeyword}', [CommercialKeywordsController::class, 'show'])->name('admin.commercial.keywords.show');
@@ -746,9 +768,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Sending NB Car Followups
     Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
-
-    Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
-    Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+    Route::group(['middleware' => ['readonly_db']], function () {
+        Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
+        Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+    });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
     Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
