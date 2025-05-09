@@ -148,7 +148,7 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
             'member_gender' => ['index' => 12, 'title' => 'Gender', 'rules' => 'required|max:50'],
             'member_category' => ['index' => 13, 'title' => 'Member Category', 'rules' => 'required|max:300'],
             'member_emirate_of_visa' => ['index' => 14, 'title' => 'Emirate of Visa', 'rules' => 'required|max:100'],
-            'payment_link' => ['index' => 15, 'title' => 'Payment Link', 'rules' => 'nullable|max:400'],
+            'payment_link' => ['index' => 15, 'title' => 'Payment Link', 'rules' => 'nullable|max:1000'],
             'previous_policy_premium' => ['index' => 16, 'title' => 'Previous Policy Premium', 'rules' => 'required|max:15'],
             'notes' => ['index' => 17, 'title' => 'Notes', 'rules' => 'max:500'],
         ];
