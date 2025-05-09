@@ -353,18 +353,18 @@ const formatAuditChanges = log => {
 
       <div v-else class="relative timeline-container mt-6">
         <!-- Timeline vertical line -->
-        <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+        <div class="absolute left-7 top-0 bottom-0 w-0.5 bg-gray-200"></div>
 
         <!-- Timeline entries -->
         <div
           v-for="(log, index) in auditLogs"
           :key="index"
-          class="timeline-entry mb-8 pl-20 relative"
+          class="timeline-entry mb-4 pl-16 relative"
         >
           <!-- Timeline dot with icon -->
           <div
             :class="[
-              'absolute left-6 top-2 w-5 h-5 rounded-full border-4 z-10 flex items-center justify-center',
+              'absolute left-5 top-3 w-4 h-4 rounded-full border-3 z-10 flex items-center justify-center',
               log.event === 'created'
                 ? 'border-green-400 bg-green-100'
                 : log.event === 'updated'
@@ -381,144 +381,142 @@ const formatAuditChanges = log => {
           <div
             class="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200"
           >
-            <!-- Card header -->
-            <div class="p-4 border-b flex justify-between items-center">
-              <div class="flex items-center">
-                <div
-                  class="w-9 h-9 rounded-full flex items-center justify-center text-white mr-3"
-                  :class="[
-                    log.event === 'created'
-                      ? 'bg-green-500'
-                      : log.event === 'updated'
-                        ? 'bg-blue-500'
-                        : log.event === 'deleted'
-                          ? 'bg-red-500'
-                          : log.event === 'sync'
-                            ? 'bg-purple-500'
-                            : 'bg-gray-500',
-                  ]"
+            <!-- Card header - more compact -->
+            <div class="p-2 border-b flex items-center">
+              <div
+                class="w-7 h-7 rounded-full flex items-center justify-center text-white mr-2"
+                :class="[
+                  log.event === 'created'
+                    ? 'bg-green-500'
+                    : log.event === 'updated'
+                      ? 'bg-blue-500'
+                      : log.event === 'deleted'
+                        ? 'bg-red-500'
+                        : log.event === 'sync'
+                          ? 'bg-purple-500'
+                          : 'bg-gray-500',
+                ]"
+              >
+                <svg
+                  v-if="log.event === 'created'"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
-                  <svg
-                    v-if="log.event === 'created'"
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                <svg
+                  v-else-if="log.event === 'updated'"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                <svg
+                  v-else-if="log.event === 'deleted'"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+                <svg
+                  v-else-if="log.event === 'sync'"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                  />
+                </svg>
+                <template v-else>
+                  {{ log.name ? log.name.charAt(0) : 'S' }}
+                </template>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center text-sm">
+                  <span class="font-medium truncate mr-1">{{
+                    log.name || 'System'
+                  }}</span>
+                  <span
+                    :class="[
+                      'ml-1 px-1.5 py-0.5 text-xs font-medium rounded-full',
+                      log.event === 'created'
+                        ? 'bg-green-100 text-green-800'
+                        : log.event === 'updated'
+                          ? 'bg-blue-100 text-blue-800'
+                          : log.event === 'deleted'
+                            ? 'bg-red-100 text-red-800'
+                            : log.event === 'sync'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-gray-100 text-gray-800',
+                    ]"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  <svg
-                    v-else-if="log.event === 'updated'"
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  <svg
-                    v-else-if="log.event === 'deleted'"
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                  <svg
-                    v-else-if="log.event === 'sync'"
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                    />
-                  </svg>
-                  <template v-else>
-                    {{ log.name ? log.name.charAt(0) : 'S' }}
-                  </template>
+                    {{ log.event.charAt(0).toUpperCase() + log.event.slice(1) }}
+                  </span>
                 </div>
-                <div>
-                  <div class="font-medium flex items-center">
-                    {{ log.name || 'System' }}
-                    <span
-                      :class="[
-                        'ml-2 px-2 py-0.5 text-xs font-medium rounded-full',
-                        log.event === 'created'
-                          ? 'bg-green-100 text-green-800'
-                          : log.event === 'updated'
-                            ? 'bg-blue-100 text-blue-800'
-                            : log.event === 'deleted'
-                              ? 'bg-red-100 text-red-800'
-                              : log.event === 'sync'
-                                ? 'bg-purple-100 text-purple-800'
-                                : 'bg-gray-100 text-gray-800',
-                      ]"
-                    >
-                      {{
-                        log.event.charAt(0).toUpperCase() + log.event.slice(1)
-                      }}
-                    </span>
-                  </div>
-                  <div class="text-xs text-gray-500 mt-1">
-                    {{ dateFormat(log.created_at) }}
-                  </div>
+                <div class="text-xs text-gray-500">
+                  {{ dateFormat(log.created_at) }}
                 </div>
               </div>
             </div>
 
-            <!-- Card content -->
-            <div class="p-4">
+            <!-- Card content - more compact -->
+            <div class="p-2">
               <div
                 v-if="formatAuditChanges(log).length === 0"
-                class="text-gray-500 italic text-center py-2"
+                class="text-gray-500 italic text-center py-1 text-xs"
               >
                 No changes detected.
               </div>
 
-              <div v-else>
+              <div v-else class="space-y-2">
                 <div
                   v-for="(change, changeIndex) in formatAuditChanges(log)"
                   :key="changeIndex"
-                  class="mb-3 last:mb-0"
+                  class="mb-2 last:mb-0"
                 >
-                  <div class="font-medium text-gray-700 mb-1">
+                  <div class="text-sm font-medium text-gray-700">
                     {{ change.field }}
                   </div>
 
                   <!-- Relation changes (e.g., users) -->
                   <div
                     v-if="change.action"
-                    class="ml-2 p-2 bg-gray-50 rounded-md"
+                    class="ml-1 p-1.5 bg-gray-50 rounded-md text-xs"
                   >
                     <div class="flex items-center">
                       <span
                         :class="[
-                          'flex items-center px-2 py-1 text-xs font-medium rounded-full mr-2',
+                          'flex items-center px-1.5 py-0.5 text-xs font-medium rounded-full mr-2',
                           change.action === 'Added'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800',
@@ -527,7 +525,7 @@ const formatAuditChanges = log => {
                         <svg
                           v-if="change.action === 'Added'"
                           xmlns="http://www.w3.org/2000/svg"
-                          class="h-3 w-3 mr-1"
+                          class="h-2.5 w-2.5 mr-0.5"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -542,7 +540,7 @@ const formatAuditChanges = log => {
                         <svg
                           v-else
                           xmlns="http://www.w3.org/2000/svg"
-                          class="h-3 w-3 mr-1"
+                          class="h-2.5 w-2.5 mr-0.5"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -556,43 +554,74 @@ const formatAuditChanges = log => {
                         </svg>
                         {{ change.action }}
                       </span>
-                      <span class="text-sm">{{ change.value }}</span>
+                      <span>{{ change.value }}</span>
                     </div>
                   </div>
 
-                  <!-- Regular changes (old/new values) -->
-                  <div v-else class="ml-2 grid grid-cols-2 gap-4">
-                    <div class="p-2 bg-gray-50 rounded-md">
-                      <div class="text-xs text-gray-500 mb-1">Previous</div>
-                      <div
-                        v-if="
-                          change.oldValue !== null &&
-                          change.oldValue !== undefined
-                        "
-                        class="text-sm"
-                      >
-                        {{ change.oldValue }}
-                      </div>
-                      <div v-else class="text-sm text-gray-400 italic">
-                        Empty
-                      </div>
-                    </div>
-
+                  <!-- Regular changes (old/new values) - more compact -->
+                  <div v-else class="ml-1">
                     <div
-                      class="p-2 bg-blue-50 rounded-md border-l-4 border-blue-300"
+                      class="flex items-center rounded-md border border-gray-200 overflow-hidden text-xs"
                     >
-                      <div class="text-xs text-blue-500 mb-1">New</div>
+                      <!-- From value -->
                       <div
-                        v-if="
-                          change.newValue !== null &&
-                          change.newValue !== undefined
-                        "
-                        class="text-sm"
+                        class="flex-1 p-1.5 bg-gray-50 overflow-hidden"
+                        :class="{
+                          'line-through text-gray-500':
+                            change.newValue !== change.oldValue,
+                        }"
                       >
-                        {{ change.newValue }}
+                        <div
+                          v-if="
+                            change.oldValue !== null &&
+                            change.oldValue !== undefined
+                          "
+                        >
+                          {{ change.oldValue }}
+                        </div>
+                        <div v-else class="text-gray-400 italic">Empty</div>
                       </div>
-                      <div v-else class="text-sm text-gray-400 italic">
-                        Empty
+
+                      <!-- Change arrow icon -->
+                      <div
+                        class="px-1 flex items-center justify-center text-blue-500 bg-blue-50"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-3 w-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
+                        </svg>
+                      </div>
+
+                      <!-- To value -->
+                      <div
+                        class="flex-1 p-1.5 bg-blue-50 border-l border-blue-200 overflow-hidden"
+                      >
+                        <div
+                          v-if="
+                            change.newValue !== null &&
+                            change.newValue !== undefined
+                          "
+                        >
+                          <span
+                            :class="{
+                              'text-blue-700 font-medium':
+                                change.newValue !== change.oldValue,
+                            }"
+                          >
+                            {{ change.newValue }}
+                          </span>
+                        </div>
+                        <div v-else class="text-gray-400 italic">Empty</div>
                       </div>
                     </div>
                   </div>
@@ -620,17 +649,27 @@ const formatAuditChanges = log => {
   transform: translateX(4px);
 }
 
+/* Custom border width class */
+.border-3 {
+  border-width: 3px;
+}
+
+/* Custom utilities for compact layouts */
+.min-h-32 {
+  min-height: 8rem;
+}
+
 @media (max-width: 640px) {
   .timeline-entry {
-    padding-left: 3rem;
+    padding-left: 2.5rem;
   }
 
-  .absolute.left-8 {
-    left: 1.25rem;
-  }
-
-  .absolute.left-6 {
+  .absolute.left-7 {
     left: 1rem;
+  }
+
+  .absolute.left-5 {
+    left: 0.75rem;
   }
 }
 </style>
