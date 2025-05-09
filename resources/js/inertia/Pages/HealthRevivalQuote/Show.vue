@@ -1,7 +1,7 @@
 <script setup>
-import LazyDocumentUploader from '../HealthQuote/Partials/DocumentUploader.vue';
-import LazyCreatePlan from '../HealthQuote/Partials/CreatePlan.vue';
 import LazyAvailablePlan from '../HealthQuote/Partials/AvailablePlans.vue';
+import LazyCreatePlan from '../HealthQuote/Partials/CreatePlan.vue';
+import LazyDocumentUploader from '../HealthQuote/Partials/DocumentUploader.vue';
 const props = defineProps({
   quote: Object,
   customerTypeEnum: Object,
@@ -412,25 +412,28 @@ const handlePlanSelected = plan => {
   });
 };
 
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
   activity: null,
   contact: null,
+  doc_id: null,
+  doc_uuid: null,
 });
+
+const onDocDelete = (doc_id, doc_uuid) => {
+  modals.docConfirm = true;
+  confirmDeleteData.doc_id = doc_id;
+  confirmDeleteData.doc_uuid = doc_uuid;
+};
 
 const confirmDeleteDoc = () => {
   quoteDocumentsTable.isLoading = true;
   router.post(
     `/documents/delete`,
     {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
+      doc_id: confirmDeleteData.doc_id,
+      doc_uuid: confirmDeleteData.doc_uuid,
     },
     {
       preserveScroll: true,
@@ -1292,13 +1295,14 @@ const updateProfileDetails = isValid => {
               v-if="!hasRole(rolesEnum.HealthWCUAdvisor)"
               class="w-full md:w-1/2 flex gap-2 items-end"
             >
-              <ComboBox
+              <x-select
                 v-model="assignLead"
                 label="Assign Lead"
                 :options="advisorOptions"
                 placeholder="Select Lead"
                 class="w-auto flex-1 mt-1"
-                :single="true"
+                filterable
+                filterPlaceholder="Filter Lead...."
               />
               <div>
                 <x-button
@@ -1640,12 +1644,13 @@ const updateProfileDetails = isValid => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
               <dd>
-                <ComboBox
+                <x-select
                   v-model="customerProfileForm.emirate_of_registration_id"
-                  :single="true"
                   placeholder="SELECT EMIRATES OF REGISTRATION"
                   :options="emiratesOptions"
                   class="w-full"
+                  filterable
+                  filterPlaceholder="Filter Emirate...."
                 />
               </dd>
             </div>
@@ -1663,21 +1668,21 @@ const updateProfileDetails = isValid => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">INDUSTRY TYPE</dt>
               <dd>
-                <ComboBox
-                  :single="true"
+                <x-select
                   v-model="customerProfileForm.industry_type_code"
                   placeholder="SELECT INDUSTRY TYPE"
                   :options="industryTypeOptions"
                   class="w-full"
+                  filterable
+                  filterPlaceholder="Filter Industry Type...."
                 />
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">ENTITY TYPE</dt>
               <dd>
-                <ComboBox
+                <x-select
                   @update:modelValue="entityTypeChange($event)"
-                  :single="true"
                   v-model:modelValue="customerProfileForm.entity_type_code"
                   placeholder="SELECT ENTITY TYPE"
                   :options="[
@@ -1685,6 +1690,8 @@ const updateProfileDetails = isValid => {
                     { label: 'Sub Entity', value: 'SubEntity' },
                   ]"
                   class="w-full"
+                  filterable
+                  filterPlaceholder="Filter Entity Type...."
                 />
               </dd>
             </div>
@@ -1818,12 +1825,13 @@ const updateProfileDetails = isValid => {
               placeholder="Last Name"
               :rules="[isRequired]"
             />
-            <ComboBox
+            <x-select
               v-model="memberForm.nationality_id"
               label="Nationality"
               :options="nationalityOptions"
               placeholder="Select Nationality"
-              :single="true"
+              filterable
+              filterPlaceholder="Filter Nationality...."
               :hasError="memberFieldReq.nationality"
             />
 
@@ -2342,15 +2350,29 @@ const updateProfileDetails = isValid => {
           <template #header> Filters </template>
 
           <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
-            <ComboBox
+            <x-select
               v-model="planFilters.insurer"
               label="Insurer"
               :options="insuranceProviders"
               :loading="planFilters.processing"
-              select-all
-              deselect-all
-            />
-            <ComboBox
+              filterable
+              filterPlaceholder="Filter Insurer...."
+              multiple
+              truncate
+              class="w-full"
+            >
+              <template #content-footer>
+                <ui-select-actions
+                  @select-all="
+                    planFilters.insurer = insuranceProviders.map(
+                      insurer => insurer.value,
+                    )
+                  "
+                  @clear="planFilters.insurer = []"
+                />
+              </template>
+            </x-select>
+            <x-select
               v-model="planFilters.network"
               :label="
                 planFilters.insurer?.length == 0
@@ -2359,9 +2381,23 @@ const updateProfileDetails = isValid => {
               "
               :options="options.network"
               :disabled="planFilters.insurer?.length == 0"
-              select-all
-              deselect-all
-            />
+              filterable
+              filterPlaceholder="Filter Network...."
+              multiple
+              truncate
+              class="w-full"
+            >
+              <template #content-footer>
+                <ui-select-actions
+                  @select-all="
+                    planFilters.network = options.network.map(
+                      network => network.value,
+                    )
+                  "
+                  @clear="planFilters.network = []"
+                />
+              </template>
+            </x-select>
             <div>
               <x-tooltip position="right" class="arrow-l">
                 <label
@@ -2402,14 +2438,28 @@ const updateProfileDetails = isValid => {
               />
             </div>
 
-            <ComboBox
+            <x-select
               v-model="planFilters.plan_types"
               :label="'Plan Type'"
               :options="planTypes"
               :disabled="planFilters.plan_types?.length == 0"
-              select-all
-              deselect-all
-            />
+              filterable
+              filterPlaceholder="Filter Plan Type...."
+              multiple
+              truncate
+              class="w-full"
+            >
+              <template #content-footer>
+                <ui-select-actions
+                  @select-all="
+                    planFilters.plan_types = planTypes.map(
+                      planType => planType.value,
+                    )
+                  "
+                  @clear="planFilters.plan_types = []"
+                />
+              </template>
+            </x-select>
           </div>
 
           <div class="flex justify-end gap-3 mb-4">
@@ -2514,13 +2564,13 @@ const updateProfileDetails = isValid => {
           {{ item.original_name }}
         </a>
       </template>
-      <template #item-action="{ doc_name }">
+      <template #item-action="{ doc_name, id, doc_uuid }">
         <div>
           <x-button
             size="xs"
             color="error"
             outlined
-            @click.prevent="onDocDelete(doc_name)"
+            @click.prevent="onDocDelete(id, doc_uuid)"
           >
             Delete
           </x-button>

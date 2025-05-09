@@ -11,7 +11,10 @@ export const useRules = () => {
     return true;
   };
 
-  const isRequired = v => !!v || 'This field is required';
+  // const isRequired = v => !!v || 'This field is required'; // will remove after testing
+  const isRequired = v =>
+    (!!v && (Array.isArray(v) ? v.length > 0 : true)) ||
+    'This field is required';
 
   const allowEmpty = v => true || 'This field is required';
 
@@ -136,6 +139,20 @@ export const useRules = () => {
       'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm.'
     );
   };
+  // Add minValue rule
+  const minValue = min => v => {
+    return !v || Number(v) >= min || `The minimum value is ${min}.`;
+  };
+
+  // Add maxSelections rule for multiple select components
+  const maxSelections = max => v => {
+    return (
+      !v ||
+      !Array.isArray(v) ||
+      v.length <= max ||
+      `You can select up to ${max} items only.`
+    );
+  };
 
   return {
     name,
@@ -160,5 +177,7 @@ export const useRules = () => {
     isRequiredNumber,
     maxCharacters,
     emiratesNumber,
+    minValue,
+    maxSelections,
   };
 };

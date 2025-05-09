@@ -74,24 +74,24 @@ class BookPolicyRequest extends FormRequest
 
             if (! $payment) {
                 $validator->errors()->add('error', 'Payment record not found');
-            }
+            } else {
+                $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')
+                    ->whereNot('code', $payment->code)
+                    ->where('insurer_tax_number', request()->insurer_tax_invoice_number)
+                    ->select('insurer_tax_number')->first();
 
-            $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')
-                ->whereNot('code', $payment->code)
-                ->where('insurer_tax_number', request()->insurer_tax_invoice_number)
-                ->select('insurer_tax_number')->first();
+                if ($isInsurerTaxNumberExists) {
+                    $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists, Please enter a unique value.');
+                }
 
-            if ($isInsurerTaxNumberExists) {
-                $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists, Please enter a unique value.');
-            }
+                $isInsurerComTaxNumberExists = Payment::whereNotNull('insurer_commmission_invoice_number')
+                    ->whereNot('code', $payment->code)
+                    ->where('insurer_commmission_invoice_number', request()->insurer_commmission_invoice_number)
+                    ->select('insurer_commmission_invoice_number')->first();
 
-            $isInsurerComTaxNumberExists = Payment::whereNotNull('insurer_commmission_invoice_number')
-                ->whereNot('code', $payment->code)
-                ->where('insurer_commmission_invoice_number', request()->insurer_commmission_invoice_number)
-                ->select('insurer_commmission_invoice_number')->first();
-
-            if ($isInsurerComTaxNumberExists) {
-                $validator->errors()->add('error', 'Insurer Commission Invoice Number already exists, Please enter a unique value.');
+                if ($isInsurerComTaxNumberExists) {
+                    $validator->errors()->add('error', 'Insurer Commission Invoice Number already exists, Please enter a unique value.');
+                }
             }
         });
     }

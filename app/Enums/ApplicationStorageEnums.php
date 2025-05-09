@@ -68,7 +68,6 @@ final class ApplicationStorageEnums extends Enum
     public const SAGE_ENABLED = 'SAGE_ENABLED';
     public const SAGE_TIMEOUT_RETRY_ENABLED = 'SAGE_TIMEOUT_RETRY_ENABLED';
     public const DTT_ENABLED = 'DTT_ENABLED';
-    public const DTT_FROM = 'DTT_FROM';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
     public const DTT_HEALTH_ENABLED = 'DTT_HEALTH_ENABLED';
@@ -196,6 +195,27 @@ final class ApplicationStorageEnums extends Enum
     public const TAP_AUTHORIZED_EMAILS = 'TAP_AUTHORIZED_EMAILS';
     public const BENCHMARKING_ENABLED = 'BENCHMARKING_ENABLED';
     public const BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS = 'BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS';
+
+    // Group Medical Team Advisors
+    public const GROUP_MEDICAL_MICRO_ADVISORS = 'GROUP_MEDICAL_MICRO_ADVISORS';
+    public const GROUP_MEDICAL_NON_MICRO_ADVISORS = 'GROUP_MEDICAL_NON_MICRO_ADVISORS';
     public const STOP_DE_DUPLICATION_JOB = 'STOP_DE_DUPLICATION_JOB';
     public const BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW = 'BIRD_CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR_WORKFLOW';
+    public const COMPANY_CAR_FOLLOWUP_DELAY_DURATION = 'COMPANY_CAR_FOLLOWUP_DELAY_DURATION';
+
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
+    public const INSLY_TEMP_SALES_PERSON_ID = 'INSLY_TEMP_SALES_PERSON_ID';
+    public const INSLY_TEMP_POLICY_OID = 'INSLY_TEMP_POLICY_OID';
+    /* For Advisor Assignment to Insly Policies - Move To IMCRM Issue */
+
+    /* AIG Workflow Integration */
+    public const BIRD_AIG_WORKFLOW = 'BIRD_AIG_WORKFLOW';
+    public const AXIOM_BATCH_SIZE = 'AXIOM_BATCH_SIZE';
+    public const AML_AUTOMATION_ENABLED = 'AML_AUTOMATION_ENABLED';
+
+    /* Advisor Emails for Allocation */
+    public const YACHT_ADVISORS = 'YACHT_ADVISORS';
+    public const PET_ADVISORS = 'PET_ADVISORS';
+    public const HOME_ADVISORS_FOR_PET = 'HOME_ADVISORS_FOR_PET';
+    public const ENABLE_UNIVERSAL_SEARCH = 'ENABLE_UNIVERSAL_SEARCH';
 }

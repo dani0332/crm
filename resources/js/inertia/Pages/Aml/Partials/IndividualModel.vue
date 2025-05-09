@@ -656,8 +656,8 @@ watch(
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
-          <x-field label="ID type" required>
+        <div class="flex gap-4">
+          <x-field class="flex-1" label="ID type" required>
             <x-select
               v-model="insuredFormDetails.screening_id_type"
               :options="documentIDTypeForScreening"
@@ -665,7 +665,7 @@ watch(
               :rules="[isRequired]"
             />
           </x-field>
-          <x-field label="ID number" required>
+          <x-field class="flex-1" label="ID number" required>
             <template
               v-if="insuredFormDetails.screening_id_type === 'emiratesId'"
             >
@@ -693,11 +693,10 @@ watch(
             </template>
           </x-field>
           <template v-if="!insuredPersonDetailsFound">
-            <x-field>
+            <x-field class="mt-3">
               <x-button
                 @click.prevent="submitInsuredPersonSearch"
                 class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
-                size="sm"
                 color="primary"
                 :loading="loader.search"
               >
@@ -706,16 +705,14 @@ watch(
             </x-field>
           </template>
           <template v-else>
-            <div class="text-left space-x-4">
-              <x-button
-                size="sm"
-                color="info"
-                @click.prevent="clearInsuredPersonDetails"
-              >
+            <x-field class="mt-3">
+              <x-button color="info" @click.prevent="clearInsuredPersonDetails">
                 Cancel
               </x-button>
-            </div>
+            </x-field>
           </template>
+        </div>
+        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
           <x-field label="Insured First Name">
             <x-input
               v-model="insuredFormDetails.insured_first_name"
@@ -738,13 +735,17 @@ watch(
           </x-field>
 
           <x-field label="Nationality">
-            <ComboBox
-              :single="true"
+            <x-select
               v-model="insuredFormDetails.nationality_id"
-              :hasError="isEmptyNationality"
+              filterable
+              filterPlaceholder="Filter Nationality...."
               placeholder="Select Nationality"
+              virtualList
+              :virtualListItemHeight="32"
+              :virtualListOverscan="10"
               :options="nationalitiesOptions"
               class="w-full"
+              :rules="[isRequired]"
             />
           </x-field>
           <x-field label="Date of Birth">
@@ -776,7 +777,8 @@ watch(
             label="Email in GIG portal"
             v-if="
               quoteType.id === page.props.quoteTypeIdEnum.Car ||
-              quoteType.id === page.props.quoteTypeIdEnum.Bike
+              quoteType.id === page.props.quoteTypeIdEnum.Bike ||
+              quoteType.id === page.props.quoteTypeIdEnum.Home
             "
           >
             <x-input
@@ -981,8 +983,7 @@ watch(
             />
           </x-field>
           <x-field label="Entity Type">
-            <ComboBox
-              :single="true"
+            <x-select
               v-model="insuredFormDetails.entity_type_code"
               :rules="[isRequired]"
               placeholder="Select Entity Type"
@@ -991,29 +992,31 @@ watch(
                 { label: 'Sub Entity', value: 'SubEntity' },
               ]"
               class="w-full"
+              filterable
+              filterPlaceholder="Filter Entity Type...."
             />
           </x-field>
           <x-field label="Industry Type">
-            <ComboBox
-              :single="true"
+            <x-select
               v-model="insuredFormDetails.industry_type_code"
               :rules="[isRequired]"
               placeholder="Select Industry Type"
               :options="industryTypeOptions"
               class="w-full"
-              :hasError="industryTypeCode"
+              filterable
+              filterPlaceholder="Filter Industry Type...."
             />
           </x-field>
 
           <x-field label="Emirate of Registration">
-            <ComboBox
-              :single="true"
+            <x-select
               v-model="insuredFormDetails.emirate_of_registration_id"
               :rules="[isRequired]"
               placeholder="Select Emirate of Registration"
               :options="emirateRegistrationOptions"
               class="w-full"
-              :hasError="emirateRegistrationId"
+              filterable
+              filterPlaceholder="Filter Emirate of Registration...."
             />
           </x-field>
         </dl>

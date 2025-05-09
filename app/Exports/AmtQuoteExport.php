@@ -10,9 +10,9 @@ class AmtQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return BusinessQuoteRepository::getData(QuoteTypes::GROUP_MEDICAL->value, true);
+        return BusinessQuoteRepository::getData(QuoteTypes::GROUP_MEDICAL->value, true, requestParams: $requestParams);
     }
 
     public function headings(): array
@@ -29,6 +29,7 @@ class AmtQuoteExport
             'LOST REASON',
             'SOURCE',
             'CREATED DATE',
+            'ADVISOR ASSIGNED DATE',
             'LAST MODIFIED DATE',
             'RENEWAL BATCH',
             'PREVIOUS POLICY EXPIRY DATE',
@@ -53,6 +54,7 @@ class AmtQuoteExport
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             $quote->source,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->renewal_batch,
             $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',

@@ -16,6 +16,7 @@ use App\Http\Requests\ReversalEntriesRequest;
 use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SaveProviderDetailsRequest;
+use App\Http\Requests\SendUpdateCancelRequest;
 use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Http\Requests\SendUpdateValidationRequest;
@@ -84,7 +85,7 @@ class SendUpdateLogController extends Controller
         }
 
         if (! empty($childLeadResponse)) {
-            if ($childLeadResponse['childLeadsCount'] == 0) {
+            if ($childLeadResponse['childLeadsCount'] == 0 || ($quoteType->code == quoteTypeCode::Travel && $childLeadResponse['childLeadsCount'])) {
                 if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
                     return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
@@ -149,6 +150,10 @@ class SendUpdateLogController extends Controller
 
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
+        }
+
+        if ($quoteType == quoteTypeCode::Travel) {
+            $sendUpdateLog->load('travelPlan.insuranceProvider');
         }
 
         $categoryCode = $sendUpdateLog->category?->code;
@@ -264,6 +269,7 @@ class SendUpdateLogController extends Controller
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
             'notesList' => $notesList ?? [],
+            'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
         ]);
     }
 
@@ -310,7 +316,6 @@ class SendUpdateLogController extends Controller
         $model = PersonalQuote::class;
 
         if ($type === 'create') {
-
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                     if ($subType && $subType['slug'] === 'MPC') {
@@ -466,5 +471,12 @@ class SendUpdateLogController extends Controller
         SendUpdateLogRepository::saveProviderDetails($request->validated());
 
         return redirect()->back();
+    }
+
+    public function sendUpdateCancel(SendUpdateCancelRequest $request)
+    {
+        $response = SendUpdateLogRepository::cancelSendUpdate($request->send_update_log_id, $request->cancel_reason);
+
+        return response()->json(['message' => $response['message']], $response['status']);
     }
 }

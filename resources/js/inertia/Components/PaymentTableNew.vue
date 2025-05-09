@@ -1,6 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref, nextTick } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
@@ -173,9 +173,23 @@ const premiumToCapture = ref(0);
 const capturePaymentValidationInProcess = ref(false);
 const capturePaymentValidationErrorMessage = ref('');
 const modal2Ref = ref(null);
-const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
+const insurerPaymentLinkChanged = ref(false);
+const confirmModalClose = ref(false);
+const insurerPaymentComponent = ref(null);
+
+const familyEmployeDiscount = [
+  quoteTypeCodeEnum.Car,
+  quoteTypeCodeEnum.Health,
+  quoteTypeCodeEnum.Home,
+  quoteTypeCodeEnum.Travel,
+];
 // Array of quote types to check against
-const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
+const quoteTypesToCheck = [
+  quoteTypeCodeEnum.Car,
+  quoteTypeCodeEnum.Health,
+  quoteTypeCodeEnum.Travel,
+  quoteTypeCodeEnum.Home,
+]; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
 
@@ -193,18 +207,23 @@ const showLackingPayment = () => {
 if (props.sendUpdate) {
   initialAmount.value = props.sendUpdate.price_with_vat;
 } else if (
-  props.quoteType === 'Health' &&
+  props.quoteType === quoteTypeCodeEnum.Health &&
   props.quoteRequest?.source !== 'Revival'
 ) {
   initialAmount.value = props.eCommercePrice;
 } else if (
-  props.quoteType === 'Health' &&
+  props.quoteType === quoteTypeCodeEnum.Health &&
   props.quoteRequest?.source === 'Revival'
 ) {
   initialAmount.value = props.quoteRequest.premium;
-} else if (props.quoteType === 'Bike') {
+} else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.isPlanDetailEnabled) {
+  initialAmount.value = props.quoteRequest.price_with_vat;
+} else if (
+  props.isPlanDetailSectionEnabled &&
+  props.quoteType === quoteTypeCodeEnum.Home
+) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
@@ -250,16 +269,17 @@ const approveProofDocument = props.paymentDocument.find(
 
 let initalPlanDetails = [];
 if (
-  props.quoteType == 'Business' ||
-  props.quoteType == 'Home' ||
+  props.quoteType == quoteTypeCodeEnum.Business ||
   props.isPlanDetailEnabled
 ) {
   initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.Home) {
+  initalPlanDetails = props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
-} else if (props.quoteType == 'Bike') {
+} else if (props.quoteType == quoteTypeCodeEnum.Bike) {
   initalPlanDetails = props.quoteRequest?.car_plan;
 } else {
   initalPlanDetails = props.quoteRequest?.insurance_provider;
@@ -404,7 +424,7 @@ const currentFile = computed(() => {
 
 // Define a computed property to calculate the initial total price without VAT
 const initialTotalPriceWithoutVat = computed(() => {
-  if (props.quoteType === 'Health') {
+  if (props.quoteType === quoteTypeCodeEnum.Health) {
     return props.eCommercePriceWithLP; // premium with loading price,excluding vat
   }
   const vatRate = vatValue ? vatValue / 100 : 0;
@@ -470,6 +490,19 @@ const rules = {
       return true;
     }
     return 'Value cannot be empty';
+  },
+  isValidUrl: v => {
+    if (!v) return true; // Allow empty value
+    try {
+      const url = new URL(v);
+      return (
+        url.protocol === 'http:' ||
+        url.protocol === 'https:' ||
+        'Please enter a valid URL starting with http:// or https://'
+      );
+    } catch {
+      return 'Please enter a valid URL';
+    }
   },
 };
 
@@ -861,10 +894,14 @@ const handleCollectionTypeChange = () => {
   );
 
   if (paymentMethodsForm.collection_type === 'insurer') {
+    let isIPLPermission = can(permissionEnum.INSURER_PAYMENT_LINK);
+    let isHealthQuote = props.quoteType === quoteTypeCodeEnum.Health;
+    let checkCondition = !isHealthQuote || !isIPLPermission;
     const excludedPaymentMethods = [
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
       page.props.paymentMethodsEnum?.Cash,
+      checkCondition && page.props.paymentMethodsEnum?.InsurerPaymentLink,
     ];
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
       item => !excludedPaymentMethods.includes(item.value),
@@ -872,10 +909,12 @@ const handleCollectionTypeChange = () => {
     paymentMethodsModels.value[1] =
       page.props.paymentMethodsEnum?.InsurerPayment;
   } else {
-    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item =>
-        ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value),
-    );
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => {
+      return ![
+        page.props.paymentMethodsEnum?.InsurerPayment,
+        page.props.paymentMethodsEnum?.InsurerPaymentLink,
+      ].includes(item.value);
+    });
     paymentMethodsModels.value[1] = '';
   }
   applyPermissions();
@@ -917,7 +956,7 @@ const handlePaymentTypes = count => {
 
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
-    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
       // need to fix this for payments
       isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
     }
@@ -1134,12 +1173,15 @@ const handleDiscountChange = (editDiscountValue = 0) => {
   }
 
   if (paymentMethodsForm.discount === 'employee_discount') {
-    if (props.quoteType === 'Health') {
+    if (props.quoteType === quoteTypeCodeEnum.Health) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (5 / 100)
       ).toFixed(2);
-    } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
+    } else if (
+      props.quoteType === quoteTypeCodeEnum.Home ||
+      props.quoteType === quoteTypeCodeEnum.Travel
+    ) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (15 / 100)
@@ -1152,12 +1194,15 @@ const handleDiscountChange = (editDiscountValue = 0) => {
     }
   }
   if (paymentMethodsForm.discount === 'family_employee_discount') {
-    if (props.quoteType === 'Health') {
+    if (props.quoteType === quoteTypeCodeEnum.Health) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (2.5 / 100)
       ).toFixed(2);
-    } else if (props.quoteType === 'Home' || props.quoteType === 'Travel') {
+    } else if (
+      props.quoteType === quoteTypeCodeEnum.Home ||
+      props.quoteType === quoteTypeCodeEnum.Travel
+    ) {
       discountValue.value = (
         initialTotalPriceWithoutVat.value *
         (12.5 / 100)
@@ -1447,6 +1492,50 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
   }
 };
 
+const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
+  if (paymentStatus == paymentStatusEnum.PAID) {
+    notification.error({
+      title: "Payment already 'Paid', button deactivated for this transaction",
+      position: 'top',
+    });
+  } else {
+    try {
+      const response = await axios.post('/generate-insurer-payment-link-new', {
+        quoteId: props.quoteRequest.id,
+        modelType: props.quoteType,
+        paymentCode: code,
+        splitPaymentId: splitPaymentId,
+        isInertia: true,
+        new_payment_structure: true,
+      });
+
+      if (response.data.success) {
+        const el = document.createElement('textarea');
+        el.value = response.data.payment_link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        notification.success({
+          title: 'Link copied to clipboard',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Payment Link Generation Failed',
+          position: 'top',
+        });
+      }
+    } catch (err) {
+      notification.error({
+        title: 'Payment Link Generation Failed',
+        position: 'top',
+      });
+    }
+  }
+};
+
 const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
   if (paymentStatus == paymentStatusEnum.PAID) {
     notification.error({
@@ -1650,6 +1739,18 @@ const isCPD = computed(() => {
   );
 });
 
+// use in insurer payment link
+const updateFromInsurerPaymentLink = (
+  closePaymentModal = false,
+  paymentLinkChanged = false,
+  closeModal = false,
+) => {
+  closePaymentModal == true &&
+    (createPaymentModal.value = !createPaymentModal.value);
+  confirmModalClose.value = closeModal;
+  insurerPaymentLinkChanged.value = paymentLinkChanged;
+};
+
 const addPaymentModal = () => {
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.price_with_vat) {
@@ -1692,7 +1793,9 @@ const addPaymentModal = () => {
   discountError.value = '';
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
-
+  console.log('totalPrice.value', totalPrice.value);
+  console.log('planDetail.value', planDetail.value);
+  console.log('sendUpdate', props.sendUpdate);
   if (
     (totalPrice.value > 0 && planDetail.value) ||
     (totalPrice.value > 0 && props.sendUpdate)
@@ -1711,13 +1814,13 @@ const addPaymentModal = () => {
   }
 
   const quoteCollectedBy = [
-    'Business',
-    'Health',
-    'Life',
-    'Marine',
-    'Pet',
-    'Cycle',
-    'Yacht',
+    quoteTypeCodeEnum.Business,
+    quoteTypeCodeEnum.Health,
+    quoteTypeCodeEnum.Life,
+    quoteTypeCodeEnum.Marine,
+    quoteTypeCodeEnum.Pet,
+    quoteTypeCodeEnum.Cycle,
+    quoteTypeCodeEnum.Yacht,
   ];
 
   if (
@@ -1771,17 +1874,7 @@ const handleRetryPayment = async () => {
     .post('/payments/' + props.quoteType + '/retry-payment', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Payment has been retried',
-          position: 'top',
-        });
         isRetryModalOpen.value = false;
-      },
-      onError: () => {
-        notification.error({
-          title: 'Payment retry failed',
-          position: 'top',
-        });
       },
     });
 };
@@ -1863,9 +1956,11 @@ const editPaymentModal = async (
   if (
     capture_approval == 1 &&
     payment?.insurance_provider?.code == 'AXA' &&
-    (props.quoteType === 'Bike' || props.quoteType === 'Car')
+    (props.quoteType === quoteTypeCodeEnum.Bike ||
+      props.quoteType === quoteTypeCodeEnum.Car ||
+      props.quoteType === quoteTypeCodeEnum.Home)
   ) {
-    await doCapturePaymentValidation(payment.total_amount);
+    await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
 
   resetPaymentForm();
@@ -1882,11 +1977,12 @@ const editPaymentModal = async (
   setFrequencyTypes();
 };
 
-const doCapturePaymentValidation = totalAmount => {
+const doCapturePaymentValidation = (totalAmount, paymentCode) => {
   const data = {
     modelType: props.quoteType,
     uuid: props.quoteRequest.uuid,
     captureAmount: totalAmount,
+    paymentCode: paymentCode,
   };
 
   capturePaymentValidationInProcess.value = true;
@@ -2015,7 +2111,7 @@ const initializePaymentForm = (
       : splitPaymentRecord.value.decline_reason_id;
   paymentMethodsForm.declined_custom_reason =
     splitPaymentRecord.value.decline_custom_reason;
-  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
     paymentMethodsForm.isCreditCardEnabled = payment.isCreditCardEnabled;
     paymentMethodsForm.isGIGProvider = payment.isGIGProvider;
     paymentMethodsForm.isMultiplePaymentsEnabled =
@@ -2035,6 +2131,7 @@ const processPaymentSplits = payment => {
 
   for (let i = 1; i <= payment.total_payments; i++) {
     const split = payment.payment_splits[i - 1];
+    console.log('split : ', split);
     readOnlyPayments.value[i] = paidStatusIds.includes(split.payment_status_id);
     if (readOnlyPayments.value[i]) {
       totalPaidAmount.value++;
@@ -2045,6 +2142,9 @@ const processPaymentSplits = payment => {
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = split.payment_method.code;
     splitAmountModels.value[i] = split.payment_amount;
+    if (i === insurerPaymentLinkIndex.value) {
+      paymentMethodsForm.insurerPaymentLink = split.insurer_payment_link;
+    }
     dueDateModels.value[i] = split.due_date
       ? moment(split.due_date).format('YYYY-MM-DD')
       : '';
@@ -2143,13 +2243,18 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
   const handleTravelQuoteType = () => {
     if (
-      props.quoteType === 'Travel' &&
+      props.quoteType === quoteTypeCodeEnum.Travel &&
       ['edit', 'view'].includes(paymentMethodsForm.status)
     ) {
-      planDetail.value = payment.travel_plan;
+      planDetail.value =
+        payment?.travel_plan ??
+        props.sendUpdate?.travel_plan ??
+        props.quoteRequest?.plan ??
+        null;
       if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
         planDetail.value['insurance_provider'] =
-          payment.travel_plan.insurance_provider;
+          payment?.travel_plan?.insurance_provider ??
+          props.sendUpdate?.insurance_provider;
       }
     }
   };
@@ -2204,6 +2309,8 @@ const paymentMethodsForm = useForm({
   paymentCode: '',
   status: 'create',
   approvalModal: '',
+  insurerPaymentLink: '',
+  insurerPaymentLinkError: '',
 });
 
 const validateViewPayment = isValid => {
@@ -2320,7 +2427,31 @@ const validatePaymentAmount = isValid => {
   return false;
 };
 
+const validateInsurerPaymentLink = () => {
+  const validationResult = rules.isValidUrl(
+    paymentMethodsForm.insurerPaymentLink,
+  );
+  if (validationResult !== true) {
+    paymentMethodsForm.errors.insurerPaymentLink = validationResult;
+  } else {
+    delete paymentMethodsForm.errors.insurerPaymentLink;
+  }
+};
+
 const addPayment = isValid => {
+  if (
+    insurerPaymentLinkIndex.value >= 0 &&
+    paymentMethodsForm.insurerPaymentLink
+  ) {
+    const urlValidation = rules.isValidUrl(
+      paymentMethodsForm.insurerPaymentLink,
+    );
+    if (urlValidation !== true) {
+      paymentMethodsForm.errors.insurerPaymentLink = urlValidation;
+      return;
+    }
+  }
+
   if (
     !props.sendUpdate?.insurance_provider_id &&
     (providerId.value === null || providerId.value === undefined)
@@ -2342,6 +2473,9 @@ const addPayment = isValid => {
     }
   }
   if (!isValid) return;
+
+  // making modal close after payment
+  confirmModalClose.value = true;
 
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]
@@ -2374,6 +2508,7 @@ const addPayment = isValid => {
     plan_id: planDetail?.value?.id ?? null, // handling null exception when plan is not found
     captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
+    sendFTCEmail: insurerPaymentLinkChanged?.value ?? false,
     new_payment_structure: true,
     isInertia: true,
     send_update_id: props.sendUpdate?.id || null,
@@ -2396,7 +2531,6 @@ const addPayment = isValid => {
     total_price: totalPrice.value,
     discount_value: discountValue.value, // discount amount
   };
-
   let splitPayments = [];
   for (let i = 1; i < splitAmountModels.value.length; i++) {
     if (i <= paymentMethodsForm.payment_no) {
@@ -2411,6 +2545,11 @@ const addPayment = isValid => {
       };
       if (i === 1) {
         splitPayments[i]['discount_documents'] = discountDocumentModel.value;
+      }
+      if (i === insurerPaymentLinkIndex.value) {
+        // Todo: For time being only saving insurer_payment_link for only first split payment
+        splitPayments[i]['insurer_payment_link'] =
+          paymentMethodsForm.insurerPaymentLink;
       }
     }
   }
@@ -2480,11 +2619,13 @@ const addPayment = isValid => {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
+          isApproveConfirmed.value = false;
           if (props.sendUpdate) {
             location.reload();
           }
         },
         onError: res => {
+          isApproveConfirmed.value = false;
           notification.error({
             title: res.error,
             position: 'top',
@@ -2523,7 +2664,17 @@ const addPayment = isValid => {
         onSuccess: () => {
           createPaymentModal.value = false;
         },
-        onError: () => {
+        onError: errors => {
+          Object.keys(errors).forEach(function (key) {
+            if (key === 'insurer_payment_link') {
+              paymentMethodsForm.errors.insurerPaymentLink = errors[key];
+            }
+            notification.error({
+              title: errors[key],
+              position: 'top',
+            });
+          });
+
           notification.error({
             title: 'Payment Update Failed',
             position: 'top',
@@ -2543,7 +2694,16 @@ const addPayment = isValid => {
       onSuccess: () => {
         createPaymentModal.value = false;
       },
-      onError: () => {
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          if (key === 'insurer_payment_link') {
+            paymentMethodsForm.errors.insurerPaymentLink = errors[key];
+          }
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
         notification.error({
           title: 'Payment Add Failed',
           position: 'top',
@@ -2674,7 +2834,7 @@ const deleteForm = useForm({
   payment_process_job_id: null,
 });
 
-const deleteDocument = (docName, count, docId) => {
+const deleteDocument = (docName, count, doc_id, doc_uuid) => {
   if (paymentMethodsForm.status == 'edit') {
     if (fileUploadModels.value[count]) {
       fileUploadModels.value[count] = fileUploadModels.value[count].filter(
@@ -2691,7 +2851,7 @@ const deleteDocument = (docName, count, docId) => {
         item => item.doc_name !== docName,
       );
     }
-    trashedFilesModal.value.push(docId);
+    trashedFilesModal.value.push(doc_id);
   } else if (
     paymentMethodsForm.status == 'view' &&
     paymentMethodsForm.collection_type === 'insurer' &&
@@ -2712,8 +2872,8 @@ const deleteDocument = (docName, count, docId) => {
     router.post(
       `/documents/delete`,
       {
-        docName: docName,
-        quoteId: props.quoteRequest.id,
+        doc_id,
+        doc_uuid,
       },
       {
         preserveScroll: true,
@@ -2815,19 +2975,15 @@ const uploadDocument = (doc, files, count) => {
           reject(errors);
         },
         onSuccess: data => {
-          let quoteDocuments = [];
-          if (
-            quoteTypesToCheck.includes(props.quoteType) ||
-            props.quoteType === 'Home' ||
+          let quoteTypes = quoteTypesToCheck.filter(
+            quoteType => quoteType !== quoteTypeCodeEnum.Home,
+          );
+          let quoteDocuments =
+            quoteTypes.includes(props.quoteType) ||
             props.quoteSubType === quoteTypeCodeEnum.CORPLINE ||
             props.sendUpdate
-          ) {
-            quoteDocuments = data.props.quoteDocuments;
-          } else {
-            quoteDocuments = data.props.quote.documents;
-          }
-          //quoteDocuments = [...quoteDocuments].reverse();
-          // Sort the array by the "id" property in descending order
+              ? data.props.quoteDocuments
+              : data.props.quote.documents;
           quoteDocuments.sort((a, b) => b.id - a.id);
           if (count === 0) {
             isDiscountDocumentNotUploaded.value = false;
@@ -2878,7 +3034,7 @@ const shouldProcessUpdate = payment => {
     props.quoteRequest.quote_status_id ===
     page.props.quoteStatusEnum.TransactionApproved;
   const isKycComplete = props.quoteRequest.kyc_decision === 'Complete';
-  const isTravelQuote = props.quoteType === 'Travel';
+  const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
   const shouldSendUpdate = props.sendUpdate;
   const isAmlOrTransactionApproved =
     isAmlCleared || isTransactionDeclined || isTransactionApproved;
@@ -3028,7 +3184,7 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   ) {
     return true;
   }
-  return getValidStatuses(paymentRecord.payment_splits[0].payment_status_id);
+  return getValidStatuses(paymentRecord.payment_splits[0]);
 };
 
 const getCaptureValidation = computed(() => {
@@ -3079,7 +3235,7 @@ const getCaptureOption = computed(() => {
 
     let isCaptureButtonEnabled =
       page.props?.bookPolicyDetails?.isCaptureButtonEnabled || false;
-    if (props.quoteType === 'Travel' && !props.sendUpdate) {
+    if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
       isCaptureButtonEnabled = payment.isCaptureButtonEnabled || false;
     }
 
@@ -3101,6 +3257,7 @@ const getCaptureOption = computed(() => {
 });
 
 const planText = ref();
+const homePlanText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
@@ -3112,7 +3269,7 @@ const fetchPlans = () => {
   axios
     .get(url)
     .then(res => {
-      planText.value = res.data.text;
+      planText.value = res.data?.text ?? res.data?.planName;
     })
     .catch(err => {});
 };
@@ -3137,6 +3294,39 @@ watch(
   },
 );
 
+const insurerPaymentLinkIndex = computed(() => {
+  var insurerPaymentIndex = paymentMethodsModels.value.findIndex(item => {
+    return item === page.props.paymentMethodsEnum?.InsurerPaymentLink;
+  });
+  return insurerPaymentIndex;
+});
+
+// Watch for changes in the modal's state
+watch(createPaymentModal, async (newVal, oldVal) => {
+  if (oldVal === true && newVal === false) {
+    // Modal is closing
+    const checkInsurerPaymentLink =
+      paymentMethodsModels.value[1] ===
+      page.props.paymentMethodsEnum?.InsurerPaymentLink;
+    if (
+      insurerPaymentLinkChanged.value &&
+      paymentMethodsForm.collection_type === 'insurer' &&
+      checkInsurerPaymentLink
+    ) {
+      // Prevent the close event from triggering
+      if (confirmModalClose.value == false) {
+        await nextTick();
+        createPaymentModal.value = true;
+        await nextTick();
+        if (insurerPaymentComponent.value) {
+          insurerPaymentComponent.value.closeNotification();
+        }
+      }
+      return;
+    }
+  }
+});
+
 onMounted(() => {
   if (props.realQuote?.plan_id || props.sendUpdate?.plan_id) {
     fetchPlans();
@@ -3144,13 +3334,35 @@ onMounted(() => {
   showLackingPayment();
 });
 
+const isChildPaymentDeletable = computed(() => {
+  if (props.payments.length !== 2) return false;
+  const childPaymentNotAuthorised = [
+    paymentStatusEnum.PENDING,
+    paymentStatusEnum.NEW,
+    paymentStatusEnum.DRAFT,
+    paymentStatusEnum.OVERDUE,
+  ].includes(props.payments[1].payment_status_id);
+  return (
+    props.quoteType == quoteTypeCodeEnum.Travel &&
+    page.props?.aboveAgeMembers &&
+    childPaymentNotAuthorised
+  );
+});
+
 const getPlanName = computed(() => {
   const plan = planDetail.value;
-  if (props.quoteType === 'Bike') {
+  if (props.quoteType === quoteTypeCodeEnum.Bike) {
     return plan ? props.quoteRequest.car_plan.text : 'Not Available';
   }
   if (props.sendUpdate) {
     return planText.value || 'Not Available';
+  }
+
+  if (props.quoteType === quoteTypeCodeEnum.Home) {
+    if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
+      homePlanText.value = props.quoteRequest.insurance_provider_plan.text;
+    }
+    return homePlanText.value || 'Not Available';
   }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan
@@ -3179,6 +3391,7 @@ const providerId = computed(() => {
 
 const providerName = computed(() => {
   const plan = planDetail.value;
+  const ecomQuoteType = [...quoteTypesToCheck, quoteTypeCodeEnum.Bike];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
       provider => provider.id === providerId.value,
@@ -3186,7 +3399,7 @@ const providerName = computed(() => {
 
     return provider.text || 'Not Available';
   } else if (
-    quoteTypesToCheck.includes(props.quoteType) &&
+    ecomQuoteType.includes(props.quoteType) &&
     plan.insurance_provider
   ) {
     return plan ? plan.insurance_provider.text : 'Not Available';
@@ -3217,10 +3430,15 @@ const setPaymentInitialPrice = () => {
       initialAmount.value = props.quoteRequest.price_with_vat;
     } else if (props.sendUpdate) {
       initialAmount.value = props.sendUpdate?.price_with_vat;
-    } else if (props.quoteType === 'Health') {
+    } else if (props.quoteType === quoteTypeCodeEnum.Health) {
       initialAmount.value = props.eCommercePrice;
-    } else if (props.quoteType === 'Bike') {
+    } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
       initialAmount.value = props.quoteRequest.premium;
+    } else if (
+      props.isPlanDetailSectionEnabled &&
+      props.quoteType === quoteTypeCodeEnum.Home
+    ) {
+      initialAmount.value = props.quoteRequest.price_with_vat;
     } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
@@ -3231,15 +3449,13 @@ const setPaymentInitialPrice = () => {
 };
 
 const setPlanDetail = () => {
-  if (
-    props.quoteType == 'Business' ||
-    props.quoteType == 'Home' ||
-    props.isPlanDetailEnabled
-  ) {
+  if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (props.quoteType == quoteTypeCodeEnum.Home) {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
-  } else if (props.quoteType == 'Bike') {
+  } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
     if (props.sendUpdate) {
       initalPlanDetails =
@@ -3289,7 +3505,10 @@ const paymentAllocationStatusTooltip = payment_allocation_status => {
 
 // verify if master payment is paid
 const isMasterPaymentPaid = computed(() => {
-  if (props.payments[0].payment_status_id === paymentStatusEnum.PAID) {
+  if (
+    props.payments.length > 0 &&
+    props.payments[0].payment_status_id === page.props.paymentStatusEnum.PAID
+  ) {
     return true;
   }
   return false;
@@ -3631,7 +3850,7 @@ const hasAnyCCSplitPayment = () => {
 
 const isCCPaymentDisabled = option => {
   let isCreditCardEnabled = isCCEnabled.value;
-  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
     isCreditCardEnabled = paymentMethodsForm.isCreditCardEnabled;
   }
   return (
@@ -3649,7 +3868,7 @@ const isPolicySendUpdateBooked = option => {
     page.props.quoteStatusEnum.PolicyBooked;
   const isUpdateBooked =
     props.sendUpdate &&
-    props.sendUpdate.status === sendUpdateStatusEnum.UPDATE_BOOKED;
+    props.sendUpdate.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
   const isCCAndInsurer = isCCEnabled.value && isInsurerCollection && isCCOption;
 
   if (isUpdateBooked && isCCAndInsurer) {
@@ -3676,7 +3895,7 @@ const isEditPaymentEnabled = payment => {
   );
 
   let isMultiPaymentEnabled = isMultiPaymentsEnabled.value;
-  if (props.quoteType === 'Travel' && !props.sendUpdate) {
+  if (props.quoteType === quoteTypeCodeEnum.Travel && !props.sendUpdate) {
     isMultiPaymentEnabled = props.payments[0].isMultiPaymentsEnabled;
   }
   return !isMultiPaymentEnabled && hasAnyAuthorizedPayment;
@@ -3688,6 +3907,14 @@ const voidPaymentModelPopup = ref(false);
 const voidPaymentModel = payment => {
   voidPaymentModelPopup.value = true;
   voidPaymentObject = payment;
+};
+
+let deletePaymentObject = {};
+const deletePaymentProcess = ref(false);
+const deletePaymentModelPopup = ref(false);
+const deletePaymentModel = payment => {
+  deletePaymentModelPopup.value = true;
+  deletePaymentObject = payment;
 };
 
 const isVoidPaymentEnabled = payment => {
@@ -3747,6 +3974,50 @@ const voidPayment = () => {
     });
 };
 
+const deletePayment = () => {
+  deletePaymentProcess.value = true;
+  let data = {
+    payment_id: deletePaymentObject.id,
+    payment_code: deletePaymentObject.code,
+  };
+
+  axios
+    .post(`/payments/${props.quoteType}/delete-payment`, data)
+    .then(res => {
+      deletePaymentProcess.value = false;
+      deletePaymentModelPopup.value = false;
+      if (res.data.status === false) {
+        notification.error({
+          title: res.data.message,
+          position: 'top',
+        });
+        return;
+      }
+      notification.success({
+        title: 'Processed',
+        position: 'top',
+      });
+
+      router.reload({
+        only: ['payments'],
+      });
+    })
+    .catch(err => {
+      deletePaymentProcess.value = false;
+      if (err.response.data) {
+        notification.error({
+          title: err.response.data?.message,
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Delete authorized payment process failed',
+          position: 'top',
+        });
+      }
+    });
+};
+
 const fetchInsurerAMLStatus = async () => {
   if (props.quoteRequest?.payments[0]?.payment_gateway_id == 3) {
     NProgress.start();
@@ -3766,6 +4037,72 @@ const fetchInsurerAMLStatus = async () => {
       });
     }
   }
+};
+
+const triggerPostPrepayment = async splitPayment => {
+  console.log(' triggerPostPrepayment : ', splitPayment.id);
+  let quoteStatusId = props.quoteRequest.quote_status_id;
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked === quoteStatusId;
+  if (!isPolicyBooked) {
+    notification.warning({
+      title:
+        'Posting of Prepayment cannot be triggered as Policy is not Booked yet!',
+      position: 'top',
+    });
+  }
+  try {
+    NProgress.start();
+    const response = await axios.post(route('can-post-premium-prepayment'), {
+      paymentSplitId: splitPayment.id,
+      quoteRequestId: props.quoteRequest.id,
+      quoteType: page.props.quoteType,
+      sendUpdateId: props.sendUpdate?.id,
+    });
+    NProgress.done();
+    if (response.data.success) {
+      notification.success({
+        title: 'Post Prepayment to Sage Process Started',
+        position: 'top',
+      });
+      router.reload({
+        only: ['payments'],
+      });
+    }
+  } catch (error) {
+    let errorMessages = error.response.data.errors;
+    Object.keys(errorMessages).forEach(function (key) {
+      notification.error({
+        title: errorMessages[key],
+        position: 'top',
+      });
+    });
+  }
+};
+const enablePostPrepaymentButton = splitPayment => {
+  console.log(
+    'showPostPrepaymentButton : showPrepaymentPostButton : ',
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
+    ' , batchNumber : ',
+    splitPayment.prepayment_receipt_status?.batchNumber,
+    splitPayment.prepayment_receipt_status,
+  );
+  let isPolicyBooked =
+    page.props.quoteStatusEnum.PolicyBooked ===
+    props.quoteRequest.quote_status_id;
+  let isSendUpdateBooked =
+    props.sendUpdate?.status === props.sendUpdateStatusEnum?.UPDATE_BOOKED;
+  let isPolicyOrSendUpdateBooked =
+    (isPolicyBooked && !props.sendUpdate) ||
+    (props.sendUpdate && isSendUpdateBooked);
+  if (
+    can(permissionEnum.CAN_POST_PREMIUM_PREPAYMENT) &&
+    isPolicyOrSendUpdateBooked &&
+    splitPayment.prepayment_receipt_status?.showPrepaymentPostButton
+  ) {
+    return true;
+  }
+  return false;
 };
 
 onBeforeMount(() => {
@@ -4151,7 +4488,24 @@ onBeforeMount(() => {
                               Edit
                             </x-button>
                           </template>
-                          <template v-if="can(permissionEnum.ApprovePayments)">
+                          <template
+                            v-if="index == 1 && isChildPaymentDeletable"
+                          >
+                            <x-button
+                              size="xs"
+                              color="orange"
+                              outlined
+                              @click="deletePaymentModel(item)"
+                            >
+                              Delete
+                            </x-button>
+                          </template>
+                          <template
+                            v-if="
+                              can(permissionEnum.ApprovePayments) &&
+                              (!isChildPaymentDeletable || index > 0)
+                            "
+                          >
                             <x-button
                               v-if="
                                 getCaptureOption(item) === 'capture' &&
@@ -4237,7 +4591,9 @@ onBeforeMount(() => {
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
-                        <td></td>
+                        <td class="text-center">
+                          {{ splitPayment.code }}-{{ splitPayment.sr_no }}
+                        </td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ formatDate(splitPayment.due_date) }}</td>
                         <td>{{ splitPayment.payment_method.name }}</td>
@@ -4335,6 +4691,25 @@ onBeforeMount(() => {
                             >
                             <x-button
                               v-if="
+                                splitPayment.payment_method.code ==
+                                paymentMethodsEnums.InsurerPaymentLink
+                              "
+                              class="ml-2"
+                              size="xs"
+                              color="emerald"
+                              @click.prevent="
+                                generateInsurerLink(
+                                  splitPayment.code,
+                                  splitPayment.sr_no,
+                                  splitPayment.payment_status_id,
+                                )
+                              "
+                              outlined
+                              >Copy Insurer Payment Link</x-button
+                            >
+
+                            <x-button
+                              v-if="
                                 canDeleteSplitPayment(
                                   item,
                                   splitIndex,
@@ -4370,6 +4745,16 @@ onBeforeMount(() => {
                               outlined
                               >Retry</x-button
                             >
+
+                            <x-button
+                              v-if="enablePostPrepaymentButton(splitPayment)"
+                              size="xs"
+                              color="red"
+                              class="ml-2"
+                              @click="triggerPostPrepayment(splitPayment)"
+                              outlined
+                              >Post
+                            </x-button>
                           </div>
                         </td>
                       </tr>
@@ -4947,7 +5332,14 @@ onBeforeMount(() => {
                     </span>
                     <span
                       class="delete-pointer"
-                      @click="deleteDocument(fileData.doc_name, 0, fileData.id)"
+                      @click="
+                        deleteDocument(
+                          fileData.doc_name,
+                          0,
+                          fileData.id,
+                          fileData.doc_uuid,
+                        )
+                      "
                       v-if="!isFieldReadonly"
                     >
                       &#10006;
@@ -5012,8 +5404,8 @@ onBeforeMount(() => {
                   <sup
                     v-if="isDiscountError"
                     class="text-sm text-red-500 dark:text-red-400"
-                    >{{ discountError }}</sup
-                  >
+                    >{{ discountError }}
+                  </sup>
                 </x-field>
               </div>
               <div
@@ -5072,6 +5464,46 @@ onBeforeMount(() => {
                   <span v-if="isFieldReadonly">
                     {{ formatAmount(totalAmount) }}
                   </span>
+                </x-field>
+              </div>
+              <div
+                class="col-span-2"
+                v-if="
+                  insurerPaymentLinkIndex >= 0 &&
+                  can(permissionEnum.INSURER_PAYMENT_LINK)
+                "
+              >
+                <x-tooltip>
+                  <span class="border-b-2 border-dotted border-black text-sm"
+                    >INSURER PAYMENT LINK -
+                    {{ paymentMethodsModels[insurerPaymentLinkIndex] }}</span
+                  >
+                  <template #tooltip>
+                    <span>{{ paymentTooltipEnum.PAYMENT_LIST_IPL }}</span>
+                  </template>
+                </x-tooltip>
+                <x-field class="w-full">
+                  <span v-if="isFieldReadonly">
+                    {{ paymentMethodsModels[insurerPaymentLinkIndex] }}
+                  </span>
+                  <x-input
+                    v-if="!isFieldReadonly"
+                    class="w-full"
+                    :class="{
+                      'custom-select-error':
+                        paymentMethodsForm.errors.insurerPaymentLink,
+                    }"
+                    placeholder="Enter valid url e.g: https://imcrm.alfred.ae/login"
+                    v-model="paymentMethodsForm.insurerPaymentLink"
+                    :disabled="isMasterPaymentPaid"
+                    @input="validateInsurerPaymentLink"
+                  />
+                  <p
+                    v-if="paymentMethodsForm.errors.insurerPaymentLink"
+                    class="text-sm text-red-500 dark:text-red-400 mt-1"
+                  >
+                    {{ paymentMethodsForm.errors.insurerPaymentLink }}
+                  </p>
                 </x-field>
               </div>
             </div>
@@ -5836,12 +6268,12 @@ onBeforeMount(() => {
                     <div class="w-1/5 px-2 mb-2">
                       <x-tooltip v-if="!readOnlyPayments[count]">
                         <Dropzone
-                          :id="paymentProofDocument.id"
+                          :id="paymentProofDocument?.id"
                           :multiple="true"
                           :customDisplay="true"
-                          :accept="paymentProofDocument.accepted_files"
-                          :max-files="paymentProofDocument.max_files"
-                          :max-size="paymentProofDocument.max_size"
+                          :accept="paymentProofDocument?.accepted_files"
+                          :max-files="paymentProofDocument?.max_files"
+                          :max-size="paymentProofDocument?.max_size"
                           :loading="documentForm.processing"
                           @change="
                             uploadDocument(paymentProofDocument, $event, count)
@@ -5881,6 +6313,7 @@ onBeforeMount(() => {
                                 fileData.doc_name,
                                 count,
                                 fileData.id,
+                                fileData.doc_uuid,
                               )
                             "
                             v-if="!readOnlyPayments[count]"
@@ -6150,6 +6583,7 @@ onBeforeMount(() => {
                             fileData.doc_name,
                             splitPaymentNo,
                             fileData.id,
+                            fileData.doc_uuid,
                           )
                         "
                         v-if="!readOnlyPayments[splitPaymentNo]"
@@ -6286,7 +6720,13 @@ onBeforeMount(() => {
             </template>
             <template v-else>
               <div class="w-full md:col-span-4 flex justify-end">
-                <div v-if="paymentMethodsForm.status == 'edit'" class="mr-4">
+                <div
+                  v-if="
+                    paymentMethodsForm.status == 'edit' &&
+                    insurerPaymentLinkIndex < 0
+                  "
+                  class="mr-4"
+                >
                   <x-button
                     @click="createPaymentModal = !createPaymentModal"
                     tabindex="0"
@@ -6297,8 +6737,9 @@ onBeforeMount(() => {
                 </div>
                 <div
                   v-if="
-                    paymentMethodsForm.status == 'create' ||
-                    paymentMethodsForm.status == 'edit'
+                    insurerPaymentLinkIndex < 0 &&
+                    (paymentMethodsForm.status == 'create' ||
+                      paymentMethodsForm.status == 'edit')
                   "
                 >
                   <x-button
@@ -6315,6 +6756,24 @@ onBeforeMount(() => {
                     }}
                   </x-button>
                 </div>
+                <template
+                  v-if="
+                    paymentMethodsModels[insurerPaymentLinkIndex] ===
+                      page.props.paymentMethodsEnum?.InsurerPaymentLink &&
+                    can(permissionEnum.INSURER_PAYMENT_LINK)
+                  "
+                >
+                  <InsurerPaymentLink
+                    ref="insurerPaymentComponent"
+                    :modelType="props.quoteType"
+                    :insurerPaymentLinkIndex="insurerPaymentLinkIndex"
+                    :paymentForm="paymentMethodsForm"
+                    :payments="payments"
+                    @updateOnParent="
+                      (e, f, g) => updateFromInsurerPaymentLink(e, f, g)
+                    "
+                  />
+                </template>
               </div>
             </template>
 
@@ -6780,6 +7239,30 @@ onBeforeMount(() => {
                 @click="voidPayment"
               >
                 <span>Confirm</span>
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+        <x-modal
+          v-model="deletePaymentModelPopup"
+          size="lg"
+          title="Delete Payment"
+          show-close
+          backdrop
+        >
+          <x-form :auto-focus="false">
+            <div class="text-lg text-center">
+              <span> Are you sure to Delete this payment?</span>
+            </div>
+            <div class="mt-2 text-center">
+              <x-button
+                size="sm"
+                color="orange"
+                class="mt-4 text-center"
+                :loading="deletePaymentProcess"
+                @click="deletePayment"
+              >
+                <span>Delete</span>
               </x-button>
             </div>
           </x-form>
