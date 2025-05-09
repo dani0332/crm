@@ -259,7 +259,7 @@ const formatAuditChanges = log => {
   <!-- Audit Logs Section -->
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-semibold">Audit Logs</h3>
+      <h3 class="text-lg font-semibold">Audit History</h3>
       <x-button
         v-if="!showAuditLogs"
         size="sm"
@@ -301,7 +301,7 @@ const formatAuditChanges = log => {
               d="M6 18L18 6M6 6l12 12"
             />
           </svg>
-          Hide Audit Logs
+          Hide Audit History
         </div>
       </x-button>
     </div>
@@ -351,234 +351,253 @@ const formatAuditChanges = log => {
         <p>No audit logs found for this configuration.</p>
       </div>
 
-      <div v-else class="space-y-4 mt-2">
+      <div v-else class="relative timeline-container mt-6">
+        <!-- Timeline vertical line -->
+        <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+
+        <!-- Timeline entries -->
         <div
           v-for="(log, index) in auditLogs"
           :key="index"
-          class="mb-4 border rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md"
+          class="timeline-entry mb-8 pl-20 relative"
         >
+          <!-- Timeline dot with icon -->
           <div
-            class="bg-gray-50 p-3 border-b flex justify-between items-center"
+            :class="[
+              'absolute left-6 top-2 w-5 h-5 rounded-full border-4 z-10 flex items-center justify-center',
+              log.event === 'created'
+                ? 'border-green-400 bg-green-100'
+                : log.event === 'updated'
+                  ? 'border-blue-400 bg-blue-100'
+                  : log.event === 'deleted'
+                    ? 'border-red-400 bg-red-100'
+                    : log.event === 'sync'
+                      ? 'border-purple-400 bg-purple-100'
+                      : 'border-gray-400 bg-gray-100',
+            ]"
+          ></div>
+
+          <!-- Timeline card -->
+          <div
+            class="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200"
           >
-            <div class="flex items-center">
-              <span
-                class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-medium mr-2"
-              >
-                {{ log.name ? log.name.charAt(0) : 'S' }}
-              </span>
-              <div>
-                <div class="font-medium">{{ log.name || 'System' }}</div>
-                <div class="text-xs text-gray-500">
-                  {{ dateFormat(log.created_at) }}
+            <!-- Card header -->
+            <div class="p-4 border-b flex justify-between items-center">
+              <div class="flex items-center">
+                <div
+                  class="w-9 h-9 rounded-full flex items-center justify-center text-white mr-3"
+                  :class="[
+                    log.event === 'created'
+                      ? 'bg-green-500'
+                      : log.event === 'updated'
+                        ? 'bg-blue-500'
+                        : log.event === 'deleted'
+                          ? 'bg-red-500'
+                          : log.event === 'sync'
+                            ? 'bg-purple-500'
+                            : 'bg-gray-500',
+                  ]"
+                >
+                  <svg
+                    v-if="log.event === 'created'"
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  <svg
+                    v-else-if="log.event === 'updated'"
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  <svg
+                    v-else-if="log.event === 'deleted'"
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  <svg
+                    v-else-if="log.event === 'sync'"
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                    />
+                  </svg>
+                  <template v-else>
+                    {{ log.name ? log.name.charAt(0) : 'S' }}
+                  </template>
+                </div>
+                <div>
+                  <div class="font-medium flex items-center">
+                    {{ log.name || 'System' }}
+                    <span
+                      :class="[
+                        'ml-2 px-2 py-0.5 text-xs font-medium rounded-full',
+                        log.event === 'created'
+                          ? 'bg-green-100 text-green-800'
+                          : log.event === 'updated'
+                            ? 'bg-blue-100 text-blue-800'
+                            : log.event === 'deleted'
+                              ? 'bg-red-100 text-red-800'
+                              : log.event === 'sync'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-gray-100 text-gray-800',
+                      ]"
+                    >
+                      {{
+                        log.event.charAt(0).toUpperCase() + log.event.slice(1)
+                      }}
+                    </span>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-1">
+                    {{ dateFormat(log.created_at) }}
+                  </div>
                 </div>
               </div>
             </div>
-            <div>
-              <span
-                :class="[
-                  'px-3 py-1 text-xs font-medium rounded-full flex items-center',
-                  log.event === 'created'
-                    ? 'bg-green-100 text-green-800'
-                    : log.event === 'updated'
-                      ? 'bg-blue-100 text-blue-800'
-                      : log.event === 'deleted'
-                        ? 'bg-red-100 text-red-800'
-                        : log.event === 'sync'
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-gray-100 text-gray-800',
-                ]"
+
+            <!-- Card content -->
+            <div class="p-4">
+              <div
+                v-if="formatAuditChanges(log).length === 0"
+                class="text-gray-500 italic text-center py-2"
               >
-                <svg
-                  v-if="log.event === 'created'"
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3 w-3 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                <svg
-                  v-else-if="log.event === 'updated'"
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3 w-3 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                <svg
-                  v-else-if="log.event === 'deleted'"
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3 w-3 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-                <svg
-                  v-else-if="log.event === 'sync'"
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-3 w-3 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                  />
-                </svg>
-                {{ log.event.charAt(0).toUpperCase() + log.event.slice(1) }}
-              </span>
-            </div>
-          </div>
+                No changes detected.
+              </div>
 
-          <div class="p-4">
-            <div
-              v-if="formatAuditChanges(log).length === 0"
-              class="text-gray-500 italic text-center py-2"
-            >
-              No changes detected.
-            </div>
+              <div v-else>
+                <div
+                  v-for="(change, changeIndex) in formatAuditChanges(log)"
+                  :key="changeIndex"
+                  class="mb-3 last:mb-0"
+                >
+                  <div class="font-medium text-gray-700 mb-1">
+                    {{ change.field }}
+                  </div>
 
-            <div v-else class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="border-b text-left">
-                    <th class="py-2 px-3 font-medium text-gray-600 w-1/5">
-                      Field
-                    </th>
-                    <th
-                      v-if="!log.relation_changes"
-                      class="py-2 px-3 font-medium text-gray-600 w-2/5"
-                    >
-                      Old Value
-                    </th>
-                    <th
-                      v-if="!log.relation_changes"
-                      class="py-2 px-3 font-medium text-gray-600 w-2/5"
-                    >
-                      New Value
-                    </th>
-                    <th
-                      v-if="log.relation_changes"
-                      class="py-2 px-3 font-medium text-gray-600 w-1/5"
-                    >
-                      Action
-                    </th>
-                    <th
-                      v-if="log.relation_changes"
-                      class="py-2 px-3 font-medium text-gray-600 w-3/5"
-                    >
-                      Value
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(change, changeIndex) in formatAuditChanges(log)"
-                    :key="changeIndex"
-                    class="border-b last:border-0 hover:bg-gray-50"
+                  <!-- Relation changes (e.g., users) -->
+                  <div
+                    v-if="change.action"
+                    class="ml-2 p-2 bg-gray-50 rounded-md"
                   >
-                    <td class="py-3 px-3 font-medium">{{ change.field }}</td>
+                    <div class="flex items-center">
+                      <span
+                        :class="[
+                          'flex items-center px-2 py-1 text-xs font-medium rounded-full mr-2',
+                          change.action === 'Added'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800',
+                        ]"
+                      >
+                        <svg
+                          v-if="change.action === 'Added'"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-3 w-3 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        <svg
+                          v-else
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-3 w-3 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                        {{ change.action }}
+                      </span>
+                      <span class="text-sm">{{ change.value }}</span>
+                    </div>
+                  </div>
 
-                    <!-- Regular changes (old/new values) -->
-                    <template v-if="!change.action">
-                      <td class="py-3 px-3">
-                        <div
-                          v-if="
-                            change.oldValue !== null &&
-                            change.oldValue !== undefined
-                          "
-                          class="inline-flex items-center"
-                        >
-                          <span>{{ change.oldValue }}</span>
-                        </div>
-                        <span v-else class="text-gray-400 italic">Empty</span>
-                      </td>
-                      <td class="py-3 px-3">
-                        <div
-                          v-if="
-                            change.newValue !== null &&
-                            change.newValue !== undefined
-                          "
-                          class="inline-flex items-center"
-                        >
-                          <span>{{ change.newValue }}</span>
-                        </div>
-                        <span v-else class="text-gray-400 italic">Empty</span>
-                      </td>
-                    </template>
+                  <!-- Regular changes (old/new values) -->
+                  <div v-else class="ml-2 grid grid-cols-2 gap-4">
+                    <div class="p-2 bg-gray-50 rounded-md">
+                      <div class="text-xs text-gray-500 mb-1">Previous</div>
+                      <div
+                        v-if="
+                          change.oldValue !== null &&
+                          change.oldValue !== undefined
+                        "
+                        class="text-sm"
+                      >
+                        {{ change.oldValue }}
+                      </div>
+                      <div v-else class="text-sm text-gray-400 italic">
+                        Empty
+                      </div>
+                    </div>
 
-                    <!-- Relation changes (e.g., users) -->
-                    <template v-else>
-                      <td class="py-3 px-3">
-                        <span
-                          :class="[
-                            'px-2 py-1 text-xs font-medium rounded-full inline-flex items-center',
-                            change.action === 'Added'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800',
-                          ]"
-                        >
-                          <svg
-                            v-if="change.action === 'Added'"
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-3 w-3 mr-1"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                          <svg
-                            v-else
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-3 w-3 mr-1"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                          {{ change.action }}
-                        </span>
-                      </td>
-                      <td class="py-3 px-3 break-words">{{ change.value }}</td>
-                    </template>
-                  </tr>
-                </tbody>
-              </table>
+                    <div
+                      class="p-2 bg-blue-50 rounded-md border-l-4 border-blue-300"
+                    >
+                      <div class="text-xs text-blue-500 mb-1">New</div>
+                      <div
+                        v-if="
+                          change.newValue !== null &&
+                          change.newValue !== undefined
+                        "
+                        class="text-sm"
+                      >
+                        {{ change.newValue }}
+                      </div>
+                      <div v-else class="text-sm text-gray-400 italic">
+                        Empty
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -586,3 +605,32 @@ const formatAuditChanges = log => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.timeline-container {
+  padding-bottom: 1rem;
+}
+
+.timeline-entry {
+  transform: translateX(0);
+  transition: transform 0.2s ease-in-out;
+}
+
+.timeline-entry:hover {
+  transform: translateX(4px);
+}
+
+@media (max-width: 640px) {
+  .timeline-entry {
+    padding-left: 3rem;
+  }
+
+  .absolute.left-8 {
+    left: 1.25rem;
+  }
+
+  .absolute.left-6 {
+    left: 1rem;
+  }
+}
+</style>
