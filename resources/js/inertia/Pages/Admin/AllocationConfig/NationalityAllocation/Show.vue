@@ -505,56 +505,61 @@ const formatAuditChanges = log => {
                   class="mb-2 last:mb-0"
                 >
                   <!-- Relation changes (e.g., users) -->
-                  <div
-                    v-if="change.action"
-                    class="ml-1 p-1.5 bg-gray-50 rounded-md text-xs"
-                  >
-                    <div class="flex flex-col">
-                      <span class="text-xs font-medium text-gray-700 mb-1">{{
-                        change.field
-                      }}</span>
-                      <div class="flex items-center">
-                        <span
-                          :class="[
-                            'flex items-center px-1.5 py-0.5 text-xs font-medium rounded-full mr-2',
-                            change.action === 'Added'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800',
-                          ]"
-                        >
-                          <svg
-                            v-if="change.action === 'Added'"
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-2.5 w-2.5 mr-0.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                  <div v-if="change.action" class="ml-1">
+                    <div
+                      class="flex items-center rounded-md border border-gray-200 overflow-hidden text-xs"
+                    >
+                      <!-- Field label -->
+                      <div
+                        class="w-28 px-2 py-1.5 bg-gray-100 font-medium border-r border-gray-200 text-gray-700 truncate"
+                      >
+                        {{ change.field }}
+                      </div>
+
+                      <div class="flex-1 p-1.5 bg-gray-50">
+                        <div class="flex items-center">
+                          <span
+                            :class="[
+                              'flex items-center px-1.5 py-0.5 text-xs font-medium rounded-full mr-2',
+                              change.action === 'Added'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800',
+                            ]"
                           >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                          <svg
-                            v-else
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-2.5 w-2.5 mr-0.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                          {{ change.action }}
-                        </span>
-                        <span>{{ change.value }}</span>
+                            <svg
+                              v-if="change.action === 'Added'"
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="h-2.5 w-2.5 mr-0.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                            <svg
+                              v-else
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="h-2.5 w-2.5 mr-0.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                            {{ change.action }}
+                          </span>
+                          <span>{{ change.value }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -566,7 +571,7 @@ const formatAuditChanges = log => {
                     >
                       <!-- Field label -->
                       <div
-                        class="px-2 py-1.5 bg-gray-100 font-medium border-r border-gray-200 text-gray-700"
+                        class="w-28 px-2 py-1.5 bg-gray-100 font-medium border-r border-gray-200 text-gray-700 truncate"
                       >
                         {{ change.field }}
                       </div>
