@@ -21,15 +21,15 @@ class ActivityController extends Controller
      */
     public function index(Request $request)
     {
-         // Validate date inputs upfront with proper error handling
-         $validator = Validator::make($request->all(), [
+        // Validate date inputs upfront with proper error handling
+        $validator = Validator::make($request->all(), [
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date',
         ]);
 
         // Validate all fields containing "date" in their name
         foreach ($request->all() as $key => $value) {
-            if (is_string($key) && str_contains(strtolower($key), 'date') && !in_array($key, ['date_from', 'date_to'])) {
+            if (is_string($key) && str_contains(strtolower($key), 'date') && ! in_array($key, ['date_from', 'date_to'])) {
                 $validator->addRules([$key => 'nullable|date']);
             }
         }
@@ -37,16 +37,16 @@ class ActivityController extends Controller
         $advisors = [];
         $activities = [];
         $totalActivities = 0;
-        
+
         // Only fetch data if validation passes
-        if (!$validator->fails()) {
+        if (! $validator->fails()) {
             $advisorsIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
             $advisors = DB::table('users')->whereIn('id', $advisorsIds)->get();
             $activities = ActivityRepository::getData();
             $totalActivities = ActivityRepository::countActivities();
         }
-        
-        $cannotUseAssignee = !Auth::user()->can(PermissionsEnum::ActivitiesAssignedToView);
+
+        $cannotUseAssignee = ! Auth::user()->can(PermissionsEnum::ActivitiesAssignedToView);
 
         return inertia('Activities/Index', [
             'activities' => $activities,
