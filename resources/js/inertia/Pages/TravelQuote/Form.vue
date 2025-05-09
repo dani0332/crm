@@ -182,20 +182,6 @@ function onSubmit(isValid) {
     },
   };
 
-  quoteForm.transform(data => {
-    const transformedData = { ...data };
-    if (
-      transformedData.region_cover_for_id === 'undefined' ||
-      transformedData.region_cover_for_id === undefined ||
-      transformedData.region_cover_for_id === null ||
-      transformedData.region_cover_for_id === 0 ||
-      transformedData.region_cover_for_id === '0'
-    ) {
-      delete transformedData.region_cover_for_id;
-    }
-    return transformedData;
-  });
-
   quoteForm.submit(method, url, options);
 }
 
