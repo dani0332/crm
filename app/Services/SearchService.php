@@ -382,15 +382,18 @@ class SearchService extends BaseService
             if ($request->has('company_name')) {
                 $query->join('insured', 'personal_quotes.insured_id', 'insured.id');
 
-                // Use FULLTEXT search
-                $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->company_name.'"']);
+                // Use FULLTEXT search with + operator for each word
+                $booleanSearchTerm = $this->prepareFulltextSearchTerm($request->company_name);
 
+                $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', [$booleanSearchTerm]);
             }
 
             // Search by policy number
             if ($request->has('policy_number') && ! isset($request->code)) {
-                // Use FULLTEXT search
-                $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->policy_number.'"']);
+                // Use FULLTEXT search with + operator for each word
+                $booleanSearchTerm = $this->prepareFulltextSearchTerm($request->policy_number);
+
+                $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', [$booleanSearchTerm]);
             }
 
             // Search by mobile number (exact match)
@@ -490,9 +493,10 @@ class SearchService extends BaseService
     {
         $query->join('customer', 'personal_quotes.customer_id', 'customer.id');
 
-        // Use FULLTEXT search
-        $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->insured_name.'"']);
+        // Use FULLTEXT search with + operator for each word
+        $booleanSearchTerm = $this->prepareFulltextSearchTerm($request->insured_name);
 
+        $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', [$booleanSearchTerm]);
     }
 
     /**
@@ -532,14 +536,17 @@ class SearchService extends BaseService
 
         // Apply first/last name filters
         if ($request->has('member_first_name')) {
-            // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->member_first_name.'"']);
+            // Use FULLTEXT search with + operator for each word
+            $booleanSearchTerm = $this->prepareFulltextSearchTerm($request->member_first_name);
+
+            $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', [$booleanSearchTerm]);
         }
 
         if ($request->has('member_last_name')) {
-            // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->member_last_name.'"']);
+            // Use FULLTEXT search with + operator for each word
+            $booleanSearchTerm = $this->prepareFulltextSearchTerm($request->member_last_name);
 
+            $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', [$booleanSearchTerm]);
         }
     }
 
@@ -629,5 +636,16 @@ class SearchService extends BaseService
                 $query->where('send_update_logs.insurer_commission_invoice_number', $request->insurer_commission_tax_invoice_number);
             }
         }
+    }
+
+    private function prepareFulltextSearchTerm($value)
+    {
+        $searchTerm = trim($value);
+        $searchWords = explode(' ', $searchTerm);
+        $booleanSearchTerm = implode(' ', array_map(function ($word) {
+            return '+'.trim($word);
+        }, $searchWords));
+
+        return $booleanSearchTerm;
     }
 }
