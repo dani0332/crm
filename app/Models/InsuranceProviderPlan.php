@@ -11,8 +11,10 @@ class InsuranceProviderPlan extends Model
 
     protected $table = 'insurance_provider_plans';
 
-    function scopeActive($query){
+    public function scopeActive($query)
+    {
         return $query->where('is_active', 1);
     }
+
     protected $guarded = [];
 }

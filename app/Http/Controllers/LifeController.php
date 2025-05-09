@@ -2,28 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\GenericRequestEnum;
-use App\Enums\PaymentGatewayIdEnum;
-use App\Enums\PermissionsEnum;
-use App\Enums\quoteStatusCode;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Http\Requests\StoreLifeRequest;
-use App\Services\CRUDService;
-use App\Services\DropdownSourceService;
-use App\Services\LookupService;
-use App\Services\QuoteDocumentService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use App\Http\Requests\LifeCardLoadMoreRequest;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Services\Life\LifeQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\Request;
 use Inertia\ResponseFactory;
-use Illuminate\Support\Facades\DB;
 
 class LifeController extends Controller
 {
@@ -49,7 +34,7 @@ class LifeController extends Controller
     public function index()
     {
         $data = $this->lifeQuoteService->getLifeQuoteData();
-        
+
         return inertia('LifeQuote/Index', $data);
     }
 
@@ -90,8 +75,7 @@ class LifeController extends Controller
         /* End - Temporarily adding for correcting historic data */
 
         $data = $this->lifeQuoteService->getShowData($uuid);
-        
-        
+
         return inertia('LifeQuote/Show', $data);
     }
 
@@ -142,28 +126,28 @@ class LifeController extends Controller
 
     public function lifePlanCreateQuote(Request $request)
     {
-      
+
         LoggerService::startQuoteLogging($request->quoteUID);
-        
+
         LoggerService::info('fn: lifePlanCreateQuoteLife - creating plan for life quote');
-        
+
         $request->validate([
             'quoteUID' => 'required',
             'formData' => 'required|array',
         ]);
 
         $model = $this->lifeQuoteService->lifePlanCreateQuote($request->quoteUID, $request->formData);
-        
+
         LoggerService::info('fn: lifePlanCreateQuoteLife - plan created for life', [
             'trace_id' => $request->quoteUID,
         ]);
-        
-        return $model; 
+
+        return $model;
     }
 
     public function lifePlanUpdate(Request $request): void
     {
-        
+
         $request->validate([
             'quoteUID' => 'required',
             'formData' => 'required|array',
@@ -175,19 +159,20 @@ class LifeController extends Controller
     public function lifePlanSelected(Request $request)
     {
         LoggerService::startQuoteLogging($request->quoteId);
-        
+
         LoggerService::info('fn: lifePlanSelected - selecting plan for life quote');
-        
+
         $request->validate([
             'planId' => 'required',
             'quoteId' => 'required',
-            'version' => 'required'
+            'version' => 'required',
         ]);
 
         $model = $this->lifeQuoteService->lifePlanSelected($request->quoteId, $request->planId, $request->version, $request?->saveQuote);
-        
+
         LoggerService::info('fn: lifePlanSelected -  Plan selected for life quote');
-        return $model; 
+
+        return $model;
 
     }
 

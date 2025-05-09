@@ -10,7 +10,7 @@ class LifeQuoteNoteService extends BaseService
     /**
      * Get the notes for a life quote.
      *
-     * @param PersonalQuote $quote The life quote.
+     * @param  PersonalQuote  $quote  The life quote.
      * @return \Illuminate\Pagination\LengthAwarePaginator
      */
     public function getNotes(PersonalQuote $quote)

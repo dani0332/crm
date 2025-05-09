@@ -76,13 +76,13 @@ class LifeQuoteRepository extends BaseRepository
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
 
         if (isset($response->quoteUID)) {
-            //todo: will remove this code once handled on Capi
+            // todo: will remove this code once handled on Capi
             $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
             $quote->lifeQuote()->update([
-                'height' => $quoteData['height'], 
-                'weight' => $quoteData['weight'], 
+                'height' => $quoteData['height'],
+                'weight' => $quoteData['weight'],
                 'bmi' => $quoteData['bmi'],
-                'age' => $quoteData['age']
+                'age' => $quoteData['age'],
             ]);
         }
 

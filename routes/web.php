@@ -216,7 +216,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('personal-quotes/life-plan-manual-create', [LifeController::class, 'lifePlanCreateQuote']);
         Route::post('personal-quotes/life-plan-update', [LifeController::class, 'lifePlanUpdate']);
         Route::post('personal-quotes/life-plan-selected', [LifeController::class, 'lifePlanSelected']);
-        
+
         Route::post('personal-quotes/get-life-provider-plan', [LifeController::class, 'getLifeProviderPlan']);
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));

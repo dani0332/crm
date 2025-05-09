@@ -17,9 +17,9 @@ class LifeInsuranceTenureSeeder extends Seeder
 
         // MARK SOME RECORDS AS DELETED
         LifeInsuranceTenure::whereIn('code', ['Term Insurance', 'Whole of Life Insurance', 'ENDOWMENT'])
-                            ->update(['is_deleted' => 1, 'is_active' => 0]);
+            ->update(['is_deleted' => 1, 'is_active' => 0]);
 
-        // INSERT NEW RECORD                            
+        // INSERT NEW RECORD
         LifeInsuranceTenure::firstOrCreate(
             ['code' => 'Life'],
             [

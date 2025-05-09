@@ -197,7 +197,7 @@ class PersonalQuotesExport
                     'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
-            ];
+                ];
             case QuoteTypes::HOME->value:
                 return [
                     'REF-ID',

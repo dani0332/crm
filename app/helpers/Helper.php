@@ -196,14 +196,14 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
         })
-        ->when($modelType == LifeQuote::class, function($query) {
+        ->when($modelType == LifeQuote::class, function ($query) {
             $query->with([
-                'nationality' => function($subquery) {
+                'nationality' => function ($subquery) {
                     $subquery->select('id', 'text');
                 },
                 'insuranceTenure' => function ($subquery) {
-                $subquery->select('id', 'text');
-            }]);
+                    $subquery->select('id', 'text');
+                }]);
         });
 
     $modelQuery = $modelType::when($modelType == BusinessQuote::class, function ($query) {
@@ -219,14 +219,14 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         ->where(function ($query) use ($request, $modelType) {
             getCardViewRequestFilters($query, $request, $modelType);
         })
-        ->when($modelType == LifeQuote::class, function($query) {
+        ->when($modelType == LifeQuote::class, function ($query) {
             $query->with([
-                'nationality' => function($subquery) {
+                'nationality' => function ($subquery) {
                     $subquery->select('id', 'text');
                 },
                 'insuranceTenure' => function ($subquery) {
-                $subquery->select('id', 'text');
-            }]);
+                    $subquery->select('id', 'text');
+                }]);
         });
 
     // Reminder: previous quote id is not available in personal quote
@@ -261,7 +261,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('price_with_vat');
         }
-        if($modelType == LifeQuote::class) {
+        if ($modelType == LifeQuote::class) {
             $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->where('advisor_id', auth()->user()->id)->sum('sum_insured_value');
         }
         $result['leads_list'] = $modelQuery->paginate(10);
@@ -275,7 +275,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         } else {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('price_with_vat');
         }
-        if($modelType == LifeQuote::class) {
+        if ($modelType == LifeQuote::class) {
             $result['total_sum_insured_value'] = $modelQueryWithOutAdvisor->sum('sum_insured_value');
         }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);

@@ -196,7 +196,7 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->morphMany(QuoteNote::class, 'quote_noteable');
     }
-    
+
     public function allowedColumns()
     {
         return $this->allowedColumns;

@@ -13,13 +13,12 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\DocumentType;
-use App\Repositories\UserRepository;
 use App\Models\ApplicationStorage;
 use App\Models\CurrencyType;
+use App\Models\DocumentType;
 use App\Models\InsuranceProviderPlan;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifeNumberOfYears;
@@ -28,14 +27,16 @@ use App\Models\LifeRider;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
+use App\Repositories\UserRepository;
 use App\Services\BaseService;
 use App\Services\CapiRequestService;
-use App\Services\QuoteDocumentService;
-use App\Services\SplitPaymentService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\KenService;
+use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Services\Reports\RenewalBatchReportService;
+use App\Services\SplitPaymentService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteLobs;
@@ -43,7 +44,6 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
-use App\Services\Logger\LoggerService;
 
 class LifeQuoteService extends BaseService
 {
@@ -53,7 +53,6 @@ class LifeQuoteService extends BaseService
     use GenericQueriesAllLobs;
     use PersonalQuoteLobs;
     use RolePermissionConditions;
-
 
     public function getLifeQuoteData($isExportRequest = false, $isTotalLeadCountRequest = false)
     {
@@ -91,7 +90,7 @@ class LifeQuoteService extends BaseService
                     'insuranceTenure',
                     'numberOfYears',
                 ]);
-            }
+            },
         ])
             ->when(auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->user()->id);
@@ -159,10 +158,10 @@ class LifeQuoteService extends BaseService
 
         $statusOrderMap = array_flip($quoteStatusTexts);
 
-        usort($quoteStatuses, function($a, $b) use ($statusOrderMap) {
+        usort($quoteStatuses, function ($a, $b) use ($statusOrderMap) {
             $posA = isset($statusOrderMap[$a['text']]) ? $statusOrderMap[$a['text']] : PHP_INT_MAX;
             $posB = isset($statusOrderMap[$b['text']]) ? $statusOrderMap[$b['text']] : PHP_INT_MAX;
-        
+
             return $posA <=> $posB;
         });
 
@@ -576,9 +575,9 @@ class LifeQuoteService extends BaseService
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
-            'getLatestRating' => false, 
+            'getLatestRating' => false,
             'lang' => 'en',
-            'callSource' => 'imcrm'
+            'callSource' => 'imcrm',
         ];
 
         $client = new \GuzzleHttp\Client;
@@ -603,6 +602,7 @@ class LifeQuoteService extends BaseService
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
+
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
@@ -619,6 +619,7 @@ class LifeQuoteService extends BaseService
             } else {
                 $responseBodyAsString = 'No Plans were found for the selected quote.';
             }
+
             return $responseBodyAsString;
         }
     }
@@ -635,43 +636,47 @@ class LifeQuoteService extends BaseService
             'update' => $data['update'],
             'isVariant' => $data['isVariant'],
             'isUW' => $data['isUW'],
-            'plans' => [$data]
+            'plans' => [$data],
         ];
-       
+
         LoggerService::info('fn: lifePlanCreateQuote', context: [
             'data' => $reqData,
-            'url' => '/save-manual-life-quote-plan'
+            'url' => '/save-manual-life-quote-plan',
         ]);
-        
+
         $response = app(abstract: KenService::class)->request('/save-manual-life-quote-plan', 'post', $reqData);
-        return $response; 
+
+        return $response;
     }
 
     public function getLifeProviderPlan($data)
     {
         LoggerService::info('fn: lifePlanCreateQuote', context: [
-            'data' => $data
+            'data' => $data,
         ]);
 
         $response = app(abstract: KenService::class)->request('/fetch-life-provider-plan', 'post', $data);
-        return $response; 
+
+        return $response;
     }
 
     /* This function will select the Plan details in the Quote */
-    function lifePlanSelected(String $quoteId, Int $planId, Int $version = 0, $saveQuote = false){
+    public function lifePlanSelected(string $quoteId, int $planId, int $version = 0, $saveQuote = false)
+    {
         // Creating Form Data
         $formData = [
             'quoteUID' => $quoteId,
-            'planId' => $planId, 
-            'version' => $version, 
+            'planId' => $planId,
+            'version' => $version,
             'quoteTypeId' => QuoteTypes::getIdFromValue('Life'),
-        ]; 
-        
-        if($saveQuote){
+        ];
+
+        if ($saveQuote) {
             $formData['saveQuote'] = true;
         }
-       $request = app(KenService::class)->request('/process-life-quote-plan', 'post',$formData); 
-       return $request;
+        $request = app(KenService::class)->request('/process-life-quote-plan', 'post', $formData);
+
+        return $request;
     }
 
     private function prepareActivitiesData($activities)

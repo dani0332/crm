@@ -6,6 +6,7 @@ use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
 use App\Models\InsurerRequestResponse;
 use App\Models\LifeInsurerRequestResponses;
+use App\Models\LifeQuote;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
 use App\Repositories\AuditRepository;
@@ -13,8 +14,7 @@ use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\LifeQuote;
-use Illuminate\Support\Facades\Validator;
+
 class AuditableController extends Controller
 {
     use GenericQueriesAllLobs;
@@ -92,7 +92,6 @@ class AuditableController extends Controller
                 'auditableId' => $auditableId,
             ]);
 
-
             $quoteUID = $auditableType::where('id', $auditableId)->value('uuid');
 
             if (! $quoteUID) {
@@ -152,8 +151,8 @@ class AuditableController extends Controller
                 return HomeInsurerRequestResponses::with('insuranceProvider')
                     ->whereNotIn('call_type', ['oAuth', 'login']);
             case LifeQuote::class:
-                        return LifeInsurerRequestResponses::with('insuranceProvider')
-                            ->whereNotIn('call_type', ['oAuth', 'login']);
+                return LifeInsurerRequestResponses::with('insuranceProvider')
+                    ->whereNotIn('call_type', ['oAuth', 'login']);
             default:
                 return InsurerRequestResponse::with('insuranceProvider');
         }
