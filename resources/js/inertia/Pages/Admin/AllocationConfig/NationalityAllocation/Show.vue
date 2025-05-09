@@ -47,6 +47,22 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
         </div>
 
         <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">SIC</dt>
+          <dd>
+            <span
+              :class="[
+                'px-2 py-1 text-xs font-medium rounded-full',
+                configuration.is_sic_enabled
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-800',
+              ]"
+            >
+              {{ configuration.is_sic_enabled ? 'Enabled' : 'Disabled' }}
+            </span>
+          </dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Created By</dt>
           <dd>{{ configuration.created_by?.name }}</dd>
         </div>

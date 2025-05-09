@@ -68,6 +68,7 @@ class NationalityAllocationConfigurationController extends Controller
             'nationality_id' => 'required|exists:nationality,id',
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
+            'is_sic_enabled' => 'boolean',
         ]);
 
         $existingConfig = NationalityAllocationConfiguration::where('quote_type_id', $validated['quote_type_id'])
@@ -118,6 +119,7 @@ class NationalityAllocationConfigurationController extends Controller
             'nationality_id' => 'required|exists:nationality,id',
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
+            'is_sic_enabled' => 'boolean',
         ]);
 
         $existingConfig = NationalityAllocationConfiguration::where('quote_type_id', $validated['quote_type_id'])
@@ -134,6 +136,7 @@ class NationalityAllocationConfigurationController extends Controller
         $nationalityAllocationConfig->update([
             'quote_type_id' => $validated['quote_type_id'],
             'nationality_id' => $validated['nationality_id'],
+            'is_sic_enabled' => $validated['is_sic_enabled'] ?? false,
             'updated_by' => Auth::id(),
         ]);
 

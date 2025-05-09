@@ -13,6 +13,11 @@ class NationalityAllocationConfiguration extends Model
         'nationality_id',
         'created_by',
         'updated_by',
+        'is_sic_enabled',
+    ];
+
+    protected $casts = [
+        'is_sic_enabled' => 'boolean',
     ];
 
     public function users(): BelongsToMany

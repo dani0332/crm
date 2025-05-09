@@ -17,6 +17,7 @@ const configForm = useForm({
   quote_type_id: props.configuration?.quote_type_id ?? '',
   nationality_id: props.configuration?.nationality_id ?? '',
   user_ids: props.configuration?.users?.map(user => user.id) ?? [],
+  is_sic_enabled: props.configuration?.is_sic_enabled ?? false,
 });
 
 const nationalityOptions = computed(() => {
@@ -123,6 +124,19 @@ function onSubmit(isValid) {
             />
           </template>
         </x-select>
+      </x-field>
+
+      <x-field label="SIC" class="sm:col-span-2">
+        <div class="flex items-center space-x-2">
+          <x-toggle
+            v-model="configForm.is_sic_enabled"
+            color="success"
+            size="lg"
+          />
+          <span class="text-sm text-gray-600">
+            {{ configForm.is_sic_enabled ? 'Enabled' : 'Disabled' }}
+          </span>
+        </div>
       </x-field>
     </div>
     <x-divider class="my-4" />

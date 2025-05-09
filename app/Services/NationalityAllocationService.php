@@ -28,18 +28,17 @@ class NationalityAllocationService
 
     public function createConfiguration(array $data, int $userId): NationalityAllocationConfiguration
     {
-        $config = NationalityAllocationConfiguration::create([
+        $configuration = NationalityAllocationConfiguration::create([
             'quote_type_id' => $data['quote_type_id'],
             'nationality_id' => $data['nationality_id'],
+            'is_sic_enabled' => $data['is_sic_enabled'] ?? false,
             'created_by' => $userId,
             'updated_by' => $userId,
         ]);
 
-        if (isset($data['user_ids']) && is_array($data['user_ids'])) {
-            $config->users()->sync($data['user_ids']);
-        }
+        $configuration->users()->attach($data['user_ids']);
 
-        return $config;
+        return $configuration;
     }
 
     public function deleteConfiguration(int $configId): bool

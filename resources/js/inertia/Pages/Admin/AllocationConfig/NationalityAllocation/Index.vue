@@ -37,6 +37,7 @@ const tableHeader = [
   { text: 'Quote Type', value: 'quote_type.text' },
   { text: 'Nationality', value: 'nationality.text' },
   { text: 'No. of Assigned Users', value: 'users' },
+  { text: 'SIC', value: 'is_sic_enabled' },
   { text: 'Created Date', value: 'created_at' },
   { text: 'Actions', value: 'actions' },
 ];
@@ -193,10 +194,27 @@ function onConfirmDelete() {
       </div>
     </template>
 
+    <template #item-is_sic_enabled="{ is_sic_enabled }">
+      <div>
+        <span
+          :class="[
+            'px-2 py-1 text-xs font-medium rounded-full',
+            is_sic_enabled
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800',
+          ]"
+        >
+          {{ is_sic_enabled ? 'Enabled' : 'Disabled' }}
+        </span>
+      </div>
+    </template>
+
     <template #item-actions="{ id }">
       <div class="flex gap-1.5 justify-end">
         <Link :href="route('admin.nationality-allocation-config.show', id)">
-          <x-button tag="div" size="xs" outlined> View </x-button>
+          <x-button tag="div" size="xs" outlined color="secondary">
+            View
+          </x-button>
         </Link>
         <Link :href="route('admin.nationality-allocation-config.edit', id)">
           <x-button color="primary" size="xs" outlined> Edit </x-button>
