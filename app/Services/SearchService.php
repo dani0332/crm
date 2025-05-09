@@ -387,7 +387,7 @@ class SearchService extends BaseService
 
                 if (! empty($companyNameFullTextIndexExists)) {
                     // Use FULLTEXT search
-                    $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->company_name.'*']);
+                    $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->company_name.'"']);
                 } else {
                     // Fallback to LIKE search
                     $query->where(DB::raw('insured.company_name'), 'like', '%'.$request->company_name.'%');
@@ -401,11 +401,11 @@ class SearchService extends BaseService
             // Search by policy number
             if ($request->has('policy_number') && ! isset($request->code)) {
                 // Check if FULLTEXT index exists and use it for better performance
-                $companyNameFullTextIndexExists = DB::select("SHOW INDEX FROM personal_quotes WHERE Key_name = 'index_personal_quotes_policy_number_fulltext'");
+                $policyNameFullTextIndexExists = DB::select("SHOW INDEX FROM personal_quotes WHERE Key_name = 'index_personal_quotes_policy_number_fulltext'");
 
-                if (! empty($companyNameFullTextIndexExists)) {
+                if (! empty($policyNameFullTextIndexExists)) {
                     // Use FULLTEXT search
-                    $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->policy_number.'*']);
+                    $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->policy_number.'"']);
                 } else {
                     // Fallback to LIKE search
                     $query->where('personal_quotes.policy_number', 'like', '%'.$request->policy_number.'%');
@@ -518,7 +518,7 @@ class SearchService extends BaseService
 
         if (! empty($insuredFullNameFullTextIndexExists)) {
             // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insured_name.'*']);
+            $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->insured_name.'"']);
         } else {
             // Fallback to LIKE search
             $query->where(DB::raw("CONCAT(customer.insured_first_name, ' ', customer.insured_last_name)"), 'like', '%'.$request->insured_name.'%');
@@ -569,7 +569,7 @@ class SearchService extends BaseService
 
             if (! empty($fullNameIndexExists)) {
                 // Use FULLTEXT search
-                $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_first_name.'*']);
+                $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->member_first_name.'"']);
             } else {
                 // Fallback to search
                 $query->where('customer_members.first_name', 'like', '%'.$request->member_first_name.'%');
@@ -584,7 +584,7 @@ class SearchService extends BaseService
 
             if (! empty($fullNameIndexExists)) {
                 // Use FULLTEXT search
-                $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_last_name.'*']);
+                $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->member_last_name.'"']);
             } else {
                 // Fallback to search
                 $query->where('customer_members.last_name', 'like', '%'.$request->member_last_name.'%');
