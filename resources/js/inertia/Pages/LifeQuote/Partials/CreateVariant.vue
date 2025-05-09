@@ -15,12 +15,6 @@ const notification = useNotifications('toast');
 
 const { isRequired } = useRules();
 
-// Custom rule to validate non-negative numbers
-const isNonNegative = (value) => {
-  if (value === null || value === undefined || value === '') return true;
-  return Number(value) >= 0 || 'Value cannot be negative';
-};
-
 const shown = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
@@ -274,6 +268,12 @@ onMounted(() => {
   }
 });
 
+// Add validation for non-negative numbers
+const isNonNegative = (value) => {
+  if (value === null || value === undefined || value === '') return true;
+  return parseFloat(value) >= 0 || 'Value must be non-negative';
+};
+
 </script>
 
 <template>
@@ -363,13 +363,12 @@ onMounted(() => {
            <x-input
               v-model="createForm.policyTerm"
               placeholder="Enter Policy Term"
-              :rules="[isRequired, isNonNegative]"
+              :rules="[isRequired]"
               class="w-full"
               type="number"
               min="0"
               step="any"
               @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
-              @input="val => createForm.policyTerm = Math.max(0, Number(val) || 0)"
               />
         </div>
 
@@ -395,7 +394,6 @@ onMounted(() => {
               min="0"
               step="any"
               @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
-              @input="val => createForm.actualPremium = Math.max(0, Number(val) || 0)"
               :disabled="plan.isApi"
           />
         </div>
@@ -435,7 +433,6 @@ onMounted(() => {
             min="0" 
             step="any"
             @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
-            @input="val => rider.coverValue = Math.max(0, Number(val) || 0)"
             :disabled="!rider.active" 
             class="w-full h-10 p-2 rounded-md" 
             v-model="rider.coverValue" 
@@ -446,7 +443,6 @@ onMounted(() => {
             min="0" 
             step="any"
             @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
-            @input="val => rider.price = Math.max(0, Number(val) || 0)"
             class="w-full h-10 p-2 rounded-md" 
             :disabled="!rider.active || !props.plan.isManualPlan" 
             v-model="rider.price"

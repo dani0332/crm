@@ -93,9 +93,9 @@ const editForm = reactive({
   isUW: props.selectedPlan?.isUnderwritten ?? false,
   currency: props.selectedPlan.currency,
   paymentTerm: props.selectedPlan?.paymentTerm ?? null,
-  sumAssured: props.selectedPlan.sumInsured ?? 0, 
+  sumAssured: parseFloat(props.selectedPlan.sumInsured) ?? 0, 
   policyTerm: props.selectedPlan.policyTerm,
-  actualPremium: props.selectedPlan.actualPremium ?? 0,
+  actualPremium: parseFloat(props.selectedPlan.actualPremium) ?? 0,
   insurerQuoteNo: props.selectedPlan.insurerQuoteNo ?? null,
   isVariant: false,
   update: true,
@@ -116,8 +116,9 @@ const onSubmit = isValid => {
   if (!isValid) {
     return;
   }
+  editForm.actualPremium = parseFloat(editForm.actualPremium);
   extraAttr.loading = true;
-  
+
   // Ensure riders have numeric values by converting strings to floats and preventing negative values
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
