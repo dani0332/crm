@@ -22,6 +22,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
 use App\Services\PaymentLinkService;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
@@ -82,7 +83,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         try {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-            info('Starting payment creation process for Quote: '.$quoteModel->code);
+            LoggerService::info('Starting payment creation process for Quote: '.$quoteModel->code);
             $masterPayment = (object) $request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
@@ -108,8 +109,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_status_id' => $masterPaymentStatus,
                 'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'created_by' => $request->user()->id,
-                'updated_by' => $request->user()->id,
+                'created_by' => $request->user()->id ?? null,
+                'updated_by' => $request->user()->id ?? null,
                 'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
             ];
 
@@ -137,7 +138,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $paymentInformation['authorized_at'] = now();
             }
         } catch (Exception $exception) {
-            info('Error occurred during payment creation pre-processing: '.$exception->getMessage());
+            LoggerService::error('Error occurred during payment creation pre-processing: '.$exception->getMessage(), [], $exception);
 
             return ['status' => 'error', 'message' => $exception->getMessage()];
         }
@@ -145,7 +146,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         DB::beginTransaction();
         try {
             $payment = $quoteModel->payments()->create($paymentInformation);
-            info('Payment created with Code: '.$paymentInformation['code']);
+            LoggerService::info('Payment created with Code: '.$paymentInformation['code']);
 
             $quoteUUID = $quoteModel instanceof SendUpdateLog ? null : $quoteModel->uuid;
             // Add split payments start
@@ -166,12 +167,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->save();
             DB::commit();
 
-            info('Payment creation process completed successfully for Payment Code: '.$paymentInformation['code']);
+            LoggerService::info('Payment creation process completed successfully for Payment Code: '.$paymentInformation['code']);
 
             return ['status' => 'success', 'message' => 'Payment Added'];
         } catch (Exception $exception) {
             DB::rollBack(); // Rollback changes if any error occurred
-            info('Error occurred during payment creation: '.$exception->getMessage());
+            LoggerService::error('Error occurred during payment creation: '.$exception->getMessage(), [], $exception);
 
             return ['status' => 'error', 'message' => $exception->getMessage()];
         }
@@ -192,7 +193,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
                 'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
                 'credit_approval' => $masterPayment->credit_approval,
-                'updated_by' => $request->user()->id,
+                'updated_by' => $request->user()->id ?? null,
             ];
 
             if ($this->shouldUpdateParentPaymentMethod($payment, $masterPayment)) {
@@ -217,7 +218,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_methods_code' => $masterPayment->payment_methods,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
-                'updated_by' => $request->user()->id,
+                'updated_by' => $request->user()->id ?? null,
                 'payment_gateway_id' => ! empty($request->payment_gateway_id) ? $request->payment_gateway_id : null,
             ];
 
@@ -237,7 +238,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             $payment->update($paymentInformation);
             // Log payment update
-            info('Payment updated successfully for Payment Code: '.$request->paymentCode);
+            LoggerService::info('Payment updated successfully for Payment Code: '.$request->paymentCode);
 
             // Update split payments start
             if (! empty($request->trashedFilesModal)) {
@@ -273,7 +274,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $isPaymentLinkNotNull = collect($masterPayment->payment_splits)->filter(function ($split) {
             return isset($split['insurer_payment_link']) && $split['insurer_payment_link'] !== null;
         })->isNotEmpty();
-        $sendFTCEmail = $isInsurerPaymentLink && $isPaymentLinkNotNull;
+        $sendFTCEmail = $isInsurerPaymentLink && $isPaymentLinkNotNull && $request->sendFTCEmail;
         $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
         if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0) {
@@ -426,7 +427,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if (! $paymentSplitRecord) {
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
-                    $index == $insurerPaymentLinkIndex && $sendFTCEmail = $splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink && $splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link ? true : false;
+                    $index == $insurerPaymentLinkIndex && $sendFTCEmail = $splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink && $request->sendFTCEmail && $splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link ? true : false;
                     $paymentSplitRecord->update($splitPaymentInformation);
                 }
                 // add document references
