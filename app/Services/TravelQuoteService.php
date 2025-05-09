@@ -230,7 +230,7 @@ class TravelQuoteService extends BaseService
                 $join->on('cm.quote_id', '=', 'tqr.id')
                     ->where('cm.quote_type', '=', ltrim($model, '\\'));
             })
-            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'cm.first_name', 'cm.last_name', 'cm.dob', 'cm.nationality_id', 'cm.passport')
+            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'cm.gender', 'cm.first_name', 'cm.last_name', 'cm.dob', 'cm.nationality_id', 'cm.passport')
             ->where('tqr.id', $quoteRequestId)
             ->first();
 
