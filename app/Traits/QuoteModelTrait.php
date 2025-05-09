@@ -154,12 +154,20 @@ trait QuoteModelTrait
         $q->isSICLead($quoteType, true);
     }
 
-    public function isSIC(QuoteTypes $quoteType): bool
+    public function scopeIsSIC($q, QuoteTypes $quoteType)
     {
-        return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+        $subQuery = function ($query) use ($quoteType) {
+            $query->distinct()
+                ->select('quote_uuid')
+                ->from('quote_tags')
+                ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
+        };
+
+        $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery);
     }
 
-    public function scopeIsSIC(QuoteTypes $quoteType): bool
+    public function isSIC(QuoteTypes $quoteType): bool
     {
         return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
     }
