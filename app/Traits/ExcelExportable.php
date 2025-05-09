@@ -6,6 +6,7 @@ use App\Enums\EnvEnum;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -137,7 +138,10 @@ trait ExcelExportable
         logger()->info("Starting CSV data export with chunking");
 
         $totalRecords = 0;
-        $chunkSize = 5000; // Adjust based on your data complexity
+        $chunkSize = 500; // Adjust based on your data complexity
+        $exportName = class_basename($this);
+        $chunkCount = 0;
+        $totalChunkTime = 0;
 
         try {
             // Use the query builder version of collection if available
@@ -145,18 +149,56 @@ trait ExcelExportable
                 $query = $this->getQuery($requestParams);
 
                 // Use database chunking for efficient memory usage
-                $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords) {
+                $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords, &$chunkCount, &$totalChunkTime, $exportName) {
+                    $chunkStartTime = microtime(true);
+                    $chunkCount++;
+                    $recordCount = count($records);
+
+                    logger()->debug("Processing chunk #{$chunkCount} with {$recordCount} records");
+
+                    // Track memory before mapping records
+                    $memoryBeforeMapping = round(memory_get_usage(true) / 1024 / 1024, 2);
+
+                    $i = 0;
                     foreach ($records as $record) {
-                        fputcsv($stream, $this->map($record));
+                        // Debug for the first record
+                        if ($chunkCount === 1 && $i === 0) {
+                            logger()->debug("{$exportName}: First record attributes", [
+                                'record_keys' => array_keys((array)$record->getAttributes()),
+                                'relation_keys' => array_keys((array)$record->getRelations())
+                            ]);
+                        }
+
+//                        $startMapTime = microtime(true);
+                        $mappedRow = $this->map($record);
+//                        $mapTime = round((microtime(true) - $startMapTime) * 1000, 2); // in milliseconds
+                        $i++;
+
+                        fputcsv($stream, $mappedRow);
                         $totalRecords++;
                     }
 
                     $currentMemory = round(memory_get_usage(true) / 1024 / 1024, 2);
-                    logger()->debug("Processed {$totalRecords} records so far. Memory: {$currentMemory}MB");
+                    $memoryDiff = $currentMemory - $memoryBeforeMapping;
+                    $chunkTime = round((microtime(true) - $chunkStartTime) * 1000, 2); // in milliseconds
+                    $totalChunkTime += $chunkTime;
+
+                    logger()->debug("{$exportName}: Chunk #{$chunkCount} processed. Records: {$recordCount}, Memory: {$currentMemory}MB, Memory diff: {$memoryDiff}MB, Chunk Time: {$chunkTime}ms, Total time: {$totalChunkTime}ms");
 
                     // Force garbage collection to free memory
                     gc_collect_cycles();
                 });
+
+                // Log summary statistics when complete
+                if ($exportName === 'HealthQuotesExport') {
+                    $avgChunkTime = $chunkCount > 0 ? round($totalChunkTime / $chunkCount, 2) : 0;
+                    logger()->debug("{$exportName}: Export summary", [
+                        'total_records' => $totalRecords,
+                        'chunks_processed' => $chunkCount,
+                        'average_chunk_time_ms' => $avgChunkTime,
+                        'total_processing_time_ms' => $totalChunkTime
+                    ]);
+                }
             } else {
                 // Fallback to less efficient memory approach if query builder not available
                 $data = $this->collection($requestParams);

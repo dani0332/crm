@@ -6,6 +6,7 @@ use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Traits\ExcelExportable;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class HealthQuotesExport
 {
@@ -21,6 +22,37 @@ class HealthQuotesExport
     public function collection($requestParams = [])
     {
         return app(HealthQuoteService::class)->getGridData(requestParams: $requestParams)->get();
+    }
+
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery($requestParams = [])
+    {
+        logger()->debug("HealthQuotesExport: Starting getQuery");
+
+        // Enable query logging
+//        DB::enableQueryLog();
+
+        // Get the query builder
+        $query = app(HealthQuoteService::class)->getGridData(requestParams: $requestParams);
+
+        // Log the query details
+//        $queryLog = DB::getQueryLog();
+//        if (!empty($queryLog)) {
+//            $lastQuery = end($queryLog);
+//            logger()->debug("HealthQuotesExport: SQL query", [
+//                'query' => $lastQuery['query'] ?? 'No query found',
+//                'bindings' => $lastQuery['bindings'] ?? [],
+//                'time' => $lastQuery['time'] ?? 0
+//            ]);
+//        }
+//
+//        // Disable query logging to prevent memory issues
+//        DB::disableQueryLog();
+
+        return $query;
     }
 
     public function headings(): array

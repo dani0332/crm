@@ -348,6 +348,7 @@ class HealthQuoteService extends BaseService
         $this->whereBasedOnRole($query, 'health_quote_request', quoteTypeCode::Health, user: $requestParams['user'] ?? null);
         $this->adjustQueryByDateFilters($query, 'health_quote_request', requestParams: $requestParams);
 
+        logger()->debug("CSV Query Ready...");
         return $query;
     }
 
