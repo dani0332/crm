@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,10 +15,11 @@ class NationalityAllocationConfiguration extends Model
         'created_by',
         'updated_by',
         'is_sic_enabled',
+        'activated_at',
     ];
-
     protected $casts = [
         'is_sic_enabled' => 'boolean',
+        'activated_at' => 'datetime',
     ];
 
     public function users(): BelongsToMany
@@ -43,5 +45,22 @@ class NationalityAllocationConfiguration extends Model
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->whereNotNull('activated_at');
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->whereNull('activated_at');
+    }
+
+    public function isActive(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->activated_at !== null,
+        );
     }
 }

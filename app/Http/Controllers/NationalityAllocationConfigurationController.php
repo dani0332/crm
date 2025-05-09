@@ -33,6 +33,16 @@ class NationalityAllocationConfigurationController extends Controller
             ->when($request->filled('created_at_end'), function ($query) use ($request) {
                 $query->whereDate('created_at', '<=', $request->created_at_end);
             })
+            ->when($request->filled('status'), function ($query) use ($request) {
+                if ($request->status === 'active') {
+                    $query->active();
+                } elseif ($request->status === 'inactive') {
+                    $query->inactive();
+                }
+            })
+            ->when($request->filled('is_sic_enabled'), function ($query) use ($request) {
+                $query->where('is_sic_enabled', $request->is_sic_enabled);
+            })
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -44,7 +54,7 @@ class NationalityAllocationConfigurationController extends Controller
             'configurations' => $configurations,
             'nationalities' => $nationalities,
             'quoteTypes' => $quoteTypes,
-            'filters' => $request->only(['quote_type_id', 'nationality_id', 'created_at', 'created_at_end']),
+            'filters' => $request->only(['quote_type_id', 'nationality_id', 'created_at', 'created_at_end', 'status', 'is_sic_enabled']),
         ]);
     }
 
@@ -69,6 +79,7 @@ class NationalityAllocationConfigurationController extends Controller
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
             'is_sic_enabled' => 'boolean',
+            'is_active' => 'boolean',
         ]);
 
         $existingConfig = NationalityAllocationConfiguration::where('quote_type_id', $validated['quote_type_id'])
@@ -81,7 +92,15 @@ class NationalityAllocationConfigurationController extends Controller
             ])->withInput();
         }
 
-        $this->nationalityAllocationService->createConfiguration($validated, Auth::id());
+        // Set activated_at based on is_active flag
+        $data = [
+            'quote_type_id' => $validated['quote_type_id'],
+            'nationality_id' => $validated['nationality_id'],
+            'is_sic_enabled' => $validated['is_sic_enabled'] ?? false,
+            'activated_at' => $validated['is_active'] ? now() : null,
+        ];
+
+        $this->nationalityAllocationService->createConfiguration($data, Auth::id());
 
         return redirect()->route('admin.nationality-allocation-config.index')
             ->with('success', 'Nationality allocation configuration created successfully!');
@@ -89,23 +108,19 @@ class NationalityAllocationConfigurationController extends Controller
 
     public function show(NationalityAllocationConfiguration $nationalityAllocationConfig)
     {
-        $nationalityAllocationConfig->load(['nationality', 'quoteType', 'users', 'createdBy', 'updatedBy']);
-
         return inertia('Admin/AllocationConfig/NationalityAllocation/Show', [
-            'configuration' => $nationalityAllocationConfig,
+            'configuration' => $nationalityAllocationConfig->load(['nationality', 'quoteType', 'users', 'createdBy', 'updatedBy']),
         ]);
     }
 
     public function edit(NationalityAllocationConfiguration $nationalityAllocationConfig)
     {
-        $nationalityAllocationConfig->load(['nationality', 'quoteType', 'users']);
-
         $nationalities = $this->getNationalities();
         $quoteTypes = $this->getQuoteTypes();
         $users = $this->getUsers();
 
         return inertia('Admin/AllocationConfig/NationalityAllocation/Form', [
-            'configuration' => $nationalityAllocationConfig,
+            'configuration' => $nationalityAllocationConfig->load(['nationality', 'quoteType', 'users']),
             'nationalities' => $nationalities,
             'quoteTypes' => $quoteTypes,
             'users' => $users,
@@ -120,6 +135,7 @@ class NationalityAllocationConfigurationController extends Controller
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
             'is_sic_enabled' => 'boolean',
+            'is_active' => 'boolean',
         ]);
 
         $existingConfig = NationalityAllocationConfiguration::where('quote_type_id', $validated['quote_type_id'])
@@ -138,6 +154,7 @@ class NationalityAllocationConfigurationController extends Controller
             'nationality_id' => $validated['nationality_id'],
             'is_sic_enabled' => $validated['is_sic_enabled'] ?? false,
             'updated_by' => Auth::id(),
+            'activated_at' => $validated['is_active'] ? ($nationalityAllocationConfig->activated_at ?? now()) : null,
         ]);
 
         $nationalityAllocationConfig->users()->sync($validated['user_ids']);

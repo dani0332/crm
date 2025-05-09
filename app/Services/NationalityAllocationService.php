@@ -12,6 +12,7 @@ class NationalityAllocationService
         $config = NationalityAllocationConfiguration::with(['users'])
             ->where('quote_type_id', $quoteTypeId)
             ->where('nationality_id', $nationalityId)
+            ->active()
             ->first();
 
         if (! $config) {
@@ -32,6 +33,7 @@ class NationalityAllocationService
             'quote_type_id' => $data['quote_type_id'],
             'nationality_id' => $data['nationality_id'],
             'is_sic_enabled' => $data['is_sic_enabled'] ?? false,
+            'activated_at' => $data['activated_at'] ?? null,
             'created_by' => $userId,
             'updated_by' => $userId,
         ]);
