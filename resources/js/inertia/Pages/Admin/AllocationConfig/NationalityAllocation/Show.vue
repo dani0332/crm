@@ -54,10 +54,26 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
                 'px-2 py-1 text-xs font-medium rounded-full',
                 configuration.is_sic_enabled
                   ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800',
+                  : 'bg-red-100 text-red-800',
               ]"
             >
               {{ configuration.is_sic_enabled ? 'Enabled' : 'Disabled' }}
+            </span>
+          </dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Status</dt>
+          <dd>
+            <span
+              :class="[
+                'px-2 py-1 text-xs font-medium rounded-full',
+                configuration.activated_at
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800',
+              ]"
+            >
+              {{ configuration.activated_at ? 'Active' : 'Inactive' }}
             </span>
           </dd>
         </div>
@@ -86,7 +102,12 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
   </div>
 
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <h3 class="text-lg font-semibold mb-4">Assigned Users</h3>
+    <h3 class="text-lg font-semibold mb-4">
+      Assigned Users
+      <span class="text-md text-red-500 font-normal"
+        >({{ configuration.users.length }})</span
+      >
+    </h3>
     <div v-if="configuration.users.length === 0" class="text-gray-500 italic">
       No users assigned to this configuration.
     </div>

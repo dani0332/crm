@@ -18,6 +18,7 @@ const configForm = useForm({
   nationality_id: props.configuration?.nationality_id ?? '',
   user_ids: props.configuration?.users?.map(user => user.id) ?? [],
   is_sic_enabled: props.configuration?.is_sic_enabled ?? false,
+  is_active: props.configuration?.activated_at !== null,
 });
 
 const nationalityOptions = computed(() => {
@@ -126,18 +127,33 @@ function onSubmit(isValid) {
         </x-select>
       </x-field>
 
-      <x-field label="SIC" class="sm:col-span-2">
-        <label class="flex items-center space-x-2 cursor-pointer">
-          <x-toggle
-            v-model="configForm.is_sic_enabled"
-            color="success"
-            size="lg"
-          />
-          <span class="text-sm text-gray-600">
-            {{ configForm.is_sic_enabled ? 'Enabled' : 'Disabled' }}
-          </span>
-        </label>
-      </x-field>
+      <div class="grid sm:grid-cols-2 gap-4 sm:col-span-2">
+        <x-field label="SIC">
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <x-toggle
+              v-model="configForm.is_sic_enabled"
+              color="success"
+              size="lg"
+            />
+            <span class="text-sm text-gray-600">
+              {{ configForm.is_sic_enabled ? 'Enabled' : 'Disabled' }}
+            </span>
+          </label>
+        </x-field>
+
+        <x-field label="Status">
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <x-toggle
+              v-model="configForm.is_active"
+              color="success"
+              size="lg"
+            />
+            <span class="text-sm text-gray-600">
+              {{ configForm.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </label>
+        </x-field>
+      </div>
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

@@ -14,6 +14,9 @@ const loader = ref({
   table: false,
 });
 
+const isSearching = ref(false);
+let isSearchOperation = false;
+
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
 
 // Initialize filters directly from props with explicit type conversion
@@ -26,6 +29,8 @@ const filters = reactive({
     : '',
   created_at: props.filters?.created_at ?? '',
   created_at_end: props.filters?.created_at_end ?? '',
+  status: props.filters?.status ?? '',
+  is_sic_enabled: props.filters?.is_sic_enabled ?? '',
   page: 1,
 });
 
@@ -38,6 +43,7 @@ const tableHeader = [
   { text: 'Nationality', value: 'nationality.text' },
   { text: 'No. of Assigned Users', value: 'users' },
   { text: 'SIC', value: 'is_sic_enabled' },
+  { text: 'Status', value: 'activated_at' },
   { text: 'Created Date', value: 'created_at' },
   { text: 'Actions', value: 'actions' },
 ];
@@ -56,8 +62,33 @@ const nationalityOptions = computed(() => {
   }));
 });
 
+const statusOptions = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+];
+
+const sicOptions = [
+  { value: '1', label: 'Enabled' },
+  { value: '0', label: 'Disabled' },
+];
+
+// Track Inertia events
+onMounted(() => {
+  router.on('start', () => {
+    if (isSearchOperation) {
+      isSearching.value = true;
+    }
+  });
+
+  router.on('finish', () => {
+    isSearching.value = false;
+    isSearchOperation = false;
+  });
+});
+
 function onSubmit(isValid) {
   filters.page = 1;
+  isSearchOperation = true;
 
   // Format date values if needed
   if (filters.created_at) filters.created_at = filters.created_at.split('T')[0];
@@ -79,6 +110,8 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  isSearchOperation = true;
+
   router.visit(route('admin.nationality-allocation-config.index'), {
     method: 'get',
     data: { page: 1 },
@@ -141,6 +174,20 @@ function onConfirmDelete() {
           filterable
         />
       </x-field>
+      <x-field label="Status">
+        <x-select
+          v-model="filters.status"
+          :options="statusOptions"
+          placeholder="Select Status"
+        />
+      </x-field>
+      <x-field label="SIC">
+        <x-select
+          v-model="filters.is_sic_enabled"
+          :options="sicOptions"
+          placeholder="Select SIC"
+        />
+      </x-field>
       <x-field label="Created Date Start">
         <DatePicker
           v-model="filters.created_at"
@@ -155,8 +202,21 @@ function onConfirmDelete() {
       </x-field>
     </div>
     <div class="flex justify-end gap-3">
-      <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-      <x-button size="sm" color="primary" @click.prevent="onReset">
+      <x-button
+        size="sm"
+        color="#ff5e00"
+        type="submit"
+        :loading="isSearching"
+        :disabled="isSearching"
+      >
+        Search
+      </x-button>
+      <x-button
+        size="sm"
+        color="primary"
+        @click.prevent="onReset"
+        :disabled="isSearching"
+      >
         Reset
       </x-button>
     </div>
@@ -205,6 +265,21 @@ function onConfirmDelete() {
           ]"
         >
           {{ is_sic_enabled ? 'Enabled' : 'Disabled' }}
+        </span>
+      </div>
+    </template>
+
+    <template #item-activated_at="{ activated_at }">
+      <div>
+        <span
+          :class="[
+            'px-2 py-1 text-xs font-medium rounded-full',
+            activated_at
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800',
+          ]"
+        >
+          {{ activated_at ? 'Active' : 'Inactive' }}
         </span>
       </div>
     </template>
