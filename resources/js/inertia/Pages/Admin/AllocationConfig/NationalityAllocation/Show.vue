@@ -567,8 +567,7 @@ const formatAuditChanges = log => {
                       <div
                         class="flex-1 p-1.5 bg-gray-50 overflow-hidden"
                         :class="{
-                          'line-through text-gray-500':
-                            change.newValue !== change.oldValue,
+                          'text-gray-600': change.newValue !== change.oldValue,
                         }"
                       >
                         <div
