@@ -343,15 +343,15 @@ class RenewalsUploadService
                 Bus::batch($jobs)
                     ->onQueue('renewals')
                     ->then(function (Batch $batch) use ($logPrefix, $renewalsUploadLead) {
-                        LoggerService::info($logPrefix . ' all jobs completed successfully');
+                        LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
                     ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsUploadLead) {
-                        LoggerService::info($logPrefix . ' one of batch is failed. ');
+                        LoggerService::info($logPrefix.' one of batch is failed. ');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function (Batch $batch) use ($logPrefix) {
-                        LoggerService::info($logPrefix . ' everything done');
+                        LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
                     ->name('Renewals Upload Batch')  // Optional: give your batch a name
@@ -1451,7 +1451,7 @@ class RenewalsUploadService
     {
         $payment = $quote->payments()->latest()
             ->first();
-        $request = new StorePaymentRequest();
+        $request = new StorePaymentRequest;
         $request->user = auth()->user();
         $quoteType = QuoteTypes::HEALTH->value;
         $request->merge([
@@ -1465,36 +1465,37 @@ class RenewalsUploadService
             'captured_amount' => null,
             'new_payment_structure' => true,
             'sendFTCEmail' => false,
-            "send_update_id" => null,
+            'send_update_id' => null,
             'payment_gateway_id' => PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL,
             'cc_payment_gateway' => strtoupper(PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL_TEXT),
             'payment' => [
-                "collection_type" => "insurer",
-                "payment_methods" => "IPL",
-                "discount_reason" => $payment ? $payment->discount_reason : null,
-                "discount_custom_reason" => $payment ? $payment->discount_custom_reason : null,
-                "reference" => null,
-                "payment_no" => "1",
-                "frequency" => "upfront",
-                "credit_approval" => null,
-                "discount" => null,
-                "collection_date" => "2025-05-07T08:44:14.013Z",
-                "total_amount" => $quote->premium,
-                "total_price" => $quote->premium,
-                "discount_value" => 0,
+                'collection_type' => 'insurer',
+                'payment_methods' => 'IPL',
+                'discount_reason' => $payment ? $payment->discount_reason : null,
+                'discount_custom_reason' => $payment ? $payment->discount_custom_reason : null,
+                'reference' => null,
+                'payment_no' => '1',
+                'frequency' => 'upfront',
+                'credit_approval' => null,
+                'discount' => null,
+                'collection_date' => '2025-05-07T08:44:14.013Z',
+                'total_amount' => $quote->premium,
+                'total_price' => $quote->premium,
+                'discount_value' => 0,
                 'payment_splits' => [
                     [
                         'sr_no' => 1,
                         'payment_amount' => $quote->premium,
                         'payment_method' => 'IPL',
-                        'due_date' => "2025-05-07T08:44:14.013Z",
-                        "discount_documents" => [],
+                        'due_date' => '2025-05-07T08:44:14.013Z',
+                        'discount_documents' => [],
                         'insurer_payment_link' => $data['payment_link'],
-                    ]
-                ]
-            ]
+                    ],
+                ],
+            ],
         ]);
         $response = $payment ? PaymentRepository::updateNewPayment($request) : PaymentRepository::createNewPayment($request);
+
         return $response;
     }
 
