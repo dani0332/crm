@@ -226,12 +226,11 @@ class TravelQuoteService extends BaseService
         }
 
         $customerTravelInfo = DB::table('travel_quote_request as tqr')
-            ->join('customer as c', 'c.id', '=', 'tqr.customer_id')
             ->leftJoin('customer_members as cm', function ($join) use ($model) {
                 $join->on('cm.quote_id', '=', 'tqr.id')
                     ->where('cm.quote_type', '=', ltrim($model, '\\'));
             })
-            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.gender', 'c.dob', 'c.nationality_id', 'cm.passport')
+            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'cm.first_name', 'cm.last_name', 'cm.dob', 'cm.nationality_id', 'cm.passport')
             ->where('tqr.id', $quoteRequestId)
             ->first();
 
