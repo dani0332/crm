@@ -2194,7 +2194,7 @@ class RenewalsUploadService
                             }
                             if ($quoteExist != null && isset($quoteExist)) {
                                 $insuranceProvider = $quoteExist->insuranceProvider;
-                                if($insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL) {
+                                if ($insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL) {
                                     $leadValidationErrors->push('Payment Gateway is not supported for health quotes');
                                 }
                             }
