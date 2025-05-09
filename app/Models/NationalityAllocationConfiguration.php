@@ -25,7 +25,6 @@ class NationalityAllocationConfiguration extends Model implements AuditableContr
         'is_sic_enabled' => 'boolean',
         'activated_at' => 'datetime',
     ];
-
     protected $auditInclude = [
         'quote_type_id',
         'nationality_id',

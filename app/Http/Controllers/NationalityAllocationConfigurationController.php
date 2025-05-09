@@ -98,7 +98,7 @@ class NationalityAllocationConfigurationController extends Controller
             'nationality_id' => $validated['nationality_id'],
             'is_sic_enabled' => $validated['is_sic_enabled'] ?? false,
             'activated_at' => $validated['is_active'] ? now() : null,
-            'user_ids' => $validated['user_ids']
+            'user_ids' => $validated['user_ids'],
         ];
 
         $configuration = $this->nationalityAllocationService->createConfiguration($data, Auth::id());
