@@ -332,7 +332,7 @@ class RenewalsUploadController extends Controller
     }
 
     public function listRenewalBatchesNonMotor(Request $request){
-
+        
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }       
@@ -422,7 +422,6 @@ class RenewalsUploadController extends Controller
         ]);
     }
     
-
     public function batchDetail($batch)
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
