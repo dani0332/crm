@@ -87,6 +87,8 @@ const extraAttr = reactive({
   generatePdfLoading: false
 });
 
+const isPdfGenerated = props?.selectedPlan?.isPdfGenerated ?? false;
+
 const editForm = reactive({
   providerId: props?.selectedPlan?.providerId ?? null,
   planId: props?.selectedPlan?.planId ?? null,
@@ -724,7 +726,7 @@ const closeModal = ()  => {
           <dd><strong>Created Date:</strong> {{ formatDate(props.selectedPlan.created_at) }}</dd>
           <dd><strong>Updated at:</strong> {{ formatDate(props.selectedPlan.updated_at) }}</dd>
 
-          <x-button v-if="editForm.isApi && editForm.providerId == 180 && !editForm.isUnderwritten" @click="generatePdf()" 
+          <x-button v-if="editForm.isApi && editForm.providerId == 180 && !editForm.isUnderwritten && !isPdfGenerated" @click="generatePdf()" 
           class="mt-2" color="orange" :loading="extraAttr.generatePdfLoading">Generate Quote Pdf</x-button>
 
         </div>
