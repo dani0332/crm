@@ -10,7 +10,7 @@ const props = defineProps({
 const { isRequired } = useRules();
 
 // Add validation for non-negative numbers
-const isNonNegative = (value) => {
+const isNonNegative = value => {
   if (value === null || value === undefined || value === '') return true;
   return parseFloat(value) >= 0 || 'Value must be non-negative';
 };
@@ -31,12 +31,16 @@ const riders = props.lifeRiders.map(rider => ({
 const ridersData = ref(riders);
 
 // Ensure rider values are always non-negative
-watch(ridersData, (newValue) => {
-  newValue.forEach(rider => {
-    if (parseFloat(rider.price) < 0) rider.price = 0;
-    if (parseFloat(rider.coverValue) < 0) rider.coverValue = 0;
-  });
-}, { deep: true });
+watch(
+  ridersData,
+  newValue => {
+    newValue.forEach(rider => {
+      if (parseFloat(rider.price) < 0) rider.price = 0;
+      if (parseFloat(rider.coverValue) < 0) rider.coverValue = 0;
+    });
+  },
+  { deep: true },
+);
 
 const page = usePage();
 
@@ -49,7 +53,6 @@ const active = ref(false);
 const lifeCoverToggled = true;
 
 const notification = useNotifications('toast');
-
 
 const paymentTerms = [
   { value: 1, label: 'Monthly' },
@@ -68,7 +71,7 @@ const availableInsuranceProviders = computed(() => {
   // return props.insuranceProviders.filter(item => {
   //   return !props.plans.some(plan => plan.providerId === item.id);
   // });
-  return props.insuranceProviders; 
+  return props.insuranceProviders;
 });
 
 const createForm = reactive({
@@ -84,35 +87,41 @@ const createForm = reactive({
   insurerQuoteNo: null,
   isVariant: false,
   update: false,
-  initialPrice: 0
+  initialPrice: 0,
 });
 
 // Ensure form numeric values are always non-negative
-watch(() => [createForm.sumAssured, createForm.actualPremium, createForm.policyTerm], ([sumAssured, actualPremium, policyTerm]) => {
-  if (parseFloat(sumAssured) < 0) createForm.sumAssured = 0;
-  if (parseFloat(actualPremium) < 0) createForm.actualPremium = 0;
-  if (parseFloat(policyTerm) < 0) createForm.policyTerm = 0;
-});
+watch(
+  () => [
+    createForm.sumAssured,
+    createForm.actualPremium,
+    createForm.policyTerm,
+  ],
+  ([sumAssured, actualPremium, policyTerm]) => {
+    if (parseFloat(sumAssured) < 0) createForm.sumAssured = 0;
+    if (parseFloat(actualPremium) < 0) createForm.actualPremium = 0;
+    if (parseFloat(policyTerm) < 0) createForm.policyTerm = 0;
+  },
+);
 
 const onSubmit = isValid => {
-
   if (!isValid) {
     return;
   }
   createForm.loading = true;
-  
+
   // Convert riders' price and coverValue to floats
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
     price: parseFloat(rider.price) || 0,
-    coverValue: parseFloat(rider.coverValue) || 0
+    coverValue: parseFloat(rider.coverValue) || 0,
   }));
-  
+
   // Ensure numeric form values are properly converted
   createForm.sumAssured = parseFloat(createForm.sumAssured) || 0;
   createForm.actualPremium = parseFloat(createForm.actualPremium) || 0;
   createForm.policyTerm = parseInt(createForm.policyTerm) || 0;
-  
+
   createForm.riders = processedRiders;
   createForm.initialPrice = parseFloat(createForm.actualPremium) || 0;
 
@@ -137,7 +146,6 @@ const onSubmit = isValid => {
         setTimeout(() => {
           location.reload();
         }, 2000);
-
       } else {
         notification.success({
           title: res?.data?.msg ?? '',
@@ -147,9 +155,9 @@ const onSubmit = isValid => {
     })
     .catch(err => {
       notification.error({
-          title: res?.data?.message ?? 'Something Went wrong',
-          position: 'top',
-        }); 
+        title: res?.data?.message ?? 'Something Went wrong',
+        position: 'top',
+      });
       emit('error');
     })
     .finally(() => {
@@ -161,7 +169,7 @@ watch(
   () => createForm?.providerId,
   value => {
     if (value) {
-      fetchProviderPlans()
+      fetchProviderPlans();
     }
   },
 );
@@ -170,9 +178,9 @@ watch(
   () => createForm?.isUW,
   value => {
     if (createForm.providerId) {
-      fetchProviderPlans()
+      fetchProviderPlans();
     }
-  }
+  },
 );
 
 const fetchProviderPlans = () => {
@@ -182,26 +190,30 @@ const fetchProviderPlans = () => {
 
   options.loading = true;
   options.providerPlans = [];
-  axios.get(`/personal-quotes/life/provider-plans/${createForm.providerId}`)
+  axios
+    .get(`/personal-quotes/life/provider-plans/${createForm.providerId}`)
     .then(res => {
-         
-            if (res.data.plans) {
-              if (!createForm.isUW) {
-                options.providerPlans = res.data.plans.filter(
-                  plan => !props.plans.some(existingPlan => existingPlan.planId === plan.id)
-                );
-              } else if(createForm.isUW) {
-                
-                options.providerPlans = res.data.plans.filter(
-                  plan => !props.plans.some(existingPlan => 
-                    existingPlan.planId === plan.id && existingPlan.isUnderwritten
-                  )
-                );
-
-              }
-            } else {
-              options.providerPlans = [];
-            }
+      if (res.data.plans) {
+        if (!createForm.isUW) {
+          options.providerPlans = res.data.plans.filter(
+            plan =>
+              !props.plans.some(
+                existingPlan => existingPlan.planId === plan.id,
+              ),
+          );
+        } else if (createForm.isUW) {
+          options.providerPlans = res.data.plans.filter(
+            plan =>
+              !props.plans.some(
+                existingPlan =>
+                  existingPlan.planId === plan.id &&
+                  existingPlan.isUnderwritten,
+              ),
+          );
+        }
+      } else {
+        options.providerPlans = [];
+      }
     })
     .catch(err => {
       emit('error');
@@ -226,21 +238,19 @@ const fetchProviderPlans = () => {
       <div class="grid grid-cols-2 gap-4">
         <div>
           <div class="flex items-center space-x-6">
-            <x-label> Is the quote underwritten? <span class="text-red-500">*</span> </x-label>
+            <x-label>
+              Is the quote underwritten? <span class="text-red-500">*</span>
+            </x-label>
             <x-form-group v-model="createForm.isUW" class="mt-5">
-              <x-radio
-                :value="1"
-                label="Yes"
-              />
-              <x-radio
-                :value="0"
-                label="No"
-              />
+              <x-radio :value="1" label="Yes" />
+              <x-radio :value="0" label="No" />
             </x-form-group>
           </div>
         </div>
         <div>
-          <label class="block font-medium text-gray-700 mb-1">Insurance Provider <span class="text-red-500">*</span></label>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Insurance Provider <span class="text-red-500">*</span></label
+          >
           <x-select
             v-model="createForm.providerId"
             :options="
@@ -255,7 +265,9 @@ const fetchProviderPlans = () => {
           />
         </div>
         <div>
-          <label class="block font-medium text-gray-700 mb-1">Plan <span class="text-red-500">*</span></label>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Plan <span class="text-red-500">*</span></label
+          >
           <x-select
             v-model="createForm.planId"
             placeholder="Select Plan"
@@ -273,7 +285,9 @@ const fetchProviderPlans = () => {
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block font-medium text-gray-700 mb-1">Currency <span class="text-red-500">*</span></label>
+            <label class="block font-medium text-gray-700 mb-1"
+              >Currency <span class="text-red-500">*</span></label
+            >
             <x-select
               v-model="createForm.currency"
               placeholder="AED"
@@ -288,7 +302,9 @@ const fetchProviderPlans = () => {
             />
           </div>
           <div>
-            <label class="block font-medium text-gray-700 mb-1">Sum Assured <span class="text-red-500">*</span></label>
+            <label class="block font-medium text-gray-700 mb-1"
+              >Sum Assured <span class="text-red-500">*</span></label
+            >
             <x-input
               v-model="createForm.sumAssured"
               placeholder="Enter Sum Assured"
@@ -296,101 +312,137 @@ const fetchProviderPlans = () => {
               class="w-full"
               type="number"
               min="0"
-              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"             
+              @keydown="
+                e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+              "
             />
           </div>
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1">Policy Term <span class="text-red-500">*</span></label>
-           <x-input
-              v-model="createForm.policyTerm"
-              placeholder="Enter Policy Term"
-              :rules="[isRequired, isNonNegative]"
-              class="w-full"
-              type="number"
-              min="0"
-              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
-            />
-        </div>
-
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">Payment Terms <span class="text-red-500">*</span></label>
-           <x-select
-              v-model="createForm.paymentTerm"
-              placeholder="Select Payment Terms"
-              class="w-full"
-              :options="paymentTerms"
-              :rules="[isRequired]"
-            />
-        </div>
-
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">Price (VAT not applicable) <span class="text-red-500">*</span></label>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Policy Term <span class="text-red-500">*</span></label
+          >
           <x-input
-              v-model="createForm.actualPremium"
-              placeholder="Enter Price"
-              :rules="[isRequired, isNonNegative]"
-              class="w-full"
-              type="number"
-              min="0"
-              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"          
-           />
+            v-model="createForm.policyTerm"
+            placeholder="Enter Policy Term"
+            :rules="[isRequired, isNonNegative]"
+            class="w-full"
+            type="number"
+            min="0"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+          />
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1">Insurer Quote Number <span class="text-red-500">*</span></label>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Payment Terms <span class="text-red-500">*</span></label
+          >
+          <x-select
+            v-model="createForm.paymentTerm"
+            placeholder="Select Payment Terms"
+            class="w-full"
+            :options="paymentTerms"
+            :rules="[isRequired]"
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Price (VAT not applicable)
+            <span class="text-red-500">*</span></label
+          >
           <x-input
-              v-model="createForm.insurerQuoteNo"
-              placeholder="Enter Insurer Quote Number"
-              :rules="[isRequired]"
-              class="w-full"
+            v-model="createForm.actualPremium"
+            placeholder="Enter Price"
+            :rules="[isRequired, isNonNegative]"
+            class="w-full"
+            type="number"
+            min="0"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+          />
+        </div>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Insurer Quote Number <span class="text-red-500">*</span></label
+          >
+          <x-input
+            v-model="createForm.insurerQuoteNo"
+            placeholder="Enter Insurer Quote Number"
+            :rules="[isRequired]"
+            class="w-full"
           />
         </div>
       </div>
 
       <div class="mt-6">
-        <h3 class="font-semibold bg-gray-100 p-4 rounded-md text-gray-700">RIDERS</h3>
+        <h3 class="font-semibold bg-gray-100 p-4 rounded-md text-gray-700">
+          RIDERS
+        </h3>
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
           <span class="text-gray-700 col-span-2">Life Cover</span>
           <span class="text-gray-700">Included</span>
-          <x-input 
-            type="number"  
-            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
-            class="w-full h-10 p-2 rounded-md" 
-            v-model="createForm.sumAssured" 
+          <x-input
+            type="number"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+            class="w-full h-10 p-2 rounded-md"
+            v-model="createForm.sumAssured"
             min="0"
-            disabled 
+            disabled
           />
 
-          <x-toggle v-model="lifeCoverToggled" color="emerald" size="lg" disabled/>
-          <x-input 
-            type="number"  
-            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
-            class="w-full h-10 p-2 rounded-md" 
-            v-model="createForm.actualPremium" 
+          <x-toggle
+            v-model="lifeCoverToggled"
+            color="emerald"
+            size="lg"
+            disabled
+          />
+          <x-input
+            type="number"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+            class="w-full h-10 p-2 rounded-md"
+            v-model="createForm.actualPremium"
             min="0"
-            disabled 
+            disabled
           />
         </div>
-        <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.id">
+        <div
+          class="grid grid-cols-6 items-center gap-4 p-2 border-b"
+          v-for="(rider, index) in ridersData"
+          :key="rider.id"
+        >
           <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
-          <span class="text-gray-700">{{ rider.active ? 'Included' : 'Optional'}}</span>
-          <x-input 
-            type="number" 
-            :disabled="!rider.active" 
-            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
-            class="w-full h-10 p-2 rounded-md" 
+          <span class="text-gray-700">{{
+            rider.active ? 'Included' : 'Optional'
+          }}</span>
+          <x-input
+            type="number"
+            :disabled="!rider.active"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+            class="w-full h-10 p-2 rounded-md"
             v-model="rider.coverValue"
             min="0"
             :rules="[isNonNegative]"
           />
           <x-toggle v-model="rider.active" color="success" size="lg" />
-          <x-input 
-            type="number" 
-            :disabled="!rider.active" 
-            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"  
-            class="w-full h-10 p-2 rounded-md" 
+          <x-input
+            type="number"
+            :disabled="!rider.active"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+            class="w-full h-10 p-2 rounded-md"
             v-model="rider.price"
             min="0"
             :rules="[isNonNegative]"
@@ -398,7 +450,6 @@ const fetchProviderPlans = () => {
         </div>
       </div>
     </div>
-
 
     <template #actions>
       <div class="flex justify-end">

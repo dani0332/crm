@@ -21,9 +21,11 @@ const quoteForm = useForm({
   dob: props.quote?.dob || '',
   sum_insured_value: props.quote?.life_quote?.sum_insured_value || '',
   nationality_id: props.quote?.nationality_id || '',
-  sum_insured_currency_id: props.quote?.life_quote?.sum_insured_currency_id || '',
+  sum_insured_currency_id:
+    props.quote?.life_quote?.sum_insured_currency_id || '',
   marital_status_id: props.quote?.life_quote?.marital_status_id || '',
-  purpose_of_insurance_id: props.quote?.life_quote?.purpose_of_insurance_id || '',
+  purpose_of_insurance_id:
+    props.quote?.life_quote?.purpose_of_insurance_id || '',
   tenure_of_insurance_id: props.quote?.life_quote?.tenure_of_insurance_id || '',
   number_of_years_id: props.quote?.life_quote?.number_of_years_id || '',
   is_smoker: props.quote?.life_quote?.is_smoker || 0,
@@ -40,7 +42,7 @@ const editMode = computed(() => {
 });
 const { isRequired, isEmail, isMobileNo } = useRules();
 
-const validateHeight = (value) => {
+const validateHeight = value => {
   if (!value) return true;
   const height = parseFloat(value);
   if (height < 55 || height > 273) {
@@ -49,7 +51,7 @@ const validateHeight = (value) => {
   return true;
 };
 
-const validateWeight = (value) => {
+const validateWeight = value => {
   if (!value) return true;
   const weight = parseFloat(value);
   if (weight < 20 || weight > 650) {
@@ -59,8 +61,6 @@ const validateWeight = (value) => {
 };
 
 function onSubmit(isValid) {
-  
-
   if (isValid) {
     let method = editMode.value ? 'put' : 'post';
     let url = editMode.value
@@ -75,21 +75,21 @@ function onSubmit(isValid) {
   }
 }
 const getBMI = () => {
-  if(!quoteForm.height || !quoteForm.weight) {
+  if (!quoteForm.height || !quoteForm.weight) {
     quoteForm.bmi = '';
     return;
   }
 
   quoteForm.bmi = calculateBMI(quoteForm.height, quoteForm.weight);
-}
+};
 const dobChanged = () => {
-  if(!quoteForm.dob) {
+  if (!quoteForm.dob) {
     quoteForm.age = '';
     return;
   }
   const date = quoteForm.dob.split('T')[0];
   quoteForm.age = calculateAge(date);
-}
+};
 watch(
   () => quoteForm.dob,
   (newValue, oldValue) => {
@@ -97,7 +97,7 @@ watch(
       dobChanged(newValue);
     }
   },
-  { deep: true }
+  { deep: true },
 );
 </script>
 
@@ -121,14 +121,14 @@ watch(
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-         <x-field label="Type of Insurance" required>
+        <x-field label="Type of Insurance" required>
           <x-select
             v-model="quoteForm.tenure_of_insurance_id"
             :options="
               typeOfInsurance.map(item => ({
                 value: item.id,
                 label: item.text,
-                disabled: item.code === 'SAVINGS'
+                disabled: item.code === 'SAVINGS',
               }))
             "
             :rules="[isRequired]"
@@ -191,7 +191,11 @@ watch(
           />
         </x-field>
         <x-field label="Date of Birth" required>
-          <DatePicker v-model="quoteForm.dob" :rules="[isRequired]" input-classes="w-full" />
+          <DatePicker
+            v-model="quoteForm.dob"
+            :rules="[isRequired]"
+            input-classes="w-full"
+          />
         </x-field>
         <x-field label="Age">
           <x-input
@@ -216,7 +220,7 @@ watch(
             :error="quoteForm.errors.nationality_id"
           />
         </x-field>
-         <x-field label="Marital Status" required>
+        <x-field label="Marital Status" required>
           <x-select
             v-model="quoteForm.marital_status_id"
             :options="
@@ -253,11 +257,14 @@ watch(
                   step="0.01"
                   min="0"
                   :rules="[isRequired, validateHeight]"
-                  class="w-full" 
+                  class="w-full"
                   :error="quoteForm.errors.height"
                   maxLength="20"
                 />
-                <span class="absolute inset-y-0 right-3 flex items-center text-gray-500">Cms</span>
+                <span
+                  class="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                  >Cms</span
+                >
               </div>
             </x-field>
             <x-field label="Weight" required>
@@ -269,11 +276,14 @@ watch(
                   step="0.01"
                   min="0"
                   :rules="[isRequired, validateWeight]"
-                  class="w-full" 
+                  class="w-full"
                   :error="quoteForm.errors.weight"
                   maxLength="20"
                 />
-                <span class="absolute inset-y-0 right-3 flex items-center text-gray-500">Kgs</span>
+                <span
+                  class="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                  >Kgs</span
+                >
               </div>
             </x-field>
             <x-field label="BMI">
@@ -281,7 +291,7 @@ watch(
                 <x-input
                   v-model="quoteForm.bmi"
                   type="text"
-                  class="w-full" 
+                  class="w-full"
                   :error="quoteForm.errors.bmi"
                   :disabled="true"
                 />
@@ -306,36 +316,39 @@ watch(
         <div class="w-full">
           <div class="grid sm:grid-cols-12 gap-4">
             <div class="sm:col-span-4">
-            <x-field label="Currency" required>
-              <x-select
-                v-model="quoteForm.sum_insured_currency_id"
-                :options="
-                  currency.map(item => ({
-                    value: item.id,
-                    label: item.text,
-                  }))
-                "
-                :rules="[isRequired]"
-                class="w-full"
-                :error="quoteForm.errors.sum_insured_currency_id"
-              />
-            </x-field>
+              <x-field label="Currency" required>
+                <x-select
+                  v-model="quoteForm.sum_insured_currency_id"
+                  :options="
+                    currency.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  :rules="[isRequired]"
+                  class="w-full"
+                  :error="quoteForm.errors.sum_insured_currency_id"
+                />
+              </x-field>
             </div>
             <div class="sm:col-span-8">
-            <x-field label="Sum Assured" required>
-              <x-input
-                v-model="quoteForm.sum_insured_value"
-                type="number"
-                class="w-full"
-                :rules="[isRequired]"
-                :error="quoteForm.errors.sum_insured_value"
-              />
-            </x-field>
+              <x-field label="Sum Assured" required>
+                <x-input
+                  v-model="quoteForm.sum_insured_value"
+                  type="number"
+                  class="w-full"
+                  :rules="[isRequired]"
+                  :error="quoteForm.errors.sum_insured_value"
+                />
+              </x-field>
             </div>
           </div>
         </div>
 
-        <x-field label="Have you smoked tobacco/nicotine in the last 12 months?" required>
+        <x-field
+          label="Have you smoked tobacco/nicotine in the last 12 months?"
+          required
+        >
           <x-select
             v-model="quoteForm.is_smoker"
             :options="[

@@ -218,11 +218,9 @@ if (props.sendUpdate) {
   initialAmount.value = props.quoteRequest.premium;
 } else if (props.quoteType === quoteTypeCodeEnum.Bike) {
   initialAmount.value = props.quoteRequest.premium;
-}
-else if (props.quoteType === quoteTypeCodeEnum.Life) {
+} else if (props.quoteType === quoteTypeCodeEnum.Life) {
   initialAmount.value = props.quoteRequest.premium;
-}
-else if (props.isPlanDetailEnabled) {
+} else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else if (
   props.isPlanDetailSectionEnabled &&
@@ -1765,7 +1763,6 @@ const addPaymentModal = () => {
       return;
     }
     if (isCPD.value && !props.sendUpdate?.price_with_vat) {
-    
       notification.error({
         title: 'Please update the Total Price in the Plan Details section.',
         position: 'top',
@@ -1807,8 +1804,7 @@ const addPaymentModal = () => {
   ) {
     totalAmount.value = totalPrice.value;
   } else {
-    
-    console.log(totalPrice.value, planDetail.value)
+    console.log(totalPrice.value, planDetail.value);
 
     let errorMsg = 'Please update the Total Price in the Plan Details section.';
     if (quoteTypesToCheck.includes(props.quoteType)) {
@@ -2063,7 +2059,6 @@ const initializePaymentForm = (
   sr_no,
   capture_approval,
 ) => {
-
   if (sr_no > 0) {
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -2540,7 +2535,7 @@ const addPayment = isValid => {
     total_price: totalPrice.value,
     discount_value: discountValue.value, // discount amount
   };
-  
+
   let splitPayments = [];
   for (let i = 1; i < splitAmountModels.value.length; i++) {
     if (i <= paymentMethodsForm.payment_no) {
@@ -3449,11 +3444,9 @@ const setPaymentInitialPrice = () => {
       props.quoteType === quoteTypeCodeEnum.Home
     ) {
       initialAmount.value = props.quoteRequest.price_with_vat;
-    }
-    else if (props.quoteType === quoteTypeCodeEnum.Life) {
+    } else if (props.quoteType === quoteTypeCodeEnum.Life) {
       initialAmount.value = props.quoteRequest.premium;
-    } 
-    else {
+    } else {
       initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
         ? props.quoteRequest.premium
         : props.quoteRequest.price_with_vat;

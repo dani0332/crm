@@ -408,7 +408,7 @@ export const getIp = async () => {
 };
 
 // Function to calculate age
-export const calculateAge = (birthDateString) => {
+export const calculateAge = birthDateString => {
   const birthDate = new Date(birthDateString);
 
   const today = new Date();
@@ -432,10 +432,10 @@ export const calculateBMI = (heightInCm, weightInKg) => {
   }
 
   const heightInMeters = heightInCm / 100;
-  const bmi = weightInKg / (heightInMeters ** 2);
+  const bmi = weightInKg / heightInMeters ** 2;
 
   return parseFloat(bmi.toFixed(2));
-}
+};
 export const resolveUserStatusText = statusId => {
   switch (parseInt(statusId)) {
     case 1:

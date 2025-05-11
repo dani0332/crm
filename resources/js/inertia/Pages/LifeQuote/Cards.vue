@@ -22,14 +22,15 @@ provide('lostReasons', props.lostReasons);
 provide('quoteType', props.quoteType);
 
 // Flattens nested lead properties to ensure data is serializable.
-const flattenLeads = (leadsTypes) => {
-  leadsTypes.forEach((leadType) => {
+const flattenLeads = leadsTypes => {
+  leadsTypes.forEach(leadType => {
     const leadsList = leadType.data?.leads_list?.data;
 
     if (Array.isArray(leadsList)) {
-      leadsList.forEach((lead) => {
+      leadsList.forEach(lead => {
         lead.nationality_text = lead.nationality?.text || '';
-        lead.insurance_tenure_text = lead?.life_quote?.insurance_tenure?.text || '';
+        lead.insurance_tenure_text =
+          lead?.life_quote?.insurance_tenure?.text || '';
         lead.age = lead.life_quote?.age || '';
         lead.sum_insured_value = lead.life_quote?.sum_insured_value || '';
 
@@ -80,7 +81,8 @@ const filters = reactive({
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   tenure_of_insurance_id: '',
-  sum_insured_currency_id: page.props.currency.find(item => item.text === 'AED')?.id || null,
+  sum_insured_currency_id:
+    page.props.currency.find(item => item.text === 'AED')?.id || null,
   sum_insured_range: '',
 });
 
@@ -89,37 +91,32 @@ const filterButtonStatuses = [
     text: 'Policy Booked',
     value: 1,
     quoteCodes: ['Policy Booked'],
-    tooltip:
-      '',
+    tooltip: '',
   },
-   {
+  {
     text: 'In Negotiation',
     value: 2,
     quoteCodes: ['In Negotiation'],
-    tooltip:
-      '',
+    tooltip: '',
   },
-   {
+  {
     text: 'Application Submitted',
     value: 3,
     quoteCodes: ['Application Submitted'],
-    tooltip:
-      '',
+    tooltip: '',
   },
   {
     text: 'Followed Up',
     value: 4,
     quoteCodes: ['Followed Up'],
-    tooltip:
-      '',
+    tooltip: '',
   },
   {
     text: 'Quoted',
     value: 5,
     quoteCodes: ['Quoted'],
-    tooltip:
-      '',
-  }
+    tooltip: '',
+  },
 ];
 
 const handleSelectedFilters = selectedFilters => {
@@ -294,7 +291,7 @@ function filterQuotes(isValid) {
     });
     return;
   }
-  if(!filters['sum_insured_range'] || !filters['sum_insured_currency_id']) {
+  if (!filters['sum_insured_range'] || !filters['sum_insured_currency_id']) {
     delete filters['sum_insured_range'];
     delete filters['sum_insured_currency_id'];
   }
@@ -340,7 +337,7 @@ watch(
     <Head title="Life List ~ Card View" />
     <sticky-header>
       <template #header>
-      <h2 class="text-xl font-semibold">Life List</h2>
+        <h2 class="text-xl font-semibold">Life List</h2>
       </template>
       <template #default>
         <FiltersButton
@@ -451,7 +448,12 @@ watch(
             name="policy_expiry_date_end"
           />
         </x-field>
-        <x-field label="Advisor" v-if="!hasRole(rolesEnum.TravelAdvisor) && !hasRole(rolesEnum.LifeAdvisor)">
+        <x-field
+          label="Advisor"
+          v-if="
+            !hasRole(rolesEnum.TravelAdvisor) && !hasRole(rolesEnum.LifeAdvisor)
+          "
+        >
           <ComboBox
             v-model="filters.advisors"
             placeholder="Search by Advisor"
@@ -541,22 +543,22 @@ watch(
           placeholder="Type of Insurance"
           label="Type of Insurance"
           :options="
-              typesOfInsurance.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
+            typesOfInsurance.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
         />
         <x-select
           v-model="filters.number_of_years_id"
           placeholder="Tenure of Cover"
           label="Tenure of Cover"
           :options="
-              numberOfYears.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
+            numberOfYears.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
         />
 
         <div v-if="!hasRole(rolesEnum.LifeAdvisor)">
@@ -566,27 +568,25 @@ watch(
               placeholder="Currency"
               label="Sum Assured"
               :options="
-                  currency.map(item => ({
-                    value: item.id,
-                    label: item.text,
-                  }))
-                "
+                currency.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
             />
             <x-select
-            v-model="filters.sum_insured_range"
-            placeholder="Value Range"
-            :options="[
+              v-model="filters.sum_insured_range"
+              placeholder="Value Range"
+              :options="[
                 { value: 'lt500k', label: '<500K' },
                 { value: '500k-1m', label: '500K- <1M' },
                 { value: 'gte1m', label: '>/= 1M' },
-              ]
-              "
-            class="border-l-0 rounded-tl-none rounded-bl-none"
-            label="&nbsp;"
-          />
+              ]"
+              class="border-l-0 rounded-tl-none rounded-bl-none"
+              label="&nbsp;"
+            />
           </div>
         </div>
-        
       </div>
 
       <div class="flex justify-end gap-3 mb-4 mt-1">

@@ -86,37 +86,32 @@ const filterButtonStatuses = [
     text: 'Policy Booked',
     value: 1,
     quoteCodes: ['Policy Booked'],
-    tooltip:
-      '',
+    tooltip: '',
   },
-   {
+  {
     text: 'In Negotiation',
     value: 2,
     quoteCodes: ['In Negotiation'],
-    tooltip:
-      '',
+    tooltip: '',
   },
-   {
+  {
     text: 'Application Submitted',
     value: 3,
     quoteCodes: ['Application Submitted'],
-    tooltip:
-      '',
+    tooltip: '',
   },
   {
     text: 'Followed Up',
     value: 4,
     quoteCodes: ['Followed Up'],
-    tooltip:
-      '',
+    tooltip: '',
   },
   {
     text: 'Quoted',
     value: 5,
     quoteCodes: ['Quoted'],
-    tooltip:
-      '',
-  }
+    tooltip: '',
+  },
 ];
 
 const loader = reactive({
@@ -144,7 +139,12 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at', sortable: true, is_active: true },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    sortable: true,
+    is_active: true,
+  },
   {
     text: 'POLICY EXPIRY DATE',
     value: 'previous_policy_expiry_date',
@@ -216,17 +216,16 @@ function filterQuotes(isValid) {
     });
     return;
   }
-  
+
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
     }
   }
 
-
   const filtersCleaned = cleanObj(filters);
   filtersCount.value = Object.keys(filtersCleaned).length;
-  
+
   serverOptions.value.page = 1;
 
   router.visit(route('life-quotes-list'), {
@@ -440,7 +439,6 @@ onMounted(() => {
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
   filtersCount.value = Object.keys(filtersCleaned).length;
-
 });
 
 const resetDateFilters = filterName => {
@@ -504,22 +502,24 @@ watch(
 );
 
 const manageFilterCount = () => {
-  if(filters['sum_insured_range'] && filters['sum_insured_currency_id']) {
+  if (filters['sum_insured_range'] && filters['sum_insured_currency_id']) {
     filtersCount.value = filtersCount.value - 1;
-  }else if(!filters['sum_insured_range'] || !filters['sum_insured_currency_id']){
-    filtersCount.value = filtersCount.value - 1; 
+  } else if (
+    !filters['sum_insured_range'] ||
+    !filters['sum_insured_currency_id']
+  ) {
+    filtersCount.value = filtersCount.value - 1;
   }
-}
+};
 
 const quoteStatuses = computed(() => page.props.leadStatuses || []);
 
-const insurerAMLStatusOption = computed(() => 
+const insurerAMLStatusOption = computed(() =>
   (page.props.insurerAMLStatus || []).map(item => ({
     value: item.id || item.value,
-    label: item.text || item.label
-  }))
+    label: item.text || item.label,
+  })),
 );
-
 </script>
 
 <template>
@@ -804,22 +804,22 @@ const insurerAMLStatusOption = computed(() =>
           placeholder="Type of Insurance"
           label="Type of Insurance"
           :options="
-              typesOfInsurance.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
+            typesOfInsurance.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
         />
         <x-select
           v-model="filters.number_of_years_id"
           placeholder="Tenure of Cover"
           label="Tenure of Cover"
           :options="
-              numberOfYears.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
+            numberOfYears.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
         />
 
         <div v-if="!hasRole(rolesEnum.LifeAdvisor)">
@@ -829,27 +829,25 @@ const insurerAMLStatusOption = computed(() =>
               placeholder="Currency"
               label="Sum Assured"
               :options="
-                  currency.map(item => ({
-                    value: item.id,
-                    label: item.text,
-                  }))
-                "
+                currency.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
             />
             <x-select
-            v-model="filters.sum_insured_range"
-            placeholder="Value Range"
-            :options="[
+              v-model="filters.sum_insured_range"
+              placeholder="Value Range"
+              :options="[
                 { value: 'lt500k', label: '<500K' },
                 { value: '500k-1m', label: '500K- <1M' },
                 { value: 'gte1m', label: '>/= 1M' },
-              ]
-              "
-            class="border-l-0 rounded-tl-none rounded-bl-none"
-            label="&nbsp;"
-          />
+              ]"
+              class="border-l-0 rounded-tl-none rounded-bl-none"
+              label="&nbsp;"
+            />
           </div>
         </div>
-        
       </div>
 
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -959,7 +957,12 @@ const insurerAMLStatusOption = computed(() =>
         </p>
       </template>
       <template #item-expiry_date="item">
-        <p v-if="item?.payment_status?.text === 'AUTHORISED' && item?.payments[0]?.authorized_at">
+        <p
+          v-if="
+            item?.payment_status?.text === 'AUTHORISED' &&
+            item?.payments[0]?.authorized_at
+          "
+        >
           {{ daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at) }}
         </p>
       </template>

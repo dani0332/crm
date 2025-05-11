@@ -8,12 +8,12 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import CreatePlanVariant from './Partials/CreateVariant.vue';
-import LazyEditPlan from './Partials/EditPlan.vue'; 
+import LazyEditPlan from './Partials/EditPlan.vue';
 import { watch } from 'vue';
 
 const page = usePage();
 defineProps({
-  availablePlan: Object, 
+  availablePlan: Object,
   quote: Object,
   quoteStatuses: Object,
   quoteType: String,
@@ -59,7 +59,6 @@ defineProps({
   lifeRiders: Array,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
-
 });
 
 const { isRequired, emiratesNumber } = useRules();
@@ -69,7 +68,7 @@ const modelClass = 'App\\Models\\LifeQuote';
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const quoteStatusEnum = page.props.quoteStatuses;
-const selectPlanLoader = ref({});  
+const selectPlanLoader = ref({});
 const emit = defineEmits(['success', 'error']);
 const modals = reactive({
   duplicate: false,
@@ -80,7 +79,7 @@ const modals = reactive({
   createPlan: false,
   sendConfirm: false,
   createPlanVariant: false,
-  editPlan: false
+  editPlan: false,
 });
 
 const rules = {
@@ -92,9 +91,9 @@ const loader = ref({
   link: false,
 });
 
-const selectedProviderPlan = page.props.quote.plan_id; 
-const selectedProviderPlanVersion = page.props?.availablePlan?.quotes?.version ?? 0; 
-
+const selectedProviderPlan = page.props.quote.plan_id;
+const selectedProviderPlanVersion =
+  page.props?.availablePlan?.quotes?.version ?? 0;
 
 const [AddPlanButtonTemplate, AddPlanButtonReuseTemplate] =
   createReusableTemplate();
@@ -103,32 +102,32 @@ const variantPlan = ref(null);
 const selectedPlans = ref([]);
 let selectedPlan = ref(null);
 
-let ecomDetail = ref(null); 
+let ecomDetail = ref(null);
 let riders = ref({});
 
-const activeRiders = (data) => {
-  if(!data){
-    return 'N/A'; 
+const activeRiders = data => {
+  if (!data) {
+    return 'N/A';
   }
-  return data.filter(item => item.active === true) 
-  .map(item => item.text)            
-  .join(', ');         
-}
+  return data
+    .filter(item => item.active === true)
+    .map(item => item.text)
+    .join(', ');
+};
 
 const viewPlan = item => {
   selectedPlan = item;
-  modals.editPlan = true;      
+  modals.editPlan = true;
 };
 
 // watch (
 //   () => selectedPlan,
 //    (editPlan) => {
 //     if(editPlan){
-    
+
 //     }
 //   }
 // )
-
 
 // plans
 const planDataTable = ref();
@@ -200,7 +199,6 @@ const plansTable = reactive({
   ],
 });
 
-
 const listQuotePlansFiltered = ref([]);
 
 watchEffect(() => {
@@ -246,12 +244,12 @@ const validateEmailSending = () => {
   modals.sendConfirm = true;
 };
 
-const getPaymentTermTitle = (months) => {
+const getPaymentTermTitle = months => {
   const mapping = {
-          1 : "Monthly",
-          3 : "Quarterly",
-          6 : "Semi-Annually",
-          12 : "Annually",
+    1: 'Monthly',
+    3: 'Quarterly',
+    6: 'Semi-Annually',
+    12: 'Annually',
   };
 
   return mapping[months] || '';
@@ -260,11 +258,11 @@ const getPaymentTermTitle = (months) => {
 const getTotalAnnualPremium = (paymentTerm, premium) => {
   const paymentTermTitle = getPaymentTermTitle(paymentTerm);
   const mapping = {
-    "Monthly" : 12,
-    "Quarterly" : 4,
-    "Semi-Annually" : 2,
-    "Annually" : 1,
-  }
+    Monthly: 12,
+    Quarterly: 4,
+    'Semi-Annually': 2,
+    Annually: 1,
+  };
   return premium * mapping[paymentTermTitle];
 };
 
@@ -311,7 +309,7 @@ const onCreateVariant = () => {
       location.reload();
     },
   });
-}
+};
 
 const addVariant = plan => {
   variantPlan.value = plan;
@@ -604,12 +602,24 @@ const customerProfileForm = useForm({
   emirates_id_expiry_date: page.props.quote?.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
-  trade_license_no: page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ?? null,
-  company_name: page.props.quote?.quote_request_entity_mapping?.entity?.company_name ?? null,
-  company_address: page.props.quote?.quote_request_entity_mapping?.entity?.company_address ?? null,
-  entity_type_code: page.props.quote?.quote_request_entity_mapping?.entity_type_code ?? 'Parent',
-  industry_type_code: page.props.quote?.quote_request_entity_mapping?.entity?.industry_type_code ?? null,
-  emirate_of_registration_id: page.props.quote?.quote_request_entity_mapping?.entity?.emirate_of_registration_id ?? null,
+  trade_license_no:
+    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
+    null,
+  company_name:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
+    null,
+  company_address:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_address ??
+    null,
+  entity_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity_type_code ??
+    'Parent',
+  industry_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.industry_type_code ?? null,
+  emirate_of_registration_id:
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
@@ -730,12 +740,13 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-      const planData = res?.data[0]; 
+      const planData = res?.data[0];
 
-      const foundPlan = planData.find(plan => 
-        plan.planId === selectedProviderPlan && 
-        plan.version === selectedProviderPlanVersion && 
-        !plan.isDisabled
+      const foundPlan = planData.find(
+        plan =>
+          plan.planId === selectedProviderPlan &&
+          plan.version === selectedProviderPlanVersion &&
+          !plan.isDisabled,
       );
 
       ecomDetail.value = foundPlan;
@@ -758,41 +769,38 @@ const confirmSendEmail = () => {
 };
 
 const selectPlan = (planId, quoteId, version, planUuid) => {
-  const loaderKey = `${planId}-${version}`; 
+  const loaderKey = `${planId}-${version}`;
   selectPlanLoader.value[planUuid] = true;
-  axios.post('/personal-quotes/life-plan-selected', {
-    planId: planId,
-    quoteId: quoteId, 
-    version: version
-  })
-  .then(response => {
-    selectPlanLoader.value[planUuid] = false;
-    notification.success({
+  axios
+    .post('/personal-quotes/life-plan-selected', {
+      planId: planId,
+      quoteId: quoteId,
+      version: version,
+    })
+    .then(response => {
+      selectPlanLoader.value[planUuid] = false;
+      notification.success({
         title: 'Plan selected successfully',
         position: 'top',
       });
-    emit('success'); 
-    
-    setTimeout(() => {
+      emit('success');
 
-      location.reload();
-        
-    }, 2000);
-    
-    // onLoadAvailablePlansData()
+      setTimeout(() => {
+        location.reload();
+      }, 2000);
 
-  })
-  .catch(error => {
+      // onLoadAvailablePlansData()
+    })
+    .catch(error => {
       notification.error({
         title: error?.response?.data?.message ?? 'something went wrong',
         position: 'top',
       });
-      console.log('error', error)
-      emit('error'); 
+      console.log('error', error);
+      emit('error');
       selectPlanLoader.value[planUuid] = true;
     });
-  
-}
+};
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -821,12 +829,48 @@ const getBMITag = () => {
   const bmi = page.props.quote.life_quote?.bmi;
 
   const bmiRanges = [
-    { min: 0, max: 15.99, text: 'High Risk-Underweight', color: 'red', bgColor: 'red-100' },
-    { min: 16, max: 18.4, text: 'Low Risk-Underweight', color: 'yellow', bgColor: 'yellow-300' },
-    { min: 18.41, max: 25, text: 'Normal', color: 'green', bgColor: 'green-200' },
-    { min: 25.01, max: 30, text: 'Low Risk-Overweight', color: 'yellow', bgColor: 'yellow-300' },
-    { min: 30.01, max: 40, text: 'Low Risk-Obese', color: 'yellow', bgColor: 'yellow-300' },
-    { min: 40.01, max: Infinity, text: 'High Risk-Obese', color: 'red', bgColor: 'red-100' },
+    {
+      min: 0,
+      max: 15.99,
+      text: 'High Risk-Underweight',
+      color: 'red',
+      bgColor: 'red-100',
+    },
+    {
+      min: 16,
+      max: 18.4,
+      text: 'Low Risk-Underweight',
+      color: 'yellow',
+      bgColor: 'yellow-300',
+    },
+    {
+      min: 18.41,
+      max: 25,
+      text: 'Normal',
+      color: 'green',
+      bgColor: 'green-200',
+    },
+    {
+      min: 25.01,
+      max: 30,
+      text: 'Low Risk-Overweight',
+      color: 'yellow',
+      bgColor: 'yellow-300',
+    },
+    {
+      min: 30.01,
+      max: 40,
+      text: 'Low Risk-Obese',
+      color: 'yellow',
+      bgColor: 'yellow-300',
+    },
+    {
+      min: 40.01,
+      max: Infinity,
+      text: 'High Risk-Obese',
+      color: 'red',
+      bgColor: 'red-100',
+    },
   ];
 
   const tag = bmiRanges.find(range => bmi >= range.min && bmi <= range.max);
@@ -875,7 +919,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             View Legacy policy
           </x-button>
         </Link>
-         <LeadNotes
+        <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteNotes"
           :modelType="modelType"
@@ -1142,10 +1186,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
             </dl>
           </div>
-          <hr class="mt-1 mb-1">
+          <hr class="mt-1 mb-1" />
           <div class="mt-2">
-            <h3 class="font-semibold text-primary-800 text-lg mb-2">Quote Details</h3>
-             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <h3 class="font-semibold text-primary-800 text-lg mb-2">
+              Quote Details
+            </h3>
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PURPOSE OF INSURANCE</dt>
                 <dd>{{ quote.life_quote?.purpose_of_insurance?.text }}</dd>
@@ -1166,7 +1212,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">ADDITIONAL INFORMATION</dt>
                 <dd>{{ quote.life_quote?.others_info }}</dd>
               </div>
-             </dl>
+            </dl>
           </div>
         </template>
       </Collapsible>
@@ -1251,16 +1297,17 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   <dt class="font-medium">AGE</dt>
                   <dd>{{ quote.life_quote?.age }}</dd>
                 </div>
-                
+
                 <div class="grid sm:grid-cols-2">
-                
                   <dt class="font-medium">GENDER</dt>
                   <dd>{{ quote.gender }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
                   <dd>
-                    {{ quote.customer.receive_marketing_updates ? 'Yes' : 'No' }}
+                    {{
+                      quote.customer.receive_marketing_updates ? 'Yes' : 'No'
+                    }}
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
@@ -1304,37 +1351,41 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   <dt class="font-medium">WEIGHT</dt>
                   <dd>{{ quote.life_quote?.weight }} KG</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="quote.life_quote?.age && quote.life_quote?.age >= 20">
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="quote.life_quote?.age && quote.life_quote?.age >= 20"
+                >
                   <dt class="font-medium">BMI</dt>
                   <dd>
-                    {{quote.life_quote?.bmi}}
+                    {{ quote.life_quote?.bmi }}
                     <span
                       :class="`inline-block px-2 py-1 text-xs font-medium rounded-full bg-${getBMITag().bgColor} text-${getBMITag().color}-800`"
                     >
                       {{ getBMITag().text }}
                     </span>
                   </dd>
-
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MARITAL STATUS</dt>
                   <dd>{{ quote.life_quote?.marital_status?.text }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  
-                <x-tooltip
-                  position="left"
-                >
-                  <dt class="font-medium">HAVE YOU CONSUMED ANY PRODUCTS WITH<br>NICOTINE FOR THE PAST 12 MONTHS?</dt>
-                  <template #tooltip>
-                    <div class="whitespace-normal text-xs">
-                      Nicotine-containing products cover a range of items such as tobacco, sisha, vape, nicotine gums, and related products.
-                    </div>
-                  </template>
-                </x-tooltip>
-                <dd>{{ quote.life_quote?.is_smoker == 1  ? 'Yes' : 'No' }}</dd>
-              </div>
-              
+                  <x-tooltip position="left">
+                    <dt class="font-medium">
+                      HAVE YOU CONSUMED ANY PRODUCTS WITH<br />NICOTINE FOR THE
+                      PAST 12 MONTHS?
+                    </dt>
+                    <template #tooltip>
+                      <div class="whitespace-normal text-xs">
+                        Nicotine-containing products cover a range of items such
+                        as tobacco, sisha, vape, nicotine gums, and related
+                        products.
+                      </div>
+                    </template>
+                  </x-tooltip>
+                  <dd>{{ quote.life_quote?.is_smoker == 1 ? 'Yes' : 'No' }}</dd>
+                </div>
+
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Life'" />
               </dl>
               <dl
@@ -1699,7 +1750,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template> -->
 
               <template #item-totalPrice="item">
-                <span class="copay-max">{{ item.isManualPlan ? item.totalPrice : item.actualPremium }}</span>
+                <span class="copay-max">{{
+                  item.isManualPlan ? item.totalPrice : item.actualPremium
+                }}</span>
               </template>
 
               <template #item-planTypeId="item">
@@ -1707,19 +1760,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </template>
 
               <template #item-variantVersion="item">
-                <span v-if="item.version" class="copay-max">v.{{ item.version }}</span>
+                <span v-if="item.version" class="copay-max"
+                  >v.{{ item.version }}</span
+                >
               </template>
               <template #item-paymentTerm="item">
-                <span class="copay-max">{{ getPaymentTermTitle(item.paymentTerm) }}</span>
+                <span class="copay-max">{{
+                  getPaymentTermTitle(item.paymentTerm)
+                }}</span>
               </template>
 
               <template #item-totalAnnualPremium="item">
-                <span class="copay-max">{{ item.isManualPlan ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice) : getTotalAnnualPremium(item.paymentTerm, item.actualPremium) }}</span>
+                <span class="copay-max">{{
+                  item.isManualPlan
+                    ? getTotalAnnualPremium(item.paymentTerm, item.totalPrice)
+                    : getTotalAnnualPremium(
+                        item.paymentTerm,
+                        item.actualPremium,
+                      )
+                }}</span>
               </template>
 
-              <template
-                #item-providerName="{ providerName, isDisabled }"
-              >
+              <template #item-providerName="{ providerName, isDisabled }">
                 <p>
                   {{ providerName }}
                 </p>
@@ -1733,12 +1795,18 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     Hidden
                   </x-tag>
                 </div>
-              </template> 
+              </template>
 
               <template
-                #item-planName="{ planName, isUnderwritten, isManualPlan, isApi, isRateCalculator }"
+                #item-planName="{
+                  planName,
+                  isUnderwritten,
+                  isManualPlan,
+                  isApi,
+                  isRateCalculator,
+                }"
               >
-                <p> 
+                <p>
                   {{ planName }}
                 </p>
                 <div class="flex gap-1">
@@ -1750,7 +1818,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   >
                     UW
                   </x-tag>
-                  <x-tag   
+                  <x-tag
                     v-else-if="isManualPlan && !isApi"
                     size="xs"
                     color="error"
@@ -1779,16 +1847,14 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
               <template #item-action="item">
                 <div class="flex gap-2 pr-2">
-
-              
-                    <x-button
-                      size="xs"
-                      color="primary"
-                      outlined
-                        @click.prevent="viewPlan(item)"
-                    >
-                      View
-                    </x-button>
+                  <x-button
+                    size="xs"
+                    color="primary"
+                    outlined
+                    @click.prevent="viewPlan(item)"
+                  >
+                    View
+                  </x-button>
                   <x-button
                     size="xs"
                     color="emerald"
@@ -1805,21 +1871,32 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   </x-button>
                   <span>
                     <x-button
-                    v-if="selectedProviderPlan == item.planId && selectedProviderPlanVersion == (item.version || 0) && !item.isDisabled"
+                      v-if="
+                        selectedProviderPlan == item.planId &&
+                        selectedProviderPlanVersion == (item.version || 0) &&
+                        !item.isDisabled
+                      "
                       size="xs"
                       color="orange"
                       outlined
                       :disabled="true"
-                    >Selected</x-button>
-                   
+                      >Selected</x-button
+                    >
+
                     <x-button
                       v-else
-                      
                       size="xs"
                       color="emerald"
                       outlined
-                      :loading="selectPlanLoader[`${item._id}`]"                     
-                       @click.prevent="selectPlan(item.planId, page.props.quote.uuid, item.version, item._id)"
+                      :loading="selectPlanLoader[`${item._id}`]"
+                      @click.prevent="
+                        selectPlan(
+                          item.planId,
+                          page.props.quote.uuid,
+                          item.version,
+                          item._id,
+                        )
+                      "
                     >
                       Select
                     </x-button>
@@ -1836,8 +1913,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </div>
               </template>
             </DataTable>
-
-           
           </div>
         </template>
       </Collapsible>
@@ -1848,19 +1923,23 @@ const applyEmiratesIdNumMasking = emiratesId =>
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              E-COM Detail 
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">E-COM Detail</h3>
           </div>
         </template>
 
         <template #body>
           <x-divider class="my-4" />
           <div>
-             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Price</dt>
-                <dd>{{ ecomDetail?.isManualPlan ? ecomDetail?.totalPrice : ecomDetail?.actualPremium ?? 'N/A' }}</dd>
+                <dd>
+                  {{
+                    ecomDetail?.isManualPlan
+                      ? ecomDetail?.totalPrice
+                      : (ecomDetail?.actualPremium ?? 'N/A')
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">Authorised AT</dt>
@@ -1881,7 +1960,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
                 <dd v-if="quote.payment_gateway == null">N/A</dd>
-                <dd v-else>{{ quote.payment_gateway == 'NGENIUS' ? 'CREDIT CARD' : quote.payment_gateway }}</dd>
+                <dd v-else>
+                  {{
+                    quote.payment_gateway == 'NGENIUS'
+                      ? 'CREDIT CARD'
+                      : quote.payment_gateway
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
@@ -1907,12 +1992,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">VARIENT</dt>
-                <dd>{{ ecomDetail?.version ? 'V' + ecomDetail?.version : 'N/A' }}</dd>
+                <dd>
+                  {{ ecomDetail?.version ? 'V' + ecomDetail?.version : 'N/A' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
                 <dd>{{ quote?.life_quote?.payment_reference ?? 'N/A' }}</dd>
-             
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ORDER REFERENCE</dt>
@@ -1922,12 +2008,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">ADDONS</dt>
                 <dd>{{ activeRiders(ecomDetail?.riders) ?? 'N/A' }}</dd>
               </div>
-             </dl>
+            </dl>
           </div>
         </template>
       </Collapsible>
     </div>
-
 
     <LazyCreatePlan
       v-model="modals.createPlan"
@@ -1936,7 +2021,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :currencies="currencies"
       :plans="computedListQuotePlans"
       :lifeRiders="lifeRiders"
-      
       @success="onCreatePlan"
       @error="onPlanError"
     />
@@ -1948,15 +2032,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :currencies="currencies"
       :plan="variantPlan"
       :lifeRiders="lifeRiders"
-      
       @success="onCreateVariant"
       @error="onPlanError"
     />
 
-
     <template>
-
-    <LazyEditPlan 
+      <LazyEditPlan
         v-if="modals.editPlan"
         v-model="modals.editPlan"
         :selectedPlan="selectedPlan"
@@ -1965,7 +2046,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
         :currencies="currencies"
         :plans="computedListQuotePlans"
         :lifeRiders="lifeRiders"
-    />
+      />
     </template>
 
     <MigratePayment

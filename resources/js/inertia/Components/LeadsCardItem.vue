@@ -245,7 +245,7 @@ const formatDate = date => {
           {{ first_name }} {{ last_name }}
         </span>
       </div>
-       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
+      <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />
         <p class="text-xs">{{ insurance_tenure_text }}</p>
       </div>

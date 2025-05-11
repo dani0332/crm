@@ -12,7 +12,7 @@ const props = defineProps({
   filterStatuses: {
     type: Array,
     default: () => [],
-  }
+  },
 });
 
 const emit = defineEmits(['toggleFilters', 'selectedFilters']);

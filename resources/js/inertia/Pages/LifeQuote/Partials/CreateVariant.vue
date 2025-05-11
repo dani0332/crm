@@ -12,7 +12,6 @@ const props = defineProps({
 
 const notification = useNotifications('toast');
 
-
 const { isRequired } = useRules();
 
 const shown = computed({
@@ -49,7 +48,6 @@ const availableInsuranceProviders = computed(() => {
 let errorMessage = null;
 let alreadyQuoted = ref(null);
 
-
 const createForm = reactive({
   providerId: null,
   planId: null,
@@ -67,97 +65,123 @@ const createForm = reactive({
 });
 
 // Ensure numeric fields are never negative
-watch(() => createForm.sumAssured, (val) => {
-  if (val !== null && val !== undefined && Number(val) < 0) {
-    createForm.sumAssured = 0;
-  }
-});
+watch(
+  () => createForm.sumAssured,
+  val => {
+    if (val !== null && val !== undefined && Number(val) < 0) {
+      createForm.sumAssured = 0;
+    }
+  },
+);
 
-watch(() => createForm.policyTerm, (val) => {
-  if (val !== null && val !== undefined && Number(val) < 0) {
-    createForm.policyTerm = 0;
-  }
-});
+watch(
+  () => createForm.policyTerm,
+  val => {
+    if (val !== null && val !== undefined && Number(val) < 0) {
+      createForm.policyTerm = 0;
+    }
+  },
+);
 
-watch(() => createForm.actualPremium, (val) => {
-  if (val !== null && val !== undefined && Number(val) < 0) {
-    createForm.actualPremium = 0;
-  }
-});
+watch(
+  () => createForm.actualPremium,
+  val => {
+    if (val !== null && val !== undefined && Number(val) < 0) {
+      createForm.actualPremium = 0;
+    }
+  },
+);
 
 // Watch for negative values in riders
-watch(() => ridersData.value, (newRiders) => {
-  newRiders.forEach(rider => {
-    if (Number(rider.price) < 0) rider.price = 0;
-    if (Number(rider.coverValue) < 0) rider.coverValue = 0;
-  });
-}, { deep: true });
+watch(
+  () => ridersData.value,
+  newRiders => {
+    newRiders.forEach(rider => {
+      if (Number(rider.price) < 0) rider.price = 0;
+      if (Number(rider.coverValue) < 0) rider.coverValue = 0;
+    });
+  },
+  { deep: true },
+);
 
-watch(() => props.plan, (newVal) => {
+watch(
+  () => props.plan,
+  newVal => {
     createForm.providerId = props.plan?.providerId;
     createForm.planId = props.plan?.planId;
     createForm.currency = props.plan?.currency;
-    createForm.sumAssured = props.plan?.sumInsured ? Math.max(0, Number(props.plan.sumInsured)) : null;
-    createForm.policyTerm = props.plan?.policyTerm ? Math.max(0, Number(props.plan.policyTerm)) : null;
+    createForm.sumAssured = props.plan?.sumInsured
+      ? Math.max(0, Number(props.plan.sumInsured))
+      : null;
+    createForm.policyTerm = props.plan?.policyTerm
+      ? Math.max(0, Number(props.plan.policyTerm))
+      : null;
     createForm.paymentTerm = props.plan?.paymentTerm;
     createForm.actualPremium = null;
-    if(!props.plan?.isApi) {
-        createForm.actualPremium = props.plan?.actualPremium ? Math.max(0, Number(props.plan.actualPremium)) : null;
+    if (!props.plan?.isApi) {
+      createForm.actualPremium = props.plan?.actualPremium
+        ? Math.max(0, Number(props.plan.actualPremium))
+        : null;
     }
     createForm.insurerQuoteNo = null;
     errorMessage = null;
 
     // Handle rider data on plan change
     if (props.plan?.riders && props.plan.riders.length > 0) {
-        console.log('Watch - Using riders from plan:', props.plan.riders);
-        ridersData.value = props.plan.riders.map(rider => ({
-            riderId: rider.id,
-            active: rider.active ?? 0,
-            price: Math.max(0, parseFloat(rider.price) || 0),
-            coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
-            text: rider.text,
-        }));
+      console.log('Watch - Using riders from plan:', props.plan.riders);
+      ridersData.value = props.plan.riders.map(rider => ({
+        riderId: rider.id,
+        active: rider.active ?? 0,
+        price: Math.max(0, parseFloat(rider.price) || 0),
+        coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
+        text: rider.text,
+      }));
     } else {
-        console.log('Watch - No riders in plan, using lifeRiders');
-        ridersData.value = props.lifeRiders.map(rider => ({
-            riderId: rider.id,
-            active: 0,
-            price: 0,
-            coverValue: 0,
-            text: rider.text,
-        }));
+      console.log('Watch - No riders in plan, using lifeRiders');
+      ridersData.value = props.lifeRiders.map(rider => ({
+        riderId: rider.id,
+        active: 0,
+        price: 0,
+        coverValue: 0,
+        text: rider.text,
+      }));
     }
     console.log('Watch - Final rider data:', ridersData.value);
-}, { deep: true });
+  },
+  { deep: true },
+);
 
 const getQuote = () => {
-    createForm.getQuoteLoading = true;
-    axios
+  createForm.getQuoteLoading = true;
+  axios
     .post(`/personal-quotes/get-life-provider-plan`, {
-        data: {
+      data: {
         quoteUID: props.uuid,
         planId: props.plan.planId,
         providerCode: props.plan.providerCode,
         isIndividualLoading: true,
         planData: {
-            currency: createForm.currency,
-            sumAssured: createForm.sumAssured,
-            policyTerm: createForm.policyTerm,
-            paymentTerm: createForm.paymentTerm,
-            riders: ridersData.value,
+          currency: createForm.currency,
+          sumAssured: createForm.sumAssured,
+          policyTerm: createForm.policyTerm,
+          paymentTerm: createForm.paymentTerm,
+          riders: ridersData.value,
         },
-        lang: "en"
-        }
+        lang: 'en',
+      },
     })
     .then(res => {
-        if (res.data.providerPlan.message) {
-            errorMessage = res.data.providerPlan.message;
-           return; 
-        }
-        if (res.data) {
-            createForm.actualPremium = Math.max(0, Number(res.data.providerPlan.plan.actualPremium));
-            errorMessage = null;
-        }
+      if (res.data.providerPlan.message) {
+        errorMessage = res.data.providerPlan.message;
+        return;
+      }
+      if (res.data) {
+        createForm.actualPremium = Math.max(
+          0,
+          Number(res.data.providerPlan.plan.actualPremium),
+        );
+        errorMessage = null;
+      }
     })
     .catch(err => {
       errorMessage = err.response.data.message;
@@ -168,41 +192,41 @@ const getQuote = () => {
 };
 
 const onSubmit = isValid => {
-
   if (!isValid) {
     return;
   }
   createForm.loading = true;
   createForm.riders = ridersData.value;
   // remove loading from createForm
-//   const data  = createForm.filter((item) => item !== 'loading');
+  //   const data  = createForm.filter((item) => item !== 'loading');
   axios
     .post('/personal-quotes/life-plan-manual-create', {
       quoteUID: props.uuid,
       formData: createForm,
     })
     .then(res => {
-
-      if(res?.data?.msg) {
+      if (res?.data?.msg) {
         alreadyQuoted = res.data.msg;
-        return;  
-      } 
+        return;
+      }
 
       notification.success({
-          title: res.data.message,
-          position: 'top',
+        title: res.data.message,
+        position: 'top',
       });
 
       setTimeout(() => {
         location.reload();
       }, 2000);
-    
     })
     .catch(err => {
       emit('error');
 
-      const alreadyQuotedMessage = 'This plan detail is already quoted'; 
-      if (err?.response?.data?.message && err?.response?.data?.message.includes(alreadyQuotedMessage)) {
+      const alreadyQuotedMessage = 'This plan detail is already quoted';
+      if (
+        err?.response?.data?.message &&
+        err?.response?.data?.message.includes(alreadyQuotedMessage)
+      ) {
         alreadyQuoted = 'This plan detail is already quoted';
         return;
       }
@@ -211,7 +235,6 @@ const onSubmit = isValid => {
         title: res.data.msg,
         position: 'top',
       });
-      
     })
     .finally(() => {
       createForm.loading = false;
@@ -222,21 +245,31 @@ const onSubmit = isValid => {
 onMounted(() => {
   if (props.plan) {
     console.log('Plan data:', props.plan);
-    
+
     // Initialize form data from plan
     createForm.providerId = props.plan.providerId;
     createForm.planId = props.plan.planId;
     createForm.currency = props.plan.currency;
-    createForm.sumAssured = props.plan.sumInsured ? Math.max(0, Number(props.plan.sumInsured)) : null;
-    createForm.policyTerm = props.plan.policyTerm ? Math.max(0, Number(props.plan.policyTerm)) : null;
+    createForm.sumAssured = props.plan.sumInsured
+      ? Math.max(0, Number(props.plan.sumInsured))
+      : null;
+    createForm.policyTerm = props.plan.policyTerm
+      ? Math.max(0, Number(props.plan.policyTerm))
+      : null;
     createForm.paymentTerm = props.plan.paymentTerm;
     createForm.actualPremium = null;
     if (!props.plan.isApi) {
-      createForm.actualPremium = props.plan.actualPremium ? Math.max(0, Number(props.plan.actualPremium)) : null;
+      createForm.actualPremium = props.plan.actualPremium
+        ? Math.max(0, Number(props.plan.actualPremium))
+        : null;
     }
-    
+
     // Handle rider data initialization
-    if (props.plan.riders && Array.isArray(props.plan.riders) && props.plan.riders.length > 0) {
+    if (
+      props.plan.riders &&
+      Array.isArray(props.plan.riders) &&
+      props.plan.riders.length > 0
+    ) {
       console.log('Using riders from plan:', JSON.stringify(props.plan.riders));
       ridersData.value = props.plan.riders.map(rider => {
         const mappedRider = {
@@ -250,7 +283,10 @@ onMounted(() => {
         return mappedRider;
       });
     } else {
-      console.log('No riders in plan, using lifeRiders:', JSON.stringify(props.lifeRiders));
+      console.log(
+        'No riders in plan, using lifeRiders:',
+        JSON.stringify(props.lifeRiders),
+      );
       ridersData.value = props.lifeRiders.map(rider => {
         const mappedRider = {
           riderId: rider.id,
@@ -263,17 +299,16 @@ onMounted(() => {
         return mappedRider;
       });
     }
-    
+
     console.log('Final rider data:', JSON.stringify(ridersData.value));
   }
 });
 
 // Add validation for non-negative numbers
-const isNonNegative = (value) => {
+const isNonNegative = value => {
   if (value === null || value === undefined || value === '') return true;
   return parseFloat(value) >= 0 || 'Value must be non-negative';
 };
-
 </script>
 
 <template>
@@ -287,12 +322,16 @@ const isNonNegative = (value) => {
     @submit="onSubmit"
   >
     <div class="mx-auto p-6 bg-white rounded-lg">
-        <h2 class="bg-gray-100 text-gray-700 font-semibold text-center rounded-lg px-6 py-3 -mt-4 mb-2">
-            {{ props.plan.planName}}
-        </h2>
+      <h2
+        class="bg-gray-100 text-gray-700 font-semibold text-center rounded-lg px-6 py-3 -mt-4 mb-2"
+      >
+        {{ props.plan.planName }}
+      </h2>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block font-medium text-gray-700 mb-1">Insurance Provider <span class="text-red-500">*</span></label>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Insurance Provider <span class="text-red-500">*</span></label
+          >
           <x-select
             v-model="createForm.providerId"
             :options="
@@ -308,19 +347,19 @@ const isNonNegative = (value) => {
           />
         </div>
         <div>
-          <label class="block font-medium text-gray-700 mb-1">Plan <span class="text-red-500">*</span></label>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Plan <span class="text-red-500">*</span></label
+          >
           <x-select
             v-model="createForm.planId"
             placeholder="Select Plan"
             class="w-full"
-            :options="
-            [
-                {
-                    value: plan.planId,
-                    label: plan.planName,
-                },
-            ]
-            "
+            :options="[
+              {
+                value: plan.planId,
+                label: plan.planName,
+              },
+            ]"
             :rules="[isRequired]"
             disabled
           />
@@ -328,7 +367,9 @@ const isNonNegative = (value) => {
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block font-medium text-gray-700 mb-1">Currency <span class="text-red-500">*</span></label>
+            <label class="block font-medium text-gray-700 mb-1"
+              >Currency <span class="text-red-500">*</span></label
+            >
             <x-select
               v-model="createForm.currency"
               placeholder="AED"
@@ -343,7 +384,9 @@ const isNonNegative = (value) => {
             />
           </div>
           <div>
-            <label class="block font-medium text-gray-700 mb-1">Sum Assured <span class="text-red-500">*</span></label>
+            <label class="block font-medium text-gray-700 mb-1"
+              >Sum Assured <span class="text-red-500">*</span></label
+            >
             <x-input
               v-model="createForm.sumAssured"
               placeholder="Enter Sum Assured"
@@ -352,99 +395,149 @@ const isNonNegative = (value) => {
               type="number"
               min="0"
               step="any"
-              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
-              @input="val => createForm.sumAssured = Math.max(0, Number(val) || 0)"
-              />
+              @keydown="
+                e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+              "
+              @input="
+                val => (createForm.sumAssured = Math.max(0, Number(val) || 0))
+              "
+            />
           </div>
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1">Policy Term <span class="text-red-500">*</span></label>
-           <x-input
-              v-model="createForm.policyTerm"
-              placeholder="Enter Policy Term"
-              :rules="[isRequired]"
-              class="w-full"
-              type="number"
-              min="0"
-              step="any"
-              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
-              />
-        </div>
-
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">Payment Terms <span class="text-red-500">*</span></label>
-           <x-select
-              v-model="createForm.paymentTerm"
-              placeholder="Select Payment Terms"
-              class="w-full"
-              :options="paymentTerms"
-              :rules="[isRequired]"
-            />
-        </div>
-
-        <div>
-          <label class="block font-medium text-gray-700 mb-1">Price (VAT not applicable) <span class="text-red-500">*</span></label>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Policy Term <span class="text-red-500">*</span></label
+          >
           <x-input
-              v-model="createForm.actualPremium"
-              placeholder="Enter Price"
-              :rules="[isRequired, isNonNegative]"
-              class="w-full"
-              type="number"
-              min="0"
-              step="any"
-              @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"
-              :disabled="plan.isApi"
+            v-model="createForm.policyTerm"
+            placeholder="Enter Policy Term"
+            :rules="[isRequired]"
+            class="w-full"
+            type="number"
+            min="0"
+            step="any"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
           />
         </div>
 
         <div>
-          <label class="block font-medium text-gray-700 mb-1">Insurer Quote Number</label>
-          <x-input
-              v-model="createForm.insurerQuoteNo"
-              placeholder="Enter Insurer Quote Number"
-              class="w-full"
-              :disabled="plan.isApi"
+          <label class="block font-medium text-gray-700 mb-1"
+            >Payment Terms <span class="text-red-500">*</span></label
+          >
+          <x-select
+            v-model="createForm.paymentTerm"
+            placeholder="Select Payment Terms"
+            class="w-full"
+            :options="paymentTerms"
+            :rules="[isRequired]"
           />
         </div>
-        <div v-if="errorMessage" class="flex items-center justify-center text-red-500 font-medium">
-            <span>{{ errorMessage }}</span>
+
+        <div>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Price (VAT not applicable)
+            <span class="text-red-500">*</span></label
+          >
+          <x-input
+            v-model="createForm.actualPremium"
+            placeholder="Enter Price"
+            :rules="[isRequired, isNonNegative]"
+            class="w-full"
+            type="number"
+            min="0"
+            step="any"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+            :disabled="plan.isApi"
+          />
         </div>
 
+        <div>
+          <label class="block font-medium text-gray-700 mb-1"
+            >Insurer Quote Number</label
+          >
+          <x-input
+            v-model="createForm.insurerQuoteNo"
+            placeholder="Enter Insurer Quote Number"
+            class="w-full"
+            :disabled="plan.isApi"
+          />
+        </div>
+        <div
+          v-if="errorMessage"
+          class="flex items-center justify-center text-red-500 font-medium"
+        >
+          <span>{{ errorMessage }}</span>
+        </div>
       </div>
 
       <div class="mt-6">
-        <h3 class="font-semibold bg-gray-100 p-4 rounded-md text-gray-700">RIDERS</h3>
-        
+        <h3 class="font-semibold bg-gray-100 p-4 rounded-md text-gray-700">
+          RIDERS
+        </h3>
+
         <div class="grid grid-cols-6 items-center gap-4 p-2 border-b">
           <span class="text-gray-700 col-span-2">Life Cover</span>
           <span class="text-gray-700">Included</span>
-          <x-input type="number" min="0" step="any" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" class="w-full h-10 p-2 rounded-md" 
-          v-model="createForm.sumAssured" disabled />
-
-          <x-toggle color="emerald" size="lg" disabled/>
-          <x-input type="number" min="0" step="any" @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()"  class="w-full h-10 p-2 rounded-md" v-model="createForm.actualPremium" disabled />
-        </div>
-        <div class="grid grid-cols-6 items-center gap-4 p-2 border-b" v-for="(rider, index) in ridersData" :key="rider.riderId">
-          <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
-          <span class="text-gray-700">{{rider.active ? 'Included' : 'Optional'}}</span>
-          <x-input 
-            type="number" 
-            min="0" 
+          <x-input
+            type="number"
+            min="0"
             step="any"
-            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
-            :disabled="!rider.active" 
-            class="w-full h-10 p-2 rounded-md" 
-            v-model="rider.coverValue" 
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+            class="w-full h-10 p-2 rounded-md"
+            v-model="createForm.sumAssured"
+            disabled
+          />
+
+          <x-toggle color="emerald" size="lg" disabled />
+          <x-input
+            type="number"
+            min="0"
+            step="any"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+            class="w-full h-10 p-2 rounded-md"
+            v-model="createForm.actualPremium"
+            disabled
+          />
+        </div>
+        <div
+          class="grid grid-cols-6 items-center gap-4 p-2 border-b"
+          v-for="(rider, index) in ridersData"
+          :key="rider.riderId"
+        >
+          <span class="text-gray-700 col-span-2">{{ rider.text }}</span>
+          <span class="text-gray-700">{{
+            rider.active ? 'Included' : 'Optional'
+          }}</span>
+          <x-input
+            type="number"
+            min="0"
+            step="any"
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+            :disabled="!rider.active"
+            class="w-full h-10 p-2 rounded-md"
+            v-model="rider.coverValue"
           />
           <x-toggle v-model="rider.active" color="success" size="lg" />
-          <x-input 
-            type="number" 
-            min="0" 
+          <x-input
+            type="number"
+            min="0"
             step="any"
-            @keydown="e => (e.key === 'e' || e.key === '-') && e.preventDefault()" 
-            class="w-full h-10 p-2 rounded-md" 
-            :disabled="!rider.active || !props.plan.isManualPlan" 
+            @keydown="
+              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+            "
+            class="w-full h-10 p-2 rounded-md"
+            :disabled="!rider.active || !props.plan.isManualPlan"
             v-model="rider.price"
           />
         </div>
@@ -460,19 +553,26 @@ const isNonNegative = (value) => {
 
         <!-- Right side: Button -->
         <div class="flex justify-end">
-          <x-button class="mr-2" @click="shown = false">
-            Cancel
-          </x-button>
-          <x-button @click="getQuote" v-if="!createForm.actualPremium && plan.isApi" color="emerald" :loading="createForm.getQuoteLoading">
+          <x-button class="mr-2" @click="shown = false"> Cancel </x-button>
+          <x-button
+            @click="getQuote"
+            v-if="!createForm.actualPremium && plan.isApi"
+            color="emerald"
+            :loading="createForm.getQuoteLoading"
+          >
             Get Quote
           </x-button>
-          
-          <x-button v-else type="submit" color="emerald" :loading="createForm.loading">
+
+          <x-button
+            v-else
+            type="submit"
+            color="emerald"
+            :loading="createForm.loading"
+          >
             Save
           </x-button>
         </div>
       </div>
     </template>
-
   </x-modal>
 </template>
