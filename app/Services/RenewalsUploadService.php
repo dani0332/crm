@@ -1921,7 +1921,7 @@ class RenewalsUploadService
                     }
                 }
                 // If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
-                if ($lead->quote_type != quoteTypeCode::TRA && $lead->quote_type != QuoteTypeShortCode::HEA) {
+                if ($lead->quote_type != quoteTypeCode::TRA ) {
                     if (! $leadData->insurer) {
                         $leadValidationErrors->push('Insurance Provider is required');
                     } elseif (! ($insurer = InsuranceProvider::where('code', $leadData->insurer)->first())) {
@@ -2193,8 +2193,8 @@ class RenewalsUploadService
                                 }
                             }
                             if ($quoteExist != null && isset($quoteExist)) {
-                                $insuranceProvider = $quoteExist->insuranceProvider;
-                                if ($insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL) {
+                                $insuranceProvider = $quoteExist->currentlyInsured;
+                                if ($insuranceProvider != null && $insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL) {
                                     $leadValidationErrors->push('Payment Gateway is not supported for health quotes');
                                 }
                             }
