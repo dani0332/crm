@@ -58,9 +58,9 @@ class TravelAIGWorkflowJob implements ShouldQueue
 
             LoggerService::info("TravelAIGWorkflowJob - Completed successfully");
 
-        } catch (\Throwable $th) {
-            LoggerService::error("TravelAIGWorkflowJob - Exception encountered", exception: $th);
-            throw $th;
+        } catch (\Exception $e) {
+            LoggerService::error("TravelAIGWorkflowJob - Exception encountered", exception: $e);
+            throw $e;
         }
     }
 } 
