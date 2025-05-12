@@ -51,7 +51,7 @@ class SendFTCEmailJob implements ShouldQueue
 
             // only add isSIC check if the quote type is not in the nonEligibleSICTypes
             if (! in_array($this->quoteType->id(), $nonEligibleSICTypes, true)) {
-                $leadQuery->isSIC($this->quoteType);
+                $leadQuery->isSICLead($this->quoteType);
                 $isSic = true;
             }
 
