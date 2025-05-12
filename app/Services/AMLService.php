@@ -770,7 +770,7 @@ class AMLService
 
     }
 
-    private function formatGender($gender): string
+    private function formatGender($gender)
     {
         if (in_array($gender, [GenericRequestEnum::MALE_SINGLE, GenericRequestEnum::MALE_SINGLE_VALUE, strtolower(GenericRequestEnum::MALE_SINGLE), strtolower(GenericRequestEnum::MALE_SINGLE_VALUE)])) {
             $gender = GenericRequestEnum::MALE_SINGLE;
@@ -858,6 +858,7 @@ class AMLService
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
             Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
             request()->merge($requestParams);
         }
 
@@ -875,8 +876,6 @@ class AMLService
             ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
             ->whereBetween('created_at', dateQueryFilter(request('amlCreatedStartDate'), request('amlCreatedEndDate')));
 
-        LoggerService::endLogging();
-        logger()->debug('rawSql: '.$query->toRawSql());
         $data = collect();
 
         $query->chunk(1000, function ($chunk) use (&$data) {

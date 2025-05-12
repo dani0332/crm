@@ -183,7 +183,7 @@ const registrationTypeOptions = [
   { value: 'All', label: 'All' },
   ...Object.values(carRegistrationTypeEnum).map(item => ({
     value: item,
-    label: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
   })),
 ];
 
@@ -191,13 +191,20 @@ const vehicleUseOptions = [
   { value: 'All', label: 'All' },
   ...Object.values(carVehicleUseEnum).map(item => ({
     value: item,
-    label: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
   })),
 ];
 
 const isVehicleUseDisabled = computed(() => {
   return filters.registration_type === carRegistrationTypeEnum.COMPANY;
 });
+const showCommercialRule = computed(() => {
+  if (filters.registration_type !== carRegistrationTypeEnum.PERSONAL) {
+    filters.isCommercial = '';
+  }
+  return filters.registration_type === carRegistrationTypeEnum.PERSONAL;
+});
+
 const onLobChange = (e, isOnMounted = false) => {
   onSubmit(true, isOnMounted);
 };
@@ -290,7 +297,7 @@ const onLobChange = (e, isOnMounted = false) => {
           :options="vehicleUseOptions"
         />
         <x-select
-          v-if="filters.lob === quoteTypeCodeEnum.Car"
+          v-if="filters.lob === quoteTypeCodeEnum.Car && showCommercialRule"
           v-model="filters.isCommercial"
           label="Commercial Rule"
           placeholder="Select any option"
