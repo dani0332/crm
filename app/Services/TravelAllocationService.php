@@ -155,11 +155,10 @@ class TravelAllocationService extends AllocationService
         }
 
         $teamName = null;
-        if ($teamId) {
-            $team = Team::find($teamId);
-            if ($team) {
-                $teamName = $team->name;
-            }
+
+        if ($lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
+            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+            $teamName = TeamNameEnum::SIC_UNASSISTED;
         }
 
         foreach ($statusOrder as $status) {
