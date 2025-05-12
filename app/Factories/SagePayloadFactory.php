@@ -17,7 +17,6 @@ use App\Models\InsuranceProvider;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
-use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
@@ -1284,7 +1283,6 @@ class SagePayloadFactory
         $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
         $sageRequest->policyNumber = $quote?->policy_number;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
-
 
         return $sageRequest;
     }
