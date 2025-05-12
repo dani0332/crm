@@ -41,6 +41,10 @@ class RenewalQuoteProcess extends Model
         return $this->belongsTo(PersonalQuote::class, 'quote_id');
     }
 
+    function renewalBatch()
+    {
+        return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
+    }
     
     /**
      * json encode data.
@@ -70,4 +74,6 @@ class RenewalQuoteProcess extends Model
     {
         $this->attributes['validation_errors'] = json_encode($value);
     }
+
+    
 }

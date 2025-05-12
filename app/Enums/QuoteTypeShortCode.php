@@ -41,4 +41,22 @@ final class QuoteTypeShortCode extends Enum
 
         return $types[$value] ?? 'Unknown';
     }
+
+    public static function getId($value)
+    {
+        $types = [
+            QuoteTypeShortCode::CAR => 1,
+            QuoteTypeShortCode::HOM => 2,
+            QuoteTypeShortCode::HEA => 3,
+            QuoteTypeShortCode::LIF => 4,
+            QuoteTypeShortCode::BUS => 5,
+            QuoteTypeShortCode::BIK => 6,
+            QuoteTypeShortCode::YAC => 7,
+            QuoteTypeShortCode::TRA => 8,
+            QuoteTypeShortCode::PET => 9,
+            QuoteTypeShortCode::CYC => 10,
+            QuoteTypeShortCode::JSK => 11,
+        ];
+        return $types[$value] ?? 'Unknown';
+    }
 }

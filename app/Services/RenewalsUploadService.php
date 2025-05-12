@@ -2365,15 +2365,7 @@ class RenewalsUploadService
                 if ($leadValidationErrors->count() == 0) {
                     $lead->status = RenewalProcessStatuses::VALIDATED;
 
-                    // Assign batch
-                    if($lead->type == RenewalsUploadType::UPDATE_LEADS){
-                        $getBatch = $this->getBatch($leadData->end_date);
-                        $lead->batch = $getBatch?->name ?? null;
-                    }
-                    
                     LoggerService::info("Batch assigned $lead->batch for uuid: $lead->uuid"); 
-
-
                 } else {
                     $lead->validation_errors = $leadValidationErrors;
                     $lead->status = RenewalProcessStatuses::BAD_DATA;
@@ -2431,6 +2423,7 @@ class RenewalsUploadService
                 $data['renewal_batch_id'] = $batch->id;
                 $lead->data = $data;
             }
+            $lead->renewal_batch_id = $batch->id;
 
             return true;
         }
