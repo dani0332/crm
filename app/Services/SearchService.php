@@ -382,14 +382,14 @@ class SearchService extends BaseService
             if ($request->has('company_name')) {
                 $query->join('insured', 'personal_quotes.insured_id', 'insured.id');
                 // Use FULLTEXT search
-                $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', ['+'.$request->company_name]);
+                $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeFulltextQuery($request->company_name)]);
 
             }
 
             // Search by policy number
             if ($request->has('policy_number') && ! isset($request->code)) {
                 // Use FULLTEXT search
-                $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->policy_number.'"']);
+                $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeFulltextQuery($request->policy_number)]);
             }
 
             // Search by mobile number (exact match)
@@ -625,5 +625,51 @@ class SearchService extends BaseService
                 $query->where('send_update_logs.insurer_commission_invoice_number', $request->insurer_commission_tax_invoice_number);
             }
         }
+    }
+
+    /**
+     * Optimize a search term for FULLTEXT Boolean mode
+     */
+    private function optimizeFulltextQuery(string $term): string
+    {
+
+        // Remove common problematic characters
+        $term = preg_replace('/[\'"\\\]/', ' ', $term);
+
+        // Split into words
+        $words = preg_split('/[\s,.\-_\/]+/', $term, -1, PREG_SPLIT_NO_EMPTY);
+
+        // Handle alphanumeric terms specially
+        $optimized = [];
+        foreach ($words as $word) {
+            // Skip stop words and very short terms
+            if (strlen($word) < 2) {
+                continue;
+            }
+
+            if (preg_match('/^[a-zA-Z0-9]+$/', $word)) {
+                // For alphanumeric, use word prefix matching
+                $optimized[] = $word.'*';
+            } else {
+                // For special character containing words, add exact and partial matches
+                $optimized[] = '"'.$word.'"';
+                $optimized[] = $word.'*';
+            }
+        }
+
+        // Join with + operator for AND logic
+        return implode(' +', $optimized);
+
+        /*
+                // Remove extra spaces
+                $term = preg_replace('/\s+/', ' ', trim($term));
+
+                // Handle special alphanumeric patterns common in your domain For example, format policy numbers consistently
+                if (preg_match('/^[A-Z0-9\-\/]+$/', $term)) {
+                    $term = str_replace(['-', '/'], ' ', $term);
+                }
+
+                return $term;*/
+
     }
 }
