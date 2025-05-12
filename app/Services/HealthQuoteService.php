@@ -33,7 +33,6 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
-use App\Models\Insured;
 use App\Models\PaymentAction;
 use App\Models\QuoteBatches;
 use App\Models\QuoteType;
@@ -206,8 +205,6 @@ class HealthQuoteService extends BaseService
                     ELSE insurer_aml_status
                 END AS insurer_aml_status_display
             '),
-            'insured.pcp_tag',
-            DB::raw(Insured::formattedPcpTagCase().' as pcp_tag_formatted'),
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')

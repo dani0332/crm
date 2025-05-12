@@ -15,8 +15,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuotePlanDetail;
-use App\Models\CustomerInsured;
-use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteTag;
@@ -24,7 +22,6 @@ use App\Models\SendUpdateLog;
 use App\Traits\QuoteTraits\QuoteAllocatable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 
@@ -292,15 +289,22 @@ trait QuoteModelTrait
         );
     }
 
-    public function insured(): HasOneThrough
+    public function pcQualifiedFormatted(): Attribute
     {
-        return $this->hasOneThrough(
-            Insured::class,
-            CustomerInsured::class,
-            'quote_request_id',
-            'id',
-            'id',
-            'insured_id'
+        return Attribute::make(
+            get: function () {
+                return $this->pcp_tag === true || $this->pcp_tag === 1 ? 'Yes' : 'No';
+            }
         );
+    }
+
+    public static function formattedPcQualifiedCase(): string
+    {
+        return "
+            CASE 
+                WHEN pc_qualified = 1 THEN 'Yes'
+                ELSE 'No'
+            END
+        ";
     }
 }

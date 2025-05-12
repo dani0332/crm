@@ -207,11 +207,11 @@ trait Filterable
     {
         if ($filter != 'all') {
             if ($filter == 'no') {
-                $query->whereRelation('insured', function ($q) {
+                $query->whereRelation('customer', function ($q) {
                     $q->WhereNull('pcp_tag');
                 });
             } else {
-                $query->whereRelation('insured', 'insured.pcp_tag', $filter);
+                $query->whereRelation('customer', 'customer.pcp_tag', $filter);
             }
         }
     }

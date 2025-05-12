@@ -41,10 +41,11 @@ const serverOptions = ref({
   sortType: 'desc',
 });
 
+console.log(page.props.quotes);
+
 const tableHeader = [
   { text: 'REF-ID', value: 'code' },
-  { text: 'PC Customer', value: 'insured.pcp_tag' },
-  { text: 'PC Customer', value: 'insured.pcp_tag' },
+  { text: 'PC Customer', value: 'customer.pcp_tag_formatted' },
   { text: 'BATCH', value: 'batch.name' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },

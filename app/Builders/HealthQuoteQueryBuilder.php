@@ -69,6 +69,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'updated_at',
             'assignment_type',
             'gender',
+            'customer_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -95,7 +96,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'memberCategory:id,text',
             'insuranceProvider:id,text',
             'plan:id,text',
-            'insured:pcp_tag',
+            'customer:id,pcp_tag',
         ]);
     }
 

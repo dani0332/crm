@@ -4,9 +4,11 @@ namespace App\Traits;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Models\Customer;
 use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\PrivateClientConfig;
+use Exception;
 use Illuminate\Support\Facades\Schema;
 
 trait PrivateClient
@@ -40,21 +42,21 @@ trait PrivateClient
             ->exists();
 
         if ($exists) {
-            $customerInsured = CustomerInsured::where([
-                'quote_request_id' => $leadId,
-                'quote_type_id' => $quoteTypeId,
-            ])->first();
-            if ($customerInsured) {
-                $insured = Insured::find($customerInsured->insured_id);
-                if ($insured && $insured->pcp_tag != 1) {
-                    $insured->ref_id = $model->code;
-                    $insured->update(['pcp_tag' => 1]);
+            try {
+                $model->update(['pc_qualified' => 1, 'pcp_tag_version' => $configs->first()->version]);
+                $customer = Customer::where([
+                    'id' => $model->customer_id,
+                ])->first();
+                if ($customer && $customer->pcp_tag != 1) {
+                    $customer->update(['pcp_tag' => 1, 'pcp_tag_version' => $configs->first()->version]);
+
+                    return 'PCP tag applied successfully.';
                 }
 
-                return 'PCP tag applied successfully.';
+                return 'PCP tag already applied for this lead.';
+            } catch (Exception $ex) {
+                throw $ex;
             }
-
-            return 'No customer insured found for this lead.';
         }
 
         return 'Lead not matched PCP criteria.';
@@ -65,20 +67,15 @@ trait PrivateClient
      */
     public function removePcpTag()
     {
-        $insureds = Insured::with([
-            'customerInsured' => function ($query) {
-                $query->whereHas('pcpConfig')->with('pcpConfig');
-            },
-        ])
+        $customers = Customer::with('customerInsured')
             ->where('pcp_tag', true)
-            ->whereHas('customerInsured.pcpConfig')
             ->orderBy('id', 'asc')
             ->get();
 
-        foreach ($insureds as $insured) {
+        foreach ($customers as $customer) {
             $hasMatchingPolicy = false;
             $checkedAnyValidCustomerInsured = false;
-            foreach ($insured->customerInsured as $customerInsured) {
+            foreach ($customer->customerInsured as $customerInsured) {
                 $quoteTypeId = $customerInsured->quote_type_id;
                 if (
                     $quoteTypeId == QuoteTypes::YACHT->id() || $quoteTypeId == QuoteTypes::JETSKI->id() || $quoteTypeId == QuoteTypes::CYCLE->id()
@@ -96,10 +93,7 @@ trait PrivateClient
                     continue; // Try next customerInsured
                 }
 
-                $configs = PrivateClientConfig::where([
-                    'status' => true,
-                    'quote_type_id' => $customerInsured->quote_type_id,
-                ])->orderBy('id', 'asc')->get();
+                $configs = $this->getActivePcpConfigs($customerInsured->quote_type_id);
 
                 $checkedAnyValidCustomerInsured = true;
                 $columns = Schema::getColumnListing($model->getTable());
@@ -139,13 +133,11 @@ trait PrivateClient
                 if ($query->exists()) {
                     $hasMatchingPolicy = true;
                     break; // No need to check other customerInsured
-                } else {
-                    $querytest[$customerInsured->insured_id][] = $query->toRawSql();
                 }
             }
             // Remove PCP tag if no matching policy was found
             if ($checkedAnyValidCustomerInsured && ! $hasMatchingPolicy) {
-                $insured->update(['pcp_tag' => false]);
+                $customer->update(['pcp_tag' => false]);
             }
         }
 
@@ -157,7 +149,8 @@ trait PrivateClient
         return PrivateClientConfig::where([
             'status' => true,
             'quote_type_id' => $quoteTypeId,
-        ])->orderBy('id', 'asc')->get();
+            'active_version' => true,
+        ])->whereNotNull('value')->get();
     }
 
     protected function getCachedTableColumns(string $modelClass, string $table): array

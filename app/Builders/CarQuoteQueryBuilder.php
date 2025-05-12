@@ -67,6 +67,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'policy_expiry_date',
             'insurer_aml_status',
             'aml_status',
+            'customer_id',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',
             'batch:id,name',
@@ -84,7 +85,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'quoteViewCount:quote_id,quote_type_id,user_id,visit_count',
             'advisor:id,name',
             'carTypeInsurance:id,text',
-            'insured:pcp_tag',
+            'customer:id,pcp_tag',
         ]);
     }
 

@@ -18,7 +18,6 @@ use App\Models\DocumentType;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\InsuranceProvider;
-use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -155,9 +154,7 @@ class HomeQuoteService extends BaseService
                     WHEN insurer_aml_status IS NULL THEN "'.AMLStatusCode::InsurerAMLScreeningNA.'"
                     ELSE insurer_aml_status
                 END AS insurer_aml_status_display
-            '),
-            DB::raw(Insured::formattedPcpTagCase().' as pcp_tag_formatted'),
-            'insured.pcp_tag',
+            ')
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')

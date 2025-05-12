@@ -100,7 +100,7 @@ const outboundCoverageCode = [
 
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
-  { text: 'PC Customer', value: 'insured.pcp_tag_formatted' },
+  { text: 'PC Customer', value: 'customer.pcp_tag_formatted' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at' },
@@ -1039,8 +1039,8 @@ const insurerAMLStatusOption = computed(() => {
       <template #item-aml_status="{ aml_status }">
         <span>{{ aml_status?.replace(/_/g, ' ') }}</span>
       </template>
-      <template #item-insured.pcp_tag_formatted="{ insured }">
-        {{ insured?.pcp_tag_formatted || 'No' }}
+      <template #item-insured.pcp_tag_formatted="{ customer }">
+        {{ customer?.pcp_tag_formatted || 'No' }}
       </template>
     </DataTable>
 

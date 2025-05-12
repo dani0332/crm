@@ -1676,6 +1676,9 @@ const isCommercialVehicle = computed(() => {
         <x-button v-if="record?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
             Private Client
         </x-button>
+        <x-button v-if="record?.pc_qualified == true" size="sm" color="#BFA100" tag="div">
+            PC-Qualified
+        </x-button>
       </template>
       <template #default>
         <Link
@@ -2098,6 +2101,10 @@ const isCommercialVehicle = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ record.transaction_approved_at }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ record.pc_qualified_formatted }}</dd>
               </div>
             </dl>
           </div>

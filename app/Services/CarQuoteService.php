@@ -24,7 +24,6 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
-use App\Models\Insured;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\Logger\LoggerService;
@@ -414,7 +413,10 @@ class CarQuoteService extends BaseService
                 '),
                 'cqr.email',
                 'cqr.mobile_no',
-                DB::raw(Insured::formattedPcpTagCase().' as pcp_tag_formatted')
+                'c.pcp_tag',
+                'cqr.pc_qualified',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+                DB::raw(CarQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
 
             )
             ->leftJoin('payments as py', function ($join) {
