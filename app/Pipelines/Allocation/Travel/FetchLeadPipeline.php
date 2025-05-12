@@ -2,64 +2,94 @@
 
 namespace App\Pipelines\Allocation\Travel;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\InsuranceProvidersEnum;
+use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
+use App\Enums\quoteTypeCode;
+use App\Models\TravelQuote;
+use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
+use App\Repositories\PaymentRepository;
+use App\Services\Logger\LoggerService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
+use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Closure;
-use Illuminate\Support\Facades\Log;
 
-class FetchLeadPipeline
+class FetchLeadPipeline extends BaseAllocationPipeline
 {
-    /**
-     * Handle the incoming request.
-     *
-     * @param  mixed  $passable
-     * @param  \Closure  $next
-     * @return mixed
-     */
-    public function handle(array $data, Closure $next)
+    public function handle(AllocationRequest $request, Closure $next)
     {
-        dd('FetchLeadPipeline', $data);
-        // Process the request before sending it to the next pipeline
+        $this->setRequest($request, true);
 
-        // Example:
-        // Log::info('Processing request through FetchLeadPipeline', ['data' => $passable]);
+        $lead = $this->resolveLead();
 
-        // Send the processed request to the next pipeline
-        return $next($passable);
+        if (! $lead) {
+            $this->allocationRequest->getTracker()->saveResult(ProcessTrackerAllocationEnum::LEAD_NOT_FOUND, [
+                '@statuses' => ['Fake', 'Duplicate', 'Lost'],
+            ]);
+
+            $this->throw('Lead not found or not under fetch criteria', self::NOT_FOUND);
+        }
+
+        $request->set('lead', $lead);
+
+        return $next($request);
     }
 
-    private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, ProcessTrackerService $tracker)
+    private function resolveLead()
     {
+        $lead = $this->getBaseLead();
+
+        if ($this->verifyFetchLeadPreChecks($lead) === false) {
+            return null;
+        }
+
+        return $this->getLeadBaseQuery()
+            ->where(function ($query) {
+                $query->sicFlowDisabled()
+                    ->orWhere(function ($subQuery) {
+                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                    });
+            })
+            ->first();
+    }
+
+    private function verifyFetchLeadPreChecks(TravelQuote $lead)
+    {
+        $tracker = $this->allocationRequest->getTracker();
+        $isAllianceTravelPolicyIssuanceEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE, useCache: true) == '1';
+
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
-        if (getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE) == '1' && $travelQuote->isParent() && $travelQuote->isAdult()) {
-            info(self::class.':verifyFetchLeadPreChecks - it is parent lead so checking for Alliance Travel Automation');
+        if ($isAllianceTravelPolicyIssuanceEnabled && $lead->isParent() && $lead->isAdult()) {
+            LoggerService::info(self::class.':verifyFetchLeadPreChecks - it is parent lead so checking for Alliance Travel Automation');
             // Check if the lead is associated with the ALNC provider
-            $payment = PaymentRepository::mainQuotePayment($travelQuote);
-            $insurer = getInsuranceProvider($payment, QuoteTypes::TRAVEL->value);
+            $payment = PaymentRepository::mainQuotePayment($lead);
+            $insurer = getInsuranceProvider($payment, $this->allocationRequest->getQuoteType()->value);
             $insurerCode = $insurer?->code;
 
             $isALNC = $insurerCode == InsuranceProvidersEnum::ALNC;
 
-            $isALNC && info(self::class.":verifyFetchLeadPreChecks - it is Alliance so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
+            $isALNC && LoggerService::info(self::class.":verifyFetchLeadPreChecks - it is Alliance so checking for automation status with insurer code: {$insurerCode} and payment code: {$payment?->code}");
 
-            $isAutomationEnabled = (new PolicyIssuanceService)->init(self::TYPE, $insurerCode)?->isPolicyIssuanceAutomationEnabled();
-            info(self::class." - verifyFetchLeadPreChecks: isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
+            $isAutomationEnabled = (new PolicyIssuanceService)->init(quoteTypeCode::Travel, $insurerCode)?->isPolicyIssuanceAutomationEnabled();
+            LoggerService::info(self::class." - verifyFetchLeadPreChecks: isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
 
-            if ($isALNC && $isAutomationEnabled && $travelQuote->isSingleTrip() && $travelQuote->isPaid()) {
+            if ($isALNC && $isAutomationEnabled && $lead->isSingleTrip() && $lead->isPaid()) {
                 $tracker->addStep(ProcessTrackerAllocationEnum::ALIANCE_PLAN_FOUND);
-                if ($travelQuote->isAutomationCompleted() || $travelQuote->isBookingFailed()) {
-                    $travelQuote->isAutomationCompleted() && $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_COMPLETED);
-                    $travelQuote->isBookingFailed() && $tracker->addStep(ProcessTrackerAllocationEnum::BOOKING_FAILED);
+                if ($lead->isAutomationCompleted() || $lead->isBookingFailed()) {
+                    $lead->isAutomationCompleted() && $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_COMPLETED);
+                    $lead->isBookingFailed() && $tracker->addStep(ProcessTrackerAllocationEnum::BOOKING_FAILED);
 
-                    $this->isCHSAdvisor = true;
-                    $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
+                    $this->allocationRequest->set('isCHSAdvisor', true);
+                    $this->allocationRequest->set('isMixEnquiryWithAutomation', $lead->hasChild());
                 } else {
-                    if (! $travelQuote->isAutomationCompleted()) {
+                    if (! $lead->isAutomationCompleted()) {
                         $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_NOT_COMPLETED);
-                        info(self::class.':fetchLead - it is Alliance and automation is not yet completed so check fail cases');
-                        if ($travelQuote->isPolicyIssuanceFailed()) {
+                        LoggerService::info(self::class.':fetchLead - it is Alliance and automation is not yet completed so check fail cases');
+                        if ($lead->isPolicyIssuanceFailed()) {
                             $tracker->addStep(ProcessTrackerAllocationEnum::POLICY_ISSUANCE_FAILED);
-                            info(self::class.':fetchLead - it is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation');
-                            $this->isSICAdvisor = true;
-                            $this->isMixEnquiryWithAutomation = $travelQuote->hasChild();
+                            LoggerService::info(self::class.':fetchLead - it is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation');
+                            $this->allocationRequest->set('isSICAdvisor', true);
+                            $this->allocationRequest->set('isMixEnquiryWithAutomation', $lead->hasChild());
 
                             return true;
                         }
@@ -71,48 +101,5 @@ class FetchLeadPipeline
         }
 
         return true;
-    }
-
-    public function fetchLead(ProcessTrackerService $tracker, $quoteId, $overrideAdvisorId = false)
-    {
-        $travelQuote = TravelQuote::where('uuid', $quoteId)->first();
-
-        // Return null if no record is found
-        if (! $travelQuote) {
-            info(self::class.' : '.__FUNCTION__.' - Quote ID : '.$quoteId.' - lead not found.');
-
-            return null;
-        }
-
-        info(self::class.'::fetchLead - Travel ILA', [
-            'uuid' => $travelQuote->uuid,
-            'payment_status_id' => $travelQuote->payment_status_id,
-            'sic_advisor_requested' => $travelQuote->sic_advisor_requested,
-            'quote_status_id' => $travelQuote->quote_status_id,
-            'lead_allocation_failed_at' => $travelQuote->lead_allocation_failed_at,
-            'sic_flow_enabled' => $travelQuote->sic_flow_enabled,
-            'parent_quote_id' => $travelQuote->parent_id,
-            'source' => $travelQuote->source,
-        ]);
-
-        if ($this->verifyFetchLeadPreChecks($travelQuote, $tracker) === false) {
-            return null;
-        }
-
-        // allocate the lead if it's Alliance Provider, Automation is disabled for Alliance
-        return TravelQuote::where('uuid', $quoteId)
-            ->whereNotIn('quote_status_id', [
-                QuoteStatusEnum::Fake,
-                QuoteStatusEnum::Duplicate,
-                QuoteStatusEnum::Lost,
-            ])
-            ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
-            ->where(function ($query) {
-                $query->sicFlowDisabled()
-                    ->orWhere(function ($subQuery) {
-                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                    });
-            })
-            ->first();
     }
 }
