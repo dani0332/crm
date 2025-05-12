@@ -1,7 +1,7 @@
 trigger:
   - none
 pool:
-  vmImage: 'Ubuntu 20.04'
+  vmImage: 'ubuntu-latest'
 variables:
   - group: stg
   - name: imageName

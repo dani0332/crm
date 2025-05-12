@@ -2,6 +2,7 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
@@ -463,6 +464,13 @@ class AdvisorDistributionReportService extends BaseService
         if (isset($filters->leadSources) && count($filters->leadSources) > 0) {
             $query->whereIn('car_quote_request.source', $filters->leadSources);
         }
+        if (isset($filters->registration_type) && $filters->registration_type != 'All') {
+
+            $query->where('car_quote_request.registration_type', $filters->registration_type);
+        }
+        if (isset($filters->vehicle_use) && $filters->vehicle_use != 'All' && $filters->registration_type == CarRegistrationType::COMPANY) {
+            $query->where('car_quote_request.vehicle_use', $filters->vehicle_use);
+        }
         if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
             $query->where('car_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
         }
@@ -591,11 +599,14 @@ class AdvisorDistributionReportService extends BaseService
             }
 
             if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
-
-                $query->join('travel_quote_request', function ($join) use ($filters) {
-                    $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
-                        ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
-                });
+                if ($isTravelQuote) {
+                    $query->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                } else {
+                    $query->join('travel_quote_request', function ($join) use ($filters) {
+                        $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
+                            ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                    });
+                }
             }
         }
 

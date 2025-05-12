@@ -44,18 +44,14 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     nodejs \
     yarn \
-    ghostscript
-RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
+    ghostscript \
+    libwebp-dev
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+RUN php -r 'var_dump(function_exists("imagecreatefromwebp"));'
+RUN pecl install mongodb-1.20.0 && docker-php-ext-enable mongodb
 
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
-
-# Install papertrail
-RUN --mount=type=cache,target=/tmp \
-wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz && \
-tar xzf ./remote_syslog*.tar.gz && \
-cp /var/www/remote_syslog/remote_syslog /usr/local/bin
 
 # Install supervisor
 #RUN apt-get install -y supervisor
@@ -110,15 +106,17 @@ RUN cp docker/supervisor.conf /etc/supervisord.conf && \
 cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini && \
 # RUN cp docker/info.php /var/www/public/
 cp docker/nginx.conf /etc/nginx/sites-enabled/default && \
-cp -r docker/*.pem /etc/nginx/conf.d/ && \
-cp docker/log_files.yml /etc/
+cp -r docker/*.pem /etc/nginx/conf.d/
 
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
 #RUN yarn
 # RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
-RUN usermod -aG root www-data
-RUN usermod -aG root www
+# Create log files
+#RUN mkdir -p /var/www/storage/logs
+#RUN touch /var/www/storage/logs/laravel.log
+#RUN chown -R www-data:www-data /var/www/storage
+#RUN chmod -R 775 /var/www/storage
 
 ENTRYPOINT ["/var/www/docker/run.sh"]

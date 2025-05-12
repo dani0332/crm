@@ -72,12 +72,14 @@ const policyIssuanceStatusOptions = computed(() => {
   });
 });
 
-const planQuoteInsurerNumber = computed(() => {
-  let quotePlanList = page.props?.listQuotePlans;
+const setQuoteInsurerNumber = () => {
+  let quotePlanList = props.availablePlans;
   if (!quotePlanList || typeof quotePlanList === 'string') return null;
   let obj = quotePlanList?.filter(item => item.id == page.props.quote.plan_id);
-  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
-});
+
+  policyDetailsForm.quote_plan_insurer_quote_number =
+    obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
+};
 
 const policyDetailsState = reactive({
   isEditing: false,
@@ -99,7 +101,7 @@ const policyDetailsForm = useForm({
     dateToYMD(page.props.quote.policy_expiry_date) || '',
   amount_with_vat: 0,
   quote_plan_insurer_quote_number:
-    planQuoteInsurerNumber.value || page.props.quote.insurer_quote_number,
+    page.props.quote.insurer_quote_number ?? null,
   quote_policy_issuance_status: page.props.quote.policy_issuance_status_id,
   quote_policy_issuance_status_other:
     page.props.quote.policy_issuance_status_other || '',
@@ -129,19 +131,26 @@ watch(
   },
 );
 
-const calculateVatAmount = () => {
+const calculateVatAmount = (isVatAmountRecalculated = false) => {
   let priceVatApplicable = Number(policyDetailsForm.price_vat_applicable);
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
+
   // if price vat applicable and not applicable both are there
   if (priceVatApplicable > 0 && priceVatNotApplicable > 0) {
-    let vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
-    policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    let vat = policyDetailsForm.vat;
+    if (isVatAmountRecalculated) {
+      vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
+      policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    }
     policyDetailsForm.amount_with_vat = useRoundIt(
       Number(vat) + Number(priceVatApplicable) + Number(priceVatNotApplicable),
     ).toFixed(2);
   } else if (priceVatApplicable > 0) {
-    let vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
-    policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    let vat = policyDetailsForm.vat;
+    if (isVatAmountRecalculated) {
+      vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
+      policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    }
     policyDetailsForm.amount_with_vat = useRoundIt(
       Number(vat) + Number(priceVatApplicable),
     ).toFixed(2);
@@ -326,8 +335,9 @@ const onUpdatePolicyDetails = isValid => {
     },
   });
 };
+
 onBeforeMount(() => {
-  calculateVatAmount();
+  calculateVatAmount(true);
 });
 
 watch(
@@ -428,7 +438,9 @@ const getMaxPolicyExpiryDate = () => {
 watch(
   () => props.availablePlans,
   availablePlans => {
-    setQuotePlanInsurerNumber();
+    // setQuotePlanInsurerNumber();
+    if (!policyDetailsForm.quote_plan_insurer_quote_number)
+      setQuoteInsurerNumber();
   },
 );
 const readOnlyMode = reactive({
@@ -437,6 +449,45 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+watch(
+  () => policyDetailsForm.vat,
+  newValue => {
+    if (Number(newValue) < 0) {
+      policyDetailsForm.vat = 0;
+    }
+  },
+);
+
+watch(
+  () => policyDetailsForm.price_vat_applicable,
+  newValue => {
+    if (Number(newValue) < 0) {
+      policyDetailsForm.price_vat_applicable = 0;
+    }
+  },
+);
+
+watch(
+  () => policyDetailsForm.price_vat_notapplicable,
+  newValue => {
+    if (Number(newValue) < 0) {
+      policyDetailsForm.price_vat_notapplicable = 0;
+    }
+  },
+);
+
+const calculateTotalPrice = () => {
+  const vat = useRoundIt(policyDetailsForm.vat).toFixed(2);
+  const priceVatApplicable = useRoundIt(
+    policyDetailsForm.price_vat_applicable,
+  ).toFixed(2);
+  const amountWithVat = useRoundIt(
+    Number(vat) + Number(priceVatApplicable),
+  ).toFixed(2);
+  policyDetailsForm.amount_with_vat = amountWithVat;
+  policyDetailsForm.vat = vat;
+};
 </script>
 
 <template>
@@ -519,7 +570,7 @@ onMounted(() => {
                 </x-tooltip>
                 <x-input
                   v-model="policyDetailsForm.price_vat_notapplicable"
-                  @change="calculateVatAmount"
+                  @change="calculateVatAmount(true)"
                   :rules="[rules.price_vat_not_applicable]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
@@ -571,7 +622,7 @@ onMounted(() => {
                 </x-tooltip>
                 <x-input
                   v-model="policyDetailsForm.price_vat_applicable"
-                  @change="calculateVatAmount"
+                  @change="calculateVatAmount(true)"
                   :rules="[rules.price_vat_applicable]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"
@@ -620,11 +671,14 @@ onMounted(() => {
                 </x-tooltip>
                 <x-input
                   v-model="policyDetailsForm.vat"
-                  type="text"
+                  type="number"
                   placeholder="Total VAT Amount"
                   class="w-full"
-                  :disabled="true"
-                  readonly
+                  :disabled="
+                    !can(permissionsEnum.POLICY_DETAILS_ADD_VAT) ||
+                    !policyDetailsState.isEditing
+                  "
+                  @change="calculateTotalPrice"
                 />
               </div>
               <div class="w-full md:w-1/2">

@@ -168,8 +168,13 @@ function onSubmit(isValid) {
 
   quoteForm.clearErrors();
 
-  const method = 'post';
-  const url = route('travel.store');
+  let method = 'post';
+  let url = route('travel.store');
+
+  if (editMode.value && quoteForm.uuid) {
+    method = 'put';
+    url = route('travel.update', quoteForm.uuid);
+  }
 
   const options = {
     onError: errors => {
@@ -201,6 +206,7 @@ onMounted(() => {
   addUpdatedTraveller();
   updateRegionCover();
   quoteForm.destination_ids = mappedDestinationIds.value ?? [];
+  quoteForm.departure_country_id = props?.quote?.departure_country_id || null;
 });
 
 watch(
@@ -263,16 +269,19 @@ const disablePastDates = date => {
   return inputDate < today;
 };
 watch(
-  () => quoteForm?.destination_ids,
-  async destination_ids => {
-    if (destination_ids) {
-      await regionName(destination_ids); // Call the function to fetch advisors
+  () => quoteForm.destination_ids,
+  newDestinationIds => {
+    if (newDestinationIds) {
+      regionName(newDestinationIds); // Call the function to fetch advisors
     }
   },
+  { deep: true },
 );
+
 function updateRegionCover(id) {
   quoteForm.region_cover_for_id = String(id) ?? '';
 }
+
 const regionName = ids => {
   let countries = page.props.fields.destination_id?.options;
   const matchedValues = ids.map(id => {
@@ -355,6 +364,16 @@ watch(mappedDestinationIds, newVal => {
   if (newVal.length < 1) return;
   quoteForm.destination_ids = newVal;
 });
+
+watch(
+  [() => quoteForm.start_date, () => quoteForm.end_date],
+  ([newStartDate, newEndDate]) => {
+    if (newStartDate && newEndDate) {
+      quoteForm.days_cover_for =
+        calculateDaysDifference(newStartDate, newEndDate) + 1; // +1 to include both start and end days
+    }
+  },
+);
 </script>
 
 <template>
@@ -419,28 +438,43 @@ watch(mappedDestinationIds, newVal => {
             :error="quoteForm.errors.coverage_code"
           />
         </x-field>
-        <x-field
+
+        <x-select
           v-if="
             quoteForm.direction_code != travelQuoteEnum.TRAVEL_UAE_INBOUND &&
             isArrivedUAE()
           "
+          v-model="quoteForm.destination_ids"
+          :options="
+            fields.destination_id.options.map(option => ({
+              value: option.id,
+              label: option.text,
+            }))
+          "
+          class="w-full"
+          :rules="[isRequired]"
+          filterable
           label="Travel Destinations"
           required
+          placeholder="Select travel destinations"
+          multiple
+          truncate
+          :error="quoteForm.errors.destination_ids"
+          virtual-list
+          :virtualListItemHeight="34"
+          :virtualListOverscan="5"
         >
-          <ComboBox
-            v-model="quoteForm.destination_ids"
-            :options="
-              fields.destination_id.options.map(option => ({
-                value: option.id,
-                label: option.text,
-              }))
-            "
-            :single="false"
-            class="w-full"
-            :rules="[rules.isRequired]"
-            :hasError="quoteForm.errors.destination_ids"
-          />
-        </x-field>
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                quoteForm.destination_ids = fields.destination_id.options.map(
+                  item => item.id,
+                )
+              "
+              @clear="quoteForm.destination_ids = []"
+            />
+          </template>
+        </x-select>
         <x-field
           label="Which regions do you need cover for?*"
           v-if="
@@ -488,7 +522,7 @@ watch(mappedDestinationIds, newVal => {
           label="Departing From"
           required
         >
-          <ComboBox
+          <x-select
             v-model="quoteForm.departure_country_id"
             :options="
               fields.destination_id.options.map(option => ({
@@ -496,10 +530,11 @@ watch(mappedDestinationIds, newVal => {
                 label: option.text,
               }))
             "
-            :single="true"
             class="w-full"
-            :rules="[rules.isRequired]"
-            :hasError="quoteForm.errors.departure_country_id"
+            :rules="[isRequired]"
+            :error="quoteForm.errors.departure_country_id"
+            filterable
+            placeholder="Select departing from"
           />
         </x-field>
 
@@ -522,27 +557,27 @@ watch(mappedDestinationIds, newVal => {
           />
         </x-field>
 
-        <x-field label="Nationality" required>
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :options="
-              fields.nationality_id.options.map(option => ({
-                value: option.id,
-                label: option.text,
-              }))
-            "
-            :single="true"
-            class="w-full"
-            :rules="[rules.isRequired]"
-            :hasError="quoteForm.errors[index]"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :options="
+            fields.nationality_id.options.map(option => ({
+              value: option.id,
+              label: option.text,
+            }))
+          "
+          class="w-full"
+          :rules="[isRequired]"
+          filterable
+          placeholder="Select nationality"
+          label="Nationality"
+          required
+          :error="quoteForm.errors.nationality_id"
+          virtual-list
+          :virtualListItemHeight="34"
+          :virtualListOverscan="5"
+        />
         <x-field v-if="editMode" label="Days Cover">
-          <x-input
-            :value="quoteForm.days_cover_for"
-            :disabled="true"
-            class="w-full"
-          />
+          <x-input disabled v-model="quoteForm.days_cover_for" class="w-full" />
         </x-field>
 
         <x-field label="Email">

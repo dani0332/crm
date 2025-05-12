@@ -72,6 +72,10 @@ class EmbeddedProduct
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
+            $customerInsured = $customer?->customerInsured
+                ->where('quote_request_id', $item->quote_request_id)
+                ->where('quote_type_id', $item->quote_type_id)
+                ->first() ?? null;
             $advisorName = $quoteObject->advisor->name ?? '';
             $nationality = $quoteObject->customer->nationality->text ?? '';
 
@@ -87,9 +91,11 @@ class EmbeddedProduct
             if (! empty($quoteObject->quoteRequestEntityMapping)) {
                 $firstName = $quoteObject->first_name ?? '';
                 $lastName = $quoteObject->last_name ?? '';
+                $emiratesIdNumber = '';
             } else {
-                $firstName = ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? '';
-                $lastName = ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? '';
+                $firstName = ($customerInsured?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
+                $lastName = ($customerInsured?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
+                $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
             }
 
             $item->id = $item->id;
@@ -108,7 +114,7 @@ class EmbeddedProduct
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
-            $item->emirates_id_number = $customer->emirates_id_number ?? '';
+            $item->emirates_id_number = $emiratesIdNumber;
 
             if ($item?->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER) {
                 $item->sync_status = $item->courier_sync_status_info;
@@ -148,6 +154,8 @@ class EmbeddedProduct
             'product.embeddedProduct',
             'quoteRequest.customer',
             'quoteRequest.customer.nationality',
+            'quoteRequest.customer.customerInsured',
+            'quoteRequest.customer.customerInsured.insured',
             'quoteRequest.carMake',
             'quoteRequest.carModel',
             'quoteRequest.quoteStatus',
@@ -220,6 +228,13 @@ class EmbeddedProduct
             $dataset = $dataset->simplePaginate()->withQueryString();
         }
 
+        $dataset = $this->postFilterReportProcessing($dataset);
+
+        return $dataset;
+    }
+
+    protected function postFilterReportProcessing($dataset)
+    {
         return $dataset;
     }
 

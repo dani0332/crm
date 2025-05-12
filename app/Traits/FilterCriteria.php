@@ -56,16 +56,16 @@ trait FilterCriteria
                             break;
                         case FilterTypes::DATE_BETWEEN:
                             if (isset(request()->{$key.'_start'}) && isset(request()->{$key.'_end'})) {
-                                $startDate = date('Y-m-d 00:00:00', strtotime(request()->{$key.'_start'}));
-                                $endDate = date('Y-m-d 23:59:59', strtotime(request()->{$key.'_end'}));
+                                $startDate = Carbon::parse(request()->{$key.'_start'})->startOfDay();
+                                $endDate = Carbon::parse(request()->{$key.'_end'})->endOfDay();
                                 $query->whereBetween($tableName.'.'.$key, [$startDate, $endDate]);
                             } elseif (isset(request()->{$key.'_time_start'}) && isset(request()->{$key.'_time_end'})) {
                                 $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_start'}));
                                 $endDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_end'}));
                                 $query->whereBetween($key, [$startDate, $endDate]);
                             } elseif (isset(request()->{'policy_expiry_date'}) && isset(request()->{'policy_expiry_date_end'})) {
-                                $startDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date'}));
-                                $endDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date_end'}));
+                                $startDate = Carbon::parse(request()->{'policy_expiry_date'})->format('Y-m-d');
+                                $endDate = Carbon::parse(request()->{'policy_expiry_date_end'})->format('Y-m-d');
                                 $query->whereBetween('previous_policy_expiry_date', [$startDate, $endDate]);
                             } elseif (isset(request()->last_modified_date) && request()->last_modified_date != '') {
                                 $dateArray = request()->{'last_modified_date'};

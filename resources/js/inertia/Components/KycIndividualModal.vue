@@ -373,31 +373,43 @@ onMounted(() => {
         :rules="[isRequired]"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.nationality_id"
         label="Nationality"
         :options="nationalityOptions"
         placeholder="Nationality"
-        :single="true"
-        :hasError="isNationalityEmpty"
+        filterable
+        filterPlaceholder="Filter Nationality...."
+        :rules="[isRequired]"
+        virtualList
+        :virtualListItemHeight="32"
+        :virtualListOverscan="10"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.country_of_residence"
         label="Country of residence"
         :options="countryList"
         placeholder="Country of residence"
-        :single="true"
+        filterable
+        filterPlaceholder="Filter Country of Residence...."
         :rules="[isRequired]"
+        virtualList
+        :virtualListItemHeight="32"
+        :virtualListOverscan="10"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.place_of_birth"
         label="Place of birth"
         :options="countryList"
         placeholder="Place of birth"
-        :single="true"
-        :hasError="isPlaceOfBirthEmpty"
+        filterable
+        filterPlaceholder="Filter Place of Birth...."
+        :rules="[isRequired]"
+        virtualList
+        :virtualListItemHeight="32"
+        :virtualListOverscan="10"
       />
 
       <x-select
@@ -530,13 +542,14 @@ onMounted(() => {
         :rules="[rules.isRequired]"
       />
 
-      <ComboBox
+      <x-select
         v-model="kycForm.professional_title"
         label="Professional job title"
         :options="professionalTitleOptions"
         placeholder="Professional job title"
-        :single="true"
         :rules="[rules.isRequired]"
+        filterable
+        filterPlaceholder="Filter Professional Job Title...."
       />
 
       <x-select

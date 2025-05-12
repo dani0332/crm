@@ -125,7 +125,7 @@ const tableHeader = [
   { text: 'CAR MODEL', value: 'car_model' },
   { text: 'CAR MODEL YEAR', value: 'year_of_manufacture' },
   { text: 'TYPE OF CAR INSURANCE', value: 'car_type_insurance_id' },
-  { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
+  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'CREATED DATE', value: 'created_at' },
   {
     text: 'ADVISOR ASSIGNED DATE',
@@ -290,7 +290,7 @@ const nbFollowupTemplates = [
         />
 
         <x-field label="Quote Batch">
-          <ComboBox
+          <x-select
             v-model="filters.quote_batch_id"
             placeholder="Search by Quote Batch"
             :options="
@@ -299,7 +299,20 @@ const nbFollowupTemplates = [
                 label: quoteBatch.name,
               }))
             "
-          />
+            filterable
+            filterPlaceholder="Filter Quote Batch...."
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.quote_batch_id = quoteBatches.map(item => item.value)
+                "
+                @clear="filters.quote_batch_id = []"
+              />
+            </template>
+          </x-select>
         </x-field>
       </div>
       <div class="flex justify-end gap-3 mb-5">
