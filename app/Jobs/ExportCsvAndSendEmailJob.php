@@ -48,7 +48,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         $startTime = microtime(true);
         $initialMemory = memory_get_usage(true) / 1024 / 1024;
 
-        Log::info("CSV export job [{$jobId}] started for {$this->requestParams['fileName']}. Memory: {$initialMemory}MB, Attempt: {$this->attempts()}");
+        Log::info("CSV export job started for {$this->requestParams['fileName']}. Memory: {$initialMemory}MB, Attempt: {$this->attempts()}");
 
         try {
             // Instantiate the export class
@@ -66,7 +66,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             $executionTime = round(microtime(true) - $startTime, 2);
             $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
 
-            Log::info("CSV export job [{$jobId}] completed successfully. Time: {$executionTime}s, Peak memory: {$peakMemory}MB");
+            Log::info("CSV export job completed successfully. Time: {$executionTime}s, Peak memory: {$peakMemory}MB");
 
             // Explicitly mark as completed and delete the job
             if ($this->job) {

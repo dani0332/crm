@@ -30,29 +30,7 @@ class HealthQuotesExport
      */
     public function getQuery($requestParams = [])
     {
-        logger()->debug("HealthQuotesExport: Starting getQuery");
-
-        // Enable query logging
-//        DB::enableQueryLog();
-
-        // Get the query builder
-        $query = app(HealthQuoteService::class)->getGridData(requestParams: $requestParams);
-
-        // Log the query details
-//        $queryLog = DB::getQueryLog();
-//        if (!empty($queryLog)) {
-//            $lastQuery = end($queryLog);
-//            logger()->debug("HealthQuotesExport: SQL query", [
-//                'query' => $lastQuery['query'] ?? 'No query found',
-//                'bindings' => $lastQuery['bindings'] ?? [],
-//                'time' => $lastQuery['time'] ?? 0
-//            ]);
-//        }
-//
-//        // Disable query logging to prevent memory issues
-//        DB::disableQueryLog();
-
-        return $query;
+        return app(HealthQuoteService::class)->getGridData(requestParams: $requestParams);
     }
 
     public function headings(): array

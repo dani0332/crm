@@ -97,10 +97,6 @@ trait ExcelExportable
      */
     public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
     {
-        // Track memory usage during export
-        $initialMemory = memory_get_usage(true) / 1024 / 1024;
-        logger()->info("CSV export started. Initial memory: {$initialMemory}MB");
-
         if (! isset($this->quoteType)) {
             $this->quoteType = $requestParams['quoteType'] ?? null;
         }
@@ -134,11 +130,8 @@ trait ExcelExportable
             logger()->debug("Processing export between: {$startDate} - {$endDate} ({$diff} days)");
         }
 
-        // Process data in memory-efficient chunks
-        logger()->info("Starting CSV data export with chunking");
-
         $totalRecords = 0;
-        $chunkSize = 500; // Adjust based on your data complexity
+        $chunkSize = 5000; // Adjust based on your data complexity
         $exportName = class_basename($this);
         $chunkCount = 0;
         $totalChunkTime = 0;
@@ -146,34 +139,21 @@ trait ExcelExportable
         try {
             // Use the query builder version of collection if available
             if (method_exists($this, 'getQuery')) {
+                // Process data in memory-efficient chunks
+                logger()->info("Starting CSV data export with chunking");
                 $query = $this->getQuery($requestParams);
 
                 // Use database chunking for efficient memory usage
                 $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords, &$chunkCount, &$totalChunkTime, $exportName) {
                     $chunkStartTime = microtime(true);
                     $chunkCount++;
-                    $recordCount = count($records);
-
-                    logger()->debug("Processing chunk #{$chunkCount} with {$recordCount} records");
 
                     // Track memory before mapping records
                     $memoryBeforeMapping = round(memory_get_usage(true) / 1024 / 1024, 2);
 
                     $i = 0;
                     foreach ($records as $record) {
-                        // Debug for the first record
-                        if ($chunkCount === 1 && $i === 0) {
-                            logger()->debug("{$exportName}: First record attributes", [
-                                'record_keys' => array_keys((array)$record->getAttributes()),
-                                'relation_keys' => array_keys((array)$record->getRelations())
-                            ]);
-                        }
-
-//                        $startMapTime = microtime(true);
                         $mappedRow = $this->map($record);
-//                        $mapTime = round((microtime(true) - $startMapTime) * 1000, 2); // in milliseconds
-                        $i++;
-
                         fputcsv($stream, $mappedRow);
                         $totalRecords++;
                     }
@@ -183,22 +163,12 @@ trait ExcelExportable
                     $chunkTime = round((microtime(true) - $chunkStartTime) * 1000, 2); // in milliseconds
                     $totalChunkTime += $chunkTime;
 
-                    logger()->debug("{$exportName}: Chunk #{$chunkCount} processed. Records: {$recordCount}, Memory: {$currentMemory}MB, Memory diff: {$memoryDiff}MB, Chunk Time: {$chunkTime}ms, Total time: {$totalChunkTime}ms");
+                    logger()->debug("{$exportName}: Chunk #{$chunkCount} processed. Memory: {$currentMemory}MB, Memory diff: {$memoryDiff}MB, Chunk Time: {$chunkTime}ms, Total time: {$totalChunkTime}ms");
 
                     // Force garbage collection to free memory
                     gc_collect_cycles();
                 });
 
-                // Log summary statistics when complete
-                if ($exportName === 'HealthQuotesExport') {
-                    $avgChunkTime = $chunkCount > 0 ? round($totalChunkTime / $chunkCount, 2) : 0;
-                    logger()->debug("{$exportName}: Export summary", [
-                        'total_records' => $totalRecords,
-                        'chunks_processed' => $chunkCount,
-                        'average_chunk_time_ms' => $avgChunkTime,
-                        'total_processing_time_ms' => $totalChunkTime
-                    ]);
-                }
             } else {
                 // Fallback to less efficient memory approach if query builder not available
                 $data = $this->collection($requestParams);
@@ -215,8 +185,6 @@ trait ExcelExportable
                     }
                 }
             }
-
-            logger()->info("Completed writing {$totalRecords} records to CSV");
 
             // Get CSV content
             rewind($stream);
