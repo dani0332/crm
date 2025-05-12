@@ -17,6 +17,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
@@ -1257,9 +1258,6 @@ class SagePayloadFactory
             $sageRequest->discount = $payment->discount_value;
         }
 
-        $sageRequest->sage_payment_code = $paymentSplit->payment_method;
-        $sageRequest->checkNumber = $paymentSplit->check_detail;
-
         if (! isset($sageRequest->advisorDepartment)) {
             $advisorDepartment = '';
             if (! empty($quote->advisor_id)) {
@@ -1269,23 +1267,24 @@ class SagePayloadFactory
 
             $sageRequest->advisorDepartment = $advisorDepartment;
         }
-
+        if (! isset($sageRequest->mainClassInsurance)) {
+            $sageRequest->mainClassInsurance = $sageRequest->quoteType;
+        }
+        $sageRequest->quoteCode = $sageRequest->quoteRefId ?? $quote->code;
         $insuranceProvider = $sageRequest->insurerID ? InsuranceProvider::find($sageRequest->insurerID) : getInsuranceProvider($payment, $sageRequest->quoteType, $quote);
         $sageRequest->insurerName = $insuranceProvider?->text;
         $sageRequest->insurerID = $insuranceProvider?->id;
         $sageRequest->insurerPaymentGatewayId = $insuranceProvider?->payment_gateway_id;
         $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
-        if (! isset($sageRequest->mainClassInsurance)) {
-            $sageRequest->mainClassInsurance = $sageRequest->quoteType;
-        }
-
+        $sageRequest->sage_payment_code = $paymentSplit->payment_method;
+        $sageRequest->checkNumber = $paymentSplit->check_detail;
         $sageRequest->orignalCommissionTaxInvoiceNumber = $payment?->insurer_commmission_invoice_number;
         $sageRequest->paymentGateway = $paymentSplit?->cc_payment_gateway;
         $sageRequest->paymentMethod = $paymentSplit?->payment_method;
         $sageRequest->insurerReceiptNumber = $paymentSplit?->insurer_receipt_number ?? null;
         $sageRequest->policyNumber = $quote?->policy_number;
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
-        $sageRequest->quoteCode = $quote->code;
+
 
         return $sageRequest;
     }
