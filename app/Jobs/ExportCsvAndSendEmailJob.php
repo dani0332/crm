@@ -87,6 +87,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             if ($this->attempts() < $this->tries) {
                 Log::warning("CSV export job [{$jobId}] will be retried. Attempts: {$this->attempts()}/{$this->tries}");
                 $this->release($this->backoff);
+
                 return;
             }
 
