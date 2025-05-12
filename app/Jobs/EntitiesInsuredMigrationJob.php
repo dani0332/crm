@@ -3,9 +3,11 @@
 namespace App\Jobs;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerInsured;
 use App\Models\Entity;
+use App\Models\HomeQuote;
 use App\Models\Insured;
 use App\Models\InsuredKyc;
 use App\Models\QuoteRequestEntityMapping;
@@ -160,15 +162,20 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
         } else {
             // Only process mappings if they exist
             foreach ($quoteRequestEntityMappings as $quoteRequestEntityMapping) {
-                $quoteObject = $this->getQuoteObject(
-                    QuoteTypes::getName($quoteRequestEntityMapping->quote_type_id)?->value,
-                    $quoteRequestEntityMapping->quote_request_id
-                );
+                if ($quoteRequestEntityMapping->quote_type_id == QuoteTypeId::Home) {
+                    $quoteObject = HomeQuote::where('id', $quoteRequestEntityMapping->quote_request_id)->first();
+                } else {
+                    $quoteObject = $this->getQuoteObject(
+                        QuoteTypes::getName($quoteRequestEntityMapping->quote_type_id)?->value,
+                        $quoteRequestEntityMapping->quote_request_id
+                    );
+                }
 
                 if (! $quoteObject) {
                     throw new \Exception('Quote object not found for quote request entity mapping. Quote Type ID: '.
                         $quoteRequestEntityMapping->quote_type_id.' Quote Request ID: '.$quoteRequestEntityMapping->quote_request_id);
                 }
+
                 CustomerInsured::updateOrCreate([
                     'customer_id' => $quoteObject->customer_id,
                     'insured_id' => $insured->id,
@@ -224,7 +231,8 @@ class EntitiesInsuredMigrationJob implements ShouldQueue
             'mode_of_contact' => $entity->mode_of_contact ?? null,
             'mode_of_delivery' => $entity->mode_of_delivery ?? null,
             'in_sanction_list' => $entity->in_sanction_list ?? null,
-            'is_sanction_match' => $entity->is_sanction_match ?? null, +'in_fatf' => $entity->in_fatf ?? null,
+            'is_sanction_match' => $entity->is_sanction_match ?? null,
+            'in_fatf' => $entity->in_fatf ?? null,
             'is_owner_high_risk' => $entity->is_owner_high_risk ?? null,
             'deal_sanction_list' => $entity->deal_sanction_list ?? null,
             'is_operation_high_risk' => $entity->is_operation_high_risk ?? null,
