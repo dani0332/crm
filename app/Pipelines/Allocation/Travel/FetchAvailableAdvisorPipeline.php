@@ -35,7 +35,8 @@ class FetchAvailableAdvisorPipeline extends BaseAllocationPipeline
             $this->throw('Advisor not found', self::NOT_FOUND);
         }
 
-        // Send the processed request to the next pipeline
+        $this->allocationRequest->set('advisor', $advisor);
+
         return $next($request);
     }
 

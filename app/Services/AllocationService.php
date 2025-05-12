@@ -18,6 +18,7 @@ use App\Models\Tier;
 use App\Services\Logger\LoggerService;
 use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Carbon\Carbon;
+use Illuminate\Http\Response;
 
 class AllocationService extends BaseService
 {
@@ -279,17 +280,20 @@ class AllocationService extends BaseService
         return $resp;
     }
 
-    public function createResponse2(AllocationRequest $request, AllocationException $e): array
+    public function createResponse2(AllocationRequest $request, ?AllocationException $e = null): array
     {
         $isSuccess = $request->get('isSuccess');
 
         if ($isSuccess) {
-            return $request->get('responseData');
+            return [
+                'advisorId' => $request->get('advisor')->id,
+                'message' => 'Lead allocated successfully',
+                'status' => Response::HTTP_OK,
+            ];
         }
 
         return [
             'advisorId' => 0,
-            ...$e->responseData,
             'message' => $e->getMessage(),
             'status' => $e->getCode(),
         ];
