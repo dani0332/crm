@@ -21,6 +21,7 @@ const {
   filterCAPayments,
   verifyCreditApproved,
   hasAnyCCSplitPayment,
+  paymentAllocationStatusTooltip,
 } = usePayment();
 
 const { isAmlVerified, isKycVerified, isInsurerAmlVerified } = useAMLKYC();
@@ -56,16 +57,19 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isEditPaymentEnabled: {
+    type: Function,
+    default: () => false,
+  }
 });
 
 const emit = defineEmits([
   'edit-payment',
   'delete-payment',
-  'capture-payment',
-  'approve-payment',
   'void-payment',
   'alert-capture',
   'open-aml-verification',
+  'toggle-expand',
 ]);
 
 const editPayment = () => {
@@ -76,26 +80,22 @@ const deletePayment = () => {
   emit('delete-payment', props.payment);
 };
 
-const capturePayment = () => {
-  emit('capture-payment', props.payment, 0, 0, 1);
-};
-
-const approvePayment = () => {
-  if (
-    !props.sendUpdate &&
-    (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments) ||
-      !isKycVerified(props.quoteRequest, props.quoteType, props.payments))
-  ) {
-    emit('open-aml-verification');
-  } else {
-    const isValid = getCaptureValidation.value;
-    if (isValid) {
-      emit('edit-payment', props.payment, 0, 0, 2);
-    } else {
-      emit('alert-capture', props.payment);
-    }
-  }
-};
+// const approvePayment = () => {
+//   if (
+//     !props.sendUpdate &&
+//     (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments) ||
+//       !isKycVerified(props.quoteRequest, props.quoteType, props.payments))
+//   ) {
+//     emit('open-aml-verification');
+//   } else {
+//     const isValid = getCaptureValidation.value;
+//     if (isValid) {
+//       emit('edit-payment', props.payment, 0, 0, 2);
+//     } else {
+//       emit('alert-capture', props.payment);
+//     }
+//   }
+// };
 
 const voidPayment = () => {
   emit('void-payment', props.payment);
@@ -123,7 +123,7 @@ const getCaptureOption = computed(() => {
   // Return 'capture' if all conditions are met, otherwise return 'approve'
   if (
     (isCreditCardPayment && isNotInsurerPayment && !isCaptureButtonEnabled) ||
-    (isCaptureButtonEnabled && isCreditCardPayment)
+    (isCaptureButtonEnabled && hasAnyCCSplitPayment(props.payments))
   ) {
     return 'capture';
   }
@@ -197,7 +197,7 @@ const shouldProcessUpdate = () => {
   ];
 
   const captureOption = getCaptureOption.value;
-  
+
   if (
     isInsurer &&
     isGIGProvider &&
@@ -233,7 +233,7 @@ const shouldProcessUpdate = () => {
   if (captureOption === 'approve') {
     return hasPayments;
   }
-  
+
   return (
     hasPayments &&
     isTotalPriceMatching &&
@@ -251,7 +251,6 @@ const shouldProcessUpdate = () => {
 //     Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
 //   const hasPayments = props.payments.length > 0;
 //   const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
-
 
 //   // Check if it's a renewal upload condition
 //   if (
@@ -463,7 +462,7 @@ const amlAndKycTooltip = computed(() => {
             {{
               paymentAllocationStatusTooltip
                 ? paymentAllocationStatusTooltip(
-                    payment.payment_allocation_status,
+                    payment.payment_allocation_status
                   )
                 : payment.payment_allocation_status
             }}
@@ -577,7 +576,7 @@ const amlAndKycTooltip = computed(() => {
                   ? $emit('open-aml-verification')
                   : getCaptureValidation
                     ? $emit('edit-payment', payment, 0, 0, 2)
-                    : alertCapture()
+                    : $emit('alert-capture', payment)
               "
               :disabled="isApproveConfirmed"
             >

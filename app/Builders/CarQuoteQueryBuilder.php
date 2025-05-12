@@ -9,6 +9,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -92,8 +93,16 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
         ]);
     }
 
-    public function applyFilters(Builder $query)
+    public function applyFilters(Builder $query, $requestParams)
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
+
         $query->when(
             ! request()->filled('email') && ! request()->filled('code') && ! request()->filled('first_name') && ! request()->filled('last_name') && ! request()->filled('quote_status_id') && ! request()->filled('mobile_no'),
             fn ($q) => $q->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]),
@@ -156,11 +165,11 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             });
     }
 
-    public function processGridData(): Builder
+    public function processGridData($requestParams): Builder
     {
         $query = $this->buildGrid();
 
-        $this->applyFilters($query);
+        $this->applyFilters($query, $requestParams);
 
         return $query;
     }

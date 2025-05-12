@@ -299,7 +299,7 @@ onMounted(() => {
 
     <x-form @submit="filterActivities" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.assignee_id"
           label="Assigned To"
           placeholder="Select Assigned To"
@@ -312,9 +312,11 @@ onMounted(() => {
               label: advisor.name,
             })),
           ]"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Advisor...."
         />
-        <ComboBox
+
+        <x-select
           v-model="filters.status"
           label="Status"
           placeholder="Select Activity Status"
@@ -322,7 +324,7 @@ onMounted(() => {
             { value: '1', label: 'Done' },
             { value: '0', label: 'Pending' },
           ]"
-          :single="true"
+          filterPlaceholder="Filter Status...."
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

@@ -75,6 +75,7 @@ use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -104,6 +105,8 @@ class CentralController extends Controller
 
     public function exportLeads(ExportValidationRequest $request, $quoteType, $exportTye = null)
     {
+        $request->merge(['quoteType' => $quoteType]);
+
         // For Personal Quotes
         if (in_array(ucfirst($quoteType), [
             QuoteTypes::BIKE->value,
@@ -113,6 +116,10 @@ class CentralController extends Controller
             QuoteTypes::JETSKI->value,
             QuoteTypes::HOME->value,
         ])) {
+            if ($request['exportType'] == 'email') {
+                return app(PersonalQuotesExport::class)->emailCSV($quoteType.'-List', $request->all());
+            }
+
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
 
@@ -128,24 +135,53 @@ class CentralController extends Controller
 
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
+
+                if ($request['exportType'] == 'email') {
+                    return app(LifeQuotesExport::class)->emailCSV('Life-List', $request->all());
+                }
+
                 return app(LifeQuotesExport::class)->download('life_leads');
 
             case QuoteTypes::HOME->value:
+                if ($request['exportType'] == 'email') {
+                    return app(HomeQuoteExport::class)->emailCSV('Home-List', $request->all());
+                }
+
                 return app(HomeQuoteExport::class)->download('home_leads');
 
             case QuoteTypes::AMT->value:
+                if ($request['exportType'] == 'email') {
+                    return app(AmtQuoteExport::class)->emailCSV('AMT-List', $request->all());
+                }
+
                 return app(AmtQuoteExport::class)->download('amt_leads');
 
             case QuoteTypes::BUSINESS->value:
+                if ($request['exportType'] == 'email') {
+                    return app(BusinessQuoteExport::class)->emailCSV('Business-List', $request->all());
+                }
+
                 return app(BusinessQuoteExport::class)->download('business_leads');
 
             case QuoteTypes::TRAVEL->value:
+                if ($request['exportType'] == 'email') {
+                    return app(TravelQuoteExport::class)->emailCSV('Travel-List', $request->all());
+                }
+
                 return app(TravelQuoteExport::class)->download('travel_leads');
 
             case QuoteTypes::CAR->value:
+                if ($request['exportType'] == 'email') {
+                    return app(CarQuoteExport::class)->emailCSV('Car-List', $request->all());
+                }
+
                 return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:
+                if ($request['exportType'] == 'email') {
+                    return app(HealthQuotesExport::class)->emailCSV('Health-List', $request->all());
+                }
+
                 return app(HealthQuotesExport::class)->download('Health-List');
 
             case RetentionReportEnum::RETENTION:
@@ -242,7 +278,7 @@ class CentralController extends Controller
     {
         try {
             $validatedData = $bookPolicyRequest->validated();
-            info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
             $paymentInformation = [
                 'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
@@ -271,13 +307,13 @@ class CentralController extends Controller
             }
 
             $payment->update($paymentInformation);
-            info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
             $response = (new SplitPaymentService)->updateCommissionSchedule($payment);
             if (! $response['status']) {
                 return back()->with('error', $response['message']);
             }
-            info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
+            LoggerService::info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
 
             return redirect()->back()->with('success', 'Booking details has been updated.');
         } catch (\Exception $e) {
@@ -291,7 +327,7 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
-        info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
+        LoggerService::info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
@@ -302,7 +338,7 @@ class CentralController extends Controller
             ];
             $quote->update($quoteData);
 
-            info('Quote Code: '.$quote->code.' Policy send to customer');
+            LoggerService::info('Quote Code: '.$quote->code.' Policy send to customer');
 
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
@@ -366,7 +402,7 @@ class CentralController extends Controller
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
-        info("Processing split payment approve {$request->payment_code}");
+        LoggerService::info("Processing split payment approve {$request->payment_code}");
 
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
         if (! $successMessage) {
@@ -393,7 +429,7 @@ class CentralController extends Controller
     public function retrySplitPayment(RetrySplitPaymentRequest $request)
     {
         $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
-        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+        LoggerService::info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
 
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
@@ -588,7 +624,7 @@ class CentralController extends Controller
             $listQuotePlans = $randomPlans;
         }
 
-        info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
+        LoggerService::info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
 
         $emailTemplateId = (int) ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->value('value');
 
@@ -610,14 +646,14 @@ class CentralController extends Controller
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                     $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
                     OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
-                    info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
+                    LoggerService::info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
                 }
             }
-            info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
+            LoggerService::info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-            info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
+            LoggerService::info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
@@ -659,7 +695,7 @@ class CentralController extends Controller
                 if (file_exists($file['path'])) {
                     $zip->addFile($file['path'], $file['name']);
                 } else {
-                    info("File does not exist: {$file['path']}");
+                    LoggerService::info("File does not exist: {$file['path']}");
                 }
             }
         } catch (\Exception $e) {
@@ -730,7 +766,7 @@ class CentralController extends Controller
             'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
         ];
 
-        info('paymentsCaptureValidation', $logPayload);
+        LoggerService::info('paymentsCaptureValidation', extra: ['payload' => $logPayload]);
 
         return response()->json(['response' => $response]);
     }
@@ -746,13 +782,13 @@ class CentralController extends Controller
                 $sendUpdateLog = SendUpdateLog::whereId(request()->sendUpdateId)->first();
             }
 
-            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Prepayment Posting of Payment split.');
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Start Prepayment Posting of Payment split.');
 
             $schedulePostPrepayment = (new SageApiService)->schedulePostPrepaymentToSageProcess([$quote, $request->quoteType, $paymentSplit, $sendUpdateLog]);
 
             if (! $schedulePostPrepayment['status']) {
                 $errors = count($schedulePostPrepayment['errors']) > 0 ? $schedulePostPrepayment['errors'] : ['message' => $schedulePostPrepayment['message']];
-                info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' -  Start Prepayment Posting of Payment split -  Error : ', $errors);
+                LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' -  Start Prepayment Posting of Payment split -  Error : ', extra: ['errors' => $errors]);
 
                 return response()->json(['errors' => $errors], 422);
             }
@@ -762,7 +798,7 @@ class CentralController extends Controller
                 'message' => 'Prepayment posting to Sage has been scheduled and will be processed in the background.',
             ], 200);
         } catch (Exception $exception) {
-            info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', $exception->getMessage());
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' Payment Split ID : '.$paymentSplit->id.' - Prepayment Posting of Payment split -  Exception : ', extra: ['Exception' => $exception->getMessage()]);
 
             return response()->json([
                 'success' => false,
