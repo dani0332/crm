@@ -769,7 +769,7 @@ class CentralController extends Controller
             'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
         ];
 
-        LoggerService::info('paymentsCaptureValidation', context:$logContext, extra:$logExtra);
+        LoggerService::info('paymentsCaptureValidation', context: $logContext, extra: $logExtra);
 
         return response()->json(['response' => $response]);
     }

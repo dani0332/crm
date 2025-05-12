@@ -1313,10 +1313,10 @@ class CentralService extends BaseService
 
         } catch (\Throwable $th) {
             LoggerService::error('capturePaymentValidation failed',
-                context:[
+                context: [
                     'ref_id' => $quoteCode,
                 ],
-                extra:[
+                extra: [
                     'quoteTypeId' => $quoteTypeId,
                     'captureAmount' => $captureAmount,
                 ],
