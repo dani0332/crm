@@ -6,7 +6,6 @@ use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Traits\ExcelExportable;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class HealthQuotesExport
 {
