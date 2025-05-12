@@ -2,16 +2,18 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
+use App\Models\User;
 use App\Enums\QuoteTypes;
 use App\Models\TravelQuote;
-use App\Models\User;
-use App\Services\Logger\LoggerService;
-use App\Services\ProcessTracker\ProcessTrackerService;
-use App\Services\TravelAllocationService;
 use Illuminate\Http\Response;
+use App\Enums\AssignmentTypeEnum;
 use Illuminate\Support\Facades\DB;
+use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\Pipeline;
+use App\Services\TravelAllocationService;
+use App\Pipelines\Allocation\Travel\FetchLeadPipeline;
+use App\Services\ProcessTracker\ProcessTrackerService;
+use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 
 class TravelAllocation implements Allocation
 {
@@ -33,6 +35,17 @@ class TravelAllocation implements Allocation
     public function executeSteps()
     {
         $this->travelAllocationService->resetProps();
+
+        Pipeline::send([
+            'quoteType' => QuoteTypes::TRAVEL,
+            'allocationId' => $this->allocationId,
+            'teamId' => $this->teamId,
+            'overrideAdvisorId' => $this->overrideAdvisorId,
+        ])->through([
+            FetchLeadPipeline::class,
+        ])->then(function ($result) {
+            return $result;
+        });
 
         $response = [
             'advisorId' => 0,
