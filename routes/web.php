@@ -88,6 +88,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Services\AddBatchForNonMotors;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -158,7 +159,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
 
-    Route::get('{quoteType}/report-export', [CentralController::class, 'exportLeads'])->name('retention-export');
+    Route::get('{quoteType}/report-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('retention-export');
     Route::get('/reports/retention-report', [ReportsController::class, 'renderRetentionReport'])->name('retentionn-report');
     Route::get('/reports/fetch-retention-leads-data', [ReportsController::class, 'fetchRetentionLeadsData'])->name('fetch-retention-leads-data');
     Route::post('/reports/fetch-batch-by-date', [ReportsController::class, 'fetchBatchByDates']);
@@ -441,26 +442,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
-        Route::get('/migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
+
+        Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
             $forceProcess = (bool) $force;
-            \App\Jobs\MigrateInsuredDataToPersonalQuotesJob::dispatch($forceProcess);
+            \App\Jobs\UniversalSearchDataMigration::dispatchSync($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
 
             return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
-        })->name('admin.migrate-insured-and-quote-id-to-personal-quote');
-
-        // Add route to trigger entity-insured migration, this should remove when migration was done
-        Route::get('/migrate-entities-insured', function () {
-            App\Jobs\EntitiesInsuredMigrationJob::dispatch();
-
-            return '<h3>Entities and Entities KYC Details migration job has been queued. Please check the logs for detailed progress and completion status.</h3>';
-        })->name('admin.migrate-entities-insured');
-
-        // Add route to trigger individual KYC details migration
-        Route::get('/migrate-individual-kyc-details', function () {
-            App\Jobs\IndividualKycDetailsMigrationJob::dispatch();
-
-            return '<h3>Individual KYC Details migration job has been queued. Please check the logs for detailed progress and completion status.</h3>';
-        })->name('admin.migrate-individual-kyc-details');
+        })->name('admin.sync-migrate-insured-and-quote-id-to-personal-quote');
 
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');

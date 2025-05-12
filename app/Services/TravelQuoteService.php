@@ -226,12 +226,11 @@ class TravelQuoteService extends BaseService
         }
 
         $customerTravelInfo = DB::table('travel_quote_request as tqr')
-            ->join('customer as c', 'c.id', '=', 'tqr.customer_id')
             ->leftJoin('customer_members as cm', function ($join) use ($model) {
                 $join->on('cm.quote_id', '=', 'tqr.id')
                     ->where('cm.quote_type', '=', ltrim($model, '\\'));
             })
-            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.gender', 'c.dob', 'c.nationality_id', 'cm.passport')
+            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'cm.gender', 'cm.first_name', 'cm.last_name', 'cm.dob', 'cm.nationality_id', 'cm.passport')
             ->where('tqr.id', $quoteRequestId)
             ->first();
 
@@ -241,7 +240,7 @@ class TravelQuoteService extends BaseService
     public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
     {
         $message = '';
-        $requiredProperty = collect(['first_name', 'last_name', 'gender', 'dob', 'nationality_id', 'passport']);
+        $requiredProperty = collect(['first_name', 'dob', 'nationality_id', 'passport']);
 
         $missingDetails = [];
         foreach ($requiredProperty as $value) {
@@ -317,7 +316,9 @@ class TravelQuoteService extends BaseService
         } else {
             $travelQuote['hasArrivedDestination'] = $request->has_arrived_destination;
             if ($request->has_arrived_destination == '0') {
-                $travelQuote['regionCoverForId'] = $request->region_cover_for_id;
+                if ($request->has('region_cover_for_id')) {
+                    $travelQuote['regionCoverForId'] = (int) $request->region_cover_for_id;
+                }
             }
         }
 

@@ -40,6 +40,7 @@ use App\Models\LifeQuote;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PaymentStatusHistory;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
@@ -1628,6 +1629,7 @@ class CentralService extends BaseService
                     $paymentSplit->documents()->forceDelete();
                 }
                 PaymentSplits::where('code', $request->payment_code)->delete();
+                PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
             info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);
