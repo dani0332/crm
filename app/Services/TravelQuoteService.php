@@ -240,7 +240,7 @@ class TravelQuoteService extends BaseService
     public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
     {
         $message = '';
-        $requiredProperty = collect(['first_name', 'last_name', 'gender', 'dob', 'nationality_id', 'passport']);
+        $requiredProperty = collect(['first_name', 'dob', 'nationality_id', 'passport']);
 
         $missingDetails = [];
         foreach ($requiredProperty as $value) {
