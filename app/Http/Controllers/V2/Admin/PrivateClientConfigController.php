@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\CarMake;
 use App\Models\InsuranceProvider;
 use App\Models\PrivateClientConfig;
-use App\Models\PrivateClientConfigHistory;
 use App\Models\SubArea;
 use App\Traits\PrivateClient;
 use Illuminate\Http\Request;
@@ -24,18 +23,31 @@ class PrivateClientConfigController extends Controller
         $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Engineering], '|'), ['only' => ['show']]);
     }
 
-    public function show()
+    public function show(Request $request)
     {
-        // Get existing configurations
-        $configurations = PrivateClientConfig::all();
+        $selectedVersion = $request->input('version', null);
 
-        // Car makes for luxury vehicles
+        $allVersions = PrivateClientConfig::select('version')
+            ->distinct()
+            ->orderBy('version', 'desc')
+            ->pluck('version')
+            ->toArray();
+
+        if ($selectedVersion === null && count($allVersions) > 0) {
+            $selectedVersion = $allVersions[0];
+        }
+
+        $configurations = new PrivateClientConfig;
+
+        if ($selectedVersion) {
+            $configurations = $configurations->where('version', $selectedVersion);
+        }
+        $configurations = $configurations->get();
+
         $carMakes = CarMake::select('code as value', 'text as label')->where('is_active', true)->get()->toArray();
 
-        // Insurance companies
         $insurers = InsuranceProvider::select('code as value', 'text as label')->where('is_active', true)->get()->toArray();
 
-        // Location areas
         $locationAreas = SubArea::select('code as value', 'text as label')->get()->toArray();
 
         return Inertia::render('Admin/PrivateClientConfig/Show', [
@@ -43,6 +55,8 @@ class PrivateClientConfigController extends Controller
             'carMakes' => $carMakes,
             'insurers' => $insurers,
             'locationAreas' => $locationAreas,
+            'allVersions' => $allVersions,
+            'selectedVersion' => $selectedVersion,
         ]);
     }
 
@@ -52,67 +66,37 @@ class PrivateClientConfigController extends Controller
             // Validate incoming request
             $validated = $request->validate([
                 'configurations' => 'required|array',
-                'configurations.*.quote_type_id' => 'required|integer',
-                'configurations.*.field_name' => 'required|string|max:255',
-                'configurations.*.operator' => 'required|string',
+                'configurations.*.quote_type_id' => 'integer',
+                'configurations.*.field_name' => 'nullable|string|max:255',
+                'configurations.*.operator' => 'nullable|string',
                 'configurations.*.value' => 'nullable|string',
                 'configurations.*.currency_type_id' => 'nullable|integer',
-                'configurations.*.status' => 'required|integer|in:0,1',
+                'configurations.*.status' => 'nullable|integer|in:0,1',
             ]);
 
             DB::beginTransaction();
 
+            $existingVersion = PrivateClientConfig::orderBy('version', 'desc')->first();
             foreach ($validated['configurations'] as $config) {
-                $existingConfig = PrivateClientConfig::where([
+
+                $version = $existingVersion ? $existingVersion->version + 1 : 1;
+
+                // Create new config with new version
+                PrivateClientConfig::create([
                     'quote_type_id' => $config['quote_type_id'],
                     'field_name' => $config['field_name'],
+                    'operator' => $config['operator'],
+                    'value' => isset($config['value']) ? $config['value'] : null,
                     'currency_type_id' => $config['currency_type_id'] ?? null,
-                ])->first();
-
-                if ($existingConfig) {
-                    $hasChanges = $existingConfig->operator != $config['operator'] ||
-                        $existingConfig->value != $config['value'] ||
-                        $existingConfig->status != $config['status'];
-
-                    if ($hasChanges) {
-                        PrivateClientConfigHistory::create([
-                            'pcp_config_id' => $existingConfig->id,
-                            'quote_type_id' => $existingConfig->quote_type_id,
-                            'field_name' => $existingConfig->field_name,
-                            'operator' => $existingConfig->operator,
-                            'value' => $existingConfig->value,
-                            'currency_type_id' => $existingConfig->currency_type_id,
-                            'status' => $existingConfig->status,
-                            'version' => $existingConfig->version,
-                        ]);
-
-                        // Update with incremented version
-                        $existingConfig->update([
-                            'operator' => $config['operator'],
-                            'field_name' => $config['field_name'],
-                            'operator' => $config['operator'],
-                            'value' => $config['value'],
-                            'status' => $config['status'],
-                            'currency_type_id' => $config['currency_type_id'] ?? null,
-                            'version' => $existingConfig->version + 1,
-                        ]);
-                    }
-                } else {
-                    PrivateClientConfig::create([
-                        'quote_type_id' => $config['quote_type_id'],
-                        'field_name' => $config['field_name'],
-                        'operator' => $config['operator'],
-                        'value' => $config['value'],
-                        'currency_type_id' => $config['currency_type_id'] ?? null,
-                        'status' => $config['status'],
-                        'version' => 1,
-                    ]);
-                }
+                    'status' => $config['status'],
+                    'version' => $version,
+                ]);
             }
 
             DB::commit();
 
-            return redirect()->back()->with('message', 'Private Client Configuration updated successfully.');
+            return redirect()->route('admin.private-client-config.show')
+                ->with('message', 'Private Client Configuration updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {

@@ -1,15 +1,23 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 
 const props = defineProps({
   configurations: Array,
   insurers: Array,
   carMakes: Array,
   locationAreas: Array,
+  allVersions: Array,
+  selectedVersion: Number,
 });
 
 const { isRequired, isRequiredNumber } = useRules();
+
+// Function to change version
+const changeVersion = (version) => {
+  window.location.href = route('admin.private-client-config.show', { version });
+};
 
 // Helper function to chunk array into groups
 const chunkArray = (array, size) => {
@@ -325,9 +333,6 @@ const onSubmit = isValid => {
         if (field.type === 'select_multiple' && Array.isArray(value)) {
           value = value.length > 0 ? value.join(',') : '';
         }
-
-        // Only add configuration if value is not blank
-        if (value !== '' && value !== null && value !== undefined) {
           // Create configuration object
           const configItem = {
             quote_type_id: type.quote_type_id,
@@ -340,7 +345,7 @@ const onSubmit = isValid => {
           };
 
           configurations.push(configItem);
-        }
+        
       });
     });
     
@@ -349,7 +354,13 @@ const onSubmit = isValid => {
       ...data,
       configurations
     })).post(route('admin.private-client-config.upsert'), {
-      onSuccess: () => loader.value = false,
+      onSuccess: () => {
+        loader.value = false;
+        // After successful save, redirect to the latest version
+        if (window.location.search.includes('version=')) {
+          window.location.href = route('admin.private-client-config.show');
+        }
+      },
       onError: () => loader.value = false
     });
 
@@ -362,6 +373,31 @@ const onSubmit = isValid => {
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Private Client Configuration</h2>
   </div>
+  
+  <!-- Version selector -->
+  <div class="bg-gray-50 p-4 rounded-md my-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="font-medium">Current Version:</span>
+        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">{{ selectedVersion }}</span>
+        
+        <!-- Warning when viewing historical version -->
+        <div v-if="selectedVersion && allVersions && allVersions.length > 0 && selectedVersion !== allVersions[0]" 
+             class="flex items-center text-amber-600 ml-2">
+        </div>
+      </div>
+      <div class="flex items-center">
+        <span class="mr-2">Select Version:</span>
+        <x-select 
+          :modelValue="selectedVersion"
+          :options="allVersions.map(v => ({ value: v, label: `Version ${v}` }))"
+          @update:modelValue="changeVersion"
+          class="w-40"
+        />
+      </div>
+    </div>
+  </div>
+  
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <!-- Loop through each insurance type -->
@@ -484,7 +520,7 @@ const onSubmit = isValid => {
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">
       <x-button size="md" color="emerald" type="submit" :loading="loader" :disabled="loader">
-        Update
+        Save
       </x-button>
     </div>
   </x-form>
