@@ -36,6 +36,7 @@ use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\CentralTrait;
 use App\Traits\HandlesDeadlockRetries;
@@ -66,8 +67,9 @@ class SplitPaymentService
         return $discount;
     }
 
-    public function uploadDiscountDocuments($discountDocuments, $paymentSplitRecord)
+    public function uploadDiscountDocuments($discountDocuments, $paymentSplitRecord, $source = null)
     {
+        LoggerService::info("Uploading discount documents for payment code: {$paymentSplitRecord->code} called from {$source}");
         foreach ($discountDocuments[0] as $document) {
             $quoteDocumentRec = QuoteDocument::find($document['id']);
             if ($quoteDocumentRec) {
