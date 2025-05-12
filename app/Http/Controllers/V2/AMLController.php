@@ -690,6 +690,8 @@ class AMLController extends Controller
 
     public function linkEntityDetails(Request $request)
     {
+        $existingEntityMapping = QuoteRequestEntityMapping::where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id])->first();
+
         $updateFields = ['entity_id' => $request->entity_id, 'entity_type_code' => LookupsEnum::PARENT_ENTITY];
         if ($request->triggeredFrom) {
             $updateFields['entity_type_code'] = LookupsEnum::SUB_ENTITY;
@@ -704,6 +706,14 @@ class AMLController extends Controller
                 'quoteMember',
             ]
         )->where('id', $request->entity_id)->first();
+
+        if ($existingEntityMapping) {
+            $previousEntity = $existingEntityMapping->entity;
+            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id])->count();
+            if ($entityMappingCount === 0 && empty($previousEntity->trade_license_no)) {
+                $previousEntity->delete();
+            }
+        }
 
         if ($request->quote_type_id == QuoteTypeId::Car) {
             CarQuoteRepository::where('id', $request->quote_request_id)->update([
