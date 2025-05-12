@@ -14,7 +14,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -34,13 +33,15 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
      */
     public $timeout = 3600;
 
+    public $tries = 1;
+
     const CLASS_NAME = 'IndividualKycDetailsMigrationJob';
 
     private $lockPostfix;
 
-    public function __construct()
+    public function __construct($lockKey)
     {
-        $this->lockPostfix = Carbon::now()->format('YmdHi');
+        $this->lockPostfix = $lockKey;
     }
 
     /**
@@ -104,7 +105,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                     $insured = Insured::where(['id_type' => $customerDetail->id_type, 'id_number' => $normalizedIdNumber])->first();
 
                     if (! $insured) {
-                        LoggerService::info(self::CLASS_NAME.' - Creating new insured record against Customer ID: '.$customer->id.' and customer detail ID: '.$customerDetail->id);
+                        // LoggerService::info(self::CLASS_NAME.' - Creating new insured record against Customer ID: '.$customer->id.' and customer detail ID: '.$customerDetail->id);
                         $insured = Insured::create([
                             'customer_type' => CustomerTypeEnum::Individual,
                             'first_name' => $customer->insured_first_name ?? $customer->first_name,
@@ -118,16 +119,16 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                             'customer_details_id' => $customerDetail->id,
                         ]);
 
-                        LoggerService::info(self::CLASS_NAME.' - Creating customer-insured mappings for customer detail ID: '.$customerDetail->id.' and customer '.$customer->id.' and insured '.$insured->id.' at '.now());
+                        // LoggerService::info(self::CLASS_NAME.' - Creating customer-insured mappings for customer detail ID: '.$customerDetail->id.' and customer '.$customer->id.' and insured '.$insured->id.' at '.now());
                         CustomerInsured::create([
                             'customer_id' => $customer->id,
                             'insured_id' => $insured->id,
                         ]);
                     } else {
-                        LoggerService::info(self::CLASS_NAME.' - Insured found against customer detail ID: '.$customerDetail->id.' and Insured ID: '.$insured->id);
+                        // LoggerService::info(self::CLASS_NAME.' - Insured found against customer detail ID: '.$customerDetail->id.' and Insured ID: '.$insured->id);
                         $customerInsured = CustomerInsured::where('customer_id', $customer->id)->where('insured_id', $insured->id)->first();
                         if (! $customerInsured) {
-                            LoggerService::info(self::CLASS_NAME.' - Creating customer-insured mappings for customer detail ID: '.$customerDetail->id.' and customer '.$customer->id.' and insured '.$insured->id.' at '.now());
+                            // LoggerService::info(self::CLASS_NAME.' - Creating customer-insured mappings for customer detail ID: '.$customerDetail->id.' and customer '.$customer->id.' and insured '.$insured->id.' at '.now());
                             CustomerInsured::create([
                                 'customer_id' => $customer->id,
                                 'insured_id' => $insured->id,
@@ -141,7 +142,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                     if ($insuredKyc) {
                         // If the existing KYC is for the same customer_details_id
                         if ($insuredKyc->customer_details_id == $customerDetail->id) {
-                            LoggerService::info(self::CLASS_NAME.' - Insured KYC details already exist against customer detail ID: '.$customerDetail->id.' and insured ID:'.$insured->id);
+                            // LoggerService::info(self::CLASS_NAME.' - Insured KYC details already exist against customer detail ID: '.$customerDetail->id.' and insured ID:'.$insured->id);
                             $skippedCount++;
 
                             continue;
@@ -151,7 +152,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                         $customerFromDetail = $customerDetail->customer;
                         if ($customerFromDetail) {
                             // Use updateOrCreate to either create a new mapping or skip if it already exists
-                            LoggerService::info(self::CLASS_NAME.' - Creating customer-insured mapping for customer detail ID: '.$customerDetail->id.' and customer ID: '.$customerFromDetail->id.' and insured ID: '.$insured->id);
+                            // LoggerService::info(self::CLASS_NAME.' - Creating customer-insured mapping for customer detail ID: '.$customerDetail->id.' and customer ID: '.$customerFromDetail->id.' and insured ID: '.$insured->id);
                             CustomerInsured::updateOrCreate(
                                 [
                                     'customer_id' => $customerFromDetail->id,
@@ -165,7 +166,7 @@ class IndividualKycDetailsMigrationJob implements ShouldQueue
                         continue;
                     }
 
-                    LoggerService::info(self::CLASS_NAME.' - Creating Insured KYC against customer detail ID: '.$customerDetail->id.' and insured '.$insured->id.' at '.now());
+                    // LoggerService::info(self::CLASS_NAME.' - Creating Insured KYC against customer detail ID: '.$customerDetail->id.' and insured '.$insured->id.' at '.now());
                     InsuredKyc::create([
                         'insured_id' => $insured->id,
                         'customer_details_id' => $customerDetail->id,
