@@ -1054,6 +1054,7 @@ class RenewalsUploadService
             $isReAssignment = $quote->advisor_id != $advisorId;
 
             $this->updateCustomer($quote, $customerData);
+            $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
 
             $quoteData = [
                 'first_name' => $customerData['first_name'],
@@ -1064,7 +1065,7 @@ class RenewalsUploadService
                 'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'advisor_id' => $advisorId,
                 'assignment_type' => $advisorId ? ($isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED) : null,
-                'renewal_batch_id' => null,
+                'renewal_batch_id' => $renewalBatchId ?? null,
                 'additional_notes' => $data['notes'],
             ];
 
