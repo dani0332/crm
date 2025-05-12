@@ -8,6 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Exceptions\Allocation\AllocationException;
 use App\Models\ApplicationStorage;
 use App\Models\BuyLeadRequestLog;
 use App\Models\CarQuote;
@@ -15,6 +16,7 @@ use App\Models\HealthQuote;
 use App\Models\LeadAllocation;
 use App\Models\Tier;
 use App\Services\Logger\LoggerService;
+use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Carbon\Carbon;
 
 class AllocationService extends BaseService
@@ -276,6 +278,23 @@ class AllocationService extends BaseService
 
         return $resp;
     }
+
+    public function createResponse2(AllocationRequest $request, AllocationException $e): array
+    {
+        $isSuccess = $request->get('isSuccess');
+
+        if ($isSuccess) {
+            return $request->get('responseData');
+        }
+
+        return [
+            'advisorId' => 0,
+            ...$e->responseData,
+            'message' => $e->getMessage(),
+            'status' => $e->getCode(),
+        ];
+    }
+
     public function shouldProceedWithReAllocation($allocationSwitchName)
     {
         // Fetch reassignment start and end times
