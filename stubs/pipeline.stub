@@ -3,7 +3,6 @@
 namespace {{ namespace }};
 
 use Closure;
-use Illuminate\Support\Facades\Log;
 
 class {{ class }}
 {
@@ -16,11 +15,6 @@ class {{ class }}
      */
     public function handle($passable, Closure $next)
     {
-        // Process the request before sending it to the next pipeline
-
-        // Example:
-        // Log::info('Processing request through {{ class }}', ['data' => $passable]);
-
         // Send the processed request to the next pipeline
         return $next($passable);
     }
