@@ -83,6 +83,7 @@ const filters = reactive({
   insurance_provider_ids: [],
   plan_name: [],
   travel_start_date: '',
+  private_client: 'all',
 });
 
 const loader = reactive({
@@ -858,6 +859,19 @@ const insurerAMLStatusOption = computed(() => {
           v-model="filters.travel_start_date"
           label="Travel Start Date"
           format="dd-MM-yyyy"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

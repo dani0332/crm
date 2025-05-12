@@ -1125,6 +1125,9 @@ const shouldShowPlanDetailsSection = computed(() => {
         <x-button v-if="quote?.insured.pcp_tag == true" size="sm" color="#BFA100" tag="div">
          Private Client
         </x-button>
+        <x-button v-if="quote?.pc_qualified == true" size="sm" color="#BFA100" tag="div">
+          PC-Qualified
+        </x-button>
       </template>
       <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes

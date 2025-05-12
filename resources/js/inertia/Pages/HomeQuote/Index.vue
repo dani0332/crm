@@ -113,6 +113,7 @@ const filters = reactive({
   advisor_assigned_date: null,
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
+  private_client: 'all',
 });
 
 const canExport = ref(false);
@@ -646,6 +647,19 @@ const formatDate = dateString =>
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -742,9 +756,6 @@ const formatDate = dateString =>
           <span>{{ code }}</span>
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
-      </template>
-      <template #item-insured.pcp_tag_formatted="{ insured }">
-        {{ insured?.pcp_tag_formatted || 'No' }}
       </template>
       <template #item-authorized_at="item">
         <p v-if="item?.payments[0]?.payment_status_id === 4">

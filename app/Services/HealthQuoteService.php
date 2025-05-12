@@ -6,15 +6,12 @@ use App\Builders\HealthQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\DatabaseColumnsString;
-use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -25,6 +22,7 @@ use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\Customer;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
@@ -205,6 +203,10 @@ class HealthQuoteService extends BaseService
                     ELSE insurer_aml_status
                 END AS insurer_aml_status_display
             '),
+            'c.pcp_tag',
+            'hqr.pc_qualified',
+            DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+            DB::raw(HealthQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -346,294 +348,6 @@ class HealthQuoteService extends BaseService
         $this->adjustQueryByDateFilters($query, 'health_quote_request');
 
         return $query;
-    }
-
-    public function getGridDataOld($model = null, $request = null)
-    {
-        $searchProperties = [];
-        $isRenewalUser = Auth::user()->isRenewalUser();
-        $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
-        $isRenewalManager = Auth::user()->isRenewalManager();
-        $isNewManager = Auth::user()->isNewBusinessManager();
-        $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-        if ($model != null) {
-            if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
-                $searchProperties = $model->renewalSearchProperties;
-            } elseif ($isNewManager || $isNewAdvisor) {
-                $searchProperties = $model->newBusinessSearchProperties;
-            } else {
-                $searchProperties = $model->searchProperties;
-            }
-        } else {
-            $searchProperties = $this->fillModelSearchProperties();
-            $request = request();
-        }
-
-        if (
-            empty($request->email) && empty($request->code) && empty($request->first_name) &&
-            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
-        ) {
-            $this->query->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
-        }
-        if (! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
-
-            $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-            $this->query->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-        }
-        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-            $dateFrom = $this->parseDate($request['next_followup_date'], true);
-            $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->transaction_approved_dates)) {
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $startDate = Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat);
-            $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
-            $this->query->whereBetween('hqr.transaction_approved_at', [$startDate, $endDate]);
-        }
-        if (
-            ! isset($request->code) && ! isset($request->last_modified_date) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date)
-            && ! isset($request->booking_date) && ! isset($request->renewal_batches)
-            && ! isset($request->previous_quote_policy_number) && ! isset($request->transaction_approved_dates) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)
-        ) {
-            $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
-        }
-        if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-            $dateFrom = $this->parseDate($request['created_at'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
-            $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-
-        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
-            $dateArray = $request['last_modified_date'];
-
-            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
-            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('hqr.updated_at', [$dateFrom, $dateTo]);
-        }
-
-        if (
-            ! empty($request->created_at_start)
-            && ! empty($request->created_at_end)
-            && empty($request->code)
-            && empty($request->email)
-            && empty($request->mobile_no)
-            && empty($request->payment_due_date)
-            && empty($request->booking_date)
-            && empty($request->renewal_batches)
-            && empty($request->previous_quote_policy_number)
-            && ! isset($request->insurer_tax_invoice_number)
-            && ! isset($request->insurer_commission_tax_invoice_number)
-        ) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-
-            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
-        }
-        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
-            // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
-        }
-        if (isset($request->code) && $request->code != '') {
-            $this->query->where('hqr.code', $request->code);
-        }
-        if (isset($request->first_name) && $request->first_name != '') {
-            $this->query->where('hqr.first_name', $request->first_name);
-        }
-        if (isset($request->last_name) && $request->last_name != '') {
-            $this->query->where('hqr.last_name', $request->last_name);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $this->query->where('hqr.email', $request->email);
-        }
-        if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $this->query->where('hqr.mobile_no', $request->mobile_no);
-        }
-        if (isset($request->policy_number) && $request->policy_number != '') {
-            $this->query->where('hqr.policy_number', $request->policy_number);
-        }
-        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where(function ($query) use ($request) {
-                $query->where('hqr.policy_number', $request->previous_quote_policy_number)
-                    ->orWhere('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
-            });
-        }
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
-            $this->query->whereIn('hqr.renewal_batch_id', $request->renewal_batches);
-        }
-        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-        }
-        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
-
-        if (! isset($request->email) && $request->email == '') {
-            $this->query->where('hqr.quote_status_id', '!=', 9);
-        }
-
-        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-            $dateFrom = $this->parseDate($request['next_followup_date'], true);
-            $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        // health_team_type filter
-        if (isset($request->sub_team) && $request->sub_team != '') {
-            $this->query->where('hqr.health_team_type', $request->sub_team);
-        }
-        // quote_status filter
-        if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
-            $this->query->whereIn('quote_status_id', $request->quote_status);
-        }
-
-        if (isset($request->advisors) && is_array($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
-            $this->query->whereNull('hqr.advisor_id');
-        }
-
-        // advisors filter
-        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0 && ! in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
-            $this->query->whereIn('advisor_id', $request->advisors);
-        }
-        // is_renewal filter
-        if (isset($request->is_renewal) && $request->is_renewal != '') {
-            if ($request->is_renewal == 'Yes') {
-                $this->query->whereNotNull('previous_quote_policy_number');
-            } else {
-                $this->query->whereNull('previous_quote_policy_number');
-            }
-        }
-
-        // payment_status_id filter
-        if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
-        }
-
-        // is_cold filter
-        if (isset($request->is_cold) && $request->is_cold != '') {
-            $this->query->where('hqr.is_cold', 1);
-        }
-
-        // is_stale filter
-        if (isset($request->is_stale) && $request->is_stale != '') {
-            $this->query->whereNotNull('hqr.stale_at');
-        }
-
-        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
-            // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
-        }
-        if (isset($request->assignment_type) && ! empty($request->assignment_type) && $request->assignment_type !== 'all') {
-            $this->query->where('hqr.assignment_type', $request->assignment_type);
-        }
-        if (isset($request->first_name) && $request->first_name != '') {
-            $this->query->where('hqr.first_name', $request->first_name);
-        }
-        if (isset($request->last_name) && $request->last_name != '') {
-            $this->query->where('hqr.last_name', $request->last_name);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $this->query->where('hqr.email', $request->email);
-        }
-        if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $this->query->where('hqr.mobile_no', $request->mobile_no);
-        }
-
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->renewal_batches) && count($request->renewal_batches) != 0) {
-            $this->query->whereIn('hqr.renewal_batch_id', $request->renewal_batches);
-        }
-        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-        }
-        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
-
-        if (isset($request->is_renewal) && $request->is_renewal != '') {
-            if ($request->is_renewal == quoteTypeCode::yesText) {
-                $this->query->whereNotNull('hqr.previous_quote_policy_number');
-            }
-            if ($request->is_renewal == quoteTypeCode::noText) {
-                $this->query->whereNull('hqr.previous_quote_policy_number');
-            }
-        }
-        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
-            $this->query->where('hqr.sic_advisor_requested', $request->sic_advisor_requested);
-        }
-        if (isset($request->is_ecommerce)) {
-            $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
-            $this->query->where('hqr.is_ecommerce', $isEcommerce);
-        }
-        if ($request->has('segment_filter')) {
-            $segmentFilter = $request->input('segment_filter');
-            $subQueryCallback = function ($subQuery) {
-                $subQuery->distinct()
-                    ->select('quote_uuid')
-                    ->from('quote_tags')
-                    ->where('name', QuoteSegmentEnum::SIC->tag())
-                    ->where('quote_type_id', QuoteTypeId::Health);
-            };
-            $this->query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($subQueryCallback) {
-                $query->whereIn('hqr.uuid', $subQueryCallback);
-            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($subQueryCallback) {
-                $query->whereNotIn('hqr.uuid', $subQueryCallback);
-            });
-        }
-
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
-            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
-        }
-
-        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
-            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
-        }
-
-        if (! empty($request->insurer_aml_status) && is_array($request->insurer_aml_status)) {
-            $this->query->whereIn('hqr.insurer_aml_status', $request->insurer_aml_status);
-        }
-
-        $this->adjustQueryByDateFilters($this->query, 'hqr');
-
-        foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at') {
-                if ($request[$item] == 'null') {
-                    $this->query->whereNull($item);
-                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
-                        $this->query->whereNull('advisor_id');
-                    } else {
-                        $this->query->whereIn('advisor_id', $request[$item]);
-                    }
-                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
-                    $this->query->whereIn('quote_status_id', $request[$item]);
-                } else {
-                    $skipped = ['is_ecommerce', 'is_renewal', 'previous_policy_expiry_date', 'next_followup_date'];
-                    if (in_array($item, $skipped)) {
-                        continue;
-                    }
-                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
-                }
-            }
-        }
-
-        // sortBy filter
-        if (isset($request->sortBy) && $request->sortBy != '') {
-            return $this->query->orderBy($request->sortBy, $request->sortType);
-        } else {
-            return $this->query->orderBy('hqr.created_at', 'DESC');
-        }
     }
 
     private function parseDate($date, $isStartOfDay)

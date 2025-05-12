@@ -623,9 +623,6 @@ const insurerAMLStatusOption = computed(() => {
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
       </template>
-      <template #item-insured.pcp_tag_formatted="{ insured }">
-        {{ insured?.pcp_tag_formatted || 'No' }}
-      </template>
     </DataTable>
 
     <Pagination

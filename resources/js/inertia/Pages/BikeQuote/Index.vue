@@ -49,6 +49,7 @@ let availableFilters = {
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   advisor_assigned_date: [],
+  private_client: 'all',
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -687,9 +688,6 @@ const insurerAMLStatusOption = computed(() => {
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
         </p>
-      </template>
-      <template #item-insured.pcp_tag_formatted="{ insured }">
-        {{ insured?.pcp_tag_formatted || 'No' }}
       </template>
     </DataTable>
 

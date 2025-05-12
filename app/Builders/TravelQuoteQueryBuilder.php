@@ -68,13 +68,12 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insurer_api_status_id',
             'start_date',
             'end_date',
-            'customer_id',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
             'travelQuoteRequestDetail',
             'travelQuoteRequestDetail.lostReason',
-            'customer:id,emirates_id_expiry_date,receive_marketing_updates',
+            'customer:id,emirates_id_expiry_date,receive_marketing_updates,pcp_tag',
             'quoteRequestEntityMapping:id,quote_request_id,entity_id,entity_type_code',
             'quoteRequestEntityMapping.entity:id,code,trade_license_no,company_name,company_address,industry_type_code,emirate_of_registration_id',
             'quotePlan',
@@ -85,7 +84,6 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'plan:id,text',
             'currentlyLocatedIn:id,text',
             'renewalBatch:id,name',
-            'customer:id,pcp_tag',
         ]);
     }
 
@@ -123,6 +121,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->filterByAdvisorAssignedDates('travelQuoteRequestDetail', 'advisor_assigned_date')
             ->filterBySegment('travel_quote_request')
+            ->filterByPrivateClient(request('private_client'))
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })

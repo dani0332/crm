@@ -107,7 +107,7 @@ const insuranceTypes = [
         operator: 'in'
       },
       {
-        name: 'insurer',
+        name: 'insurance_provider_id',
         uiName: 'car_insurer',
         label: 'Insurer',
         type: 'select_multiple',
@@ -131,7 +131,7 @@ const insuranceTypes = [
         operator: '>='
       },
       {
-        name: 'insurer',
+        name: 'insurance_provider_id',
         uiName: 'health_insurer',
         label: 'Insurer',
         type: 'select_multiple',
@@ -207,7 +207,7 @@ const insuranceTypes = [
         operator: '>='
       },
       {
-        name: 'insurer',
+        name: 'insurance_provider_id',
         uiName: 'home_insurer',
         label: 'Insurer',
         type: 'select_multiple',
@@ -239,7 +239,7 @@ const insuranceTypes = [
         operator: '>='
       },
       {
-        name: 'insurer',
+        name: 'insurance_provider_id',
         uiName: 'yacht_insurer',
         label: 'Insurer',
         type: 'select_multiple',

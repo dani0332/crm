@@ -48,6 +48,7 @@ class TravelQuote extends Model implements AuditableContract
         'insurer_aml_status_text',
         'previous_policy_expiry_date_formatted',
         'dob_formatted',
+        'pc_qualified_formatted',
     ];
 
     protected static function booted()

@@ -69,7 +69,6 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'updated_at',
             'assignment_type',
             'gender',
-            'customer_id',
         ], [
             'maritalStatus:id,text',
             'healthCoverFor:id,text',
@@ -84,7 +83,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'memberCategory:id,text',
             'renewalBatch:id,name',
             'insuredCustomer:id,first_name,last_name',
-            'customer:id,emirates_id_expiry_date,receive_marketing_updates',
+            'customer:id,emirates_id_expiry_date,receive_marketing_updates,pcp_tag',
             'quoteRequestEntityMapping:id,quote_request_id,entity_id,entity_type_code',
             'quoteRequestEntityMapping.entity:id,code,trade_license_no,company_name,company_address,industry_type_code,emirate_of_registration_id',
             'quotePlan',
@@ -96,7 +95,6 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'memberCategory:id,text',
             'insuranceProvider:id,text',
             'plan:id,text',
-            'customer:id,pcp_tag',
         ]);
     }
 
@@ -129,6 +127,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDateRange('booking_date', 'policy_booking_date')
             ->filterByAdvisorAssignedDates('healthQuoteRequestDetail', ['assigned_to_date_start', 'assigned_to_date_end'], verifyQuoteStatus: true)
             ->filterByDateRange('last_modified_date', 'updated_at')
+            ->filterByPrivateClient(request('private_client'))
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })

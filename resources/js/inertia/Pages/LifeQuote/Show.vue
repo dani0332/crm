@@ -520,6 +520,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
       <x-button v-if="quote?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
         Private Client
       </x-button>
+      <x-button v-if="quote?.pc_qualified == true" size="sm" color="#BFA100" tag="div">
+        PC-Qualified
+      </x-button>
       <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
         <Link
           v-if="quote.life_quote_request_detail?.insly_id"

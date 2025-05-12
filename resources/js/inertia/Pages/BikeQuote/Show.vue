@@ -367,6 +367,9 @@ function capitalizeString(str) {
         <x-button v-if="quote?.insured?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
               Private Client
         </x-button>
+        <x-button v-if="quote?.pc_qualified == true" size="sm" color="#BFA100" tag="div">
+          PC-Qualified
+        </x-button>
       </div>
       <div class="flex gap-2">
         <Link

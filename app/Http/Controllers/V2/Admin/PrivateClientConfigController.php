@@ -90,6 +90,7 @@ class PrivateClientConfigController extends Controller
                     'currency_type_id' => $config['currency_type_id'] ?? null,
                     'status' => $config['status'],
                     'version' => $version,
+                    'active_version' => true,
                 ]);
             }
 
