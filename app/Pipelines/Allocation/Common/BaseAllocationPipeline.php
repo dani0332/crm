@@ -5,15 +5,18 @@ namespace App\Pipelines\Allocation\Common;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
+use App\Models\QuoteBatches;
+use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 
-abstract class BaseAllocationPipeline
+abstract class BaseAllocationPipeline extends AllocationService
 {
     public const NOT_FOUND = Response::HTTP_NOT_FOUND;
     public const OK = Response::HTTP_OK;
+    public const SERVER_ERROR = Response::HTTP_INTERNAL_SERVER_ERROR;
 
     protected AllocationRequest $allocationRequest;
     protected ?Model $lead = null;
@@ -87,5 +90,10 @@ abstract class BaseAllocationPipeline
     protected function throw(string $message, int $code = 500)
     {
         throw new AllocationException($message, $code);
+    }
+
+    protected function getQuoteBatch()
+    {
+        return QuoteBatches::latest()->first();
     }
 }
