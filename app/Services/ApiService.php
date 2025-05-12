@@ -406,19 +406,33 @@ class ApiService
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
             }
 
+            // Get model class for the quote type
+            $modelClass = $quoteType->model();
+            
             // Verify the quote exists
-            $quote = $quoteType->model()->where('uuid', $quoteUuid)->first();
+            $quote = $modelClass->where('uuid', $quoteUuid)->first();
             if (! $quote) {
                 LoggerService::info("Quote not found");
                 return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
             }
-
-            // Dispatch the travel AIG workflow job
-            LoggerService::info("------ Dispatching Travel AIG workflow job ------");
-            dispatch(new \App\Jobs\TravelAIGWorkflowJob($quoteUuid, $quoteTypeId));
-            LoggerService::info("------ Travel AIG workflow trigger request completed ------");
-
-            return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow triggered successfully!');
+            
+            // Atomic update - only proceeds if travel_aig_flow_executed_at is null
+            $updated = $modelClass->where('uuid', $quoteUuid)
+                ->whereNull('travel_aig_flow_executed_at')
+                ->update(['travel_aig_flow_executed_at' => now()]);
+                
+            if ($updated) {
+                // Only dispatch the job if we successfully updated the record
+                LoggerService::info("------ Dispatching Travel AIG workflow job ------");
+                dispatch(new \App\Jobs\TravelAIGWorkflowJob($quoteUuid, $quoteTypeId));
+                LoggerService::info("------ Travel AIG workflow trigger request completed ------");
+                
+                return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow triggered successfully!');
+            } else {
+                // The workflow has already been triggered
+                LoggerService::info("------ Travel AIG workflow already triggered for this quote ------");
+                return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow already triggered for this quote');
+            }
         } catch (\Exception $e) {
             LoggerService::error("Travel AIG workflow trigger failed", exception: $e);
             return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Travel AIG workflow trigger failed!');

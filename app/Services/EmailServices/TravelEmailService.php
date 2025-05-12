@@ -398,36 +398,35 @@ class TravelEmailService extends BaseService
     {
         try {
             LoggerService::info('Sending AIGWorkflow for travel');
+            
+            // Refresh the lead to get the latest state
+            $lead->refresh();
+            
             if (empty($lead->travel_aig_flow_executed_at)) {
-                $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->buildAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::TRAVEL_AIG_WORKFLOW);
-                // using the same event for AIG and BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL and have a Travel AIG branch in that event workflow
-                $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL)->first();
-
-                if ($birdAIGEvent) {
-                    $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent->value, $emailData);
-                    LoggerService::info("AIGWorkflow event triggered for travel");
-
-                    $lead->travel_aig_flow_executed_at = now();
-                    LoggerService::info("AIGWorkflow travel lead ref-id", extra: [
-                        'quote_status_id' => $lead->quote_status_id,
-                        'travel_aig_flow_executed_at' => $lead->travel_aig_flow_executed_at,
-                    ]);
-                    $lead->save();
-
-                    if (! empty($response->headers['Run-Id'])) {
-                        $this->createQuoteFlowDetails($lead, $response);
-                    }
-                } else {
-                    LoggerService::info("AIGWorkflow key not found for travel");
-                }
-            } else {
-                LoggerService::info("AIGWorkflow already executed for travel", extra: [
-                    'travel_aig_flow_executed_at' => $lead->travel_aig_flow_executed_at,
-                ]);
+                LoggerService::info("AIGWorkflow not executed yet, but should be already marked in the database. Skipping to avoid duplication.");
+                return null;
             }
+            
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::TRAVEL_AIG_WORKFLOW);
+            // using the same event for AIG and BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL and have a Travel AIG branch in that event workflow
+            $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL)->first();
 
-            return $response ?? null;
+            if ($birdAIGEvent) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent->value, $emailData);
+                LoggerService::info("AIGWorkflow event triggered for travel");
+
+                if (!empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response);
+                    LoggerService::info("AIGWorkflow flow details created successfully");
+                }
+                
+                return $response;
+            } else {
+                LoggerService::info("AIGWorkflow key not found for travel");
+            }
+            
+            return null;
         } catch (\Exception $e) {
             LoggerService::error("AIGWorkflow-Error: while sending workflow for travel", exception: $e);
             throw $e;
