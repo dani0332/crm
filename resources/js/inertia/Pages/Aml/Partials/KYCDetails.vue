@@ -120,12 +120,8 @@ const kycFormDetails = useForm({
     (isScreeningIndividual
       ? insuredDetails?.insured?.insured_kyc?.residential_address
       : insuredDetails?.insured?.insured_kyc?.registered_address) ?? null,
-  mobile_number:
-    insuredDetails?.insured?.insured_kyc?.mobile_no ??
-    page.props.quoteRequest.mobile_no,
-  email:
-    insuredDetails?.insured?.insured_kyc?.email ??
-    page.props.quoteRequest.email,
+  mobile_number: page.props.quoteRequest.mobile_no,
+  email: page.props.quoteRequest.email,
   customer_tenure:
     insuredDetails?.insured?.insured_kyc?.customer_tenure ?? null,
   id_type: insuredDetails?.insured?.id_type ?? null,
@@ -318,8 +314,6 @@ watch(
       first_name: kyc.first_name,
       last_name: kyc.last_name,
       residential_address: kyc.residential_address,
-      mobile_number: kyc.mobile_no,
-      email: kyc.email,
       customer_tenure: kyc.customer_tenure,
       id_type: kyc.id_type,
       id_number: kyc.id_number,
