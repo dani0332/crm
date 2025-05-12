@@ -269,16 +269,19 @@ const disablePastDates = date => {
   return inputDate < today;
 };
 watch(
-  () => quoteForm?.destination_ids,
-  async destination_ids => {
-    if (destination_ids) {
-      await regionName(destination_ids); // Call the function to fetch advisors
+  () => quoteForm.destination_ids,
+  newDestinationIds => {
+    if (newDestinationIds) {
+      regionName(newDestinationIds); // Call the function to fetch advisors
     }
   },
+  { deep: true },
 );
+
 function updateRegionCover(id) {
   quoteForm.region_cover_for_id = String(id) ?? '';
 }
+
 const regionName = ids => {
   let countries = page.props.fields.destination_id?.options;
   const matchedValues = ids.map(id => {
@@ -457,6 +460,9 @@ watch(
           multiple
           truncate
           :error="quoteForm.errors.destination_ids"
+          virtual-list
+          :virtualListItemHeight="34"
+          :virtualListOverscan="5"
         >
           <template #content-footer>
             <ui-select-actions
@@ -566,6 +572,9 @@ watch(
           label="Nationality"
           required
           :error="quoteForm.errors.nationality_id"
+          virtual-list
+          :virtualListItemHeight="34"
+          :virtualListOverscan="5"
         />
         <x-field v-if="editMode" label="Days Cover">
           <x-input disabled v-model="quoteForm.days_cover_for" class="w-full" />
