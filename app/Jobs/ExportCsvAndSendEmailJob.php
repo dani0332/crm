@@ -41,8 +41,6 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
      */
     public function handle()
     {
-        // Increase memory limit for large exports
-        ini_set('memory_limit', '512M');
 
         $jobId = $this->job->getJobId() ?? 'unknown';
         $startTime = microtime(true);
