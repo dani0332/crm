@@ -65,6 +65,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 class AMLController extends Controller
@@ -175,45 +176,19 @@ class AMLController extends Controller
 
     public function export(Request $request)
     {
-        $query = AML::select([
-            'id',
-            'quote_request_id',
-            'quote_type_id',
-            'input',
-            'search_type',
-            'match_found',
-            'results_found',
-            'created_at',
-            'decision',
-        ])
-            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
-            ->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
-
-        $data = collect();
-
-        $query->chunk(1000, function ($chunk) use (&$data) {
-            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
-            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
-                $quoteType = QuoteTypes::getName($quoteTypeId);
-                $nameSpace = '\\App\\Models\\';
-                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
-
-                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
-                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
-                foreach ($quoteRequestData as $quoteRequest) {
-                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
-                    foreach ($amlData as $index => $value) {
-                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
-                        $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
-                    }
-                }
-            }
-            $data = $data->merge($chunk);
-        });
-
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
-        return (new KycLogs($data))->download("AML Logs {$reportDateRange}");
+        $request->merge([
+            'exportTitle' => 'AML',
+            'created_at_start' => $request->amlCreatedStartDate,
+            'created_at_end' => $request->amlCreatedEndDate,
+        ]);
+
+        if ($request->exportType == 'email') {
+            return app(KycLogs::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
+        }
+
+        return app(KycLogs::class)->download("AML Logs {$reportDateRange}");
     }
 
     /**
@@ -479,6 +454,7 @@ class AMLController extends Controller
                 $insuredPersonDetails = Insured::updateOrCreate([
                     'id_type' => $AMLCheckRequest->screening_id_type,
                     'id_number' => $AMLCheckRequest->screening_id_number,
+                    'customer_type' => CustomerTypeEnum::Individual,
                 ], [
                     'first_name' => $AMLCheckRequest->insured_first_name,
                     'last_name' => $AMLCheckRequest->insured_last_name,
@@ -494,6 +470,8 @@ class AMLController extends Controller
                     'customer_id' => $AMLCheckRequest->customer_id,
                     'insured_id' => $insuredPersonDetails->id,
                 ]);
+
+                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredPersonDetails);
 
                 if ($customer->isDirty() ||
                     ! isset($getLastScreening->created_at) ||
@@ -640,6 +618,27 @@ class AMLController extends Controller
                     ], ['entity_id' => $fetchEntity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
                 }
 
+                // Reminder:: this patch included because of new structure, Entity and Entity quote request mapping will be remove soon.
+                $insuredEntityDetails = Insured::updateOrCreate([
+                    'trade_license_no' => $AMLCheckRequest->trade_license_no,
+                    'customer_type' => CustomerTypeEnum::Entity,
+                ], [
+                    'company_name' => $AMLCheckRequest->company_name,
+                    'company_address' => $AMLCheckRequest->company_address,
+                    'industry_type_code' => $AMLCheckRequest->industry_type_code,
+                    'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration_id,
+                ]);
+                $insuredEntityDetails->refresh();
+                CustomerInsured::updateOrCreate([
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $updateQuote->id,
+                ], [
+                    'customer_id' => $AMLCheckRequest->customer_id,
+                    'insured_id' => $insuredEntityDetails->id,
+                ]);
+
+                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredEntityDetails);
+
                 if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
                     $updateQuote->company_name = $AMLCheckRequest->company_name;
                     $updateQuote->company_address = $AMLCheckRequest->company_address;
@@ -664,6 +663,17 @@ class AMLController extends Controller
         }
 
         return $this->handleResponse(false, 'Something went wrong', $isAutomation);
+    }
+
+    private function updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insured)
+    {
+        $getPersonalQuote = PersonalQuote::where(['uuid' => $updateQuote->uuid, 'quote_type_id' => $quoteTypeId])->first();
+        if ($getPersonalQuote) {
+            $getPersonalQuote->insured_id = $insured->id;
+            $getPersonalQuote->save();
+        }
+
+        return $getPersonalQuote;
     }
 
     public function fetchEntity(Request $request)
@@ -792,6 +802,7 @@ class AMLController extends Controller
             }
 
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
+            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();
             // this event only working for travel lob
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
@@ -809,6 +820,7 @@ class AMLController extends Controller
             ]);
 
             $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
+            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 $isPassportDocumentExist = app(QuoteDocumentService::class)->isDocumentExists(quoteTypeCode::Travel, $quoteDetails->id, DocumentTypeCode::TRVLPAS);

@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
@@ -173,6 +174,7 @@ class AdvisorConversionReportService extends BaseService
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::POLICY_BOOKING_FAILED,
         ];
     }
 
@@ -744,7 +746,7 @@ class AdvisorConversionReportService extends BaseService
             ->when(! empty($filters->registration_type) && $filters->registration_type != 'All', function ($q) use ($filters) {
                 $q->where('car_quote_request.registration_type', '=', $filters->registration_type);
             })
-            ->when(! empty($filters->vehicle_use) && $filters->vehicle_use != 'All', function ($q) use ($filters) {
+            ->when(! empty($filters->vehicle_use) && $filters->vehicle_use != 'All' && $filters->registration_type == CarRegistrationType::COMPANY, function ($q) use ($filters) {
                 $q->where('car_quote_request.vehicle_use', $filters->vehicle_use);
             });
 

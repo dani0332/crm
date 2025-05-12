@@ -43,16 +43,7 @@ const modelIdError = computed(() => {
 });
 
 function onSubmit(isValid) {
-  if (
-    commercialForm.car_make_id == null ||
-    commercialForm.car_model_id == null
-  ) {
-    validationPassed.value = true;
-    return;
-  } else {
-    validationPassed.value = true;
-  }
-  if (validationPassed.value) {
+  if (isValid) {
     loader.value = true;
     let method = 'post';
     let url = isEdit.value
@@ -108,58 +99,40 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Car Make" required>
-        <ComboBox
-          v-model="commercialForm.car_make_id"
-          :options="
-            carMake.map(x => {
-              return { label: x.text, value: x.id };
-            })
-          "
-          single
-          @update:modelValue="getCarModel"
-          :hasError="makeModelError"
-        />
-        <!-- <x-select
-          class="w-full"
-          :options="
-            carMake.map(x => {
-              return { label: x.text, value: x.id };
-            })
-          "
-          v-model="commercialForm.car_make_id"
-          :rules="[isRequired]"
-          @update:modelValue="getCarModel"
-        > -->
-        <!-- </x-select> -->
-      </x-field>
-      <x-field label="Car Model" required>
-        <ComboBox
-          v-model="commercialForm.car_model_id"
-          :options="
-            carModels.map(x => {
-              return { label: x.text, value: x.id };
-            })
-          "
-          placeholder="Select Car Model "
-          multiple
-          :loading="buttonLoader"
-          :hasError="modelIdError"
-        />
-        <!-- <x-select
-          class="w-full"
-          :options="
-            carModels.map(x => {
-              return { label: x.text, value: x.id };
-            })
-          "
-          v-model="commercialForm.car_model_id"
-          :rules="[isRequired]"
-          placeholder="Select Car Model "
-          multiple
-        >
-        </x-select> -->
-      </x-field>
+      <x-select
+        class="w-full"
+        :options="
+          carMake.map(x => {
+            return { label: x.text, value: x.id };
+          })
+        "
+        v-model="commercialForm.car_make_id"
+        :rules="[isRequired]"
+        @update:modelValue="getCarModel"
+        filterable
+        filterPlaceholder="Filter Car Make...."
+        placeholder="Select Car Make"
+        required
+        label="Car Make"
+      />
+      <x-select
+        class="w-full"
+        :options="
+          carModels.map(x => {
+            return { label: x.text, value: x.id };
+          })
+        "
+        v-model="commercialForm.car_model_id"
+        :rules="[isRequired]"
+        placeholder="Select Car Model "
+        multiple
+        label="Car Model"
+        filterable
+        filterPlaceholder="Filter Car Model...."
+        required
+        :loading="buttonLoader"
+      >
+      </x-select>
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

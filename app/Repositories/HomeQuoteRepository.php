@@ -42,6 +42,7 @@ use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -62,7 +63,7 @@ class HomeQuoteRepository extends BaseRepository
         )->orderBy('created_at', 'desc');
     }
 
-    public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false)
+    public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false, $requestParams = [])
     {
         $excludeCreatedAtFilters = [
             'email',
@@ -73,6 +74,14 @@ class HomeQuoteRepository extends BaseRepository
             'payment_due_date',
             'booking_date',
         ];
+
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         // Check if any of the exclude filters are active
         $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters);

@@ -34,11 +34,11 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
-use Barryvdh\DomPDF\Facade\Pdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class TravelQuoteService extends BaseService
 {
@@ -269,7 +269,7 @@ class TravelQuoteService extends BaseService
         $members = [];
         $travelQuote = [
             'directionCode' => $request->direction_code,
-            'regionCoverForId' => 3,
+            'regionCoverForId' => $request->region_cover_for_id ? (int) $request->region_cover_for_id : 3,
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
             'email' => $request->email,
@@ -317,7 +317,9 @@ class TravelQuoteService extends BaseService
         } else {
             $travelQuote['hasArrivedDestination'] = $request->has_arrived_destination;
             if ($request->has_arrived_destination == '0') {
-                $travelQuote['regionCoverForId'] = $request->region_cover_for_id;
+                if ($request->has('region_cover_for_id')) {
+                    $travelQuote['regionCoverForId'] = (int) $request->region_cover_for_id;
+                }
             }
         }
 
@@ -342,6 +344,8 @@ class TravelQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
+
+            $this->selfAssign(QuoteTypes::TRAVEL, $response->quoteUID);
 
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
@@ -386,11 +390,11 @@ class TravelQuoteService extends BaseService
         return TravelQuote::orderBy('created_at', 'desc')->get();
     }
 
-    public function getGridData()
+    public function getGridData($model = null, $requestParams = [])
     {
-        $query = $this->travelQuoteQueryBuilder->processGridData();
-        $this->whereBasedOnRole($query, 'travel_quote_request');
-        $this->adjustQueryByDateFilters($query, 'travel_quote_request');
+        $query = $this->travelQuoteQueryBuilder->processGridData($requestParams);
+        $this->whereBasedOnRole($query, 'travel_quote_request', null, user: $requestParams['user'] ?? null);
+        $this->adjustQueryByDateFilters($query, 'travel_quote_request', requestParams: $requestParams);
 
         return $query;
 
