@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,6 +16,7 @@ class Customer extends Model implements AuditableContract
 
     protected $table = 'customer';
     protected $guarded = [];
+    protected $appends = ['pcp_tag_formatted'];
 
     /**
      * customer detail relation
@@ -130,5 +132,14 @@ class Customer extends Model implements AuditableContract
     public function customerInsured(): HasMany
     {
         return $this->hasMany(CustomerInsured::class, 'customer_id', 'id');
+    }
+
+    public function pcpTagFormatted(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->attributes['pcp_tag'] === true || $this->attributes['pcp_tag'] === 1 ? 'Yes' : ($this->attributes['pcp_tag'] === false || $this->attributes['pcp_tag'] === 0 ? 'Ex - PC' : 'No');
+            }
+        );
     }
 }
