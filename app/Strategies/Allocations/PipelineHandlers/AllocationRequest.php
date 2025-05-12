@@ -15,7 +15,8 @@ class AllocationRequest
         protected $quoteUUID,
         protected $teamId,
         protected $overrideAdvisorId,
-        protected ?ProcessTrackerService $tracker = null
+        protected ?ProcessTrackerService $tracker = null,
+        protected bool $isReassignmentJob = false
     ) {
         $this->collection = new Collection;
     }
@@ -43,6 +44,11 @@ class AllocationRequest
     public function getTracker()
     {
         return $this->tracker;
+    }
+
+    public function isReassignmentJob()
+    {
+        return $this->isReassignmentJob;
     }
 
     public function getRefID()
