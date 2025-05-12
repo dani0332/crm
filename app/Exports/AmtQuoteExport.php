@@ -12,7 +12,7 @@ class AmtQuoteExport
 
     public function collection($requestParams = [])
     {
-        return BusinessQuoteRepository::getData(QuoteTypes::GROUP_MEDICAL->value, true, requestParams: $requestParams);
+        return BusinessQuoteRepository::getData(QuoteTypes::GROUP_MEDICAL->value, true, requestParams: $requestParams)->get();
     }
 
     /**
@@ -21,7 +21,7 @@ class AmtQuoteExport
      */
     public function getQuery($requestParams = [])
     {
-        return $this->collection($requestParams);
+        return BusinessQuoteRepository::getData(QuoteTypes::GROUP_MEDICAL->value, true, requestParams: $requestParams);
     }
 
     public function headings(): array
