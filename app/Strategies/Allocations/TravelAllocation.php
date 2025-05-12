@@ -9,6 +9,7 @@ use App\Exceptions\Allocation\AllocationException;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Pipelines\Allocation\Common\VerifyAlreadyInProgressAllocationPipeline;
+use App\Pipelines\Allocation\Travel\FetchAvailableAdvisorPipeline;
 use App\Pipelines\Allocation\Travel\FetchLeadPipeline;
 use App\Services\Logger\LoggerService;
 use App\Services\ProcessTracker\ProcessTrackerService;
@@ -52,6 +53,7 @@ class TravelAllocation implements Allocation
             return Pipeline::send($alloctionRequest)->through([
                 FetchLeadPipeline::class,
                 VerifyAlreadyInProgressAllocationPipeline::class,
+                FetchAvailableAdvisorPipeline::class,
             ])->then(function ($result) {
                 return $result;
             });
@@ -70,11 +72,6 @@ class TravelAllocation implements Allocation
                 'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
             ];
         }
-    }
-
-    private function fetchLead()
-    {
-        return $this->travelAllocationService->fetchLead($this->tracker, $this->allocationId, $this->overrideAdvisorId);
     }
 
     private function fetchAvailableAdvisor(TravelQuote $lead)
