@@ -346,14 +346,14 @@ class RenewalsUploadController extends Controller
             
         
         $query = RenewalQuoteProcess::query()
-            ->select('renewal_quote_processes.batch as renewal_batch', 'renewal_quote_processes.quote_type as quote_type')
-            ->where([
-                'renewal_quote_processes.quote_type' => ! empty($request->lob) ? $request->lob : QuoteTypeShortCode::HOM,
-                'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
-            ])
-            ->whereYear('personal_quotes.previous_policy_expiry_date', ! empty($request->year) ? $request->year : date('Y'))
-            ->whereMonth('personal_quotes.previous_policy_expiry_date', ! empty($request->month) ? $request->month : date('m'))
-        ->when(! empty($request->batch), function ($query) use ($request) {
+        ->select('renewal_quote_processes.batch as renewal_batch', 'renewal_quote_processes.quote_type as quote_type')
+        ->where('renewal_quote_processes.quote_type', !empty($request->lob) ? $request->lob : QuoteTypeShortCode::HOM)
+        ->where('renewal_quote_processes.type', RenewalsUploadType::UPDATE_LEADS)
+        ->whereHas('personalQuote', function ($q) use ($request) {
+            $q->whereYear('previous_policy_expiry_date', !empty($request->year) ? $request->year : date('Y'))
+            ->whereMonth('previous_policy_expiry_date', !empty($request->month) ? $request->month : date('m'));
+        })
+        ->when(!empty($request->batch), function ($query) use ($request) {
             return $query->where('renewal_quote_processes.batch', $request->batch);
         });
 
