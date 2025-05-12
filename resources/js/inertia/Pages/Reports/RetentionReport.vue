@@ -1,5 +1,4 @@
 <script setup>
-import { filter } from 'lodash';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -701,23 +700,25 @@ function handleDateChange(dateRange) {
 
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.lob"
           label="Line of Business"
           placeholder="Select Line of Business"
           :options="quoteTypesOptions"
           class="w-full"
-          :single="true"
           @update:modelValue="onLobChange"
+          filterable
+          filterPlaceholder="Filter LOB...."
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.displayBy"
           placeholder="Search by Group"
           label="View by"
           :options="displayBy"
           class="w-full"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter View by...."
         />
 
         <DatePicker
@@ -749,7 +750,7 @@ function handleDateChange(dateRange) {
           model-type="yyyy-MM-dd"
         />
 
-        <ComboBox
+        <x-select
           v-if="
             filters.displayBy === RetentionReportEnum.BATCH &&
             filters.policyExpiryDate &&
@@ -760,9 +761,22 @@ function handleDateChange(dateRange) {
           placeholder="Search by Batch"
           :options="batchOptions"
           :loading="loaders.batchOption"
-        />
+          filterable
+          filterPlaceholder="Filter Batch...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.batch = batchOptions.map(batch => batch.value)
+              "
+              @clear="filters.batch = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
           :class="{
@@ -774,20 +788,32 @@ function handleDateChange(dateRange) {
           :options="teamOptions"
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(team => team.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('department')"
           v-model="filters.department"
           placeholder="Select Department"
           label="Department"
           :options="departments"
           class="w-full"
+          filterable
+          filterPlaceholder="Filter Department...."
           @update:model-value="onDepartmentChange"
-          :single="true"
         />
 
-        <ComboBox
+        <x-select
           v-if="canShow('advisors')"
           :disabled="!isDisabled('advisors')"
           :class="{
@@ -797,7 +823,20 @@ function handleDateChange(dateRange) {
           :label="getAdvisorLabel()"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
 
         <x-select
           v-if="canShow('insurance_type')"

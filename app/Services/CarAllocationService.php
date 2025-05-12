@@ -5,11 +5,14 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanType;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RuleEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
@@ -33,6 +36,7 @@ use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
 use App\Models\UserTeams;
+use App\Services\DTOs\FetchCarLeadResult;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -111,7 +115,7 @@ class CarAllocationService extends AllocationService
         return $continueAssignment;
     }
 
-    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false)
+    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false): FetchCarLeadResult
     {
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -126,15 +130,19 @@ class CarAllocationService extends AllocationService
 
         $lead = CarQuote::where('uuid', $quoteId)->first();
 
-        if ($lead && $getLeadWithoutCriteria) {
-            return $lead;
+        if (! $lead) {
+            return new FetchCarLeadResult(null, true);
         }
 
-        if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
-            return null;
+        if ($getLeadWithoutCriteria) {
+            return new FetchCarLeadResult($lead, false);
         }
 
-        return $lead;
+        if (! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
+            return new FetchCarLeadResult(null, false);
+        }
+
+        return new FetchCarLeadResult($lead, false);
     }
 
     public function getTier($tierId)
@@ -144,10 +152,16 @@ class CarAllocationService extends AllocationService
 
     public function getTierBasedOnValue($carLead, $tiersQuery): void
     {
-        if ($carLead->car_model_detail_id == null) {
+
+        if ($carLead->car_model_detail_id == null && ! $this->isCommercialLead($carLead)) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
         } else {
-            $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
+            if (! $this->isCommercialLead($carLead)) {
+                $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
+            } else {
+                $valuations = [];
+                info(self::class.'- Commercial lead. No valuation found. Ref-ID: '.$carLead->uuid.' | Time: '.now());
+            }
 
             $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
 
@@ -156,17 +170,30 @@ class CarAllocationService extends AllocationService
             });
 
             $carValue = 0;
-
-            if (! empty($axaValuation)) {
-                $firstAxaValuation = reset($axaValuation); // Get the first element of the array
-
-                if (! empty($firstAxaValuation) && property_exists($firstAxaValuation, 'carValue')) {
-                    LoggerService::info('car value as per valuation engine for GIG', [
-                        'car_value' => $firstAxaValuation->carValue,
-                    ]);
-
-                    if ($firstAxaValuation->carValue > 0) {
+            if ($carLead->registration_type == CarRegistrationType::COMPANY) {
+                if ($carLead->vehicle_use == CarVehicleUse::PRIVATE) {
+                    if (! empty($axaValuation)) {
+                        $firstAxaValuation = reset($axaValuation); // Get the first element of the array
                         $carValue = $firstAxaValuation->carValue;
+                        info(self::class.'- Company registration with private use. AXA valuation found. Car value: '.$carValue.' Ref-ID: '.$carLead->uuid.' | Time: '.now());
+                    }
+                } else {
+                    $carValue = $carLead->car_value;
+                    info(self::class.'- Company registration with non-private use. Car value: '.$carValue.' Ref-ID: '.$carLead->uuid.' Time: '.now());
+                }
+            } else {
+
+                if (! empty($axaValuation)) {
+                    $firstAxaValuation = reset($axaValuation); // Get the first element of the array
+
+                    if (! empty($firstAxaValuation) && property_exists($firstAxaValuation, 'carValue')) {
+                        LoggerService::info('car value as per valuation engine for GIG', [
+                            'car_value' => $firstAxaValuation->carValue,
+                        ]);
+
+                        if ($firstAxaValuation->carValue > 0) {
+                            $carValue = $firstAxaValuation->carValue;
+                        }
                     }
                 }
             }
@@ -284,10 +311,17 @@ class CarAllocationService extends AllocationService
             if (count($plans) > 0) {
                 LoggerService::info('More than one plan found');
                 // Determine the tier based on a value and return the first matching tier.
+                info(self::class."- More than one plan found against Tier based on value is being calculated for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
                 $this->getTierBasedOnValue($carLead, $tiersQuery);
 
                 return $tiersQuery->first();
             } else {
+                // Check car value and age to determine the tier.
+                if ($carLead->car_value >= 300000) {
+                    info(self::class." - Car value is {$carLead->car_valu}   Tier H is being assigned for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
+
+                    return $tiersQuery->Where('name', TiersEnum::TIER_H)->first();
+                }
                 LoggerService::debug(self::class.'::findTier - Car Lead Info', extra: [
                     'car_value' => $carLead->car_value,
                     'car_value_tier' => $carLead->car_value_tier,
@@ -314,6 +348,7 @@ class CarAllocationService extends AllocationService
             }
         } else {
             // Determine the tier based on a value and return the first matching tier.
+            info(self::class."- Tier based on value is being calculated for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
             $this->getTierBasedOnValue($carLead, $tiersQuery);
 
             return $tiersQuery->first();
@@ -409,8 +444,14 @@ class CarAllocationService extends AllocationService
         $rules = $this->getRules($lead);
 
         if ($rules->isEmpty()) {
-            $ruleUserIds = $this->getRuleUsers();
-            LoggerService::info('No rules found, excluding rule users: '.json_encode($ruleUserIds));
+
+            if ($lead->registration_type == CarRegistrationType::PERSONAL) {
+                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: true);
+            } else {
+                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: false);
+            }
+
+            LoggerService::info('No rules found, excluding rule users: ', json_encode($ruleUserIds));
 
             return array_diff(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $ruleUserIds);
         }
@@ -579,27 +620,46 @@ class CarAllocationService extends AllocationService
                 ||
                 ($commercialCarMake && $commercialCarModel)
             ) {
-                return $this->getCommercialRule();
+                if ($lead->registration_type == CarRegistrationType::COMPANY) {
+                    info(self::class."- Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
+                    return $this->getRulesForVehicleUse($lead);
+                } else {
+                    info(self::class."-Lead is not registered as a company, applying commercial rules for lead with Ref-ID:  {$lead->uuid} | Time: ".now());
+
+                    return $this->getCommercialRule($lead);
+                }
             }
         }
 
         LoggerService::info('keyword not found and vehicle is not commercial as well, so checking for normal rules');
 
-        $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
-            ->join('rules', 'rules.id', 'rule_details.rule_id')
-            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-            ->join('users', 'users.id', 'rule_users.user_id')
-            ->where('lead_sources.name', $lead->source)
-            ->where('rules.is_active', 1)
-            ->where('lead_sources.is_applicable_for_rules', 1)
-            ->groupBy('rule_details.lead_source_id')
-            ->select(
-                'lead_sources.name AS leadSourceName',
-                'lead_sources.id AS leadSourceId',
-                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-            );
+        return $this->getUsersByLeadSourceRules($lead);
+    }
+    public function getUsersByLeadSourceRules($lead)
+    {
+        if ($lead->registration_type == CarRegistrationType::COMPANY) {
+            info(self::class."- Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
 
-        return $records->get();
+            return $this->getRulesForVehicleUse($lead);
+        } else {
+            $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
+                ->join('rules', 'rules.id', 'rule_details.rule_id')
+                ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+                ->join('users', 'users.id', 'rule_users.user_id')
+                ->where('lead_sources.name', $lead->source)
+                ->where('rules.is_active', 1)
+                ->where('lead_sources.is_applicable_for_rules', 1)
+                ->groupBy('rule_details.lead_source_id')
+                ->select(
+                    'lead_sources.name AS leadSourceName',
+                    'lead_sources.id AS leadSourceId',
+                    DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+                );
+            info(self::class."- Lead is not registered as a company, applying  rules for lead with Ref-ID:  {$lead->uuid} | Time: ".now());
+
+            return $records->get();
+        }
     }
 
     public function getCommercialRule()
@@ -617,6 +677,41 @@ class CarAllocationService extends AllocationService
                 'rules.name AS ruleName',
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers'),
             ])->get();
+    }
+    public function getRulesForVehicleUse($lead)
+    {
+
+        if ($lead->vehicle_use == CarVehicleUse::PRIVATE) {
+            info(self::class." - Lead is not commercial, applying private use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
+            return $this->getCompanyUsageRules($lead, RuleEnum::PRIVATE_USE->value);
+        } else {
+            info(self::class." - Lead is commercial, applying commercial use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
+            return $this->getCompanyUsageRules($lead, RuleEnum::COMMERCIAL_USE->value);
+        }
+    }
+
+    private function getCompanyUsageRules($lead, $ruleName = null)
+    {
+        // if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_CAR_QUOTE) {
+        info(self::class." - Applying rule: {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} | Time: ".now());
+
+        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('rules.name', $ruleName)
+            ->where('rule_type', RuleTypeEnum::VEHICLE_USE)
+            ->where('rules.is_active', 1)
+            ->groupBy('rule_details.rule_id')
+            ->select(
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+            )->get();
+        // } else {
+        //     info(self::class." -No rule found for {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} Time: ".now());
+        // }
+
+        return [];
     }
 
     public function determineFinalUserId(CarQuote $lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
@@ -705,13 +800,16 @@ class CarAllocationService extends AllocationService
         return $userIds;
     }
 
-    private function getRuleUsers(): mixed
+    private function getRuleUsers($excludeVehicleUseRule = true): mixed
     {
         // Join the RuleLeadSource table with the Rules table where the rule is active (is_active = 1).
         // Select distinct user IDs associated with these rules and convert the result to an array.
         return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->where('rules.is_active', 1)
+            ->when($excludeVehicleUseRule, function ($query) {
+                $query->where('rule_type', '!=', RuleTypeEnum::VEHICLE_USE);
+            })
             ->distinct()
             ->pluck('rule_users.user_id')
             ->toArray();
@@ -920,4 +1018,35 @@ class CarAllocationService extends AllocationService
             ->pluck('user_id')
             ->toArray();
     }
+    public function isCommercialLead($lead)
+    {
+
+        $commercialCarMake = CarMake::where('id', $lead->car_make_id)
+            ->where('is_commercial', true)
+            ->select('id')
+            ->first();
+
+        $commercialCarModel = CarModel::where('id', $lead->car_model_id)
+            ->where('is_commercial', true)
+            ->select('id')
+            ->first();
+
+        if ($commercialCarMake && $commercialCarModel) {
+            info(self::class." - Commercial car make and model found for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
+            return true;
+        }
+        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+
+        foreach ($commercialKeywords as $keyword) {
+            if (str_contains(strtolower(trim($lead->full_name)), strtolower(trim($keyword->name)))) {
+                info(self::class." - Commercial keywords found for lead with Ref-ID: {$lead->uuid} | Time:".now());
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }
