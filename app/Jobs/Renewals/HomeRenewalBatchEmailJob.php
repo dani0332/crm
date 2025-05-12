@@ -7,6 +7,7 @@ use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Services\EmailServices\HomeEmailService;
+use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -57,12 +58,15 @@ class HomeRenewalBatchEmailJob implements ShouldQueue, StackableJob
      */
     public function handle(HomeEmailService $homeEmailService)
     {
-        info('Renewals OCB email job started processId: '.$this->renewalQuoteProcess->id);
+        LoggerService::info('Renewals OCB email job started', extra: [
+            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+        ]);
 
         $homeEmailService->sendRenewalOCBEmail($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
 
-        info('Renewals OCB email job completed ');
-
+        LoggerService::info('Renewals OCB email job completed', extra:[
+            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+        ]);
     }
 
     public function middleware()
@@ -75,8 +79,9 @@ class HomeRenewalBatchEmailJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-        info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
-        // $this->renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
+        LoggerService::error("CL: ".get_class()." FN: failed. Job Failed.", extra: [
+            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+        ], exception: $exception);
         RenewalsBatchEmails::where('id', $this->renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 }

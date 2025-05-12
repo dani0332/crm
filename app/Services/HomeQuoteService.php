@@ -793,9 +793,6 @@ class HomeQuoteService extends BaseService
 
         return 'true';
     }
-
-    public function sendHomeOCB() {}
-
     /**
      * Get Quote Plans from KEN API
      * 

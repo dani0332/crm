@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\ProcessStatusCode;
 use App\Models\RenewalsBatchEmails;
+use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -42,13 +43,17 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        info('CL: ScheduleHomeRenewalOcbEmails OCB email schedule is started');
+        LoggerService::info('CL: ScheduleHomeRenewalOcbEmails OCB email schedule is started', extra: [
+            'batch' => $this->batch,
+        ]);
 
         $this->renewalsBatchEmail->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
         $renewalsUploadService->scheduleHomeOCB($this->batch, $this->renewalsBatchEmail);
 
-        info('CL: ScheduleHomeRenewalOcbEmails OCB email schedule is completed');
+        LoggerService::info('CL: ScheduleHomeRenewalOcbEmails OCB email schedule is completed', extra: [
+            'batch' => $this->batch,
+        ]);
     }
 
     /**
@@ -64,7 +69,9 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed', extra: [
+            'batch' => $this->batch,
+        ], exception: $exception);
         $this->renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
     }
 }

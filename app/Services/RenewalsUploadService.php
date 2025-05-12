@@ -2853,6 +2853,19 @@ class RenewalsUploadService
         return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
     }
 
+    public function getMonths(): array
+    {
+        $monthNames = array_map(fn($m) => date('F', mktime(0, 0, 0, $m, 1)), range(1, 12));
+        $months = array_combine($monthNames, range(1, 12));
+        return $months;
+    }
+
+    public function getNonMotorLobs(): array{
+        return [
+            quoteTypeCode::Home => QuoteTypeShortCode::HOM,
+            quoteTypeCode::Health => QuoteTypeShortCode::HEA,
+        ];
+    }
     private function isFakeEmail($email)
     {
         $fakeEmail = false;
@@ -2865,4 +2878,4 @@ class RenewalsUploadService
 
         return $fakeEmail;
     }
-    }
+}

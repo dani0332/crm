@@ -6,7 +6,7 @@ use App\Enums\QuoteTypeShortCode;
 use App\Models\RenewalsUploadLeads;
 use Illuminate\Foundation\Http\FormRequest;
 
-class RenewalsUploadRequest extends FormRequest
+class RenewalsUploadNonMotorRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -17,7 +17,7 @@ class RenewalsUploadRequest extends FormRequest
     {
         return true;
     }
-
+    
     /**
      * Get the validation rules that apply to the request.
      *
@@ -28,12 +28,8 @@ class RenewalsUploadRequest extends FormRequest
         $rules = [
             'file_name' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
             'renewals_upload_type' => 'required',
+            'lob' => 'required',
         ];
-
-        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update' && request()->lob != QuoteTypeShortCode::HOM) {
-            $rules['skip_plans'] = 'required';
-            $rules['is_sic'] = 'required';
-        }
 
         return $rules;
     }

@@ -98,30 +98,36 @@ class HomeEmailService extends BaseService
             $lead = PersonalQuote::find($renewalQuoteProcess->quote_id);
             $homeQuote = $lead->homeQuote; 
             
-            
-            LoggerService::info('Home Renewals OCB Email started for uuid: '.$lead->uuid);
+            LoggerService::startQuoteLogging($lead);
+
+            LoggerService::info('Home Renewals OCB Email started');
 
             // Get Lead Advisor
             $advisor = User::where('id', $lead->advisor_id)->first();
 
-            // Map Data for Home OCB Email
+            // Map Data for Home Renewal OCB Email
             $emailData = $this->mapDataForRenewalOCBEmail($homeQuote, $advisor, WorkflowTypeEnum::HOME_RENEWAL_OCB);
 
             $workflowUrl = ApplicationStorage::where('key_name', WorkflowTypeEnum::HOME_RENEWAL_OCB)->first()?->value;
             
             if($workflowUrl){
                 app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
-                LoggerService::info('Renewals OCB Email completed for uuid: '.$lead->uuid);
+                
+                LoggerService::info('Renewals OCB Email Flow triggered', extra:[
+                    'email' => $lead->email
+                ]);
 
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                 RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
 
             }else{
-                LoggerService::info('Home Renewals OCB Email failed error: Workflow URL not found');
+                LoggerService::error('Home Renewals OCB Email failed', extra: [
+                    'email' => $lead->email
+                ]);
             }
             
         } catch (\Exception $exception) {
-            LoggerService::info('Home Renewals OCB Email failed error: '.$exception->getMessage());
+            LoggerService::error('Home Renewals OCB Email failed', exception: $exception);
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
@@ -163,27 +169,42 @@ class HomeEmailService extends BaseService
 
     private function mapDataForRenewalOCBEmail($lead, $advisor, $workflowType)
     {
-        return (object) [
+        $fullName = trim("{$lead->first_name} {$lead->last_name}");
+        $advisorName = trim("{$advisor->name}");
+        $advisorEmail = $advisor?->email ?? '';
+        $advisorDetails = $advisor ?? null;
+        $advisorId = $advisor?->id ?? null;
+        $automatedFlowExecuted = empty($lead->automated_flow_executed_at) ? true : false;
+        $flowExecutedAt = empty($lead->flow_executed_at) ? null : $lead->flow_executed_at;
+        $triggerDate = $this->getOCBTriggerTimestamp($lead->previous_policy_expiry_date);
+        $mobileNoWithoutSpaces = (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : '');
+        $whatsappConsent = getWhatsappConsent(QuoteTypes::HOME, uuid: $lead->uuid);
+        $landLine = (! empty($advisor?->landline_no) ? $advisor->landline_no : '');
+        $mobilePhone = (! empty($advisor?->mobile_no) ? $advisor->mobile_no : '');
+        $whatsAppNumber = (! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '');
+        $customerMobile = (! empty($lead->mobile_no) ? $lead->mobile_no : '');
+
+        $data = (object) [
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
-            'refID' => $lead->code,
-            'automatedFlowExecuted' => empty($lead->automated_flow_executed_at) ? true : false,
+            'refID' => $lead->code, 
+            'automatedFlowExecuted' => $automatedFlowExecuted,
             'uuid' => $lead->uuid,
-            'customerFullName' => "{$lead->first_name} {$lead->last_name}",
-            'customerName' => "{$lead->first_name} {$lead->last_name}",
-            'advisorId' => $advisor?->id ?? null,
-            'advisorName' => $advisor?->name ?? '',
-            'advisorEmail' => $advisor?->email ?? '',
-            'advisorDetails' => $advisor ?? null,
-            'flowExecutedAt' => $lead->flow_executed_at ?? null,
-            'landLine' => (! empty($advisor?->landline_no) ? $advisor->landline_no : ''),
-            'mobilePhone' => (! empty($advisor?->mobile_no) ? $advisor->mobile_no : ''),
-            'whatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
-            'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'customerFullName' => $fullName,
+            'customerName' => $fullName,
+            'advisorId' => $advisorId,
+            'advisorName' => $advisorName,
+            'advisorEmail' => $advisorEmail,
+            'advisorDetails' => $advisorDetails,
+            'flowExecutedAt' => $flowExecutedAt,
+            'landLine' => $landLine,
+            'mobilePhone' => $mobilePhone,
+            'whatsAppNumber' => $whatsAppNumber,
+            'mobileNoWithoutSpaces' =>  $mobileNoWithoutSpaces,
             'workflowType' => $workflowType,
-            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
-            'triggerDate' => $this->getOCBTriggerTimestamp($lead->previous_policy_expiry_date)
-            // 'whatsappConsent' => getWhatsappConsent(QuoteTypes::HOME, uuid: $lead->uuid),
+            'customerMobile' => $customerMobile,
+            'triggerDate' => $triggerDate,
+            'whatsappConsent' => $whatsappConsent,
         ];
 
         $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid);

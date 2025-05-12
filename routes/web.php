@@ -251,12 +251,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('uploaded-leads', [RenewalsUploadController::class, 'index'])->name('renewals-uploaded-leads-list');
             Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
-            Route::get('non-motor-batches', [RenewalsUploadController::class, 'listRenewalBatchesNonMotor'])->name('renewals-batches-nonmotor');
+            Route::get('non-motor-batches', [RenewalsUploadController::class, 'listRenewalBatchesNonMotor'])
+            ->name('renewals-batches-nonmotor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
             Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export')->middleware(SetReadDbConnection::class)->name('renewal-search-export');
 
             // Non Motor
             Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update');
+            Route::post('non-motor/upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdateNonMotor'])->name('upload-update-non-motor');
+
         });
     });
 
@@ -397,12 +400,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
         Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update');
         Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses'])->name('batch-plans-processes');
-    Route::get('batches/{id}/{quoteType}/plans-processes', [RenewalsUploadController::class, 'plansProcessesNonMotor'])->name('batch-plans-processes.non.motor');
+    Route::get('batches/{id}/{quoteType}/plans-processes', [RenewalsUploadController::class, 'plansProcessesNonMotor'])->name('batch-plans-processes.non.motor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);;
         
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batch-renewal-detail');
-        Route::get('batches/{id}/{quoteType}', [RenewalsUploadController::class, 'batchDetailNonMotor'])->name('batch-renewal-detail.non.motor');
+        Route::get('batches/{id}/{quoteType}', [RenewalsUploadController::class, 'batchDetailNonMotor'])->name('batch-renewal-detail.non.motor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
         Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans'])->name('batch-fetch-plans');
-        Route::get('batches/{id}/{quoteType}/fetch-plans', [RenewalsUploadController::class, 'fetchPlansNonMotor'])->name('batch-fetch-plans.non.motor');
+        Route::get('batches/{id}/{quoteType}/fetch-plans', [RenewalsUploadController::class, 'fetchPlansNonMotor'])->name('batch-fetch-plans.non.motor')->middleware('permission:'.PermissionsEnum::RENEWALS_BATCHES_NONMOTOR);
         Route::get('batches/{batch}/schedule-renewals-ocb', [RenewalsUploadController::class, 'scheduleRenewalsOcb'])->name('run-batch-process');
         Route::get('batches/{batch}/{quoteType}/schedule-renewals-ocb', [RenewalsUploadController::class, 'scheduleRenewalsOcbNonMotor'])->name('run-batch-process.non.motor');
         

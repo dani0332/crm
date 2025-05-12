@@ -2,15 +2,13 @@
 
 namespace App\Enums;
 
-use BenSampo\Enum\Enum;
-
-final class RangeLookupKeyEnums extends Enum
+enum RangeLookupKeyEnums: string
 {
-    public const POSSESSION_TYPE = 'possession-type';
-    public const ACCOMMODATION_TYPE = 'accommodation-type';
-    public const OWNER_OCCUPANCY_TYPE = 'owner-occupancy-type';
-    public const COVERAGE_TYPE = 'coverage-type';
-    public const COVERAGE_POSSESSION_TYPE = 'coverage-possession-type';
-    public const CONTENT_VALUES = 'content-values';
-    public const PERSONAL_BELONGING_VALUES = 'personal-belonging-values';
+    case POSSESSION_TYPE = 'possession-type';
+    case ACCOMMODATION_TYPE = 'accommodation-type';
+    case OWNER_OCCUPANCY_TYPE = 'owner-occupancy-type';
+    case COVERAGE_TYPE = 'coverage-type';
+    case COVERAGE_POSSESSION_TYPE = 'coverage-possession-type';
+    case CONTENT_VALUES = 'content-values';
+    case PERSONAL_BELONGING_VALUES = 'personal-belonging-values';
 }

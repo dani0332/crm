@@ -2,9 +2,15 @@
 
 namespace App\Enums;
 
-use BenSampo\Enum\Enum;
-
-final class RangeLookupIdEnums extends Enum
+enum RangeLookupIdEnums: int
 {
-    public const LANDLORD_RENTING_OUT = 2;
+    case LANDLORD_RENTING_OUT = 2;
+    
+    /**
+     * Get the value of an enum case
+     */
+    public function value(): int
+    {
+        return $this->value;
+    }
 }

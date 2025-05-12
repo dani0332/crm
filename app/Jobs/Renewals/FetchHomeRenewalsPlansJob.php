@@ -12,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
-
+use App\Services\Logger\LoggerService;
 class FetchHomeRenewalsPlansJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -44,6 +44,11 @@ class FetchHomeRenewalsPlansJob implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
+        LoggerService::info('FetchHomeRenewalsPlansJob: job being started', extra: [
+            'renewalStatusProcessId' => $this->renewalStatusProcess->id,
+            'batch' => $this->batch,
+            'quoteType' => $this->quoteType,
+        ]);
         $renewalsUploadService->fetchRenewalPlansForNonMotor($this->renewalStatusProcess, $this->batch, $this->quoteType);
     }
 
@@ -60,7 +65,9 @@ class FetchHomeRenewalsPlansJob implements ShouldQueue
      */
     public function failed(Throwable $exception)
     {
-        info('CL: '.get_class().' FN: failed. Job Failed. renewalStatusProcessId: '.$this->renewalStatusProcess->id.' Error: '.$exception->getMessage());
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
+            'renewalStatusProcessId' => $this->renewalStatusProcess->id,
+        ], exception: $exception);
         RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['status' => ProcessStatusCode::FAILED]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Jobs\Renewals;
 
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
+use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -34,7 +35,9 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue, StackableJob
      */
     public function __construct(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
-        info('FetchPlansForHomeRenewalsQuoteJob: inside constructor');
+        LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: inside constructor', extra: [
+            'renewalQuoteProcessId' => $renewalQuoteProcess->id,
+        ]);
         $this->renewalQuoteProcess = $renewalQuoteProcess;
         $this->renewalStatusProcess = $renewalStatusProcess;
     }
@@ -46,7 +49,10 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue, StackableJob
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        info('FetchPlansForHomeRenewalsQuoteJob: job being started for policy_number: '.$this->renewalQuoteProcess->policy_number);
+        LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: job being started', extra: [
+            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+            'policy_number' => $this->renewalQuoteProcess->policy_number,
+        ]);
         $renewalsUploadService->fetchHomeQuotePlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
     }
 
@@ -63,7 +69,10 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-        info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
+       
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
+            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
+        ], exception: $exception);
         RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 }
