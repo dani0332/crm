@@ -153,13 +153,20 @@ const onUpdatePlan = () => {
         position: 'top',
       });
 
-      updatePlanLoading.value = false;
-
       emit('onLoadAvailablePlansData');
+
+      // Reload the page data to update payments section
+      router.reload({
+        preserveScroll: true,
+        only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
+        onSuccess: () => {
+          // After page data is refreshed, emit event again to ensure plans are updated
+          emit('onLoadAvailablePlansData');
+          updatePlanLoading.value = false;
+        },
+      });
     })
     .catch(error => {
-      console.error('error', error);
-
       const errors = error.response?.data?.errors;
 
       if (errors) {

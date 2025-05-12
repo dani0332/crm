@@ -246,6 +246,8 @@ function onSubmit(isValid) {
           "
           :rules="[isRequired]"
           required
+          filterable
+          filter-placeholder="Search by nationality"
         />
 
         <x-field label="EMIRATE OF YOUR VISA" required>
