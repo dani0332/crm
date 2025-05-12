@@ -645,8 +645,8 @@ class CentralController extends Controller
         }
 
         try {
-            $puaUpdateExport = app(PUAQuoteExport::class)->download('PUA (Payment Pending).xlsx');
-            $nonPuaUpdateExport = app(NonPUAQuoteExport::class)->download('Non-PUA (Payment Pending).xlsx');
+            $puaUpdateExport = app(PUAQuoteExport::class)->download('PUA-AUTHORIZED.xlsx');
+            $nonPuaUpdateExport = app(NonPUAQuoteExport::class)->download('NON-PUA-AUTHORIZED.xlsx');
             $puaUpdatesExport = app(PUAUpdatesExport::class)->download('PUA-UPDATES.xlsx');
 
             $files = [
