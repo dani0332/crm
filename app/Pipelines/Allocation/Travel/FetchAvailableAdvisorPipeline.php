@@ -6,7 +6,6 @@ use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\UserStatusEnum;
-use App\Models\Team;
 use App\Models\User;
 use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
 use App\Services\Logger\LoggerService;
@@ -105,7 +104,7 @@ class FetchAvailableAdvisorPipeline extends BaseAllocationPipeline
         return null;
     }
 
-    public function getAdvisorByStatus($status, $teamId)
+    public function getAdvisorByStatus($onlineStatus, $teamId)
     {
         if ($this->allocationRequest->get('isCHSAdvisor')) {
             info(self::class.' - getAdvisorByStatus: CHS Advisor is required');
@@ -119,35 +118,19 @@ class FetchAvailableAdvisorPipeline extends BaseAllocationPipeline
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
 
-        $userQuery = User::select('users.id as user_id')
-            ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
-            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
-            ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-            ->where('users.status', $status)
-            ->where(function ($query) {
-                // Apply allocation count and max capacity conditions.
-                $query->whereRaw('la.allocation_count < la.max_capacity')
-                    ->orWhere('la.max_capacity', -1);
-            })
-            ->when($teamId, function ($q) use ($teamId) {
-                $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
-            }, function ($q) {
-                // if no team provided then user must not be part of SIC Unassisted 2.0 Team
+        $query = $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])
+            ->when(! $teamId, function ($q) {
                 $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
                 if ($sicUnassistedTeamId) {
                     $q->whereNotIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $sicUnassistedTeamId));
                 }
             })
-            ->whereIn('r.name', [RolesEnum::TravelAdvisor])
-            ->where('la.quote_type_id', $this->allocationRequest->getQuoteType()->id())
-            ->activeUser()
             ->when($this->lead->isSIC($this->allocationRequest->getQuoteType()), function ($q) {
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
-            })
-            ->orderBy('la.last_allocated', 'asc');
+            });
 
-        LoggerService::info(self::class." - getAdvisorByStatus query: {$userQuery->toRawSql()}");
+        LoggerService::info(self::class." - getAdvisorByStatus query: {$query->toRawSql()}");
 
-        return $userQuery->first();
+        return $query->first();
     }
 }
