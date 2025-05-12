@@ -78,7 +78,7 @@ abstract class BaseAllocationPipeline extends AllocationService
     protected function getLeadBaseQuery()
     {
         return $this->allocationRequest->model()
-            ->where('uuid', $this->allocationRequest->getQuoteUUID())
+            ->where('uuid', $this->lead->uuid)
             ->whereNotIn('quote_status_id', [
                 QuoteStatusEnum::Fake,
                 QuoteStatusEnum::Duplicate,
