@@ -922,7 +922,7 @@ class SplitPaymentService
                 }
             }
             if (! $sendUpdateId) {
-                $this->updateLeadStatus($masterPayment);
+                $this->updateLeadStatus($masterPayment, 'process master payment approval');
                 info("Master payment code: {$quoteModel->code} Lead status updated for quote according to payment status");
             }
 
@@ -945,8 +945,11 @@ class SplitPaymentService
     }
 
     // Update lead status for ecomm quotes
-    public function updateLeadStatus($payment)
+    public function updateLeadStatus($payment, $source = null)
     {
+        if ($source != null) {
+            info("Master payment code: {$payment->code} -update lead status called source: {$source}");
+        }
         $quoteModel = $payment->paymentable;
         $ecommQuotes = [
             CarQuote::class,
@@ -954,10 +957,12 @@ class SplitPaymentService
             TravelQuote::class,
         ];
         if ($quoteModel) {
+            $oldPaymentStatus = $quoteModel->payment_status_id;
             $quoteModel->payment_status_id = $payment->payment_status_id;
+
             if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 $quoteModel->payment_paid_at = now();
-                info("Master payment code: {$payment->code} updating payment paid at for lead at ".now()->format('Y-m-d H:i:s'));
+                info("Master payment code: {$payment->code} - Quote type: {$payment->paymentable_type} - Payment paid at updated to: ".now()->format('Y-m-d H:i:s'));
 
                 // Update lead source for revival quotes after payment is paid
                 $isRevival = $quoteModel->source == LeadSourceEnum::REVIVAL || $quoteModel->source == LeadSourceEnum::REVIVAL_REPLIED;
@@ -965,7 +970,7 @@ class SplitPaymentService
             }
             $quoteModel->save();
             // Log after successfully saving the quote model
-            info('Master payment code: '.$payment->code.' Lead payment status updated to '.$payment->payment_status_id);
+            info("Master payment code: {$payment->code} quote payment status updated from {$oldPaymentStatus} to {$payment->payment_status_id}");
         }
     }
 
