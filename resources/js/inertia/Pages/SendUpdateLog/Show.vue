@@ -145,6 +145,8 @@ const onEdit = () => {
   }
 };
 
+const notesFieldError = ref(false);
+
 const onCancel = () => {
   state.edit = false;
   sendUpdateForm.notes = props.sendUpdateLog?.notes || '';
@@ -155,9 +157,9 @@ const onCancel = () => {
     props.sendUpdateLog?.seating_capacity || null;
   sendUpdateForm.endorsement_number =
     props.sendUpdateLog?.endorsement_number || null;
-};
 
-const notesFieldError = ref(false);
+  notesFieldError.value = false;
+};
 
 watch(() => sendUpdateForm.notes, (newValue) => {
   if (newValue) notesFieldError.value = false;
