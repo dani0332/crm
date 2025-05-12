@@ -424,7 +424,7 @@ class ApiService
             if ($updated) {
                 // Only dispatch the job if we successfully updated the record
                 LoggerService::info("------ Dispatching Travel AIG workflow job ------");
-                dispatch(new \App\Jobs\TravelAIGWorkflowJob($quoteUuid, $quoteTypeId));
+                dispatch(new \App\Jobs\TravelAIGWorkflowJob($quoteUuid, $quoteType));
                 LoggerService::info("------ Travel AIG workflow trigger request completed ------");
                 
                 return apiResponse(null, Response::HTTP_OK, 'Travel AIG workflow triggered successfully!');

@@ -410,10 +410,10 @@ class TravelEmailService extends BaseService
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->buildAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::TRAVEL_AIG_WORKFLOW);
             // using the same event for AIG and BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL and have a Travel AIG branch in that event workflow
-            $birdAIGEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL)->first();
+            $birdAIGEvent = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL, useCache: true);
 
             if ($birdAIGEvent) {
-                $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent->value, $emailData);
+                $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent, $emailData);
                 LoggerService::info("AIGWorkflow event triggered for travel");
 
                 if (!empty($response->headers['Run-Id'])) {

@@ -20,30 +20,24 @@ class TravelAIGWorkflowJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    private $quoteUuid;
-
-    private $quoteTypeId;
     public $tries = 3;
     public $timeout = 15;
     public $backoff = 60;
 
-    public function __construct($quoteUuid, $quoteTypeId = null)
-    {
-        $this->quoteUuid = $quoteUuid;
-        $this->quoteTypeId = $quoteTypeId;
-    }
+    public function __construct(protected $quoteUuid, protected $quoteType)
+    {}
 
     /**
      * Execute the job.
      */
     public function handle(TravelEmailService $travelEmailService): void
     {
+        LoggerService::startQuoteLogging($this->quoteType->refId($this->quoteUuid));
         try {
             LoggerService::info("TravelAIGWorkflowJob - Starting workflow");
 
             // Use provided quote type or default to Travel if not specified
-            $quoteTypeId = $this->quoteTypeId ?? QuoteTypeId::Travel;
-            $quoteType = QuoteTypes::getName($quoteTypeId);
+            $quoteType = $this->quoteType ?? QuoteTypes::TRAVEL;
 
             if (! $quoteType) {
                 LoggerService::info("TravelAIGWorkflowJob - Invalid Quote Type");
