@@ -2,18 +2,22 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Models\User;
-use App\Enums\QuoteTypes;
-use App\Models\TravelQuote;
-use Illuminate\Http\Response;
 use App\Enums\AssignmentTypeEnum;
-use Illuminate\Support\Facades\DB;
-use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\Pipeline;
-use App\Services\TravelAllocationService;
-use App\Pipelines\Allocation\Travel\FetchLeadPipeline;
-use App\Services\ProcessTracker\ProcessTrackerService;
 use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
+use App\Enums\QuoteTypes;
+use App\Exceptions\Allocation\AllocationException;
+use App\Models\TravelQuote;
+use App\Models\User;
+use App\Pipelines\Allocation\Common\VerifyAlreadyInProgressAllocationPipeline;
+use App\Pipelines\Allocation\Travel\FetchLeadPipeline;
+use App\Services\Logger\LoggerService;
+use App\Services\ProcessTracker\ProcessTrackerService;
+use App\Services\TravelAllocationService;
+use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Pipeline;
+use Throwable;
 
 class TravelAllocation implements Allocation
 {
@@ -36,74 +40,36 @@ class TravelAllocation implements Allocation
     {
         $this->travelAllocationService->resetProps();
 
-        Pipeline::send([
-            'quoteType' => QuoteTypes::TRAVEL,
-            'allocationId' => $this->allocationId,
-            'teamId' => $this->teamId,
-            'overrideAdvisorId' => $this->overrideAdvisorId,
-        ])->through([
-            FetchLeadPipeline::class,
-        ])->then(function ($result) {
-            return $result;
-        });
-
-        $response = [
-            'advisorId' => 0,
-            'message' => '',
-            'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
-        ];
+        $alloctionRequest = new AllocationRequest(
+            quoteType: QuoteTypes::TRAVEL,
+            quoteUUID: $this->allocationId,
+            teamId: $this->teamId,
+            overrideAdvisorId: $this->overrideAdvisorId,
+            tracker: $this->tracker
+        );
 
         try {
-            LoggerService::info(self::class." - executeSteps: Travel Allocation started for allocation id : {$this->allocationId}");
-            $lead = $this->fetchLead();
-
-            if (! $lead) {
-                LoggerService::info(self::class.' - executeSteps: Lead not found');
-
-                $this->tracker->saveResult(ProcessTrackerAllocationEnum::LEAD_NOT_FOUND, [
-                    '@statuses' => ['Fake', 'Duplicate', 'Lost'],
-                ]);
-
-                $response = $this->travelAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
-            } else {
-                if ($lead->isAllocationInProgress()) {
-                    LoggerService::info("Allocation is already started at {$lead->allocation_started_at}");
-
-                    return $this->travelAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
-                }
-
-                $lead->startAllocation();
-
-                $advisor = $this->fetchAvailableAdvisor($lead);
-
-                if (! $advisor) {
-                    $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
-
-                    LoggerService::info(self::class.' - executeSteps: No advisor found');
-
-                    $response = $this->travelAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
-
-                    $this->tracker->saveResult(ProcessTrackerAllocationEnum::ADVISOR_NOT_FOUND, ignoreStep: true);
-                } else {
-                    $this->assignLead($lead, $advisor); // Assign the lead to the advisor
-                    $lead->endAllocation();
-                    $response = $this->travelAllocationService->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
-                }
-            }
-        } catch (\Throwable $th) {
+            return Pipeline::send($alloctionRequest)->through([
+                FetchLeadPipeline::class,
+                VerifyAlreadyInProgressAllocationPipeline::class,
+            ])->then(function ($result) {
+                return $result;
+            });
+        } catch (AllocationException|Throwable $e) {
             $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
 
-            $message = $th->getMessage() ?? '';
-            LoggerService::error('exception occurred in travel lead allocation with error : '.$message);
-            LoggerService::error('exception occurred in travel lead allocation with error stack as  : '.$th->getTraceAsString());
-            $response = $this->travelAllocationService->createResponse(0, 'exception occurred in travel lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            if ($e instanceof AllocationException) {
+                return $this->travelAllocationService->createResponse2($alloctionRequest, $e);
+            }
 
-            $this->tracker->saveResult(ProcessTrackerAllocationEnum::EXCEPTION_RAISED, summary: "Exception Occurred in Lead Allocation with error : {$message}");
+            $this->tracker->saveResult(ProcessTrackerAllocationEnum::EXCEPTION_RAISED, summary: "Exception Occurred in Lead Allocation with error : {$e->getMessage()}");
+
+            return [
+                'advisorId' => 0,
+                'message' => $e->getMessage(),
+                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
+            ];
         }
-
-        $this->travelAllocationService->resetProps();
-
-        return $response;
     }
 
     private function fetchLead()
