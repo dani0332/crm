@@ -5,11 +5,12 @@ namespace App\Strategies\Allocations;
 use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\QuoteTypes;
 use App\Exceptions\Allocation\AllocationException;
+use App\Pipelines\Allocation\Common\FetchLeadPipeline;
 use App\Pipelines\Allocation\Common\MakeResponsePipeline;
 use App\Pipelines\Allocation\Common\VerifyAlreadyInProgressAllocationPipeline;
 use App\Pipelines\Allocation\Travel\AssignLeadPipeline;
 use App\Pipelines\Allocation\Travel\FetchAvailableAdvisorPipeline;
-use App\Pipelines\Allocation\Travel\FetchLeadPipeline;
+use App\Pipelines\Allocation\Travel\VerifyLeadPreChecksPipeline;
 use App\Services\AllocationService;
 use App\Services\ProcessTracker\ProcessTrackerService;
 use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
@@ -46,6 +47,7 @@ class TravelAllocation extends AllocationService implements Allocation
 
             return Pipeline::send($alloctionRequest)->through([
                 FetchLeadPipeline::class,
+                VerifyLeadPreChecksPipeline::class,
                 VerifyAlreadyInProgressAllocationPipeline::class,
                 FetchAvailableAdvisorPipeline::class,
                 AssignLeadPipeline::class,
