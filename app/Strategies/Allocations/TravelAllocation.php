@@ -8,6 +8,7 @@ use App\Exceptions\Allocation\AllocationException;
 use App\Pipelines\Allocation\Common\FetchLeadPipeline;
 use App\Pipelines\Allocation\Common\MakeResponsePipeline;
 use App\Pipelines\Allocation\Common\VerifyAlreadyInProgressAllocationPipeline;
+use App\Pipelines\Allocation\Travel\AssignChildLeadPipeline;
 use App\Pipelines\Allocation\Travel\AssignLeadPipeline;
 use App\Pipelines\Allocation\Travel\FetchAvailableAdvisorPipeline;
 use App\Pipelines\Allocation\Travel\VerifyLeadPreChecksPipeline;
@@ -51,6 +52,7 @@ class TravelAllocation extends AllocationService implements Allocation
                 VerifyAlreadyInProgressAllocationPipeline::class,
                 FetchAvailableAdvisorPipeline::class,
                 AssignLeadPipeline::class,
+                AssignChildLeadPipeline::class,
                 MakeResponsePipeline::class,
             ])->thenReturn();
 
