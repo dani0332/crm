@@ -523,7 +523,9 @@ const isRenewalUpload = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  const canUpdateToFakeDuplicate = can(permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE);
+  const canUpdateToFakeDuplicate = can(
+    permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
+  );
   const isLeadPool = hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool]);
   const isPA = hasAnyRole([rolesEnum.Admin, rolesEnum.PA]);
   const renewal_batch = page.props.record.renewal_batch;
@@ -537,12 +539,12 @@ const leadStatusOptions = computed(() => {
 
   const filteredLeadStatuses = statuses?.map(status => {
     if (
-      (!isLeadPool && 
-       !canUpdateToFakeDuplicate &&
-       [
-         page.props.quoteStatusEnum.Fake,
-         page.props.quoteStatusEnum.Duplicate,
-       ].includes(status.id)) ||
+      (!isLeadPool &&
+        !canUpdateToFakeDuplicate &&
+        [
+          page.props.quoteStatusEnum.Fake,
+          page.props.quoteStatusEnum.Duplicate,
+        ].includes(status.id)) ||
       (!isPA && status.id === page.props.quoteStatusEnum.TransactionApproved) ||
       ((renewal_batch === '' ||
         previous_quote_policy_number === '' ||
@@ -565,8 +567,10 @@ const leadStatusOptions = computed(() => {
 });
 
 const leadStatusDisabled = computed(() => {
-  const canUpdateToFakeDuplicate = can(permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE);
-  
+  const canUpdateToFakeDuplicate = can(
+    permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
+  );
+
   if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
     return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
   }
