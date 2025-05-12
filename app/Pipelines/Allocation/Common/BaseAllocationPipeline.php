@@ -6,6 +6,7 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
 use App\Models\QuoteBatches;
+use App\Models\User;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
 use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
@@ -95,5 +96,24 @@ abstract class BaseAllocationPipeline extends AllocationService
     protected function getQuoteBatch()
     {
         return QuoteBatches::latest()->first();
+    }
+
+    protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles)
+    {
+        return User::select('users.id as user_id')
+            ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
+            ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+            ->where('users.status', $onlineStatus)
+            ->where(function ($query) {
+                $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
+            })
+            ->when($teamId, function ($q) use ($teamId) {
+                $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
+            })
+            ->whereIn('r.name', $roles)
+            ->where('la.quote_type_id', $this->allocationRequest->getQuoteType()->id())
+            ->activeUser()
+            ->orderBy('la.last_allocated', 'asc');
     }
 }
