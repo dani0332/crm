@@ -87,8 +87,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             // Initialize payment source and get quote model
             $paymentSource = "Main Lead";
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+            LoggerService::startQuoteLogging($quoteModel);
             $quoteCode = $quoteModel->code;
-            
             LoggerService::info("Starting manual payment creation process for quote code: {$quoteCode}");
             $masterPayment = (object) $request->payment;
             
@@ -555,6 +555,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         info("Processing payment decline for {$request->payment_code}");
 
         $quoteModel = $this->getQuoteModel($request->modelType, $request->quote_id, $request->send_update_id);
+        LoggerService::startQuoteLogging($quoteModel);
         $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
         $firstPayment->update([
             'decline_reason_id' => $request->declined_reason,
@@ -568,7 +569,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
         }
         $quoteModel->save();
-        info("Transaction declined process complete: {$request->payment_code}");
+        LoggerService::info("Transaction declined process complete: {$request->payment_code}");
 
         return 'Transaction declined';
     }
@@ -582,7 +583,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     public function handlePaymentApprove($request)
     {
-        info("Payment approval process initiated: {$request->payment_code}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
+        LoggerService::info("Payment approval process initiated: {$request->payment_code}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
                 $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
@@ -593,17 +594,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
-                    info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} approving process started");
+                    LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} approving process started");
 
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
                 } else {
-                    info("Payment split not found or already paid: {$request->payment_code}, Split No: {$key}");
+                    LoggerService::info("Payment split not found or already paid: {$request->payment_code}, Split No: {$key}");
                 }
             }
         }
         // Log the master payment approval process
-        info('Master payment code: '.$request->payment_code.' processing master payment approval called');
+        LoggerService::info('Master payment code: '.$request->payment_code.' processing master payment approval called');
 
         // process master payment approve
         return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
