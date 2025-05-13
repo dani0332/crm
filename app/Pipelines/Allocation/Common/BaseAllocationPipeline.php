@@ -4,6 +4,7 @@ namespace App\Pipelines\Allocation\Common;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
 use App\Models\QuoteBatches;
 use App\Models\User;
@@ -115,5 +116,19 @@ abstract class BaseAllocationPipeline extends AllocationService
             ->where('la.quote_type_id', $this->allocationRequest->getQuoteType()->id())
             ->activeUser()
             ->orderBy('la.last_allocated', 'asc');
+    }
+
+    protected function getOnlineStatusesInOrder()
+    {
+        $statuses = [
+            UserStatusEnum::ONLINE,
+            UserStatusEnum::OFFLINE,
+        ];
+
+        if (! $this->allocationRequest->isReassignmentJob()) {
+            $statuses[] = UserStatusEnum::UNAVAILABLE;
+        }
+
+        return $statuses;
     }
 }
