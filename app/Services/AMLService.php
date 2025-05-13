@@ -892,8 +892,6 @@ class AMLService
                         ['insured_id' => $insuredKycRequest['insured_id']], // Condition to find the record
                         [
                             'insured_id' => $insuredKycRequest['insured_id'],
-                            'mobile_no' => $insuredKycRequest['mobile_number'] ?? null,
-                            'email' => $insuredKycRequest['email'] ?? null,
                             'website' => $insuredKycRequest['website'] ?? null,
                             'legal_structure' => $insuredKycRequest['legal_structure'] ?? null,
                             'country_of_corporation' => $insuredKycRequest['country_of_corporation'] ?? null,
@@ -994,8 +992,6 @@ class AMLService
                             'deal_sanction_list' => $insuredKycRequest['deal_sanction_list'] ?? null,
                             'is_operation_high_risk' => $insuredKycRequest['is_operation_high_risk'] ?? null,
                             'is_partner' => $insuredKycRequest['is_partner'] ?? null,
-                            'mobile_no' => $insuredKycRequest['mobile_number'] ?? null,
-                            'email' => $insuredKycRequest['email'] ?? null,
                         ]
                     );
                     LoggerService::info('KYC Individual Details updated Successfully');

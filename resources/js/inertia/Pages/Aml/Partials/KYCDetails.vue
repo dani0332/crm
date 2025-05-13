@@ -120,12 +120,8 @@ const kycFormDetails = useForm({
     (isScreeningIndividual
       ? insuredDetails?.insured?.insured_kyc?.residential_address
       : insuredDetails?.insured?.insured_kyc?.registered_address) ?? null,
-  mobile_number:
-    insuredDetails?.insured?.insured_kyc?.mobile_no ??
-    page.props.quoteRequest.mobile_no,
-  email:
-    insuredDetails?.insured?.insured_kyc?.email ??
-    page.props.quoteRequest.email,
+  mobile_number: page.props.quoteRequest.mobile_no,
+  email: page.props.quoteRequest.email,
   customer_tenure:
     insuredDetails?.insured?.insured_kyc?.customer_tenure ?? null,
   id_type: insuredDetails?.insured?.id_type ?? null,
@@ -273,6 +269,15 @@ function changeIncomeSource() {
       : 1
     : false;
 }
+const isDateExpired = (date) => {
+  if (!date) return false;
+  const expiryDate = new Date(date);
+  const today = new Date();
+  // Clear time part for accurate date comparison
+  today.setHours(0, 0, 0, 0);
+  expiryDate.setHours(0, 0, 0, 0);
+  return expiryDate < today;
+};
 onMounted(() => {
   complianceDisable.value = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
@@ -303,6 +308,9 @@ watch(
   { immediate: true },
 );
 
+const idExpiryDateError = ref('');
+
+
 // Add watcher for searchData
 watch(
   () => props.searchData,
@@ -312,19 +320,34 @@ watch(
     const customerTypeEnum = page.props.customerTypeEnum;
     const kyc = newData.insured_kyc;
 
+    // Check if ID expiry date is expired
+    const idExpiryDate = convertDate(kyc.id_expiry_date);
+    const isExpired = isDateExpired(idExpiryDate);
+    
+    // Show notification if ID is expired
+    if (isExpired && kyc.id_expiry_date) {
+      notification.warning({
+        title: 'ID Expiry Date has expired',
+        message: 'Please provide a valid ID with current expiry date',
+        position: 'top',
+        timeout: 5000
+      });
+      idExpiryDateError.value = 'This ID is expired';
+    } else {
+      idExpiryDateError.value = '';
+    }
+
     // Set common fields for both individual and entity
     const commonFields = {
       insured_id: newData.id,
       first_name: kyc.first_name,
       last_name: kyc.last_name,
       residential_address: kyc.residential_address,
-      mobile_number: kyc.mobile_no,
-      email: kyc.email,
       customer_tenure: kyc.customer_tenure,
       id_type: kyc.id_type,
       id_number: kyc.id_number,
       id_issue_date: convertDate(kyc.id_issuance_date),
-      id_expiry_date: convertDate(kyc.id_expiry_date),
+      id_expiry_date: isExpired ? null : idExpiryDate, // Set to null if expired
       mode_of_contact: kyc.mode_of_contact,
       mode_of_delivery: kyc.mode_of_delivery,
       transaction_pattern: kyc.transaction_pattern,
@@ -388,6 +411,26 @@ watch(
     }
   },
   { immediate: true, deep: true },
+);
+
+
+// Add a watcher for the ID expiry date
+watch(
+  () => kycFormDetails.id_expiry_date,
+  (newDate) => {
+    if (isDateExpired(newDate)) {
+      notification.warning({
+        title: 'ID Expiry Date has expired',
+        message: 'Please provide a valid ID with current expiry date',
+        position: 'top',
+        timeout: 5000
+      });
+      kycFormDetails.id_expiry_date = null;
+      idExpiryDateError.value = 'This ID is expired';
+    } else {
+      idExpiryDateError.value = '';
+    }
+  }
 );
 </script>
 <template>
@@ -591,7 +634,12 @@ watch(
           isScreeningIndividual ? 'ID Expiry Date' : 'ID / Document Expiry Date'
         "
       >
-        <DatePicker v-model="kycFormDetails.id_expiry_date" />
+        <DatePicker
+          v-model="kycFormDetails.id_expiry_date"
+          :rules="[isRequired]"
+          :error="idExpiryDateError"
+          :min-date="new Date()"
+        />
       </x-field>
     </dl>
     <dl class="grid md:grid-cols-4 gap-x-6 gap-y-4 items-center">
