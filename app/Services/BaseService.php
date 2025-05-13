@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 class BaseService
 {
@@ -459,6 +460,10 @@ class BaseService
 
         $this->addOrUpdateQuoteViewCount($lead, $quoteType->id(), $userId);
 
+        if (empty($lead->lead_assignment_trigger)) {
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
+        }
+        
         $lead->save();
     }
 

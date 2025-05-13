@@ -23,6 +23,7 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\ProcessTracker\ProcessTrackerService;
 use Illuminate\Support\Facades\Log;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 class TravelAllocationService extends AllocationService
 {
@@ -254,6 +255,9 @@ class TravelAllocationService extends AllocationService
         $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
+        if (empty($lead->lead_assignment_trigger)) {
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();

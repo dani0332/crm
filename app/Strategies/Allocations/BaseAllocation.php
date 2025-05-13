@@ -14,6 +14,7 @@ use App\Services\Logger\LoggerService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 abstract class BaseAllocation extends AllocationService
 {
@@ -157,6 +158,9 @@ abstract class BaseAllocation extends AllocationService
             $previousUserId = $this->lead->advisor_id;
             $this->lead->advisor_id = $advisor->id;
             $this->lead->assignment_type = $assignmentType;
+            if (empty($this->lead->lead_assignment_trigger)) {
+                $this->lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+            }
             $quoteBatch = QuoteBatches::latest()->first();
             $this->lead->quote_batch_id = $quoteBatch->id;
             $this->lead->save();

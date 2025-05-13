@@ -40,6 +40,7 @@ use App\Services\DTOs\FetchCarLeadResult;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 class CarAllocationService extends AllocationService
 {
@@ -882,7 +883,10 @@ class CarAllocationService extends AllocationService
         $lead->cost_per_lead = $tier->cost_per_lead;
         $lead->auto_assigned = true;
         $lead->sic_flow_enabled = 0;
-        $lead->assignment_type = $assignmentType;
+        
+        if (empty($lead->lead_assignment_trigger)) {
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
 
         // Get the latest quote batch and assign it to the lead.
         $quoteBatch = QuoteBatches::latest()->first();

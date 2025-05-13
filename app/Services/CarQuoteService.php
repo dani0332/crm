@@ -40,6 +40,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use PDF;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 class CarQuoteService extends BaseService
 {
@@ -1433,6 +1434,10 @@ class CarQuoteService extends BaseService
             $lead->advisor_id = $userId;
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
+
+            if (empty($lead->lead_assignment_trigger)) {
+                $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
+            }
 
             $quoteBatch = QuoteBatches::latest()->first();
 

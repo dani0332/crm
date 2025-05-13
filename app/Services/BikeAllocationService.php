@@ -37,6 +37,7 @@ use App\Models\UserTeams;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 class BikeAllocationService extends AllocationService
 {
@@ -479,7 +480,9 @@ class BikeAllocationService extends AllocationService
         $lead->cost_per_lead = $tier->cost_per_lead;
         $lead->auto_assigned = true;
         $lead->assignment_type = $assignmentType;
-
+        if (empty($lead->lead_assignment_trigger)) {
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
         // Get the latest quote batch and assign it to the lead.
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;

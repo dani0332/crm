@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 class HealthAllocationService extends AllocationService
 {
@@ -283,6 +284,9 @@ class HealthAllocationService extends AllocationService
         $isReassignment = $previousUserId != null;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
+        if (empty($lead->lead_assignment_trigger)) {
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
