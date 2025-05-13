@@ -2,6 +2,8 @@
 
 namespace App\Pipelines\Allocation\Common;
 
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\UserStatusEnum;
@@ -165,5 +167,53 @@ abstract class BaseAllocationPipeline extends AllocationService
         */
 
         return null;
+    }
+
+    protected function assign()
+    {
+        $advisor = $this->allocationRequest->get('advisor');
+        $assignmentType = $this->allocationRequest->getAssignmentType();
+
+        LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
+        $previousAssignmentType = $this->lead->assignment_type;
+        $previousUserId = $this->lead->advisor_id;
+
+        $this->lead->advisor_id = $advisor->id;
+        $this->lead->assignment_type = $assignmentType;
+
+        $quoteBatch = $this->getQuoteBatch();
+        $this->lead->quote_batch_id = $quoteBatch->id;
+        $this->lead->save();
+
+        $this->lead->endAllocation();
+
+        LoggerService::info(self::class." - Assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
+
+        $previousAdvisorAssignedDate = $this->updateQuoteDetail($this->lead->id);
+
+        if ($this->lead->source != LeadSourceEnum::REFERRAL) {
+            LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
+
+            $quoteTypeId = $this->allocationRequest->getQuoteType()->id();
+
+            if ($assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED) {
+                $this->addAllocationCounts($advisor->id, $quoteTypeId);
+            } else {
+                $this->adjustAllocationCounts($advisor->id, $this->lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId);
+            }
+        }
+    }
+
+    protected function updateQuoteDetail()
+    {
+        LoggerService::info(self::class.' - about to update quote detail record');
+
+        $oldAdvisorAssignedDate = $this->lead->quoteDetail?->advisor_assigned_date ?? '';
+
+        $quoteType = $this->allocationRequest->getQuoteType();
+
+        $this->upsertQuoteDetail($this->lead->id, $quoteType->detailModel(), $quoteType->model()->getForeignKey());
+
+        return $oldAdvisorAssignedDate;
     }
 }
