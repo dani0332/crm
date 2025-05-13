@@ -284,7 +284,7 @@ enum QuoteTypes: string
         };
 
         if ($allocationService) {
-            return $allocationService->executeSteps();
+            return $allocationService->execute();
         }
 
         return $allocationService;

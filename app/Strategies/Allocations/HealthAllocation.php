@@ -25,7 +25,7 @@ class HealthAllocation implements Allocation
         $this->overrideAdvisorId = $overrideAdvisorId;
     }
 
-    public function executeSteps()
+    public function execute()
     {
         try {
             $lead = $this->fetchLead();

@@ -15,7 +15,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-abstract class BaseAllocation extends AllocationService
+abstract class BaseAllocation extends AllocationService implements Allocation
 {
     abstract protected function fetchAdvisor(int $onlineStatus);
 
@@ -28,7 +28,7 @@ abstract class BaseAllocation extends AllocationService
         return in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id();
     }
 
-    public function executeSteps()
+    public function execute()
     {
         $response = [
             'advisorId' => 0,
@@ -37,11 +37,11 @@ abstract class BaseAllocation extends AllocationService
         ];
 
         try {
-            LoggerService::info(self::class.' - executeSteps: Allocation Started');
+            LoggerService::info(self::class.' - execute: Allocation Started');
             $this->resolveLead();
 
             if (! $this->lead) {
-                LoggerService::info(self::class.' - executeSteps: Lead not found');
+                LoggerService::info(self::class.' - execute: Lead not found');
                 $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 $advisor = $this->fetchAvailableAdvisor();
@@ -49,7 +49,7 @@ abstract class BaseAllocation extends AllocationService
                 if (! $advisor) {
                     $this->leadAllocationFailed($this->uuid, $this->quoteType);
 
-                    LoggerService::info(self::class.' - executeSteps: No advisor found');
+                    LoggerService::info(self::class.' - execute: No advisor found');
 
                     $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {

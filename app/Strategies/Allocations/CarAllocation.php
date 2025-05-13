@@ -37,7 +37,7 @@ class CarAllocation implements Allocation
         $this->sicAdvisorRequested = $sicAdvisorRequested;
     }
 
-    public function executeSteps()
+    public function execute()
     {
         $response = [
             'advisorId' => 0,

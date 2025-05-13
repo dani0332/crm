@@ -23,7 +23,7 @@ class BikeAllocation implements Allocation
         $this->overrideAdvisorId = $overrideAdvisorId;
     }
 
-    public function executeSteps()
+    public function execute()
     {
         $response = $this->bikeAllocationService->createResponse(0, '', Response::HTTP_INTERNAL_SERVER_ERROR);
 
