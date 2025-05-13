@@ -492,13 +492,13 @@ class RenewalsUploadService
         }
 
         $renewalsBatchEmail = RenewalsBatchEmails::create([
-            'batch' => $batch,
+            'renewal_batch_id' => $batch,
             'status' => ProcessStatusCode::PENDING,
             'total_leads' => $totalLeads,
             'total_sent' => 0,
             'total_bounced' => 0,
             'total_failed' => 0,
-            'created_by_id' => $userId 
+            'created_by_id' => $userId
         ]);
 
         ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalsBatchEmail);
@@ -556,10 +556,7 @@ class RenewalsUploadService
         $logPrefix ="FetchPlans FN: fetchRenewalPlansForNonMotor Batch: $batch";
         LoggerService::info($logPrefix.'  Fetch plans started');
 
-        $batchNumber = $batch; 
-
         $userId = $renewalStatusProcess->user_id; 
-       
 
         try {
             $jobs = null;
@@ -568,13 +565,13 @@ class RenewalsUploadService
             $query = RenewalQuoteProcess::where([
                 'status' => RenewalProcessStatuses::PROCESSED,
                 'quote_type' => $quoteType,
-                'batch' => $batch,
+                'renewal_batch_id' => $batch,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->with(['renewalUploadLead', 'personalQuote']);
             
             
-            $query->chunkById(50, function ($leads) use ($batchNumber, $quoteType, $renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
+            $query->chunkById(50, function ($leads) use ($quoteType, $renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
                         switch ($quoteType) {
@@ -2527,7 +2524,7 @@ class RenewalsUploadService
     {
         $query =  RenewalQuoteProcess::select('id', 'quote_id')->where([
             'quote_type' => $quoteType,
-            'batch' => $batch,
+            'renewal_batch_id' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'email_sent' => 0,

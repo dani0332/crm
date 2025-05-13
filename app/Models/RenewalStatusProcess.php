@@ -9,7 +9,7 @@ class RenewalStatusProcess extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['batch', 'total_leads', 'total_completed', 'total_failed', 'status', 'user_id'];
+    protected $fillable = ['batch', 'total_leads', 'total_completed', 'total_failed', 'status', 'user_id', 'renewal_batch_id'];
 
     public function createdBy()
     {
@@ -18,5 +18,9 @@ class RenewalStatusProcess extends Model
 
     function personalQuotes(){
         return $this->hasMany(PersonalQuote::class, 'renewal_batch', 'batch');
+    }
+
+    function renewalBatch(){
+        return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 }

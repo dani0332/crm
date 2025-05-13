@@ -181,4 +181,8 @@ class RenewalBatch extends Model implements AuditableContract
             get: fn () => Carbon::parse("{$this->year}-{$this->month}")->format('M')
         );
     }
+
+    function personalQuotes(){
+        return $this->hasMany(PersonalQuote::class, 'renewal_batch_id');
+    }
 }

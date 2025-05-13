@@ -195,7 +195,7 @@ filters.month = new Date().getMonth() + 1;
     </template>
     <template #item-action="{ renewal_batch, quote_type }">
       <x-button
-        :href="`/renewals/batches/${renewal_batch.name}/${quote_type}/plans-processes`"
+        :href="`/renewals/batches/${renewal_batch.id}/${quote_type}/plans-processes`"
         class="text-primary-500 btn-passed mr-2"
         color="primary"
       >

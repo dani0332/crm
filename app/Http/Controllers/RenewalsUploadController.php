@@ -128,15 +128,16 @@ class RenewalsUploadController extends Controller
 
         $totalPending = RenewalQuoteProcess::where([
             'quote_type' => $quoteType,
-            'batch' => $batch,
+            'renewal_batch_id' => $batch,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
-        ])->exists();
+        ])->count();
+        
 
         if ($totalPending) {
             $renewalStatusProcess = RenewalStatusProcess::create([
-                'batch' => $batch,
+                'renewal_batch_id' => $batch,
                 'total_leads' => $totalPending,
                 'status' => ProcessStatusCode::IN_PROGRESS,
                 'user_id' => auth()->id(),
@@ -345,15 +346,13 @@ class RenewalsUploadController extends Controller
     }
 
     public function listRenewalBatchesNonMotor(Request $request){
-        
-
         $year = $request->year ?? Carbon::now()->year;
         $month = $request->month ?? Carbon::now()->month;
         
         $lob = $request->lob ?? QuoteTypeShortCode::HOM;
 
         $query = RenewalQuoteProcess::query()
-        ->whereHas('renewalBatch', callback: function($query) use ($lob, $year, $month) {
+        ->whereHas('renewalBatch', callback: function($query) use ($year, $month) {
             $query->where('year', $year)
             ->where('month', $month);
         })
@@ -361,13 +360,13 @@ class RenewalsUploadController extends Controller
             'renewal_quote_processes.quote_type' => $lob,
             'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
         ])
-        ->with('renewalBatch')
         ->when(!empty($request->batch), function ($query) use ($request) {
             return $query->where('renewal_quote_processes.batch', $request->batch);
         });
 
         $renewalQuotes = $query->simplePaginate(); 
-        // dd($renewalQuotes->toArray()); 
+
+        dd($renewalQuotes->toArray());
 
         $lobs = $this->renewalsUploadFileService->getNonMotorLobs();
         
@@ -407,20 +406,16 @@ class RenewalsUploadController extends Controller
 
     public function plansProcessesNonMotor($batch, $quoteType)
     {
-        
         $quoteTypeId = QuoteTypeShortCode::getId($quoteType);
-        
-        $process = RenewalStatusProcess::query()
-        ->select('renewal_status_processes.*')
-        ->join('renewal_batches', 'renewal_status_processes.batch', '=', 'renewal_batches.name')
-        ->join('personal_quotes', function($join) use ($batch, $quoteTypeId) {
-            $join->on('renewal_batches.id', '=', 'personal_quotes.renewal_batch_id')
-                ->where('personal_quotes.quote_type_id', '=', $quoteTypeId);
-        })
-        ->where('renewal_status_processes.batch', $batch)
-        ->with('createdby')
-        ->orderBy('renewal_status_processes.id', 'desc');
-        
+        $process = RenewalStatusProcess::with('createdby')
+            ->whereHas('renewalBatch', function ($query) use ($batch, $quoteTypeId) {
+                $query->where('id', $batch)
+                    ->whereHas('personalQuotes', function ($q) use ($quoteTypeId) {
+                        $q->where('quote_type_id', $quoteTypeId);
+                    });
+            })
+            ->orderBy('id', 'desc'); 
+            
         $process = $process->simplePaginate();
         
         return inertia('Renewals/PlanProcessesNonMotor', [
