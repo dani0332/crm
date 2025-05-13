@@ -34,7 +34,7 @@ class TravelAllocation implements Allocation
             return Pipeline::send($alloctionRequest)->through([
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
-                VerifyAlreadyInProgressAllocationPipe::class,
+                // VerifyAlreadyInProgressAllocationPipe::class,
                 ValidateNationalityConfigPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
