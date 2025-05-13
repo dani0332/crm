@@ -3,7 +3,6 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\QuoteTypes;
-use App\Exceptions\Allocation\AllocationException;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
@@ -41,7 +40,7 @@ class TravelAllocation implements Allocation
                 MakeResponsePipe::class,
             ])->thenReturn();
 
-        } catch (AllocationException|Exception $e) {
+        } catch (Exception $e) {
             return app(AllocationService::class)->resolveAllocationResponse($alloctionRequest, $e);
         }
     }
