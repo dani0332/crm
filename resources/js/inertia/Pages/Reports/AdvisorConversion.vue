@@ -130,6 +130,10 @@ const totalLeads = reactive({
       value: 'cdbId',
     },
     {
+      text: 'Private Client',
+      value: 'pcp_tag_formatted',
+    },
+    {
       text: 'Customer Name',
       value: 'fullName',
     },

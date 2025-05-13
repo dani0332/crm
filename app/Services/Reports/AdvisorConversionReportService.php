@@ -17,6 +17,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Traits\VehicleTypeTrait;
 use App\Models\CarQuote;
+use App\Models\Customer;
 use App\Models\LeadSource;
 use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
@@ -773,6 +774,7 @@ class AdvisorConversionReportService extends BaseService
                 'car_quote_request_detail.advisor_assigned_date as assignedDate',
                 'car_quote_request.premium as premium',
                 'car_quote_request.uuid as uuid',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
 
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
@@ -781,6 +783,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
+            ->leftJoin('customer as c', 'car_quote_request.customer_id', 'c.id')
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc')
             ->where('users.is_active', true);
     }
@@ -798,11 +801,13 @@ class AdvisorConversionReportService extends BaseService
                 'personal_quote_details.advisor_assigned_date as assignedDate',
                 'personal_quotes.premium as premium',
                 'personal_quotes.uuid as uuid',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             )
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->join('quote_status', 'quote_status.id', 'personal_quotes.quote_status_id')
+            ->leftJoin('customer as c', 'personal_quotes.customer_id', 'c.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
             ->orderBy('personal_quote_details.advisor_assigned_date', 'desc');
