@@ -133,6 +133,7 @@ abstract class BaseAllocationPipe extends AllocationService
             })
             ->whereIn('r.name', $roles)
             ->where('la.quote_type_id', $this->allocationRequest->getQuoteType()->id())
+            ->when($this->allocationRequest->hasNationalityConfig(), fn ($q) => $q->whereIn('users.id', $this->allocationRequest->getAdvisorIDs()))
             ->activeUser()
             ->orderBy('la.last_allocated', 'asc');
     }
