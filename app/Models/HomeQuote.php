@@ -19,6 +19,7 @@ class HomeQuote extends Model implements AuditableContract
     protected $table = 'home_quote_request';
     protected $fillable = [];
     protected $guarded = [];
+    public $allowedColumns = ['first_name', 'last_name', 'previous_quote_policy_number', 'code', 'email', 'source', 'policy_expiry_date', 'policy_number', 'policy_start_date', 'uuid', 'mobile_no', 'customer_id', 'advisor_id', 'premium', 'insurance_provider_id', 'insly_migrated', 'quote_status_id'];
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
@@ -197,5 +198,10 @@ class HomeQuote extends Model implements AuditableContract
     public function hasBuilding(): bool
     {
         return ! empty($this->building_value);
+    }
+
+    public function allowedColumns()
+    {
+        return $this->allowedColumns;
     }
 }
