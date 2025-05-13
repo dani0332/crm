@@ -378,7 +378,7 @@ class SearchService extends BaseService
             if ($request->has('company_name')) {
                 $query->join('insured', 'personal_quotes.insured_id', 'insured.id');
                 // Use FULLTEXT search
-                $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeCompanyNameFulltextQuery($request->company_name)]);
+                $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($request->company_name)]);
 
             }
 
@@ -485,7 +485,7 @@ class SearchService extends BaseService
     {
         $query->join('customer', 'personal_quotes.customer_id', 'customer.id');
         // Use FULLTEXT search
-        $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', ['+'.$request->insured_name]);
+        $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($request->insured_name)]);
     }
 
     /**
@@ -526,12 +526,12 @@ class SearchService extends BaseService
         // Apply first/last name filters
         if ($request->has('member_first_name')) {
             // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['+'.$request->member_first_name]);
+            $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($request->member_first_name)]);
         }
 
         if ($request->has('member_last_name')) {
             // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['+'.$request->member_last_name]);
+            $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($request->member_last_name)]);
         }
     }
 
@@ -626,7 +626,7 @@ class SearchService extends BaseService
     /**
      * Optimize a search term for FULLTEXT Boolean mode
      */
-    private function optimizeCompanyNameFulltextQuery(string $term): string
+    private function optimizeSearchTerm(string $term): string
     {
         // Remove common problematic characters
         $term = preg_replace('/[\'"\\\]/', ' ', $term);
