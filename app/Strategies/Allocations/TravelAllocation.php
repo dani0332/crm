@@ -13,7 +13,6 @@ use App\Pipelines\Allocation\Travel\AssignLeadPipeline;
 use App\Pipelines\Allocation\Travel\FetchAvailableAdvisorPipeline;
 use App\Pipelines\Allocation\Travel\VerifyLeadPreChecksPipeline;
 use App\Services\AllocationService;
-use App\Services\ProcessTracker\ProcessTrackerService;
 use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Pipeline;
@@ -23,14 +22,12 @@ class TravelAllocation extends AllocationService implements Allocation
 {
     public $allocationId;
     public $teamId;
-    public $tracker;
     private bool $overrideAdvisorId = false;
 
-    public function __construct(ProcessTrackerService $tracker, $allocationId, $teamId = false, bool $overrideAdvisorId = false)
+    public function __construct($allocationId, $teamId = false, bool $overrideAdvisorId = false)
     {
         $this->allocationId = $allocationId;
         $this->teamId = $teamId;
-        $this->tracker = $tracker;
         $this->overrideAdvisorId = $overrideAdvisorId;
     }
 
@@ -40,8 +37,7 @@ class TravelAllocation extends AllocationService implements Allocation
             quoteType: QuoteTypes::TRAVEL,
             quoteUUID: $this->allocationId,
             teamId: $this->teamId,
-            overrideAdvisorId: $this->overrideAdvisorId,
-            tracker: $this->tracker
+            overrideAdvisorId: $this->overrideAdvisorId
         );
 
         try {
