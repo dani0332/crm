@@ -6,6 +6,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Models\Role;
 use App\Traits\TeamHierarchyTrait;
@@ -32,6 +33,7 @@ class SearchService extends BaseService
                 'personal_quotes.created_at',
                 'personal_quotes.policy_expiry_date',
                 'personal_quotes.policy_number',
+                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
             ];
 
             if ($isEndorsementList) {
@@ -84,6 +86,7 @@ class SearchService extends BaseService
                 $query->where('personal_quotes.advisor_id', auth()->id());
             });
 
+            $baseQuery->leftJoin('customer as c', 'personal_quotes.customer_id', 'c.id');
             $baseQuery->orderBy($baseTable.'.'.(request()->sortBy ?? 'updated_at'), request()->sortType ?? 'desc');
 
             if ($isExport) {
@@ -117,7 +120,6 @@ class SearchService extends BaseService
 
                 return $baseQuery->get();
             }
-
             $baseQuery->select($selectColumns);
 
             return $baseQuery->simplePaginate(15)->withQueryString();
