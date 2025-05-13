@@ -55,6 +55,19 @@ abstract class BaseAllocationPipeline extends AllocationService
         $this->lead = $lead;
     }
 
+    protected function resolveLead()
+    {
+        $lead = $this->getBaseLead();
+
+        if (! $lead) {
+            $this->throw('Lead not found', self::NOT_FOUND);
+        }
+
+        $this->allocationRequest->set('lead', $lead);
+
+        return $lead;
+    }
+
     protected function logLeadData(Model $lead)
     {
         LoggerService::info(self::class.'::logLeadData', [
