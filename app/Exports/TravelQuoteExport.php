@@ -6,6 +6,8 @@ use App\Enums\AMLStatusCode;
 use App\Services\TravelQuoteService;
 use App\Traits\ExcelExportable;
 use App\Enums\QuoteTypeId;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 class TravelQuoteExport
 {
@@ -98,8 +100,8 @@ class TravelQuoteExport
             $quote->coverage_code,
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
-            $quote->assignment_type ?? '',
-            $quote->lead_assignment_trigger ?? '',
+            $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '',
+            $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
             $quote->getSegments($quote, QuoteTypeId::Travel) ?? '',
         ];
     }
