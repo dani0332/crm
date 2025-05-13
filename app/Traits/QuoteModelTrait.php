@@ -308,4 +308,69 @@ trait QuoteModelTrait
                    return $payment->hasOneOfPaidStatus();
                });
     }
+
+    public function getSegments($lead, $quoteTypeId)
+    {
+        $requestData = request()->all();
+        $segmentFilter = $requestData['segment_filter'] ?? null;
+
+        $segment = QuoteSegmentEnum::tryFrom($segmentFilter);
+
+        if ($segmentFilter && $segmentFilter !== strtolower(QuoteSegmentEnum::ALL->label())) {
+            return $segment->label();
+        }
+
+        if ($segmentFilter && $segmentFilter == strtolower(QuoteSegmentEnum::ALL->label())) {
+            $matchedSegments = [];
+
+            // Fetch all relevant tags in one query
+            $tagNames = QuoteTag::where('quote_uuid', $lead->uuid)
+                ->where('quote_type_id', $quoteTypeId)
+                ->pluck('name')
+                ->map(fn ($name) => strtolower($name))
+                ->toArray();
+
+            $leadSource = $lead->source;
+
+            $isProduction = config('constants.APP_ENV') == EnvEnum::PRODUCTION;
+            $marketSource = $isProduction ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE;
+
+            // Priority: AIG check first
+            if (in_array(strtolower(QuoteSegmentEnum::AIG->tag()), $tagNames)) {
+                return QuoteSegmentEnum::AIG->label();
+            }
+
+            // Check SIC
+            if (
+                in_array(strtolower(QuoteSegmentEnum::SIC->tag()), $tagNames) &&
+                ! in_array($leadSource, [
+                    LeadSourceEnum::REVIVAL,
+                    LeadSourceEnum::REVIVAL_REPLIED,
+                    LeadSourceEnum::REVIVAL_PAID,
+                ]) &&
+                str_contains($leadSource, $marketSource)
+            ) {
+                $matchedSegments[] = QuoteSegmentEnum::SIC->label();
+            }
+
+            // Check NON-SIC
+            if (
+                ! in_array(strtolower(QuoteSegmentEnum::SIC->tag()), $tagNames) &&
+                str_contains($leadSource, $marketSource)
+            ) {
+                $matchedSegments[] = QuoteSegmentEnum::NON_SIC->label();
+            }
+
+            // Check SIC-REVIVAL
+            if (in_array($leadSource, [
+                LeadSourceEnum::REVIVAL,
+                LeadSourceEnum::REVIVAL_REPLIED,
+                LeadSourceEnum::REVIVAL_PAID,
+            ])) {
+                $matchedSegments[] = QuoteSegmentEnum::SIC_REVIVAL->label();
+            }
+
+            return implode(', ', $matchedSegments);
+        }
+    }
 }

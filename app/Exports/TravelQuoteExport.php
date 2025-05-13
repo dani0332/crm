@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Enums\AMLStatusCode;
 use App\Services\TravelQuoteService;
 use App\Traits\ExcelExportable;
+use App\Enums\QuoteTypeId;
 
 class TravelQuoteExport
 {
@@ -53,6 +54,9 @@ class TravelQuoteExport
             'TRAVEL COVERAGE',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'ASSIGNMENT TYPE',
+            'LEAD ASSIGNMENT TRIGGER',
+            'SEGMENT',
         ];
     }
 
@@ -94,6 +98,9 @@ class TravelQuoteExport
             $quote->coverage_code,
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            $quote->assignment_type ?? '',
+            $quote->lead_assignment_trigger ?? '',
+            $quote->getSegments($quote, QuoteTypeId::Travel) ?? '',
         ];
     }
 }
