@@ -49,6 +49,12 @@ trait QuoteAllocatable
 
     public function markLeadAllocationFailed()
     {
+        if ($this->advisor_id) {
+            // if advisor is already assigned then we don't need to mark it as failed
+
+            return;
+        }
+
         if ($this->lead_allocation_failed_at) {
             self::withoutEvents(function () {
                 $this->update([
