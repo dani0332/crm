@@ -15,6 +15,15 @@ const isNonNegative = value => {
   return parseFloat(value) >= 0 || 'Value must be non-negative';
 };
 
+const validatePriceRange = value => {
+  if (!value) return true;
+  const price = parseFloat(value);
+  if (price < 1 || price > 100000000) {
+    return 'Value must be between 1 and 100,000,000';
+  }
+  return true;
+};
+
 const shown = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
@@ -308,7 +317,7 @@ const fetchProviderPlans = () => {
             <x-input
               v-model="createForm.sumAssured"
               placeholder="Enter Sum Assured"
-              :rules="[isRequired, isNonNegative]"
+              :rules="[isRequired, isNonNegative, validatePriceRange]"
               class="w-full"
               type="number"
               min="0"
@@ -357,7 +366,7 @@ const fetchProviderPlans = () => {
           <x-input
             v-model="createForm.actualPremium"
             placeholder="Enter Price"
-            :rules="[isRequired, isNonNegative]"
+            :rules="[isRequired, isNonNegative, validatePriceRange]"
             class="w-full"
             type="number"
             min="0"

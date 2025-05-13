@@ -45,8 +45,8 @@ const { isRequired, isEmail, isMobileNo } = useRules();
 const validateHeight = value => {
   if (!value) return true;
   const height = parseFloat(value);
-  if (height < 55 || height > 273) {
-    return 'Height must be between 55 and 273 cm';
+  if (height < 1 || height > 999) {
+    return 'Height must be between 1 and 999 cm';
   }
   return true;
 };
@@ -54,8 +54,17 @@ const validateHeight = value => {
 const validateWeight = value => {
   if (!value) return true;
   const weight = parseFloat(value);
-  if (weight < 20 || weight > 650) {
-    return 'Weight must be between 20 and 650 kg';
+  if (weight < 1 || weight > 999) {
+    return 'Weight must be between 1 and 999 kg';
+  }
+  return true;
+};
+
+const validateSumAssured = value => {
+  if (!value) return true;
+  const sumAssured = parseFloat(value);
+  if (sumAssured < 1 || sumAssured > 100000000) {
+    return 'Sum Assured must be between 1 and 100,000,000';
   }
   return true;
 };
@@ -337,7 +346,7 @@ watch(
                   v-model="quoteForm.sum_insured_value"
                   type="number"
                   class="w-full"
-                  :rules="[isRequired]"
+                  :rules="[isRequired, validateSumAssured]"
                   :error="quoteForm.errors.sum_insured_value"
                 />
               </x-field>

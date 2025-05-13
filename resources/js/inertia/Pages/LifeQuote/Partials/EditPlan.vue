@@ -43,6 +43,15 @@ const formatDate = timestamp => {
   return moment(timestamp).format('DD-MM-YYYY HH:mm:ss');
 };
 
+const validatePriceRange = value => {
+  if (!value) return true;
+  const price = parseFloat(value);
+  if (editForm.isManualPlan && price < 1 || price > 100000000) {
+    return 'Value must be between 1 and 100,000,000';
+  }
+  return true;
+};
+
 const ridersData = ref(riders);
 
 const page = usePage();
@@ -511,6 +520,7 @@ const closeModal = () => {
                 <x-input
                   v-model="editForm.actualPremium"
                   :disabled="editForm.isApi"
+                  :rules="[isRequired, validatePriceRange]"
                   @input="handleActualPremium"
                   size="sm"
                   type="number"
@@ -543,7 +553,7 @@ const closeModal = () => {
                 <x-input
                   v-model="editForm.sumAssured"
                   :disabled="editForm.isApi"
-                  :rules="[isRequired]"
+                  :rules="[isRequired, validatePriceRange]"
                   size="sm"
                   type="number"
                   min="0"

@@ -19,6 +19,16 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
+const validatePriceRange = value => {
+  if (!value) return true;
+  const price = parseFloat(value);
+  if (createForm.isManualPlan && price < 1 || price > 100000000) {
+    return 'Value must be between 1 and 100,000,000';
+  }
+  return true;
+};
+
+
 const riders = props.lifeRiders.map(rider => ({
   riderId: rider.id,
   active: 0,
@@ -390,17 +400,13 @@ const isNonNegative = value => {
             <x-input
               v-model="createForm.sumAssured"
               placeholder="Enter Sum Assured"
-              :rules="[isRequired, isNonNegative]"
+              :rules="[isRequired, isNonNegative, validatePriceRange]"
               class="w-full"
               type="number"
               min="0"
               step="any"
               @keydown="
-                e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-              "
-              @input="
-                val => (createForm.sumAssured = Math.max(0, Number(val) || 0))
-              "
+                e => (e.key === 'e' || e.key === '-') && e.preventDefault()              "
             />
           </div>
         </div>
@@ -444,7 +450,7 @@ const isNonNegative = value => {
           <x-input
             v-model="createForm.actualPremium"
             placeholder="Enter Price"
-            :rules="[isRequired, isNonNegative]"
+            :rules="[isRequired, isNonNegative, validatePriceRange]"
             class="w-full"
             type="number"
             min="0"
