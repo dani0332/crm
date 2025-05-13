@@ -57,6 +57,7 @@ final class QuoteTypeShortCode extends Enum
             QuoteTypeShortCode::CYC => 10,
             QuoteTypeShortCode::JSK => 11,
         ];
+
         return $types[$value] ?? 'Unknown';
     }
 }

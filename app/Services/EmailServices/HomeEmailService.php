@@ -10,19 +10,19 @@ use App\Enums\WorkflowTypeEnum;
 use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Models\ApplicationStorage;
 use App\Models\HomeQuote;
+use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
+use App\Models\RenewalQuoteProcess;
+use App\Models\RenewalsBatchEmails;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use App\Models\RenewalsBatchEmails;
-use App\Models\RenewalQuoteProcess;
 use App\Services\HomeQuoteService;
-use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
-use App\Models\PersonalQuote; 
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class HomeEmailService extends BaseService
 {
@@ -96,8 +96,8 @@ class HomeEmailService extends BaseService
         try {
             // Find Home Quote
             $lead = PersonalQuote::find($renewalQuoteProcess->quote_id);
-            $homeQuote = $lead->homeQuote; 
-            
+            $homeQuote = $lead->homeQuote;
+
             LoggerService::startQuoteLogging($lead);
 
             LoggerService::info('Home Renewals OCB Email started');
@@ -109,29 +109,28 @@ class HomeEmailService extends BaseService
             $emailData = $this->mapDataForRenewalOCBEmail($homeQuote, $advisor, WorkflowTypeEnum::HOME_RENEWAL_OCB);
 
             $workflowUrl = ApplicationStorage::where('key_name', WorkflowTypeEnum::HOME_RENEWAL_OCB)->first()?->value;
-            
-            if($workflowUrl){
+
+            if ($workflowUrl) {
                 app(BirdService::class)->triggerWebHookRequest($workflowUrl, $emailData);
-                
-                LoggerService::info('Renewals OCB Email Flow triggered', extra:[
-                    'email' => $lead->email
+
+                LoggerService::info('Renewals OCB Email Flow triggered', extra: [
+                    'email' => $lead->email,
                 ]);
 
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                 RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
 
-            }else{
+            } else {
                 LoggerService::error('Home Renewals OCB Email failed', extra: [
-                    'email' => $lead->email
+                    'email' => $lead->email,
                 ]);
             }
-            
+
         } catch (\Exception $exception) {
             LoggerService::error('Home Renewals OCB Email failed', exception: $exception);
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
-
 
     public function buildEmailData($lead, $advisor, $workflowType, $homeQuote)
     {
@@ -187,7 +186,7 @@ class HomeEmailService extends BaseService
         $data = (object) [
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
-            'refID' => $lead->code, 
+            'refID' => $lead->code,
             'automatedFlowExecuted' => $automatedFlowExecuted,
             'uuid' => $lead->uuid,
             'customerFullName' => $fullName,
@@ -200,7 +199,7 @@ class HomeEmailService extends BaseService
             'landLine' => $landLine,
             'mobilePhone' => $mobilePhone,
             'whatsAppNumber' => $whatsAppNumber,
-            'mobileNoWithoutSpaces' =>  $mobileNoWithoutSpaces,
+            'mobileNoWithoutSpaces' => $mobileNoWithoutSpaces,
             'workflowType' => $workflowType,
             'customerMobile' => $customerMobile,
             'triggerDate' => $triggerDate,
@@ -309,18 +308,18 @@ class HomeEmailService extends BaseService
     /**
      * Get timestamp for OCB trigger date based on policy expiry date
      * OCB date is 30 days before expiry, adjusted for weekends
-     * 
-     * @param string|Carbon $expiryDate The policy expiry date
+     *
+     * @param  string|Carbon  $expiryDate  The policy expiry date
      * @return string Timestamp for the OCB trigger date
      */
     private function getOCBTriggerTimestamp($expiryDate): string
     {
         // Ensure Carbon instance
         $expiry = Carbon::parse($expiryDate);
-    
+
         // Subtract 30 days to get the OCB trigger date
         $ocbDate = $expiry->copy()->subDays(30);
-    
+
         // Adjust for weekend rules
         switch ($ocbDate->dayOfWeek) {
             case Carbon::SATURDAY:
@@ -330,21 +329,21 @@ class HomeEmailService extends BaseService
                 $ocbDate->addDay(); // Move to Monday
                 break;
         }
-    
+
         // Get current time
         $now = Carbon::now();
-    
+
         LoggerService::info('fn: getOCBTriggerTimestamp', [
             'expiryDate' => $expiryDate,
             'ocbDate' => $ocbDate,
         ]);
-    
+
         // If OCB date is already in the past, return timestamp for 10 minutes from now
         if ($ocbDate->lessThanOrEqualTo($now)) {
-            return (string)strtotime('+10 minutes'); 
+            return (string) strtotime('+10 minutes');
         }
-    
+
         // Return timestamp for the OCB date
-        return (string)$ocbDate->timestamp;
+        return (string) $ocbDate->timestamp;
     }
 }

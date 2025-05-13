@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\QuoteTypeShortCode;
 use App\Models\RenewalsUploadLeads;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -17,7 +16,7 @@ class RenewalsUploadNonMotorRequest extends FormRequest
     {
         return true;
     }
-    
+
     /**
      * Get the validation rules that apply to the request.
      *

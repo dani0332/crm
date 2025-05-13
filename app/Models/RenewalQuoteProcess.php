@@ -9,7 +9,7 @@ class RenewalQuoteProcess extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type', 'fetch_plans_status','renewal_batch_id'];
+    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type', 'fetch_plans_status', 'renewal_batch_id'];
     protected $casts = [
         'data' => 'array',
         'validation_errors' => 'array',
@@ -41,11 +41,11 @@ class RenewalQuoteProcess extends Model
         return $this->belongsTo(PersonalQuote::class, 'quote_id');
     }
 
-    function renewalBatch()
+    public function renewalBatch()
     {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
-    
+
     /**
      * json encode data.
      * todo: fix later as its not preserving order
@@ -75,5 +75,4 @@ class RenewalQuoteProcess extends Model
         $this->attributes['validation_errors'] = json_encode($value);
     }
 
-    
 }

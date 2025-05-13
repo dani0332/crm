@@ -105,11 +105,10 @@ class CapiRequestService
     {
         $response = self::sendCAPIRequest('/api/v1-get-uuid', ['quoteTypeId' => $type]);
         if ($response) {
-          
 
             return $response;
         } else {
-         
+
             return false;
         }
     }
@@ -121,6 +120,7 @@ class CapiRequestService
             return $response;
         } else {
             info('fn: getPersonalQuoteUUID - response: false');
+
             return false;
         }
     }

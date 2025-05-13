@@ -40,11 +40,13 @@ use App\Jobs\Renewals\CreateRenewalsWorkflowJob;
 use App\Jobs\Renewals\CreateTravelRenewalQuotesJob;
 use App\Jobs\Renewals\FetchPlansForHomeRenewalsQuoteJob;
 use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
+use App\Jobs\Renewals\HomeRenewalBatchEmailJob;
 use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
+use App\Jobs\ScheduleHomeRenewalOcbEmails;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -57,6 +59,7 @@ use App\Models\CurrentlyLocatedIn;
 use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\HealthPlan;
+use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
@@ -85,17 +88,10 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use DateTime;
+use Illuminate\Bus\Batch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
-use App\Jobs\Renewals\HomeRenewalBatchEmailJob;
-use App\Models\HomeQuote;
-use App\Enums\WorkflowTypeEnum;
-use Illuminate\Bus\Batch;
-use Illuminate\Support\Facades\Bus;
-use Throwable;
-use App\Jobs\ScheduleHomeRenewalOcbEmails;
 
 class RenewalsUploadService
 {
@@ -110,7 +106,6 @@ class RenewalsUploadService
     protected $sendEmailCustomerService;
     protected $userService;
     protected $healthQuoteService;
-
     protected $homeQuoteService;
 
     public function __construct(
@@ -122,7 +117,7 @@ class RenewalsUploadService
         LookupService $lookupService,
         SendEmailCustomerService $sendEmailCustomerService,
         UserService $userService,
-        HealthQuoteService $healthQuoteService, 
+        HealthQuoteService $healthQuoteService,
         HomeQuoteService $homeQuoteService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
@@ -396,11 +391,13 @@ class RenewalsUploadService
         return $quotePlans;
     }
 
-    function getPlansNonMotor($id, $quoteType){
-        LoggerService::info('fn: getPlansNonMotor: quoteType: '.$quoteType);   
+    public function getPlansNonMotor($id, $quoteType)
+    {
+        LoggerService::info('fn: getPlansNonMotor: quoteType: '.$quoteType);
+
         return $this->homeQuoteService->getQuotePlans($id, [
-            'getLatestRating' => true
-        ]);   
+            'getLatestRating' => true,
+        ]);
     }
 
     /**
@@ -409,7 +406,7 @@ class RenewalsUploadService
     public function fetchRenewalPlans(RenewalStatusProcess $renewalStatusProcess, $batch)
     {
         $logPrefix = 'FetchPlans FN: fetchRenewalPlans Batch: '.$batch;
-        
+
         LoggerService::info($logPrefix.'  Fetch plans started');
 
         try {
@@ -480,14 +477,15 @@ class RenewalsUploadService
 
     public function scheduleHomeRenewalsOcbEmails($batch, $userId = null)
     {
-        LoggerService::info('fn: scheduleHomeRenewalsOcbEmails - Renewal OCB Email Send Started'); 
+        LoggerService::info('fn: scheduleHomeRenewalsOcbEmails - Renewal OCB Email Send Started');
 
         // get pending leads
         $totalLeads = $this->getPendingOcbLeadsTotalNonMotor($batch, QuoteTypeShortCode::HOM);
-        
+
         // If there are not leads, return false
         if ($totalLeads == 0) {
-            LoggerService::info('fn: scheduleHomeRenewalsOcbEmails - No leads found for sending OCB Emails'); 
+            LoggerService::info('fn: scheduleHomeRenewalsOcbEmails - No leads found for sending OCB Emails');
+
             return false;
         }
 
@@ -498,21 +496,21 @@ class RenewalsUploadService
             'total_sent' => 0,
             'total_bounced' => 0,
             'total_failed' => 0,
-            'created_by_id' => $userId
+            'created_by_id' => $userId,
         ]);
 
         ScheduleHomeRenewalOcbEmails::dispatch($batch, $renewalsBatchEmail);
- 
+
     }
 
-
-    public function scheduleHomeOCB($batch, $renewalsBatchEmail){
-        $logPrefix = 'fn: scheduleHomeOCB - Scheduling Home Renewals OCB email';        
+    public function scheduleHomeOCB($batch, $renewalsBatchEmail)
+    {
+        $logPrefix = 'fn: scheduleHomeOCB - Scheduling Home Renewals OCB email';
 
         try {
             $jobs = null;
 
-            $quoteType = QuoteTypeShortCode::HOM; 
+            $quoteType = QuoteTypeShortCode::HOM;
 
             $this->getOcbLeadsQueryNonMotor($batch, $quoteType)
                 ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
@@ -526,7 +524,7 @@ class RenewalsUploadService
                 Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
-                    ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
+                    ->then(function () use ($logPrefix, $renewalsBatchEmail) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
 
@@ -553,10 +551,10 @@ class RenewalsUploadService
 
     public function fetchRenewalPlansForNonMotor(RenewalStatusProcess $renewalStatusProcess, $batch, $quoteType)
     {
-        $logPrefix ="FetchPlans FN: fetchRenewalPlansForNonMotor Batch: $batch";
+        $logPrefix = "FetchPlans FN: fetchRenewalPlansForNonMotor Batch: $batch";
         LoggerService::info($logPrefix.'  Fetch plans started');
 
-        $userId = $renewalStatusProcess->user_id; 
+        $userId = $renewalStatusProcess->user_id;
 
         try {
             $jobs = null;
@@ -569,8 +567,7 @@ class RenewalsUploadService
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->with(['renewalUploadLead', 'personalQuote']);
-            
-            
+
             $query->chunkById(50, function ($leads) use ($quoteType, $renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
@@ -581,7 +578,7 @@ class RenewalsUploadService
                             default:
                                 break;
                         }
-                        
+
                     } else {
                         LoggerService::info($logPrefix.' skipping fetch plans for uuid : '.$lead->personalQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
@@ -595,20 +592,18 @@ class RenewalsUploadService
                 LoggerService::info($logPrefix.' total leads for skipped plans ('.$totalSkipped.')');
             }
 
-            
-            if (!empty($jobs)) {
-                LoggerService::info($logPrefix . ' ' . count($jobs) . ' found to schedule for fetch plans');
-    
+            if (! empty($jobs)) {
+                LoggerService::info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
                 Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalStatusProcess, $batch, $userId) {
-                        LoggerService::info($logPrefix . ' all jobs completed successfully');
+                        LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
 
                         // Don't call scheduleHomeRenewalsOcbEmails directly, dispatch it as a separate job
-                        dispatch(function() use ($batch, $userId) {
+                        dispatch(function () use ($batch, $userId) {
                             app(RenewalsUploadService::class)->scheduleHomeRenewalsOcbEmails($batch, $userId);
                         })->onQueue('renewals');
                     })
@@ -617,17 +612,17 @@ class RenewalsUploadService
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function ($batch) use ($logPrefix) {
-                        LoggerService::info($logPrefix . ' everything done');
+                        LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
                     ->withDelay(1)
                     ->dispatch();
-    
-                LoggerService::info($logPrefix . ' all jobs are scheduled');
+
+                LoggerService::info($logPrefix.' all jobs are scheduled');
             } else {
-                LoggerService::info($logPrefix . ' no leads available for fetch plans, about to mark status as completed');
+                LoggerService::info($logPrefix.' no leads available for fetch plans, about to mark status as completed');
                 $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
-                LoggerService::info($logPrefix . ' fetch plans is completed');
+                LoggerService::info($logPrefix.' fetch plans is completed');
             }
 
             return true;
@@ -802,12 +797,12 @@ class RenewalsUploadService
         if (checkPersonalQuotes($quoteType)) {
             $quoteType = QuoteTypes::PERSONAL->value;
         }
-        LoggerService::info("fn: createQuoteObject QuoteType: ".$quoteType);
+        LoggerService::info('fn: createQuoteObject QuoteType: '.$quoteType);
 
         $model = $nameSpace.ucfirst(strtolower($quoteType)).'Quote';
-        
-        LoggerService::info("fn: createQuoteObject model: ".$model);
-    
+
+        LoggerService::info('fn: createQuoteObject model: '.$model);
+
         return (class_exists($model)) ? $model::query() : false;
     }
 
@@ -1082,7 +1077,6 @@ class RenewalsUploadService
 
             $quote = $quoteObject->create($quoteData);
 
-
             if (! $isQuotePersonal) {
                 $this->syncQuote($quote, $quoteData);
             }
@@ -1090,8 +1084,8 @@ class RenewalsUploadService
             // Create Entry in Personal Quote Details Table
             if ($isQuotePersonal) {
                 $quote->quoteDetail()->create($detailData);
-            } 
-            
+            }
+
             // Create entry in Lob Specific QUote Detail Table
             else {
                 $quotType = strtolower($quoteType->code);
@@ -1110,8 +1104,7 @@ class RenewalsUploadService
                 LoggerService::info($logPrefix.'-insertion in mongo db for : UUID: '.$quote->uuid);
             }
 
-           
-            // As Home is a personal Quote, creating entry for HomeQuote and HomeQuoteDetail 
+            // As Home is a personal Quote, creating entry for HomeQuote and HomeQuoteDetail
             if ($quoteType->code == quoteTypeCode::Home) {
 
                 // unsetting fields as homeQuote table doesn't have them
@@ -1121,7 +1114,6 @@ class RenewalsUploadService
                 unset($detailData['additional_notes'], $quoteData['previous_advisor_id']);
                 $homeQuote->homeQuoteRequestDetail()->create($detailData);
             }
-            
 
             // update advisor assign date/time
             if (! empty($advisorId)) {
@@ -1254,8 +1246,7 @@ class RenewalsUploadService
                 $nationality = Nationality::where('text', $data['nationality'])->first();
                 $emirate = Emirate::where('text', $data['registration_location'])->first();
                 $uaeLicenseHeldFor = UAELicenseHeldFor::where('text', $data['driving_experience'])->first();
-            } 
-            elseif ($isQuoteTypeHome) {
+            } elseif ($isQuoteTypeHome) {
                 $homeCurrentInsuranceProvider = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::where('code', $data['current_insurance_provider'])->first()->id : null;
                 $homePossessionTypeId = (! empty($data['you_are_a'])) ? RangeLookup::where('text', $data['you_are_a'])->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)->first()->id : null;
                 $homeIliveinAccommodationTypeId = (! empty($data['i_live_in_a'])) ? RangeLookup::where('text', $data['i_live_in_a'])->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)->first()->id : null;
@@ -1332,7 +1323,6 @@ class RenewalsUploadService
             $quoteData = $this->getNonEmptyValues($quoteData);
             $isQuoteTypeCar && $quoteData['is_gcc_standard'] = $data['is_gcc'] == 'Yes' ? 1 : 0;
 
-           
             /*
              * API refresh plans when quote_updated_at have latest date
              */
@@ -1373,8 +1363,8 @@ class RenewalsUploadService
             LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
 
             $quote->update($quoteData);
- 
-            // create or update in lob specific table i.e home_quote_request, health_quote_request etc. 
+
+            // create or update in lob specific table i.e home_quote_request, health_quote_request etc.
             if ($isQuoteTypeHome) {
                 $quoteData['personal_quote_id'] = $quote->id;
                 $quoteData['insurance_provider_id'] = $homeCurrentInsuranceProvider;
@@ -1394,9 +1384,7 @@ class RenewalsUploadService
                 $quoteData['insurer_quote_number'] = $homeInsurerQuoteNumber;
                 $quoteData['previous_advisor_id'] = $homePreviousAdvisorId;
                 $quoteData['additional_notes'] = $data['notes'];
-                
 
-                
                 $homeQuote = HomeQuote::updateOrCreate(
                     [
                         'uuid' => $quote->uuid,
@@ -1404,17 +1392,14 @@ class RenewalsUploadService
                     $quoteData
                 );
 
-                if($homeQuote){
+                if ($homeQuote) {
                     LoggerService:info('fn: updateQuote - Home Quote Created/Update', [
-                        'ref-id' => $quote->uuid
-                    ]); 
+                        'ref-id' => $quote->uuid,
+                    ]);
                 }
             }
 
-            
-
-
-            if (!checkPersonalQuotes($quoteType->code)) {
+            if (! checkPersonalQuotes($quoteType->code)) {
                 $this->syncQuote($quote, $quoteData);
             }
 
@@ -1766,9 +1751,6 @@ class RenewalsUploadService
         }
     }
 
-    
-
-
     /**
      * This function use to retrieve template id for emails
      *
@@ -2075,12 +2057,12 @@ class RenewalsUploadService
                 }
 
                 if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number && $quoteTypeObject) {
-                    $quoteExist = $isQuotePersonal == 1 ? 
+                    $quoteExist = $isQuotePersonal == 1 ?
                     $quoteTypeObject->where('quote_type_id', $quoteType->id)->where('previous_quote_policy_number', $lead->policy_number)
-                    ->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first() : 
+                        ->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first() :
                         $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)
-                        ->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))
-                        ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first();
+                            ->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))
+                            ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)->first();
 
                     if ($quoteExist != null && isset($quoteExist)) {
                         $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
@@ -2254,7 +2236,7 @@ class RenewalsUploadService
                                 }
                             }
                             if ($leadData->current_insurance_provider) {
-                                if (!InsuranceProvider::where('code', $leadData->current_insurance_provider)->first()) {
+                                if (! InsuranceProvider::where('code', $leadData->current_insurance_provider)->first()) {
                                     $leadValidationErrors->push('Invalid Current Insurance Provider Text');
                                     break;
                                 }
@@ -2362,7 +2344,7 @@ class RenewalsUploadService
                 if ($leadValidationErrors->count() == 0) {
                     $lead->status = RenewalProcessStatuses::VALIDATED;
 
-                    LoggerService::info("Batch assigned $lead->batch for uuid: $lead->uuid"); 
+                    LoggerService::info("Batch assigned $lead->batch for uuid: $lead->uuid");
                 } else {
                     $lead->validation_errors = $leadValidationErrors;
                     $lead->status = RenewalProcessStatuses::BAD_DATA;
@@ -2431,7 +2413,7 @@ class RenewalsUploadService
 
     private function getBatch($endDate)
     {
-       
+
         // Extract year from endDate
         $endDate = Carbon::createFromFormat('d/m/Y', $endDate);
         $year = $endDate->format('Y');
@@ -2445,9 +2427,9 @@ class RenewalsUploadService
             ['quote_type_id', null],
         ])->first();
 
-        LoggerService::info('Get Batch: ' . json_encode($batch->toArray()));
+        LoggerService::info('Get Batch: '.json_encode($batch->toArray()));
 
-        return $batch; 
+        return $batch;
     }
 
     private function validateDate($date, $format = 'd/m/Y')
@@ -2503,8 +2485,6 @@ class RenewalsUploadService
             })->groupBy('quote_id');
     }
 
-   
-
     public function getPendingOcbLeadsTotal($batch)
     {
         return $this->getOcbLeadsQuery($batch)->get()->count();
@@ -2514,15 +2494,15 @@ class RenewalsUploadService
     public function getPendingOcbLeadsTotalNonMotor($batch, $quoteType)
     {
 
-        $count = $this->getOcbLeadsQueryNonMotor($batch, $quoteType)->get()->count(); 
-        LoggerService::info("fn: getPendingOcbLeadsTotalNonMotor - $batch - $quoteType - $count"); 
+        $count = $this->getOcbLeadsQueryNonMotor($batch, $quoteType)->get()->count();
+        LoggerService::info("fn: getPendingOcbLeadsTotalNonMotor - $batch - $quoteType - $count");
 
         return $count;
     }
 
     public function getOcbLeadsQueryNonMotor($batch, $quoteType)
     {
-        $query =  RenewalQuoteProcess::select('id', 'quote_id')->where([
+        $query = RenewalQuoteProcess::select('id', 'quote_id')->where([
             'quote_type' => $quoteType,
             'renewal_batch_id' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -2537,12 +2517,12 @@ class RenewalsUploadService
                     $q->whereNull('paid_at');
                 });
                 break;
-            default:                
+            default:
                 break;
         }
+
         return $query->groupBy('quote_id');
     }
-    
 
     public function scheduleRenewalsOcbEmails($batch, RenewalsBatchEmails $renewalsBatchEmail)
     {
@@ -2603,7 +2583,6 @@ class RenewalsUploadService
         //        }
     }
 
-  
     // todo: remove this code
     //    public function updateRenewalQuoteEmailSent($batch, $quoteId)
     //    {
@@ -2845,12 +2824,14 @@ class RenewalsUploadService
 
     public function getMonths(): array
     {
-        $monthNames = array_map(fn($m) => date('F', mktime(0, 0, 0, $m, 1)), range(1, 12));
+        $monthNames = array_map(fn ($m) => date('F', mktime(0, 0, 0, $m, 1)), range(1, 12));
         $months = array_combine($monthNames, range(1, 12));
+
         return $months;
     }
 
-    public function getNonMotorLobs(): array{
+    public function getNonMotorLobs(): array
+    {
         return [
             quoteTypeCode::Home => QuoteTypeShortCode::HOM,
             quoteTypeCode::Health => QuoteTypeShortCode::HEA,

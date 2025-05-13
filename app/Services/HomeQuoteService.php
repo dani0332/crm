@@ -795,11 +795,10 @@ class HomeQuoteService extends BaseService
     }
     /**
      * Get Quote Plans from KEN API
-     * 
-     * @param string $id
-     * @param boolean $latestRating
+     *
+     * @param  string  $id
+     * @param  bool  $latestRating
      */
-    
     public function getQuotePlans($id, $extraData = [])
     {
         $quoteUuId = PersonalQuote::where('uuid', '=', $id)->value('uuid');

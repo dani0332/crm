@@ -5,19 +5,20 @@ namespace App\Http\Controllers;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\ProcessStatusCode;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
+use App\Http\Requests\RenewalsUploadNonMotorRequest;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchHomeRenewalsPlansJob;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
+use App\Jobs\ScheduleHomeRenewalOcbEmails;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\CarQuote;
 use App\Models\HomeQuote;
@@ -27,14 +28,12 @@ use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Repositories\CarQuoteRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Jobs\ScheduleHomeRenewalOcbEmails;
-use App\Services\Logger\LoggerService;
-use App\Http\Requests\RenewalsUploadNonMotorRequest;
-use Carbon\Carbon;
 
 class RenewalsUploadController extends Controller
 {
@@ -115,8 +114,9 @@ class RenewalsUploadController extends Controller
         return redirect()->route('batch-plans-processes', $batch)->with('error', 'No pending leads available to fetch plans');
     }
 
-    public function fetchPlansNonMotor($batch, $quoteType){
-        
+    public function fetchPlansNonMotor($batch, $quoteType)
+    {
+
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
@@ -133,7 +133,6 @@ class RenewalsUploadController extends Controller
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ])->count();
-        
 
         if ($totalPending) {
             $renewalStatusProcess = RenewalStatusProcess::create([
@@ -151,6 +150,7 @@ class RenewalsUploadController extends Controller
                 default:
                     break;
             }
+
             return redirect()->route('batch-plans-processes.non.motor', [$batch, $quoteType])->with('success', 'Fetch plans is started for batch '.$batch);
         }
 
@@ -345,32 +345,33 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
-    public function listRenewalBatchesNonMotor(Request $request){
+    public function listRenewalBatchesNonMotor(Request $request)
+    {
         $year = $request->year ?? Carbon::now()->year;
         $month = $request->month ?? Carbon::now()->month;
-        
+
         $lob = $request->lob ?? QuoteTypeShortCode::HOM;
 
         $query = RenewalQuoteProcess::query()
-        ->whereHas('renewalBatch', callback: function($query) use ($year, $month) {
-            $query->where('year', $year)
-            ->where('month', $month);
-        })
-        ->where([
-            'renewal_quote_processes.quote_type' => $lob,
-            'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
-        ])
-        ->join('renewal_batches', 'renewal_quote_processes.renewal_batch_id', '=', 'renewal_batches.id')
-        ->select('renewal_batches.name as renewal_batch', 'renewal_quote_processes.quote_type', 'renewal_quote_processes.renewal_batch_id')
-        ->when(!empty($request->batch), function ($query) use ($request) {
-            return $query->where('renewal_quote_processes.batch', $request->batch);
-        });
+            ->whereHas('renewalBatch', callback: function ($query) use ($year, $month) {
+                $query->where('year', $year)
+                    ->where('month', $month);
+            })
+            ->where([
+                'renewal_quote_processes.quote_type' => $lob,
+                'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
+            ])
+            ->join('renewal_batches', 'renewal_quote_processes.renewal_batch_id', '=', 'renewal_batches.id')
+            ->select('renewal_batches.name as renewal_batch', 'renewal_quote_processes.quote_type', 'renewal_quote_processes.renewal_batch_id')
+            ->when(! empty($request->batch), function ($query) use ($request) {
+                return $query->where('renewal_quote_processes.batch', $request->batch);
+            });
 
-        $renewalQuotes = $query->distinct()->simplePaginate(); 
+        $renewalQuotes = $query->distinct()->simplePaginate();
 
         $lobs = $this->renewalsUploadFileService->getNonMotorLobs();
-        
-        $years = array_combine(range(date("Y"), 2010), range(date("Y"), 2010));
+
+        $years = array_combine(range(date('Y'), 2010), range(date('Y'), 2010));
 
         $months = $this->renewalsUploadFileService->getMonths();
 
@@ -378,7 +379,7 @@ class RenewalsUploadController extends Controller
             'lobs' => $lobs,
             'years' => $years,
             'months' => $months,
-            'batches' => $renewalQuotes
+            'batches' => $renewalQuotes,
         ]);
     }
 
@@ -414,17 +415,17 @@ class RenewalsUploadController extends Controller
                         $q->where('quote_type_id', $quoteTypeId);
                     });
             })
-            ->orderBy('id', 'desc'); 
-            
+            ->orderBy('id', 'desc');
+
         $process = $process->simplePaginate();
-        
+
         return inertia('Renewals/PlanProcessesNonMotor', [
             'process' => $process,
             'batch' => $batch,
             'quoteType' => $quoteType,
         ]);
     }
-    
+
     public function batchDetail($batch)
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
@@ -448,14 +449,15 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
-    public function batchDetailNonMotor($batch, $quoteType){
+    public function batchDetailNonMotor($batch, $quoteType)
+    {
 
         $totalLeads = $this->renewalsUploadFileService->getProcessTotalLeads($batch, $quoteType);
         $totalLeadsCompleted = $this->renewalsUploadFileService->getProcessTotalLeadsWithPlans($batch, $quoteType);
         $hideSendEmailButton = $totalLeadsCompleted != $totalLeads ? 1 : 0;
 
         $emailBatches = RenewalsBatchEmails::query()
-            ->leftJoin('personal_quotes', function($join) use ($quoteType) {
+            ->leftJoin('personal_quotes', function ($join) use ($quoteType) {
                 $join->on('renewals_batch_emails.batch', '=', 'personal_quotes.renewal_batch')
                     ->where('personal_quotes.quote_type_id', '=', $quoteType);
             })
@@ -464,7 +466,7 @@ class RenewalsUploadController extends Controller
                 'personal_quotes.quote_type_id' => $quoteType,
             ])->with('createdby');
         $emailBatches = $emailBatches->simplePaginate();
-        
+
         return inertia('Renewals/BatchDetailNonMotor', [
             'emailBatches' => $emailBatches,
             'hideSendEmailButton' => $hideSendEmailButton,
@@ -498,7 +500,7 @@ class RenewalsUploadController extends Controller
     public function scheduleRenewalsOcbNonMotor($batch, $quoteType)
     {
         $totalLeads = $this->renewalsUploadFileService->getPendingOcbLeadsTotalNonMotor($batch, $quoteType);
-        
+
         $renewalsBatchEmail = RenewalsBatchEmails::create([
             'batch' => $batch,
             'status' => ProcessStatusCode::PENDING,
@@ -610,6 +612,7 @@ class RenewalsUploadController extends Controller
     public function export(Request $request)
     {
         $quotes = $this->renewalsUploadFileService->getExport($request);
+
         return $quotes;
     }
 

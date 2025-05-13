@@ -16,11 +16,13 @@ class RenewalStatusProcess extends Model
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    function personalQuotes(){
+    public function personalQuotes()
+    {
         return $this->hasMany(PersonalQuote::class, 'renewal_batch', 'batch');
     }
 
-    function renewalBatch(){
+    public function renewalBatch()
+    {
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 }

@@ -2,13 +2,10 @@
 
 namespace App\Jobs\Renewals;
 
-use App\Enums\ProcessStatusCode;
-use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Services\EmailServices\HomeEmailService;
 use App\Services\Logger\LoggerService;
-use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,7 +13,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
@@ -44,7 +40,7 @@ class HomeRenewalBatchEmailJob implements ShouldQueue, StackableJob
     // $batchLeadId, $batchEmailId, $quoteTypeId, $isCompleted, $batch
     public function __construct($batch, RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
     {
-       
+
         $this->batch = $batch;
         $this->renewalsBatchEmail = $renewalsBatchEmail;
         $this->renewalQuoteProcess = $renewalQuoteProcess;
@@ -64,7 +60,7 @@ class HomeRenewalBatchEmailJob implements ShouldQueue, StackableJob
 
         $homeEmailService->sendRenewalOCBEmail($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
 
-        LoggerService::info('Renewals OCB email job completed', extra:[
+        LoggerService::info('Renewals OCB email job completed', extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
         ]);
     }
@@ -79,7 +75,7 @@ class HomeRenewalBatchEmailJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-        LoggerService::error("CL: ".get_class()." FN: failed. Job Failed.", extra: [
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
         ], exception: $exception);
         RenewalsBatchEmails::where('id', $this->renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);

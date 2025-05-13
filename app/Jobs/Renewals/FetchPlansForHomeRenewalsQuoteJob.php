@@ -6,6 +6,7 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,11 +17,10 @@ use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
-use Illuminate\Bus\Batchable;
 
 class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue, StackableJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable,Batchable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels,Stackable;
 
     protected $renewalQuoteProcess;
     protected $renewalStatusProcess;
@@ -69,7 +69,7 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-       
+
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
         ], exception: $exception);

@@ -4,6 +4,7 @@ namespace App\Jobs\Renewals;
 
 use App\Enums\ProcessStatusCode;
 use App\Models\RenewalStatusProcess;
+use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,7 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
-use App\Services\Logger\LoggerService;
+
 class FetchHomeRenewalsPlansJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;

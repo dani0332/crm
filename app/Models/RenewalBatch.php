@@ -182,7 +182,8 @@ class RenewalBatch extends Model implements AuditableContract
         );
     }
 
-    function personalQuotes(){
+    public function personalQuotes()
+    {
         return $this->hasMany(PersonalQuote::class, 'renewal_batch_id');
     }
 }
