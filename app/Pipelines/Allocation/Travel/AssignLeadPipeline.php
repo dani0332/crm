@@ -4,7 +4,6 @@ namespace App\Pipelines\Allocation\Travel;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Models\TravelQuoteRequestDetail;
 use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
 use App\Services\Logger\LoggerService;
@@ -38,8 +37,6 @@ class AssignLeadPipeline extends BaseAllocationPipeline
             DB::rollBack();
             LoggerService::error($e->getMessage(), exception: $e);
 
-            $this->allocationRequest->getTracker()->saveResult(ProcessTrackerAllocationEnum::EXCEPTION_RAISED, summary: "Lead allocation failed with error : {$e->getMessage()}");
-
             $this->throw('Lead allocation failed', self::SERVER_ERROR);
         }
 
@@ -50,7 +47,6 @@ class AssignLeadPipeline extends BaseAllocationPipeline
     {
         $advisor = $this->allocationRequest->get('advisor');
         $assignmentType = $this->allocationRequest->getAssignmentType();
-        $tracker = $this->allocationRequest->getTracker();
 
         LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
         $previousAssignmentType = $this->lead->assignment_type;
@@ -67,26 +63,6 @@ class AssignLeadPipeline extends BaseAllocationPipeline
         LoggerService::info(self::class." - Assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($this->lead->id);
-
-        if ($tracker) {
-            $tracker->saveResult(
-                ProcessTrackerAllocationEnum::LEAD_ASSIGNED,
-                [
-                    'leadId' => $this->lead->id,
-                    'leadUuid' => $this->lead->uuid,
-                    'advisorId' => $advisor->id,
-                    'advisorName' => $advisor->name,
-                    'advisorEmail' => $advisor->email,
-                    'quoteBatchId' => $quoteBatch->id,
-                    'quoteBatchName' => $quoteBatch->name,
-                    'previousAssignmentType' => $previousAssignmentType,
-                    'previousUserId' => $previousUserId,
-                    'previousAdvisorAssignedDate' => $previousAdvisorAssignedDate,
-                ],
-                "Lead assigned to advisor: {$advisor->name} with Quote Batch ID: {$quoteBatch->id} and Batch Name: {$quoteBatch->name}",
-                isSuccess: true
-            );
-        }
 
         if ($this->lead->source != LeadSourceEnum::REFERRAL) {
             LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');

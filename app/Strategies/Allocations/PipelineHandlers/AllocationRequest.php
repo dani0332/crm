@@ -4,7 +4,6 @@ namespace App\Strategies\Allocations\PipelineHandlers;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
-use App\Services\ProcessTracker\ProcessTrackerService;
 use Illuminate\Support\Collection;
 
 class AllocationRequest
@@ -16,7 +15,6 @@ class AllocationRequest
         protected $quoteUUID,
         protected $teamId,
         protected $overrideAdvisorId,
-        protected ?ProcessTrackerService $tracker = null,
         protected bool $isReassignmentJob = false,
         protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED
     ) {
@@ -41,11 +39,6 @@ class AllocationRequest
     public function getOverrideAdvisorId()
     {
         return $this->overrideAdvisorId;
-    }
-
-    public function getTracker()
-    {
-        return $this->tracker;
     }
 
     public function isReassignmentJob()

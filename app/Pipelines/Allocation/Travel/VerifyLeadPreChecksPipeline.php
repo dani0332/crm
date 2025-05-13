@@ -4,7 +4,6 @@ namespace App\Pipelines\Allocation\Travel;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
-use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\quoteTypeCode;
 use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
 use App\Repositories\PaymentRepository;
@@ -28,10 +27,6 @@ class VerifyLeadPreChecksPipeline extends BaseAllocationPipeline
         $lead = $this->resolveLead();
 
         if (! $lead) {
-            $this->allocationRequest->getTracker()?->saveResult(ProcessTrackerAllocationEnum::LEAD_NOT_FOUND, [
-                '@statuses' => ['Fake', 'Duplicate', 'Lost'],
-            ]);
-
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
         }
 
@@ -58,7 +53,6 @@ class VerifyLeadPreChecksPipeline extends BaseAllocationPipeline
 
     private function verifyFetchLeadPreChecks()
     {
-        $tracker = $this->allocationRequest->getTracker();
         $lead = $this->lead;
 
         if ($lead->isRenewalUpload()) {
@@ -85,19 +79,13 @@ class VerifyLeadPreChecksPipeline extends BaseAllocationPipeline
             LoggerService::info(self::class." - verifyFetchLeadPreChecks: isALNC: {$isALNC} - isAutomationEnabled: {$isAutomationEnabled}");
 
             if ($isALNC && $isAutomationEnabled && $lead->isSingleTrip() && $lead->isPaid()) {
-                $tracker->addStep(ProcessTrackerAllocationEnum::ALIANCE_PLAN_FOUND);
                 if ($lead->isAutomationCompleted() || $lead->isBookingFailed()) {
-                    $lead->isAutomationCompleted() && $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_COMPLETED);
-                    $lead->isBookingFailed() && $tracker->addStep(ProcessTrackerAllocationEnum::BOOKING_FAILED);
-
                     $this->allocationRequest->set('isCHSAdvisor', true);
                     $this->allocationRequest->set('isMixEnquiryWithAutomation', $lead->hasChild());
                 } else {
                     if (! $lead->isAutomationCompleted()) {
-                        $tracker->addStep(ProcessTrackerAllocationEnum::AUTOMATION_NOT_COMPLETED);
                         LoggerService::info(self::class.':fetchLead - it is Alliance and automation is not yet completed so check fail cases');
                         if ($lead->isPolicyIssuanceFailed()) {
-                            $tracker->addStep(ProcessTrackerAllocationEnum::POLICY_ISSUANCE_FAILED);
                             LoggerService::info(self::class.':fetchLead - it is Alliance and automation is not yet completed but policy issuance failed so proceed with allocation');
                             $this->allocationRequest->set('isSICAdvisor', true);
                             $this->allocationRequest->set('isMixEnquiryWithAutomation', $lead->hasChild());
