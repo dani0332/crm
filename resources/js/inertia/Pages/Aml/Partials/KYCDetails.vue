@@ -269,7 +269,7 @@ function changeIncomeSource() {
       : 1
     : false;
 }
-const isDateExpired = (date) => {
+const isDateExpired = date => {
   if (!date) return false;
   const expiryDate = new Date(date);
   const today = new Date();
@@ -310,7 +310,6 @@ watch(
 
 const idExpiryDateError = ref('');
 
-
 // Add watcher for searchData
 watch(
   () => props.searchData,
@@ -323,14 +322,14 @@ watch(
     // Check if ID expiry date is expired
     const idExpiryDate = convertDate(kyc.id_expiry_date);
     const isExpired = isDateExpired(idExpiryDate);
-    
+
     // Show notification if ID is expired
     if (isExpired && kyc.id_expiry_date) {
       notification.warning({
         title: 'ID Expiry Date has expired',
         message: 'Please provide a valid ID with current expiry date',
         position: 'top',
-        timeout: 5000
+        timeout: 5000,
       });
       idExpiryDateError.value = 'This ID is expired';
     } else {
@@ -413,24 +412,23 @@ watch(
   { immediate: true, deep: true },
 );
 
-
 // Add a watcher for the ID expiry date
 watch(
   () => kycFormDetails.id_expiry_date,
-  (newDate) => {
+  newDate => {
     if (isDateExpired(newDate)) {
       notification.warning({
         title: 'ID Expiry Date has expired',
         message: 'Please provide a valid ID with current expiry date',
         position: 'top',
-        timeout: 5000
+        timeout: 5000,
       });
       kycFormDetails.id_expiry_date = null;
       idExpiryDateError.value = 'This ID is expired';
     } else {
       idExpiryDateError.value = '';
     }
-  }
+  },
 );
 </script>
 <template>
