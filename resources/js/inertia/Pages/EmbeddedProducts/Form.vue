@@ -241,12 +241,13 @@ function onSubmit(isValid) {
           label="Insurance Provider"
           required
         >
-          <ComboBox
+          <x-select
             v-model="form.insurance_provider_id"
             placeholder="Select Insurance Provider"
             :options="insuranceProviderOptions"
-            :single="true"
-            :hasError="isInsuranceProviderIdEmpty"
+            filterable
+            filterPlaceholder="Filter Insurance Provider...."
+            :rules="[isRequired]"
           />
         </x-field>
 
@@ -426,12 +427,13 @@ function onSubmit(isValid) {
       <template v-for="(f, index) in form.placements" :key="index">
         <div class="grid sm:grid-cols-2 gap-4">
           <x-field label="LOB" required>
-            <ComboBox
+            <x-select
               v-model="form.placements[index].quote_type_id"
               placeholder="Select LOB"
               :options="quoteTypesOptions"
-              :single="true"
-              :hasError="isLOBEmpty[index]"
+              filterable
+              filterPlaceholder="Filter LOB...."
+              :rules="[isRequired]"
             />
           </x-field>
 

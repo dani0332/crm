@@ -11,7 +11,7 @@ defineProps({
   amlStatuses: Object,
   insuranceProviders: Array,
   travelPlans: Array,
-  insurerAMLStatus: Array,
+  insurerAMLStatus: Object,
 });
 
 let params = useUrlSearchParams('history');
@@ -102,47 +102,53 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at' },
   { text: 'PAYMENT EXPIRY', value: 'expiry_dates' },
   { text: 'Travel Type', value: 'direction_code' },
   { text: 'Travel Coverage', value: 'coverage_code' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'LEAD STATUS', value: 'quote_status.text' },
   { text: 'AML Status', value: 'aml_status' },
-  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_display' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'INSURER AML STATUS', value: 'insurer_aml_status_text' },
+  { text: 'ADVISOR', value: 'advisor.name' },
   {
     text: 'ADVISOR REQUESTED',
     value: 'sic_advisor_requested',
   },
-  { text: 'Advisor Assigned Date And Time', value: 'advisor_assigned_date' },
+  {
+    text: 'Advisor Assigned Date And Time',
+    value: 'travel_quote_request_detail.advisor_assigned_date',
+  },
   { text: 'API ISSUANCE STATUS', value: 'api_issuance_status' },
   { text: 'INSURER API STATUS', value: 'insurer_api_status' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {
     text: 'POLICY EXPIRY DATE',
-    value: 'previous_policy_expiry_date',
+    value: 'previous_policy_expiry_date_formatted',
     sortable: true,
   },
-  { text: 'DATE OF BIRTH', value: 'dob' },
-  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'DATE OF BIRTH', value: 'dob_formatted' },
+  {
+    text: 'LOST REASON',
+    value: 'travel_quote_request_detail.lost_reason.text',
+  },
   { text: 'SOURCE', value: 'source' },
-  { text: 'Provider Name', value: 'travel_plan_provider_text' },
-  { text: 'Plan Name', value: 'plan_id_text' },
+  { text: 'Provider Name', value: 'insurance_provider.text' },
+  { text: 'Plan Name', value: 'plan.text' },
   { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'DESTINATION', value: 'destination_id_text' },
-  { text: 'CURRENTLY LOCATED IN', value: 'currently_located_in_id_text' },
+  { text: 'DESTINATION', value: 'nationality.country_name' },
+  { text: 'CURRENTLY LOCATED IN', value: 'currently_located_in.text' },
   { text: 'EXPIRY DATE', value: 'expiry_date' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
+  { text: 'PAYMENT STATUS', value: 'payment_status.text' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
   {
     text: 'Previous Policy Premium',
     value: 'previous_quote_policy_premium',
     sortable: true,
   },
-  { text: 'Renewal Batch', value: 'renewal_batch_text' },
+  { text: 'Renewal Batch', value: 'renewal_batch.name' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -350,7 +356,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 const exportLoader = ref(false);
-const onDataExport = () => {
+const onDataExport = (exportType = 'download') => {
   filters.created_at_start = filters.created_at_start
     ? useDateFormat(filters.created_at_start, 'YYYY-MM-DD').value
     : '';
@@ -359,20 +365,41 @@ const onDataExport = () => {
     ? useDateFormat(filters.created_at_end, 'YYYY-MM-DD').value
     : '';
 
+  filters.exportType = exportType;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'travel');
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Travel'),
+    exportType: exportType,
     url: url + '?' + new URLSearchParams(data).toString(),
   };
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-    console.log(result);
-    if (result)
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result.data.message) {
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response.data.message
+          ? err.response.data.message
+          : 'Unable to start an export',
+        position: 'top',
+      });
       setTimeout(() => {
         exportLoader.value = false;
       }, 1000);
-  });
+      throw err;
+    });
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
@@ -629,22 +656,57 @@ const insurerAMLStatusOption = computed(() => {
         <x-field label="Created Date End">
           <DatePicker v-model="filters.created_at_end" name="created_at_end" />
         </x-field>
-        <x-field label="Lead Status">
-          <ComboBox
-            v-model="filters.quote_status_id"
-            name="quote_status_id"
-            placeholder="Search by Lead Status"
-            :options="leadsStatusOptions"
-          />
-        </x-field>
-        <x-field label="Insurer AML Status">
-          <ComboBox
-            v-model="filters.insurer_aml_status"
-            name="insurer_aml_status"
-            placeholder="Search by Insurer AML Status"
-            :options="insurerAMLStatusOption"
-          />
-        </x-field>
+        <DatePicker
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <x-select
+          v-model="filters.quote_status_id"
+          name="quote_status_id"
+          placeholder="Search by Lead Status"
+          :options="leadsStatusOptions"
+          class="w-full"
+          filterable
+          label="Lead Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = leadsStatusOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.insurer_aml_status"
+          name="insurer_aml_status"
+          placeholder="Search by Insurer AML Status"
+          :options="insurerAMLStatusOption"
+          class="w-full"
+          filterable
+          label="Insurer AML Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -657,13 +719,26 @@ const insurerAMLStatusOption = computed(() => {
             name="policy_expiry_date_end"
           />
         </x-field>
-        <x-field label="Advisor" v-if="!permissions.travelAdvisor">
-          <ComboBox
-            v-model="filters.advisor_id"
-            placeholder="Search by Advisor"
-            :options="advisorsOptions"
-          />
-        </x-field>
+        <x-select
+          v-model="filters.advisor_id"
+          name="advisor_id"
+          placeholder="Search by Advisor"
+          :options="advisorsOptions"
+          class="w-full"
+          filterable
+          label="Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisor_id = advisorsOptions.map(item => item.value)
+              "
+              @clear="filters.advisor_id = []"
+            />
+          </template>
+        </x-select>
         <DatePicker
           v-model="filters.transaction_approved_dates"
           label="Transaction Approved Date"
@@ -685,14 +760,17 @@ const insurerAMLStatusOption = computed(() => {
             class="w-full"
           />
         </x-field>
-        <x-field label="Payment Status">
-          <ComboBox
-            v-model="filters.payment_status_id"
-            placeholder="Search by Payment Status"
-            :options="paymentStatusOptions"
-            :single="true"
-          />
-        </x-field>
+
+        <x-select
+          v-model="filters.payment_status_id"
+          name="payment_status_id"
+          placeholder="Search by Payment Status"
+          :options="paymentStatusOptions"
+          class="w-full"
+          filterable
+          label="Payment Status"
+        />
+
         <x-field label="Travel Type" required>
           <x-select
             v-model="filters.direction_code"
@@ -728,12 +806,28 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Policy Number"
         />
-        <ComboBox
+        <x-select
           v-model="filters.renewal_batches"
-          label="Renewal Batch"
+          name="renewal_batches"
           placeholder="Search by Renewal Batch"
           :options="renewalBatchOptions"
-        />
+          class="w-full"
+          filterable
+          multiple
+          truncate
+          label="Renewal Batch"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.renewal_batches = renewalBatchOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.renewal_batches = []"
+            />
+          </template>
+        </x-select>
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -750,15 +844,18 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
-        <ComboBox
+
+        <x-select
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
-          label="Segment"
           v-model="filters.segment_filter"
-          placeholder="Select Segment"
+          name="segment_filter"
+          placeholder="Search by Segment"
           :options="quoteSegments"
           class="w-full"
-          :single="true"
+          label="Segment"
+          filterable
         />
+
         <DatePicker
           v-model="filters.last_modified_date"
           name="created_at_start"
@@ -766,25 +863,18 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-        <DatePicker
-          v-if="hasRole(rolesEnum.TravelManager)"
-          v-model="filters.advisor_assigned_date"
-          name="created_at_start"
-          label="Advisor Assigned Date"
-          range
-          format="dd-MM-yyyy"
-        />
-        <ComboBox
+
+        <x-select
           v-model="filters.sic_advisor_requested"
-          label="Advisor Requested"
-          placeholder="Select any option"
+          name="sic_advisor_requested"
+          placeholder="Search by Advisor Requested"
           :options="[
             { value: 'All', label: 'All' },
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
           class="w-full"
-          :single="true"
+          label="Advisor Requested"
         />
         <x-input
           v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
@@ -806,47 +896,110 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
         />
-        <ComboBox
-          label="API Issuance Status"
+
+        <x-select
           v-model="filters.api_issuance_status_id"
-          placeholder="Select API Issuance Status"
+          name="api_issuance_status_id"
+          placeholder="Search by API Issuance Status"
           :options="issuanceStatuses"
           class="w-full"
-        />
-        <ComboBox
-          label="Insurer API Status"
+          label="API Issuance Status"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.api_issuance_status_id = issuanceStatuses.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.api_issuance_status_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
           v-model="filters.insurer_api_status_id"
-          placeholder="Select Status"
+          name="insurer_api_status_id"
+          placeholder="Search by Insurer API Status"
           :options="insurerApiStatus"
           class="w-full"
-        />
-        <x-field label="AML Status">
-          <ComboBox
-            v-model="filters.amlStatus"
-            name="source"
-            class="w-full"
-            placeholder="Search by AMLStatus"
-            :options="computedAmlStatuses"
-          />
-        </x-field>
-        <x-field label="Provider Name">
-          <ComboBox
-            v-model="filters.insurance_provider_ids"
-            name="source"
-            class="w-full"
-            placeholder="Search by Provider Name"
-            :options="computedInsuranceProviders"
-          />
-        </x-field>
-        <x-field label="Plan Name">
-          <ComboBox
-            v-model="filters.plan_name"
-            name="source"
-            class="w-full"
-            placeholder="Search by Plan Name"
-            :options="computedTravelPlans"
-          />
-        </x-field>
+          label="Insurer API Status"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_api_status_id = insurerApiStatus.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_api_status_id = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.amlStatus"
+          name="source"
+          class="w-full"
+          placeholder="Search by AML Status"
+          :options="computedAmlStatuses"
+          label="AML Status"
+          filterable
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.amlStatus = computedAmlStatuses.map(item => item.value)
+              "
+              @clear="filters.amlStatus = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
+          v-model="filters.insurance_provider_ids"
+          name="source"
+          class="w-full"
+          placeholder="Search by Provider Name"
+          :options="computedInsuranceProviders"
+          label="Provider Name"
+          filterable
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurance_provider_ids = computedInsuranceProviders.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurance_provider_ids = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.plan_name"
+          name="source"
+          class="w-full"
+          placeholder="Search by Plan Name"
+          :options="computedTravelPlans"
+          filterable
+          label="Plan Name"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.plan_name = computedTravelPlans.map(item => item.value)
+              "
+              @clear="filters.plan_name = []"
+            />
+          </template>
+        </x-select>
         <DatePicker
           v-model="filters.travel_start_date"
           label="Travel Start Date"
@@ -861,12 +1014,27 @@ const insurerAMLStatusOption = computed(() => {
             color="emerald"
             :loading="exportLoader"
             @click.prevent="onDataExport"
-            class="justify-self-start"
+            class="justify-self-start mr-3"
           >
             Export
           </x-button>
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click.prevent="onDataExport('email')"
+            class="justify-self-start"
+          >
+            Export via email
+          </x-button>
           <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"
+              >Export via email</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Created dates or policy expiry dates or payment due date or

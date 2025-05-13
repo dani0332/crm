@@ -12,6 +12,7 @@ final class AssignmentTypeEnum extends Enum
     const MANUAL_REASSIGNED = 4;
     const BOUGHT_LEAD = 5;
     const REASSIGNED_AS_BOUGHT_LEAD = 6;
+    const SELF_ASSIGNED = 7;
     const AssignmentTypeList = [
         self::SYSTEM_ASSIGNED,
         self::SYSTEM_REASSIGNED,
@@ -19,6 +20,7 @@ final class AssignmentTypeEnum extends Enum
         self::MANUAL_REASSIGNED,
         self::BOUGHT_LEAD,
         self::REASSIGNED_AS_BOUGHT_LEAD,
+        self::SELF_ASSIGNED,
     ];
 
     public static function getAssignmentTypeText($assignmentType)

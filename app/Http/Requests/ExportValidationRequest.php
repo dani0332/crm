@@ -77,7 +77,7 @@ class ExportValidationRequest extends FormRequest
         $validator->after(function ($validator) {
 
             if (! $validator->errors()->any()) {
-                $diffInDays = 120;
+                $diffInDays = 31;
                 $exportTye = $this->route('exportTye');
                 $quoteType = $this->route('quoteType');
 
@@ -119,9 +119,9 @@ class ExportValidationRequest extends FormRequest
                         $error_fields = 'transaction approved dates';
                     }
                     $diff = $start->diffInDays($end);
-                    if ($diff > $diffInDays) {
-                        $message = "Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.";
-                        logger()->error('ExportValidationRequest: '.$message);
+                    if ($diff >= $diffInDays) {
+                        $message = "Maximum of {$diffInDays} days ({$error_fields}) are allowed to be exported.";
+                        // logger()->error('ExportValidationRequest: '.$message);
                         $validator->errors()->add('flash', $message);
                     }
                 } else {

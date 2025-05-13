@@ -132,12 +132,13 @@ function onSubmit(isValid) {
         label="Date of Birth"
         :hasError="customerForm.errors.dob"
       />
-      <ComboBox
+      <x-select
         v-model="customerForm.nationality_id"
         label="Nationality"
-        :single="true"
         :options="nationalityOptions"
         :error="customerForm.errors.nationality_id"
+        filterable
+        filterPlaceholder="Filter Nationality...."
       />
       <div class="flex gap-5">
         <x-form-group v-model="customerForm.has_alfred_access">

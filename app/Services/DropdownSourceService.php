@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Models\BusinessActivity;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarAddOn;
 use App\Models\CarMake;
@@ -15,8 +16,6 @@ use App\Models\CurrencyType;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
 use App\Models\HealthPlanType;
-use App\Models\HomeAccomodationType;
-use App\Models\HomePossessionType;
 use App\Models\InsuranceProvider;
 use App\Models\LeadSource;
 use App\Models\LifeChildren;
@@ -214,12 +213,6 @@ class DropdownSourceService extends BaseService
                     }
                 }
                 break;
-            case 'iam_possesion_type_id':
-                $data = HomePossessionType::select('id', 'text')->where('is_active', true)->get();
-                break;
-            case 'ilivein_accommodation_type_id':
-                $data = HomeAccomodationType::select('id', 'text')->where('is_active', true)->get();
-                break;
             case 'business_type_of_insurance_id':
                 $data = BusinessInsuranceType::select('id', 'text')->where('is_active', true)->get();
                 break;
@@ -339,6 +332,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'line_of_business':
                 $data = Team::where('is_active', true)->get();
+                break;
+            case 'business_activity':
+                $data = BusinessActivity::active()->get();
                 break;
             default:
                 break;

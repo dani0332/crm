@@ -88,18 +88,18 @@ onMounted(() => {
   <div class="flex flex-col h-[85vh]">
     <div class="flex gap-3 justify-end">
       <x-field label="Segment" v-if="can(permissionsEnum.SEGMENT_FILTER)">
-        <ComboBox
+        <x-select
           v-model="filters.segment_filter"
           placeholder="Select Segment"
           :options="quoteSegments"
-          class="w-full"
-          :single="true"
+          class="w-full min-w-[200px]"
+          filterable
+          filterPlaceholder="Filter Segment...."
         />
       </x-field>
       <x-field label="Teams">
-        <ComboBox
+        <x-select
           v-model="filters.team_filter"
-          name="team_name"
           placeholder="Select Teams"
           :options="
             allTeams.map(item => ({
@@ -108,10 +108,22 @@ onMounted(() => {
             }))
           "
           :disabled="can(permissionsEnum.ViewTeamsFilters)"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          class="w-full min-w-[200px]"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.team_filter = allTeams.map(item => item.id)"
+              @clear="filters.team_filter = []"
+            />
+          </template>
+        </x-select>
       </x-field>
       <x-field label="Advisor">
-        <ComboBox
+        <x-select
           v-model="filters.userFilter"
           placeholder="Select Advisor"
           :options="
@@ -122,7 +134,19 @@ onMounted(() => {
           "
           :disabled="filters.team_filter.length == 0"
           :class="{ 'cursor-no-drop': filters.team_filter.length == 0 }"
-        />
+          multiple
+          truncate
+          class="w-full min-w-[200px]"
+          filterable
+          filterPlaceholder="Filter Advisor...."
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.userFilter = advisors.map(item => item.id)"
+              @clear="filters.userFilter = []"
+            />
+          </template>
+        </x-select>
       </x-field>
       <x-field label="Commercial">
         <x-select

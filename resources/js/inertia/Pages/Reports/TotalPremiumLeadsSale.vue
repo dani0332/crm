@@ -137,7 +137,8 @@ onMounted(() => {
           @update:modelValue="fetchTeamsAgainstQuoteType"
           disabled
         />
-        <ComboBox
+
+        <x-select
           v-model="filters.teams"
           label="Teams"
           placeholder="Search by Teams"
@@ -148,9 +149,20 @@ onMounted(() => {
             }))
           "
           @update:modelValue="fetchTeamUsers"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(team => team.id)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-model="filters.userIds"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -160,7 +172,18 @@ onMounted(() => {
               label: user.name,
             }))
           "
-        />
+          filterable
+          filterPlaceholder="Filter Advisor...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.userIds = teamUsers.map(user => user.id)"
+              @clear="filters.userIds = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

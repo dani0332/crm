@@ -22,5 +22,6 @@ class CustomerAddress extends Model
         'city',
         'landmark',
         'is_default',
+        'is_courier_address',
     ];
 }

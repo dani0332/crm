@@ -10,6 +10,7 @@ final class TeamNameEnum extends Enum
     public const HOME = 'Home';
     public const CYCLE = 'Cycle';
     public const HEALTH = 'Health';
+    public const LIFE = 'Life';
     public const CORPLINE = 'Corpline';
     public const PET = 'Pet';
     public const YACHT = 'Yacht';

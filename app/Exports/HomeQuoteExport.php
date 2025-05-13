@@ -9,9 +9,9 @@ class HomeQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return HomeQuoteRepository::getData(true);
+        return HomeQuoteRepository::getData(true, false, $requestParams);
     }
     public function headings(): array
     {
@@ -22,6 +22,7 @@ class HomeQuoteExport
             'LEAD STATUS',
             'ADVISOR',
             'CREATED DATE',
+            'ADVISOR ASSIGNED DATE',
             'LAST MODIFIED DATE',
             'TRANSAPP CODE',
             'SOURCE',
@@ -46,11 +47,12 @@ class HomeQuoteExport
             optional($quote->quoteStatus)->text,
             optional($quote->advisor)->name,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            isset($quote->homeQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->homeQuoteRequestDetail->advisor_assigned_date)) : '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             optional($quote->homeQuoteRequestDetail)->transapp_code,
             $quote->source,
             optional($quote->homeQuoteRequestDetail)->lostReason?->text,
-            $quote->premium ? $quote->premium : $quote->price_with_vat,
+            ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
             $quote->policy_number,
             $quote->renewal_batch,
             $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
