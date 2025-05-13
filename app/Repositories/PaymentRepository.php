@@ -552,7 +552,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     private function handlePaymentDecline($request)
     {
-        info("Processing payment decline for {$request->payment_code}");
+        LoggerService::info("Processing payment decline for {$request->payment_code}");
 
         $quoteModel = $this->getQuoteModel($request->modelType, $request->quote_id, $request->send_update_id);
         LoggerService::startQuoteLogging($quoteModel);
@@ -588,7 +588,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             foreach ($request->collection_amount as $key => $splitAmount) {
                 $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
                 if ($key == null || $key <= 0) {
-                    info("Child payment code: {$paymentSplit->code} Invalid split number: {$key}");
+                    LoggerService::info("Child payment code: {$paymentSplit->code} Invalid split number: {$key}");
                     continue;
                 }
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
@@ -614,7 +614,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     // This method handles the approval or decline of split payments based on the request.
     public function fetchUpdateSplitPaymentsApprove($request)
     {
-        info("Processing split payment request for {$request->payment_code} - Action: ".($request->is_declined ? 'Decline' : 'Approve'));
+        LoggerService::info("Processing split payment request for {$request->payment_code} - Action: ".($request->is_declined ? 'Decline' : 'Approve'));
 
         return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);
     }
