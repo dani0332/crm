@@ -13,28 +13,18 @@ use App\Pipes\Allocation\Travel\AssignLeadPipe;
 use App\Pipes\Allocation\Travel\FetchAvailableAdvisorPipe;
 use App\Pipes\Allocation\Travel\VerifyLeadPreChecksPipe;
 use App\Services\AllocationService;
-use Illuminate\Http\Response;
+use Exception;
 use Illuminate\Support\Facades\Pipeline;
-use Throwable;
 
-class TravelAllocation extends AllocationService implements Allocation
+class TravelAllocation implements Allocation
 {
-    public $allocationId;
-    public $teamId;
-    private bool $overrideAdvisorId = false;
+    public function __construct(protected $uuid, protected $teamId = false, protected bool $overrideAdvisorId = false) {}
 
-    public function __construct($allocationId, $teamId = false, bool $overrideAdvisorId = false)
-    {
-        $this->allocationId = $allocationId;
-        $this->teamId = $teamId;
-        $this->overrideAdvisorId = $overrideAdvisorId;
-    }
-
-    public function executeSteps()
+    public function execute()
     {
         $alloctionRequest = new AllocationRequest(
             quoteType: QuoteTypes::TRAVEL,
-            quoteUUID: $this->allocationId,
+            quoteUUID: $this->uuid,
             teamId: $this->teamId,
             overrideAdvisorId: $this->overrideAdvisorId
         );
@@ -51,18 +41,8 @@ class TravelAllocation extends AllocationService implements Allocation
                 MakeResponsePipe::class,
             ])->thenReturn();
 
-        } catch (AllocationException|Throwable $e) {
-            $this->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
-
-            if ($e instanceof AllocationException) {
-                return $this->createResponse2($alloctionRequest, $e);
-            }
-
-            return [
-                'advisorId' => 0,
-                'message' => $e->getMessage(),
-                'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
-            ];
+        } catch (AllocationException|Exception $e) {
+            return app(AllocationService::class)->resolveAllocationResponse($alloctionRequest, $e);
         }
     }
 }
