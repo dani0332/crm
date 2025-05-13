@@ -76,7 +76,7 @@ class BusinessQuoteRepository extends BaseRepository
             return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query : $query->simplePaginate();
     }
 
     /**

@@ -326,6 +326,13 @@ function activePatternField() {
   }
 }
 
+const isExpired = date => {
+  if (!date) return false;
+  // Format the date in DD-MM-YYYY HH:MM:SS format for useCompareDueDate
+  const formattedDate = useDateFormat(date, 'DD-MM-YYYY 00:00:00').value;
+  return useCompareDueDate(formattedDate);
+};
+
 onMounted(() => {
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
@@ -482,6 +489,7 @@ onMounted(() => {
         v-model="kycForm.id_expiry_date"
         label="ID expiry date"
         :rules="[isRequired]"
+        :helper="isExpired(kycForm.id_expiry_date) ? 'Invalid expiry date' : ''"
       />
     </div>
 
