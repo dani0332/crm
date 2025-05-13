@@ -585,15 +585,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     public function handlePaymentApprove($request)
     {
-        LoggerService::info("Payment approval process initiated: {$request->payment_code}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
+        $paymentCode = $request->payment_code;
+        LoggerService::info("Payment approval process initiated: {$paymentCode}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
-                $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
-                if ($paymentSplit && ($key == null || $key <= 0)) {
-                    LoggerService::info("Child payment code: {$paymentSplit->code} Invalid split number: {$key}");
+                if ($key == null || $key <= 0) {
+                    LoggerService::info("Child payment code: {$paymentCode} Invalid split number: {$key}");
 
                     continue;
                 }
+                $paymentSplit = PaymentSplits::where(['code' => $paymentCode, 'sr_no' => $key])->first();
+                
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
@@ -602,15 +604,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
                 } else {
-                    LoggerService::info("Payment split not found or already paid: {$request->payment_code}, Split No: {$key}");
+                    LoggerService::info("Payment split not found or already paid: {$paymentCode}, Split No: {$key}");
                 }
             }
         }
         // Log the master payment approval process
-        LoggerService::info('Master payment code: '.$request->payment_code.' processing master payment approval called');
+        LoggerService::info('Master payment code: '.$paymentCode.' processing master payment approval called');
 
         // process master payment approve
-        return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
+        return app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $paymentCode);
 
     }
 
