@@ -15,6 +15,6 @@ class MakeResponsePipe extends BaseAllocationPipe
      */
     public function handle(AllocationRequest $request, Closure $next)
     {
-        return $this->createResponse2($request);
+        return $this->resolveAllocationResponse($request);
     }
 }

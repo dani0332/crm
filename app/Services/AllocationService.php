@@ -8,7 +8,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
-use App\Exceptions\Allocation\AllocationException;
 use App\Models\ApplicationStorage;
 use App\Models\BuyLeadRequestLog;
 use App\Models\CarQuote;
@@ -18,6 +17,7 @@ use App\Models\Tier;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Response;
 
 class AllocationService extends BaseService
@@ -280,11 +280,13 @@ class AllocationService extends BaseService
         return $resp;
     }
 
-    public function createResponse2(AllocationRequest $request, ?AllocationException $e = null): array
+    public function resolveAllocationResponse(AllocationRequest $request, ?Exception $exception = null): array
     {
-        $isSuccess = $request->get('isSuccess');
+        if ($lead = $request->get('lead')) {
+            $lead->endAllocation();
+        }
 
-        if ($isSuccess) {
+        if ($request->isAllocated()) {
             return [
                 'advisorId' => $request->get('advisor')->id,
                 'message' => 'Lead allocated successfully',
@@ -292,10 +294,14 @@ class AllocationService extends BaseService
             ];
         }
 
+        if ($request->isFailed()) {
+            $this->leadAllocationFailed($request->getQuoteUUID(), $request->getQuoteType());
+        }
+
         return [
             'advisorId' => 0,
-            'message' => $e->getMessage(),
-            'status' => $e->getCode(),
+            'message' => $exception ? $exception->getMessage() : 'Lead allocation failed',
+            'status' => $exception ? $exception->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR,
         ];
     }
 

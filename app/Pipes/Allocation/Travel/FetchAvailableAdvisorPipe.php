@@ -27,6 +27,8 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         if (! $advisor) {
             LoggerService::info(self::class.' - No advisor found');
 
+            $this->allocationRequest->markAsFailed();
+
             $this->throw('Advisor not found', self::NOT_FOUND);
         }
 

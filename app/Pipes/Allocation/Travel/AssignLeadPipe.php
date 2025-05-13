@@ -26,10 +26,12 @@ class AssignLeadPipe extends BaseAllocationPipe
         try {
             $this->assign();
 
-            $this->allocationRequest->set('isSuccess', true);
+            $this->allocationRequest->markAsAllocated();
 
             DB::commit();
         } catch (\Exception $e) {
+            $this->allocationRequest->markAsFailed();
+
             DB::rollBack();
             LoggerService::error($e->getMessage(), exception: $e);
 
