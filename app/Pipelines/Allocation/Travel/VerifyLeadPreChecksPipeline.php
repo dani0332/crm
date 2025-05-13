@@ -24,7 +24,7 @@ class VerifyLeadPreChecksPipeline extends BaseAllocationPipeline
     {
         $this->setRequest($request);
 
-        $lead = $this->resolveLead();
+        $lead = $this->findLead();
 
         if (! $lead) {
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
@@ -35,7 +35,7 @@ class VerifyLeadPreChecksPipeline extends BaseAllocationPipeline
         return $next($request);
     }
 
-    private function resolveLead()
+    private function findLead()
     {
         if ($this->verifyFetchLeadPreChecks() === false) {
             return null;
