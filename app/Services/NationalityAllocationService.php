@@ -2,33 +2,31 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypes;
 use App\Models\Nationality;
 use App\Models\NationalityAllocationConfiguration;
 use App\Models\QuoteType;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class NationalityAllocationService
 {
-    public function findUsersForAllocation(int $quoteTypeId, int $nationalityId): Collection
+    public static function find(QuoteTypes $quoteType, $nationalityId): ?NationalityAllocationConfiguration
     {
-        $config = NationalityAllocationConfiguration::with(['users'])
-            ->where('quote_type_id', $quoteTypeId)
+        if (! $nationalityId) {
+            return null;
+        }
+
+        return NationalityAllocationConfiguration::query()
+            ->where('quote_type_id', $quoteType->id())
             ->where('nationality_id', $nationalityId)
             ->active()
             ->first();
-
-        if (! $config) {
-            return collect();
-        }
-
-        return $config->users;
     }
 
-    public function getAllConfigurations(): Collection
+    public static function getUserIDs(NationalityAllocationConfiguration $config): array
     {
-        return NationalityAllocationConfiguration::with(['nationality', 'quoteType', 'users'])->get();
+        return $config->users->pluck('id')->toArray();
     }
 
     public function createConfiguration(array $data, int $userId): NationalityAllocationConfiguration
