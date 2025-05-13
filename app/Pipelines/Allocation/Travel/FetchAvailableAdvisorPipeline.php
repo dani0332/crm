@@ -2,10 +2,8 @@
 
 namespace App\Pipelines\Allocation\Travel;
 
-use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
-use App\Enums\UserStatusEnum;
 use App\Models\User;
 use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
 use App\Services\Logger\LoggerService;
@@ -29,8 +27,6 @@ class FetchAvailableAdvisorPipeline extends BaseAllocationPipeline
         if (! $advisor) {
             LoggerService::info(self::class.' - No advisor found');
 
-            $this->allocationRequest->getTracker()->saveResult(ProcessTrackerAllocationEnum::ADVISOR_NOT_FOUND, ignoreStep: true);
-
             $this->throw('Advisor not found', self::NOT_FOUND);
         }
 
@@ -41,26 +37,12 @@ class FetchAvailableAdvisorPipeline extends BaseAllocationPipeline
 
     private function fetchAvailableAdvisor()
     {
-        $isReassignmentJob = $this->allocationRequest->isReassignmentJob();
         $teamId = $this->allocationRequest->getTeamId();
-        $tracker = $this->allocationRequest->getTracker();
 
-        LoggerService::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId}");
-
-        $statusOrder = [
-            UserStatusEnum::ONLINE,
-            UserStatusEnum::OFFLINE,
-        ];
-
-        if (! $isReassignmentJob) {
-            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
-        }
-
-        $teamName = null;
+        $statusOrder = $this->getOnlineStatusesInOrder();
 
         if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-            $teamName = TeamNameEnum::SIC_UNASSISTED;
         }
 
         foreach ($statusOrder as $status) {
@@ -70,34 +52,7 @@ class FetchAvailableAdvisorPipeline extends BaseAllocationPipeline
             if ($eligibleUser) {
                 info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
 
-                $user = User::find($eligibleUser->user_id);
-
-                if ($tracker) {
-                    $tracker->addStep(
-                        ProcessTrackerAllocationEnum::ADVISOR_FOUND,
-                        [
-                            'userId' => $user->id,
-                            '@name' => $user->name,
-                            '@email' => $user->email,
-                            '@status' => UserStatusEnum::getUserStatusText($status),
-                        ]
-                    );
-                }
-
-                return $user;
-            } else {
-                if ($tracker) {
-                    $tracker->addStep(
-                        ProcessTrackerAllocationEnum::ADVISOR_NOT_FOUND,
-                        [
-                            '@status' => UserStatusEnum::getUserStatusText($status),
-                            'teamId' => $teamId,
-                            ':teamName' => $teamName,
-                            '@roleName' => RolesEnum::TravelAdvisor,
-                        ],
-                        removableWords: $teamName ? [] : ['against team :teamName']
-                    );
-                }
+                return User::find($eligibleUser->user_id);
             }
         }
 
