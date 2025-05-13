@@ -158,7 +158,7 @@ abstract class BaseAllocation extends AllocationService
             $previousUserId = $this->lead->advisor_id;
             $this->lead->advisor_id = $advisor->id;
             $this->lead->assignment_type = $assignmentType;
-            if (empty($this->lead->lead_assignment_trigger)) {
+            if (empty($this->lead?->lead_assignment_trigger)) {
                 $this->lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
             }
             $quoteBatch = QuoteBatches::latest()->first();

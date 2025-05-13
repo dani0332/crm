@@ -255,7 +255,7 @@ class TravelAllocationService extends AllocationService
         $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
-        if (empty($lead->lead_assignment_trigger)) {
+        if (empty($lead?->lead_assignment_trigger)) {
             $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
         }
         $quoteBatch = QuoteBatches::latest()->first();

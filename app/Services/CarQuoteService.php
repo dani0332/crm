@@ -1435,7 +1435,7 @@ class CarQuoteService extends BaseService
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
-            if (empty($lead->lead_assignment_trigger)) {
+            if (empty($lead?->lead_assignment_trigger)) {
                 $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
             }
 

@@ -208,7 +208,7 @@ class CentralService extends BaseService
 
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
                 $getQuoteLead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
-                if (empty($getQuoteLead->lead_assignment_trigger)) {
+                if (empty($getQuoteLead?->lead_assignment_trigger)) {
                     $getQuoteLead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
                 }
                 $getQuoteLead->quote_batch_id = $quoteBatch->id;

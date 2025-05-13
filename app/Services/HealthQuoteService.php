@@ -1312,7 +1312,7 @@ class HealthQuoteService extends BaseService
             $lead->advisor_id = $userId;
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
-            if (empty($lead->lead_assignment_trigger)) {
+            if (empty($lead?->lead_assignment_trigger)) {
                 $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
             }
             // will update the car quote request detail entity about assignment
