@@ -153,4 +153,9 @@ class Customer extends Model implements AuditableContract
             END
         ";
     }
+
+    public function personalQuote(): HasMany
+    {
+        return $this->hasMany(PersonalQuote::class, 'customer_id', 'id');
+    }
 }

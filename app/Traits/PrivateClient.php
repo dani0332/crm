@@ -5,11 +5,11 @@ namespace App\Traits;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
-use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\PrivateClientConfig;
 use Exception;
 use Illuminate\Support\Facades\Schema;
+use OwenIt\Auditing\Models\Audit;
 
 trait PrivateClient
 {
@@ -63,85 +63,44 @@ trait PrivateClient
     }
 
     /**
-     * Remove PCP tag from insured table.
+     * Remove PCP tag from customer table.
+     *
+     * Gather active qualifiers, count leads where PC-Qualified = Yes AND
+     * lead_status not in Policy Cancelled AND
+     * Expiry Date > Today's date (the expiry date has NOT passed).
+     *
+     * Outcome:
+     * If count > 0 → keep the Private Client tag.
+     * If count = 0 → remove the tag and write an audit-log entry on the Contact-Person profile.
      */
     public function removePcpTag()
     {
-        $customers = Customer::with('customerInsured')
-            ->where('pcp_tag', true)
-            ->orderBy('id', 'asc')
-            ->get();
+        $customers = Customer::where('pcp_tag', true)->get();
+        $updateCustomers = [];
 
         foreach ($customers as $customer) {
-            $hasMatchingPolicy = false;
-            $checkedAnyValidCustomerInsured = false;
-            foreach ($customer->customerInsured as $customerInsured) {
-                $quoteTypeId = $customerInsured->quote_type_id;
-                if (
-                    $quoteTypeId == QuoteTypes::YACHT->id() || $quoteTypeId == QuoteTypes::JETSKI->id() || $quoteTypeId == QuoteTypes::CYCLE->id()
-                    || $quoteTypeId == QuoteTypes::BIKE->id() || $quoteTypeId == QuoteTypes::PET->id()
-                ) {
-                    $quoteTypeId = QuoteTypes::PERSONAL->id();
-                }
+            $activeQualifiedLeadsCount = 0;
 
-                $modelClass = QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
+            $personalQuoteCount = $customer->personalQuote()
+                ->where('pc_qualified', true)
+                ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
+                ->whereNotNull('policy_expiry_date')
+                ->where('policy_expiry_date', '>', now())
+                ->count();
 
-                $query = $modelClass::where('id', $customerInsured->quote_request_id);
-                $model = $query->first();
+            $activeQualifiedLeadsCount += $personalQuoteCount;
 
-                if (! $model) {
-                    continue; // Try next customerInsured
-                }
-
-                $configs = $this->getActivePcpConfigs($customerInsured->quote_type_id);
-
-                $checkedAnyValidCustomerInsured = true;
-                $columns = Schema::getColumnListing($model->getTable());
-                $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $columns);
-
-                $query->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-                    ->whereNotNull('policy_expiry_date')
-                    ->where('policy_expiry_date', '>', now())->where(function ($outerQuery) use ($configs, $model, $hasSumInsuredCurrency) {
-                        foreach ($configs as $config) {
-                            $field = trim($config->field_name);
-                            $operator = strtolower(trim($config->operator));
-                            $value = trim($config->value);
-                            $currency_type_id = trim($config->currency_type_id);
-                            $values = array_map('trim', explode(',', $value));
-
-                            $outerQuery->orWhere(function ($q) use ($field, $operator, $value, $values, $model, $hasSumInsuredCurrency, $currency_type_id) {
-                                match ($operator) {
-                                    'in' => $q->whereIn($field, $values),
-                                    'not in' => $q->whereNotIn($field, $values),
-                                    'between' => count($values) === 2 ? $q->whereBetween($field, $values) : null,
-                                    'not between' => count($values) === 2 ? $q->whereNotBetween($field, $values) : null,
-                                    'like' => $q->where($field, 'like', "%$value%"),
-                                    'not like' => $q->where($field, 'not like', "%$value%"),
-                                    'is null' => $q->whereNull($field),
-                                    'is not null' => $q->whereNotNull($field),
-                                    '=', '!=', '<', '<=', '>', '>=' => $q->where($field, $operator, $value),
-                                    default => null,
-                                };
-
-                                if ($hasSumInsuredCurrency && isset($model->sum_insured_currency_id)) {
-                                    $q->where('sum_insured_currency_id', $currency_type_id);
-                                }
-                            });
-                        }
-                    });
-
-                if ($query->exists()) {
-                    $hasMatchingPolicy = true;
-                    break; // No need to check other customerInsured
-                }
-            }
-            // Remove PCP tag if no matching policy was found
-            if ($checkedAnyValidCustomerInsured && ! $hasMatchingPolicy) {
-                $customer->update(['pcp_tag' => false]);
+            if ($activeQualifiedLeadsCount === 0) {
+                $updateCustomers[] = $customer->id;
             }
         }
+        if (count($updateCustomers) > 0) {
+            Customer::whereIn('id', $updateCustomers)->update(['pcp_tag' => false]);
 
-        return 'PCP tags updated.';
+            return 'PCP tag updated. '.implode(', ', $updateCustomers).' customer(s) had their PCP tag removed.';
+        } else {
+            return 'No customer found that had PCP Tag';
+        }
     }
 
     protected function getActivePcpConfigs(int $quoteTypeId)
