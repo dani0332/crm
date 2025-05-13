@@ -7,8 +7,9 @@ use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
+class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
 {
     use Exportable;
 
@@ -29,8 +30,6 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
         $puaLeadCounts = $this->puaLeads[0]->count();
 
         $teamCounts = $this->nonPUALeads[1];
-
-        $countByStatus = $this->nonPUALeads[2];
 
         $exportData = collect();
 
@@ -64,18 +63,30 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
             ]);
         }
 
-        if ($countByStatus->isNotEmpty()) {
-            $exportData->push((object) [' ' => ' ']);
-            $exportData->push((object) [' ' => ' ']);
+        // Define all statusses
+        $allStatuses = [
+            'Payment Link Requested By Customer' => 0,
+            'Payment Link In Progress' => 0,
+            'Payment Link Sent To Customer' => 0,
+        ];
+
+        // Count leads by status
+        foreach ($leads as $lead) {
+            if (isset($allStatuses[$lead->leadstatus])) {
+                $allStatuses[$lead->leadstatus]++;
+            }
         }
 
-        foreach ($countByStatus as $status) {
+        $exportData->push((object) [' ' => ' ']);
+        $exportData->push((object) [' ' => ' ']);           
+
+        // Add status counts to export data
+        foreach ($allStatuses as $status => $count) {
             $exportData->push((object) [
-                'Quote Status' => $status->text,
-                'Count' => $status->count,
+                'Quote Status' => $status,
+                'Count' => $count,
             ]);
         }
-        
 
         return $exportData;
     }
