@@ -37,29 +37,16 @@ class FetchAvailableAdvisorPipeline extends BaseAllocationPipeline
 
     private function fetchAvailableAdvisor()
     {
-        $teamId = $this->allocationRequest->getTeamId();
-
-        $statusOrder = $this->getOnlineStatusesInOrder();
+        $teamId = null;
 
         if ($this->lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
 
-        foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status}");
-            $eligibleUser = $this->getAdvisorByStatus($status, $teamId);
-
-            if ($eligibleUser) {
-                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
-
-                return User::find($eligibleUser->user_id);
-            }
-        }
-
-        return null;
+        return $this->findAvailableAdvisor($teamId);
     }
 
-    public function getAdvisorByStatus($onlineStatus, $teamId)
+    protected function getAdvisorByStatus($onlineStatus, $teamId)
     {
         if ($this->allocationRequest->get('isCHSAdvisor')) {
             info(self::class.' - getAdvisorByStatus: CHS Advisor is required');
@@ -84,7 +71,7 @@ class FetchAvailableAdvisorPipeline extends BaseAllocationPipeline
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             });
 
-        LoggerService::info(self::class." - getAdvisorByStatus query: {$query->toRawSql()}");
+        LoggerService::sql(self::class.' - getAdvisorByStatus query', $query);
 
         return $query->first();
     }
