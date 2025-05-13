@@ -5,6 +5,7 @@ namespace App\Strategies\Allocations;
 use App\Enums\QuoteTypes;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\ValidateNationalityConfigPipe;
 use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Pipes\Allocation\Travel\AssignChildLeadPipe;
@@ -34,6 +35,7 @@ class TravelAllocation implements Allocation
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
                 VerifyAlreadyInProgressAllocationPipe::class,
+                ValidateNationalityConfigPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
                 AssignChildLeadPipe::class,
