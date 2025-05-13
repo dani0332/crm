@@ -1280,8 +1280,8 @@ class RenewalsUploadService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
-        LoggerService::info('Renewal: Health Plan Modify V2 Request Data: ' . json_encode($dataArray));
-        $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
+        LoggerService::info('Renewal: Health Plan Modify V2 Request Data present in extra ', $dataArray, ['ref_id' => $quote->uuid]);
+        $response = Ken::renewalRequest('/save-manual-health-quote-plans', 'POST', $dataArray);
 
         if ($response) {
             $selectResponse = $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id);
@@ -1398,20 +1398,20 @@ class RenewalsUploadService
         $memberDetails = arrayKeysToCamelCase($memberDetails);
         $updateMemberDetails = arrayKeysToCamelCase($updateMemberDetails);
 
-        info('Health quote update member: '.json_encode($memberDetails));
-        $addResponse = count($memberDetails) > 0 && Ken::request('/add-health-quote-members', 'POST', [
+        LoggerService::info('Renewal: Health quote add member details in extra', [...$memberDetails], ['ref_id' => $quote->uuid]);
+        $addResponse = count($memberDetails) > 0 && Ken::renewalRequest('/add-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$memberDetails],
         ]);
 
-        info('Health quote update member: '.json_encode($updateMemberDetails));
-        $updateResponse = count($updateMemberDetails) > 0 && Ken::request('/update-health-quote-members', 'POST', [
+        LoggerService::info('Renewal: Health quote update member details in extra', [...$updateMemberDetails], ['ref_id' => $quote->uuid]);
+        $updateResponse = count($updateMemberDetails) > 0 && Ken::renewalRequest('/update-health-quote-members', 'POST', [
             'quoteUID' => $quote->uuid,
             'memberDetails' => [...$updateMemberDetails],
         ]);
 
         if ($addResponse || $updateResponse) {
-            info(' Health Members added/updated successfully for UUID: '.$quote->uuid);
+            LoggerService::info('Renewal: Health Members added/updated successfully for UUID: ' . $quote->uuid, [], ['ref_id' => $quote->uuid]);
             $this->updateBasePricePlan($quote, $data);
         }
     }
@@ -1435,9 +1435,9 @@ class RenewalsUploadService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
             'url' => request()->url(),
         ];
-        
-        LoggerService::info('Renewal: select health plan request data: ' . json_encode($data));
-        $response = Capi::request($endpoint, 'post', $data);
+
+        LoggerService::info('Renewal: select health plan request data in extra ', $data, ['ref_id' => $quote->uuid]);
+        $response = Capi::request($endpoint, 'post', $data, true);
 
         return $response;
     }
