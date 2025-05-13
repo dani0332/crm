@@ -518,6 +518,17 @@ class AMLController extends Controller
         return $this->handleResponse(false, 'Something went wrong', $isAutomation);
     }
 
+    private function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
+    {
+        $getPersonalQuote = PersonalQuote::where(['uuid' => $quote->uuid, 'quote_type_id' => $quoteTypeId])->first();
+        if ($getPersonalQuote) {
+            $getPersonalQuote->insured_id = $insured->id;
+            $getPersonalQuote->save();
+        }
+
+        return $getPersonalQuote;
+    }
+
     private function preparedInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening)
     {
         LoggerService::info('fn:preparedInsuredDataForScreening - AMLController');
@@ -551,6 +562,7 @@ class AMLController extends Controller
             ]);
         }
         $insured->refresh();
+        $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
         // Reminder:: this patch add becuase when migrated data from customer_details to insured table, there is no link between quote_request and customer_insured table.
         $customerInsured = CustomerInsured::where('customer_id', $request->customer_id)
             ->where('insured_id', $insured->id)

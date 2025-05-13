@@ -9,6 +9,7 @@ use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -98,6 +99,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
             Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
             request()->merge($requestParams);
         }
 

@@ -1090,6 +1090,7 @@ class AMLService
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
             Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
             request()->merge($requestParams);
         }
 

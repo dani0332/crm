@@ -11,7 +11,8 @@ export const useCleanObj = reactive => {
       reactive[key] === undefined ||
       reactive[key] === '' ||
       reactive[key] === false ||
-      reactive[key].length === 0
+      reactive[key].length === 0 ||
+      (typeof reactive[key] === 'string' && reactive[key].trim() === '')
     ) {
       delete reactive[key];
     }

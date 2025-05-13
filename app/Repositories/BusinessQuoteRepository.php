@@ -37,6 +37,7 @@ class BusinessQuoteRepository extends BaseRepository
             $user = $requestParams['user'] ?? null;
             unset($requestParams['user']);
             Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
             request()->merge($requestParams);
         }
 
@@ -75,7 +76,7 @@ class BusinessQuoteRepository extends BaseRepository
             return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query : $query->simplePaginate();
     }
 
     /**

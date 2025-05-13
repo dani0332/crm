@@ -37,6 +37,7 @@ use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PaymentStatusHistory;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
@@ -1300,7 +1301,7 @@ class CentralService extends BaseService
         return in_array($insuranceProviderCode, $enabledProviders);
     }
 
-    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
     {
         try {
             $data = [
@@ -1312,11 +1313,15 @@ class CentralService extends BaseService
             return Ken::request('/capture-payment-validation', 'put', $data);
 
         } catch (\Throwable $th) {
-            LoggerService::error('capturePaymentValidation failed: '.$th->getMessage(), [
-                'uuid' => $uuid,
-                'quoteTypeId' => $quoteTypeId,
-                'captureAmount' => $captureAmount,
-            ]);
+            LoggerService::error('capturePaymentValidation failed',
+                context: [
+                    'ref_id' => $quoteCode,
+                ],
+                extra: [
+                    'quoteTypeId' => $quoteTypeId,
+                    'captureAmount' => $captureAmount,
+                ],
+                exception: $th);
 
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
@@ -1362,6 +1367,7 @@ class CentralService extends BaseService
                     $paymentSplit->documents()->forceDelete();
                 }
                 PaymentSplits::where('code', $request->payment_code)->delete();
+                PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
             info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);
