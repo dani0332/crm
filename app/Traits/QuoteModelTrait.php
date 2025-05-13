@@ -44,7 +44,6 @@ trait QuoteModelTrait
         }
 
         if (! request()->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name', 'previous_quote_policy_number', 'renewal_batch', 'previous_quote_policy_number_text'])) {
-
             return $query->where('quote_status_id', '<>', QuoteStatusEnum::Fake);
         }
     }
@@ -83,7 +82,7 @@ trait QuoteModelTrait
     public static function applySegmentFilter($query, $segmentFilter, $alias, $quoteTypeId)
     {
         $user = auth()->user();
-        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
+        if ($user && $user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
             $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($alias, $quoteTypeId) {
                 $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
@@ -110,6 +109,14 @@ trait QuoteModelTrait
                     LeadSourceEnum::REVIVAL_REPLIED,
                     LeadSourceEnum::REVIVAL_PAID,
                 ]);
+            })->when($segmentFilter === QuoteSegmentEnum::AIG->value, function ($query) use ($alias, $quoteTypeId) {
+                $query->whereIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                });
             });
         }
     }
@@ -187,7 +194,7 @@ trait QuoteModelTrait
 
     public static function applyRequestTableJoins($query, $request): void
     {
-        $applicableFilters = ['member_first_name', 'member_last_name', 'company_name'];
+        $applicableFilters = ['member_first_name', 'member_last_name'/* , 'company_name' */];
         $quoteTypes = [
             QuoteTypeId::Car => 'car_quote_request',
             QuoteTypeId::Home => 'home_quote_request',
@@ -280,5 +287,4 @@ trait QuoteModelTrait
             }
         );
     }
-
 }

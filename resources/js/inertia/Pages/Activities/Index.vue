@@ -5,6 +5,7 @@ const props = defineProps({
   advisors: Object,
   cannotUseAssignee: Boolean,
   totalActivities: Number,
+  errors: Object,
 });
 
 // Vue Composition API
@@ -278,8 +279,22 @@ const onSubmit = isValid => {
 // Component hooks
 watch(() => filters, { deep: true, immediate: true });
 
+const showErrors = () => {
+  if (props.errors && Object.keys(props.errors).length > 0) {
+    // loop through erros
+    Object.values(props.errors).forEach(error => {
+      console.log(error);
+      notification.error({
+        message: error.toString(),
+        position: 'top',
+      });
+    });
+  }
+};
+
 onMounted(() => {
   setQueryFilters();
+  showErrors();
 });
 </script>
 
@@ -299,7 +314,7 @@ onMounted(() => {
 
     <x-form @submit="filterActivities" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.assignee_id"
           label="Assigned To"
           placeholder="Select Assigned To"
@@ -312,9 +327,11 @@ onMounted(() => {
               label: advisor.name,
             })),
           ]"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Advisor...."
         />
-        <ComboBox
+
+        <x-select
           v-model="filters.status"
           label="Status"
           placeholder="Select Activity Status"
@@ -322,7 +339,7 @@ onMounted(() => {
             { value: '1', label: 'Done' },
             { value: '0', label: 'Pending' },
           ]"
-          :single="true"
+          filterPlaceholder="Filter Status...."
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
@@ -15,14 +16,18 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
+use App\Http\Controllers\V2\AMLController;
+use App\Http\Requests\AMLCheckRequest;
 use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CustomerDetail;
 use App\Models\CustomerInsured;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\Insured;
 use App\Models\JetskiQuote;
 use App\Models\KycLog;
 use App\Models\LifeQuote;
@@ -34,14 +39,16 @@ use App\Models\QuoteStatusLog;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
+use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\View;
 
 class AMLService
 {
@@ -243,7 +250,7 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false, $isAutomation = false)
     {
         $emailRecipients = [];
         $emailSystem = config('constants.APP_ENV');
@@ -277,9 +284,9 @@ class AMLService
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,
             ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser) {
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser, $isAutomation) {
                 $message->to($emailRecipients);
-                if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
+                if (! $isAutomation && (in_array($loginUserEmail, $emailRecipients)) || ! $forComplianceSuperUser) {
                     $message->cc($loginUserEmail);
                 }
                 $message->subject($emailSubject);
@@ -344,6 +351,78 @@ class AMLService
     //        }
     //    }
 
+    /**
+     * Get insured person details.
+     *
+     * @return object containing properties:
+     *                - 'status' (bool)
+     *                - 'message' (string)
+     *                - 'response' (object|null) may not exists
+     */
+    public function getInsuredPersonDetails(string $idType, string $idNumber): ?object
+    {
+        $insuredPersonDetails = Insured::where([
+            'id_type' => $idType,
+            'id_number' => $idNumber,
+        ])->first();
+
+        if (! $insuredPersonDetails) {
+            $customerDetails = CustomerDetail::with(['customer:id,code,dob,gender,insured_first_name as first_name,insured_last_name as last_name,nationality_id'])
+                ->where(['id_type' => $idType, 'id_number' => str_replace('-', '', $idNumber)])->first();
+            $insuredPersonDetails = $customerDetails?->customer;
+        }
+
+        return $insuredPersonDetails;
+    }
+
+    /**
+     * Get insured person details.
+     *
+     * @param array AMLCheckRequest $amlRequestData
+     * @return object containing properties:
+     *                - 'status' (bool)
+     *                - 'message' (string)
+     *
+     * Need to refactor this code to not call controller from here
+     */
+    public function quoteAmlProcessCall(array $amlRequestData, int $quoteTypeId, int $quoteRequestId): object
+    {
+        // Create AML check request object
+        $amlCheckRequest = new AMLCheckRequest($amlRequestData);
+
+        // Call the AML quote update method
+        return app(AMLController::class)->quoteUpdate($amlCheckRequest, $quoteTypeId, $quoteRequestId)->getData();
+    }
+
+    public function saveManualAuditLog($quoteDetails, User $processByUser): bool
+    {
+        if (! $quoteDetails instanceof TravelQuote) {
+            return false;
+        }
+
+        $dirty = $quoteDetails->getDirty();
+
+        if (empty($dirty)) {
+            return false;
+        }
+
+        $changes = [];
+        foreach ($dirty as $attribute => $value) {
+            $changes['old_values'][$attribute] = $quoteDetails->getOriginal($attribute);
+            $changes['new_values'][$attribute] = $value;
+        }
+
+        $quoteDetails->audits()->create([
+            'user_type' => get_class($processByUser),
+            'user_id' => $processByUser->id ?? null,
+            'event' => 'updated',
+            'old_values' => $changes['old_values'],
+            'new_values' => $changes['new_values'],
+        ]);
+
+        return true;
+    }
+
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
@@ -392,6 +471,15 @@ class AMLService
 
         if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::EntityShort;
+        } elseif ($status == null && $quoteTypeId == QuoteTypes::CAR->id()) {
+
+            $quote = CarQuoteRepository::where('id', $quoteRequestId)->select('registration_type')->first();
+            if ($quote->registration_type == CarRegistrationType::COMPANY) {
+                $status = CustomerTypeEnum::EntityShort;
+            } else {
+                $status = CustomerTypeEnum::IndividualShort;
+            }
+
         } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::IndividualShort;
         }
@@ -667,7 +755,7 @@ class AMLService
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::UNKNOWN;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningPending];
             } else {
-                LoggerService::warning('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
+                LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
                 $kycLogDetails['match_found'] = 1;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
@@ -682,7 +770,7 @@ class AMLService
 
     }
 
-    private function formatGender($gender): string
+    private function formatGender($gender)
     {
         if (in_array($gender, [GenericRequestEnum::MALE_SINGLE, GenericRequestEnum::MALE_SINGLE_VALUE, strtolower(GenericRequestEnum::MALE_SINGLE), strtolower(GenericRequestEnum::MALE_SINGLE_VALUE)])) {
             $gender = GenericRequestEnum::MALE_SINGLE;
@@ -762,5 +850,54 @@ class AMLService
         }
 
         return true;
+    }
+
+    public function getAMLData($requestParams = [])
+    {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
+
+        $query = AML::select([
+            'id',
+            'quote_request_id',
+            'quote_type_id',
+            'input',
+            'search_type',
+            'match_found',
+            'results_found',
+            'created_at',
+            'decision',
+        ])
+            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
+            ->whereBetween('created_at', dateQueryFilter(request('amlCreatedStartDate'), request('amlCreatedEndDate')));
+
+        $data = collect();
+
+        $query->chunk(1000, function ($chunk) use (&$data) {
+            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
+            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
+                $quoteType = QuoteTypes::getName($quoteTypeId);
+                $nameSpace = '\\App\\Models\\';
+                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
+
+                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
+                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
+                foreach ($quoteRequestData as $quoteRequest) {
+                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
+                    foreach ($amlData as $index => $value) {
+                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
+                        $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
+                    }
+                }
+            }
+            $data = $data->merge($chunk);
+        });
+
+        return $data;
     }
 }

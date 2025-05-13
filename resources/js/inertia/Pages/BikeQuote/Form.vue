@@ -327,20 +327,22 @@ const chassisNumberRule = v => {
             :hasError="quoteForm.errors.dob || formFieldReq.dob"
           />
         </x-field>
-        <x-field label="NATIONALITY" required>
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="
-              nationalities.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            :hasError="isEmptyField || formFieldReq.nationality_id"
-            :error="quoteForm.errors.nationality_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :rules="[isRequired]"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.nationality_id"
+          label="NATIONALITY"
+          filterable
+          placeholder="Search by Nationality"
+          required
+        ></x-select>
         <x-field label="GENDER">
           <x-select
             v-model="quoteForm.gender"
@@ -376,32 +378,31 @@ const chassisNumberRule = v => {
           />
         </x-field>
 
-        <x-field label="BIKE MAKE" required>
-          <ComboBox
-            v-model="quoteForm.make_id"
-            :rules="[isRequired]"
-            :single="true"
-            :options="bikeMakeOptions"
-            @update:modelValue="getBikeModel()"
-            class="w-full"
-            :hasError="isEmptyField || formFieldReq.make_id"
-            :error="quoteForm.errors.make_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.make_id"
+          :rules="[isRequired]"
+          :options="bikeMakeOptions"
+          class="w-full"
+          :error="quoteForm.errors.make_id"
+          @update:modelValue="getBikeModel()"
+          filterable
+          placeholder="Search by Bike Make"
+          required
+          label="BIKE MAKE"
+        />
 
-        <x-field label="BIKE MODEL" required>
-          <ComboBox
-            v-model="quoteForm.model_id"
-            :rules="[isRequired]"
-            :single="true"
-            :options="bikeModelOptions"
-            @update:modelValue="getModelDetails(true)"
-            class="w-full"
-            :hasError="isEmptyField || formFieldReq.model_id"
-            :disabled="isBikeModelDisabled || !bikeModelOptions.length"
-            :error="quoteForm.errors.model_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.model_id"
+          :rules="[isRequired]"
+          :options="bikeModelOptions"
+          class="w-full"
+          @update:modelValue="getModelDetails(true)"
+          :disabled="isBikeModelDisabled || !bikeModelOptions.length"
+          :error="quoteForm.errors.model_id"
+          label="BIKE MODEL"
+          required
+          placeholder="Search by Bike Model"
+        />
 
         <x-field label="BIKE MODEL YEAR" required>
           <x-select
@@ -529,17 +530,18 @@ const chassisNumberRule = v => {
           />
         </x-field>
 
-        <x-field label="CURRENTLY INSURED WITH" required>
-          <ComboBox
-            v-model="quoteForm.currently_insured_with"
-            :rules="[isRequired]"
-            :single="true"
-            :options="currentlyInsuredWithOptions"
-            class="w-full"
-            :hasError="isEmptyField || formFieldReq.currently_insured_with"
-            :error="quoteForm.errors.currently_insured_with"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.currently_insured_with"
+          :rules="[isRequired]"
+          :options="currentlyInsuredWithOptions"
+          class="w-full"
+          :error="quoteForm.errors.currently_insured_with"
+          label="CURRENTLY INSURED WITH"
+          filterable
+          placeholder="Search by Currently Insured With"
+          required
+          error="quoteForm.errors.currently_insured_with"
+        />
 
         <x-field label="CLAIM HISTORY" required>
           <x-select

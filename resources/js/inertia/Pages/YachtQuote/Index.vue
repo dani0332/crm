@@ -211,21 +211,43 @@ const handleSelectedFilters = selectedFilters => {
 };
 
 const exportLoader = ref(false);
-const onDataExport = () => {
+const onDataExport = (exportType = 'download') => {
+  filters.exportType = exportType;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'yacht');
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Yacht'),
+    exportType: exportType,
     url: url + '?' + new URLSearchParams(data).toString(),
   };
 
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-    if (result)
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result.data.message) {
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response.data.message
+          ? err.response.data.message
+          : 'Unable to start an export',
+        position: 'top',
+      });
       setTimeout(() => {
         exportLoader.value = false;
       }, 1000);
-  });
+      throw err;
+    });
 };
 
 const advisorOptionsFilter = computed(() => {
@@ -562,24 +584,54 @@ const insurerAMLStatusOption = computed(() => {
           format="dd-MM-yyyy"
         />
         <x-field label="Lead Status">
-          <ComboBox
+          <x-select
             v-model="filters.quote_status_id"
             name="quote_status"
-            placeholder="Search by Lead Status"
+            placeholder="Please select lead status"
             :options="
               quoteStatuses.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
             "
-          />
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.quote_status_id = quoteStatuses.map(item => item.id)
+                "
+                @clear="filters.quote_status_id = []"
+              />
+            </template>
+          </x-select>
         </x-field>
-        <ComboBox
-          v-model="filters.insurer_aml_status"
-          label="Insurer AML Status"
-          name="insurer_aml_status"
-          :options="insurerAMLStatusOption"
-        />
+        <x-field label="Insurer AML Status">
+          <x-select
+            v-model="filters.insurer_aml_status"
+            name="insurer_aml_status"
+            placeholder="Please select status"
+            :options="insurerAMLStatusOption"
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.insurer_aml_status = insurerAMLStatusOption.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.insurer_aml_status = []"
+              />
+            </template>
+          </x-select>
+        </x-field>
         <x-field label="Policy Expiry Start Date">
           <DatePicker
             v-model="filters.policy_expiry_date"
@@ -602,10 +654,12 @@ const insurerAMLStatusOption = computed(() => {
             ])
           "
         >
-          <ComboBox
+          <x-select
             v-model="filters.advisor_id"
-            placeholder="Search by Advisor"
+            placeholder="Please select advisor"
             :options="advisorOptionsFilter"
+            class="w-full"
+            filterable
           />
         </x-field>
         <x-field label="Is E-Commerce">
@@ -621,11 +675,26 @@ const insurerAMLStatusOption = computed(() => {
           />
         </x-field>
         <x-field label="Renewal Batch">
-          <ComboBox
+          <x-select
             v-model="filters.renewal_batch_id"
-            placeholder="Search by Renewal Batch"
+            placeholder="Please select renewal batch"
             :options="renewalBatchOptions"
-          />
+            class="w-full"
+            filterable
+            multiple
+            truncate
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.renewal_batch_id = renewalBatchOptions.map(
+                    item => item.value,
+                  )
+                "
+                @clear="filters.renewal_batch_id = []"
+              />
+            </template>
+          </x-select>
         </x-field>
         <x-field label="Renewal">
           <x-select
@@ -700,12 +769,27 @@ const insurerAMLStatusOption = computed(() => {
             color="emerald"
             :loading="exportLoader"
             @click.prevent="onDataExport"
-            class="justify-self-start"
+            class="justify-self-start mr-3"
           >
             Export
           </x-button>
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click.prevent="onDataExport('email')"
+            class="justify-self-start"
+          >
+            Export via email
+          </x-button>
           <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"
+              >Export via email</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Created dates or policy expiry dates or payment due date or
