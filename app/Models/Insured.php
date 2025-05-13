@@ -12,7 +12,6 @@ class Insured extends Model implements AuditableContract
 
     protected $table = 'insured';
     protected $guarded = [];
-    protected $appends = ['pcp_tag_formatted'];
 
     public function nationality()
     {

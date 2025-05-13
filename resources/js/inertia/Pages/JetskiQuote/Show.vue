@@ -61,11 +61,18 @@ const dateFormat = date =>
 <template>
   <div>
     <Head title="Jetski Quotes" />
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Jetski Detail</h2>
+        <x-button v-if="quote.customer?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
+         Private Client
+        </x-button>
+        <x-button v-if="quote.pc_qualified == true" size="sm" color="#BFA100" tag="div">
+          PC-Qualified
+        </x-button>
+      </template>
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
-        <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-          <h2 class="text-xl font-semibold">Jetski Detail</h2>
-        </div>
         <template #body>
           <div
             class="flex gap-2 mb-4 justify-end"
@@ -199,6 +206,10 @@ const dateFormat = date =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
 
@@ -304,7 +315,7 @@ const dateFormat = date =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRIVATE CLIENT</dt>
-                <dd>{{ quote.insured.pcp_tag_formatted ?? 'No' }}</dd>
+                <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
               </div>
               <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
             </dl>
@@ -312,6 +323,7 @@ const dateFormat = date =>
         </template>
       </Collapsible>
     </div>
+    </StickyHeader>
 
     <LastYearPolicyDetail
       v-if="

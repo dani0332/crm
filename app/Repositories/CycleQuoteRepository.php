@@ -96,6 +96,7 @@ class CycleQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',

@@ -48,6 +48,7 @@ let availableFilters = {
   insurer_tax_number: '',
   insurer_commmission_invoice_number: '',
   advisor_assigned_date: [],
+  private_client: 'all',
 };
 
 const filters = reactive(availableFilters);
@@ -173,7 +174,7 @@ onMounted(() => {
 
 const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
-  { text: 'PC Customer', value: 'insured.pcp_tag_formatted', is_active: true },
+  { text: 'PC Customer', value: 'customer.pcp_tag_formatted', is_active: true },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
@@ -504,6 +505,19 @@ const insurerAMLStatusOption = computed(() => {
           label="Insurer Commission Tax Invoice No"
           class="w-full"
           placeholder="Insurer Commission Tax Invoice No"
+        />
+        <ComboBox
+          v-model="filters.private_client"
+          label="Private Client"
+          placeholder="Search by private client tag"
+          :options="[
+            { value: 'all', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 'no', label: 'No' },
+            { value: 0, label: 'Ex-Pc' },
+          ]"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

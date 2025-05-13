@@ -115,7 +115,7 @@ class PetQuoteRepository extends BaseRepository
             'payments',
             'renewalBatchModel',
             'quoteDetail',
-            'insured',
+            'customer',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -137,6 +137,7 @@ class PetQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',

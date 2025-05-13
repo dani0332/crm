@@ -182,7 +182,7 @@ class YachtQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'quoteDetail',
-            'insured',
+            'customer',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -196,6 +196,7 @@ class YachtQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport, $forTotalLeadsCount)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',

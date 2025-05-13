@@ -305,7 +305,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           Stale for {{ countDays }}
         </p>
         <div class="grid sm:grid-cols-2">
-          <x-button v-if="quote?.insured?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
+          <x-button v-if="quote?.customer?.pcp_tag == true" size="sm" color="#BFA100" tag="div" class="mr-2">
             Private Client
           </x-button>
           <x-button v-if="quote?.pc_qualified == true" size="sm" color="#BFA100" tag="div">
@@ -579,6 +579,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
                     <label
@@ -765,7 +769,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">PRIVATE CLIENT</dt>
-                  <dd>{{ quote.insured.pcp_tag_formatted ?? 'No' }}</dd>
+                  <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Pet'" />
               </dl>

@@ -123,7 +123,7 @@ class JetskiQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
-            'insured',
+            'customer',
         ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
         })
@@ -136,6 +136,7 @@ class JetskiQuoteRepository extends BaseRepository
                 });
             })
             ->filter(! $forExport)
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
             ->select([
                 '*',

@@ -293,7 +293,7 @@ trait QuoteModelTrait
     {
         return Attribute::make(
             get: function () {
-                return $this->pcp_tag === true || $this->pcp_tag === 1 ? 'Yes' : 'No';
+                return $this->pc_qualified === true || $this->pc_qualified === 1 ? 'Yes' : 'No';
             }
         );
     }

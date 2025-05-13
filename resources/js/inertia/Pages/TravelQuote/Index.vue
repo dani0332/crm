@@ -1053,9 +1053,6 @@ const insurerAMLStatusOption = computed(() => {
       <template #item-aml_status="{ aml_status }">
         <span>{{ aml_status?.replace(/_/g, ' ') }}</span>
       </template>
-      <template #item-insured.pcp_tag_formatted="{ customer }">
-        {{ customer?.pcp_tag_formatted || 'No' }}
-      </template>
     </DataTable>
 
     <Pagination

@@ -514,103 +514,106 @@ const applyEmiratesIdNumMasking = emiratesId =>
 <template>
   <div>
     <Head title="Life Quotes" />
-
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Life Detail</h2>
-      <x-button v-if="quote?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
-        Private Client
-      </x-button>
-      <x-button v-if="quote?.pc_qualified == true" size="sm" color="#BFA100" tag="div">
-        PC-Qualified
-      </x-button>
-      <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
-        <Link
-          v-if="quote.life_quote_request_detail?.insly_id"
-          :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-        <Link
-          v-else-if="
-            quote.source == leadSource.RENEWAL_UPLOAD &&
-            canAny([
-              permissionsEnum.VIEW_LEGACY_DETAILS,
-              permissionsEnum.VIEW_ALL_LEADS,
-            ])
-          "
-          :href="
-            route(
-              'view-legacy-policy.renewal-uploads',
-              quote.previous_quote_policy_number,
-            )
-          "
-          preserve-scroll
-        >
-          <x-button size="sm" color="#ff5e00" tag="div">
-            View Legacy policy
-          </x-button>
-        </Link>
-        <x-button
-          class="ml-2"
-          size="sm"
-          color="#ff5e00"
-          @click.prevent="openDuplicate"
-        >
-          Duplicate Lead
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Life Detail</h2>
+        <x-button v-if="quote.customer?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
+            Private Client
         </x-button>
-        <Link
-          v-if="can(permissionsEnum.LifeQuotesList)"
-          :href="route('life-quotes-list')"
-          preserve-scroll
-        >
-          <x-button size="sm" color="primary" tag="div"> Life Quotes </x-button>
-        </Link>
-        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+        <x-button v-if="quote.pc_qualified == true" size="sm" color="#BFA100" tag="div">
+            PC-Qualified
+        </x-button>
+      </template>
+      <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+        <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
           <Link
-            v-if="!isDisabled"
-            :href="route('life-quotes-edit', quote.uuid)"
+            v-if="quote.life_quote_request_detail?.insly_id"
+            :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
+            preserve-scroll
           >
-            <x-button size="sm" tag="div">Edit</x-button>
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
-            >Edit</x-button
+          <Link
+            v-else-if="
+              quote.source == leadSource.RENEWAL_UPLOAD &&
+              canAny([
+                permissionsEnum.VIEW_LEGACY_DETAILS,
+                permissionsEnum.VIEW_ALL_LEADS,
+              ])
+            "
+            :href="
+              route(
+                'view-legacy-policy.renewal-uploads',
+                quote.previous_quote_policy_number,
+              )
+            "
+            preserve-scroll
           >
-        </LeadEditBtnTemplate>
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <x-button
+            class="ml-2"
+            size="sm"
+            color="#ff5e00"
+            @click.prevent="openDuplicate"
+          >
+            Duplicate Lead
+          </x-button>
+          <Link
+            v-if="can(permissionsEnum.LifeQuotesList)"
+            :href="route('life-quotes-list')"
+            preserve-scroll
+          >
+            <x-button size="sm" color="primary" tag="div"> Life Quotes </x-button>
+          </Link>
+          <LeadEditBtnTemplate v-slot="{ isDisabled }">
+            <Link
+              v-if="!isDisabled"
+              :href="route('life-quotes-edit', quote.uuid)"
+            >
+              <x-button size="sm" tag="div">Edit</x-button>
+            </Link>
+            <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+              >Edit</x-button
+            >
+          </LeadEditBtnTemplate>
 
-        <x-tooltip
-          v-if="lockLeadSectionsDetails.lead_details"
-          placement="bottom"
-        >
-          <LeadEditBtnReuseTemplate
-            v-if="
-              canAny([
-                permissionsEnum.LifeQuotesEdit,
-                permissionsEnum.VIEW_ALL_LEADS,
-              ])
-            "
-            :isDisabled="true"
-          />
-          <template #tooltip
-            >This lead is now locked as the policy has been booked. If changes
-            are needed, go to 'Send Update', select 'Add Update', and choose
-            'Correction of Policy'</template
+          <x-tooltip
+            v-if="lockLeadSectionsDetails.lead_details"
+            placement="bottom"
           >
-        </x-tooltip>
-        <template v-else>
-          <LeadEditBtnReuseTemplate
-            v-if="
-              canAny([
-                permissionsEnum.LifeQuotesEdit,
-                permissionsEnum.VIEW_ALL_LEADS,
-              ])
-            "
-          />
-        </template>
+            <LeadEditBtnReuseTemplate
+              v-if="
+                canAny([
+                  permissionsEnum.LifeQuotesEdit,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
+              :isDisabled="true"
+            />
+            <template #tooltip
+              >This lead is now locked as the policy has been booked. If changes
+              are needed, go to 'Send Update', select 'Add Update', and choose
+              'Correction of Policy'</template
+            >
+          </x-tooltip>
+          <template v-else>
+            <LeadEditBtnReuseTemplate
+              v-if="
+                canAny([
+                  permissionsEnum.LifeQuotesEdit,
+                  permissionsEnum.VIEW_ALL_LEADS,
+                ])
+              "
+            />
+          </template>
+        </div>
       </div>
-    </div>
+    </StickyHeader>
 
     <x-modal
       v-model="modalsDuplicate"
@@ -771,6 +774,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
@@ -971,7 +978,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">PRIVATE CLIENT</dt>
-                  <dd>{{ quote.pcp_tag_formatted ?? 'No' }}</dd>
+                  <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
                 </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Life'" />
               </dl>

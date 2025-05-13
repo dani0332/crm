@@ -88,6 +88,7 @@ class LifeQuoteRepository extends BaseRepository
                 });
             })
             ->filter()
+            ->filterByPrivateClient(request('private_client'))
             ->withFakeLeadCriteria()
             ->select([
                 '*',
