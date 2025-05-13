@@ -11,6 +11,7 @@ use App\Models\QuoteBatches;
 use App\Models\User;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
+use App\Services\NationalityAllocationService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +21,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     abstract protected function fetchAdvisor(int $onlineStatus);
 
     protected $lead;
+    protected bool $hasNationalityConfig = false;
+    protected array $advisorIDs = [];
 
     public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false) {}
 
@@ -107,15 +110,11 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             })
             ->whereIn('r.name', $roles)
             ->where('la.quote_type_id', $this->getQuoteTypeId())
+            ->when($this->hasNationalityConfig, fn ($q) => $q->whereIn('users.id', $this->advisorIDs))
             ->activeUser()
             ->orderBy('la.last_allocated', 'asc');
 
-        Log::info('BaseAllocation: getAdvisorBaseQuery completed', [
-            'onlineStatus' => $onlineStatus,
-            'roles' => $roles,
-            'sql' => $query->toSql(),
-            'bindings' => $query->getBindings(),
-        ]);
+        LoggerService::sql('BaseAllocation: getAdvisorBaseQuery', $query);
 
         return $query;
     }
@@ -132,6 +131,8 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         if (! $this->isReAssignment) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
+
+        $this->resolveNationalityConfig();
 
         foreach ($statusOrder as $status) {
             LoggerService::info(self::class." - trying to get advisors with current status as {$status}");
@@ -205,5 +206,17 @@ abstract class BaseAllocation extends AllocationService implements Allocation
         LoggerService::info(self::class.' - Advisor Emails fetched', ['count' => count($emails), 'advisors' => $emails]);
 
         return $emails;
+    }
+
+    private function resolveNationalityConfig()
+    {
+        $config = NationalityAllocationService::find($this->quoteType, $this->lead->nationality_id);
+
+        if ($config) {
+            $this->hasNationalityConfig = true;
+            $this->advisorIDs = NationalityAllocationService::getUserIDs($config);
+        }
+
+        return $config;
     }
 }
