@@ -266,7 +266,7 @@ class RenewalsUploadService
             return true;
         } catch (\Exception $exception) {
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-            LoggerService::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
+            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage(). ' Line: '.$exception->getLine());
 
             return false;
         }
@@ -581,7 +581,7 @@ class RenewalsUploadService
 
             return true;
         } catch (\Exception $exception) {
-            LoggerService::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
+            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage(). ' Line: '.$exception->getLine());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
 
             return false;
@@ -1923,7 +1923,7 @@ class RenewalsUploadService
                     }
                 }
                 // If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
-                if ($lead->quote_type != quoteTypeCode::TRA ) {
+                if (($lead->quote_type != quoteTypeCode::TRA && $lead->quote_type != QuoteTypeShortCode::HEA) || ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->quote_type == QuoteTypeShortCode::HEA)) {
                     if (! $leadData->insurer) {
                         $leadValidationErrors->push('Insurance Provider is required');
                     } elseif (! ($insurer = InsuranceProvider::where('code', $leadData->insurer)->first())) {
@@ -2480,7 +2480,7 @@ class RenewalsUploadService
             return true;
         } catch (\Exception $exception) {
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-            LoggerService::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
+            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage(). ' Line: '.$exception->getLine());
 
             return false;
         }
