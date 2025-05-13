@@ -45,7 +45,7 @@ class MakePipeCommand extends Command
         }
 
         // Get directory and namespace parts
-        [$directory, $namespace] = $this->getPiplineClassDirectory($name);
+        [$directory, $namespace] = $this->getPipeClassDirectory($name);
 
         // Create directory if it doesn't exist
         if (! File::exists($directory)) {
