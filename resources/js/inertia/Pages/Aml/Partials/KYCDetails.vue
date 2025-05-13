@@ -325,12 +325,6 @@ watch(
 
     // Show notification if ID is expired
     if (isExpired && kyc.id_expiry_date) {
-      notification.warning({
-        title: 'ID Expiry Date has expired',
-        message: 'Please provide a valid ID with current expiry date',
-        position: 'top',
-        timeout: 5000,
-      });
       idExpiryDateError.value = 'This ID is expired';
     } else {
       idExpiryDateError.value = '';
@@ -417,12 +411,6 @@ watch(
   () => kycFormDetails.id_expiry_date,
   newDate => {
     if (isDateExpired(newDate)) {
-      notification.warning({
-        title: 'ID Expiry Date has expired',
-        message: 'Please provide a valid ID with current expiry date',
-        position: 'top',
-        timeout: 5000,
-      });
       kycFormDetails.id_expiry_date = null;
       idExpiryDateError.value = 'This ID is expired';
     } else {
