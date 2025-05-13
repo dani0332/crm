@@ -595,7 +595,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     continue;
                 }
                 $paymentSplit = PaymentSplits::where(['code' => $paymentCode, 'sr_no' => $key])->first();
-                
+
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
