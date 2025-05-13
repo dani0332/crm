@@ -12,6 +12,7 @@ use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
 use App\Services\Logger\LoggerService;
 use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Closure;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 
 class AssignChildLeadPipeline extends BaseAllocationPipeline
@@ -33,14 +34,19 @@ class AssignChildLeadPipeline extends BaseAllocationPipeline
     {
         $lead = $this->allocationRequest->model()->where('parent_id', $parentLead->id)->first();
         if ($lead) {
-            LoggerService::info(self::class.":assignAvailableAdvisorToChild - Finding Advisor for Child Lead: {$lead->uuid}");
-            $advisor = $this->fetchAvailableAdvisor(teamId: getTeamId(TeamNameEnum::SIC_UNASSISTED), lead: $lead);
-            if (! $advisor) {
-                LoggerService::info(self::class.":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid}");
+            try {
+                LoggerService::info(self::class.":assignAvailableAdvisorToChild - Finding Advisor for Child Lead: {$lead->uuid}");
+                $advisor = $this->fetchAvailableAdvisor(teamId: getTeamId(TeamNameEnum::SIC_UNASSISTED), lead: $lead);
+                if (! $advisor) {
+                    LoggerService::info(self::class.":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid}");
+                    $this->leadAllocationFailed($lead->uuid, $this->allocationRequest->getQuoteType());
+                } else {
+                    info(self::class.":assignAvailableAdvisorToChild - Advisor found for Child Lead: {$lead->uuid}");
+                    $this->assignLead($lead, $advisor, AssignmentTypeEnum::SYSTEM_ASSIGNED);
+                }
+            } catch (Exception $e) {
+                LoggerService::error($e->getMessage(), exception: $e);
                 $this->leadAllocationFailed($lead->uuid, $this->allocationRequest->getQuoteType());
-            } else {
-                info(self::class.":assignAvailableAdvisorToChild - Advisor found for Child Lead: {$lead->uuid}");
-                $this->assignLead($lead, $advisor, AssignmentTypeEnum::SYSTEM_ASSIGNED);
             }
         }
     }
