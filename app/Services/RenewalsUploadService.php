@@ -1386,6 +1386,7 @@ class RenewalsUploadService
 
                     continue;
                 }
+                continue;
             }
 
             // Update existing member if found
