@@ -589,7 +589,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
                 $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
-                if ($key == null || $key <= 0) {
+                if ($paymentSplit && ($key == null || $key <= 0)) {
                     LoggerService::info("Child payment code: {$paymentSplit->code} Invalid split number: {$key}");
 
                     continue;
