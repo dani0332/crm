@@ -2269,6 +2269,7 @@ class RenewalsUploadService
                 $data['renewal_batch_id'] = $batch->id;
                 $lead->data = $data;
             }
+            $lead->renewal_batch_id = $batch->id;
 
             return true;
         }
