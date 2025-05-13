@@ -6426,7 +6426,7 @@ onBeforeMount(() => {
               v-if="isApproveConfirmed && !isApproveLowerAmountConfirmed"
             >
               <div
-                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+                class="modal-confirm-container bg-white w-[400px] max-w-[60%] md:max-h-[37vh] lg:max-h-[27vh] p-5 rounded-lg shadow-lg"
               >
                 <div class="modal-confirm-header text-base text-white bg-white">
                   <div
@@ -6464,13 +6464,13 @@ onBeforeMount(() => {
                   <div
                     class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
                   >
-                    <div class="text-left">
+                    <div class="text-left text-sm">
                       <span>The entered amount is less than the total amount. Do you want to proceed with approval?</span>
                     </div>
                   </div>
                   <div class="flex flex-row space-x-4 mt-4">
                     <x-button
-                      size="lg"
+                      size="md"
                       type="submit"
                       color="orange"
                       class="px-4 py-2"
@@ -6479,7 +6479,7 @@ onBeforeMount(() => {
                       <span>Yes</span>
                     </x-button>
                     <x-button
-                      size="lg"
+                      size="md"
                       type="submit"
                       color="gray"
                       class="px-4 py-2"
