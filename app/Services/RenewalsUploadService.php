@@ -867,6 +867,7 @@ class RenewalsUploadService
 
             if ($quoteType->code == quoteTypeCode::Health || $isQuotePersonal) {
                 $quoteData['currently_insured_with_id'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->id;
+                $quoteData['insurance_provider_id'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->id;
             }
 
             // set business type insurance id
