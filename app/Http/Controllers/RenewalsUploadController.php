@@ -360,13 +360,13 @@ class RenewalsUploadController extends Controller
             'renewal_quote_processes.quote_type' => $lob,
             'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
         ])
+        ->join('renewal_batches', 'renewal_quote_processes.renewal_batch_id', '=', 'renewal_batches.id')
+        ->select('renewal_batches.name as renewal_batch', 'renewal_quote_processes.quote_type', 'renewal_quote_processes.renewal_batch_id')
         ->when(!empty($request->batch), function ($query) use ($request) {
             return $query->where('renewal_quote_processes.batch', $request->batch);
         });
 
-        $renewalQuotes = $query->simplePaginate(); 
-
-        dd($renewalQuotes->toArray());
+        $renewalQuotes = $query->distinct()->simplePaginate(); 
 
         $lobs = $this->renewalsUploadFileService->getNonMotorLobs();
         

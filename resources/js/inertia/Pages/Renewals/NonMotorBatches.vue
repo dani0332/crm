@@ -191,11 +191,11 @@ filters.month = new Date().getMonth() + 1;
       hide-footer
     >
     <template #item-renewal_batch="{ renewal_batch }">
-      {{ renewal_batch.name }}
+      {{ renewal_batch }}
     </template>
-    <template #item-action="{ renewal_batch, quote_type }">
+    <template #item-action="{ renewal_batch, quote_type, renewal_batch_id }">
       <x-button
-        :href="`/renewals/batches/${renewal_batch.id}/${quote_type}/plans-processes`"
+        :href="`/renewals/batches/${renewal_batch_id}/${quote_type}/plans-processes`"
         class="text-primary-500 btn-passed mr-2"
         color="primary"
       >
