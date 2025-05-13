@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Pipelines\Allocation\Travel;
+namespace App\Pipes\Allocation\Travel;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
@@ -8,14 +8,14 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
-use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
+use App\Pipes\Allocation\Common\BaseAllocationPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 
-class AssignChildLeadPipeline extends BaseAllocationPipeline
+class AssignChildLeadPipe extends BaseAllocationPipe
 {
     public function handle(AllocationRequest $request, Closure $next)
     {

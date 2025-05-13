@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Pipelines\Allocation\Common;
+namespace App\Pipes\Allocation\Common;
 
-use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
 use Closure;
 
-class MakeResponsePipeline extends BaseAllocationPipeline
+class MakeResponsePipe extends BaseAllocationPipe
 {
     /**
      * Handle the incoming request.

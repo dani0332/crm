@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Strategies\Allocations\PipelineHandlers;
+namespace App\Pipes\Allocation\Handlers;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;

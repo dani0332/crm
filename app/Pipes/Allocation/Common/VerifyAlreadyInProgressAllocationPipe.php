@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Pipelines\Allocation\Common;
+namespace App\Pipes\Allocation\Common;
 
+use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Closure;
 
-class VerifyAlreadyInProgressAllocationPipeline extends BaseAllocationPipeline
+class VerifyAlreadyInProgressAllocationPipe extends BaseAllocationPipe
 {
     /**
      * Handle the incoming request.

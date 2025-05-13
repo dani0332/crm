@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Pipelines\Allocation\Travel;
+namespace App\Pipes\Allocation\Travel;
 
 use App\Models\TravelQuoteRequestDetail;
-use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
+use App\Pipes\Allocation\Common\BaseAllocationPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Closure;
 use Illuminate\Support\Facades\DB;
 
-class AssignLeadPipeline extends BaseAllocationPipeline
+class AssignLeadPipe extends BaseAllocationPipe
 {
     /**
      * Handle the incoming request.

@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Pipelines\Allocation\Travel;
+namespace App\Pipes\Allocation\Travel;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\quoteTypeCode;
-use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
+use App\Pipes\Allocation\Common\BaseAllocationPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Repositories\PaymentRepository;
 use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
-use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Closure;
 
-class VerifyLeadPreChecksPipeline extends BaseAllocationPipeline
+class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 {
     /**
      * Handle the incoming request.

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Pipelines\Allocation\Common;
+namespace App\Pipes\Allocation\Common;
 
-use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
 use Closure;
 
-class FetchLeadPipeline extends BaseAllocationPipeline
+class FetchLeadPipe extends BaseAllocationPipe
 {
     public function handle(AllocationRequest $request, Closure $next)
     {

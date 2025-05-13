@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Pipelines\Allocation\Common;
+namespace App\Pipes\Allocation\Common;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
@@ -14,13 +14,13 @@ use App\Models\HealthQuote;
 use App\Models\QuoteBatches;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 
-abstract class BaseAllocationPipeline extends AllocationService
+abstract class BaseAllocationPipe extends AllocationService
 {
     public const NOT_FOUND = Response::HTTP_NOT_FOUND;
     public const OK = Response::HTTP_OK;

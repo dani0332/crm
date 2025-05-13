@@ -6,28 +6,28 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
-class MakePipelineCommand extends Command
+class MakePipeCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'make:pipeline {name : The name of the pipeline class}';
+    protected $signature = 'make:pipe {name : The name of the pipe class}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create a new pipeline class';
+    protected $description = 'Create a new pipe class';
 
     /**
      * The type of class being generated.
      *
      * @var string
      */
-    protected $type = 'Pipeline';
+    protected $type = 'Pipe';
 
     /**
      * Execute the console command.
@@ -39,9 +39,9 @@ class MakePipelineCommand extends Command
         // Handle nested directories in the name
         $className = $this->getClassName($name);
 
-        // Ensure the name has Pipeline suffix
-        if (! Str::endsWith($className, 'Pipeline')) {
-            $className = $className.'Pipeline';
+        // Ensure the name has Pipe suffix
+        if (! Str::endsWith($className, 'Pipe')) {
+            $className = $className.'Pipe';
         }
 
         // Get directory and namespace parts
@@ -56,7 +56,7 @@ class MakePipelineCommand extends Command
 
         // Check if file already exists
         if (File::exists($filePath)) {
-            $this->error("Pipeline {$className} already exists!");
+            $this->error("Pipe {$className} already exists!");
 
             return 1;
         }
@@ -74,7 +74,7 @@ class MakePipelineCommand extends Command
         // Create the file
         File::put($filePath, $stub);
 
-        $this->info("Pipeline {$namespace}\\{$className} created successfully!");
+        $this->info("Pipe {$namespace}\\{$className} created successfully!");
 
         return 0;
     }
@@ -86,11 +86,11 @@ class MakePipelineCommand extends Command
      */
     protected function getStubPath()
     {
-        $customPath = base_path('stubs/pipeline.stub');
+        $customPath = base_path('stubs/pipe.stub');
 
         return File::exists($customPath)
             ? $customPath
-            : __DIR__.'/stubs/pipeline.stub';
+            : __DIR__.'/stubs/pipe.stub';
     }
 
     /**
@@ -102,14 +102,14 @@ class MakePipelineCommand extends Command
     }
 
     /**
-     * Get the directory and namespace for the pipeline class.
+     * Get the directory and namespace for the pipe class.
      *
      * @return array [directory, namespace]
      */
-    protected function getPiplineClassDirectory(string $name): array
+    protected function getPipeClassDirectory(string $name): array
     {
-        $baseDirectory = app_path('Pipelines');
-        $baseNamespace = 'App\\Pipelines';
+        $baseDirectory = app_path('Pipes');
+        $baseNamespace = 'App\\Pipes';
 
         // Handle namespace directories
         $parts = explode('/', $name);

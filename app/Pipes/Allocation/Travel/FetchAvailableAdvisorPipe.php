@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Pipelines\Allocation\Travel;
+namespace App\Pipes\Allocation\Travel;
 
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Models\User;
-use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
+use App\Pipes\Allocation\Common\BaseAllocationPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
-use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Closure;
 
-class FetchAvailableAdvisorPipeline extends BaseAllocationPipeline
+class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 {
     /**
      * Handle the incoming request.

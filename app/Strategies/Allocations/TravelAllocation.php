@@ -4,15 +4,15 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\QuoteTypes;
 use App\Exceptions\Allocation\AllocationException;
-use App\Pipelines\Allocation\Common\FetchLeadPipeline;
-use App\Pipelines\Allocation\Common\MakeResponsePipeline;
-use App\Pipelines\Allocation\Common\VerifyAlreadyInProgressAllocationPipeline;
-use App\Pipelines\Allocation\Travel\AssignChildLeadPipeline;
-use App\Pipelines\Allocation\Travel\AssignLeadPipeline;
-use App\Pipelines\Allocation\Travel\FetchAvailableAdvisorPipeline;
-use App\Pipelines\Allocation\Travel\VerifyLeadPreChecksPipeline;
+use App\Pipes\Allocation\Common\FetchLeadPipe;
+use App\Pipes\Allocation\Common\MakeResponsePipe;
+use App\Pipes\Allocation\Common\VerifyAlreadyInProgressAllocationPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Pipes\Allocation\Travel\AssignChildLeadPipe;
+use App\Pipes\Allocation\Travel\AssignLeadPipe;
+use App\Pipes\Allocation\Travel\FetchAvailableAdvisorPipe;
+use App\Pipes\Allocation\Travel\VerifyLeadPreChecksPipe;
 use App\Services\AllocationService;
-use App\Strategies\Allocations\PipelineHandlers\AllocationRequest;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Pipeline;
 use Throwable;
@@ -42,13 +42,13 @@ class TravelAllocation extends AllocationService implements Allocation
         try {
 
             return Pipeline::send($alloctionRequest)->through([
-                FetchLeadPipeline::class,
-                VerifyLeadPreChecksPipeline::class,
-                VerifyAlreadyInProgressAllocationPipeline::class,
-                FetchAvailableAdvisorPipeline::class,
-                AssignLeadPipeline::class,
-                AssignChildLeadPipeline::class,
-                MakeResponsePipeline::class,
+                FetchLeadPipe::class,
+                VerifyLeadPreChecksPipe::class,
+                VerifyAlreadyInProgressAllocationPipe::class,
+                FetchAvailableAdvisorPipe::class,
+                AssignLeadPipe::class,
+                AssignChildLeadPipe::class,
+                MakeResponsePipe::class,
             ])->thenReturn();
 
         } catch (AllocationException|Throwable $e) {
