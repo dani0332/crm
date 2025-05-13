@@ -1280,7 +1280,7 @@ class RenewalsUploadService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
         ];
 
-        info('Renewal: Health Plan Modify V2 Request Data: '.json_encode($dataArray));
+        LoggerService::info('Renewal: Health Plan Modify V2 Request Data: ' . json_encode($dataArray));
         $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
         if ($response) {
@@ -1435,7 +1435,8 @@ class RenewalsUploadService
             'callSource' => strtolower(LeadSourceEnum::IMCRM),
             'url' => request()->url(),
         ];
-
+        
+        LoggerService::info('Renewal: select health plan request data: ' . json_encode($data));
         $response = Capi::request($endpoint, 'post', $data);
 
         return $response;
