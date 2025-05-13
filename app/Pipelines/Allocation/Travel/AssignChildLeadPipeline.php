@@ -6,7 +6,6 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
-use App\Enums\UserStatusEnum;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
 use App\Pipelines\Allocation\Common\BaseAllocationPipeline;
@@ -48,21 +47,10 @@ class AssignChildLeadPipeline extends BaseAllocationPipeline
 
     private function fetchAvailableAdvisor($teamId, $lead)
     {
-        $isReassignmentJob = $this->allocationRequest->isReassignmentJob();
-
-        LoggerService::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId}");
-
-        $statusOrder = [
-            UserStatusEnum::ONLINE,
-            UserStatusEnum::OFFLINE,
-        ];
-
-        if (! $isReassignmentJob) {
-            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
-        }
+        $statusOrder = $this->getOnlineStatusesInOrder();
 
         foreach ($statusOrder as $status) {
-            $eligibleUser = $this->getAdvisorByStatus($status, $teamId, $lead);
+            $eligibleUser = $this->findtAdvisorByStatus($status, $teamId, $lead);
 
             if ($eligibleUser) {
                 return User::find($eligibleUser->user_id);
@@ -72,7 +60,7 @@ class AssignChildLeadPipeline extends BaseAllocationPipeline
         return null;
     }
 
-    public function getAdvisorByStatus($onlineStatus, $teamId, $lead)
+    private function findtAdvisorByStatus($onlineStatus, $teamId, $lead)
     {
         return $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])
             ->when($lead->isSIC($this->allocationRequest->getQuoteType()), function ($q) {
@@ -97,15 +85,22 @@ class AssignChildLeadPipeline extends BaseAllocationPipeline
 
         LoggerService::info(self::class." - Assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
 
-        $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
+        $previousAdvisorAssignedDate = $this->updateTravelQuoteDetail($lead->id);
 
         if ($lead->source != LeadSourceEnum::REFERRAL) {
             LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
-            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id, $this->allocationRequest->getQuoteType()->id()) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, $this->allocationRequest->getQuoteType()->id());
+
+            $quoteTypeId = $this->allocationRequest->getQuoteType()->id();
+
+            if ($assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED) {
+                $this->addAllocationCounts($advisor->id, $quoteTypeId);
+            } else {
+                $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId);
+            }
         }
     }
 
-    private function updateQuoteDetail($leadId)
+    protected function updateTravelQuoteDetail($leadId)
     {
         $quoteDetail = TravelQuoteRequestDetail::where('travel_quote_request_id', $leadId)->first();
         $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date ?? '';
