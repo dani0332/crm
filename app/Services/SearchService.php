@@ -32,7 +32,7 @@ class SearchService extends BaseService
     /**
      * Get search leads based on request parameters
      *
-     * @param  bool  $isEndorsementList  Whether to show endorsement list
+     * @param  bool  $isEndorsementList  Whether to show an endorsement list
      * @param  bool  $isExport  Whether this is for export
      * @return LengthAwarePaginator|Collection|array
      */
@@ -50,8 +50,7 @@ class SearchService extends BaseService
 
         // Build query with essential joins and apply filters
         $baseQuery = $this->buildBaseQuery($baseTable, $isEndorsementList);
-        $this->applyJoinsAndFilters($baseQuery, $baseTable, $isEndorsementList);
-        $selectColumns = $this->getFilteredCompanyCases(request(), $selectColumns);
+        $selectColumns = $this->applyJoinsAndFilters($baseQuery, $baseTable, $isEndorsementList);
         $this->applyAuthorizationFilters($baseQuery);
 
         // Apply sorting with proper index usage
@@ -74,7 +73,7 @@ class SearchService extends BaseService
     /**
      * Get base select columns for queries
      *
-     * @param  bool  $isEndorsementList  Whether this is for endorsement list
+     * @param  bool  $isEndorsementList  Whether this is for the endorsement list
      */
     private function getBaseSelectColumns(bool $isEndorsementList = false): array
     {
@@ -97,7 +96,7 @@ class SearchService extends BaseService
      * Build the base query with essential joins
      *
      * @param  string  $baseTable  Base table for the query
-     * @param  bool  $isEndorsementList  Whether this is for endorsement list
+     * @param  bool  $isEndorsementList  Whether this is for the endorsement list
      */
     private function buildBaseQuery(string $baseTable, bool $isEndorsementList): Builder
     {
@@ -129,9 +128,9 @@ class SearchService extends BaseService
      *
      * @param  Builder  $query  Query builder instance
      * @param  string  $baseTable  Base table for the query
-     * @param  bool  $isEndorsementList  Whether this is for endorsement list
+     * @param  bool  $isEndorsementList  Whether this is for the endorsement list
      */
-    private function applyJoinsAndFilters(Builder $query, string $baseTable, bool $isEndorsementList): void
+    private function applyJoinsAndFilters(Builder $query, string $baseTable, bool $isEndorsementList)
     {
         try {
             // Apply standard table joins from the model
@@ -140,7 +139,7 @@ class SearchService extends BaseService
             // Apply search filters
             $this->searchQuoteQueryFilters($query, request(), $isEndorsementList);
 
-            // Process columns for endorsement list
+            // Process columns for an endorsement list
             if ($isEndorsementList) {
                 $suSelectColumns = [
                     'send_update_logs.code',
@@ -159,15 +158,12 @@ class SearchService extends BaseService
                 $query->addSelect($this->getFilteredCompanyCases(request(), $selectColumns));
             } else {
                 // Add standard columns
-                $query->addSelect([
-                    'personal_quotes.uuid',
-                    'quote_status.text as quote_status',
-                ]);
-
-                // Get filtered company cases
                 $selectColumns = array_merge($this->getBaseSelectColumns(), ['personal_quotes.uuid', 'quote_status.text as quote_status']);
-                $query->addSelect($this->getFilteredCompanyCases(request(), $selectColumns));
+                $selectColumns = array_merge($selectColumns, $this->getFilteredCompanyCases(request(), $selectColumns));
+                $query->addSelect($selectColumns);
             }
+
+            return $selectColumns;
         } catch (\Exception $e) {
             LoggerService::error(self::CLASS_NAME.' fn:'.__FUNCTION__.' Error applying joins and filters: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
@@ -214,7 +210,7 @@ class SearchService extends BaseService
      *
      * @param  Builder  $query  Query builder instance
      * @param  string  $baseTable  Base table for the query
-     * @param  bool  $isEndorsementList  Whether this is for endorsement list
+     * @param  bool  $isEndorsementList  Whether this is for the endorsement list
      * @param  array  $selectColumns  Base select columns
      * @return Collection Collection of export data
      */
@@ -648,13 +644,13 @@ class SearchService extends BaseService
 
             // Check word type
             if (preg_match('/^[a-zA-Z]+$/', $word)) {
-                // Pure alphabetic - treat as single word
+                // Pure alphabetic - treat as a single word
                 $optimized[] = '+'.$word;
             } elseif (preg_match('/^[a-zA-Z0-9]+$/', $word)) {
                 // Alphanumeric - use word prefix matching
                 $optimized[] = '+'.$word.'*';
 
-                // If word has both letters and numbers, also add exact match
+                // If word has both letters and numbers, also add an exact match
                 if (preg_match('/[a-zA-Z]/', $word) && preg_match('/[0-9]/', $word)) {
                     $optimized[] = '+"'.$word.'"';
                 }
