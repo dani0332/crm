@@ -6,7 +6,11 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
 use App\Models\QuoteBatches;
+use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
@@ -21,7 +25,7 @@ abstract class BaseAllocationPipeline extends AllocationService
     public const SERVER_ERROR = Response::HTTP_INTERNAL_SERVER_ERROR;
 
     protected AllocationRequest $allocationRequest;
-    protected ?Model $lead = null;
+    protected CarQuote|TravelQuote|HealthQuote|BusinessQuote|null $lead = null;
 
     protected function setRequest(AllocationRequest $allocationRequest, bool $startLogging = true)
     {
@@ -130,5 +134,36 @@ abstract class BaseAllocationPipeline extends AllocationService
         }
 
         return $statuses;
+    }
+
+    protected function findAvailableAdvisor($teamId = null)
+    {
+        $teamId = $teamId ?? $this->allocationRequest->getTeamId();
+
+        $statusOrder = $this->getOnlineStatusesInOrder();
+
+        foreach ($statusOrder as $status) {
+            info(self::class." - trying to get advisors with current status as {$status} and team id: {$teamId}");
+            $eligibleUser = $this->getAdvisorByStatus($status, $teamId);
+
+            if ($eligibleUser) {
+                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id}");
+
+                return User::find($eligibleUser->user_id);
+            }
+        }
+
+        return null;
+    }
+
+    protected function getAdvisorByStatus($onlineStatus, $teamId)
+    {
+        /*
+            override this method in child classes to get the advisor by status
+            this method will stay in base class to make it optional for child classes to override
+            default implementation is to return null
+        */
+
+        return null;
     }
 }
