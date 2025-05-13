@@ -589,7 +589,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         LoggerService::info("Payment approval process initiated: {$paymentCode}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
         if ($request->is_capture) { // update collected amount in childs
             foreach ($request->collection_amount as $key => $splitAmount) {
-                if ($key == null || $key <= 0) {
+                if ($key == null || $key < 0) {
                     LoggerService::info("Child payment code: {$paymentCode} Invalid split number: {$key}");
 
                     continue;
