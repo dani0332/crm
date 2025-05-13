@@ -37,6 +37,7 @@ use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PaymentStatusHistory;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
@@ -315,17 +316,20 @@ class CentralService extends BaseService
     {
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $repository = getRepositoryObject($quoteType);
+        $quote = $repository::where('code', $code)->firstOrFail();
 
         $priceVatApp = $data->price_vat_applicable ?? 0;
         $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+        $vatAmount = ($priceVatApp / 100) * $vatPercentage;
+        LoggerService::info("Quote {$code} - VAT values: priceVatApp: {$priceVatApp}, priceVatNotApp: {$priceVatNotApp}, vatAmount: {$vatAmount}");
 
         if ($quoteType == QuoteTypes::BUSINESS->value) {
-            $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
+            $data->price_with_vat = $priceVatApp + $priceVatNotApp + $vatAmount;
         } else {
-            $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
+            $data->price_with_vat = $priceVatApp ? ($priceVatApp + $vatAmount) : $priceVatNotApp;
         }
 
-        $quote = $repository::where('code', $code)->firstOrFail();
+        $data->vat = $vatAmount;
 
         $oldInsuranceProviderId = $quote->insurance_provider_id;
         $newInsuranceProviderId = $data->insurance_provider_id;
@@ -1260,9 +1264,6 @@ class CentralService extends BaseService
         $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
         $quote->save();
 
-        if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink()) {
-            app(QuoteDocumentService::class)->updateQuoteAndPaymentStatusToPaymentPending($quote);
-        }
         $paymentSplits = method_exists($quote, 'getAllInsurerPaymentLinkSplits') ? $quote->getAllInsurerPaymentLinkSplits() : [];
         foreach ($paymentSplits as $ps) {
             $ps->insurer_payment_link = null;
@@ -1300,7 +1301,7 @@ class CentralService extends BaseService
         return in_array($insuranceProviderCode, $enabledProviders);
     }
 
-    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
     {
         try {
             $data = [
@@ -1312,11 +1313,15 @@ class CentralService extends BaseService
             return Ken::request('/capture-payment-validation', 'put', $data);
 
         } catch (\Throwable $th) {
-            LoggerService::error('capturePaymentValidation failed: '.$th->getMessage(), [
-                'uuid' => $uuid,
-                'quoteTypeId' => $quoteTypeId,
-                'captureAmount' => $captureAmount,
-            ]);
+            LoggerService::error('capturePaymentValidation failed',
+                context: [
+                    'ref_id' => $quoteCode,
+                ],
+                extra: [
+                    'quoteTypeId' => $quoteTypeId,
+                    'captureAmount' => $captureAmount,
+                ],
+                exception: $th);
 
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
@@ -1362,6 +1367,7 @@ class CentralService extends BaseService
                     $paymentSplit->documents()->forceDelete();
                 }
                 PaymentSplits::where('code', $request->payment_code)->delete();
+                PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
             info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);

@@ -22,7 +22,7 @@ class CompanyCarOCBJob implements ShouldQueue
     private $quoteUuid;
 
     public $tries = 3;
-    public $timeout = 15;
+    public $timeout = 120;
     public $backoff = 60;
 
     public function __construct($quoteUuid)

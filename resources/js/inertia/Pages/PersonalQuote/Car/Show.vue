@@ -16,7 +16,6 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
-  listQuotePlans: { Array, String },
   quoteDocuments: Array,
   documentTypes: Object,
   cdnPath: String,
@@ -524,6 +523,9 @@ const isRenewalUpload = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
+  const canUpdateToFakeDuplicate = can(
+    permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
+  );
   const isLeadPool = hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool]);
   const isPA = hasAnyRole([rolesEnum.Admin, rolesEnum.PA]);
   const renewal_batch = page.props.record.renewal_batch;
@@ -538,6 +540,7 @@ const leadStatusOptions = computed(() => {
   const filteredLeadStatuses = statuses?.map(status => {
     if (
       (!isLeadPool &&
+        !canUpdateToFakeDuplicate &&
         [
           page.props.quoteStatusEnum.Fake,
           page.props.quoteStatusEnum.Duplicate,
@@ -554,8 +557,6 @@ const leadStatusOptions = computed(() => {
         disabled: true,
       };
     }
-    // if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
-    // else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true;
     return {
       value: status.id,
       label: status.text,
@@ -566,6 +567,10 @@ const leadStatusOptions = computed(() => {
 });
 
 const leadStatusDisabled = computed(() => {
+  const canUpdateToFakeDuplicate = can(
+    permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
+  );
+
   if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
     return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
   }
@@ -575,7 +580,8 @@ const leadStatusDisabled = computed(() => {
     ((page.props.record.quote_status_id ==
       page.props.quoteStatusEnum.Duplicate ||
       page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake) &&
-      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin])) ||
+      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]) &&
+      !canUpdateToFakeDuplicate) ||
     (!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction)
   );
 });
@@ -642,12 +648,6 @@ const policyDetailsState = reactive({
   isEditing: false,
 });
 
-const planQuoteInsurerNumber = computed(() => {
-  let quotePlanList = page.props?.listQuotePlans;
-  if (!quotePlanList || typeof quotePlanList === 'string') return null;
-  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
-  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
-});
 const vatAmount = computed(() => {
   return (page.props.record.premium * 0.05).toFixed(2);
 });
@@ -655,33 +655,6 @@ const vatAmount = computed(() => {
 const priceWithoutVat = computed(() => {
   return page.props.record.premium - vatAmount.value;
 });
-
-const policyDetailsForm = useForm({
-  quote_policy_number: page.props.record.policy_number || null,
-
-  quote_policy_issuance_date:
-    dateToYMD(page.props.record.policy_issuance_date) || '',
-  quote_policy_price_vat_notapplicable: null,
-  quote_policy_price_vat_applicable: priceWithoutVat || '',
-  quote_policy_vat_total_amount: vatAmount.value || null,
-  quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
-  quote_policy_expiry_date:
-    dateToYMD(page.props.record.policy_expiry_date) || '',
-  quote_premium: page.props.record.premium || null,
-  quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
-  quote_policy_issuance_status: null,
-  modelType: 'Car',
-  quote_id: page.props.record.id,
-});
-
-const onUpdatePolicyDetails = () => {
-  policyDetailsForm.post('/quotes/Car/update-quote-policy', {
-    preserveScroll: true,
-    onSuccess: () => {
-      policyDetailsState.isEditing = false;
-    },
-  });
-};
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -1887,7 +1860,12 @@ const isCommercialVehicle = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">REGISTRATION TYPE</dt>
-                <dd>{{ quote.registration_type }}</dd>
+                <dd>
+                  {{
+                    quote.registration_type.charAt(0).toUpperCase() +
+                    quote.registration_type.slice(1)
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
@@ -1915,7 +1893,14 @@ const isCommercialVehicle = computed(() => {
               </div>
               <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">Vehicle use</dt>
-                <dd>{{ record.vehicle_use }}</dd>
+                <dd>
+                  {{
+                    record.vehicle_use
+                      ? record.vehicle_use.charAt(0).toUpperCase() +
+                        record.vehicle_use.slice(1)
+                      : ''
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CAR MAKE</dt>
@@ -2461,12 +2446,13 @@ const isCommercialVehicle = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Emirates of Registration...."
                     />
                   </dd>
                 </div>
@@ -2484,21 +2470,21 @@ const isCommercialVehicle = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
                       placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Industry Type...."
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       @update:modelValue="entityTypeChange($event)"
-                      :single="true"
                       v-model:modelValue="customerProfileForm.entity_type_code"
                       placeholder="SELECT ENTITY TYPE"
                       :options="[
@@ -2506,6 +2492,8 @@ const isCommercialVehicle = computed(() => {
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Entity Type...."
                     />
                   </dd>
                 </div>
@@ -2668,9 +2656,8 @@ const isCommercialVehicle = computed(() => {
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                <ComboBox
+                <x-select
                   v-model="leadStatusForm.leadStatus"
-                  :single="true"
                   label="Status"
                   class="w-full uppercase"
                   placeholder="Please select Lead Status"

@@ -56,8 +56,8 @@ trait FilterCriteria
                             break;
                         case FilterTypes::DATE_BETWEEN:
                             if (isset(request()->{$key.'_start'}) && isset(request()->{$key.'_end'})) {
-                                $startDate = date('Y-m-d 00:00:00', strtotime(request()->{$key.'_start'}));
-                                $endDate = date('Y-m-d 23:59:59', strtotime(request()->{$key.'_end'}));
+                                $startDate = Carbon::parse(request()->{$key.'_start'})->startOfDay();
+                                $endDate = Carbon::parse(request()->{$key.'_end'})->endOfDay();
                                 $query->whereBetween($tableName.'.'.$key, [$startDate, $endDate]);
                             } elseif (isset(request()->{$key.'_time_start'}) && isset(request()->{$key.'_time_end'})) {
                                 $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_start'}));

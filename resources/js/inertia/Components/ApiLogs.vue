@@ -125,19 +125,18 @@ const onLoadAuditLogData = async () => {
         </div>
         <div v-else>
           <div class="flex items-center gap-4 my-3">
-            <x-field class="flex-1" label="Insurance Provider">
-              <ComboBox
-                :single="true"
-                class="w-full"
-                v-model="insuranceProviderId"
-                :options="insuranceProviders"
-              />
-            </x-field>
+            <x-select
+              class="flex-1 mt-1"
+              v-model="insuranceProviderId"
+              :options="insuranceProviders"
+              placeholder="Insurance Provider"
+              filterable
+            />
             <x-button
               size="sm"
               color="primary"
               @click="insuranceProviderId = null"
-              class="h-10 mt-3"
+              class="h-10"
             >
               Reset
             </x-button>
