@@ -4,6 +4,9 @@ namespace App\Pipes\Allocation\Handlers;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Models\NationalityAllocationConfiguration;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class AllocationRequest
@@ -89,5 +92,45 @@ class AllocationRequest
     public function isFailed()
     {
         return $this->get('failed', false);
+    }
+
+    public function setLead(Model $lead)
+    {
+        $this->set('lead', $lead);
+    }
+
+    public function getLead()
+    {
+        return $this->get('lead');
+    }
+
+    public function setAdvisor(User $advisor)
+    {
+        $this->set('advisor', $advisor);
+    }
+
+    public function getAdvisor()
+    {
+        return $this->get('advisor');
+    }
+
+    public function setNationalityConfig(NationalityAllocationConfiguration $config)
+    {
+        $this->set('nationality_config', $config);
+    }
+
+    public function hasNationalityConfig()
+    {
+        return ! empty($this->get('nationality_config', null));
+    }
+
+    public function setAdvisorIDs(array $advisorIds)
+    {
+        $this->set('advisor_ids', $advisorIds);
+    }
+
+    public function getAdvisorIDs()
+    {
+        return $this->get('advisor_ids', []);
     }
 }

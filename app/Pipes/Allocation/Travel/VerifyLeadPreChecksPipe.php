@@ -30,7 +30,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
         }
 
-        $this->allocationRequest->set('lead', $lead);
+        $this->allocationRequest->setLead($lead);
 
         return $next($request);
     }

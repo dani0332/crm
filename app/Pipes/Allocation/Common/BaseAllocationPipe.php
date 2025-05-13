@@ -37,8 +37,8 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->startQuoteLogging();
         }
 
-        if ($this->allocationRequest->get('lead')) {
-            $this->setLead($this->allocationRequest->get('lead'));
+        if ($lead = $this->allocationRequest->getLead()) {
+            $this->setLead($lead);
         }
     }
 
@@ -63,7 +63,7 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->throw('Lead not found', self::NOT_FOUND);
         }
 
-        $this->allocationRequest->set('lead', $lead);
+        $this->allocationRequest->setLead($lead);
 
         return $lead;
     }
@@ -184,7 +184,7 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function assign()
     {
-        $advisor = $this->allocationRequest->get('advisor');
+        $advisor = $this->allocationRequest->getAdvisor();
         $assignmentType = $this->allocationRequest->getAssignmentType();
 
         LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');

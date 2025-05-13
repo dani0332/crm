@@ -32,7 +32,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             $this->throw('Advisor not found', self::NOT_FOUND);
         }
 
-        $this->allocationRequest->set('advisor', $advisor);
+        $this->allocationRequest->setAdvisor($advisor);
 
         return $next($request);
     }
