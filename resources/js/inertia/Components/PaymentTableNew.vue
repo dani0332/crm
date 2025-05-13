@@ -6279,8 +6279,14 @@ onBeforeMount(() => {
                 <div
                   v-if="
                     isCreditApprovalView ||
-                    (splitPaymentRecord.payment_status_id !=
-                      paymentStatusEnum.PAID &&
+                    ((splitPaymentRecord.payment_status_id != paymentStatusEnum.PAID &&
+                      !(splitPaymentRecord.verified_by !== null &&
+                        paymentMethodsForm.status == 'view' &&
+                        paymentMethodsModels[splitPaymentNo] !=
+                          paymentMethodsEnums.CreditCard &&
+                        paymentMethodsModels[splitPaymentNo] !=
+                          paymentMethodsEnums.CreditApproval)
+                    ) &&
                       (can(permissionEnum.ApprovePayments) ||
                         (can(permissionEnum.INPL_APPROVER) &&
                           splitPaymentRecord.payment_method.code ==
