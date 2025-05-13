@@ -61,6 +61,12 @@ class VerifyLeadPreChecksPipeline extends BaseAllocationPipeline
         $tracker = $this->allocationRequest->getTracker();
         $lead = $this->lead;
 
+        if ($lead->isRenewalUpload()) {
+            LoggerService::info(self::class.':verifyFetchLeadPreChecks - it is Renewal Upload so skipping allocation');
+
+            return false;
+        }
+
         $isAllianceTravelPolicyIssuanceEnabled = getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE, useCache: true) == '1';
 
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
