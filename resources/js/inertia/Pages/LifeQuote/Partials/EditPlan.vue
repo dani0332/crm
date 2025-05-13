@@ -46,7 +46,7 @@ const formatDate = timestamp => {
 const validatePriceRange = value => {
   if (!value) return true;
   const price = parseFloat(value);
-  if (editForm.isManualPlan && price < 1 || price > 100000000) {
+  if ((editForm.isManualPlan && price < 1) || price > 100000000) {
     return 'Value must be between 1 and 100,000,000';
   }
   return true;

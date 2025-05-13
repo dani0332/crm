@@ -1757,10 +1757,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
               <template #item-sumInsured="item">
                 <span class="copay-max">{{
-                  parseFloat(item.sumInsured).toFixed(2) 
+                  parseFloat(item.sumInsured).toFixed(2)
                 }}</span>
               </template>
-
 
               <template #item-planTypeId="item">
                 <span class="copay-max">{{ item.planType }}</span>

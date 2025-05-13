@@ -22,12 +22,11 @@ const shown = computed({
 const validatePriceRange = value => {
   if (!value) return true;
   const price = parseFloat(value);
-  if (createForm.isManualPlan && price < 1 || price > 100000000) {
+  if ((createForm.isManualPlan && price < 1) || price > 100000000) {
     return 'Value must be between 1 and 100,000,000';
   }
   return true;
 };
-
 
 const riders = props.lifeRiders.map(rider => ({
   riderId: rider.id,
@@ -406,7 +405,8 @@ const isNonNegative = value => {
               min="0"
               step="any"
               @keydown="
-                e => (e.key === 'e' || e.key === '-') && e.preventDefault()              "
+                e => (e.key === 'e' || e.key === '-') && e.preventDefault()
+              "
             />
           </div>
         </div>
