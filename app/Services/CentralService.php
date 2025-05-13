@@ -1301,7 +1301,7 @@ class CentralService extends BaseService
         return in_array($insuranceProviderCode, $enabledProviders);
     }
 
-    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
     {
         try {
             $data = [
@@ -1313,11 +1313,15 @@ class CentralService extends BaseService
             return Ken::request('/capture-payment-validation', 'put', $data);
 
         } catch (\Throwable $th) {
-            LoggerService::error('capturePaymentValidation failed: '.$th->getMessage(), [
-                'uuid' => $uuid,
-                'quoteTypeId' => $quoteTypeId,
-                'captureAmount' => $captureAmount,
-            ]);
+            LoggerService::error('capturePaymentValidation failed',
+                context: [
+                    'ref_id' => $quoteCode,
+                ],
+                extra: [
+                    'quoteTypeId' => $quoteTypeId,
+                    'captureAmount' => $captureAmount,
+                ],
+                exception: $th);
 
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }

@@ -5,6 +5,7 @@ const props = defineProps({
   advisors: Object,
   cannotUseAssignee: Boolean,
   totalActivities: Number,
+  errors: Object,
 });
 
 // Vue Composition API
@@ -278,8 +279,22 @@ const onSubmit = isValid => {
 // Component hooks
 watch(() => filters, { deep: true, immediate: true });
 
+const showErrors = () => {
+  if (props.errors && Object.keys(props.errors).length > 0) {
+    // loop through erros
+    Object.values(props.errors).forEach(error => {
+      console.log(error);
+      notification.error({
+        message: error.toString(),
+        position: 'top',
+      });
+    });
+  }
+};
+
 onMounted(() => {
   setQueryFilters();
+  showErrors();
 });
 </script>
 
