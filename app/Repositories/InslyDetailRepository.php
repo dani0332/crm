@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
+use App\Models\HomeQuote;
 use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
 use App\Models\PetQuote;
@@ -27,7 +28,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use MongoDB\BSON\Regex;
 use MongoDB\BSON\UTCDateTime;
-use App\Models\HomeQuote;
 
 class InslyDetailRepository extends BaseRepository
 {
