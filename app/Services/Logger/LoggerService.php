@@ -146,10 +146,10 @@ class LoggerService
         Log::emergency($message, $context);
     }
 
-    public static function sql(string $message, $queryInstance)
+    public static function sql(string $title, $queryInstance)
     {
         $sql = $queryInstance->toRawSql();
 
-        self::info($message, ['sql' => $sql]);
+        self::info("{$title} Query", ['sql' => $sql]);
     }
 }

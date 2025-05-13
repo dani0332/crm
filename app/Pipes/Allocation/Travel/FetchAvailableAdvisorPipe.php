@@ -51,13 +51,13 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     protected function getAdvisorByStatus($onlineStatus, $teamId)
     {
         if ($this->allocationRequest->get('isCHSAdvisor')) {
-            info(self::class.' - getAdvisorByStatus: CHS Advisor is required');
+            LoggerService::info(self::class.' - getAdvisorByStatus: CHS Advisor is required');
 
             return User::select('users.id as user_id')->chs()->first();
         }
 
         if ($this->allocationRequest->get('isSICAdvisor')) {
-            info(self::class.' - getAdvisorByStatus: SIC Advisor is required');
+            LoggerService::info(self::class.' - getAdvisorByStatus: SIC Advisor is required');
 
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
@@ -73,7 +73,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             });
 
-        LoggerService::sql(self::class.' - getAdvisorByStatus query', $query);
+        LoggerService::sql(self::class.' - getAdvisorByStatus', $query);
 
         return $query->first();
     }
