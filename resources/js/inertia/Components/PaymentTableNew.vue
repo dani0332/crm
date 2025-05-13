@@ -2129,6 +2129,8 @@ const processPaymentSplits = payment => {
     paymentStatusEnum.PARTIAL_CAPTURED,
   ];
 
+  // TODO: Permanent fix from here we are starting from 1 and not 0
+  // We are sending null for the first split collection_amount
   for (let i = 1; i <= payment.total_payments; i++) {
     const split = payment.payment_splits[i - 1];
     console.log('split : ', split);
