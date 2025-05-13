@@ -50,6 +50,8 @@ class PrivateClientConfigController extends Controller
 
         $locationAreas = SubArea::select('code as value', 'text as label')->get()->toArray();
 
+        $isCurrentVersion = (int) $selectedVersion === (int) $allVersions[0];
+
         return Inertia::render('Admin/PrivateClientConfig/Show', [
             'configurations' => $configurations,
             'carMakes' => $carMakes,
@@ -57,6 +59,7 @@ class PrivateClientConfigController extends Controller
             'locationAreas' => $locationAreas,
             'allVersions' => $allVersions,
             'selectedVersion' => $selectedVersion,
+            'isCurrentVersion' => $isCurrentVersion,
         ]);
     }
 
@@ -75,6 +78,9 @@ class PrivateClientConfigController extends Controller
             ]);
 
             DB::beginTransaction();
+
+            // Set active_version=false for all existing configurations
+            PrivateClientConfig::where('active_version', true)->update(['active_version' => false]);
 
             $existingVersion = PrivateClientConfig::orderBy('version', 'desc')->first();
             foreach ($validated['configurations'] as $config) {

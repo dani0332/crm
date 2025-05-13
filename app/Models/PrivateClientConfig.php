@@ -20,6 +20,7 @@ class PrivateClientConfig extends Model implements AuditableContract
         'currency_type_id',
         'status',
         'version',
+        'active_version',
     ];
 
     /**

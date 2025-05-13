@@ -10,6 +10,7 @@ const props = defineProps({
   locationAreas: Array,
   allVersions: Array,
   selectedVersion: Number,
+  isCurrentVersion: Boolean,
 });
 
 const { isRequired, isRequiredNumber } = useRules();
@@ -25,6 +26,9 @@ const chunkArray = (array, size) => {
     array.slice(i * size, i * size + size)
   );
 };
+
+// Computed property to check if viewing the latest version
+const isCurrentVersion = props.isCurrentVersion;
 
 // Create a group check for sum assured fields
 const sumAssuredEnabled = ref(false);
@@ -378,13 +382,8 @@ const onSubmit = isValid => {
   <div class="bg-gray-50 p-4 rounded-md my-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="flex flex-wrap items-center gap-2">
-        <span class="font-medium">Current Version:</span>
+        <span class="font-medium">Criteria Version:</span>
         <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">{{ selectedVersion }}</span>
-        
-        <!-- Warning when viewing historical version -->
-        <div v-if="selectedVersion && allVersions && allVersions.length > 0 && selectedVersion !== allVersions[0]" 
-             class="flex items-center text-amber-600 ml-2">
-        </div>
       </div>
       <div class="flex items-center">
         <span class="mr-2">Select Version:</span>
@@ -417,7 +416,8 @@ const onSubmit = isValid => {
                   configForm['life_sum_insured_value_aed_enabled'] = e.target.checked;
                   configForm['life_sum_insured_value_gbp_enabled'] = e.target.checked;
                   configForm['life_sum_insured_value_eur_enabled'] = e.target.checked;
-                }" />
+                }"
+                :disabled="!isCurrentVersion" />
               <p class="mr-2">Sum Insured</p>
               <p class="text-gray-500">(At least one required)</p>
             </div>
@@ -426,7 +426,8 @@ const onSubmit = isValid => {
             <div class="grid grid-cols-4 gap-4">
               <div>
                 <x-input v-model="configForm['life_sum_insured_value_usd']" class="!mb-0"
-                  :rules="[validateAtLeastOneSum]">
+                  :rules="[validateAtLeastOneSum]"
+                  :disabled="!isCurrentVersion">
                   <template #suffix>
                     <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                       <span>USD</span>
@@ -436,7 +437,8 @@ const onSubmit = isValid => {
               </div>
               <div>
                 <x-input v-model="configForm['life_sum_insured_value_aed']" class="!mb-0" 
-                  :rules="[validateAtLeastOneSum]">
+                  :rules="[validateAtLeastOneSum]"
+                  :disabled="!isCurrentVersion">
                   <template #suffix>
                     <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                       <span>AED</span>
@@ -446,7 +448,8 @@ const onSubmit = isValid => {
               </div>
               <div>
                 <x-input v-model="configForm['life_sum_insured_value_gbp']" class="!mb-0" 
-                  :rules="[validateAtLeastOneSum]">
+                  :rules="[validateAtLeastOneSum]"
+                  :disabled="!isCurrentVersion">
                   <template #suffix>
                     <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                       <span>GBP</span>
@@ -456,7 +459,8 @@ const onSubmit = isValid => {
               </div>
               <div>
                 <x-input v-model="configForm['life_sum_insured_value_eur']" class="!mb-0" 
-                  :rules="[validateAtLeastOneSum]">
+                  :rules="[validateAtLeastOneSum]"
+                  :disabled="!isCurrentVersion">
                   <template #suffix>
                     <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                       <span>EUR</span>
@@ -480,13 +484,15 @@ const onSubmit = isValid => {
                 <div v-if="field.type !== 'select_multiple'">
                   <div v-if="field.label" class="flex items-center mb-2">
                     <input type="checkbox" v-model="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`]"
-                      class="mr-2 h-4 w-4" />
+                      class="mr-2 h-4 w-4" 
+                      :disabled="!isCurrentVersion" />
                     <p class="mr-2">{{ field.label }}</p>
                     <p v-if="field.operator === '>='" class="text-gray-500">(Greater than or equal to)</p>
                   </div>
                   <div v-else></div>
                   <x-input v-model="configForm[`${insuranceType.name}_${field.uiName || field.name}`]" class="!mb-0"
-                    :rules="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`] ? [isRequired, isRequiredNumber] : []">
+                    :rules="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`] ? [isRequired, isRequiredNumber] : []"
+                    :disabled="!isCurrentVersion">
                     <template #suffix v-if="field.currency">
                       <div class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400">
                         <span>{{ field.currency }}</span>
@@ -499,12 +505,14 @@ const onSubmit = isValid => {
                 <div v-else-if="field.type === 'select_multiple'">
                   <div class="flex items-center mb-2">
                     <input type="checkbox" v-model="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`]"
-                      class="mr-2 h-4 w-4" />
+                      class="mr-2 h-4 w-4" 
+                      :disabled="!isCurrentVersion" />
                     <p>{{ field.label }}</p>
                   </div>
                   <x-select :placeholder="`Select ${field.label}`" :options="props[field.options]" filterable multiple
                     v-model="configForm[`${insuranceType.name}_${field.uiName || field.name}`]"
-                    :rules="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`] ? [v => v && v.length ? true : 'This field is required'] : []">
+                    :rules="configForm[`${insuranceType.name}_${field.uiName || field.name}_enabled`] ? [v => v && v.length ? true : 'This field is required'] : []"
+                    :disabled="!isCurrentVersion">
                   </x-select>
                 </div>
               </template>
@@ -519,9 +527,16 @@ const onSubmit = isValid => {
     <AuditLogs :quoteType="'PrivateClientConfig'" />
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">
-      <x-button size="md" color="emerald" type="submit" :loading="loader" :disabled="loader">
+      <x-button size="md" color="emerald" type="submit" :loading="loader" :disabled="loader || !isCurrentVersion">
         Save
       </x-button>
     </div>
   </x-form>
+
+  <!-- Warning when viewing historical version -->
+  <div v-if="!isCurrentVersion" 
+       class="flex items-center text-amber-600 ml-2">
+    <i class="ri-error-warning-line mr-1"></i>
+    <span>You are viewing a historical version. Form fields are disabled.</span>
+  </div>
 </template>
