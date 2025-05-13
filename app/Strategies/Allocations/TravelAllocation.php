@@ -2,7 +2,6 @@
 
 namespace App\Strategies\Allocations;
 
-use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\QuoteTypes;
 use App\Exceptions\Allocation\AllocationException;
 use App\Pipelines\Allocation\Common\FetchLeadPipeline;
@@ -58,8 +57,6 @@ class TravelAllocation extends AllocationService implements Allocation
             if ($e instanceof AllocationException) {
                 return $this->createResponse2($alloctionRequest, $e);
             }
-
-            $this->tracker->saveResult(ProcessTrackerAllocationEnum::EXCEPTION_RAISED, summary: "Exception Occurred in Lead Allocation with error : {$e->getMessage()}");
 
             return [
                 'advisorId' => 0,
