@@ -416,7 +416,7 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::HOME->value:
-                            $obj->homeQuoteRequestDetail()->updateOrCreate(
+                            $obj->homeQuote->homeQuoteRequestDetail()->updateOrCreate(
                                 ['home_quote_request_id' => $obj->id],
                                 ['insly_id' => $policy->_id]
                             );
