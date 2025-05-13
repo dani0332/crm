@@ -594,7 +594,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                     // Log the split payment approval process
-                    LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} approving process started");
+                    LoggerService::info("Child payment code: {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} approving process started with amount: {$splitAmount}");
 
                     // process split payment approve
                     app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
