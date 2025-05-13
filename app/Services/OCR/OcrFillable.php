@@ -53,6 +53,8 @@ trait OcrFillable
 
     private function fillTaxInvoice(Model $quote, object $data)
     {
+        $providersWithPolicyIssuanceDate = [];
+
         $providersWithPriceVatApplicable = [
             InsurerProviderEnum::GIG_INSURANCE,
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
@@ -61,18 +63,17 @@ trait OcrFillable
             InsurerProviderEnum::TOKIO_MARINE,
         ];
 
-        $providersWithPolicyIssuanceDate = [];
-
         $dataToUpdate = [];
 
         $price = $this->resolveProp($data, 'price');
-        if ($this->isEnabled($quote, $providersWithPriceVatApplicable) && $quote->payment) {
-            $paymentDataToUpdate['price_vat_applicable'] = $this->resolveProp($price, 'baseAmount') ?? $quote->payment->price_vat_applicable;
+
+        if ($this->isEnabled($quote, $providersWithPriceVatApplicable)) {
+            $dataToUpdate['price_vat_applicable'] = $this->resolveProp($price, 'baseAmount') ?? $quote->price_vat_applicable;
         }
 
         if ($this->isEnabled($quote, $providersWithPolicyIssuanceDate)) {
-            $data['vat'] = $this->resolveProp($price, 'VAT') ?? $quote->vat;
-            $data['price_with_vat'] = $this->resolveProp($price, 'totalAmount') ?? $quote->price_with_vat;
+            $dataToUpdate['vat'] = $this->resolveProp($price, 'VAT') ?? $quote->vat;
+            $dataToUpdate['price_with_vat'] = $this->resolveProp($price, 'totalAmount') ?? $quote->price_with_vat;
             $dataToUpdate['policy_issuance_date'] = $this->parseDate($this->resolveProp($data, 'issuanceDate'), $quote->policy_issuance_date);
         }
 
@@ -95,19 +96,17 @@ trait OcrFillable
             InsurerProviderEnum::TOKIO_MARINE,
         ];
 
-        $paymentDataToUpdate = $paymentDataToUpdate ?? [];
+        $paymentDataToUpdate = [];
 
         if ($this->isEnabled($quote, $providersWithInsurerInvoiceDate)) {
             $paymentDataToUpdate['insurer_invoice_date'] = $this->parseDate($this->resolveProp($data, 'invoiceDate'), $quote->payment?->insurer_invoice_date);
         }
 
         if ($this->isEnabled($quote, $providersWithInsurerTaxNumber)) {
-            $paymentDataToUpdate['insurer_tax_number'] = $this->resolveProp($data, 'taxInvoiceNumber') ?? $quote->payment?->insurer_tax_number;
-        }
+            $taxInvoiceNumber = $this->resolveProp($data, 'taxInvoiceNumber');
 
-        $taxInvoiceNumber = $this->resolveProp($data, 'taxInvoiceNumber');
-        if ($taxInvoiceNumber !== null && $quote->payment) {
-            $paymentDataToUpdate['tax_invoice_number'] = $taxInvoiceNumber;
+            $paymentDataToUpdate['insurer_tax_number'] = $taxInvoiceNumber ?? $quote->payment?->insurer_tax_number;
+            $paymentDataToUpdate['tax_invoice_number'] = $taxInvoiceNumber ?? $quote->payment?->tax_invoice_number;
         }
 
         if (! empty($paymentDataToUpdate) && $quote->payment) {
