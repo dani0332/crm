@@ -27,6 +27,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use MongoDB\BSON\Regex;
 use MongoDB\BSON\UTCDateTime;
+use App\Models\HomeQuote;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -416,8 +417,12 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::HOME->value:
-                            $obj->homeQuote->homeQuoteRequestDetail()->updateOrCreate(
-                                ['home_quote_request_id' => $obj->id],
+                            $obj->homeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new HomeQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;
