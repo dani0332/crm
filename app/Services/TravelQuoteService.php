@@ -18,6 +18,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
+use App\Models\Customer;
 use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
@@ -183,6 +184,10 @@ class TravelQuoteService extends BaseService
                     ELSE insurer_aml_status
                 END AS insurer_aml_status_display
             '),
+            'c.pcp_tag',
+            'tqr.pc_qualified',
+            DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
+            DB::raw(TravelQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
         ])
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')

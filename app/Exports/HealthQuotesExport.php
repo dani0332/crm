@@ -109,7 +109,7 @@ class HealthQuotesExport
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             $quote->payment_status?->payment_status_text ?? 'N/A',
             $quote->car_teams ?? 'N/A',
-            $quote->pcp_tag?->pcp_tag ?? '',
+            $quote->customer->pcp_tag_formatted ?? '',
         ];
     }
 }

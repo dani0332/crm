@@ -78,10 +78,10 @@ const loader = reactive({
   table: false,
   export: false,
 });
-
+console.log(page.props.quotes);
 const tableHeader = reactive([
   { text: 'Ref-ID', value: 'code', is_active: true },
-  { text: 'PC Customer', value: 'customer.pcp_tag_formatted' },
+  { text: 'PC Customer', value: 'customer.pcp_tag_formatted', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },

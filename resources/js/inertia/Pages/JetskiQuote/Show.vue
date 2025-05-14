@@ -203,7 +203,7 @@ const dateFormat = date =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="can(permissionEnum.VIEW_PCP)">
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ quote.pc_qualified_formatted }}</dd>
               </div>

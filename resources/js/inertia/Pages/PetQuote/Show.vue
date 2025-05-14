@@ -67,7 +67,7 @@ const countDays = computed(() =>
 );
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const historyLoading = ref(false);
-
+const permissionEnum = page.props.permissionsEnum;
 const { isRequired, emiratesNumber } = useRules();
 const hasRole = role => useHasRole(role);
 const notification = useNotifications('toast');

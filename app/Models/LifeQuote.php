@@ -41,6 +41,9 @@ class LifeQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
+    protected $appends = [
+        'pc_qualified_formatted',
+    ];
 
     protected static function booted()
     {

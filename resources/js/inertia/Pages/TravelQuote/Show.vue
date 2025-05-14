@@ -2072,6 +2072,10 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">API ISSUANCE STATUS</dt>
                 <dd>{{ quote.api_issuance_status }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2" v-if="can(permissionEnum.VIEW_PCP)">
+                <dt class="font-medium">PC-Qualified</dt>
+                <dd>{{ quote.pc_qualified_formatted }}</dd>
+              </div>
             </dl>
           </div>
         </template>

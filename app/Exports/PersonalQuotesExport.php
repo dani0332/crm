@@ -173,6 +173,7 @@ class PersonalQuotesExport
                     'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
+                    'PC CUSTOMER',
                 ];
 
             case QuoteTypes::HOME->value:
@@ -231,7 +232,7 @@ class PersonalQuotesExport
                     $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
-                    $quote->insured?->pcp_tag ?? '',
+                    $quote->customer?->pcp_tag_formatted ?? '',
                 ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
@@ -255,7 +256,7 @@ class PersonalQuotesExport
                     $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
-                    $quote->insured?->pcp_tag ?? '',
+                    $quote->customer?->pcp_tag_formatted ?? '',
                 ];
 
             case QuoteTypes::PET->value:
@@ -290,7 +291,7 @@ class PersonalQuotesExport
                     $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
-                    $quote->insured?->pcp_tag ?? '',
+                    $quote->customer?->pcp_tag_formatted ?? '',
                 ];
 
             case QuoteTypes::CYCLE->value:
@@ -313,7 +314,7 @@ class PersonalQuotesExport
                     $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
-                    $quote->insured?->pcp_tag ?? '',
+                    $quote->customer?->pcp_tag_formatted ?? '',
                 ];
 
             case QuoteTypes::HOME->value:
@@ -334,7 +335,7 @@ class PersonalQuotesExport
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                     $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
                     $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
-                    $quote->insured?->pcp_tag ?? '',
+                    $quote->customer?->pcp_tag_formatted ?? '',
                 ];
         }
     }
