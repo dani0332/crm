@@ -72,7 +72,7 @@ class InstantAlfredService extends BaseService
                     
                     WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN 'SIC'
                     
-                    WHEN qt.tags NOT LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN 'NON-SIC'
+                    WHEN qt.tags NOT LIKE '%".QuoteSegmentEnum::SIC->tag()."%' AND qt.tags NOT LIKE '%".QuoteSegmentEnum::AIG->tag()."%' THEN 'NON-SIC'
                     ELSE 'N/A'
                     END as segment
                 "),
