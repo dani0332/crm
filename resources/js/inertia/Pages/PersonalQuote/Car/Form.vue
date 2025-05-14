@@ -418,7 +418,6 @@ const gender = computed(() => {
     { value: 'F', label: 'Female' },
   ];
 });
-
 </script>
 
 <template>
