@@ -8,7 +8,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
-use App\Models\Customer;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\QuoteBatches;
@@ -93,10 +92,6 @@ class LifeQuoteService extends BaseService
                 'lqr.policy_issuance_date',
                 'lqrd.insly_id',
                 'lu.text as transaction_type_text',
-                'c.pcp_tag',
-                'lqr.pc_qualified',
-                DB::raw(Customer::formattedPcpTagCase().' as pcp_tag_formatted'),
-                DB::raw(LifeQuote::formattedPcQualifiedCase().' as pc_qualified_formatted'),
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -110,8 +105,7 @@ class LifeQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'lqr.advisor_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'lqr.nationality_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'lqr.transaction_type_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'lqr.insurance_provider_id')
-            ->leftJoin('customer as c', 'c.id', '=', 'lqr.customer_id');
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'lqr.insurance_provider_id');
     }
 
     public function saveLifeQuote(Request $request)
