@@ -489,7 +489,7 @@ class SendUpdateLogService
 
     public function getEndorsementProviderDetails($sendUpdateLog): array
     {
-        info('fn: getEndorsementProviderDetails start for Send Update - code: '.$sendUpdateLog->code);
+        LoggerService::info('fn: getEndorsementProviderDetails start for Send Update Log');
         $planId = null;
         $quoteType = QuoteTypes::getName($sendUpdateLog->quote_type_id)->value;
         $getQuoteDetails = $this->getQuoteObjectBy($quoteType, $sendUpdateLog->quote_uuid, 'uuid');
@@ -497,10 +497,12 @@ class SendUpdateLogService
 
         if ($sendUpdateLog?->category->code == SendUpdateLogStatusEnum::CPD || $payments->isEmpty()) {
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
-            info('insuranceProviderId: '.$insuranceProviderId.' found against CPD || null payments Send Update - code: '.$sendUpdateLog->code);
+            LoggerService::info('insuranceProviderId found against CPD || null payments Send Update Log', extra: [
+                'insuranceProviderId' => $insuranceProviderId,
+            ]);
         } else {
             if ($getQuoteDetails->insly_id || $getQuoteDetails->insly_migrated) {
-                info('insly_id || insly_migrated found for Send Update - code: '.$sendUpdateLog->code);
+                LoggerService::info('insly_id || insly_migrated lead found for Send Update Log');
                 if (empty($sendUpdateLog->insurance_provider_id)) {
                     if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                         $getQuoteDetails->load('plan.insuranceProvider');
@@ -510,17 +512,22 @@ class SendUpdateLogService
                     }
                 } else {
                     $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
-                    info('insuranceProviderId: '.$insuranceProviderId.' found from Send Update - code: '.$sendUpdateLog->code);
+                    LoggerService::info('insuranceProviderId found from Send Update Log', extra: [
+                        'insuranceProviderId' => $insuranceProviderId,
+                    ]);
                 }
             } elseif (! $payments->isEmpty()) {
                 $insuranceProviderId = $payments[0]->insurance_provider_id ?? null;
-                info('insuranceProviderId: '.$insuranceProviderId.' found against payments Send Update - code: '.$sendUpdateLog->code.', payment code'.$payments[0]->code);
+                LoggerService::info('insuranceProviderId found against main lead payments for Send Update Log', extra: [
+                    'payment_code' => $payments[0]->code,
+                    'insuranceProviderId' => $insuranceProviderId,
+                ]);
                 $planId = $payments[0]->plan_id ?? null;
             } else {
                 @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id);
             }
         }
-        info('fn: getEndorsementProviderDetails end for Send Update - code: '.$sendUpdateLog->code);
+        LoggerService::info('fn: getEndorsementProviderDetails end for Send Update Log');
 
         return [$insuranceProviderId, $planId];
     }
@@ -1536,6 +1543,7 @@ class SendUpdateLogService
 
     public function updateInsurerDetails($request, $sendUpdate)
     {
+        LoggerService::startQuoteLogging($sendUpdate);
         $quote = app(getServiceObject($request->quoteType))->getEntityPlain($request->quoteRefId);
 
         if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD ||
