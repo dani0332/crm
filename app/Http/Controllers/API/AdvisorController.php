@@ -41,17 +41,8 @@ class AdvisorController extends Controller
             ], 422);
         }
 
-        // Get advisor roles for this quote type
         $advisorRoles = $quoteTypeEnum->advisorRoles();
 
-        if (empty($advisorRoles)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No advisor roles found for this quote type',
-            ], 404);
-        }
-
-        // Get users with these roles
         $users = User::whereHas('roles', function ($query) use ($advisorRoles) {
             $query->whereIn('name', $advisorRoles);
         })
