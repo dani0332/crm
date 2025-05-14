@@ -32,6 +32,8 @@ class SendFTCEmailJob implements ShouldQueue
         $this->quoteUUID = $quoteUUID;
         $this->quoteType = $quoteType;
         $this->isInsurerPayment = $isInsurerPayment;
+
+        $this->afterCommit();
     }
 
     /**
@@ -54,7 +56,7 @@ class SendFTCEmailJob implements ShouldQueue
                 $leadQuery->isSIC($this->quoteType);
                 $isSic = true;
             }
-            LoggerService::info('FTC lead fetch criteria query ', json_encode($leadQuery->toRawSql()));
+            LoggerService::sql('FTC lead fetch criteria', $leadQuery);
             // Fetch the lead
             $lead = $leadQuery->first();
 
