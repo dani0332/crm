@@ -46,9 +46,17 @@ class OCRService
         return in_array($fileMimeType, self::IMAGE_MIME_TYPES);
     }
 
-    private function getData(string $docUrl, OCRDocumentTypeEnum $docType, string $fileMimeType)
-    {
+    private function getData(
+        QuoteTypes $quoteType,
+        Model $quote,
+        string $docUrl,
+        OCRDocumentTypeEnum $docType,
+        string $fileMimeType
+    ) {
         $response = $this->sendRequest('/process-document', [
+            'ref_id' => $quote->code,
+            'uuid' => $quote->uuid,
+            'quote_type_id' => $quoteType->id(),
             'doc_url' => $docUrl,
             'doc_type' => $docType->value,
 
@@ -80,7 +88,7 @@ class OCRService
 
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
-        $data = $this->getData($url, $docType, $fileMimeType);
+        $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
 
         if ($data) {
             return $this->fill(
