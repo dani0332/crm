@@ -1,7 +1,8 @@
 trigger:
   - develop
-pool:
-  vmImage: 'staging-rill'
+# pool:
+#   vmImage: 'staging-rill'
+pool: 'Rill Server SH Agent'
 variables:
   - group: stg
   - name: imageName
