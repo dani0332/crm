@@ -1006,7 +1006,7 @@ class RenewalsUploadService
             throw_if(! in_array($quoteTypeCode, [QuoteTypeShortCode::CAR, QuoteTypeShortCode::HEA]), 'Only Insurance Type Car and Health are allowed to update lead');
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
-            $isQuoteTypeCar = $quoteTypeCode == QuoteTypeShortCode::CAR;
+            $isQuoteTypeCar = $quoteTypeCode == QuoteTypeShortCode::CAR || $quoteTypeCode == QuoteTypeShortCode::BIK;
             $isPersonalQuote = checkPersonalQuotes($quoteTypeCode);
 
             LoggerService::info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'].' ID: '.$renewalQuoteProcess->id.' UploadLeadId: '.$renewalUploadLead->id);
