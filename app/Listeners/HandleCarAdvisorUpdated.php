@@ -50,7 +50,7 @@ class HandleCarAdvisorUpdated
         $lead = $event->lead;
 
         if ($lead) {
-            SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(now()->addSeconds(5));
+            SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(now()->addSeconds(5))->afterCommit();
         }
 
         $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];

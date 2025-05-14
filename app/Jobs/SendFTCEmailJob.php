@@ -54,7 +54,7 @@ class SendFTCEmailJob implements ShouldQueue
                 $leadQuery->isSIC($this->quoteType);
                 $isSic = true;
             }
-
+            LoggerService::info('FTC lead fetch criteria query ', json_encode($leadQuery->toRawSql()));
             // Fetch the lead
             $lead = $leadQuery->first();
 
