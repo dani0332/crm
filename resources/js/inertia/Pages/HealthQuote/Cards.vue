@@ -376,18 +376,18 @@ const validateDateRange = () => {
             />
           </template>
         </x-select>
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
+
+        <DatePicker
+          label="Policy Expiry Start Date"
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+        />
+
+        <DatePicker
+          label="Policy Expiry End Date"
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+        />
         <x-select
           v-if="isAllowed"
           v-model="filters.advisors"

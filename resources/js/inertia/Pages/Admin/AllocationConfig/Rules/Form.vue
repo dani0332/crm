@@ -89,13 +89,13 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Rule Name" required>
-        <x-input
-          v-model="ruleForm.name"
-          class="w-full"
-          :error="ruleForm.errors.name"
-        />
-      </x-field>
+      <x-input
+        label="Rule Name"
+        required
+        v-model="ruleForm.name"
+        class="w-full"
+        :error="ruleForm.errors.name"
+      />
 
       <x-select
         v-model="ruleForm.rule_type"
@@ -133,17 +133,16 @@ function onSubmit(isValid) {
         </template>
       </x-select>
 
-      <x-field label="Is Active?">
-        <x-select
-          v-model="ruleForm.is_active"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-          :error="ruleForm.errors.is_active"
-        />
-      </x-field>
+      <x-select
+        label="Is Active?"
+        v-model="ruleForm.is_active"
+        class="w-full"
+        :options="[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]"
+        :error="ruleForm.errors.is_active"
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

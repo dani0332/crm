@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Services\Logger\LoggerService;
 
 class PaymentService extends BaseService
 {
@@ -17,6 +18,7 @@ class PaymentService extends BaseService
      */
     public function processMasterPayment($payment, $quoteObject, $isCreditCardEnabled = true)
     {
+        LoggerService::info('fn:processMasterPayment - PaymentService');
         $infoMessage = 'Quote Code: '.$payment->code;
         $priceWithVat = round($quoteObject->price_with_vat, 2);
         $capturedAmount = $payment->captured_amount;
@@ -28,7 +30,7 @@ class PaymentService extends BaseService
         $infoMessage .= 'CA: '.$capturedAmount.' DV: '.$discountValue.' TA: '.$totalPaymentAmount.' ';
         $infoMessage .= 'ID: '.$difference.' ';
 
-        info($infoMessage);
+        LoggerService::info('Message Information', extra: ['infoMessage' => $infoMessage]);
 
         $this->setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference);
 
@@ -50,6 +52,7 @@ class PaymentService extends BaseService
      */
     public function setPaymentStatusBasedOnPrice($priceWithVat, $payment, $difference): void
     {
+        LoggerService::info('fn:setPaymentStatusBasedOnPrice - Start - PaymentService');
         if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
             $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
             // If status is partially paid & total price is less than price with vat then set status to partially paid
@@ -66,7 +69,7 @@ class PaymentService extends BaseService
      */
     private function setTotalAmount($payment)
     {
-        info('Quote Code: '.$payment->code.' Updating TA frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
+        LoggerService::info('Quote Code: '.$payment->code.' Updating TA frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::NEW, PaymentStatusEnum::OVERDUE])) {
             $totalPrice = $payment->total_price;
             $discountValue = $payment->discount_value;

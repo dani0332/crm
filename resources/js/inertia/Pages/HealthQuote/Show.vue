@@ -1,9 +1,9 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
+import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 
 const props = defineProps({
   quote: Object,
@@ -3114,14 +3114,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   :error="leadStatusForm.errors.lostReason"
                   :disabled="lockLeadSectionsDetails.lead_status"
                 />
-                <x-field class="" label="Transaction Type">
-                  <x-input
-                    type="text"
-                    v-model="quote.transaction_type_text"
-                    class="w-full"
-                    :disabled="true"
-                  />
-                </x-field>
+                <x-input
+                  label="Transaction Type"
+                  type="text"
+                  v-model="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
 
                 <div class="flex flex-col gap-4"></div>
               </div>

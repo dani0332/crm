@@ -12,6 +12,15 @@ class BusinessQuoteExport
 
     public function collection($requestParams = [])
     {
+        return BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true, requestParams: $requestParams)->get();
+    }
+
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery($requestParams = [])
+    {
         return BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true, requestParams: $requestParams);
     }
 

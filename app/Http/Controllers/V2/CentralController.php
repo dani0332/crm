@@ -755,18 +755,21 @@ class CentralController extends Controller
     public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
-        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode);
 
-        $logPayload = [
+        $logContext = [
+            'ref_id' => $request->quoteCode,
+        ];
+
+        $logExtra = [
             'paymentCode' => $request->paymentCode,
-            'uuid' => $request->uuid,
             'quoteTypeId' => $quoteTypeId,
             'responseStatus' => isset($response['status']) ? $response['status'] : null,
             'responseMessage' => isset($response['message']) ? $response['message'] : null,
             'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
         ];
 
-        LoggerService::info('paymentsCaptureValidation', extra: ['payload' => $logPayload]);
+        LoggerService::info('paymentsCaptureValidation', context: $logContext, extra: $logExtra);
 
         return response()->json(['response' => $response]);
     }
