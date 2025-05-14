@@ -44,7 +44,12 @@ class InstantAlfredService extends BaseService
                 'pqr.quote_batch_id',
                 'pqr.insurance_provider_id',
                 'pqr.premium as total_price',
-                'pqr.lead_assignment_trigger',
+                DB::raw('CASE 
+                    WHEN ' . $quoteTypeId . ' = ' . QuoteTypeId::Car . ' THEN cqr.lead_assignment_trigger
+                    WHEN ' . $quoteTypeId . ' = ' . QuoteTypeId::Health . ' THEN hqr.lead_assignment_trigger
+                    WHEN ' . $quoteTypeId . ' = ' . QuoteTypeId::Travel . ' THEN tqr.lead_assignment_trigger
+                    ELSE pqr.lead_assignment_trigger
+                END as lead_assignment_trigger'),
                 'pqrd.chat_initiated_at',
                 'qs.text AS quote_status_id_text',
                 'qb.name as quote_batch_id_text',
@@ -85,6 +90,9 @@ class InstantAlfredService extends BaseService
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
             ->leftJoin('quote_batches as qb', 'qb.id', '=', 'pqr.quote_batch_id')
+            ->leftJoin('car_quote_request as cqr', 'cqr.uuid', '=', 'pqr.uuid')
+            ->leftJoin('health_quote_request as hqr', 'hqr.uuid', '=', 'pqr.uuid')
+            ->leftJoin('travel_quote_request as tqr', 'tqr.uuid', '=', 'pqr.uuid')
             ->when($quoteTypeId == QuoteTypeId::Car || $quoteTypeId === QuoteTypeId::Bike, function ($query) use ($quoteTypeId) {
                 $query->leftJoin('car_plan as cp', function ($join) use ($quoteTypeId) {
                     $join->on('cp.id', '=', 'pqr.plan_id')
