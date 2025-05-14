@@ -3,7 +3,6 @@ const props = defineProps({
   configuration: Object,
   nationalities: Array,
   quoteTypes: Array,
-  users: Array,
 });
 
 const { isRequired } = useRules();
@@ -35,12 +34,69 @@ const quoteTypeOptions = computed(() => {
   }));
 });
 
-const userOptions = computed(() => {
-  return props.users.map(user => ({
-    value: user.id,
-    label: user.name,
-  }));
-});
+const userOptions = ref([]);
+const advisorsLoading = ref(false);
+
+/**
+ * Fetch advisors based on the selected quote type
+ */
+const fetchAdvisors = quoteTypeId => {
+  if (!quoteTypeId) return;
+
+  advisorsLoading.value = true;
+  const quoteType = props.quoteTypes.find(type => type.id === quoteTypeId);
+
+  if (!quoteType) {
+    advisorsLoading.value = false;
+    return;
+  }
+
+  // Use the web route
+  axios
+    .post('/advisors/by-quote-type', {
+      quote_type: quoteType.code ? quoteType.code : quoteType.text,
+    })
+    .then(response => {
+      if (
+        response.data.success &&
+        response.data.data &&
+        response.data.data.length > 0
+      ) {
+        userOptions.value = response.data.data.map(user => ({
+          value: user.id,
+          label: user.name,
+        }));
+      } else {
+        userOptions.value = [];
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching advisors:', error);
+      userOptions.value = [];
+    })
+    .finally(() => {
+      advisorsLoading.value = false;
+    });
+};
+
+// Load advisors if editing an existing configuration
+if (isEdit.value && configForm.quote_type_id) {
+  fetchAdvisors(configForm.quote_type_id);
+}
+
+// Watch for quote type changes to fetch advisors
+watch(
+  () => configForm.quote_type_id,
+  newQuoteTypeId => {
+    // Reset user_ids when quote type changes
+    configForm.user_ids = [];
+    if (newQuoteTypeId) {
+      fetchAdvisors(newQuoteTypeId);
+    } else {
+      userOptions.value = [];
+    }
+  },
+);
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -109,14 +165,16 @@ function onSubmit(isValid) {
         <x-select
           v-model="configForm.user_ids"
           :options="userOptions"
-          placeholder="Select Users"
+          placeholder="Select Quote Type first to load advisors"
           multiple
           filterable
           :rules="[isRequired]"
           :error="configForm.errors.user_ids"
           class="w-full"
+          :loading="advisorsLoading"
+          :disabled="!configForm.quote_type_id || advisorsLoading"
         >
-          <template #content-footer>
+          <template #content-footer v-if="userOptions.length > 0">
             <ui-select-actions
               @select-all="
                 configForm.user_ids = userOptions.map(item => item.value)
