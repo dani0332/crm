@@ -33,7 +33,7 @@ const formFields = computed(() => {
 const quoteForm = useForm({
   first_name: props.quote?.first_name || null,
   last_name: props.quote?.last_name || null,
-  email: props.quote?.email || null,
+  email: props.quote?.email || null, // not used in update mode
   direction_code: props.quote?.direction_code
     ? props.quote?.direction_code
     : editMode.value &&
@@ -52,29 +52,26 @@ const quoteForm = useForm({
       ? '1'
       : editMode.value && props.quotePlans == null
         ? '0'
-        : null),
+        : null), // not used in update mode
   has_arrived_destination:
     props.quote?.has_arrived_destination?.toString() ||
     (editMode.value && props.quotePlans && props.quote.has_arrived_destination
       ? '1'
       : editMode.value && props.quotePlans == null
         ? '0'
-        : null),
+        : null), // not used in update mode
   coverage_code: props.quote?.coverage_code || null,
   uuid: editMode.value ? props.quote?.uuid : null,
-  mobile_no: props.quote?.mobile_no || null,
+  mobile_no: props.quote?.mobile_no || null, // not used in update mode
   nationality_id: props.quote?.nationality_id || null,
   destination_ids: props.quote?.destination_ids ?? [],
   start_date: props.quote?.start_date || null,
   end_date: props.quote?.end_date || null,
   region_cover_for_id: props.quote?.region_cover_for_id?.toString() || null,
   premium: props.quote?.premium || null,
-  policy_number: props.quote?.policy_number || null,
-  iam_possesion_type_id: props.quote?.iam_possesion_type_id || null,
-  ilivein_accommodation_type_id:
-    props.quote?.ilivein_accommodation_type_id || null,
+  policy_number: props.quote?.policy_number || null, // not used in update mode
   days_cover_for: props.quote?.days_cover_for || null,
-  members: [{ value: 'male', label: 'Male', primary: true }],
+  members: [{ value: 'male', label: 'Male', primary: true }], // not used in update mode
   edit_mode: editMode.value,
   departure_country_id: null,
 });
@@ -182,6 +179,14 @@ function onSubmit(isValid) {
     },
   };
 
+  quoteForm.transform(data => {
+    // For edit mode, remove fields that shouldn't be updated
+    if (editMode.value) {
+      const { mobile_no, email, policy_number, members, ...updateData } = data;
+      return updateData;
+    }
+    return data;
+  });
   quoteForm.submit(method, url, options);
 }
 
@@ -269,16 +274,19 @@ const disablePastDates = date => {
   return inputDate < today;
 };
 watch(
-  () => quoteForm?.destination_ids,
-  async destination_ids => {
-    if (destination_ids) {
-      await regionName(destination_ids); // Call the function to fetch advisors
+  () => quoteForm.destination_ids,
+  newDestinationIds => {
+    if (newDestinationIds) {
+      regionName(newDestinationIds); // Call the function to fetch advisors
     }
   },
+  { deep: true },
 );
+
 function updateRegionCover(id) {
   quoteForm.region_cover_for_id = String(id) ?? '';
 }
+
 const regionName = ids => {
   let countries = page.props.fields.destination_id?.options;
   const matchedValues = ids.map(id => {
@@ -458,6 +466,9 @@ watch(
           multiple
           truncate
           :error="quoteForm.errors.destination_ids"
+          virtual-list
+          :virtualListItemHeight="34"
+          :virtualListOverscan="5"
         >
           <template #content-footer>
             <ui-select-actions
@@ -561,8 +572,10 @@ watch(
           label="Nationality"
           required
           :error="quoteForm.errors.nationality_id"
+          virtual-list
+          :virtualListItemHeight="34"
+          :virtualListOverscan="5"
         />
-
         <x-input
           v-if="editMode"
           :value="quoteForm.days_cover_for"

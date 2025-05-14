@@ -523,6 +523,9 @@ const isRenewalUpload = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
+  const canUpdateToFakeDuplicate = can(
+    permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
+  );
   const isLeadPool = hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool]);
   const isPA = hasAnyRole([rolesEnum.Admin, rolesEnum.PA]);
   const renewal_batch = page.props.record.renewal_batch;
@@ -537,6 +540,7 @@ const leadStatusOptions = computed(() => {
   const filteredLeadStatuses = statuses?.map(status => {
     if (
       (!isLeadPool &&
+        !canUpdateToFakeDuplicate &&
         [
           page.props.quoteStatusEnum.Fake,
           page.props.quoteStatusEnum.Duplicate,
@@ -553,8 +557,6 @@ const leadStatusOptions = computed(() => {
         disabled: true,
       };
     }
-    // if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
-    // else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true;
     return {
       value: status.id,
       label: status.text,
@@ -565,6 +567,10 @@ const leadStatusOptions = computed(() => {
 });
 
 const leadStatusDisabled = computed(() => {
+  const canUpdateToFakeDuplicate = can(
+    permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
+  );
+
   if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
     return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
   }
@@ -574,7 +580,8 @@ const leadStatusDisabled = computed(() => {
     ((page.props.record.quote_status_id ==
       page.props.quoteStatusEnum.Duplicate ||
       page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake) &&
-      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin])) ||
+      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]) &&
+      !canUpdateToFakeDuplicate) ||
     (!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction)
   );
 });

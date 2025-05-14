@@ -250,6 +250,8 @@ function onSubmit(isValid) {
           class="w-full"
           label="NATIONALITY"
           required
+          filterable
+          filter-placeholder="Search by nationality"
         />
 
         <x-select
