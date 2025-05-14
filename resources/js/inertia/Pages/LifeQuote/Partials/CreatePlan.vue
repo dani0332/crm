@@ -128,11 +128,13 @@ const onSubmit = isValid => {
 
   // Ensure numeric form values are properly converted
   createForm.sumAssured = parseFloat(createForm.sumAssured).toFixed(2) || 0;
-  createForm.actualPremium = parseFloat(createForm.actualPremium).toFixed(2) || 0;
+  createForm.actualPremium =
+    parseFloat(createForm.actualPremium).toFixed(2) || 0;
   createForm.policyTerm = parseInt(createForm.policyTerm) || 0;
 
   createForm.riders = processedRiders;
-  createForm.initialPrice = parseFloat(createForm.actualPremium).toFixed(2) || 0;
+  createForm.initialPrice =
+    parseFloat(createForm.actualPremium).toFixed(2) || 0;
 
   // remove loading from createForm
   // const data  = createForm.filter((item) => item !== 'loading');

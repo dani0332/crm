@@ -208,7 +208,7 @@ const onSubmit = isValid => {
   createForm.sumAssured = parseFloat(createForm.sumAssured).toFixed(2);
   createForm.actualPremium = parseFloat(createForm.actualPremium).toFixed(2);
   createForm.riders = ridersData.value;
-  
+
   axios
     .post('/personal-quotes/life-plan-manual-create', {
       quoteUID: props.uuid,

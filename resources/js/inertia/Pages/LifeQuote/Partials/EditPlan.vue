@@ -128,7 +128,7 @@ const onSubmit = isValid => {
   editForm.sumAssured = parseFloat(editForm.sumAssured).toFixed(2);
 
   extraAttr.loading = true;
-  
+
   // Ensure riders have numeric values by converting strings to floats and preventing negative values
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
