@@ -57,8 +57,9 @@ class TravelQuoteExport
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
             'ASSIGNMENT TYPE',
-            'LEAD ASSIGNMENT TRIGGER',
+            'ADVISOR REQUESTED',
             'SEGMENT',
+            'LEAD ASSIGNMENT TRIGGER',
         ];
     }
 
@@ -101,8 +102,9 @@ class TravelQuoteExport
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
             $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '',
-            $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
+            (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
             $quote->getSegments($quote, QuoteTypeId::Travel) ?? '',
+            $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
         ];
     }
 }
