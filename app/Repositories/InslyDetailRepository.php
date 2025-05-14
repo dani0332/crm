@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
+use App\Models\HomeQuote;
 use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
 use App\Models\LifeQuote;
@@ -421,8 +422,12 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::HOME->value:
-                            $obj->homeQuoteRequestDetail()->updateOrCreate(
-                                ['home_quote_request_id' => $obj->id],
+                            $obj->homeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new HomeQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;
