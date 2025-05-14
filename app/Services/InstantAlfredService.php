@@ -14,6 +14,7 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 class InstantAlfredService extends BaseService
 {
@@ -43,6 +44,7 @@ class InstantAlfredService extends BaseService
                 'pqr.quote_batch_id',
                 'pqr.insurance_provider_id',
                 'pqr.premium as total_price',
+                'pqr.lead_assignment_trigger',
                 'pqrd.chat_initiated_at',
                 'qs.text AS quote_status_id_text',
                 'qb.name as quote_batch_id_text',
@@ -243,6 +245,10 @@ class InstantAlfredService extends BaseService
                 $relatedMongoRecord = $mongoResultsCollection->firstWhere('id', $sqlRecord->uuid);
 
                 $sqlRecord->quote_type = $request->quoteType;
+                $sqlRecord->lead_assignment_trigger_text = $sqlRecord->lead_assignment_trigger 
+                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlRecord->lead_assignment_trigger) 
+                    : 'N/A';
+                    
                 if ($relatedMongoRecord) {
                     $sqlRecord->communication_channels = $relatedMongoRecord['communication_channels'];
                     $sqlRecord->customer_interactions = $relatedMongoRecord['customer_interactions'];
