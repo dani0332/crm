@@ -36,7 +36,7 @@ const props = defineProps({
   sendUpdateId: {
     type: [Number, String],
     default: null,
-  }
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -54,21 +54,24 @@ const closeModal = () => {
  */
 const voidPayment = async () => {
   processing.value = true;
-  
+
   const data = {
     quote_type_id: props.quoteTypeId,
     quote_id: props.quoteId,
     quote_uuid: props.quoteUuid,
     payment_id: props.paymentId,
     payment_code: props.paymentCode,
-    send_update_log_id: props.sendUpdateId
+    send_update_log_id: props.sendUpdateId,
   };
 
   try {
-    const res = await axios.post(`/payments/${props.quoteType}/void-payment`, data);
+    const res = await axios.post(
+      `/payments/${props.quoteType}/void-payment`,
+      data,
+    );
     processing.value = false;
     closeModal();
-    
+
     if (res.data.status === false) {
       notification.error({
         title: res.data.message,
@@ -76,7 +79,7 @@ const voidPayment = async () => {
       });
       return;
     }
-    
+
     notification.success({
       title: 'Processed',
       position: 'top',
@@ -84,7 +87,7 @@ const voidPayment = async () => {
     reloadPage();
   } catch (err) {
     processing.value = false;
-    
+
     if (err.response && err.response.data) {
       notification.error({
         title: err.response.data[0] || 'Void authorized payment process failed',
@@ -121,9 +124,7 @@ const reloadPage = () => {
         <div
           class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
         >
-          <div class="flex items-center space-x-2">
-            Void Authorized Payment
-          </div>
+          <div class="flex items-center space-x-2">Void Authorized Payment</div>
           <div class="flex items-center space-x-2">
             <span
               @click="closeModal"
@@ -200,4 +201,4 @@ const reloadPage = () => {
 .modal-confirm-header {
   color: #000;
 }
-</style> 
+</style>

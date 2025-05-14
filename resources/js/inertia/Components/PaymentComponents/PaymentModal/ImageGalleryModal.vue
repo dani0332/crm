@@ -30,7 +30,7 @@ const props = defineProps({
 });
 
 // Define emits for two-way binding with v-model
-const emit = defineEmits(['update:modelValue']); 
+const emit = defineEmits(['update:modelValue']);
 
 // Reactive state for the component
 const currentFileIndex = ref(props.initialIndex);
@@ -128,23 +128,29 @@ const handleKeyDown = event => {
  * Watches for changes in initialIndex prop to update the local currentFileIndex ref
  * This ensures synchronization when the parent component changes the initial index
  */
-watch(() => props.initialIndex, (newIndex) => {
-  currentFileIndex.value = newIndex;
-});
+watch(
+  () => props.initialIndex,
+  newIndex => {
+    currentFileIndex.value = newIndex;
+  },
+);
 
 /**
  * Watches for the modal visibility state
  * When modal opens, focuses the modal element for keyboard navigation
  */
-watch(() => props.modelValue, (isOpen) => {
-  if (isOpen) {
-    nextTick(() => {
-      if (modalRef.value) {
-        modalRef.value.focus();
-      }
-    });
-  }
-});
+watch(
+  () => props.modelValue,
+  isOpen => {
+    if (isOpen) {
+      nextTick(() => {
+        if (modalRef.value) {
+          modalRef.value.focus();
+        }
+      });
+    }
+  },
+);
 </script>
 
 <template>
@@ -236,7 +242,9 @@ watch(() => props.modelValue, (isOpen) => {
               </svg>
             </button>
             <div class="flex flex-initial w-24 justify-center">
-              <span class="text-gray-300 font-bold">{{ Math.round(zoomLevel * 100) }}%</span>
+              <span class="text-gray-300 font-bold"
+                >{{ Math.round(zoomLevel * 100) }}%</span
+              >
             </div>
             <button
               class="flex items-center space-x-2 cursor-pointer text-gray-300"

@@ -21,7 +21,7 @@ const props = defineProps({
   quoteId: {
     type: [Number, String],
     required: true,
-  }
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -38,7 +38,7 @@ const closeModal = () => {
 
 /**
  * Handles the retry payment submission
- * Makes an API call to retry the payment process 
+ * Makes an API call to retry the payment process
  */
 const handleRetry = async () => {
   const retryData = {
@@ -159,4 +159,4 @@ const handleRetry = async () => {
 .modal-confirm-header {
   color: #000;
 }
-</style> 
+</style>

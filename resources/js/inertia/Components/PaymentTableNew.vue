@@ -6,13 +6,13 @@ import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { time } from 'highcharts';
-import { 
-  ImageGalleryModal, 
-  AmlApprovalModal, 
+import {
+  ImageGalleryModal,
+  AmlApprovalModal,
   RetryPaymentModal,
   DeleteSplitPaymentModal,
   DeleteParentPaymentModal,
-  VoidPaymentModal
+  VoidPaymentModal,
 } from './PaymentComponents/PaymentModal/index.js';
 
 // New Flow Implementation
@@ -413,7 +413,7 @@ const openModal = () => {
 
 /**
  * Opens the image gallery modal to display a specific file
- * 
+ *
  * @param {number} fileId - ID of the file to display initially
  */
 const openInnerModal = fileId => {
@@ -423,12 +423,12 @@ const openInnerModal = fileId => {
     ...approvedDocumentModel.value.flat(),
     ...discountDocumentModel.value.flat(),
   ];
-  
+
   // Find the index of the file to display in the combined array
   currentFileIndex.value = filesTest.value.findIndex(
     item => item.id === fileId,
   );
-  
+
   // Open the modal
   isGalleryModelOpen.value = true;
 };
@@ -573,7 +573,7 @@ const calculateTotalSplitAmount = () => {
  * - Payment calculation errors
  * - Missing required documents
  * - Discount validation
- * 
+ *
  * @returns {boolean} True if there are validation issues, false if all validations pass
  */
 const validatePaymentOption = () => {
@@ -1416,7 +1416,7 @@ const resetTotalPayments = () => {
 /**
  * Handles payment frequency changes
  * Updates payment number and calculates payment breakups based on selected frequency
- * 
+ *
  * @param {boolean} noPaymentUpdate - If true, will reset payment number to default
  */
 const handleFrequencyChange = (noPaymentUpdate = true) => {
@@ -1687,7 +1687,7 @@ const closeDeleteModal = () => {
 /**
  * Opens the payment modal for editing a payment
  * Loads payment data, initializes form, and sets appropriate view/edit state
- * 
+ *
  * @param {Object} payment - Payment data object
  * @param {number} split_payment_id - ID of the split payment to edit
  * @param {number} sr_no - Serial number of the payment split
@@ -3409,8 +3409,6 @@ onBeforeMount(() => {
 const closeVoidPaymentModal = () => {
   voidPaymentModelPopup.value = false;
 };
-
-
 </script>
 
 <template>
@@ -5518,16 +5516,16 @@ const closeVoidPaymentModal = () => {
                     can(permissionEnum.INSURER_PAYMENT_LINK)
                   "
                 >
-                <InsurerPaymentLink
-                  ref="insurerPaymentComponent"
-                  :modelType="props.quoteType"
-                  :insurerPaymentLinkIndex="insurerPaymentLinkIndex"
-                  :paymentForm="paymentMethodsForm"
-                  :payments="payments"
-                  @updateOnParent="
-                    (e, f, g) => updateFromInsurerPaymentLink(e, f, g)
-                  "
-                />
+                  <InsurerPaymentLink
+                    ref="insurerPaymentComponent"
+                    :modelType="props.quoteType"
+                    :insurerPaymentLinkIndex="insurerPaymentLinkIndex"
+                    :paymentForm="paymentMethodsForm"
+                    :payments="payments"
+                    @updateOnParent="
+                      (e, f, g) => updateFromInsurerPaymentLink(e, f, g)
+                    "
+                  />
                 </template>
               </div>
             </template>
@@ -5641,7 +5639,9 @@ const closeVoidPaymentModal = () => {
         <!--  Clear AML KYC Screening         -->
         <AmlApprovalModal
           v-model="isAmlApprovalRequired"
-          :quote-type-id="page.props.quoteTypeId ?? props.sendUpdate.quote_type_id"
+          :quote-type-id="
+            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+          "
           :quote-request-id="props.quoteRequest.id"
           :is-processing="paymentMethodsForm.processing"
           @update:model-value="closeAmlConfirmModal"
@@ -5684,7 +5684,9 @@ const closeVoidPaymentModal = () => {
           :quote-type="props.quoteType"
           :quote-id="props.quoteRequest.id"
           :quote-uuid="props.quoteRequest.uuid"
-          :quote-type-id="page.props.quoteTypeId ?? props.sendUpdate.quote_type_id"
+          :quote-type-id="
+            page.props.quoteTypeId ?? props.sendUpdate.quote_type_id
+          "
           :send-update-id="props.sendUpdate?.id"
           @update:model-value="closeVoidPaymentModal"
         />

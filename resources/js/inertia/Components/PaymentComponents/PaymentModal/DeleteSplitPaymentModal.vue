@@ -22,7 +22,7 @@ const props = defineProps({
   quoteId: {
     type: [Number],
     required: true,
-  }
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -83,9 +83,7 @@ const handleDeletePayment = async () => {
         <div
           class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
         >
-          <div class="flex items-center space-x-2">
-            Delete Split Payment
-          </div>
+          <div class="flex items-center space-x-2">Delete Split Payment</div>
           <div class="flex items-center space-x-2">
             <span
               @click="closeModal"
@@ -162,4 +160,4 @@ const handleDeletePayment = async () => {
 .modal-confirm-header {
   color: #000;
 }
-</style> 
+</style>

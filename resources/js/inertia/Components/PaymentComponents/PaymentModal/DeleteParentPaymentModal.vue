@@ -23,7 +23,7 @@ const props = defineProps({
   quoteId: {
     type: [Number, String],
     required: true,
-  }
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -41,15 +41,18 @@ const closeModal = () => {
  */
 const deletePayment = async () => {
   processing.value = true;
-  
+
   try {
-    const res = await axios.post(`/payments/${props.quoteType}/delete-payment`, {
-      payment_id: props.paymentId,
-      payment_code: props.paymentCode,
-    });
-    
+    const res = await axios.post(
+      `/payments/${props.quoteType}/delete-payment`,
+      {
+        payment_id: props.paymentId,
+        payment_code: props.paymentCode,
+      },
+    );
+
     processing.value = false;
-    
+
     if (res.data.status === false) {
       notification.error({
         title: res.data.message,
@@ -58,13 +61,13 @@ const deletePayment = async () => {
       closeModal();
       return;
     }
-    
+
     notification.success({
       title: 'Payment deleted successfully',
       position: 'top',
     });
     closeModal();
-    
+
     // Reload to reflect changes
     setTimeout(() => {
       router.reload({
@@ -73,7 +76,7 @@ const deletePayment = async () => {
     }, 500);
   } catch (err) {
     processing.value = false;
-    
+
     let errorMessage = 'Delete payment process failed';
     if (err.response) {
       if (err.response.data.message) {
@@ -82,7 +85,7 @@ const deletePayment = async () => {
         errorMessage = err.response.data[0];
       }
     }
-    
+
     notification.error({
       title: errorMessage,
       position: 'top',
@@ -104,9 +107,7 @@ const deletePayment = async () => {
         <div
           class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
         >
-          <div class="flex items-center space-x-2">
-            Delete Payment
-          </div>
+          <div class="flex items-center space-x-2">Delete Payment</div>
           <div class="flex items-center space-x-2">
             <span
               @click="closeModal"
@@ -183,4 +184,4 @@ const deletePayment = async () => {
 .modal-confirm-header {
   color: #000;
 }
-</style> 
+</style>

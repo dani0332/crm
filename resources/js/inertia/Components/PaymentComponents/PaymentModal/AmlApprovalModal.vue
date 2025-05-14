@@ -1,4 +1,3 @@
-
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
@@ -31,10 +30,14 @@ const emit = defineEmits(['update:modelValue']);
 const closeModal = () => {
   emit('update:modelValue', false);
 };
-</script> 
+</script>
 
 <template>
-  <x-modal :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" size="lg">
+  <x-modal
+    :model-value="modelValue"
+    @update:model-value="$emit('update:modelValue', $event)"
+    size="lg"
+  >
     <div class="flex items-center justify-end space-x-2">
       <span
         @click="closeModal"
@@ -63,11 +66,7 @@ const closeModal = () => {
         <span>Please complete the AML screening to proceed.</span>
       </div>
       <div class="mt-2 text-center">
-        <Link
-          :href="`/kyc/aml/${
-            quoteTypeId
-          }/details/${quoteRequestId}`"
-        >
+        <Link :href="`/kyc/aml/${quoteTypeId}/details/${quoteRequestId}`">
           <x-tooltip>
             <x-button
               v-if="can(permissionEnum.AMLList)"
