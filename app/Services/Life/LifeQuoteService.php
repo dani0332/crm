@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\LifeInsurerTenure;
 use App\Enums\LifeRiderEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
@@ -62,10 +63,11 @@ class LifeQuoteService extends BaseService
         $authorizedDays = $this->getPaymentAuthorisedDays();
         $renewalBatches = $this->getRenewalBaches();
         $typesOfInsurance = LifeInsuranceTenure::withActive()->get();
+        $planTypes = LifeInsuranceTenure::select('id', 'text')->oldest()->limit(2)->get();
         $numberOfYears = LifeNumberOfYears::withActive()->get();
         $currency = CurrencyType::withActive()->get();
 
-        return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency');
+        return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planTypes');
     }
 
     public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
@@ -225,7 +227,7 @@ class LifeQuoteService extends BaseService
             'sumInsuredCurrencyId' => $data['sum_insured_currency_id'],
             'maritalStatusId' => $data['marital_status_id'],
             'purposeOfInsuranceId' => $data['purpose_of_insurance_id'],
-            'tenureOfInsuranceId' => $data['tenure_of_insurance_id'],
+            'tenureOfInsuranceId' => LifeInsurerTenure::LIFE,
             'numberOfYearsId' => $data['number_of_years_id'],
             'isSmoker' => $data['is_smoker'] == 1 ? 1 : 0,
             'gender' => $data['gender'],

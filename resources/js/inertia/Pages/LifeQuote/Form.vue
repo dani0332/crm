@@ -130,21 +130,7 @@ watch(
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="Type of Insurance" required>
-          <x-select
-            v-model="quoteForm.tenure_of_insurance_id"
-            :options="
-              typeOfInsurance.map(item => ({
-                value: item.id,
-                label: item.text,
-                disabled: item.code === 'SAVINGS',
-              }))
-            "
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.tenure_of_insurance_id"
-          />
-        </x-field>
+        
         <x-field label="Purpose of Insurance" required>
           <x-select
             v-model="quoteForm.purpose_of_insurance_id"

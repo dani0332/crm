@@ -79,6 +79,7 @@ const filters = reactive({
   tenure_of_insurance_id: '',
   sum_insured_currency_id: null,
   sum_insured_range: '',
+  plan_type:''
 });
 
 const filterButtonStatuses = [
@@ -520,6 +521,18 @@ const insurerAMLStatusOption = computed(() =>
     label: item.text || item.label,
   })),
 );
+
+let planTypes = [
+  {
+    id: 1,
+    text: 'Fixed Term Insurance',
+  },
+  {
+    id: 2,
+    text: 'Whole Life Insurance',
+  },
+]
+
 </script>
 
 <template>
@@ -801,10 +814,10 @@ const insurerAMLStatusOption = computed(() =>
         />
         <x-select
           v-model="filters.tenure_of_insurance_id"
-          placeholder="Type of Insurance"
-          label="Type of Insurance"
+          placeholder="Plan Type"
+          label="Plan Type"
           :options="
-            typesOfInsurance.map(item => ({
+            planTypes.map(item => ({
               value: item.id,
               label: item.text,
             }))

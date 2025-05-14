@@ -39,7 +39,6 @@ class LifeQuoteRequest extends FormRequest
             'weight' => 'required|numeric|min:0',
             'bmi' => 'required|numeric|min:0',
             'age' => 'required|numeric|min:0',
-            'tenure_of_insurance_id' => 'required|exists:life_insurance_tenure,id',
             'number_of_years_id' => 'required|exists:life_number_of_year,id',
             'is_smoker' => 'required',
             'gender' => 'required|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
