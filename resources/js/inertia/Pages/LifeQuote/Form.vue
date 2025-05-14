@@ -269,12 +269,12 @@ watch(
                   :rules="[isRequired, validateHeight]"
                   class="w-full"
                   :error="quoteForm.errors.height"
-                  maxLength="20"
-                />
-                <span
-                  class="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                  >Cms</span
-                >
+                  maxLength="20">
+                
+                <template #suffix>
+                  <span class="absolute inset-y-0 right-3 flex items-center text-gray-500">Cms</span>
+                </template>
+                </x-input>
               </div>
             </x-field>
             <x-field label="Weight" required>
@@ -289,11 +289,14 @@ watch(
                   class="w-full"
                   :error="quoteForm.errors.weight"
                   maxLength="20"
-                />
-                <span
-                  class="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                  >Kgs</span
                 >
+                <template #suffix>
+                  <span
+                    class="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                    >Kgs</span
+                  >
+                </template>
+              </x-input>
               </div>
             </x-field>
             <x-field label="BMI">
