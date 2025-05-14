@@ -45,7 +45,7 @@ trait OcrFillable
         try {
             return $date ? Carbon::parse($date)->format($format) : $default;
         } catch (Exception $e) {
-            info(self::class." - Exception occurred during date parsing: {$e->getMessage()}");
+            LoggerService::error(self::class.' - Exception occurred during date parsing', exception: $e);
 
             return $default;
         }
@@ -91,6 +91,7 @@ trait OcrFillable
 
         $providersWithInsurerTaxNumber = [
             InsurerProviderEnum::GIG_INSURANCE,
+            InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
             InsurerProviderEnum::QATAR_INSURANCE,
             InsurerProviderEnum::LIVANA_INSURANCE,
             InsurerProviderEnum::TOKIO_MARINE,
