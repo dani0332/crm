@@ -235,6 +235,7 @@ function isNotZero(value) {
 
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
+  code: props.sendUpdateLog.code,
   send_update_type: props.sendUpdateLog.category.code,
   send_update_option: props.sendUpdateLog?.option?.code ?? null,
   booking_date: props.bookingDetails?.booking_date,
@@ -604,6 +605,7 @@ const selectedInvoice = () => {
     quoteUuid: props.realQuote.uuid,
     quoteId: props.realQuote.id,
     taxInvoiceNo: bookingDetailsForm.reversal_invoice,
+    code: props.sendUpdateLog.code,
   };
   axios
     .post(url, data)
@@ -795,6 +797,7 @@ const sendUpdateValidation = () => {
       quoteRefId: props.realQuote.id,
       action: actionButton.value,
       inslyMigrated: props.realQuote.insly_migrated,
+      code: props.sendUpdateLog.code,
     })
     .then(response => {
       if (response.status == 200) {
@@ -913,6 +916,7 @@ function sendUpdate(prePaymentCheck = true) {
       paymentValidated: true,
       reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
       inslyMigrated: props.realQuote.insly_migrated,
+      code: props.sendUpdateLog.code,
     })
     .then(response => {
       loader.sendUpdate = false;
@@ -972,6 +976,7 @@ const submitToCustomer = (withPartialPaymentCheck = true) => {
     inslyMigrated: props.realQuote.insly_migrated,
     isEmailSent: props.sendUpdateLog.is_email_sent,
     quoteCode: props.realQuote.code,
+    code: props.sendUpdateLog.code,
   };
   axios
     .post(url, data)

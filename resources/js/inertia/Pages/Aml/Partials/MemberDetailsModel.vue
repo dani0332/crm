@@ -199,66 +199,62 @@ function onMemberSubmit(isValid) {
         class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center"
         v-if="addMember"
       >
-        <x-field
+        <x-input
           label="Member First Name"
           required
           v-if="quoteType.code == 'Health'"
-        >
-          <x-input
-            v-model="memberForm.first_name"
-            placeholder="Member First Name"
-            class="w-full"
-            :rules="[isRequired, rules.nameCheck]"
-          />
-        </x-field>
-        <x-field label="Member Name" required v-else>
-          <x-input
-            v-model="memberForm.first_name"
-            placeholder="Member Name"
-            class="w-full"
-            :rules="[isRequired, rules.nameCheck]"
-          />
-        </x-field>
-        <x-field
+          v-model="memberForm.first_name"
+          placeholder="Member First Name"
+          class="w-full"
+          :rules="[isRequired, rules.nameCheck]"
+        />
+        <x-input
+          label="Member Name"
+          required
+          v-else
+          v-model="memberForm.first_name"
+          placeholder="Member Name"
+          class="w-full"
+          :rules="[isRequired, rules.nameCheck]"
+        />
+        <x-input
           label="Member Last Name"
           required
           v-if="quoteType.code == 'Health'"
-        >
-          <x-input
-            v-model="memberForm.last_name"
-            placeholder="Member Last Name"
-            class="w-full"
-            :rules="[isRequired, rules.nameCheck]"
-          />
-        </x-field>
-        <x-field label="Nationality" required>
-          <x-select
-            v-model="memberForm.nationality_id"
-            placeholder="Select Nationality"
-            :options="nationalitiesOptions"
-            class="w-full"
-            :rules="[isRequired]"
-            filterable
-            filterPlaceholder="Filter Nationality...."
-          />
-        </x-field>
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="memberForm.dob"
-            placeholder="Date of Birth"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="Relation" required>
-          <x-select
-            v-model="memberForm.relation_code"
-            placeholder="Select Relation"
-            :options="memberRelationOptions"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
+          v-model="memberForm.last_name"
+          placeholder="Member Last Name"
+          class="w-full"
+          :rules="[isRequired, rules.nameCheck]"
+        />
+        <x-select
+          v-model="memberForm.nationality_id"
+          placeholder="Select Nationality"
+          :options="nationalitiesOptions"
+          class="w-full"
+          :rules="[isRequired]"
+          filterable
+          filterPlaceholder="Filter Nationality...."
+          label="Nationality"
+          required
+        />
+
+        <DatePicker
+          label="Date of Birth"
+          required
+          v-model="memberForm.dob"
+          placeholder="Date of Birth"
+          class="w-full"
+          :rules="[isRequired]"
+        />
+        <x-select
+          v-model="memberForm.relation_code"
+          placeholder="Select Relation"
+          :options="memberRelationOptions"
+          class="w-full"
+          :rules="[isRequired]"
+          label="Relation"
+          required
+        />
         <x-checkbox
           v-model="memberForm.is_payer"
           label="Is This Member a Payer?"

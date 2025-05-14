@@ -59,21 +59,21 @@ const onAssignTier = () => {
         <x-divider class="my-4" />
         <div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4">
           <div class="w-full md:w-50">
-            <x-field label="Select Tier" required>
-              <x-select
-                v-model="tierForm.selectedTierId"
-                :options="
-                  tiers.map(tier => ({
-                    label: tier.name,
-                    value: tier.id,
-                  }))
-                "
-                :error="tierForm.errors.selectedTierId"
-                placeholder="Select Tier"
-                :rules="[rules.isRequired]"
-                class="w-full"
-              />
-            </x-field>
+            <x-select
+              label="Select Tier"
+              required
+              v-model="tierForm.selectedTierId"
+              :options="
+                tiers.map(tier => ({
+                  label: tier.name,
+                  value: tier.id,
+                }))
+              "
+              :error="tierForm.errors.selectedTierId"
+              placeholder="Select Tier"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
           </div>
           <div class="w-full md:w-50">
             <x-button

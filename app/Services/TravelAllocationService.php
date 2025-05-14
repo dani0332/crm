@@ -42,6 +42,10 @@ class TravelAllocationService extends AllocationService
 
     private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, ProcessTrackerService $tracker)
     {
+        if ($travelQuote->isRenewalUpload()) {
+            return false;
+        }
+
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
         if (getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE) == '1' && $travelQuote->isParent() && $travelQuote->isAdult()) {
             info(self::class.':verifyFetchLeadPreChecks - it is parent lead so checking for Alliance Travel Automation');

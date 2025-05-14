@@ -69,31 +69,33 @@ function onSubmit(isValid) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="BATCH" required>
-          <x-input
-            v-model="batchForm.name"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="batchForm.errors.name"
-          />
-        </x-field>
-        <x-field label="LEAD STATUS" required>
-          <x-select
-            v-model="batchForm.quote_status_id"
-            :rules="[isRequired]"
-            :options="leadStatusOptions"
-            class="w-full"
-            :error="batchForm.errors.quote_status_id"
-          />
-        </x-field>
-        <x-field label="DEADLINE DATE" required>
-          <DatePicker
-            v-model="batchForm.deadline_date"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="batchForm.errors.deadline_date"
-          />
-        </x-field>
+        <x-input
+          label="BATCH"
+          required
+          v-model="batchForm.name"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="batchForm.errors.name"
+        />
+
+        <x-select
+          label="LEAD STATUS"
+          required
+          v-model="batchForm.quote_status_id"
+          :rules="[isRequired]"
+          :options="leadStatusOptions"
+          class="w-full"
+          :error="batchForm.errors.quote_status_id"
+        />
+
+        <DatePicker
+          label="DEADLINE DATE"
+          required
+          v-model="batchForm.deadline_date"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="batchForm.errors.deadline_date"
+        />
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
