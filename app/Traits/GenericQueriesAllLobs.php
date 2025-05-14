@@ -23,6 +23,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\CapiRequestService;
 use App\Services\CentralService;
 use App\Services\CustomerService;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -473,6 +474,7 @@ trait GenericQueriesAllLobs
      */
     private function isLackingPayment($payment)
     {
+        LoggerService::info('fn:isLackingPayment - GenericQueriesAllLobs');
         if ($this->isSplitPaymentFullyPaid($payment)) {
             return true;
         }
@@ -728,6 +730,8 @@ trait GenericQueriesAllLobs
      */
     private function isSplitPaymentFullyPaid($payment)
     {
+        LoggerService::info('fn:isSplitPaymentFullyPaid - Start - GenericQueriesAllLobs');
+
         // Check if the payment exists and has a frequency of split payments
         if ($payment && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
             // Get the payment splits associated with the payment
