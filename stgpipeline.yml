@@ -29,7 +29,7 @@ steps:
   - script: |
       sed -i "s/imcrmdev/imcrmstage/g" "$(System.DefaultWorkingDirectory)/docker/nginx.conf"
       sed -i "s/development-alfredcrm/staging-alfredcrm/g" "$(System.DefaultWorkingDirectory)/docker/log_files.yml"
-       doppler --token $(IMCRM_TOKEN) run -- sh -c 'DOCKER_BUILDKIT=1 docker build --build-arg IMCRM_TOKEN=$(IMCRM_TOKEN) -f Dockerfile_MS -t $(acrName).azurecr.io/$(imageName) .'
+       doppler --token $(IMCRM_TOKEN) run -- sh -c 'sudo DOCKER_BUILDKIT=1 docker build --build-arg IMCRM_TOKEN=$(IMCRM_TOKEN) -f Dockerfile_MS -t $(acrName).azurecr.io/$(imageName) .'
        if [ $? -ne 0 ]; then
         curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
          --header 'Content-Type: application/json' \
@@ -38,9 +38,9 @@ steps:
         exit 1
        fi
     displayName: 'docker build'
-  - script: docker login -u $(dockerId) -p $(dockerPassword) $(acrName).azurecr.io
+  - script: sudo docker login -u $(dockerId) -p $(dockerPassword) $(acrName).azurecr.io
     displayName: 'docker login'
-  - script: docker push $(acrName).azurecr.io/$(imageName)
+  - script: sudo docker push $(acrName).azurecr.io/$(imageName)
     displayName: 'docker push'
   ## Build Completed notification
   - task: Bash@3
