@@ -16,7 +16,6 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
-  listQuotePlans: { Array, String },
   quoteDocuments: Array,
   documentTypes: Object,
   cdnPath: String,
@@ -524,6 +523,9 @@ const isRenewalUpload = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
+  const canUpdateToFakeDuplicate = can(
+    permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
+  );
   const isLeadPool = hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool]);
   const isPA = hasAnyRole([rolesEnum.Admin, rolesEnum.PA]);
   const renewal_batch = page.props.record.renewal_batch;
@@ -538,6 +540,7 @@ const leadStatusOptions = computed(() => {
   const filteredLeadStatuses = statuses?.map(status => {
     if (
       (!isLeadPool &&
+        !canUpdateToFakeDuplicate &&
         [
           page.props.quoteStatusEnum.Fake,
           page.props.quoteStatusEnum.Duplicate,
@@ -554,8 +557,6 @@ const leadStatusOptions = computed(() => {
         disabled: true,
       };
     }
-    // if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
-    // else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true;
     return {
       value: status.id,
       label: status.text,
@@ -566,6 +567,10 @@ const leadStatusOptions = computed(() => {
 });
 
 const leadStatusDisabled = computed(() => {
+  const canUpdateToFakeDuplicate = can(
+    permissionEnum.UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE,
+  );
+
   if (canAny([permissionEnum.SUPER_LEAD_STATUS_CHANGE])) {
     return page.props.quote.quote_status_id == quoteStatusEnum.PolicyBooked;
   }
@@ -575,7 +580,8 @@ const leadStatusDisabled = computed(() => {
     ((page.props.record.quote_status_id ==
       page.props.quoteStatusEnum.Duplicate ||
       page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake) &&
-      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin])) ||
+      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]) &&
+      !canUpdateToFakeDuplicate) ||
     (!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction)
   );
 });
@@ -642,12 +648,6 @@ const policyDetailsState = reactive({
   isEditing: false,
 });
 
-const planQuoteInsurerNumber = computed(() => {
-  let quotePlanList = page.props?.listQuotePlans;
-  if (!quotePlanList || typeof quotePlanList === 'string') return null;
-  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
-  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
-});
 const vatAmount = computed(() => {
   return (page.props.record.premium * 0.05).toFixed(2);
 });
@@ -655,33 +655,6 @@ const vatAmount = computed(() => {
 const priceWithoutVat = computed(() => {
   return page.props.record.premium - vatAmount.value;
 });
-
-const policyDetailsForm = useForm({
-  quote_policy_number: page.props.record.policy_number || null,
-
-  quote_policy_issuance_date:
-    dateToYMD(page.props.record.policy_issuance_date) || '',
-  quote_policy_price_vat_notapplicable: null,
-  quote_policy_price_vat_applicable: priceWithoutVat || '',
-  quote_policy_vat_total_amount: vatAmount.value || null,
-  quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
-  quote_policy_expiry_date:
-    dateToYMD(page.props.record.policy_expiry_date) || '',
-  quote_premium: page.props.record.premium || null,
-  quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
-  quote_policy_issuance_status: null,
-  modelType: 'Car',
-  quote_id: page.props.record.id,
-});
-
-const onUpdatePolicyDetails = () => {
-  policyDetailsForm.post('/quotes/Car/update-quote-policy', {
-    preserveScroll: true,
-    onSuccess: () => {
-      policyDetailsState.isEditing = false;
-    },
-  });
-};
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -1887,7 +1860,12 @@ const isCommercialVehicle = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">REGISTRATION TYPE</dt>
-                <dd>{{ quote.registration_type }}</dd>
+                <dd>
+                  {{
+                    quote.registration_type.charAt(0).toUpperCase() +
+                    quote.registration_type.slice(1)
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
@@ -1915,7 +1893,14 @@ const isCommercialVehicle = computed(() => {
               </div>
               <div v-if="isCompanyCar" class="grid sm:grid-cols-2">
                 <dt class="font-medium">Vehicle use</dt>
-                <dd>{{ record.vehicle_use }}</dd>
+                <dd>
+                  {{
+                    record.vehicle_use
+                      ? record.vehicle_use.charAt(0).toUpperCase() +
+                        record.vehicle_use.slice(1)
+                      : ''
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CAR MAKE</dt>
@@ -2198,32 +2183,33 @@ const isCommercialVehicle = computed(() => {
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
-        <x-field label="LOBs" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[rules.isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-        </x-field>
-        <x-field label="Reason" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            :rules="[rules.isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-        </x-field>
+        <x-select
+          label="LOBs"
+          required
+          v-model="leadDuplicateForm.lob_team"
+          :options="
+            allowedDuplicateLOB.map(lob => ({
+              value: lob,
+              label: lob,
+            }))
+          "
+          :rules="[rules.isRequired]"
+          placeholder="Select LOB For Duplication"
+          class="w-full"
+          multiple
+        />
+
+        <x-select
+          label="Reason"
+          required
+          v-model="leadDuplicateForm.lob_team_sub_selection"
+          :rules="[rules.isRequired]"
+          class="w-full"
+          :options="[
+            { value: 'new_enquiry', label: 'New enquiry' },
+            { value: 'record_only', label: 'Record purposes only' },
+          ]"
+        />
       </div>
       <template #secondary-action>
         <x-button ghost tabindex="-1" @click="modals.duplicate = false">
@@ -2461,12 +2447,13 @@ const isCommercialVehicle = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Emirates of Registration...."
                     />
                   </dd>
                 </div>
@@ -2484,21 +2471,21 @@ const isCommercialVehicle = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
                       placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Industry Type...."
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       @update:modelValue="entityTypeChange($event)"
-                      :single="true"
                       v-model:modelValue="customerProfileForm.entity_type_code"
                       placeholder="SELECT ENTITY TYPE"
                       :options="[
@@ -2506,6 +2493,8 @@ const isCommercialVehicle = computed(() => {
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Entity Type...."
                     />
                   </dd>
                 </div>
@@ -2668,9 +2657,8 @@ const isCommercialVehicle = computed(() => {
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                <ComboBox
+                <x-select
                   v-model="leadStatusForm.leadStatus"
-                  :single="true"
                   label="Status"
                   class="w-full uppercase"
                   placeholder="Please select Lead Status"
@@ -2680,45 +2668,39 @@ const isCommercialVehicle = computed(() => {
                   :options="leadStatusOptions"
                   filterable
                 />
-                <x-field
-                  label="Lost Reason"
-                  class="uppercase"
+
+                <x-select
+                  label="LOST REASON"
                   required
                   v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
-                >
-                  <x-select
-                    v-model="leadStatusForm.lostReason"
-                    :options="
-                      lostReasons?.map(item => ({
-                        value: item.id,
-                        label: item.text,
-                      }))
-                    "
-                    placeholder="Lost Reason is required"
-                    class="w-full"
-                    :error="leadStatusForm.errors.lostReason"
-                    :disabled="lockLeadSectionsDetails.lead_status"
-                  />
-                </x-field>
-                <x-field
-                  label="Followup Date"
-                  class="uppercase"
+                  v-model="leadStatusForm.lostReason"
+                  :options="
+                    lostReasons?.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  placeholder="Lost Reason is required"
+                  class="w-full"
+                  :error="leadStatusForm.errors.lostReason"
+                  :disabled="lockLeadSectionsDetails.lead_status"
+                />
+                <DatePicker
+                  label="FOLLOWUP DATE"
                   v-if="
                     leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
                     leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
                     leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
                   "
-                >
-                  <DatePicker
-                    v-model="leadStatusForm.next_followup_date"
-                    withTime
-                    :rules="[isRequired]"
-                    placeholder="Please select follow-up date & time"
-                    :error="leadStatusForm.errors.next_followup_date"
-                    class="w-full"
-                    :disabled="lockLeadSectionsDetails.lead_status"
-                  />
-                  <!-- <x-input
+                  v-model="leadStatusForm.next_followup_date"
+                  withTime
+                  :rules="[isRequired]"
+                  placeholder="Please select follow-up date & time"
+                  :error="leadStatusForm.errors.next_followup_date"
+                  class="w-full"
+                  :disabled="lockLeadSectionsDetails.lead_status"
+                />
+                <!-- <x-input
 								v-model="leadStatusForm.next_followup_date"
 								:value="new Date(leadStatusForm.next_followup_date).toLocaleDateString('en-US')"
 								type="datetime-local"
@@ -2726,7 +2708,6 @@ const isCommercialVehicle = computed(() => {
 								class="w-full"
 								:error="leadStatusForm.errors.next_followup_date"
 							/> -->
-                </x-field>
                 <x-select
                   v-if="leadStatusForm.leadStatus == quoteStatusEnum.IMRenewal"
                   v-model="leadStatusForm.tier_id"
@@ -2743,66 +2724,59 @@ const isCommercialVehicle = computed(() => {
                   :error="leadStatusForm.errors.tier_id"
                   :disabled="lockLeadSectionsDetails.lead_status"
                 />
-                <x-field
-                  label="Notes"
-                  class="uppercase"
+
+                <x-textarea
+                  label="NOTES"
                   :required="
                     leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
                     leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
                     leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
                   "
-                >
-                  <x-textarea
-                    v-model="leadStatusForm.notes"
-                    type="text"
-                    placeholder="Lead Notes"
-                    class="w-full"
-                    :rules="
-                      leadStatusForm.leadStatus ==
-                        quoteStatusEnum.FollowupCall ||
-                      leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                      leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-                        ? [isRequired]
-                        : []
-                    "
-                    :error="leadStatusForm.errors.notes"
-                    :disabled="
-                      allowStatusUpdate ||
-                      isCarLostStatus(record.quote_status_id) ||
-                      lockLeadSectionsDetails.lead_status
-                    "
-                  />
-                </x-field>
-                <x-field
-                  label="Car Sold / Uncontactable Proof"
-                  class="uppercase"
+                  v-model="leadStatusForm.notes"
+                  type="text"
+                  placeholder="Lead Notes"
+                  class="w-full"
+                  :rules="
+                    leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
+                    leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
+                    leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
+                      ? [isRequired]
+                      : []
+                  "
+                  :error="leadStatusForm.errors.notes"
+                  :disabled="
+                    allowStatusUpdate ||
+                    isCarLostStatus(record.quote_status_id) ||
+                    lockLeadSectionsDetails.lead_status
+                  "
+                />
+
+                <input
                   v-if="
                     leadStatusForm.leadStatus == quoteStatusEnum.CarSold ||
                     leadStatusForm.leadStatus == quoteStatusEnum.Uncontactable
                   "
-                >
-                  <input
-                    @input="
-                      leadStatusForm.proof_document = $event.target.files[0]
-                    "
-                    type="file"
-                    :disabled="
-                      (isCarLostStatus(record.quote_status_id) &&
-                        !carLostChangeStatus) ||
-                      lockLeadSectionsDetails.lead_status
-                    "
-                    placeholder="Car Sold / Uncontactable Proof"
-                    class="form-control w-full"
-                  />
-                </x-field>
-                <x-field class="uppercase" label="Transaction Type">
-                  <x-input
-                    type="text"
-                    v-model="record.transaction_type_text"
-                    class="w-full"
-                    :disabled="true"
-                  />
-                </x-field>
+                  label="CAR SOLD / UNCONTACTABLE PROOF"
+                  @input="
+                    leadStatusForm.proof_document = $event.target.files[0]
+                  "
+                  type="file"
+                  :disabled="
+                    (isCarLostStatus(record.quote_status_id) &&
+                      !carLostChangeStatus) ||
+                    lockLeadSectionsDetails.lead_status
+                  "
+                  placeholder="Car Sold / Uncontactable Proof"
+                  class="form-control w-full"
+                />
+
+                <x-input
+                  label="TRANSACTION TYPE"
+                  type="text"
+                  v-model="record.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
               </div>
             </div>
             <div
@@ -2810,74 +2784,65 @@ const isCommercialVehicle = computed(() => {
               v-if="isCarLostStatus(record.quote_status_id)"
             >
               <div class="flex flex-col gap-4">
-                <x-field required label="Approval Status" class="uppercase">
-                  <x-select
-                    v-model="leadStatusForm.lost_approval_status"
-                    :options="leadApprovalStatusOptions"
-                    :disabled="
-                      !allowQuoteLogAction ||
-                      lockLeadSectionsDetails.lead_status
-                    "
-                    placeholder="Approval Status"
-                    class="w-full"
-                    :rules="[isRequired]"
-                  />
-                </x-field>
-
-                <x-field
+                <x-select
+                  label="APPROVAL STATUS"
                   required
-                  label="Approval Reasons"
-                  class="uppercase"
+                  v-model="leadStatusForm.lost_approval_status"
+                  :options="leadApprovalStatusOptions"
+                  :disabled="
+                    !allowQuoteLogAction || lockLeadSectionsDetails.lead_status
+                  "
+                  placeholder="Approval Status"
+                  class="w-full"
+                  :rules="[isRequired]"
+                />
+
+                <x-select
                   v-if="
                     leadStatusForm.lost_approval_status ==
                     genericRequestEnum.APPROVED
                   "
-                >
-                  <x-select
-                    v-model="leadStatusForm.approve_reason_id"
-                    :options="
-                      lostApproveReasons.map(item => ({
-                        value: item.id,
-                        label: item.text,
-                      }))
-                    "
-                    :disabled="
-                      !allowQuoteLogAction ||
-                      !hasRole(rolesEnum.MarketingOperations) ||
-                      lockLeadSectionsDetails.lead_status
-                    "
-                    placeholder="Approval Reasons"
-                    class="w-full"
-                    :rules="[isRequired]"
-                  />
-                </x-field>
-                <x-field
                   required
-                  label="Rejection Reasons"
-                  class="uppercase"
+                  label="APPROVAL REASONS"
+                  v-model="leadStatusForm.approve_reason_id"
+                  :options="
+                    lostApproveReasons.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  :disabled="
+                    !allowQuoteLogAction ||
+                    !hasRole(rolesEnum.MarketingOperations) ||
+                    lockLeadSectionsDetails.lead_status
+                  "
+                  placeholder="Approval Reasons"
+                  class="w-full"
+                  :rules="[isRequired]"
+                />
+
+                <x-select
+                  label="REJECTION REASONS"
                   v-if="
                     leadStatusForm.lost_approval_status ==
                     genericRequestEnum.REJECTED
                   "
-                >
-                  <x-select
-                    v-model="leadStatusForm.reject_reason_id"
-                    :options="
-                      lostRejectReasons.map(item => ({
-                        value: item.id,
-                        label: item.text,
-                      }))
-                    "
-                    :disabled="
-                      !allowQuoteLogAction ||
-                      !hasRole(rolesEnum.MarketingOperations) ||
-                      lockLeadSectionsDetails.lead_status
-                    "
-                    placeholder="Rejection Reasons"
-                    class="w-full"
-                    :rules="[isRequired]"
-                  />
-                </x-field>
+                  v-model="leadStatusForm.reject_reason_id"
+                  :options="
+                    lostRejectReasons.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))
+                  "
+                  :disabled="
+                    !allowQuoteLogAction ||
+                    !hasRole(rolesEnum.MarketingOperations) ||
+                    lockLeadSectionsDetails.lead_status
+                  "
+                  placeholder="Rejection Reasons"
+                  class="w-full"
+                  :rules="[isRequired]"
+                />
                 <template
                   v-if="
                     [
@@ -2886,37 +2851,32 @@ const isCommercialVehicle = computed(() => {
                     ].includes(leadStatusForm.lost_approval_status)
                   "
                 >
-                  <x-field class="uppercase" label="Notes">
-                    <x-textarea
-                      v-model="leadStatusForm.lost_notes"
-                      :disabled="
-                        !allowQuoteLogAction ||
-                        lockLeadSectionsDetails.lead_status
-                      "
-                      placeholder="Notes"
-                      class="w-full"
-                    />
-                  </x-field>
-                  <x-field
+                  <x-textarea
+                    label="NOTES"
+                    v-model="leadStatusForm.lost_notes"
+                    :disabled="
+                      !allowQuoteLogAction ||
+                      lockLeadSectionsDetails.lead_status
+                    "
+                    placeholder="Notes"
+                    class="w-full"
+                  />
+
+                  <input
+                    label="CAR SOLD / UNCONTACTABLE PROOF"
                     required
-                    label="Car Sold / Uncontactable Proof"
-                    class="uppercase"
-                  >
-                    <input
-                      @input="
-                        leadStatusForm.mo_proof_document =
-                          $event.target.files[0]
-                      "
-                      type="file"
-                      :disabled="
-                        !allowQuoteLogAction ||
-                        lockLeadSectionsDetails.lead_status
-                      "
-                      placeholder="Car Sold / Uncontactable Proof"
-                      class="w-full"
-                      :rules="[isRequired]"
-                    />
-                  </x-field>
+                    @input="
+                      leadStatusForm.mo_proof_document = $event.target.files[0]
+                    "
+                    type="file"
+                    :disabled="
+                      !allowQuoteLogAction ||
+                      lockLeadSectionsDetails.lead_status
+                    "
+                    placeholder="Car Sold / Uncontactable Proof"
+                    class="w-full"
+                    :rules="[isRequired]"
+                  />
                 </template>
               </div>
             </div>
@@ -2999,129 +2959,122 @@ const isCommercialVehicle = computed(() => {
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
-              <x-field label="Cylinder" class="uppercase" required>
-                <x-input
-                  v-model="assumptionsForm.cylinder"
-                  type="number"
-                  placeholder="cylinder"
+              <x-input
+                label="CYLINDER"
+                required
+                v-model="assumptionsForm.cylinder"
+                type="number"
+                placeholder="cylinder"
+                class="w-full"
+                :rules="[isRequired]"
+                :disabled="!assumptionState.isEditing"
+              />
+            </div>
+            <div class="w-full md:w-1/2">
+              <x-input
+                label="SEAT CAPACITY"
+                required
+                v-model="assumptionsForm.seat_capacity"
+                type="number"
+                placeholder="Seat Capacity"
+                class="w-full"
+                :rules="[isRequired]"
+                :disabled="!assumptionState.isEditing"
+              />
+            </div>
+          </div>
+          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+            <div class="w-full md:w-1/2">
+              <div class="flex flex-col gap-4">
+                <x-select
+                  label="VEHICLE BODY TYPE"
+                  required
+                  v-model="assumptionsForm.vehicle_type_id"
+                  :options="vehicleTypeOptions"
+                  placeholder="Vehicle Body Type"
                   class="w-full"
                   :rules="[isRequired]"
                   :disabled="!assumptionState.isEditing"
                 />
-              </x-field>
+              </div>
             </div>
             <div class="w-full md:w-1/2">
-              <x-field label="Seat Capacity" class="uppercase" required>
-                <x-input
-                  v-model="assumptionsForm.seat_capacity"
-                  type="number"
-                  placeholder="Seat Capacity"
+              <div class="flex flex-col gap-4">
+                >
+                <x-select
+                  label="IS VEHICLE MODIFIED?"
+                  required
+                  v-model="assumptionsForm.is_modified"
+                  :options="isOptions"
+                  placeholder="Is Modified"
                   class="w-full"
                   :rules="[isRequired]"
                   :disabled="!assumptionState.isEditing"
                 />
-              </x-field>
+              </div>
             </div>
           </div>
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Vehicle Body Type" class="uppercase" required>
-                  <x-select
-                    v-model="assumptionsForm.vehicle_type_id"
-                    :options="vehicleTypeOptions"
-                    placeholder="Vehicle Body Type"
-                    class="w-full"
-                    :rules="[isRequired]"
-                    :disabled="!assumptionState.isEditing"
-                  />
-                </x-field>
-              </div>
-            </div>
-            <div class="w-full md:w-1/2">
-              <div class="flex flex-col gap-4">
-                <x-field
-                  label="Is Vehicle modified?"
-                  class="uppercase"
+                <x-select
+                  label="IS BANK FINANCED?"
                   required
-                >
-                  <x-select
-                    v-model="assumptionsForm.is_modified"
-                    :options="isOptions"
-                    placeholder="Is Modified"
-                    class="w-full"
-                    :rules="[isRequired]"
-                    :disabled="!assumptionState.isEditing"
-                  />
-                </x-field>
-              </div>
-            </div>
-          </div>
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-              <div class="flex flex-col gap-4">
-                <x-field label="Is Bank Financed" class="uppercase" required>
-                  <x-select
-                    v-model="assumptionsForm.is_bank_financed"
-                    :options="isOptions"
-                    placeholder="Is Bank Financed"
-                    class="w-full"
-                    :rules="[isRequired]"
-                    :disabled="!assumptionState.isEditing"
-                  />
-                </x-field>
+                  v-model="assumptionsForm.is_bank_financed"
+                  :options="isOptions"
+                  placeholder="Is Bank Financed"
+                  class="w-full"
+                  :rules="[isRequired]"
+                  :disabled="!assumptionState.isEditing"
+                />
               </div>
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                <x-field label="Is GCC Standard?" class="uppercase" required>
-                  <x-select
-                    v-model="assumptionsForm.is_gcc_standard"
-                    :options="isOptions"
-                    placeholder="Is GCC Standard"
-                    class="w-full"
-                    :rules="[isRequired]"
-                    :disabled="!assumptionState.isEditing"
-                  />
-                </x-field>
-              </div>
-            </div>
-          </div>
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-              <div class="flex flex-col gap-4">
-                <x-field label="Current Insurance" class="uppercase" required>
-                  <x-select
-                    v-model="assumptionsForm.current_insurance_status"
-                    :options="currentInsuranceOptions"
-                    placeholder="Current Insurance"
-                    class="w-full"
-                    :rules="[isRequired]"
-                    :disabled="!assumptionState.isEditing"
-                  />
-                </x-field>
-              </div>
-            </div>
-            <div class="w-full md:w-1/2">
-              <div class="flex flex-col gap-4">
-                <x-field
-                  label="Year Of First Registration"
-                  class="uppercase"
+                <x-select
+                  label="IS GCC STANDARD?"
                   required
-                >
-                  <x-select
-                    v-model="assumptionsForm.year_of_first_registration"
-                    :options="
-                      $page.props.yearsOfManufacture.map(year => {
-                        return { value: year.id.toString(), label: year.text };
-                      })
-                    "
-                    placeholder="Year Of First Registration"
-                    class="w-full"
-                    :rules="[isRequired]"
-                    :disabled="!assumptionState.isEditing"
-                  />
-                </x-field>
+                  v-model="assumptionsForm.is_gcc_standard"
+                  :options="isOptions"
+                  placeholder="Is GCC Standard"
+                  class="w-full"
+                  :rules="[isRequired]"
+                  :disabled="!assumptionState.isEditing"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+            <div class="w-full md:w-1/2">
+              <div class="flex flex-col gap-4">
+                <x-select
+                  label="CURRENT INSURANCE"
+                  required
+                  v-model="assumptionsForm.current_insurance_status"
+                  :options="currentInsuranceOptions"
+                  placeholder="Current Insurance"
+                  class="w-full"
+                  :rules="[isRequired]"
+                  :disabled="!assumptionState.isEditing"
+                />
+              </div>
+            </div>
+            <div class="w-full md:w-1/2">
+              <div class="flex flex-col gap-4">
+                <x-select
+                  label="YEAR OF FIRST REGISTRATION"
+                  required
+                  v-model="assumptionsForm.year_of_first_registration"
+                  :options="
+                    $page.props.yearsOfManufacture.map(year => {
+                      return { value: year.id.toString(), label: year.text };
+                    })
+                  "
+                  placeholder="Year Of First Registration"
+                  class="w-full"
+                  :rules="[isRequired]"
+                  :disabled="!assumptionState.isEditing"
+                />
               </div>
             </div>
           </div>
@@ -4162,38 +4115,40 @@ const isCommercialVehicle = computed(() => {
         @submit="onActivitySubmit"
       >
         <div class="grid gap-4">
-          <x-field label="Title" required>
-            <x-input
-              v-model="activityForm.title"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Description" required>
-            <x-textarea
-              v-model="activityForm.description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Assignee" required>
-            <x-select
-              v-model="activityForm.assignee_id"
-              :options="advisorOptions"
-              :rules="[isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Due Date" required>
-            <date-picker
-              v-model="activityForm.due_date"
-              :rules="[isRequired]"
-              class="w-full"
-              withTime
-              :timezone="'UTC'"
-            />
-          </x-field>
+          <x-input
+            label="Title"
+            required
+            v-model="activityForm.title"
+            :rules="[isRequired]"
+            class="w-full"
+          />
+          <x-textarea
+            label="Description"
+            required
+            v-model="activityForm.description"
+            :adjust-to-text="false"
+            class="w-full"
+          />
+
+          <x-select
+            label="Assignee"
+            required
+            v-model="activityForm.assignee_id"
+            :options="advisorOptions"
+            :rules="[isRequired]"
+            placeholder="Select Assignee"
+            class="w-full"
+          />
+
+          <date-picker
+            label="Due Date"
+            required
+            v-model="activityForm.due_date"
+            :rules="[isRequired]"
+            class="w-full"
+            withTime
+            :timezone="'UTC'"
+          />
         </div>
 
         <template #secondary-action>

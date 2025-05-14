@@ -306,15 +306,15 @@ function onSubmit(isValid) {
         <x-form @submit="onSubmit" :auto-focus="false">
           <template v-for="(advisor, index) in advisors" :key="index">
             <div class="grid sm:grid-cols-2 gap-4">
-              <x-field label="Name" class="flex-1" required>
-                <x-input
-                  v-model="advisor.name"
-                  type="text"
-                  class="w-full"
-                  placeholder="Name"
-                  :rules="[isRequired]"
-                />
-              </x-field>
+              <x-input
+                v-model="advisor.name"
+                type="text"
+                class="w-full flex-1"
+                placeholder="Name"
+                :rules="[isRequired]"
+                label="Name"
+                required
+              />
 
               <div class="mt-[23px]">
                 <x-button

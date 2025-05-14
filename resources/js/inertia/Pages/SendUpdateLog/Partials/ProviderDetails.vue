@@ -98,12 +98,13 @@ const onCancel = () => {
                 </x-tooltip>
               </dt>
               <dd>
-                <ComboBox
+                <x-select
                   v-model="providerDetailsForm.insurance_provider_id"
                   :options="insuranceProvidersOptions"
                   placeholder="Provider Name"
-                  :single="true"
                   :disabled="!state.isEdit"
+                  filterable
+                  filterPlaceholder="Filter Provider Name...."
                 />
               </dd>
             </div>

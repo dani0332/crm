@@ -518,34 +518,35 @@ const expandNotes = ref(false);
         v-else-if="modals.step === 'step3' && sendUpdateOptions"
       >
         <div class="flex flex-col gap-2 flex-grow w-75">
-          <x-field :label="form.childCategory.title" required>
-            <ComboBox
-              v-model="form.option"
-              :single="true"
-              :hasError="optionError"
-              :options="
-                sendUpdateOptions.map(item => ({
-                  label: item.title,
-                  value: item.id,
-                  tooltip: item.description,
-                }))
-              "
-              :rules="[isRequired]"
-              :placeholder="
-                ['EF', 'EN'].includes(form.childCategory.slug)
-                  ? 'Select Subtype'
-                  : 'Select Reason'
-              "
-              class="w-full"
-            />
-            <!-- <x-select
+          <x-select
+            :label="form.childCategory.title"
+            required
+            v-model="form.option"
+            :hasError="optionError"
+            :options="
+              sendUpdateOptions.map(item => ({
+                label: item.title,
+                value: item.id,
+                tooltip: item.description,
+              }))
+            "
+            :rules="[isRequired]"
+            :placeholder="
+              ['EF', 'EN'].includes(form.childCategory.slug)
+                ? 'Select Subtype'
+                : 'Select Reason'
+            "
+            class="w-full"
+            filterable
+            filterPlaceholder="Filter Reason...."
+          />
+          <!-- <x-select
               class="w-full"
               v-model="form.option"
               :options="form.childCategory.childs.map(item => ({ label: item.title, value: item.id, tooltip: item.tooltip }))"
               :placeholder="['EF', 'EN'].includes(form.childCategory.slug) ? 'Select Subtype' : 'Select Reason'"
               :rules="[isRequired]"
             /> -->
-          </x-field>
           <div class="flex justify-end mt-2">
             <x-button
               size="sm"
