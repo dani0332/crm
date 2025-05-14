@@ -105,130 +105,117 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-field label="Start Date">
-          <DatePicker
-            v-model="filters.transapp_start_date"
-            name="date_of_purchase"
-            class="w-full"
-            model-type="yyyy-MM-dd"
-          />
-        </x-field>
-        <x-field label="Stop Date">
-          <DatePicker
-            v-model="filters.transapp_stop_date"
-            name="date_of_purchase"
-            class="w-full"
-            model-type="yyyy-MM-dd"
-          />
-        </x-field>
-        <x-field
+        <DatePicker
+          v-model="filters.transapp_start_date"
+          name="date_of_purchase"
+          class="w-full"
+          model-type="yyyy-MM-dd"
+          label="Start Date"
+        />
+        <DatePicker
+          v-model="filters.transapp_stop_date"
+          name="date_of_purchase"
+          class="w-full"
+          model-type="yyyy-MM-dd"
+          label="Stop Date"
+        />
+        <x-select
+          v-if="
+            hasAnyRole([
+              rolesEnum.TRANSAPP_ADVISOR,
+              rolesEnum.TRANSAPP_APPROVER,
+            ])
+          "
+          v-model="filters.transactor"
+          placeholder="Select Transactor"
+          class="w-full"
+          filterable
           label="Transactor"
+          :options="
+            transactors.map(item => ({ label: item.name, value: item.id }))
+          "
+        />
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.TRANSAPP_ADVISOR,
               rolesEnum.TRANSAPP_APPROVER,
             ])
           "
-        >
-          <x-select
-            v-model="filters.transactor"
-            placeholder="Select Transactor"
-            class="w-full"
-            filterable
-            :options="
-              transactors.map(item => ({ label: item.name, value: item.id }))
-            "
-          />
-        </x-field>
-        <x-field
+          v-model="filters.handler"
+          :options="
+            handlers.map(item => ({ label: item.name, value: item.id }))
+          "
+          filterable
+          placeholder="Select Advisor"
+          class="w-full"
           label="Advisor"
-          v-if="
-            hasAnyRole([
-              rolesEnum.TRANSAPP_ADVISOR,
-              rolesEnum.TRANSAPP_APPROVER,
-            ])
+        />
+        <x-select
+          v-model="filters.insurance_company"
+          :options="
+            insuranceCompanies.map(item => ({
+              label: item.name,
+              value: item.id,
+            }))
           "
-        >
-          <x-select
-            v-model="filters.handler"
-            :options="
-              handlers.map(item => ({ label: item.name, value: item.id }))
-            "
-            filterable
-            placeholder="Select Advisor"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Insurance Company">
-          <x-select
-            v-model="filters.insurance_company"
-            :options="
-              insuranceCompanies.map(item => ({
-                label: item.name,
-                value: item.id,
-              }))
-            "
-            filterable
-            placeholder="Select Insurance Company"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Reason">
-          <x-select
-            v-model="filters.reason"
-            :options="
-              reasons.map(item => ({
-                label: item.name,
-                value: item.id,
-              }))
-            "
-            filterable
-            placeholder="Reason"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Customer Email">
-          <x-input
-            v-model="filters.transapp_customer_email"
-            placeholder="Customer Email"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Approval Code">
-          <x-input
-            v-model="filters.transapp_approval_code"
-            placeholder="Approval Code"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Payment mode">
-          <x-select
-            v-model="filters.payment_mode"
-            :options="
-              paymentModes.map(item => ({
-                label: item.name,
-                value: item.id,
-              }))
-            "
-            filterable
-            placeholder="Payment mode"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Teams" v-if="hasRole(rolesEnum.CAR_MANAGER)">
-          <x-select
-            v-model="filters.team"
-            :options="
-              teams.map(item => ({
-                label: item.name,
-                value: item.id,
-              }))
-            "
-            filterable
-            placeholder="Select Team"
-            class="w-full"
-          />
-        </x-field>
+          filterable
+          placeholder="Select Insurance Company"
+          class="w-full"
+          label="Insurance Company"
+        />
+        <x-select
+          v-model="filters.reason"
+          :options="
+            reasons.map(item => ({
+              label: item.name,
+              value: item.id,
+            }))
+          "
+          filterable
+          placeholder="Reason"
+          class="w-full"
+          label="Reason"
+        />
+        <x-input
+          v-model="filters.transapp_customer_email"
+          placeholder="Customer Email"
+          class="w-full"
+          label="Customer Email"
+        />
+        <x-input
+          v-model="filters.transapp_approval_code"
+          placeholder="Approval Code"
+          class="w-full"
+          label="Approval Code"
+        />
+        <x-select
+          v-model="filters.payment_mode"
+          :options="
+            paymentModes.map(item => ({
+              label: item.name,
+              value: item.id,
+            }))
+          "
+          filterable
+          placeholder="Payment mode"
+          class="w-full"
+          label="Payment mode"
+        />
+        <x-select
+          v-if="hasRole(rolesEnum.CAR_MANAGER)"
+          v-model="filters.team"
+          :options="
+            teams.map(item => ({
+              label: item.name,
+              value: item.id,
+            }))
+          "
+          filterable
+          placeholder="Select Team"
+          class="w-full"
+          label="Teams"
+        />
       </div>
       <div class="flex justify-end">
         <div class="flex justify-self-end gap-3">
