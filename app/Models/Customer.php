@@ -143,12 +143,12 @@ class Customer extends Model implements AuditableContract
         );
     }
 
-    public static function formattedPcpTagCase(): string
+    public static function formattedPcpTagCase($tableAlias = 'c'): string
     {
-        return "
+        return '
             CASE 
-                WHEN c.pcp_tag = 1 THEN 'Yes'
-                WHEN c.pcp_tag = 0 THEN 'Ex-PC'
+                WHEN '.$tableAlias.".pcp_tag = 1 THEN 'Yes'
+                WHEN ".$tableAlias.".pcp_tag = 0 THEN 'Ex-PC'
                 ELSE 'No'
             END
         ";

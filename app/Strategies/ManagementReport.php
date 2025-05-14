@@ -140,6 +140,8 @@ class ManagementReport
 
         $departments = $request['department_id'] ?? [];
         $departments = is_array($departments) ? $request['department_id'] : [$departments];
+        $pcpTag = $request['pcp_tag'] ?? [];
+        $pcpTag = is_array($pcpTag) ? $request['pcp_tag'] : [$pcpTag];
         $user = auth()->user();
         if ($user->isDepartmentManager() && empty($departments)) {
             $departments = $user->departments->pluck('id');
@@ -175,6 +177,22 @@ class ManagementReport
                 $query->where('personal_quotes.business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL)
                     ->orWhereNull('personal_quotes.business_type_of_insurance_id');
             });
+        }
+
+        if (! empty($pcpTag)) {
+            if (! in_array('all', $pcpTag)) {
+                if (in_array('no', $pcpTag)) {
+                    $filteredTags = array_diff($pcpTag, ['no']);
+                    $query->where(function ($q) use ($filteredTags) {
+                        $q->whereNull('pcp_tag');
+                        if (! empty($filteredTags)) {
+                            $q->orWhereIn('pcp_tag', $filteredTags);
+                        }
+                    });
+                } else {
+                    $query->whereIn('pcp_tag', $pcpTag);
+                }
+            }
         }
 
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);

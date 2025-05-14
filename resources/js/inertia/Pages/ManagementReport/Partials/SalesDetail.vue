@@ -23,6 +23,10 @@ const tableHeader = reactive([
     tooltip: 'Ref ID of the lead/policy',
   },
   {
+    text: 'Private Client',
+    value: 'pcp_tag_formatted',
+  },
+  {
     text: 'Policy No.',
     value: 'policy_number',
     tooltip: 'The policy number of the lead',
