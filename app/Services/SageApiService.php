@@ -887,7 +887,14 @@ class SageApiService
                     $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
                     $arInvoiceBatch = json_decode($arInvoiceBatch, true);
 
-                    LoggerService::info('SAGE API :  Status of  AR invoice batch '.$sageResponse['BatchNumber'].'  for '.$quote->code.' is '.$arInvoiceBatch['BatchStatus']);
+                    LoggerService::info('SAGE API :  Status of  AR invoice batch '.$sageResponse['BatchNumber'].'  for '.$quote->code, extra: $arInvoiceBatch);
+                    if (! isset($arInvoiceBatch['BatchStatus'])) {
+                        $message = 'Upfront - AR Invoice batch status key not defined';
+                        $returnMessage['message'] = $message;
+                        $returnMessage['error'] = $message;
+
+                        return $returnMessage;
+                    }
                     if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                         LoggerService::info('SAGE API : AR invoice batch '.$sageResponse['BatchNumber'].' already posted for '.$quote->code);
                         $postedResponse = $aRPostInvoices['payload'];
@@ -1083,7 +1090,14 @@ class SageApiService
                 $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$batchNumber.')', [], 'GET');
                 $arInvoiceBatch = json_decode($arInvoiceBatch, true);
 
-                LoggerService::info('SAGE API :  Status of  AR invoice batch('.$batchNumber.') : '.$arInvoiceBatch['BatchStatus']);
+                LoggerService::info('SAGE API :  Status of  AR invoice batch('.$batchNumber.') : ', extra: $arInvoiceBatch);
+                if (! isset($arInvoiceBatch['BatchStatus'])) {
+                    $message = 'NON-Upfront - AR Invoice batch status key not defined';
+                    $returnMessage['message'] = $message;
+                    $returnMessage['error'] = $message;
+
+                    return $returnMessage;
+                }
                 if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     LoggerService::info('SAGE API : AR invoice batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostInvoices['payload'];
@@ -1212,7 +1226,14 @@ class SageApiService
                         $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
                         $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
 
-                        LoggerService::info('SAGE API : Status of  AP invoice batch('.$postedResponse['BatchNumber'].'): '.$aPInvoiceBatch['BatchStatus']);
+                        LoggerService::info('SAGE API : Status of  AP invoice batch('.$postedResponse['BatchNumber'].'): ', extra: $aPInvoiceBatch);
+                        if (! isset($aPInvoiceBatch['BatchStatus'])) {
+                            $message = 'Upfront - AP Invoice batch status key not defined';
+                            $returnMessage['message'] = $message;
+                            $returnMessage['error'] = $message;
+
+                            return $returnMessage;
+                        }
 
                         if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                             LoggerService::info('SAGE API : AP invoice batch '.$postedResponse['BatchNumber'].' already posted for '.$quote->code);
@@ -1389,7 +1410,14 @@ class SageApiService
                     $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
                     $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
 
-                    LoggerService::info('SAGE API :  Status of  AP invoice batch('.$postedResponse['BatchNumber'].') : '.$aPInvoiceBatch['BatchStatus']);
+                    LoggerService::info('SAGE API :  Status of  AP invoice batch('.$postedResponse['BatchNumber'].') : ', extra: $aPInvoiceBatch);
+                    if (! isset($aPInvoiceBatch['BatchStatus'])) {
+                        $message = 'NON Upfront - AP Invoice batch status key not defined';
+                        $returnMessage['message'] = $message;
+                        $returnMessage['error'] = $message;
+
+                        return $returnMessage;
+                    }
                     if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                         LoggerService::info('SAGE API : AP invoice batch '.$postedResponse['BatchNumber'].' already posted for '.$quote->code);
                         $postedResponse = $aPPostInvoices['payload'];
@@ -1532,7 +1560,14 @@ class SageApiService
                         $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
                         $arInvoiceBatch = json_decode($arInvoiceBatch, true);
 
-                        LoggerService::info('SAGE API :  Status of  AR invoice batch('.$postedResponse['BatchNumber'].') : '.$arInvoiceBatch['BatchStatus']);
+                        LoggerService::info('SAGE API :  Status of  AR invoice batch('.$postedResponse['BatchNumber'].') : ', extra: $arInvoiceBatch);
+                        if (! isset($arInvoiceBatch['BatchStatus'])) {
+                            $message = 'AR Discount Invoice batch status key not defined';
+                            $returnMessage['message'] = $message;
+                            $returnMessage['error'] = $message;
+
+                            return $returnMessage;
+                        }
                         if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                             LoggerService::info('SAGE API : AR invoice batch '.$postedResponse['BatchNumber'].' already posted for '.$quote->code);
                             $postedResponse = $aRPostInvoices['payload'];
@@ -1688,7 +1723,14 @@ class SageApiService
                 $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
-                LoggerService::info('SAGE API :  Status of  AR Prepayment Receipts batch('.$batchNumber.') : '.$aRReceiptBatch['BatchStatus']);
+                LoggerService::info('SAGE API :  Status of  AR Prepayment Receipts batch('.$batchNumber.') : ', extra: $aRReceiptBatch);
+                if (! isset($aRReceiptBatch['BatchStatus'])) {
+                    $message = 'Apply Upfront Payment batch status key not defined';
+                    $returnMessage['message'] = $message;
+                    $returnMessage['error'] = $message;
+
+                    return $returnMessage;
+                }
                 if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     LoggerService::info('SAGE API : AR Prepayment Receipts batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostReceipts['payload'];
@@ -1797,7 +1839,14 @@ class SageApiService
                 $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
-                LoggerService::info('SAGE API :  Status of  AR Prepayment Receipts batch('.$batchNumber.') : '.$aRReceiptBatch['BatchStatus']);
+                LoggerService::info('SAGE API :  Status of  AR Prepayment Receipts batch('.$batchNumber.') : ', extra: $aRReceiptBatch);
+                if (! isset($aRReceiptBatch['BatchStatus'])) {
+                    $message = 'Apply Split Payment - batch status key not defined';
+                    $returnMessage['message'] = $message;
+                    $returnMessage['error'] = $message;
+
+                    return $returnMessage;
+                }
                 if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     LoggerService::info('SAGE API : AP Prepayment Receipts batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostReceipts['payload'];
@@ -1905,7 +1954,14 @@ class SageApiService
                 $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
-                LoggerService::info('SAGE API :  Status of  AR Prepayment Receipts batch('.$batchNumber.') '.$aRReceiptBatch['BatchStatus']);
+                LoggerService::info('SAGE API :  Status of  AR Prepayment Receipts batch('.$batchNumber.') ', extra: $aRReceiptBatch);
+                if (! isset($aRReceiptBatch['BatchStatus'])) {
+                    $message = 'Apply Non Split Non Upfront Payment - batch status key not defined';
+                    $returnMessage['message'] = $message;
+                    $returnMessage['error'] = $message;
+
+                    return $returnMessage;
+                }
                 if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     LoggerService::info('SAGE API : AP Prepayment Receipts batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostReceipts['payload'];
