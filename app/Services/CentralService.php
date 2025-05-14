@@ -1315,7 +1315,10 @@ class CentralService extends BaseService
     {
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             $quoteType = strtolower(QuoteTypes::getName($quoteTypeId)->value).'-su-notes';
-            $notes = Lookup::where('key', $quoteType)->where('code', $sendUpdateLog->notes)->first()->description ?? '';
+            $notes = Lookup::where('key', $quoteType)->whereIn('code', json_decode($sendUpdateLog->notes, true))->get() ?? [];
+            if (! empty($notes)) {
+                $notes = implode(', ', $notes->pluck('description')->toArray());
+            }
         } else {
             $notes = $sendUpdateLog->notes;
         }
