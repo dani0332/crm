@@ -28,6 +28,15 @@ const validatePriceRange = value => {
   return true;
 };
 
+const validatePolicyTerm = value => {
+  if (!value) return true;
+  const policyTerm = parseFloat(value);
+  if (policyTerm < 1 || policyTerm > 100) {
+    return 'Value must be between 1 to 100';
+  }
+  return true;
+};
+
 const riders = props.lifeRiders.map(rider => ({
   riderId: rider.id,
   active: 0,
@@ -162,6 +171,10 @@ watch(
 
 const getQuote = () => {
   createForm.getQuoteLoading = true;
+  
+  if(!validatePolicyTerm(createForm.policyTerm)) {
+    return;
+  }
   axios
     .post(`/personal-quotes/get-life-provider-plan`, {
       data: {
@@ -419,7 +432,7 @@ const isNonNegative = value => {
           <x-input
             v-model="createForm.policyTerm"
             placeholder="Enter Policy Term"
-            :rules="[isRequired]"
+            :rules="[isRequired, isNonNegative, validatePolicyTerm]"
             class="w-full"
             type="number"
             min="0"

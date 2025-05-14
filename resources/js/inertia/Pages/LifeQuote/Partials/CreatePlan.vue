@@ -24,6 +24,16 @@ const validatePriceRange = value => {
   return true;
 };
 
+
+const validatePolicyTerm = value => {
+  if (!value) return true;
+  const policyTerm = parseFloat(value);
+  if (policyTerm < 1 || policyTerm > 100) {
+    return 'Value must be between 1 to 100';
+  }
+  return true;
+};
+
 const shown = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
@@ -336,7 +346,7 @@ const fetchProviderPlans = () => {
           <x-input
             v-model="createForm.policyTerm"
             placeholder="Enter Policy Term"
-            :rules="[isRequired, isNonNegative]"
+            :rules="[isRequired, isNonNegative, validatePolicyTerm]"
             class="w-full"
             type="number"
             min="0"

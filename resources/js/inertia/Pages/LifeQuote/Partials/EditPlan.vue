@@ -89,6 +89,7 @@ const availableInsuranceProviders = computed(() => {
   });
 });
 
+
 const extraAttr = reactive({
   getQuoteLoading: false,
   loading: false,
@@ -410,6 +411,15 @@ const computedFinalPrice = rider =>
 const closeModal = () => {
   this.shown = false;
 };
+const validatePolicyTerm = value => {
+  if (!value) return true;
+  const policyTerm = parseFloat(value);
+  if (policyTerm < 1 || policyTerm > 100) {
+    return 'Value must be between 1 to 100';
+  }
+  return true;
+};
+
 </script>
 
 <template>
@@ -568,7 +578,7 @@ const closeModal = () => {
                 <x-input
                   v-model="editForm.policyTerm"
                   :disabled="editForm.isApi"
-                  :rules="[isRequired]"
+                  :rules="[isRequired, validatePolicyTerm, isNonNegative]"
                   size="sm"
                   type="number"
                   min="0"
