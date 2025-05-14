@@ -46,7 +46,7 @@ class AdvisorController extends Controller
         $users = User::whereHas('roles', function ($query) use ($advisorRoles) {
             $query->whereIn('name', $advisorRoles);
         })
-            ->where('is_active', 1)
+            ->activeUser()
             ->select('id', 'name', 'email')
             ->orderBy('name')
             ->get();
