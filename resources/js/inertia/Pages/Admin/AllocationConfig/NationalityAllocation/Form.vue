@@ -34,8 +34,24 @@ const quoteTypeOptions = computed(() => {
   }));
 });
 
-const userOptions = ref([]);
+// Initialize userOptions with existing users on edit to prevent display issues
+const userOptions = ref(
+  props.configuration?.users?.map(user => ({
+    value: user.id,
+    label: user.name,
+  })) || [],
+);
 const advisorsLoading = ref(false);
+
+// Computed property for dynamic placeholder text
+const advisorPlaceholder = computed(() => {
+  if (advisorsLoading.value) return 'Loading advisors...';
+  if (!configForm.quote_type_id)
+    return 'Select Quote Type first to load advisors';
+  if (userOptions.value.length === 0)
+    return 'No advisors found for this Quote Type';
+  return 'Select advisors from the list';
+});
 
 /**
  * Fetch advisors based on the selected quote type
@@ -165,12 +181,12 @@ function onSubmit(isValid) {
         <x-select
           v-model="configForm.user_ids"
           :options="userOptions"
-          placeholder="Select Quote Type first to load advisors"
+          :placeholder="advisorPlaceholder"
           multiple
           filterable
           :rules="[isRequired]"
           :error="configForm.errors.user_ids"
-          class="w-full"
+          class="w-full min-h-[40px]"
           :loading="advisorsLoading"
           :disabled="!configForm.quote_type_id || advisorsLoading"
         >
