@@ -2,14 +2,10 @@
 
 namespace App\Pipes\Allocation\Health;
 
-use Closure;
-use Illuminate\Support\Str;
-use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Services\Logger\LoggerService;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
+use Closure;
 
 class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 {
@@ -22,7 +18,7 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 
         $lead = $this->findLead();
 
-        if (!$lead) {
+        if (! $lead) {
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
         }
 

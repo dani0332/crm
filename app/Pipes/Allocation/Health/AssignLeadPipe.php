@@ -19,7 +19,7 @@ class AssignLeadPipe extends BaseAllocationPipe
 
         $advisor = $this->allocationRequest->getAdvisor();
 
-        if (!$advisor) {
+        if (! $advisor) {
             $this->throw('No advisor found to assign', self::NOT_FOUND);
         }
 

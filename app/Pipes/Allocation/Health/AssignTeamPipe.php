@@ -2,14 +2,14 @@
 
 namespace App\Pipes\Allocation\Health;
 
-use App\Models\Team;
 use App\Enums\HealthTeamType;
+use App\Mail\HealthAssignmentIssueEmail;
+use App\Models\Team;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\HealthAssignmentIssueEmail;
 
 class AssignTeamPipe extends BaseAllocationPipe
 {
@@ -22,11 +22,14 @@ class AssignTeamPipe extends BaseAllocationPipe
 
         $this->assignTeamBasedOnPrices();
 
-        if (!$this->lead->health_team_type) {
+        if (! $this->lead->health_team_type) {
             LoggerService::warning('No health team found');
-            $this->lead->endAllocation();
             $this->throw('No health team found', self::NOT_FOUND);
         }
+
+        $this->lead->refresh();
+
+        $this->allocationRequest->setLead($this->lead);
 
         return $next($request);
     }
@@ -42,6 +45,7 @@ class AssignTeamPipe extends BaseAllocationPipe
             $this->lead->is_error_email_sent = true;
             $this->lead->save();
             Mail::send(new HealthAssignmentIssueEmail($this->lead->code, $priceStartingFrom));
+
             return;
         }
 
@@ -66,16 +70,16 @@ class AssignTeamPipe extends BaseAllocationPipe
 
     protected function determinePriceStartingFrom()
     {
-        if ($this->lead->isSIC(app($this->allocationRequest->getQuoteType()))) {
-            $price = !empty($this->lead->plan_id) && !empty($this->lead->premium)
+        if ($this->lead->isSIC($this->allocationRequest->getQuoteType())) {
+            $price = ! empty($this->lead->plan_id) && ! empty($this->lead->premium)
                 ? $this->lead->premium
                 : $this->lead->price_starting_from;
 
-            $planStatus = !empty($this->lead->plan_id) ? 'found' : 'not found';
-            LoggerService::info("Plan {$planStatus} with plan id: {$this->lead->plan_id} | premium: {$this->lead->premium} | Time: " . now());
+            $planStatus = ! empty($this->lead->plan_id) ? 'found' : 'not found';
+            LoggerService::info("Plan {$planStatus} with plan id: {$this->lead->plan_id} | premium: {$this->lead->premium}");
         } else {
             $price = $this->lead->price_starting_from;
-            LoggerService::info("No SIC lead | plan id: {$this->lead->plan_id} | premium: {$this->lead->premium} | Time: " . now());
+            LoggerService::info("No SIC lead | plan id: {$this->lead->plan_id} | premium: {$this->lead->premium}");
         }
 
         return $price;

@@ -85,4 +85,14 @@ class AllocationRequest
     {
         return $this->get('advisor_ids', []);
     }
+
+    public function markAsSIC()
+    {
+        $this->set('sic', true);
+    }
+
+    public function isSIC()
+    {
+        return $this->get('sic', false);
+    }
 }

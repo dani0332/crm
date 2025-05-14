@@ -33,7 +33,6 @@ use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Services\BikeAllocationService;
 use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
 use App\Services\Logger\LoggerService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;

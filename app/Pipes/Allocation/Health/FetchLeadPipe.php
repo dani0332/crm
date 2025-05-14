@@ -2,7 +2,6 @@
 
 namespace App\Pipes\Allocation\Health;
 
-use App\Enums\QuoteTypes;
 use App\Models\HealthQuote;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -20,7 +19,7 @@ class FetchLeadPipe extends BaseAllocationPipe
 
         $lead = $this->fetchLead();
 
-        if (!$lead) {
+        if (! $lead) {
             LoggerService::info('Lead not found or not under fetch criteria');
             $this->throw('Lead not found or not under fetch criteria', self::NOT_FOUND);
         }

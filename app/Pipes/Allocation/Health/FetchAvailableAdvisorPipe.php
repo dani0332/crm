@@ -3,14 +3,13 @@
 namespace App\Pipes\Allocation\Health;
 
 use App\Enums\RolesEnum;
-use App\Enums\UserStatusEnum;
 use App\Models\BuyLeadRequest;
 use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\HealthEmailService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
-use App\Services\HealthEmailService;
 use Closure;
 
 class FetchAvailableAdvisorPipe extends BaseAllocationPipe
@@ -27,14 +26,14 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         $advisor = $this->fetchAvailableAdvisor();
 
-        if (!$advisor) {
+        if (! $advisor) {
             LoggerService::warning('No advisors found');
 
             $this->allocationRequest->markAsFailed();
 
             // Check if we need to send an apply now email
             if ($this->lead->isApplicationPending() &&
-                !$this->lead->isApplyNowEmailSent() &&
+                ! $this->lead->isApplyNowEmailSent() &&
                 Carbon::parse($this->lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
                 LoggerService::info("Sending Apply Now Email as it's been 10 minutes since quote status was marked as application pending");
                 app(HealthEmailService::class)->initiateApplyNowEmail($this->lead);
@@ -61,9 +60,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
     protected function fetchAvailableAdvisor()
     {
-        // Reset Buy Lead Advisor flag and Buy Lead Request object
-        $this->resetProps();
-
         $advisor = null;
 
         if ($this->lead->isBuyLeadApplicable($this->lead->isSIC($this->allocationRequest->getQuoteType())) &&
@@ -71,17 +67,11 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             $advisor = $this->fetchAdvisorByType('getBLAdvisorByStatus');
         }
 
-        if (empty($advisor) || !$advisor) {
+        if (empty($advisor) || ! $advisor) {
             $advisor = $this->fetchAdvisorByType('getAdvisorByStatus');
         }
 
         return $advisor;
-    }
-
-    protected function resetProps()
-    {
-        $this->isBuyLeadAdvisor = false;
-        $this->buyLeadRequest = null;
     }
 
     protected function fetchAdvisorByType(string $methodName)
@@ -150,9 +140,11 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             if ($this->buyLeadRequest) {
                 $this->buyLeadRequest->startProcessing();
                 $this->isBuyLeadAdvisor = true;
+
                 return User::find($advisor->user_id);
             } else {
                 LoggerService::warning(self::class."::getBLAdvisorByStatus - Advisor found but Buy Lead Request not found for Advisor: {$advisor->user_id}");
+
                 return null;
             }
         }

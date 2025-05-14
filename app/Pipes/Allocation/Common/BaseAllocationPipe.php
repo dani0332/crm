@@ -8,7 +8,6 @@ use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
-use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\QuoteBatches;
@@ -80,7 +79,7 @@ abstract class BaseAllocationPipe extends AllocationService
             'source' => $lead->source,
         ];
 
-        if($lead instanceof HealthQuote) {
+        if ($lead instanceof HealthQuote) {
             $data = [
                 ...$data,
                 'price_starting_from' => $lead->price_starting_from,
@@ -88,7 +87,7 @@ abstract class BaseAllocationPipe extends AllocationService
             ];
         }
 
-        if($lead instanceof TravelQuote) {
+        if ($lead instanceof TravelQuote) {
             $data = [
                 ...$data,
                 'coverage_code' => $lead->coverage_code,

@@ -33,7 +33,7 @@ class HealthAllocation implements Allocation
             return Pipeline::send($allocationRequest)->through([
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
-                VerifyAlreadyInProgressAllocationPipe::class,
+                // VerifyAlreadyInProgressAllocationPipe::class,
                 ValidateNationalityConfigPipe::class,
                 AssignTeamPipe::class,
                 FetchAvailableAdvisorPipe::class,
