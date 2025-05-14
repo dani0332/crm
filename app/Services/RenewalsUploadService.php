@@ -1007,6 +1007,7 @@ class RenewalsUploadService
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
             $isQuoteTypeCar = $quoteTypeCode == QuoteTypeShortCode::CAR;
+            $isPersonalQuote = checkPersonalQuotes($quoteTypeCode);
 
             LoggerService::info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'].' ID: '.$renewalQuoteProcess->id.' UploadLeadId: '.$renewalUploadLead->id);
 
@@ -1138,9 +1139,13 @@ class RenewalsUploadService
 
             LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
 
+            if($isPersonalQuote){
+                unset($quoteData['additional_notes']);
+            }
+
             $quote->update($quoteData);
 
-            if (! checkPersonalQuotes($quoteType)) {
+            if (! $isPersonalQuote) {
                 $this->syncQuote($quote, $quoteData);
             }
 
