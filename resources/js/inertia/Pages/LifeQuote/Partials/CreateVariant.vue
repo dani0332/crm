@@ -32,7 +32,7 @@ const validatePolicyTerm = value => {
   if (!value) return true;
   const policyTerm = parseFloat(value);
   if (policyTerm < 1 || policyTerm > 100) {
-    return 'Value must be between 1 to 100';
+    return 'Policy term must be between 1 to 100';
   }
   return true;
 };
@@ -172,9 +172,32 @@ watch(
 const getQuote = () => {
   createForm.getQuoteLoading = true;
   
-  if(!validatePolicyTerm(createForm.policyTerm)) {
+  const policyTermValidation = validatePolicyTerm(createForm.policyTerm);
+  const sumAssuredValidation = validatePriceRange(createForm.sumAssured);
+  
+  // validate policy term
+  if(policyTermValidation !== true) {
+    createForm.getQuoteLoading = false;
+    
+    notification.error({
+      title: policyTermValidation,
+      position: 'top',
+    });
     return;
   }
+
+  // validate sum assured
+  if(sumAssuredValidation !== true) {
+    createForm.getQuoteLoading = false;
+    
+    notification.error({
+      title: sumAssuredValidation,
+      position: 'top',
+    });
+
+    return;
+  }
+
   axios
     .post(`/personal-quotes/get-life-provider-plan`, {
       data: {
