@@ -78,7 +78,7 @@ const loader = reactive({
   table: false,
   export: false,
 });
-console.log(page.props.quotes);
+
 const tableHeader = reactive([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'PC Customer', value: 'customer.pcp_tag_formatted', is_active: true },

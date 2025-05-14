@@ -68,6 +68,7 @@ const dateFormat = date =>
          Private Client
         </x-button>
       </template>
+    </StickyHeader>
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #body>
@@ -320,8 +321,7 @@ const dateFormat = date =>
         </template>
       </Collapsible>
     </div>
-    </StickyHeader>
-
+    
     <LastYearPolicyDetail
       v-if="
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
