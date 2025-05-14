@@ -5,6 +5,9 @@ namespace App\Exports;
 use App\Enums\AMLStatusCode;
 use App\Services\CarQuoteService;
 use App\Traits\ExcelExportable;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\QuoteTypeId;
 
 class CarQuoteExport
 {
@@ -80,6 +83,10 @@ class CarQuoteExport
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'ASSIGNMENT TYPE',
+            'ADVISOR REQUESTED',
+            'SEGMENT',
+            'LEAD ASSIGNMENT TRIGGER',
         ];
     }
 
@@ -135,6 +142,10 @@ class CarQuoteExport
             $quote->previous_quote_policy_number ?? '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '',
+            (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
+            $quote->getSegments($quote, QuoteTypeId::Car) ?? '',
+            $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
         ];
     }
 }
