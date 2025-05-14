@@ -294,6 +294,25 @@ class InstantAlfredService extends BaseService
 
             $mongoResults = $mongoResults->merge(collect($chunkResults));
         }
+        
+        // Create mappings for SQL data to merge with MongoDB results
+        $sqlData = $data->keyBy('uuid');
+        
+        // Add SQL data to mongo results
+        $mongoResults = $mongoResults->map(function ($record) use ($sqlData) {
+            $quoteId = $record['quote_id'] ?? null;
+            if ($quoteId && isset($sqlData[$quoteId])) {
+                // Add segment
+                $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
+                
+                // Add lead_assignment_trigger and its text representation
+                $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
+                $record['lead_assignment_trigger_text'] = $sqlData[$quoteId]->lead_assignment_trigger 
+                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlData[$quoteId]->lead_assignment_trigger) 
+                    : 'N/A';
+            }
+            return $record;
+        });
 
         return $mongoResults;
     }
