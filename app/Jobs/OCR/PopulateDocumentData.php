@@ -3,6 +3,7 @@
 namespace App\Jobs\OCR;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
@@ -43,7 +44,7 @@ class PopulateDocumentData implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::startQuoteLogging($this->quote);
+        LoggerService::startQuoteLogging($this->quote, LoggerFeatureEnum::OCR);
 
         if (! $this->validateMimeType()) {
             info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
