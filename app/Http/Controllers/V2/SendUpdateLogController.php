@@ -292,6 +292,7 @@ class SendUpdateLogController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        LoggerService::startQuoteLogging($request->code);
         $data = $request->all();
 
         $log = SendUpdateLogRepository::updateLog($id, $data);

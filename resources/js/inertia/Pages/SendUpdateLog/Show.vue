@@ -122,6 +122,7 @@ const sendUpdateForm = useForm({
   emirates_id: props.sendUpdateLog?.emirates_id || null,
   seating_capacity: props.sendUpdateLog?.seating_capacity || null,
   endorsement_number: props.sendUpdateLog?.endorsement_number || null,
+  code: props.sendUpdateLog?.code || null,
 });
 
 onMounted(() => {
@@ -493,7 +494,7 @@ const cancelOptionsList = computed(() => {
                   <dd v-if="[page.props.quoteTypeCodeEnum.Car, page.props.quoteTypeCodeEnum.Bike].includes(props.quoteType)">
                     <ComboBox
                         v-model="sendUpdateForm.notes"
-                        :single="true"
+                        :single="false"
                         placeholder="Select Notes"
                         :options="notesOptions"
                         size="xs"
