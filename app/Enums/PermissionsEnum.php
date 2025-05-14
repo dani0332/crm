@@ -414,6 +414,7 @@ final class PermissionsEnum extends Enum
     public const GROUP_MEDICAL_LEADPOOL = 'group-medical-leadpool';
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
+    public const VIEW_PCP = 'view_pc_qualified';
 
     public static function getAdvisorConversionReportPermissions()
     {

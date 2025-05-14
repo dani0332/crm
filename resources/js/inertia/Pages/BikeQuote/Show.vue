@@ -363,11 +363,8 @@ function capitalizeString(str) {
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Bike Detail</h2>
-        <x-button v-if="record?.customer.pcp_tag == true" size="sm" color="#BFA100" tag="div">
+        <x-button v-if="record?.customer?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
             Private Client
-        </x-button>
-        <x-button v-if="record?.pc_qualified == true" size="sm" color="#BFA100" tag="div">
-            PC-Qualified
         </x-button>
       </template>
       
@@ -755,7 +752,7 @@ function capitalizeString(str) {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div class="grid sm:grid-cols-2" v-if="can(permissionEnum.VIEW_PCP)">
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ quote.pc_qualified_formatted }}</dd>
               </div>

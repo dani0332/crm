@@ -520,9 +520,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
         <x-button v-if="quote.customer?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
             Private Client
         </x-button>
-        <x-button v-if="quote.pc_qualified == true" size="sm" color="#BFA100" tag="div">
-            PC-Qualified
-        </x-button>
       </template>
       <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
         <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
@@ -775,7 +772,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2">
+              <div class="grid sm:grid-cols-2" v-if="can(permissionEnum.VIEW_PCP)">
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ quote.pc_qualified_formatted }}</dd>
               </div>
