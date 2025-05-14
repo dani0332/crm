@@ -19,7 +19,7 @@ trait AllocationRequestable
         return $this->teamId;
     }
 
-    public function getOverrideAdvisorId()
+    public function isOverrideAdvisorRequest()
     {
         return $this->overrideAdvisorId;
     }

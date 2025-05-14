@@ -150,6 +150,6 @@ class LoggerService
     {
         $sql = $queryInstance->toRawSql();
 
-        self::info("{$title} Query", ['sql' => $sql]);
+        self::debug("{$title} Query", ['sql' => $sql]);
     }
 }

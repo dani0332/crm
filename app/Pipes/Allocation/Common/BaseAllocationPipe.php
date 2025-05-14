@@ -27,7 +27,7 @@ abstract class BaseAllocationPipe extends AllocationService
     public const SERVER_ERROR = Response::HTTP_INTERNAL_SERVER_ERROR;
 
     protected AllocationRequest $allocationRequest;
-    protected CarQuote|TravelQuote|HealthQuote|BusinessQuote|null $lead = null;
+    protected CarQuote|TravelQuote|HealthQuote|null $lead = null;
 
     protected function setRequest(AllocationRequest $allocationRequest, bool $startLogging = true)
     {
@@ -70,7 +70,7 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function logLeadData(Model $lead)
     {
-        LoggerService::info(self::class.'::logLeadData', [
+        $data = [
             'payment_status_id' => $lead->payment_status_id,
             'sic_advisor_requested' => $lead->sic_advisor_requested,
             'quote_status_id' => $lead->quote_status_id,
@@ -78,7 +78,24 @@ abstract class BaseAllocationPipe extends AllocationService
             'sic_flow_enabled' => $lead->sic_flow_enabled,
             'parent_quote_id' => $lead->parent_id,
             'source' => $lead->source,
-        ]);
+        ];
+
+        if($lead instanceof HealthQuote) {
+            $data = [
+                ...$data,
+                'price_starting_from' => $lead->price_starting_from,
+                'plan_id' => $lead->plan_id,
+            ];
+        }
+
+        if($lead instanceof TravelQuote) {
+            $data = [
+                ...$data,
+                'coverage_code' => $lead->coverage_code,
+            ];
+        }
+
+        LoggerService::info(self::class.'::logLeadData', $data);
     }
 
     protected function getBaseLead(): ?Model
@@ -105,7 +122,7 @@ abstract class BaseAllocationPipe extends AllocationService
                 QuoteStatusEnum::Duplicate,
                 QuoteStatusEnum::Lost,
             ])
-            ->when(! $this->allocationRequest->getOverrideAdvisorId(), fn ($q) => $q->whereNull('advisor_id'));
+            ->when(! $this->allocationRequest->isOverrideAdvisorRequest(), fn ($q) => $q->whereNull('advisor_id'));
     }
 
     protected function throw(string $message, int $code = 500)
