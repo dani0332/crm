@@ -229,7 +229,7 @@ const formatAuditChanges = log => {
 
   <div class="p-4 rounded shadow mb-6 bg-white">
     <h3 class="text-lg font-semibold mb-4">
-      Assigned Users
+      Assigned Advisors
       <span class="text-md text-red-500 font-normal"
         >({{ configuration.users.length }})</span
       >

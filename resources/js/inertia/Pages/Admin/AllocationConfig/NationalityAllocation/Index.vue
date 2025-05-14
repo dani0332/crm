@@ -41,7 +41,7 @@ const tableHeader = [
   { text: 'ID', value: 'id' },
   { text: 'Quote Type', value: 'quote_type.text' },
   { text: 'Nationality', value: 'nationality.text' },
-  { text: 'No. of Assigned Users', value: 'users' },
+  { text: 'No. of Assigned Advisors', value: 'users' },
   { text: 'SIC', value: 'is_sic_enabled' },
   { text: 'Status', value: 'activated_at' },
   { text: 'Created Date', value: 'created_at' },
@@ -246,7 +246,7 @@ function onConfirmDelete() {
     <template #item-users="{ users }">
       <div>
         <div v-if="users.length === 0" class="italic text-sm">
-          No assigned users
+          No assigned advisors
         </div>
         <div v-else class="text-sm">
           {{ users.length }}

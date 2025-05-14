@@ -177,7 +177,7 @@ function onSubmit(isValid) {
         />
       </x-field>
 
-      <x-field label="Assigned Users" class="sm:col-span-2" required>
+      <x-field label="Advisors" class="sm:col-span-2" required>
         <x-select
           v-model="configForm.user_ids"
           :options="userOptions"
