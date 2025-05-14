@@ -1182,7 +1182,7 @@ class SplitPaymentService
      */
     public function updateSplitPaymentStatusAndAmount($payment, $isCreditCardEnabled = true)
     {
-        info('Quote Code: '.$payment->code.' fn: Updating child payment status');
+        LoggerService::info('fn:processMasterPayment - SplitPaymentService Quote Code: '.$payment->code.' fn: Updating child payment status');
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {

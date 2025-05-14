@@ -133,6 +133,7 @@ const getSendUpdateOptions = () => {
       businessInsuranceTypeId:
         props.reportable?.business_type_of_insurance_id || null,
       status: form.childCategory?.slug || null,
+      quote_uuid: props.reportable.uuid,
     })
     .then(response => {
       if (response.status == 200) {
@@ -246,6 +247,7 @@ const onAddUpdate = autoSubmit => {
         childCategory: childCatgeory,
         option_id: option?.id || null,
         quote_uuid: props.reportable.uuid,
+        quote_code: props.reportable.code,
         status: page.props.sendUpdateEnum.NEW_REQUEST,
         ref_id: props.reportable.id,
       };
