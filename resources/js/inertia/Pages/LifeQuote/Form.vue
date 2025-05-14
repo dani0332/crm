@@ -224,6 +224,7 @@ watch(
                 label: item.text,
               }))
             "
+            filterable
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.nationality_id"

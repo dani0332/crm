@@ -124,9 +124,11 @@ const onSubmit = isValid => {
   if (!isValid) {
     return;
   }
-  editForm.actualPremium = parseFloat(editForm.actualPremium);
-  extraAttr.loading = true;
+  editForm.actualPremium = parseFloat(editForm.actualPremium).toFixed(2);
+  editForm.sumAssured = parseFloat(editForm.sumAssured).toFixed(2);
 
+  extraAttr.loading = true;
+  
   // Ensure riders have numeric values by converting strings to floats and preventing negative values
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
@@ -524,7 +526,6 @@ const closeModal = () => {
                   @input="handleActualPremium"
                   size="sm"
                   type="number"
-                  min="0"
                   @keydown="
                     e => (e.key === 'e' || e.key === '-') && e.preventDefault()
                   "
@@ -556,7 +557,6 @@ const closeModal = () => {
                   :rules="[isRequired, validatePriceRange]"
                   size="sm"
                   type="number"
-                  min="0"
                   @keydown="
                     e => (e.key === 'e' || e.key === '-') && e.preventDefault()
                   "
@@ -663,7 +663,6 @@ const closeModal = () => {
                     "
                     class="w-full h-10 p-2 rounded-md"
                     v-model="editForm.actualPremium"
-                    min="0"
                     disabled
                   />
                 </div>
@@ -691,7 +690,6 @@ const closeModal = () => {
                     v-if="props.selectedPlan.isUnderwritten"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="editForm.actualPremium"
-                    min="0"
                     disabled
                   />
                 </div>

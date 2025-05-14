@@ -171,7 +171,7 @@ const getQuote = () => {
         isIndividualLoading: true,
         planData: {
           currency: createForm.currency,
-          sumAssured: createForm.sumAssured,
+          sumAssured: parseFloat(createForm.sumAssured).toFixed(2),
           policyTerm: createForm.policyTerm,
           paymentTerm: createForm.paymentTerm,
           riders: ridersData.value,
@@ -205,9 +205,10 @@ const onSubmit = isValid => {
     return;
   }
   createForm.loading = true;
+  createForm.sumAssured = parseFloat(createForm.sumAssured).toFixed(2);
+  createForm.actualPremium = parseFloat(createForm.actualPremium).toFixed(2);
   createForm.riders = ridersData.value;
-  // remove loading from createForm
-  //   const data  = createForm.filter((item) => item !== 'loading');
+  
   axios
     .post('/personal-quotes/life-plan-manual-create', {
       quoteUID: props.uuid,

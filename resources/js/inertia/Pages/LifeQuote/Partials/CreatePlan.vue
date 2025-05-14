@@ -127,12 +127,12 @@ const onSubmit = isValid => {
   }));
 
   // Ensure numeric form values are properly converted
-  createForm.sumAssured = parseFloat(createForm.sumAssured) || 0;
-  createForm.actualPremium = parseFloat(createForm.actualPremium) || 0;
+  createForm.sumAssured = parseFloat(createForm.sumAssured).toFixed(2) || 0;
+  createForm.actualPremium = parseFloat(createForm.actualPremium).toFixed(2) || 0;
   createForm.policyTerm = parseInt(createForm.policyTerm) || 0;
 
   createForm.riders = processedRiders;
-  createForm.initialPrice = parseFloat(createForm.actualPremium) || 0;
+  createForm.initialPrice = parseFloat(createForm.actualPremium).toFixed(2) || 0;
 
   // remove loading from createForm
   // const data  = createForm.filter((item) => item !== 'loading');
@@ -320,7 +320,6 @@ const fetchProviderPlans = () => {
               :rules="[isRequired, isNonNegative, validatePriceRange]"
               class="w-full"
               type="number"
-              min="0"
               @keydown="
                 e => (e.key === 'e' || e.key === '-') && e.preventDefault()
               "
@@ -369,7 +368,6 @@ const fetchProviderPlans = () => {
             :rules="[isRequired, isNonNegative, validatePriceRange]"
             class="w-full"
             type="number"
-            min="0"
             @keydown="
               e => (e.key === 'e' || e.key === '-') && e.preventDefault()
             "
