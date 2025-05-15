@@ -115,49 +115,6 @@ const selectedProviderPlan = ref({
 
 const modelClass = 'App\\Models\\CarQuote';
 
-/*
-* comment for now, will be used in later after confirmation
-
-const prefillPlanPremium = ref('');
-
-const computedPlanDetails = reactive({
-  premium: '',
-  planName: '',
-  providerName: ''
-});
-
-const prefillPlanId = ref(page.props.quote.prefill_plan_id);
-
-//compare plan selected at and prefill plan selected at
-const updateComputedPlanDetails = () => {
-
-  console.log('updateComputedPlanDetails called');
-
-  let planSelectedAt = new Date(page.props.record.plan_selected_at);
-  let prefillPlanSelectedAt = new Date(page.props.record.prefill_plan_selected_at);
-
-  console.log('plan selected at', planSelectedAt, prefillPlanSelectedAt);
-  console.log('plan selected at', ' PlanId:', page.props.record.plan_id, " : PREFILL PLAN ID", page.props.record.prefill_plan_id);
-
-  if ( (page.props.record.plan_id && !page.props.record.prefill_plan_id) ||  (planSelectedAt > prefillPlanSelectedAt) ) {
-
-      console.log('plan selected at is greater than prefill plan selected at :' , "PRICE", page.props.record.premium, "PLAN", page.props.record.plan_id_text, "PROVIDER",  page.props.record.car_plan_provider_id_text);
-      computedPlanDetails.premium = page.props.record.premium,
-      computedPlanDetails.planName = page.props.record.plan_id_text,
-      computedPlanDetails.providerName = page.props.record.car_plan_provider_id_text
-  } else
-  {
-      console.log('plan selected at is less than prefill plan selected at');
-      computedPlanDetails.premium = '',
-      computedPlanDetails.planName = page.props.record.prefill_plan_id_text,
-      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text
-  }
-};
-
-onMounted(() => {
-  updateComputedPlanDetails();
-});*/
-
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;

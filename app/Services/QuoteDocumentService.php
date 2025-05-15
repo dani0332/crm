@@ -59,6 +59,8 @@ class QuoteDocumentService extends BaseService
 
     public function getQuoteDocumentsForUpload($quoteTypeId, $options = null)
     {
+        LoggerService::info('fn:getQuoteDocumentsForUpload - Start - QuoteDocumentService');
+
         $query = DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true]);
         if ($options) {
             $query = $query->whereIn('code', $options);
@@ -298,6 +300,8 @@ class QuoteDocumentService extends BaseService
      */
     public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null, $isSendUpdate = false)
     {
+        LoggerService::info('fn:getQuoteDocuments - Start - QuoteDocumentService');
+
         if ($isSendUpdate) {
             $quote = SendUpdateLog::find($recordId);
         } else {
@@ -397,6 +401,8 @@ class QuoteDocumentService extends BaseService
      */
     public function paymentDocumentTypesOptions($quoteTypeId): array
     {
+        LoggerService::info('fn:paymentDocumentTypesOptions - Start - QuoteDocumentService');
+
         $mapping = [
             QuoteTypeId::Car => ['CPD', 'CPDR', 'CDPDR'],
             QuoteTypeId::Health => ['HPD', 'HPDR', 'HDPDR'],
