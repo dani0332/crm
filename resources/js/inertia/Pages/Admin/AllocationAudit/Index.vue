@@ -138,28 +138,25 @@ function search(isValid) {
     <x-form @submit="search" :auto-focus="false" class="flex flex-col">
       <div class="flex gap-4">
         <div class="flex-1">
-          <x-field label="Quote Type" :rules="[isRequired]">
-            <ComboBox
-              v-model="filters.quote_type"
-              placeholder="Select Quote Type"
-              :options="props.quoteTypes"
-              :single="true"
-              class="w-full"
-            />
-          </x-field>
+          <x-select
+            v-model="filters.quote_type"
+            placeholder="Select Quote Type"
+            :options="props.quoteTypes"
+            class="w-full"
+            :rules="[isRequired]"
+            required
+            label="Quote Type"
+          />
         </div>
         <div class="flex-1">
-          <x-field
+          <x-input
             :label="(filters.quote_type || '') + ' UUID'"
             :rules="[isRequired]"
-          >
-            <x-input
-              v-model="filters.uuid"
-              type="search"
-              class="w-full"
-              :placeholder="'Type ' + (filters.quote_type || '') + ' UUID'"
-            />
-          </x-field>
+            v-model="filters.uuid"
+            type="search"
+            class="w-full"
+            :placeholder="'Type ' + (filters.quote_type || '') + ' UUID'"
+          />
         </div>
       </div>
       <div class="flex justify-end gap-4">
