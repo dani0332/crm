@@ -1,0 +1,261 @@
+/**
+ * Cursor AI Rules for Travel AIG Workflows
+ * 
+ * This rule file enforces business logic and patterns related to Travel AIG insurance processes.
+ * It monitors code changes that might affect the integrity of Travel AIG-specific workflows,
+ * data models, and integrations.
+ */
+
+// ----------------------------------------------------------------------------------
+// Travel AIG Lead Identification and Tagging Rules
+// ----------------------------------------------------------------------------------
+
+// Ensure proper usage of AIG tag for travel quotes
+rule EnforceTravelAIGTagging {
+  matches: file(app/Traits/QuoteTraits/QuoteAllocatable.php)
+  
+  detects: any(
+    removal('public function isAIG(QuoteTypes $quoteType): bool'),
+    change('return QuoteTag::where(\'quote_uuid\', $this->uuid)->where(\'quote_tags.name\', QuoteSegmentEnum::AIG->tag())->where(\'quote_tags.quote_type_id\', $quoteType->id())->exists();')
+  )
+  
+  warns: "The AIG tag identification logic has been modified. Ensure Travel AIG leads can still be properly identified."
+}
+
+// Ensure AIG lead query scopes remain intact
+rule PreserveTravelAIGQueryScopes {
+  matches: file(app/Traits/QuoteTraits/QuoteAllocatable.php)
+  
+  detects: any(
+    removal('protected function scopeIsAIG($query, QuoteTypes $quoteType): void'),
+    removal('protected function scopeIsNotAIG($query, QuoteTypes $quoteType): void'),
+    removal('protected function aigSubQuery($subQuery, $table, QuoteTypes $quoteType)')
+  )
+  
+  errors: "Critical AIG query scope methods have been removed or modified. These methods are essential for identifying Travel AIG leads."
+}
+
+// ----------------------------------------------------------------------------------
+// Travel AIG Workflow Job Rules
+// ----------------------------------------------------------------------------------
+
+// Monitor changes to the Travel AIG Workflow Job
+rule PreserveTravelAIGWorkflowJobLogic {
+  matches: file(app/Jobs/TravelAIGWorkflowJob.php)
+  
+  detects: any(
+    change(method('handle')),
+    removal('$travelEmailService->sendTravelAIGWorkflow($quote);')
+  )
+  
+  warns: "The TravelAIGWorkflowJob handle method has been modified. Ensure the core Travel AIG workflow dispatch logic is preserved."
+}
+
+// Ensure job configuration remains correct
+rule TravelAIGJobConfigurationCheck {
+  matches: file(app/Jobs/TravelAIGWorkflowJob.php)
+  
+  detects: any(
+    change('public $tries = 3;'),
+    change('public $timeout = 15;'),
+    change('public $backoff = 60;')
+  )
+  
+  warns: "TravelAIGWorkflowJob execution parameters (tries, timeout, backoff) have been modified. This may affect job reliability."
+}
+
+// ----------------------------------------------------------------------------------
+// Travel AIG Email Service Rules
+// ----------------------------------------------------------------------------------
+
+// Protect the Travel AIG workflow execution logic
+rule PreserveTravelAIGWorkflowExecution {
+  matches: file(app/Services/EmailServices/TravelEmailService.php)
+  
+  detects: any(
+    removal('public function sendTravelAIGWorkflow($lead)'),
+    change('$lead->travel_aig_flow_executed_at = now();'),
+    removal('$emailData = $this->buildTravelAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::TRAVEL_AIG_WORKFLOW);')
+  )
+  
+  errors: "Critical Travel AIG workflow logic in TravelEmailService has been modified. This affects workflow triggering and execution tracking."
+}
+
+// Ensure Travel AIG workflow data payload remains complete
+rule EnsureTravelAIGWorkflowDataIntegrity {
+  matches: file(app/Services/EmailServices/TravelEmailService.php)
+  
+  detects: removal(method('buildTravelAIGWorkflowData'))
+  
+  errors: "The Travel AIG workflow data builder has been removed. This function is essential for creating the correct Bird API payload."
+}
+
+// ----------------------------------------------------------------------------------
+// Travel AIG API Endpoint Rules
+// ----------------------------------------------------------------------------------
+
+// Protect the Travel AIG workflow trigger API endpoint
+rule PreserveTravelAIGWorkflowAPIEndpoint {
+  matches: file(routes/api.php)
+  
+  detects: removal("Route::post('/imcrm/trigger-travel-aig-workflow', [ApiController::class, 'triggerTravelAIGWorkflow'])->name('triggerTravelAIGWorkflow');")
+  
+  errors: "The API endpoint for triggering Travel AIG workflows has been removed. This endpoint is required for external systems to initiate Travel AIG workflows."
+}
+
+// Ensure API controller maintains the Travel AIG workflow trigger method
+rule PreserveTravelAIGAPIControllerMethod {
+  matches: file(app/Http/Controllers/API/ApiController.php)
+  
+  detects: removal('public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)')
+  
+  errors: "The triggerTravelAIGWorkflow controller method has been removed. This method is required to handle Travel AIG workflow API requests."
+}
+
+// Monitor changes to the API service Travel AIG workflow logic
+rule PreserveAPIServiceTravelAIGWorkflow {
+  matches: file(app/Services/ApiService.php)
+  
+  detects: any(
+    removal(method('triggerTravelAIGWorkflow')),
+    removal('dispatch(new TravelAIGWorkflowJob($quoteUuid, $quoteTypeId));')
+  )
+  
+  errors: "The ApiService triggerTravelAIGWorkflow method has been modified. This affects the core Travel AIG workflow trigger logic."
+}
+
+// ----------------------------------------------------------------------------------
+// Bird Integration Rules for Travel AIG
+// ----------------------------------------------------------------------------------
+
+// Monitor Bird service webhook request logic
+rule PreserveBirdWebhookIntegrationTravel {
+  matches: file(app/Services/BirdService.php)
+  
+  detects: change(method('triggerWebHookRequest'))
+  
+  warns: "The Bird API webhook request method has been modified. This may affect Travel AIG communication workflows."
+}
+
+// Ensure Travel AIG Bird workflow configuration is maintained
+rule PreserveBirdWorkflowConfigurationTravel {
+  matches: file(app/Enums/ApplicationStorageEnums.php)
+  
+  detects: removal('public const BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL = \'BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL\';')
+  
+  errors: "The Bird workflow configuration constant for Travel AIG has been removed. This constant is required for workflow triggering."
+}
+
+// ----------------------------------------------------------------------------------
+// Travel AIG Database Structure Rules
+// ----------------------------------------------------------------------------------
+
+// Ensure TravelQuote model preserves Travel AIG fields
+rule PreserveTravelQuoteAIGFields {
+  matches: file(app/Models/TravelQuote.php)
+  
+  detects: any(
+    removal('travel_aig_flow_executed_at')
+  )
+  
+  errors: "The travel_aig_flow_executed_at field in the TravelQuote model has been removed. This field is essential for tracking Travel AIG workflow execution status."
+}
+
+// ----------------------------------------------------------------------------------
+// Allocation and Processing Rules for Travel AIG
+// ----------------------------------------------------------------------------------
+
+// Ensure Travel AIG lead allocation logic is preserved
+rule PreserveTravelAIGAllocationLogic {
+  matches: file(app/Strategies/Allocations/TravelAllocation.php)
+  
+  detects: removal(method('isAIGLeadEligibleForAllocation'))
+  
+  warns: "The Travel AIG allocation eligibility method has been removed. This affects how AIG leads are allocated to advisors."
+}
+
+// Monitor changes to Travel AIG workflow types
+rule PreserveWorkflowTypeDefinitionsTravel {
+  matches: file(app/Enums/WorkflowTypeEnum.php)
+  
+  detects: removal('public const TRAVEL_AIG_WORKFLOW = \'travel_aig_workflow\';')
+  
+  errors: "The TRAVEL_AIG_WORKFLOW type constant has been removed. This constant is required to identify Travel AIG workflows."
+}
+
+// ----------------------------------------------------------------------------------
+// Security and Validation Rules
+// ----------------------------------------------------------------------------------
+
+// Ensure Travel AIG workflow request validation remains secure
+rule PreserveTravelAIGRequestValidation {
+  matches: file(app/Http/Requests/TravelAIGWorkflowRequest.php)
+  
+  detects: any(
+    change(method('rules')),
+    change('return true;') in method('authorize')
+  )
+  
+  warns: "The validation or authorization logic for Travel AIG workflow requests has been modified. Ensure proper security controls remain in place."
+}
+
+// ----------------------------------------------------------------------------------
+// IMPROVEMENTS START HERE - ADDITIONAL RULES AND ENHANCED DETECTION
+// ----------------------------------------------------------------------------------
+
+// Improved: Monitor changes to helper methods or related utility functions used in Travel AIG tagging and validation
+rule MonitorHelperMethodsChangesTravel {
+  matches: any(
+    file(app/Helpers/TravelAIGHelper.php),
+    file(app/Services/Helpers/AIGHelper.php)
+  )
+  detects: any(
+    removal(method('validateAIGTag')),
+    change(method('buildTravelAIGPayload'))
+  )
+  warns: "Potential changes in helper functions related to Travel AIG tagging or payload building detected. Review for business logic impact."
+}
+
+// Improved: Track removal or modification of test files for Travel AIG workflows
+rule PreserveTravelAIGTests {
+  matches: file(tests/Feature/TravelAIG/)
+  
+  detects: removal(any)
+  
+  warns: "Travel AIG feature tests have been removed or modified. Ensure test coverage is sufficient."
+}
+
+// Improved: Watch for changes in configuration files or environment variable keys related to Travel AIG
+rule MonitorTravelAIGConfigChanges {
+  matches: any(
+    file(config('aig.php')),
+    file('.env')
+  )
+  
+  detects: any(
+    change('BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL'),
+    removal('BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL'),
+    change('ECOM_TRAVEL_INSURANCE_QUOTE_URL')
+  )
+  
+  warns: "Configuration keys related to Travel AIG workflows have changed. Verify that integrations and URLs remain valid."
+}
+
+// Improved: Add contextual alerts with impact details
+rule ContextualAlertOnTravelJobHandleChange {
+  matches: file(app/Jobs/TravelAIGWorkflowJob.php)
+  
+  detects: change(method('handle'))
+  
+  warns: "Changes to TravelAIGWorkflowJob::handle may affect orchestration of Travel AIG quote workflows, including job dispatch and external API calls."
+}
+
+// Improved: Monitor business logic inside critical methods, not just their presence
+rule MonitorBusinessLogicChangesInTravelEmailService {
+  matches: file(app/Services/EmailServices/TravelEmailService.php)
+  
+  detects: change(method('sendTravelAIGWorkflow'))
+  
+  warns: "Modifications detected inside sendTravelAIGWorkflow method. Ensure that workflow data building, state updates, and external calls remain consistent."
+}
+
