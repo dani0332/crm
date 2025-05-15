@@ -64,7 +64,7 @@ abstract class BaseAllocationPipe extends AllocationService
 
         $this->allocationRequest->setLead($lead);
 
-        if($this->lead->isSIC($this->allocationRequest->getQuoteType())) {
+        if ($this->lead->isSIC($this->allocationRequest->getQuoteType())) {
             $this->allocationRequest->markAsSIC();
         }
 
@@ -138,16 +138,26 @@ abstract class BaseAllocationPipe extends AllocationService
         return QuoteBatches::latest()->first();
     }
 
-    protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles)
+    protected function getAdvisorBaseQuery($onlineStatus, $teamId, $roles, bool $isBuyLead = false)
     {
         return User::select('users.id as user_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->where('users.status', $onlineStatus)
-            ->where(function ($query) {
-                $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
-            })
+            ->when(
+                $isBuyLead,
+                function ($q) {
+                    $q->where(function ($query) {
+                        $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity')->orWhere('la.buy_lead_max_capacity', -1);
+                    });
+                },
+                function ($q) {
+                    $q->where(function ($query) {
+                        $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
+                    });
+                },
+            )
             ->when($teamId, function ($q) use ($teamId) {
                 $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
             })
@@ -155,7 +165,12 @@ abstract class BaseAllocationPipe extends AllocationService
             ->where('la.quote_type_id', $this->allocationRequest->getQuoteType()->id())
             ->when($this->allocationRequest->hasNationalityConfig(), fn ($q) => $q->whereIn('users.id', $this->allocationRequest->getAdvisorIDs()))
             ->activeUser()
-            ->orderBy('la.last_allocated', 'asc');
+            ->when($isBuyLead, fn ($q) => $q->where('la.buy_lead_status', true))
+            ->when(
+                $isBuyLead,
+                fn ($q) => $q->orderBy('la.buy_lead_last_allocated', 'asc'),
+                fn ($q) => $q->orderBy('la.last_allocated', 'asc'),
+            );
     }
 
     protected function getOnlineStatusesInOrder()
@@ -203,14 +218,34 @@ abstract class BaseAllocationPipe extends AllocationService
         return null;
     }
 
-    protected function assign()
+    protected function resolveAssignmentType()
+    {
+        $assignmentType = $this->allocationRequest->getAssignmentType();
+
+        if (! empty($this->lead->advisor_id) && $assignmentType !== AssignmentTypeEnum::SYSTEM_REASSIGNED) {
+            $assignmentType = AssignmentTypeEnum::SYSTEM_REASSIGNED;
+        }
+
+        if ($assignmentType === AssignmentTypeEnum::SYSTEM_ASSIGNED && $this->allocationRequest->isBuyLead()) {
+            $assignmentType = AssignmentTypeEnum::BOUGHT_LEAD;
+        }
+
+        if ($assignmentType === AssignmentTypeEnum::SYSTEM_REASSIGNED && $this->allocationRequest->isBuyLead()) {
+            $assignmentType = AssignmentTypeEnum::REASSIGNED_AS_BOUGHT_LEAD;
+        }
+
+        return $assignmentType;
+    }
+
+    protected function assignToAdvisor()
     {
         $advisor = $this->allocationRequest->getAdvisor();
-        $assignmentType = $this->allocationRequest->getAssignmentType();
+        $assignmentType = $this->resolveAssignmentType();
 
         LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
         $previousAssignmentType = $this->lead->assignment_type;
-        $previousUserId = $this->lead->advisor_id;
+        $previousAdvisorId = $this->lead->advisor_id;
+        $isReAssignment = ! empty($previousAdvisorId);
 
         $this->lead->advisor_id = $advisor->id;
         $this->lead->assignment_type = $assignmentType;
@@ -221,7 +256,32 @@ abstract class BaseAllocationPipe extends AllocationService
 
         $this->lead->endAllocation();
 
-        LoggerService::info(self::class." - Assigned to advisor : {$advisor->name} Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name}");
+        if ($this->allocationRequest->isBuyLead()) {
+            $this->allocationRequest->getBuyLeadRequest()->buyLead($this->lead, $this->allocationRequest->getQuoteType());
+            LoggerService::info("Assigned to advisor {$advisor->name}, Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name} as {$assignmentType} Bought Lead");
+        } else {
+            LoggerService::info("Assigned to advisor {$advisor->name}, Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name} as {$assignmentType} Lead");
+        }
+
+        return [
+            'advisor' => $advisor,
+            'assignmentType' => $assignmentType,
+            'previousAdvisorId' => $previousAdvisorId,
+            'previousAssignmentType' => $previousAssignmentType,
+            'quoteBatch' => $quoteBatch,
+            'isReAssignment' => $isReAssignment,
+        ];
+    }
+
+    protected function assign(?callable $afterAssign = null)
+    {
+        [
+            'advisor' => $advisor,
+            'assignmentType' => $assignmentType,
+            'previousAdvisorId' => $previousAdvisorId,
+            'previousAssignmentType' => $previousAssignmentType,
+            'isReAssignment' => $isReAssignment,
+        ] = $this->assignToAdvisor();
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($this->lead->id);
 
@@ -230,11 +290,14 @@ abstract class BaseAllocationPipe extends AllocationService
 
             $quoteTypeId = $this->allocationRequest->getQuoteType()->id();
 
-            if ($assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED) {
-                $this->addAllocationCounts($advisor->id, $quoteTypeId);
-            } else {
-                $this->adjustAllocationCounts($advisor->id, $this->lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId);
-            }
+            match ($assignmentType) {
+                AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($advisor->id, $quoteTypeId, $this->allocationRequest->isBuyLead()),
+                default => $this->adjustAllocationCounts($advisor->id, $this->lead, $previousAdvisorId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId, $this->allocationRequest->isBuyLead()),
+            };
+        }
+
+        if ($afterAssign) {
+            $afterAssign($isReAssignment, $previousAdvisorId, $previousAssignmentType);
         }
     }
 
@@ -249,5 +312,21 @@ abstract class BaseAllocationPipe extends AllocationService
         $this->upsertQuoteDetail($this->lead->id, $quoteType->detailModel(), $quoteType->model()->getForeignKey());
 
         return $oldAdvisorAssignedDate;
+    }
+
+    protected function verifyIfAdvisorIsSameAsPreviousAdvisor(User $advisor)
+    {
+        if (! $this->lead->advisor_id) {
+            return;
+        }
+
+        if ($advisor->id == $this->lead->advisor_id) {
+            LoggerService::info('Advisor is same as previous advisor. Skipping for now.');
+
+            $this->allocationRequest->endBuyLeadProcessing();
+
+            $this->throw('Advisor is same as previous advisor', self::OK);
+        }
+
     }
 }
