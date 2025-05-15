@@ -4,6 +4,7 @@ namespace App\Pipes\Allocation\Handlers;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Models\BuyLeadRequest;
 use App\Models\NationalityAllocationConfiguration;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -94,5 +95,36 @@ class AllocationRequest
     public function isSIC()
     {
         return $this->get('sic', false);
+    }
+
+    public function markAsBuyLead()
+    {
+        $this->set('buy_lead', true);
+    }
+
+    public function isBuyLead()
+    {
+        return $this->get('buy_lead', false);
+    }
+
+    public function setBuyLeadRequest(BuyLeadRequest $buyLeadRequest)
+    {
+        if ($buyLeadRequest) {
+            $this->markAsBuyLead();
+        }
+
+        $this->set('buy_lead_request', $buyLeadRequest);
+    }
+
+    public function getBuyLeadRequest(): ?BuyLeadRequest
+    {
+        return $this->get('buy_lead_request');
+    }
+
+    public function endBuyLeadProcessing()
+    {
+        if ($this->isBuyLead() && $this->getBuyLeadRequest()) {
+            $this->getBuyLeadRequest()->completeProcessing();
+        }
     }
 }
