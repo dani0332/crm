@@ -172,7 +172,6 @@ const tableHeader = ref([
     value: 'renewal_batch_model',
     is_active: true,
   },
-  { text: 'Type of Insurance', value: 'tenure_of_insurance', is_active: true },
   { text: 'Tenure of Cover', value: 'number_of_years', is_active: true },
   { text: 'Sum Assured', value: 'sum_insured_value', is_active: true },
 ]);
@@ -1014,11 +1013,6 @@ let planTypes = [
       <template #item-renewal_batch_model="item">
         <p>
           {{ item?.renewal_batch_model?.name ?? '' }}
-        </p>
-      </template>
-      <template #item-tenure_of_insurance="item">
-        <p>
-          {{ item?.life_quote?.insurance_tenure?.text ?? '' }}
         </p>
       </template>
       <template #item-number_of_years="item">

@@ -263,7 +263,7 @@ const getTotalAnnualPremium = (paymentTerm, premium) => {
     'Semi-Annually': 2,
     Annually: 1,
   };
-  return premium * mapping[paymentTermTitle];
+  return (premium * mapping[paymentTermTitle]).toFixed(2); 
 };
 
 const onCopyText = text => {
@@ -1737,7 +1737,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               table-class-name="tablefixed compact"
               :headers="plansTable.columns"
               :items="computedListQuotePlans || []"
-              border-cell
+            border-cell
               hide-rows-per-page
               :rows-per-page="15"
               class="flex-wrap"
@@ -1751,7 +1751,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
               <template #item-totalPrice="item">
                 <span class="copay-max">{{
-                  item.isManualPlan ? item.totalPrice : item.actualPremium
+                  item.isManualPlan ? item.totalPrice.toFixed(2) : item.actualPremium.toFixed(2)
                 }}</span>
               </template>
 
