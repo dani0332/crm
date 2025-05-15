@@ -830,9 +830,11 @@ class CentralController extends Controller
             $result = app(CentralService::class)->getPlansPaymentGateway($request, $quoteType);
 
             LoggerService::info('getPlansPaymentGateway response: ', extra: $result, context: ['ref_id' => $quoteCcode]);
+
             return response()->json(['plans' => $result]);
         } catch (\Throwable $th) {
             LoggerService::error('getPlansPaymentGateway error: ', exception: $th, context: ['ref_id' => $quoteCcode]);
+
             return response()->json(['error' => $th->getMessage()], 500);
         }
     }

@@ -1393,11 +1393,13 @@ class CentralService extends BaseService
             $planId = $plan['planId'];
             $providerId = $plan['providerId'];
 
-            if(!$planId || !$providerId) {continue;}
+            if (! $planId || ! $providerId) {
+                continue;
+            }
 
             $childPaymentGatewayIds = ['plan_id' => $planId, 'gateway_id' => 3];
 
-            //COMMENTED FOR NOW WILL BE USED LATER WHEN BROKER COMMISSION CHANGES GO LIVE
+            // COMMENTED FOR NOW WILL BE USED LATER WHEN BROKER COMMISSION CHANGES GO LIVE
             // // First check if Broker Commission exists for the plan+provider+quoteTypeId
             // $planBrokerCommission = BrokerCommission::where(['plan_id' => $planId, 'insurance_provider_id' => $providerId, 'quote_type_id' => $quoteTypeId, 'is_active' => 1])->first();
             // if($planBrokerCommission) {
@@ -1417,7 +1419,7 @@ class CentralService extends BaseService
             // Third check from insurance_provider table
             $insuranceProvider = InsuranceProvider::where(['id' => $providerId, 'is_active' => 1])->first();
 
-            if($insuranceProvider) {
+            if ($insuranceProvider) {
                 $childPaymentGatewayIds['gateway_id'] = $insuranceProvider->payment_gateway_id;
             }
 
