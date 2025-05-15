@@ -232,7 +232,7 @@ class TravelRenewalService extends BaseService
 
             LoggerService::info(self::class." -  Lead allocation job dispatched for Ref-ID: {$response->quoteUID} -");
         } catch (\Exception $e) {
-            LoggerService::info(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->previousQuoteId}");
+            LoggerService::error(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->previousQuoteId}", exception: $e);
         }
     }
 
