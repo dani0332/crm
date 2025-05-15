@@ -284,7 +284,7 @@ class HealthAllocationService extends AllocationService
         $isReassignment = $previousUserId != null;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
-        if (empty($lead?->lead_assignment_trigger)) {
+        if (empty($lead->lead_assignment_trigger)) {
             info(self::class.' - assignLead: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
             $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
         }

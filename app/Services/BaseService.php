@@ -460,7 +460,7 @@ class BaseService
 
         $this->addOrUpdateQuoteViewCount($lead, $quoteType->id(), $userId);
 
-        if (empty($lead?->lead_assignment_trigger)) {
+        if (empty($lead->lead_assignment_trigger)) {
             info(self::class.' - handleAssignment: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
             $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
         }
@@ -478,7 +478,7 @@ class BaseService
 
         if ($lead->advisor_id && $lead->source === config('constants.SOURCE_NAME')) {
             $lead->assignment_type = AssignmentTypeEnum::SELF_ASSIGNED;
-            if (empty($lead?->lead_assignment_trigger)) {
+            if (empty($lead->lead_assignment_trigger)) {
                 info(self::class.' - selfAssign: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
                 $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
             }
