@@ -566,7 +566,7 @@ class QuoteDocumentService extends BaseService
     {
 
         // Create a simple watermark PDF
-        $watermarkPdf = storage_path('temp/watermark_' . $uuid . '.pdf');
+        $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
         $fpdf = new Fpdi;
         $fpdf->AddPage();
         $fpdf->Image(public_path('images/watermark1.png'), 0, 0, $fpdf->GetPageWidth(), $fpdf->GetPageHeight());
@@ -578,14 +578,14 @@ class QuoteDocumentService extends BaseService
         exec('which pdftk 2>&1', $pdftk_check_output, $pdftk_check_return);
 
         LoggerService::info("PDFtk availability check for UUID: $uuid");
-        LoggerService::info('PDFtk path: ' . (empty($pdftk_check_output) ? 'Not found' : implode("\n", $pdftk_check_output)));
+        LoggerService::info('PDFtk path: '.(empty($pdftk_check_output) ? 'Not found' : implode("\n", $pdftk_check_output)));
         LoggerService::info("PDFtk check return code: $pdftk_check_return");
         // end Check if PDFtk is installed
 
         // Use PDFtk's background operation to apply watermark behind content
-        $pdftk_command = 'pdftk ' . escapeshellarg($sourceFilePath) .
-            ' background ' . escapeshellarg($watermarkPdf) .
-            ' output ' . escapeshellarg($outputPath) . ' 2>&1';
+        $pdftk_command = 'pdftk '.escapeshellarg($sourceFilePath).
+            ' background '.escapeshellarg($watermarkPdf).
+            ' output '.escapeshellarg($outputPath).' 2>&1';
 
         // Execute the command and capture output
         $output = [];
@@ -595,12 +595,12 @@ class QuoteDocumentService extends BaseService
         // Show detailed output from command execution for direct debugging
         LoggerService::info("PDFtk command execution details for UUID: $uuid");
         LoggerService::info("Return code: $returnVar");
-        LoggerService::info('Command output: ' . (empty($output) ? 'No output' : implode("\n", $output)));
-        LoggerService::info('Output file exists: ' . (file_exists($outputPath) ? 'Yes' : 'No'));
-        LoggerService::info('Output file size: ' . (file_exists($outputPath) ? filesize($outputPath) . ' bytes' : 'N/A'));
+        LoggerService::info('Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
+        LoggerService::info('Output file exists: '.(file_exists($outputPath) ? 'Yes' : 'No'));
+        LoggerService::info('Output file size: '.(file_exists($outputPath) ? filesize($outputPath).' bytes' : 'N/A'));
 
         // Simple check - if file doesn't exist or is too small, try Ghostscript
-        if ($returnVar !== 0 || !file_exists($outputPath) || filesize($outputPath) < 100) {
+        if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
             LoggerService::error("PDFtk background failed, trying Ghostscript for UUID: $uuid");
             $this->ghostscriptWatermark($sourceFilePath, $outputPath, $uuid);
         }
