@@ -6,6 +6,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
 use App\Models\Insured;
+use App\Models\PersonalQuote;
 use App\Models\PrivateClientConfig;
 use App\Services\Logger\LoggerService;
 use Exception;
@@ -57,8 +58,10 @@ trait PrivateClient
 
         if ($exists) {
             try {
-                $model->whereNull('pc_qualified')->update(['pc_qualified' => 1, 'pcp_tag_version' => $configs->first()->version]);
+                $pcpTagVersion = $configs->first()->version;
+                $model->whereNull('pc_qualified')->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
                 if (! $model->wasChanged()) {
+                    PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
                     LoggerService::info('PC qualified tag already applied on lead.');
                 } else {
                     LoggerService::info('PC qualified tag applied successfully on lead.');
@@ -68,7 +71,7 @@ trait PrivateClient
                 ])->first();
                 if ($customer && $customer->pcp_tag != 1) {
                     $customer->ref_id = $model->code;
-                    $customer->update(['pcp_tag' => 1, 'pcp_tag_version' => $configs->first()->version]);
+                    $customer->update(['pcp_tag' => 1, 'pcp_tag_version' => $pcpTagVersion]);
 
                     LoggerService::info('PCP tag applied successfully on customer.', [
                         'customer_id' => $customer->id,
