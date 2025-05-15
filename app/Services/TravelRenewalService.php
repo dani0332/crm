@@ -256,16 +256,16 @@ class TravelRenewalService extends BaseService
 
     public function leadAllocation($quoteUID)
     {
-        LoggerService::info(self::class." - Processing Travel record for Quote Allocation with Ref-ID: {$quoteUID}");
+        LoggerService::startQuoteLogging(QuoteTypes::TRAVEL->refId($quoteUID), LoggerFeatureEnum::ALLOCATION);
+
+        LoggerService::info(self::class.' - Processing Travel record for Quote Allocation');
 
         $lead = TravelQuote::where('uuid', $quoteUID)->first();
         if (! $lead) {
-            LoggerService::info(self::class." - No lead found for Quote UID: {$quoteUID}");
+            LoggerService::info(self::class.' - No lead found');
 
             return false;
         }
-
-        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
         LoggerService::info(self::class.' - Lead found');
 
@@ -280,10 +280,11 @@ class TravelRenewalService extends BaseService
 
         LoggerService::info(self::class." - Eligible Advisor {$advisorId} found");
 
-        // Update the last allocated timestamp
-        LeadAllocation::where('id', $leadAllocationId)->update([
-            'last_allocated' => now()->timestamp,
-        ]);
+        $leadllocation = LeadAllocation::where('id', $leadAllocationId)->first();
+        if ($leadllocation) {
+            $leadllocation->last_allocated = now()->timestamp;
+            $leadllocation->save();
+        }
 
         // Assign the lead to the advisor
         $this->assignLead($lead, $advisorId, AssignmentTypeEnum::SYSTEM_ASSIGNED);
