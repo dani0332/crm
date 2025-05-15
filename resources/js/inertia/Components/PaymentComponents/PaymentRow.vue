@@ -11,6 +11,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentGatewayEnum = page.props.paymentGatewayEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
+const paymentMethodsEnum = page.props.paymentMethodsEnum;
 
 const {
   formatDate,
@@ -225,13 +226,13 @@ const shouldProcessUpdate = () => {
 // Validate the upfront capture logic
 const validateUpfrontCapture = paymentRecord => {
   let paymentSplitRec = paymentRecord.payment_splits[0];
-  if (paymentSplitRec.payment_method.code === 'CC')
+  if (paymentSplitRec.payment_method.code === paymentMethodsEnum.CreditCard)
     return getCaptureValidStatuses(paymentSplitRec);
   const isIPPending =
-    paymentSplitRec.payment_method.code === 'IP' &&
+    paymentSplitRec.payment_method.code === paymentMethodsEnum.InsurerPayment &&
     paymentSplitRec.payment_status_id === paymentStatusEnum.PENDING;
   const isCAPayment =
-    paymentSplitRec.payment_method.code === 'CA' &&
+    paymentSplitRec.payment_method.code === paymentMethodsEnum.CreditApproval &&
     paymentSplitRec.payment_status_id === paymentStatusEnum.CREDIT_APPROVED;
   const isPaidPayment =
     paymentSplitRec.payment_status_id === paymentStatusEnum.PAID;
@@ -267,7 +268,7 @@ const validateSplitPaymentsCapture = paymentRecord => {
     );
   } else {
     let ipPaymentStatus = paymentRecord.payment_splits.filter(
-      item => item.payment_method.code === 'IP',
+      item => item.payment_method.code === paymentMethodsEnum.InsurerPayment,
     );
     if (ipPaymentStatus.length > 0) {
       let ipPending = ipPaymentStatus.filter(
@@ -291,8 +292,8 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
     if (verifyCreditApproved(paymentRecord)) return true;
   } else if (
-    (paymentRecord.payment_splits[0].payment_method.code === 'IP' ||
-      paymentRecord.payment_splits[0].payment_method.code === 'PDC') &&
+    (paymentRecord.payment_splits[0].payment_method.code === paymentMethodsEnum.InsurerPayment ||
+      paymentRecord.payment_splits[0].payment_method.code === paymentMethodsEnum.PostDatedCheque) &&
     paymentRecord.payment_splits[0].payment_status_id ===
       paymentStatusEnum.PENDING
   ) {
