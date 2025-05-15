@@ -38,7 +38,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                 app(HealthEmailService::class)->initiateApplyNowEmail($this->lead);
             }
 
-            $this->throw('Advisor not found', self::NOT_FOUND);
+            $this->throw('Advisor not found', self::OK);
         }
 
         $this->allocationRequest->setAdvisor($advisor);
