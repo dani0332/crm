@@ -127,4 +127,14 @@ class AllocationRequest
             $this->getBuyLeadRequest()->completeProcessing();
         }
     }
+
+    public function markAsSameAdvisor()
+    {
+        $this->set('same_advisor', true);
+    }
+
+    public function isSameAdvisor()
+    {
+        return $this->get('same_advisor', false);
+    }
 }

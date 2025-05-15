@@ -323,7 +323,7 @@ abstract class BaseAllocationPipe extends AllocationService
         if ($advisor->id == $this->lead->advisor_id) {
             LoggerService::info('Advisor is same as previous advisor. Skipping for now.');
 
-            $this->allocationRequest->endBuyLeadProcessing();
+            $this->allocationRequest->markAsSameAdvisor();
 
             $this->throw('Advisor is same as previous advisor', self::OK);
         }

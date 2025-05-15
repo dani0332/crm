@@ -23,8 +23,6 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        dd('here');
-
         DB::beginTransaction();
 
         try {
@@ -38,8 +36,6 @@ class AssignLeadPipe extends BaseAllocationPipe
         } catch (\Exception $e) {
             $this->allocationRequest->markAsFailed();
 
-            $this->allocationRequest->endBuyLeadProcessing();
-
             DB::rollBack();
             LoggerService::error($e->getMessage(), exception: $e);
 
@@ -51,6 +47,11 @@ class AssignLeadPipe extends BaseAllocationPipe
 
     private function sendIntroEmail($isReAssignment, $previousAdvisorId)
     {
+        // Ignore sending email in local environment
+        if (app()->environment('local')) {
+            return;
+        }
+
         Haystack::build()
             ->addJob(new GetQuotePlansJob($this->lead))
             ->then(function () use ($previousAdvisorId, $isReAssignment) {

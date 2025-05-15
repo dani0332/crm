@@ -288,10 +288,16 @@ class AllocationService extends BaseService
 
         $request->endBuyLeadProcessing();
 
-        if ($request->isAllocated()) {
+        if ($request->isAllocated() || $request->isSameAdvisor()) {
+            $message = 'Lead allocated successfully';
+
+            if ($request->isSameAdvisor()) {
+                $message = 'Found same advisor as previous advisor so further allocation is skipped';
+            }
+
             return [
                 'advisorId' => $request->get('advisor')->id,
-                'message' => 'Lead allocated successfully',
+                'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
         }
