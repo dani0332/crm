@@ -79,7 +79,7 @@ const filters = reactive({
   tenure_of_insurance_id: '',
   sum_insured_currency_id: null,
   sum_insured_range: '',
-  plan_type:''
+  plan_type: '',
 });
 
 const filterButtonStatuses = [
@@ -530,8 +530,7 @@ let planTypes = [
     id: 2,
     text: 'Whole Life Insurance',
   },
-]
-
+];
 </script>
 
 <template>

@@ -24,7 +24,6 @@ const validatePriceRange = value => {
   return true;
 };
 
-
 const validatePolicyTerm = value => {
   if (!value) return true;
   const policyTerm = parseFloat(value);

@@ -171,14 +171,14 @@ watch(
 
 const getQuote = () => {
   createForm.getQuoteLoading = true;
-  
+
   const policyTermValidation = validatePolicyTerm(createForm.policyTerm);
   const sumAssuredValidation = validatePriceRange(createForm.sumAssured);
-  
+
   // validate policy term
-  if(policyTermValidation !== true) {
+  if (policyTermValidation !== true) {
     createForm.getQuoteLoading = false;
-    
+
     notification.error({
       title: policyTermValidation,
       position: 'top',
@@ -187,9 +187,9 @@ const getQuote = () => {
   }
 
   // validate sum assured
-  if(sumAssuredValidation !== true) {
+  if (sumAssuredValidation !== true) {
     createForm.getQuoteLoading = false;
-    
+
     notification.error({
       title: sumAssuredValidation,
       position: 'top',

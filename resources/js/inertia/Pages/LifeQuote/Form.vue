@@ -130,7 +130,6 @@ watch(
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        
         <x-field label="Purpose of Insurance" required>
           <x-select
             v-model="quoteForm.purpose_of_insurance_id"
@@ -255,11 +254,14 @@ watch(
                   :rules="[isRequired, validateHeight]"
                   class="w-full"
                   :error="quoteForm.errors.height"
-                  maxLength="20">
-                
-                <template #suffix>
-                  <span class="absolute inset-y-0 right-3 flex items-center text-gray-500">Cms</span>
-                </template>
+                  maxLength="20"
+                >
+                  <template #suffix>
+                    <span
+                      class="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                      >Cms</span
+                    >
+                  </template>
                 </x-input>
               </div>
             </x-field>
@@ -276,13 +278,13 @@ watch(
                   :error="quoteForm.errors.weight"
                   maxLength="20"
                 >
-                <template #suffix>
-                  <span
-                    class="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                    >Kgs</span
-                  >
-                </template>
-              </x-input>
+                  <template #suffix>
+                    <span
+                      class="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                      >Kgs</span
+                    >
+                  </template>
+                </x-input>
               </div>
             </x-field>
             <x-field label="BMI">

@@ -89,7 +89,6 @@ const availableInsuranceProviders = computed(() => {
   });
 });
 
-
 const extraAttr = reactive({
   getQuoteLoading: false,
   loading: false,
@@ -419,7 +418,6 @@ const validatePolicyTerm = value => {
   }
   return true;
 };
-
 </script>
 
 <template>
