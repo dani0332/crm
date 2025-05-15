@@ -113,7 +113,7 @@ const editForm = reactive({
   isManualPlan: props.selectedPlan.isManualPlan,
   version: props.selectedPlan.version,
   isApi: props.selectedPlan.isApi,
-  isManualUpdate: props.selectedPlan.isManualPlan ? true : false,
+  isManualUpdate: props.selectedPlan.isManualPlan || props.selectedPlan.isApi ? true : false,
   overallLoading: 0,
 });
 
