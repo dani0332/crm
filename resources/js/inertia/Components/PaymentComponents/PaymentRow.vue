@@ -60,7 +60,7 @@ const props = defineProps({
   isEditPaymentEnabled: {
     type: Function,
     default: () => false,
-  }
+  },
 });
 
 const emit = defineEmits([
@@ -459,7 +459,7 @@ const amlAndKycTooltip = computed(() => {
             {{
               paymentAllocationStatusTooltip
                 ? paymentAllocationStatusTooltip(
-                    payment.payment_allocation_status
+                    payment.payment_allocation_status,
                   )
                 : payment.payment_allocation_status
             }}
