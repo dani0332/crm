@@ -24,6 +24,19 @@ class InstantAlfredService extends BaseService
     {
         $aliases = [];
 
+        // Define segment constants for better maintainability
+        $SEGMENT_NON_SIC = 'NON-SIC';
+        $SEGMENT_SIC_REVIVAL = 'SIC-REVIVAL';
+        $SEGMENT_AIG = 'AIG';
+        $SEGMENT_SIC = 'SIC';
+
+        // Define revival sources for better maintainability
+        $REVIVAL_SOURCES = [
+            LeadSourceEnum::REVIVAL,
+            LeadSourceEnum::REVIVAL_REPLIED,
+            LeadSourceEnum::REVIVAL_PAID
+        ];
+
         $subQuery = DB::table('quote_tags as qt')
             ->select(
                 'qt.quote_uuid',
@@ -60,20 +73,29 @@ class InstantAlfredService extends BaseService
                 DB::raw('DATE_FORMAT(pqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
                 DB::raw("
                     CASE 
-                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' 
-                        AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
-                    THEN 'SIC-REVIVAL'
-
-                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC_REVIVAL->tag()."%'
-                        AND pqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
-                    THEN 'SIC-REVIVAL'
-
-                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::AIG->tag()."%' THEN 'AIG'
-                    
-                    WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN 'SIC'
-                    
-                    WHEN qt.tags NOT LIKE '%".QuoteSegmentEnum::SIC->tag()."%' AND qt.tags NOT LIKE '%".QuoteSegmentEnum::AIG->tag()."%' THEN 'NON-SIC'
-                    ELSE 'N/A'
+                        -- Handle NULL tags first (most common case)
+                        WHEN qt.tags IS NULL THEN '{$SEGMENT_NON_SIC}'
+                        
+                        -- Handle AIG cases first (most specific tag)
+                        WHEN qt.tags LIKE '%".QuoteSegmentEnum::AIG->tag()."%' THEN '{$SEGMENT_AIG}'
+                        
+                        -- Handle SIC-REVIVAL cases (requires both tag and source match)
+                        WHEN (
+                            (qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' OR qt.tags LIKE '%".QuoteSegmentEnum::SIC_REVIVAL->tag()."%')
+                            AND pqr.source IN ('".implode("','", $REVIVAL_SOURCES)."')
+                        ) THEN '{$SEGMENT_SIC_REVIVAL}'
+                        
+                        -- Handle SIC cases (excluding SIC-REVIVAL)
+                        WHEN qt.tags LIKE '%".QuoteSegmentEnum::SIC->tag()."%' THEN '{$SEGMENT_SIC}'
+                        
+                        -- Handle NON-SIC cases explicitly (tags exist but don't contain SIC or AIG)
+                        WHEN (
+                            qt.tags NOT LIKE '%".QuoteSegmentEnum::SIC->tag()."%' 
+                            AND qt.tags NOT LIKE '%".QuoteSegmentEnum::AIG->tag()."%'
+                        ) THEN '{$SEGMENT_NON_SIC}'
+                        
+                        -- Default case (any other unexpected cases)
+                        ELSE '{$SEGMENT_NON_SIC}'
                     END as segment
                 "),
             )
