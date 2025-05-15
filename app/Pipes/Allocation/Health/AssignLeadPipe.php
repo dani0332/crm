@@ -2,11 +2,17 @@
 
 namespace App\Pipes\Allocation\Health;
 
+use App\Enums\HealthTeamType;
+use App\Enums\quoteTypeCode;
+use App\Jobs\GetQuotePlansJob;
+use App\Jobs\IntroEmailJob;
+use App\Models\HealthQuoteRequestDetail;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
 use Illuminate\Support\Facades\DB;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class AssignLeadPipe extends BaseAllocationPipe
 {
@@ -17,58 +23,58 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        $advisor = $this->allocationRequest->getAdvisor();
+        dd('here');
 
-        if (! $advisor) {
-            $this->throw('No advisor found to assign', self::NOT_FOUND);
+        DB::beginTransaction();
+
+        try {
+            $this->assign(function ($isReAssignment, $previousAdvisorId) {
+                $this->sendIntroEmail($isReAssignment, $previousAdvisorId);
+            });
+
+            $this->allocationRequest->markAsAllocated();
+
+            DB::commit();
+        } catch (\Exception $e) {
+            $this->allocationRequest->markAsFailed();
+
+            $this->allocationRequest->endBuyLeadProcessing();
+
+            DB::rollBack();
+            LoggerService::error($e->getMessage(), exception: $e);
+
+            $this->throw('Lead allocation failed', self::SERVER_ERROR);
         }
-
-        $this->assignLead($advisor);
-        $this->lead->endAllocation();
-
-        $this->allocationRequest->markAsAllocated();
 
         return $next($request);
     }
 
-    protected function assignLead($advisor)
+    private function sendIntroEmail($isReAssignment, $previousAdvisorId)
     {
-        LoggerService::info("Assigning health lead {$this->lead->uuid} to advisor {$advisor->id}");
+        Haystack::build()
+            ->addJob(new GetQuotePlansJob($this->lead))
+            ->then(function () use ($previousAdvisorId, $isReAssignment) {
+                if (in_array($this->lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::PCP])) {
+                    IntroEmailJob::dispatch(
+                        quoteTypeCode::Health,
+                        'Capi',
+                        $this->lead->uuid,
+                        'send-rm-intro-email',
+                        $previousAdvisorId,
+                        $isReAssignment
+                    )->delay(now()->addSeconds(15));
+                }
+            })->dispatch();
+    }
 
-        DB::beginTransaction();
-        try {
-            // Update the lead with the new advisor
-            $this->lead->advisor_id = $advisor->id;
-            $this->lead->assignment_type = $this->allocationRequest->getAssignmentType();
-            $this->lead->save();
+    protected function updateQuoteDetail()
+    {
+        LoggerService::info('about to update health quote detail record');
 
-            // Update the advisor's allocation count
-            $leadAllocation = $advisor->leadAllocation()
-                ->where('quote_type_id', $this->allocationRequest->getQuoteType()->id())
-                ->first();
+        $quoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $this->lead->id)->first();
+        $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date ?? '';
+        $this->upsertQuoteDetail($this->lead->id, HealthQuoteRequestDetail::class, 'health_quote_request_id');
 
-            if ($leadAllocation) {
-                $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
-                $leadAllocation->last_allocated = now();
-                $leadAllocation->save();
-            }
-
-            // If this is a buy lead, update the buy lead allocation count
-            if ($this->allocationRequest->get('buyLeadRequest')) {
-                $leadAllocation->buy_lead_allocation_count = $leadAllocation->buy_lead_allocation_count + 1;
-                $leadAllocation->buy_lead_last_allocated = now();
-                $leadAllocation->save();
-
-                $this->allocationRequest->get('buyLeadRequest')->endProcessing();
-            }
-
-            DB::commit();
-
-            LoggerService::info("Successfully assigned lead {$this->lead->uuid} to advisor {$advisor->id}");
-        } catch (\Exception $e) {
-            DB::rollback();
-            LoggerService::error("Failed to assign lead: {$e->getMessage()}");
-            $this->throw("Failed to assign lead: {$e->getMessage()}", self::SERVER_ERROR);
-        }
+        return $oldAdvisorAssignedDate;
     }
 }
