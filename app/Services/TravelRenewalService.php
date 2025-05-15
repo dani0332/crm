@@ -31,6 +31,7 @@ class TravelRenewalService extends BaseService
         $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_RENEWALS_DAYS_THRESHOLD);
         $startDate = Carbon::now()->subDays((int) $renewalDaysThreshold);
         LoggerService::info(self::class." - Travel Renewal Leads processing started with Start Date: {$startDate}");
+
         TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
             QuoteStatusEnum::PolicyBooked,
@@ -236,7 +237,7 @@ class TravelRenewalService extends BaseService
         }
     }
 
-    protected function dispatchLeadAllocationJob($quoteUID)
+    public function dispatchLeadAllocationJob($quoteUID)
     {
         // Add a random delay between 5-30 seconds to ensure staggered processing
         $delaySeconds = rand(5, 30);
@@ -264,7 +265,7 @@ class TravelRenewalService extends BaseService
             return false;
         }
 
-        LoggerService::startFeatureLogging($lead, LoggerFeatureEnum::ALLOCATION);
+        LoggerService::startQuoteLogging($lead, LoggerFeatureEnum::ALLOCATION);
 
         LoggerService::info(self::class.' - Lead found');
 
