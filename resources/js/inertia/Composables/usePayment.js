@@ -52,7 +52,8 @@ export const usePayment = () => {
   const filterCCPayments = payment => {
     // Return only payment splits that use Credit Card (CC) payment method
     return payment.payment_splits.filter(
-      item => item.payment_method.code === page.props.paymentMethodsEnum.CreditCard,
+      item =>
+        item.payment_method.code === page.props.paymentMethodsEnum.CreditCard,
     );
   };
 
@@ -60,7 +61,10 @@ export const usePayment = () => {
     // Check if the first payment in the array has any Credit Card split payments
     if (payments.length > 0) {
       const paymentSplits = payments[0].payment_splits;
-      return paymentSplits.some(item => item.payment_method.code === page.props.paymentMethodsEnum.CreditCard);
+      return paymentSplits.some(
+        item =>
+          item.payment_method.code === page.props.paymentMethodsEnum.CreditCard,
+      );
     }
     return false;
   };
@@ -85,7 +89,9 @@ export const usePayment = () => {
   const verifyCreditApproved = paymentRecord => {
     // Check if all Credit Approval (CA) payment methods have CREDIT_APPROVED status
     let caPaymentStatus = paymentRecord.payment_splits.filter(
-      item => item.payment_method.code === page.props.paymentMethodsEnum.CreditApproval,
+      item =>
+        item.payment_method.code ===
+        page.props.paymentMethodsEnum.CreditApproval,
     );
     if (caPaymentStatus.length > 0) {
       let caApproved = filterCAPayments(paymentRecord);

@@ -269,7 +269,9 @@ const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
         >
 
         <x-button
-          v-if="splitPayment.payment_method.code == paymentMethodsEnums.CreditCard"
+          v-if="
+            splitPayment.payment_method.code == paymentMethodsEnums.CreditCard
+          "
           class="ml-2"
           size="xs"
           color="emerald"

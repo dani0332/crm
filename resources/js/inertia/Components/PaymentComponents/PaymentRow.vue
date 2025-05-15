@@ -292,8 +292,10 @@ const validateNonUpfrontAndSplitCapture = paymentRecord => {
   if (paymentRecord.payment_status_id === paymentStatusEnum.CREDIT_APPROVED) {
     if (verifyCreditApproved(paymentRecord)) return true;
   } else if (
-    (paymentRecord.payment_splits[0].payment_method.code === paymentMethodsEnum.InsurerPayment ||
-      paymentRecord.payment_splits[0].payment_method.code === paymentMethodsEnum.PostDatedCheque) &&
+    (paymentRecord.payment_splits[0].payment_method.code ===
+      paymentMethodsEnum.InsurerPayment ||
+      paymentRecord.payment_splits[0].payment_method.code ===
+        paymentMethodsEnum.PostDatedCheque) &&
     paymentRecord.payment_splits[0].payment_status_id ===
       paymentStatusEnum.PENDING
   ) {
