@@ -97,21 +97,23 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-      <x-field label="Created Date Start">
-        <DatePicker
-          v-model="filters.created_at"
-          placeholder="Created Date Start"
-        />
-      </x-field>
-      <x-field label="Created Date End">
-        <DatePicker
-          v-model="filters.created_at_end"
-          placeholder="Created Date End"
-        />
-      </x-field>
-      <x-field label="Rule Name">
-        <x-input v-model="filters.name" type="text" class="w-full" />
-      </x-field>
+      <DatePicker
+        label="Created Date Start"
+        v-model="filters.created_at"
+        placeholder="Created Date Start"
+      />
+
+      <DatePicker
+        label="Created Date End"
+        v-model="filters.created_at_end"
+        placeholder="Created Date End"
+      />
+      <x-input
+        label="Rule Name"
+        v-model="filters.name"
+        type="text"
+        class="w-full"
+      />
     </div>
     <div class="flex justify-end gap-3">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

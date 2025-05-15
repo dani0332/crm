@@ -362,16 +362,16 @@ watch(
     </template>
 
     <x-form class="w-full" @submit="onNoteSubmit" :auto-focus="false">
-      <x-field label="Notes" class="w-full">
-        <x-textarea
-          :adjustToText="false"
-          maxlength="1000"
-          class="w-full"
-          v-model="notesForm.notes"
-          rows="5"
-          :rules="[isRequired]"
-        />
-      </x-field>
+      <x-textarea
+        :adjustToText="false"
+        maxlength="1000"
+        class="w-full"
+        v-model="notesForm.notes"
+        rows="5"
+        :rules="[isRequired]"
+        label="Notes"
+        required
+      />
       <p class="text-xs ml-auto flex justify-end mt-2">
         {{ notesLength }}/1000
       </p>

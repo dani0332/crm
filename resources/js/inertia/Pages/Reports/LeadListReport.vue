@@ -127,25 +127,25 @@ const tableHeader = reactive([
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Search">
-        <x-input
-          v-model="filters.uuid"
-          type="text"
-          class="w-full"
-          placeholder="Search By Ref i.e CAR-12345678"
-        />
-      </x-field>
-      <x-field label="Advisor Assigned Date" required>
-        <DatePicker
-          v-model="filters.advisorAssignedDates"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
-          size="sm"
-          model-type="yyyy-MM-dd"
-          :rules="[isRequired]"
-        />
-      </x-field>
+      <x-input
+        label="Search"
+        v-model="filters.uuid"
+        type="text"
+        class="w-full"
+        placeholder="Search By Ref i.e CAR-12345678"
+      />
+
+      <DatePicker
+        label="Advisor Assigned Date"
+        required
+        v-model="filters.advisorAssignedDates"
+        placeholder="Select Start & End Date"
+        range
+        :max-range="92"
+        size="sm"
+        model-type="yyyy-MM-dd"
+        :rules="[isRequired]"
+      />
       <x-select
         label="Tiers"
         v-model="filters.tiers"
@@ -215,18 +215,18 @@ const tableHeader = reactive([
           />
         </template>
       </x-select>
-      <x-field label="Is Ecommerce">
-        <x-select
-          v-model="filters.is_ecommerce"
-          placeholder="Search by Ecommerce"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          class="w-full"
-        />
-      </x-field>
+
+      <x-select
+        label="Is Ecommerce"
+        v-model="filters.is_ecommerce"
+        placeholder="Search by Ecommerce"
+        :options="[
+          { value: 'All', label: 'All' },
+          { value: 'Yes', label: 'Yes' },
+          { value: 'No', label: 'No' },
+        ]"
+        class="w-full"
+      />
       <x-select
         v-model="filters.payment_status"
         placeholder="Search By Payment Status"

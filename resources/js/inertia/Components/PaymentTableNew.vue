@@ -37,6 +37,7 @@ const paymentAllocationStatus = page.props.paymentAllocationStatus;
 const paymentMethodsEnums = page.props.paymentMethodsEnum;
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const paymentCaptureValidationEnum = page.props.paymentCaptureValidationEnum;
 
 const {
   formatDate,
@@ -1778,6 +1779,8 @@ const editPaymentModal = async (
       props.quoteType === quoteTypeCodeEnum.Car ||
       props.quoteType === quoteTypeCodeEnum.Home)
   ) {
+    capturePaymentValidationInProcess.value = true;
+    isTransactionCaptureButtonEnabled.value = false;
     await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
 
@@ -1801,14 +1804,15 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
     uuid: props.quoteRequest.uuid,
     captureAmount: totalAmount,
     paymentCode: paymentCode,
+    quoteCode: props.quoteRequest?.code,
   };
 
-  capturePaymentValidationInProcess.value = true;
   return axios
     .post(`/payments/${props.quoteType}/payments-capture-validation`, data)
     .then(res => {
-      if (res?.data?.response?.status == 'CAPTURE_VALIDATION_CLEARED') {
+      if (res?.data?.response?.status == paymentCaptureValidationEnum.SUCCESS) {
         premiumToCapture.value = res?.data?.response?.premiumAmount;
+        isTransactionCaptureButtonEnabled.value = true;
       } else {
         isTransactionCaptureButtonEnabled.value = false;
         capturePaymentValidationErrorMessage.value =
