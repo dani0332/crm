@@ -418,16 +418,6 @@ const gender = computed(() => {
     { value: 'F', label: 'Female' },
   ];
 });
-
-const isAmlOrKycUpdated = computed(() => {
-  return (
-    isEdit.value &&
-    ((props.quote?.aml_status !== amlStatusEnum.AMLPending &&
-      props.quote?.aml_status !== null) ||
-      (props.quote?.kyc_decision !== kycStatusEnum.PENDING &&
-        props.quote?.kyc_decision !== null))
-  );
-});
 </script>
 
 <template>
