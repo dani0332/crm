@@ -236,13 +236,10 @@ class TravelRenewalService extends BaseService
         }
     }
 
-    /**
-     * Dispatch the lead allocation job with a small delay to prevent race conditions
-     */
     protected function dispatchLeadAllocationJob($quoteUID)
     {
-        // Add a random delay between 5-15 seconds to ensure staggered processing
-        $delaySeconds = rand(5, 15);
+        // Add a random delay between 5-30 seconds to ensure staggered processing
+        $delaySeconds = rand(5, 30);
         AssignTravelRenewalLeadJob::dispatch($quoteUID)->delay(now()->addSeconds($delaySeconds));
 
         LoggerService::info(self::class." - Lead allocation job dispatched with {$delaySeconds}s delay for Ref-ID: {$quoteUID}");
