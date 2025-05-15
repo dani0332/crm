@@ -194,26 +194,26 @@ function onSubmit(isValid) {
     </div>
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="Lead Status" required>
-          <x-select
-            v-model="leadForm.tm_lead_statuses_id"
-            :options="
-              tmLeadStatuses.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="Next Follow-up Date & Time" required>
-          <DatePicker
-            v-model="leadForm.next_followup_date"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
+        <x-select
+          v-model="leadForm.tm_lead_statuses_id"
+          :options="
+            tmLeadStatuses.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :rules="[isRequired]"
+          label="Lead Status"
+          required
+        />
+        <DatePicker
+          v-model="leadForm.next_followup_date"
+          class="w-full"
+          :rules="[isRequired]"
+          label="Next Follow-up Date & Time"
+          required
+        />
         <x-textarea
           v-model="leadForm.notes"
           type="text"
@@ -221,14 +221,14 @@ function onSubmit(isValid) {
           placeholder="Lead Notes"
           class="w-full"
         />
-        <x-field label="No Answer/Switched Off (Count)" required>
-          <x-input
-            :value="tmlead.no_answer_count ? tmlead.no_answer_count : 0"
-            type="tel"
-            class="w-full"
-            disabled
-          />
-        </x-field>
+        <x-input
+          :value="tmlead.no_answer_count ? tmlead.no_answer_count : 0"
+          type="tel"
+          class="w-full"
+          disabled
+          label="No Answer/Switched Off (Count)"
+          required
+        />
       </div>
       <div class="flex justify-end">
         <x-button type="submit" class="mt-4" color="emerald" size="sm">
