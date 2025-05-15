@@ -100,37 +100,35 @@ watch(
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-3 gap-4">
-      <x-field label="Line of Business" required>
-        <x-select
-          placeholder="Select LOB"
-          :options="props.lobs"
-          filterable
-          v-model="buyForm.quote_type"
-          :rules="[isRequired]"
-        ></x-select>
-      </x-field>
-      <x-field label="Departments">
-        <x-select
-          placeholder="Select Department"
-          :options="props.departments"
-          filterable
-          v-model="buyForm.department_id"
-          :rules="[isRequired]"
-        ></x-select>
-      </x-field>
-      <x-field label="Segment" class="hidden">
-        <x-select
-          placeholder="Select Segment"
-          :options="props.segments"
-          filterable
-          v-model="buyForm.segment"
-          :disabled="
-            fetchLoader || !buyForm.department_id || !buyForm.quote_type
-          "
-          :loading="fetchLoader"
-          :rules="[isRequired]"
-        ></x-select>
-      </x-field>
+      <x-select
+        placeholder="Select LOB"
+        :options="props.lobs"
+        filterable
+        v-model="buyForm.quote_type"
+        :rules="[isRequired]"
+        label="Line of Business"
+        required
+      ></x-select>
+      <x-select
+        placeholder="Select Department"
+        :options="props.departments"
+        filterable
+        v-model="buyForm.department_id"
+        :rules="[isRequired]"
+        label="Departments"
+        required
+      ></x-select>
+      <x-select
+        placeholder="Select Segment"
+        :options="props.segments"
+        filterable
+        v-model="buyForm.segment"
+        :disabled="fetchLoader || !buyForm.department_id || !buyForm.quote_type"
+        :loading="fetchLoader"
+        :rules="[isRequired]"
+        label="Segment"
+        required
+      ></x-select>
     </div>
     <p class="font-medium">Lead Pricing</p>
     <div class="grid sm:grid-cols-2 gap-4">

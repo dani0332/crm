@@ -17,16 +17,16 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
             // HealthRevivalQuotesSeeder::class,
-            QuoteStatusSeeder::class,
+            // QuoteStatusSeeder::class,
             LookupSeeder::class,
             // ILAGMPermissionSeeder::class,
             // TravelRenewalTeamSeeder::class,
-            QuoteTypeTableSeeder::class,
-            DocumentTypesSeeder::class,
-            CommercialCarPlanSeeder::class,
-            RuleNameSeeder::class,
-            BusinessActivitiesSeeder::class,
-            PaymentMethodsAddSeeder::class,
+            // QuoteTypeTableSeeder::class,
+            // DocumentTypesSeeder::class,
+            // CommercialCarPlanSeeder::class,
+            // RuleNameSeeder::class,
+            // BusinessActivitiesSeeder::class,
+            // PaymentMethodsAddSeeder::class,
         ]);
     }
 }

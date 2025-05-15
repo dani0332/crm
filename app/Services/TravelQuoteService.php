@@ -226,12 +226,11 @@ class TravelQuoteService extends BaseService
         }
 
         $customerTravelInfo = DB::table('travel_quote_request as tqr')
-            ->join('customer as c', 'c.id', '=', 'tqr.customer_id')
             ->leftJoin('customer_members as cm', function ($join) use ($model) {
                 $join->on('cm.quote_id', '=', 'tqr.id')
                     ->where('cm.quote_type', '=', ltrim($model, '\\'));
             })
-            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'c.first_name', 'c.last_name', 'c.gender', 'c.dob', 'c.nationality_id', 'cm.passport')
+            ->select('tqr.id', 'tqr.code', 'tqr.customer_id', 'cm.gender', 'cm.first_name', 'cm.last_name', 'cm.dob', 'cm.nationality_id', 'cm.passport')
             ->where('tqr.id', $quoteRequestId)
             ->first();
 
@@ -241,7 +240,7 @@ class TravelQuoteService extends BaseService
     public function checkCustomerTravelInfoIsComplete(array $travelQuoteRequest): array
     {
         $message = '';
-        $requiredProperty = collect(['first_name', 'last_name', 'gender', 'dob', 'nationality_id', 'passport']);
+        $requiredProperty = collect(['first_name', 'dob', 'nationality_id', 'passport']);
 
         $missingDetails = [];
         foreach ($requiredProperty as $value) {
@@ -269,7 +268,7 @@ class TravelQuoteService extends BaseService
         $members = [];
         $travelQuote = [
             'directionCode' => $request->direction_code,
-            'regionCoverForId' => $request->region_cover_for_id ? (int) $request->region_cover_for_id : 3,
+            'regionCoverForId' => 3,
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
             'email' => $request->email,
@@ -755,14 +754,30 @@ class TravelQuoteService extends BaseService
         $travelQuote->last_name = $request->last_name;
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
-        $travelQuote->destination = $request->destination;
         $travelQuote->dob = $request->dob;
         if ($travelQuote->days_cover_for != $request->days_cover_for || $travelQuote->destination_id != $request->destination_id || $travelQuote->currently_located_in_id != $request->currently_located_in_id || $travelQuote->travel_cover_for_id != $request->travel_cover_for_id || $travelQuote->region_cover_for_id != $request->region_cover_for_id
     || $travelQuote->departure_country_id != $request->departure_country_id || $travelQuote->start_date != $request->start_date || $travelQuote->end_date != $request->end_date || $travelQuote->direction_code != $request->direction_code) {
             $travelQuote->quote_updated_at = Carbon::now();
         }
         $travelQuote->days_cover_for = $request->days_cover_for;
-        $travelQuote->destination_id = $request->destination_id;
+
+        // Handle multiple destinations using the existing TravelDestinations relation
+        if (is_array($request->destination_ids) && ! empty($request->destination_ids)) {
+            // Delete existing destinations first
+            $travelQuote->TravelDestinations()->delete();
+
+            // Create new destination records
+            foreach ($request->destination_ids as $destinationId) {
+                $travelQuote->TravelDestinations()->create([
+                    'uuid' => $travelQuote->uuid,
+                    'destination_id' => $destinationId,
+                ]);
+            }
+
+            // Set the primary destination_id to the first one in the array
+            $travelQuote->destination_id = $request->destination_ids[0];
+        }
+
         $travelQuote->currently_located_in_id = $request->currently_located_in_id;
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         (isset($request->region_cover_for_id) && $request->region_cover_for_id != 'undefined') && $travelQuote->region_cover_for_id = $request->region_cover_for_id;
