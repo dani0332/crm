@@ -52,11 +52,11 @@ class TravelRenewalService extends BaseService
                     LoggerService::info(self::class." - processing travel renewals quotes in chunk: {$quoteCount}");
                     $this->createTravelRenewalLeads($quotes);
                 } else {
-                    LoggerService::info(self::class.' - No quotes in chunk. | Time: '.now());
+                    LoggerService::info(self::class.' - No quotes in chunk');
                 }
             });
 
-        LoggerService::info(self::class.' Travel Renewal Leads processing completed | Time: '.now());
+        LoggerService::info(self::class.' Travel Renewal Leads processing completed');
     }
 
     public function createTravelRenewalLeads($quotes)
@@ -98,18 +98,18 @@ class TravelRenewalService extends BaseService
 
         $batch = $this->getRenewalBatch($policyExpiryDate);
         if (empty($batch)) {
-            LoggerService::info(self::class." - TravelRenewalService No renewal batch found for Ref-ID: {$quote->uuid} | Time:".now());
+            LoggerService::info(self::class." - TravelRenewalService No renewal batch found for Ref-ID: {$quote->uuid}");
 
             return;
         }
 
         $customerService = app(CustomerService::class);
         $customer = $customerService->getCustomerByEmail($quote->customer_email);
-        LoggerService::info(self::class." Processing renewal for old quote. Ref-ID: {$quote->uuid}. Initiating renewal process with updated policy details. | Time:".now());
+        LoggerService::info(self::class." Processing renewal for old quote. Ref-ID: {$quote->uuid}. Initiating renewal process with updated policy details.");
         $destinationIds = collect($quote->TravelDestinations)->pluck('destination_id')->toArray();
         if (count($destinationIds) < 1) {
-            LoggerService::info(self::class." - TravelRenewalService No destination found for Ref-ID: {$quote->uuid} | Time:".now());
-            LoggerService::info(self::class." -  region_cover_for_id: {$quote->region_cover_for_id} Ref-ID: {$quote->uuid} | Time:".now());
+            LoggerService::info(self::class." - TravelRenewalService No destination found for Ref-ID: {$quote->uuid}");
+            LoggerService::info(self::class." -  region_cover_for_id: {$quote->region_cover_for_id} Ref-ID: {$quote->uuid}");
             $destinationIds = $this->getDestinationId($quote->regionCoverFor, $quote->uuid);
         }
 
@@ -123,7 +123,7 @@ class TravelRenewalService extends BaseService
             ];
             $travelQuotePayload = (object) $this->createTravelRenewalPayload($quote, $batch, $policyDates, $destinationIds, $members, $customer);
             TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
-            LoggerService::info(self::class." - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid} | Time:".now());
+            LoggerService::info(self::class." - Travel renewal lead creation job dispatched for Ref-ID: {$quote->uuid}");
         } else {
             $logData = [
                 'message' => 'TravelRenewalService No destination or members found',
@@ -133,7 +133,7 @@ class TravelRenewalService extends BaseService
                 'members_count' => count($members),
                 'time' => now(),
             ];
-            LoggerService::info(self::class.' - '.json_encode($logData).' | Time: '.now());
+            LoggerService::info(self::class.' - '.json_encode($logData));
         }
 
     }
@@ -178,10 +178,10 @@ class TravelRenewalService extends BaseService
             RegionCoverEnum::WORLDWIDE_INCL_US_CANADA => RegionCoverEnum::UNITED_STATES,
         ];
         $countryCode = $regionMapping[$regionCoverFor->code];
-        LoggerService::info(self::class." - TravelRenewalService Mapping destination for country code: {$countryCode} quote Ref-ID: {$quoteUID} | Time:".now());
+        LoggerService::info(self::class." - TravelRenewalService Mapping destination for country code: {$countryCode} quote Ref-ID: {$quoteUID}");
         $destination = Nationality::where('code', $countryCode)->first();
         $countryName = $destination->country_name ?? '';
-        LoggerService::info(self::class." - TravelRenewalService Destination found for country: {$countryName} quote Ref-ID: {$quoteUID} | Time:".now());
+        LoggerService::info(self::class." - TravelRenewalService Destination found for country: {$countryName} quote Ref-ID: {$quoteUID}");
 
         return [$destination->id ?? null];
     }
@@ -224,15 +224,15 @@ class TravelRenewalService extends BaseService
     {
         try {
             $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
-            LoggerService::info(self::class." - TravelRenewalService Travel quote successfully saved. Ref-ID: {$response->quoteUID} | Time:".now());
-            LoggerService::info(self::class." -  Lead allocation process initiated for Ref-ID: {$response->quoteUID} | Time:".now());
+            LoggerService::info(self::class." - TravelRenewalService Travel quote successfully saved. Ref-ID: {$response->quoteUID}");
+            LoggerService::info(self::class." -  Lead allocation process initiated for Ref-ID: {$response->quoteUID}");
 
             // Dispatch the lead allocation job with a delay to avoid race conditions
             $this->dispatchLeadAllocationJob($response->quoteUID);
 
             LoggerService::info(self::class." -  Lead allocation job dispatched for Ref-ID: {$response->quoteUID} -");
         } catch (\Exception $e) {
-            LoggerService::info(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->previousQuoteId} | Time:".now());
+            LoggerService::info(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->previousQuoteId}");
         }
     }
 
@@ -290,7 +290,7 @@ class TravelRenewalService extends BaseService
         // Assign the lead to the advisor
         $this->assignLead($lead, $advisorId, AssignmentTypeEnum::SYSTEM_ASSIGNED);
 
-        LoggerService::info(self::class.' - TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: '.$quoteUID.' | Time: '.now());
+        LoggerService::info(self::class.' - TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob');
         SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
 
         return true;
