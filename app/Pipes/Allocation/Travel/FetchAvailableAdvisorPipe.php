@@ -64,7 +64,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         }
 
-        $query = $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])
+        return $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::TravelAdvisor])
             ->when(! $teamId, function ($q) {
                 $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
                 if ($sicUnassistedTeamId) {
@@ -73,10 +73,8 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             })
             ->when($this->lead->isSIC($this->allocationRequest->getQuoteType()), function ($q) {
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
-            });
-
-        LoggerService::sql(self::class.' - getAdvisorByStatus', $query);
-
-        return $query->first();
+            })
+            ->logRawSql()
+            ->first();
     }
 }

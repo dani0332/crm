@@ -101,6 +101,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                 $q->isVolumeUser($this->allocationRequest->getQuoteType());
             })
             ->whereIn('users.id', $buyLeadRequestedUserIds)
+            ->logRawSql()
             ->first();
 
         if ($advisor) {
@@ -133,6 +134,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         $advisor = $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
             ->where('la.normal_allocation_enabled', true)
+            ->logRawSql()
             ->first();
 
         return $advisor ? User::find($advisor->user_id) : null;
