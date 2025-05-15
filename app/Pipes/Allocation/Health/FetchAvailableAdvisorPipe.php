@@ -62,8 +62,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $advisor = null;
 
-        if ($this->lead->isBuyLeadApplicable($this->lead->isSIC($this->allocationRequest->getQuoteType())) &&
-            ($this->lead->isValueLead() || $this->lead->isVolumeLead())) {
+        if ($this->lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($this->lead->isValueLead() || $this->lead->isVolumeLead())) {
             $advisor = $this->fetchAdvisorByType('getBLAdvisorByStatus');
         }
 

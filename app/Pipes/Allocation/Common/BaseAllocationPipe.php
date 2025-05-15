@@ -64,6 +64,10 @@ abstract class BaseAllocationPipe extends AllocationService
 
         $this->allocationRequest->setLead($lead);
 
+        if($this->lead->isSIC($this->allocationRequest->getQuoteType())) {
+            $this->allocationRequest->markAsSIC();
+        }
+
         return $lead;
     }
 
