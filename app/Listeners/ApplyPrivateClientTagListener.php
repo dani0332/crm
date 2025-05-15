@@ -2,7 +2,10 @@
 
 namespace App\Listeners;
 
+use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\QuoteTypes;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Services\Logger\LoggerService;
 use App\Traits\PrivateClient;
 
 class ApplyPrivateClientTagListener
@@ -14,6 +17,14 @@ class ApplyPrivateClientTagListener
      */
     public function handle(PrivateClientUpdatedEvent $event): void
     {
-        $this->applyPcpTag($event->leadId, $event->quoteTypeId);
+        LoggerService::info('private client tag event has been triggered.');
+
+        LoggerService::startQuoteLogging(QuoteTypes::getName($event->quoteTypeId)->refId($event->lead->uuid), LoggerFeatureEnum::PCP_CLIENT);
+
+        $this->applyPcpTag($event->lead->id, $event->quoteTypeId);
+
+        LoggerService::info('private client tag event has been ended.');
+
+        LoggerService::endLogging();
     }
 }

@@ -107,7 +107,7 @@ class HealthQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
-            event(new PrivateClientUpdatedEvent($healthQuote->id, QuoteTypeId::Health));
+            event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
         }
 
         if (
@@ -116,7 +116,7 @@ class HealthQuoteObserver
         ) {
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
-            event(new PrivateClientUpdatedEvent($healthQuote->id, QuoteTypeId::Health));
+            event(new PrivateClientUpdatedEvent($healthQuote, QuoteTypeId::Health));
         }
     }
 }

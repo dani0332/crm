@@ -4,6 +4,7 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -11,15 +12,22 @@ class PrivateClientUpdatedEvent
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public int $leadId;
+    /**
+     * The lead model instance.
+     */
+    public $lead;
+
+    /**
+     * The quote type ID.
+     */
     public int $quoteTypeId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(int $leadId, int $quoteTypeId)
+    public function __construct(Model $lead, int $quoteTypeId)
     {
-        $this->leadId = $leadId;
+        $this->lead = $lead;
         $this->quoteTypeId = $quoteTypeId;
     }
 
@@ -31,7 +39,7 @@ class PrivateClientUpdatedEvent
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('channel-name'),
+            new PrivateChannel('private-client-updated'),
         ];
     }
 }

@@ -95,7 +95,7 @@ class TravelQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
-            event(new PrivateClientUpdatedEvent($travelQuote->id, QuoteTypeId::Travel));
+            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
         }
 
         if (
@@ -104,7 +104,7 @@ class TravelQuoteObserver
         ) {
             $payment = $travelQuote->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
-            event(new PrivateClientUpdatedEvent($travelQuote->id, QuoteTypeId::Travel));
+            event(new PrivateClientUpdatedEvent($travelQuote, QuoteTypeId::Travel));
         }
     }
 }

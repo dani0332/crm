@@ -15,9 +15,9 @@ class Customer extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'customer';
-    protected $guarded = [];
+    protected $guarded = ['ref_id'];
     protected $appends = ['pcp_tag_formatted'];
-
+    public $ref_id;
     /**
      * customer detail relation
      *
@@ -29,6 +29,16 @@ class Customer extends Model implements AuditableContract
             'auditable_type' => self::class,
         ];
     }
+
+    public function transformAudit(array $data): array
+    {
+        if (isset($this->ref_id)) {
+            $data['new_values']['ref_id'] = $this->ref_id;
+        }
+
+        return $data;
+    }
+
     public function detail()
     {
         return $this->hasOne(CustomerDetail::class);

@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Models\Customer;
 use App\Models\Insured;
 use App\Models\PrivateClientConfig;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\Schema;
 use OwenIt\Auditing\Models\Audit;
@@ -20,17 +21,30 @@ trait PrivateClient
     {
         $configs = $this->getActivePcpConfigs($quoteTypeId);
         if ($configs->isEmpty()) {
-            return 'No active PCP configurations found for this quote type.';
+            LoggerService::warning('No active PCP configurations found.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return false;
         }
 
         $modelClass = QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
         if (! class_exists($modelClass)) {
-            return 'Model class not found for quote type.';
+            LoggerService::warning('Model class not found.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+            ]);
+
+            return false;
         }
 
         $model = (new $modelClass)->find($leadId);
         if (! $model) {
-            return 'Lead not found.';
+            LoggerService::warning('Lead not found.', extra: [
+                'quoteTypeId' => $quoteTypeId,
+                'leadId' => $leadId,
+            ]);
+
+            return false;
         }
 
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
@@ -43,23 +57,40 @@ trait PrivateClient
 
         if ($exists) {
             try {
-                $model->update(['pc_qualified' => 1, 'pcp_tag_version' => $configs->first()->version]);
+                $model->whereNull('pc_qualified')->update(['pc_qualified' => 1, 'pcp_tag_version' => $configs->first()->version]);
+                if (! $model->wasChanged()) {
+                    LoggerService::info('PC qualified tag already applied on lead.');
+                } else {
+                    LoggerService::info('PC qualified tag applied successfully on lead.');
+                }
                 $customer = Customer::where([
                     'id' => $model->customer_id,
                 ])->first();
                 if ($customer && $customer->pcp_tag != 1) {
+                    $customer->ref_id = $model->code;
                     $customer->update(['pcp_tag' => 1, 'pcp_tag_version' => $configs->first()->version]);
 
-                    return 'PCP tag applied successfully.';
+                    LoggerService::info('PCP tag applied successfully on customer.', [
+                        'customer_id' => $customer->id,
+                    ]);
+
+                    return true;
                 }
 
-                return 'PCP tag already applied for this lead.';
+                LoggerService::warning('PCP tag already applied on customer.', [
+                    'customer_id' => $customer->id,
+                ]);
+
+                return false;
             } catch (Exception $ex) {
+                LoggerService::error('Error applying PCP tag.', exception: $ex);
                 throw $ex;
             }
         }
 
-        return 'Lead not matched PCP criteria.';
+        LoggerService::warning('Lead not matched PCP criteria.');
+
+        return false;
     }
 
     /**
@@ -95,11 +126,17 @@ trait PrivateClient
             }
         }
         if (count($updateCustomers) > 0) {
-            Customer::whereIn('id', $updateCustomers)->update(['pcp_tag' => false]);
-
-            return 'PCP tag updated. '.implode(', ', $updateCustomers).' customer(s) had their PCP tag removed.';
+            try {
+                Customer::whereIn('id', $updateCustomers)->update(['pcp_tag' => false]);
+                LoggerService::info('PCP tag removed successfully from customers: ', extra: [
+                    'customers' => implode(', ', $updateCustomers),
+                ]);
+            } catch (\Exception $ex) {
+                LoggerService::error('Error removing PCP tag.', exception: $ex);
+                throw $ex;
+            }
         } else {
-            return 'No customer found that had PCP Tag';
+            LoggerService::warning('No customer found that had PCP Tag.');
         }
     }
 

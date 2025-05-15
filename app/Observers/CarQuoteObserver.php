@@ -113,7 +113,7 @@ class CarQuoteObserver
                     'uuid' => $lead->uuid,
                 ]);
             }
-            event(new PrivateClientUpdatedEvent($lead->id, QuoteTypeId::Car));
+            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
         if (
             isset($dirty['quote_status_id']) &&
@@ -121,7 +121,7 @@ class CarQuoteObserver
         ) {
             $payment = $lead->payments()->mainLeadPayment()->first();
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lead, $payment, QuoteTypes::CAR->value);
-            event(new PrivateClientUpdatedEvent($lead->id, QuoteTypeId::Car));
+            event(new PrivateClientUpdatedEvent($lead, QuoteTypeId::Car));
         }
     }
 }

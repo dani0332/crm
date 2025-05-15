@@ -3,8 +3,6 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
-use App\Events\PrivateClientUpdatedEvent;
 use App\Models\BikeQuote;
 
 class BikeQuoteObserver
@@ -23,13 +21,6 @@ class BikeQuoteObserver
                 $bikeQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $bikeQuote->transaction_approved_at];
-        }
-
-        if (
-            isset($dirty['quote_status_id']) &&
-            in_array($bikeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
-        ) {
-            event(new PrivateClientUpdatedEvent($bikeQuote->id, QuoteTypeId::Bike));
         }
     }
 }
