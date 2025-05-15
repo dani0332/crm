@@ -4,6 +4,7 @@ namespace App\Pipes\Allocation\Health;
 
 use App\Enums\RolesEnum;
 use App\Models\BuyLeadRequest;
+use App\Models\Team;
 use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -32,9 +33,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             $this->allocationRequest->markAsFailed();
 
             // Check if we need to send an apply now email
-            if ($this->lead->isApplicationPending() &&
-                ! $this->lead->isApplyNowEmailSent() &&
-                Carbon::parse($this->lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
+            if ($this->lead->isApplicationPending() && ! $this->lead->isApplyNowEmailSent() && Carbon::parse($this->lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
                 LoggerService::info("Sending Apply Now Email as it's been 10 minutes since quote status was marked as application pending");
                 app(HealthEmailService::class)->initiateApplyNowEmail($this->lead);
             }
@@ -42,16 +41,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             $this->throw('Advisor not found', self::NOT_FOUND);
         }
 
-        if ($advisor->id == $this->lead->advisor_id) {
-            LoggerService::info('Advisor is same as previous advisor. Skipping for now.');
-            $this->lead->endAllocation();
-
-            if ($this->isBuyLeadAdvisor && $this->buyLeadRequest) {
-                $this->buyLeadRequest->endProcessing();
-            }
-
-            $this->throw('Advisor is same as previous advisor', self::OK);
-        }
+        $this->verifyIfAdvisorIsSameAsPreviousAdvisor($advisor);
 
         $this->allocationRequest->setAdvisor($advisor);
 
@@ -77,10 +67,12 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         $statusOrder = $this->getOnlineStatusesInOrder();
 
+        $teamId = Team::where('name', $this->lead->health_team_type)->value('id');
+
         foreach ($statusOrder as $status) {
             LoggerService::info(self::class."::fetchAdvisorByType - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$status}");
 
-            $eligibleUser = $this->{$methodName}($status, null);
+            $eligibleUser = $this->{$methodName}($status, $teamId);
 
             if ($eligibleUser) {
                 LoggerService::info(self::class."::fetchAdvisorByType - eligible user found for team: {$this->lead->health_team_type} with status: {$status} and user id: {$eligibleUser->id}");
@@ -98,47 +90,31 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(
             $this->allocationRequest->getQuoteType(),
-            $this->lead->isSIC($this->allocationRequest->getQuoteType()),
+            $this->allocationRequest->isSIC(),
             $this->lead->isValueLead()
         );
 
-        $teamName = $this->lead->health_team_type;
-        $teamId = User::join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->join('teams as t', 't.id', '=', 'ut.team_id')
-            ->where('t.name', $teamName)
-            ->value('t.id');
-
-        $advisor = $this->getAdvisorBaseQuery($status, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
-            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->join('teams as t', 't.id', '=', 'ut.team_id')
-            ->where('t.name', $teamName)
+        $advisor = $this->getAdvisorBaseQuery($status, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor], true)
             ->when($this->lead->isValueLead(), function ($q) {
                 $q->isValueUser($this->allocationRequest->getQuoteType());
             }, function ($q) {
                 $q->isVolumeUser($this->allocationRequest->getQuoteType());
             })
             ->whereIn('users.id', $buyLeadRequestedUserIds)
-            ->where('la.buy_lead_status', true)
-            ->where(function ($query) {
-                $query->whereRaw('la.buy_lead_allocation_count < la.buy_lead_max_capacity')
-                    ->orWhere('la.buy_lead_max_capacity', -1);
-            })
-            ->orderBy('la.buy_lead_last_allocated', 'asc')
             ->first();
 
         if ($advisor) {
             LoggerService::info(self::class."::getBLAdvisorByStatus - found Advisor: {$advisor->user_id} for team: {$this->lead->health_team_type} with current status as {$status}");
 
-            $this->buyLeadRequest = BuyLeadRequest::getRequest(
+            $buyLeadRequest = BuyLeadRequest::getRequest(
                 $this->allocationRequest->getQuoteType(),
-                $this->lead->isSIC($this->allocationRequest->getQuoteType()),
+                $this->allocationRequest->isSIC(),
                 $advisor->user_id,
                 $this->lead->isValueLead()
             );
 
-            if ($this->buyLeadRequest) {
-                $this->buyLeadRequest->startProcessing();
-                $this->isBuyLeadAdvisor = true;
+            if ($buyLeadRequest) {
+                $this->allocationRequest->setBuyLeadRequest($buyLeadRequest);
 
                 return User::find($advisor->user_id);
             } else {
@@ -155,22 +131,8 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
     {
         LoggerService::info(self::class."::getAdvisorByStatus - trying to get advisors for team: {$this->lead->health_team_type} with current status as {$onlineStatus}");
 
-        $teamName = $this->lead->health_team_type;
-        $teamId = User::join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->join('teams as t', 't.id', '=', 'ut.team_id')
-            ->where('t.name', $teamName)
-            ->value('t.id');
-
         $advisor = $this->getAdvisorBaseQuery($onlineStatus, $teamId, [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
-            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->join('teams as t', 't.id', '=', 'ut.team_id')
-            ->where('t.name', $teamName)
             ->where('la.normal_allocation_enabled', true)
-            ->where(function ($query) {
-                $query->whereRaw('la.allocation_count < la.max_capacity')
-                    ->orWhere('la.max_capacity', -1);
-            })
-            ->orderBy('la.last_allocated', 'asc')
             ->first();
 
         return $advisor ? User::find($advisor->user_id) : null;
