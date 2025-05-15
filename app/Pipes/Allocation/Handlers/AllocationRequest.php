@@ -86,27 +86,6 @@ class AllocationRequest
     {
         return $this->get('advisor_ids', []);
     }
-
-    public function markAsSIC()
-    {
-        $this->set('sic', true);
-    }
-
-    public function isSIC()
-    {
-        return $this->get('sic', false);
-    }
-
-    public function markAsBuyLead()
-    {
-        $this->set('buy_lead', true);
-    }
-
-    public function isBuyLead()
-    {
-        return $this->get('buy_lead', false);
-    }
-
     public function setBuyLeadRequest(BuyLeadRequest $buyLeadRequest)
     {
         if ($buyLeadRequest) {

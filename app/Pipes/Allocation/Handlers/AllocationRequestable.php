@@ -53,4 +53,34 @@ trait AllocationRequestable
     {
         return $this->collection->get($key, $default);
     }
+
+    public function markAsSIC()
+    {
+        $this->set('sic', true);
+    }
+
+    public function isSIC()
+    {
+        return $this->get('sic', false);
+    }
+
+    public function markAsBuyLead()
+    {
+        $this->set('buy_lead', true);
+    }
+
+    public function isBuyLead()
+    {
+        return $this->get('buy_lead', false);
+    }
+
+    public function markAsAIG()
+    {
+        $this->set('aig', true);
+    }
+
+    public function isAIG()
+    {
+        return $this->get('aig', false);
+    }
 }

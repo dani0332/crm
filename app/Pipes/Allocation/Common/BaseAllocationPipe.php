@@ -68,6 +68,10 @@ abstract class BaseAllocationPipe extends AllocationService
             $this->allocationRequest->markAsSIC();
         }
 
+        if ($lead->isAIG($this->allocationRequest->getQuoteType())) {
+            $this->allocationRequest->markAsAIG();
+        }
+
         return $lead;
     }
 
