@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\AssignmentTypeEnum;
 use App\Services\TravelQuoteService;
 use App\Traits\ExcelExportable;
 
@@ -27,10 +28,13 @@ class TravelQuoteExport
             'ADVISOR REQUESTED',
             'ADVISOR',
             'ADVISOR ASSIGNED DATE AND TIME',
+            'ASSIGNMENT TYPE',
             'API ISSUANCE STATUS',
             'INSURER API STATUS',
             'CREATED DATE',
             'TRAVEL START DATE',
+            'TRAVEL END DATE',
+            'TRAVEL DURATION',
             'LAST MODIFIED DATE',
             'DOB',
             'TRANSAPP CODE',
@@ -68,10 +72,13 @@ class TravelQuoteExport
             $quote->sic_advisor_requested == '0' ? 'No' : 'Yes',
             optional($quote->advisor)->name,
             $quote->travelQuoteRequestDetail->advisor_assigned_date ?? '',
+            !empty($quote->assignment_type) ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '',
             $quote->api_issuance_status ? $quote->api_issuance_status : '',
             $quote->insurer_api_status ? $quote->insurer_api_status : '',
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             $quote->start_date ?? '',
+            $quote->end_date ?? '',
+            $quote->days_cover_for ?? '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             date(config('constants.datetime_format'), strtotime($quote->dob)),
             optional($quote->travelQuoteRequestDetail)->transapp_code,

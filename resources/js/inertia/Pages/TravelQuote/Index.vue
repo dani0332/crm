@@ -12,6 +12,7 @@ defineProps({
   insuranceProviders: Array,
   travelPlans: Array,
   insurerAMLStatus: Object,
+  assignmentTypes: Object,
 });
 
 let params = useUrlSearchParams('history');
@@ -83,6 +84,8 @@ const filters = reactive({
   insurance_provider_ids: [],
   plan_name: [],
   travel_start_date: '',
+  travel_end_date: '',
+  assignment_type: '',
 });
 
 const loader = reactive({
@@ -105,6 +108,7 @@ const tableHeader = [
   { text: 'PAYMENT AUTHORISED DATE', value: 'payment.authorized_at' },
   { text: 'PAYMENT EXPIRY', value: 'expiry_dates' },
   { text: 'Travel Type', value: 'direction_code' },
+  { text: 'Travel Duration', value: 'days_cover_for' },
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status.text' },
   { text: 'AML Status', value: 'aml_status' },
@@ -114,11 +118,13 @@ const tableHeader = [
     text: 'ADVISOR REQUESTED',
     value: 'sic_advisor_requested',
   },
+  { text: 'Assignment Type', value: 'assignment_type_text' },
   {
     text: 'Advisor Assigned Date And Time',
     value: 'travel_quote_request_detail.advisor_assigned_date',
   },
   { text: 'API ISSUANCE STATUS', value: 'api_issuance_status' },
+  { text: 'Travel End Date', value: 'end_date' },
   { text: 'INSURER API STATUS', value: 'insurer_api_status' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
@@ -998,6 +1004,22 @@ const insurerAMLStatusOption = computed(() => {
           label="Travel Start Date"
           format="dd-MM-yyyy"
         />
+        <DatePicker
+          v-model="filters.travel_end_date"
+          label="Travel End Date"
+          format="dd-MM-yyyy"
+        />
+
+        <x-select
+          v-model="filters.assignment_type"
+          name="assignment_type"
+          class="w-full"
+          placeholder="Search by Assignment Type"
+          :options="assignmentTypes"
+          label="Assignment Type"
+          filterable
+        />
+
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

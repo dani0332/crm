@@ -69,6 +69,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insurer_api_status_id',
             'start_date',
             'end_date',
+            'days_cover_for',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
@@ -130,6 +131,8 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             ->filterByDateRange('transaction_approved_dates', 'transaction_approved_at')
             ->filterByAdvisorAssignedDates('travelQuoteRequestDetail', 'advisor_assigned_date')
             ->filterBySegment('travel_quote_request')
+            ->filterByDate('travel_end_date', 'end_date', false)
+            ->filterBy('assignment_type', ignoreAll: true)
             ->when(request()->filled('previous_quote_policy_number'), function ($query) {
                 $query->where(fn ($q) => $q->filterBy('previous_quote_policy_number')->orWhere->filterBy('previous_quote_policy_number', 'policy_number'));
             })
