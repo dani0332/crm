@@ -1397,21 +1397,22 @@ class CentralService extends BaseService
 
             $childPaymentGatewayIds = ['plan_id' => $planId, 'gateway_id' => 3];
 
-            // First check if Broker Commission exists for the plan+provider+quoteTypeId
-            $planBrokerCommission = BrokerCommission::where(['plan_id' => $planId, 'insurance_provider_id' => $providerId, 'quote_type_id' => $quoteTypeId, 'is_active' => 1])->first();
-            if($planBrokerCommission) {
-                $childPaymentGatewayIds['gateway_id'] = $planBrokerCommission->enable_payment_link ? 4:3;
-                $paymentGatewayIds[] = $childPaymentGatewayIds;
-                continue;
-            }
+            //COMMENTED FOR NOW WILL BE USED LATER WHEN BROKER COMMISSION CHANGES GO LIVE
+            // // First check if Broker Commission exists for the plan+provider+quoteTypeId
+            // $planBrokerCommission = BrokerCommission::where(['plan_id' => $planId, 'insurance_provider_id' => $providerId, 'quote_type_id' => $quoteTypeId, 'is_active' => 1])->first();
+            // if($planBrokerCommission) {
+            //     $childPaymentGatewayIds['gateway_id'] = $planBrokerCommission->enable_payment_link ? 4:3;
+            //     $paymentGatewayIds[] = $childPaymentGatewayIds;
+            //     continue;
+            // }
 
-            // Second check if Broker Commission exists for the provider+quoteTypeId
-            $providerBrokerCommission = BrokerCommission::where(['insurance_provider_id' => $providerId, 'quote_type_id' => $quoteTypeId, 'is_active' => 1])->whereNull('plan_id')->first();
-            if($providerBrokerCommission) {
-                $childPaymentGatewayIds['gateway_id'] = $providerBrokerCommission->enable_payment_link ? 4:3;
-                $paymentGatewayIds[] = $childPaymentGatewayIds;
-                continue;
-            }
+            // // Second check if Broker Commission exists for the provider+quoteTypeId
+            // $providerBrokerCommission = BrokerCommission::where(['insurance_provider_id' => $providerId, 'quote_type_id' => $quoteTypeId, 'is_active' => 1])->whereNull('plan_id')->first();
+            // if($providerBrokerCommission) {
+            //     $childPaymentGatewayIds['gateway_id'] = $providerBrokerCommission->enable_payment_link ? 4:3;
+            //     $paymentGatewayIds[] = $childPaymentGatewayIds;
+            //     continue;
+            // }
 
             // Third check from insurance_provider table
             $insuranceProvider = InsuranceProvider::where(['id' => $providerId, 'is_active' => 1])->first();
