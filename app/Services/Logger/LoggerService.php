@@ -145,4 +145,11 @@ class LoggerService
 
         Log::emergency($message, $context);
     }
+
+    public static function sql(string $title, $queryInstance)
+    {
+        $sql = $queryInstance->toRawSql();
+
+        self::debug("{$title} Query", ['sql' => $sql]);
+    }
 }

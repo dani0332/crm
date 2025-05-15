@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Marshall;
 use App\Services\Logger\LoggerService;
@@ -32,6 +33,8 @@ class SendFTCEmailJob implements ShouldQueue
         $this->quoteUUID = $quoteUUID;
         $this->quoteType = $quoteType;
         $this->isInsurerPayment = $isInsurerPayment;
+
+        $this->afterCommit();
     }
 
     /**
@@ -39,11 +42,13 @@ class SendFTCEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
+        LoggerService::startQuoteLogging($this->quoteType->refId($this->quoteUUID), LoggerFeatureEnum::FTC_EMAIL);
+
         // Define eligible SIC types
         $nonEligibleSICTypes = [QuoteTypes::BIKE->id(), QuoteTypes::HOME->id(), QuoteTypes::HEALTH->id()];
 
         try {
-            LoggerService::info('Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid', '', ['feature' => 'SendFTCEmailJob', 'ref_id' => $this->quoteUUID]);
+            LoggerService::info('Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned');
             $isSic = false;
             $leadQuery = $this->quoteType->model()::with('payments')
                 ->whereNotNull('advisor_id')
@@ -54,7 +59,7 @@ class SendFTCEmailJob implements ShouldQueue
                 $leadQuery->isSIC($this->quoteType);
                 $isSic = true;
             }
-
+            LoggerService::sql('FTC lead fetch criteria', $leadQuery);
             // Fetch the lead
             $lead = $leadQuery->first();
 
@@ -70,19 +75,19 @@ class SendFTCEmailJob implements ShouldQueue
                     ];
 
                     Marshall::request('/payment/send-payment-auth-email', 'post', $data);
-                    LoggerService::info('Email Sent Successfully for uuid', '', ['feature' => 'SendFTCEmailJob', 'ref_id' => $this->quoteUUID]);
+                    LoggerService::info('Email Sent Successfully');
                 } else {
-                    LoggerService::info('Payment not authorized for uuid', '', ['feature' => 'SendFTCEmailJob', 'ref_id' => $this->quoteUUID]);
+                    LoggerService::info('Payment not authorized');
                 }
             } else {
-                LoggerService::info('Quote not found for uuid', '', ['feature' => 'SendFTCEmailJob', 'ref_id' => $this->quoteUUID]);
+                LoggerService::info('Quote not found');
             }
         } catch (Exception $e) {
             LoggerService::error('Error sending FTC email', [
                 'quoteUUID' => $this->quoteUUID,
                 'quoteType' => $this->quoteType->id(),
                 'isInsurerPayment' => $this->isInsurerPayment,
-            ], $e, ['ref_id' => $this->quoteUUID, 'feature' => 'SendFTCEmailJob']);
+            ], $e);
         }
     }
 }
