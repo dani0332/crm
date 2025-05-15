@@ -282,37 +282,46 @@ watch(
   </div>
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="NAME" required>
-        <x-input v-model="userForm.name" :rules="[isRequired]" class="w-full" />
-      </x-field>
-      <x-field label="EMAIL ADDRESS" required>
-        <x-input
-          type="email"
-          v-model="userForm.email"
-          :rules="[isRequired, isEmail]"
-          class="w-full"
-          name="email"
-          :error="$page.props.errors.email"
-        />
-      </x-field>
-      <x-field label="MOBILE NUMBER" required>
-        <x-input
-          v-model="userForm.mobile_no"
-          class="w-full"
-          :rules="[isRequired, isMobileNo]"
-        />
-      </x-field>
-      <x-field label="LANDLINE NUMBER" required>
-        <x-input
-          :rules="[isRequired]"
-          type="tel"
-          v-model="userForm.landline_no"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="PASSWORD" required v-if="isAllowed">
-        <x-input v-model="userForm.password" class="w-full" type="password" />
-      </x-field>
+      <x-input
+        label="NAME"
+        required
+        v-model="userForm.name"
+        :rules="[isRequired]"
+        class="w-full"
+      />
+      <x-input
+        type="email"
+        v-model="userForm.email"
+        :rules="[isRequired, isEmail]"
+        class="w-full"
+        name="email"
+        :error="$page.props.errors.email"
+        label="EMAIL ADDRESS"
+        required
+      />
+      <x-input
+        v-model="userForm.mobile_no"
+        class="w-full"
+        :rules="[isRequired, isMobileNo]"
+        label="MOBILE NUMBER"
+        required
+      />
+      <x-input
+        :rules="[isRequired]"
+        type="tel"
+        v-model="userForm.landline_no"
+        class="w-full"
+        label="LANDLINE NUMBER"
+        required
+      />
+      <x-input
+        label="PASSWORD"
+        required
+        v-if="isAllowed"
+        v-model="userForm.password"
+        class="w-full"
+        type="password"
+      />
       <x-select
         label="ROLES"
         v-model="userForm.roles"
@@ -499,17 +508,16 @@ watch(
         </template>
       </x-select>
 
-      <x-field label="ACTIVE">
-        <x-select
-          v-model="userForm.is_active"
-          :options="[
-            { value: false, label: 'No' },
-            { value: true, label: 'Yes' },
-          ]"
-          class="w-full"
-        >
-        </x-select>
-      </x-field>
+      <x-select
+        v-model="userForm.is_active"
+        :options="[
+          { value: false, label: 'No' },
+          { value: true, label: 'Yes' },
+        ]"
+        class="w-full"
+        label="ACTIVE"
+      >
+      </x-select>
 
       <x-select
         v-if="hasRole(rolesEnum.Admin)"
@@ -537,28 +545,22 @@ watch(
       </x-select>
     </div>
     <div class="grid sm:grid-cols-2 gap-4 mt-2">
-      <x-field
+      <x-textarea
         label="GOOGLE MEET CALENDAR (EMBEDDED LINK)"
         :required="isAdvisor"
+        class="w-full text-md"
+        v-model="userForm.calendar_link"
+        :rules="isAdvisor ? [isRequired] : []"
       >
-        <x-textarea
-          class="w-full text-md"
-          v-model="userForm.calendar_link"
-          :rules="isAdvisor ? [isRequired] : []"
-        >
-        </x-textarea>
-      </x-field>
-      <x-field
+      </x-textarea>
+      <x-textarea
+        class="w-full text-md"
+        v-model="userForm.phone_calendar_link"
+        :rules="isAdvisor ? [isRequired] : []"
         label="PHONE CALL CALENDAR (EMBEDDED LINK)"
         :required="isAdvisor"
       >
-        <x-textarea
-          class="w-full text-md"
-          v-model="userForm.phone_calendar_link"
-          :rules="isAdvisor ? [isRequired] : []"
-        >
-        </x-textarea>
-      </x-field>
+      </x-textarea>
     </div>
 
     <x-divider class="my-4" />

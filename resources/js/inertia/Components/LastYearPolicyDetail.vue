@@ -188,15 +188,16 @@ onMounted(() => {
             class="flex justify-between gap-3 items-center"
             v-if="canAddBatchNumber"
           >
-            <x-field v-if="allowEdit" label="Renewal batch" required>
-              <x-input
-                v-model="policyForm.renewal_batch"
-                type="tel"
-                class="w-full md:w-64"
-                :rules="[isRequired]"
-                :error="policyForm.errors.renewal_batch"
-              />
-            </x-field>
+            <x-input
+              v-if="allowEdit"
+              label="Renewal batch"
+              required
+              v-model="policyForm.renewal_batch"
+              type="tel"
+              class="w-full md:w-64"
+              :rules="[isRequired]"
+              :error="policyForm.errors.renewal_batch"
+            />
             <div v-if="readOnlyMode.isDisable === true">
               <x-button v-if="allowEdit" color="primary" type="submit">
                 Update

@@ -154,31 +154,25 @@ onMounted(() => getPauseReaons());
         :value="reason.code"
         :label="reason.text"
       />
-      <x-field
-        class="pt-2 ml-7"
+
+      <x-input
+        class="pt-2 ml-7 w-full"
         label="Reason for client request:"
         v-if="showInput && reason.code == 'followupLater'"
-      >
-        <x-input
-          v-model="notes"
-          type="text"
-          class="w-full"
-          placeholder="reason"
-        />
-      </x-field>
-    </div>
-    <x-field
-      class="mt-5"
-      label="Choose the date to resume Automated Follow-ups"
-    >
-      <DatePicker
-        :disabled="selectedReason == 'lostCase'"
-        v-model="date"
-        :min-date="new Date()"
-        :max-date="maxDate"
-        class="w-full"
+        v-model="notes"
+        type="text"
+        placeholder="reason"
       />
-    </x-field>
+    </div>
+
+    <DatePicker
+      :disabled="selectedReason == 'lostCase'"
+      v-model="date"
+      :min-date="new Date()"
+      :max-date="maxDate"
+      class="w-full mt-5"
+      label="Choose the date to resume Automated Follow-ups"
+    />
     <template #primary-action>
       <x-button type="submit" size="sm" color="primary" :loading="isloading">
         Ok
