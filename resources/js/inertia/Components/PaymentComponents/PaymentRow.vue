@@ -80,23 +80,6 @@ const deletePayment = () => {
   emit('delete-payment', props.payment);
 };
 
-// const approvePayment = () => {
-//   if (
-//     !props.sendUpdate &&
-//     (!isAmlVerified(props.quoteRequest, props.quoteType, props.payments) ||
-//       !isKycVerified(props.quoteRequest, props.quoteType, props.payments))
-//   ) {
-//     emit('open-aml-verification');
-//   } else {
-//     const isValid = getCaptureValidation.value;
-//     if (isValid) {
-//       emit('edit-payment', props.payment, 0, 0, 2);
-//     } else {
-//       emit('alert-capture', props.payment);
-//     }
-//   }
-// };
-
 const voidPayment = () => {
   emit('void-payment', props.payment);
 };
@@ -238,60 +221,6 @@ const shouldProcessUpdate = () => {
     isInsurerAmlCleared
   );
 };
-
-// COMMENTED BECAUSE NOT WORKING AS EXPECTED
-// Will check if the payment is ready for capture
-// const shouldProcessUpdate = () => {
-//   const payment = props.payment;
-//   const totalPriceRounded = Math.round(payment.total_price * 100) / 100;
-//   const calculatedTotal =
-//     Math.round((payment.total_amount + payment.discount_value) * 100) / 100;
-//   const hasPayments = props.payments.length > 0;
-//   const isTotalPriceMatching = totalPriceRounded === calculatedTotal;
-
-//   // Check if it's a renewal upload condition
-//   if (
-//     props.isCapBtnEnabled &&
-//     props.quoteType === quoteTypeCodeEnum.Car &&
-//     (page.props?.bookPolicyDetails?.isGIGProvider || false) &&
-//     isAmlVerified(props.quoteRequest, props.quoteType, props.payments) &&
-//     isKycVerified(props.quoteRequest, props.quoteType, props.payments) &&
-//     isTotalPriceMatching &&
-//     hasAnyCCSplitPayment(props.payments) &&
-//     !props.sendUpdate &&
-//     hasPayments &&
-//     payment?.collection_type == 'insurer'
-//   ) {
-//     return true;
-//   }
-// console.log("=======---")
-//   // Check if capture option is approve
-//   const captureOption = getCaptureOption.value;
-//   console.log("captureOption---", captureOption);
-//   if (captureOption === 'approve') {
-//     return hasPayments;
-//   }
-// console.log("0000000")
-// console.log('!!!!!=============!!!',
-//     hasPayments,
-//     isTotalPriceMatching,
-//     // Check if AML & KYC verification and insurer AML are complete
-//     (isAmlVerified(props.quoteRequest, props.quoteType, props.payments) ||
-//       props.quoteType === quoteTypeCodeEnum.Travel ||
-//       props.sendUpdate),
-//     isInsurerAmlVerified(props.quoteRequest, props.quoteType, props.payments)
-//   )
-//   // All other cases
-//   return (
-//     hasPayments &&
-//     isTotalPriceMatching &&
-//     // Check if AML & KYC verification and insurer AML are complete
-//     (isAmlVerified(props.quoteRequest, props.quoteType, props.payments) ||
-//       props.quoteType === quoteTypeCodeEnum.Travel ||
-//       props.sendUpdate) &&
-//     isInsurerAmlVerified(props.quoteRequest, props.quoteType, props.payments)
-//   );
-// };
 
 // Validate the upfront capture logic
 const validateUpfrontCapture = paymentRecord => {

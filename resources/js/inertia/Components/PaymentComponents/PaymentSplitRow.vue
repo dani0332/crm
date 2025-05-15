@@ -132,13 +132,6 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
 };
 
 const enablePostPrepaymentButton = computed(() => {
-  console.log(
-    'showPostPrepaymentButton : showPrepaymentPostButton : ',
-    props.splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
-    ' , batchNumber : ',
-    props.splitPayment.prepayment_receipt_status?.batchNumber,
-    props.splitPayment.prepayment_receipt_status,
-  );
   let isPolicyBooked =
     page.props.quoteStatusEnum.PolicyBooked ===
     props.quoteRequest.quote_status_id;
