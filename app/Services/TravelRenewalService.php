@@ -14,6 +14,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 use App\Jobs\TravelRenewalLeadCreationJob;
+use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\RenewalBatch;
 use App\Models\TravelQuote;
@@ -246,10 +247,16 @@ class TravelRenewalService extends BaseService
         $lead = TravelQuote::where('uuid', $quoteUID)->first();
         if ($lead) {
             info(self::class." - Lead found for Quote UID: {$quoteUID} | Time: ".now());
-            $eligibleUser = $this->getTravelRenewalsAdvisor();
-            if ($eligibleUser) {
-                info(self::class." - Eligible Advisor {$eligibleUser->user_id} found for Quote UID: {$quoteUID} | Time: ".now());
-                $this->assignLead($lead, $eligibleUser->user_id, AssignmentTypeEnum::SYSTEM_ASSIGNED);
+            [$advisorId, $leadAllocationId] = $this->getTravelRenewalsAdvisor();
+
+            if ($advisorId) {
+                info(self::class." - Eligible Advisor {$advisorId} found for Quote UID: {$quoteUID} | Time: ".now());
+                $this->assignLead($lead, $advisorId, AssignmentTypeEnum::SYSTEM_ASSIGNED);
+
+                LeadAllocation::where('id', $leadAllocationId)->update([
+                    'last_allocated' => now()->timestamp,
+                ]);
+
                 info(self::class.' - TravelRenewalService Going to dispatch SendOCBTravelRenewalIntroEmailJob  Ref-ID: '.$quoteUID.' | Time: '.now());
                 SendOCBTravelRenewalIntroEmailJob::dispatch($quoteUID)->delay(now()->addSeconds(30));
             } else {
@@ -286,7 +293,7 @@ class TravelRenewalService extends BaseService
     {
         $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
 
-        return User::select('users.id as user_id')
+        $advisor = User::select('users.id as user_id', 'la.id as lead_allocation_id')
             ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
@@ -298,5 +305,7 @@ class TravelRenewalService extends BaseService
             ->orderBy('la.last_allocated', 'asc')
             ->activeUser()
             ->first();
+
+        return [$advisor->user_id, $advisor->lead_allocation_id];
     }
 }

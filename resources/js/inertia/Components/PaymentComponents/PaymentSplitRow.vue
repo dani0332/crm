@@ -132,13 +132,6 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
 };
 
 const enablePostPrepaymentButton = computed(() => {
-  console.log(
-    'showPostPrepaymentButton : showPrepaymentPostButton : ',
-    props.splitPayment.prepayment_receipt_status?.showPrepaymentPostButton,
-    ' , batchNumber : ',
-    props.splitPayment.prepayment_receipt_status?.batchNumber,
-    props.splitPayment.prepayment_receipt_status,
-  );
   let isPolicyBooked =
     page.props.quoteStatusEnum.PolicyBooked ===
     props.quoteRequest.quote_status_id;
@@ -276,7 +269,9 @@ const generateInsurerLink = async (code, splitPaymentId, paymentStatus) => {
         >
 
         <x-button
-          v-if="splitPayment.payment_method.code == 'CC'"
+          v-if="
+            splitPayment.payment_method.code == paymentMethodsEnums.CreditCard
+          "
           class="ml-2"
           size="xs"
           color="emerald"
