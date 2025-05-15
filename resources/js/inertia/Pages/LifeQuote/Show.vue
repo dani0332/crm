@@ -1751,13 +1751,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
               <template #item-totalPrice="item">
                 <span class="copay-max">{{
-                  item.isManualPlan ? item.totalPrice.toFixed(2) : item.actualPremium.toFixed(2)
+                  item.isManualPlan ? item.totalPrice : item.actualPremium
                 }}</span>
               </template>
 
               <template #item-sumInsured="item">
                 <span class="copay-max">{{
-                  parseFloat(item.sumInsured).toFixed(2)
+                  parseFloat(item.sumInsured)
                 }}</span>
               </template>
 
