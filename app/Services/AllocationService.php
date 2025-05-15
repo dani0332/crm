@@ -286,6 +286,8 @@ class AllocationService extends BaseService
             $lead->endAllocation();
         }
 
+        $request->endBuyLeadProcessing();
+
         if ($request->isAllocated()) {
             return [
                 'advisorId' => $request->get('advisor')->id,
