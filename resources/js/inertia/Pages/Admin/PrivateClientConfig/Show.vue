@@ -13,7 +13,11 @@ const props = defineProps({
   isCurrentVersion: Boolean,
 });
 
+const page = usePage();
+
 const { isRequired, isRequiredNumber } = useRules();
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 
 // Function to change version
 const changeVersion = (version) => {
@@ -379,7 +383,7 @@ const onSubmit = isValid => {
   </div>
   
   <!-- Version selector -->
-  <div class="bg-gray-50 p-4 rounded-md my-4">
+  <div v-if="hasAnyRole([rolesEnum.Engineering])" class="bg-gray-50 p-4 rounded-md my-4">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-medium">Criteria Version:</span>

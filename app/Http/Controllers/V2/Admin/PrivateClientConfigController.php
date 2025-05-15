@@ -20,7 +20,7 @@ class PrivateClientConfigController extends Controller
 
     public function __construct()
     {
-        $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Engineering], '|'), ['only' => ['show']]);
+        $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Admin], '|'), ['only' => ['show']]);
     }
 
     public function show(Request $request)

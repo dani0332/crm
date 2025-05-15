@@ -298,7 +298,7 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
-    public function insuredCustomer()
+    public function insured()
     {
         return $this->belongsTo(Customer::class, 'currently_insured_id');
     }
