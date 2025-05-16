@@ -593,7 +593,7 @@ class QuoteDocumentService extends BaseService
 
         // Show detailed output from command execution for direct debugging
         LoggerService::info("PDFtk command execution details for UUID: $uuid");
-        LoggerService::info('PDFtk Command output: ' . (empty($output) ? 'No output' : implode("\n", $output)));
+        LoggerService::info('PDFtk Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
 
         // Simple check - if file doesn't exist or is too small, try Ghostscript
         if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
