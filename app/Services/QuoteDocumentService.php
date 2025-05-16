@@ -577,8 +577,8 @@ class QuoteDocumentService extends BaseService
         $pdftk_check_return = 0;
         exec('which pdftk 2>&1', $pdftk_check_output, $pdftk_check_return);
 
-        LoggerService::info("PDFtk availability check for UUID: $uuid");
-        LoggerService::info('PDFtk path: '.(empty($pdftk_check_output) ? 'Not found' : implode("\n", $pdftk_check_output)));
+        // LoggerService::info("PDFtk availability check for UUID: $uuid");
+        // LoggerService::info('PDFtk path: '.(empty($pdftk_check_output) ? 'Not found' : implode("\n", $pdftk_check_output)));
         // end Check if PDFtk is installed
 
         // Use PDFtk's background operation to apply watermark behind content
@@ -592,8 +592,8 @@ class QuoteDocumentService extends BaseService
         exec($pdftk_command, $output, $returnVar);
 
         // Show detailed output from command execution for direct debugging
-        LoggerService::info("PDFtk command execution details for UUID: $uuid");
-        LoggerService::info('PDFtk Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
+        // LoggerService::info("PDFtk command execution details for UUID: $uuid");
+        // LoggerService::info('PDFtk Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
 
         // Simple check - if file doesn't exist or is too small, try Ghostscript
         if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
@@ -641,7 +641,7 @@ class QuoteDocumentService extends BaseService
         exec($gsCommand, $output, $returnVar);
 
         // Show detailed output for direct debugging
-        LoggerService::info('Ghostscript Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
+        // LoggerService::info('Ghostscript Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
 
         // Clean up
         if (file_exists($watermarkPdfGs)) {
