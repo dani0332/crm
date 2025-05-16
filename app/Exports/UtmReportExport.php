@@ -50,7 +50,7 @@ class UtmReportExport implements FromCollection, WithHeadings, ShouldAutoSize, W
             'Booked Policies',
             'Authorized (AED)',
             'Captured (AED)',
-            'Total Price',
+            'Total Price (AED)',
         ];
     }
 
