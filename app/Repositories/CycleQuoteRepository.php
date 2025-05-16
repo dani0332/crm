@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -58,7 +59,7 @@ class CycleQuoteRepository extends BaseRepository
             'nationalityId' => $data['nationality_id'],
         ];
 
-        info('cycleQuote:'.json_encode($quoteData));
+        LoggerService::info('cycleQuote:'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
@@ -66,8 +67,15 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
@@ -78,8 +86,8 @@ class CycleQuoteRepository extends BaseRepository
             'quoteDetail',
             'renewalBatchModel',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
             ->when(isset(request()->advisors) && ! empty(request()->advisors), function ($query) {
                 $advisors = request()->advisors;
@@ -119,7 +127,7 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()

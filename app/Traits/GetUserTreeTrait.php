@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 trait GetUserTreeTrait
@@ -27,8 +28,14 @@ trait GetUserTreeTrait
 
         return [];
     }
-    public function walkTree($userId, $productType = null, $allowedPermissions = []) // product
+
+    public function walkTree($userId, $productType = null, $allowedPermissions = [], ?User $user = null) // product
     {
+
+        if (auth()->check() && empty($user)) {
+            $user = auth()->user();
+        }
+
         $childUserIds = [$userId];
         $productTeam = $this->getProductByName($productType ?? quoteTypeCode::Car);
         $rolesArray = [
@@ -45,7 +52,7 @@ trait GetUserTreeTrait
             RolesEnum::GMManager,
             RolesEnum::LeadPool,
         ];
-        if (auth()->user()->hasAnyRole($rolesArray) || auth()->user()->hasAnyPermission($allowedPermissions)) {
+        if ($user && $user->hasAnyRole($rolesArray) || $user->hasAnyPermission($allowedPermissions)) {
             $userAllTeams = DB::table('teams')
                 ->join('user_team', 'user_team.team_id', 'teams.id')
                 ->where('user_id', $userId)

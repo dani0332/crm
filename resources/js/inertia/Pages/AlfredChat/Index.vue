@@ -39,6 +39,11 @@ const filters = reactive({
   email: null,
 });
 
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
+});
+
 const params = useUrlSearchParams('history');
 
 const reportButtonCon = computed(() => {
@@ -112,7 +117,7 @@ const chatMessages = ref({
 
 const tableHeader = reactive([
   { text: 'Ref-ID', value: 'code' },
-  { text: 'Created At', value: 'created_at' },
+  { text: 'Created At', value: 'created_at', sortable: true },
   { text: 'Actions', value: 'action' },
 ]);
 
@@ -129,6 +134,13 @@ const isQuoteTypeSelected = computed(() => {
   );
 });
 
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
+
 function onSubmit() {
   if (filters.quoteId || filters.email || filters.mobile_no) {
     filters.chat_initiated_at = [];
@@ -137,7 +149,7 @@ function onSubmit() {
   filters.page = 1;
   router.visit(route('instant-alfred.index'), {
     method: 'get',
-    data: useGenerateQueryString(filters),
+    data: { ...useGenerateQueryString(filters), ...serverOptions.value },
     preserveState: true,
     preserveScroll: true,
     onBefore: () => (loader.table = true),
@@ -156,11 +168,17 @@ function onReset() {
 }
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+  for (const [key, value] of Object.entries(params)) {
+    if (key.startsWith('chat_initiated_at[')) {
+      // Extract the index from 'chat_initiated_at[0]', 'chat_initiated_at[1]'
+      const index = parseInt(key.match(/\[(\d+)\]/)?.[1], 10);
+      if (!isNaN(index)) {
+        filters.chat_initiated_at[index] = value.split('T')[0]; // Remove time part
+      }
+    } else if (Array.isArray(value)) {
+      filters[key] = value;
     } else {
-      filters[key] = params[key];
+      filters[key] = isNaN(parseInt(value)) ? value : parseInt(value);
     }
   }
 }
@@ -204,10 +222,22 @@ const showChat = item => {
 
 onMounted(() => {
   setQueryStringFilters();
+
+  let filtersCleaned = cleanObj({ ...filters, ...serverOptions.value });
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
 });
 
 const downloadReport = () => {
-  const data = useObjToUrl(useCleanObj(filters));
+  const data = useObjToUrl(useCleanObj({ ...filters, ...serverOptions.value }));
   const url = route('exportChatData');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
@@ -221,15 +251,14 @@ const downloadReport = () => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-3 md:grid-cols-3 gap-4">
-      <x-field label="Ref-ID">
-        <x-input
-          v-model="filters.quoteId"
-          type="search"
-          name="code"
-          class="w-full"
-          placeholder="Search by Ref-ID"
-        />
-      </x-field>
+      <x-input
+        v-model="filters.quoteId"
+        type="search"
+        name="code"
+        class="w-full"
+        placeholder="Search by Ref-ID"
+        label="Ref-ID"
+      />
       <x-field label="Quote Type" required>
         <combo-box
           v-model="filters.quoteType"
@@ -413,6 +442,7 @@ const downloadReport = () => {
   ></chat-logs-modal>
 
   <DataTable
+    v-model:server-options="serverOptions"
     table-class-name="tablefixed mt-3"
     :loading="loader.table"
     :headers="tableHeader"

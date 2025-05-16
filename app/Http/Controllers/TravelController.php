@@ -96,7 +96,7 @@ class TravelController extends Controller
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
         $insurerApiStatus = PolicyIssuanceEnum::getInsurerAPIStatuses();
         $issuanceStatuses = PolicyIssuanceEnum::getAPIIssuanceStatuses(getAll: true);
-        $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
+        $gridData = $this->travelQuoteService->getGridData();
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManager = auth()->user()->isManagerOrDeputy();
@@ -351,6 +351,7 @@ class TravelController extends Controller
             'lockStatusOfPolicyIssuanceSteps' => $lockStatusOfPolicyIssuanceSteps,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'isAllianceProvider' => $insuranceProvider?->code === InsuranceProvidersEnum::ALNC,
         ]);
     }
 
@@ -488,7 +489,6 @@ class TravelController extends Controller
     public function update(UpdateTravelRequest $request, $id)
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-
         $this->travelQuoteService->updateTravelQuote($request, $id);
 
         return redirect('/quotes/travel/'.$id)->with('message', 'Record updated successfully');

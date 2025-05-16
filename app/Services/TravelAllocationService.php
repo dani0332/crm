@@ -19,6 +19,7 @@ use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\ProcessTracker\ProcessTrackerService;
 use Illuminate\Support\Facades\Log;
@@ -40,6 +41,10 @@ class TravelAllocationService extends AllocationService
 
     private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, ProcessTrackerService $tracker)
     {
+        if ($travelQuote->isRenewalUpload()) {
+            return false;
+        }
+
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
         if (getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE) == '1' && $travelQuote->isParent() && $travelQuote->isAdult()) {
             info(self::class.':verifyFetchLeadPreChecks - it is parent lead so checking for Alliance Travel Automation');
@@ -136,7 +141,7 @@ class TravelAllocationService extends AllocationService
             info(self::class.":assignAvailableAdvisorToChild - Finding Advisor for Child Lead: {$lead->uuid}");
             $advisor = $this->fetchAvailableAdvisor(teamId: getTeamId(TeamNameEnum::SIC_UNASSISTED), lead: $lead);
             if (! $advisor) {
-                info(self::class.":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid}");
+                LoggerService::info(self::class.":assignAvailableAdvisorToChild - No Advisor found for Child Lead: {$lead->uuid}");
                 $this->leadAllocationFailed($lead->uuid, QuoteTypes::TRAVEL);
             } else {
                 info(self::class.":assignAvailableAdvisorToChild - Advisor found for Child Lead: {$lead->uuid}");
@@ -159,11 +164,10 @@ class TravelAllocationService extends AllocationService
         }
 
         $teamName = null;
-        if ($teamId) {
-            $team = Team::find($teamId);
-            if ($team) {
-                $teamName = $team->name;
-            }
+
+        if ($lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
+            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+            $teamName = TeamNameEnum::SIC_UNASSISTED;
         }
 
         foreach ($statusOrder as $status) {

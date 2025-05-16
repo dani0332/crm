@@ -925,12 +925,12 @@ function capitalizeString(str) {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
               <dd>
-                <ComboBox
+                <x-select
                   v-model="customerProfileForm.emirate_of_registration_id"
-                  :single="true"
-                  placeholder="SELECT EMIRATES OF REGISTRATION"
                   :options="emiratesOptions"
                   class="w-full"
+                  placeholder="SELECT EMIRATES OF REGISTRATION"
+                  filterable
                 />
               </dd>
             </div>
@@ -948,28 +948,28 @@ function capitalizeString(str) {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">INDUSTRY TYPE</dt>
               <dd>
-                <ComboBox
-                  :single="true"
+                <x-select
                   v-model="customerProfileForm.industry_type_code"
-                  placeholder="SELECT INDUSTRY TYPE"
                   :options="industryTypeOptions"
                   class="w-full"
+                  placeholder="SELECT INDUSTRY TYPE"
+                  filterable
                 />
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">ENTITY TYPE</dt>
               <dd>
-                <ComboBox
-                  @update:modelValue="entityTypeChange($event)"
-                  :single="true"
-                  v-model:modelValue="customerProfileForm.entity_type_code"
-                  placeholder="SELECT ENTITY TYPE"
+                <x-select
+                  :modelValue="customerProfileForm.entity_type_code"
                   :options="[
                     { label: 'Parent', value: 'Parent' },
                     { label: 'Sub Entity', value: 'SubEntity' },
                   ]"
                   class="w-full"
+                  placeholder="SELECT ENTITY TYPE"
+                  filterable
+                  @update:modelValue="entityTypeChange($event)"
                 />
               </dd>
             </div>
@@ -1137,121 +1137,121 @@ function capitalizeString(str) {
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
         <div class="w-full md:w-1/2">
-          <x-field label="CC" required>
-            <x-input
-              v-model="assumptionsForm.cubic_capacity"
-              type="number"
-              placeholder="CC"
+          <x-input
+            v-model="assumptionsForm.cubic_capacity"
+            type="number"
+            placeholder="CC"
+            class="w-full"
+            :rules="[isRequired]"
+            :disabled="!assumptionState.isEditing"
+            label="CC"
+            required
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-input
+            v-model="assumptionsForm.seat_capacity"
+            type="number"
+            placeholder="Seat Capacity"
+            class="w-full"
+            :rules="[isRequired]"
+            :disabled="!assumptionState.isEditing"
+            label="Seat Capacity"
+            required
+          />
+        </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-select
+              v-model="assumptionsForm.vehicle_type_id"
+              :options="bikeBodyType"
+              placeholder="Vehicle Body Type"
               class="w-full"
               :rules="[isRequired]"
               :disabled="!assumptionState.isEditing"
+              label="Vehicle Body Type"
+              required
             />
-          </x-field>
+          </div>
         </div>
         <div class="w-full md:w-1/2">
-          <x-field label="Seat Capacity" required>
-            <x-input
-              v-model="assumptionsForm.seat_capacity"
-              type="number"
-              placeholder="Seat Capacity"
+          <div class="flex flex-col gap-4">
+            <x-select
+              v-model="assumptionsForm.is_modified"
+              :options="isOptions"
+              placeholder="Is Modified"
               class="w-full"
               :rules="[isRequired]"
               :disabled="!assumptionState.isEditing"
+              label="Is Bike modified?"
+              required
             />
-          </x-field>
-        </div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <div class="flex flex-col gap-4">
-            <x-field label="Vehicle Body Type" required>
-              <x-select
-                v-model="assumptionsForm.vehicle_type_id"
-                :options="bikeBodyType"
-                placeholder="Vehicle Body Type"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
-          </div>
-        </div>
-        <div class="w-full md:w-1/2">
-          <div class="flex flex-col gap-4">
-            <x-field label="Is Bike modified?" required>
-              <x-select
-                v-model="assumptionsForm.is_modified"
-                :options="isOptions"
-                placeholder="Is Modified"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
           </div>
         </div>
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-field label="Is Bank Financed" required>
-              <x-select
-                v-model="assumptionsForm.is_bank_financed"
-                :options="isOptions"
-                placeholder="Is Bank Financed"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
+            <x-select
+              v-model="assumptionsForm.is_bank_financed"
+              :options="isOptions"
+              placeholder="Is Bank Financed"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+              label="Is Bank Financed"
+              required
+            />
           </div>
         </div>
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-field label="Is GCC Standard?" required>
-              <x-select
-                v-model="assumptionsForm.is_gcc_standard"
-                :options="isOptions"
-                placeholder="Is GCC Standard"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
+            <x-select
+              v-model="assumptionsForm.is_gcc_standard"
+              :options="isOptions"
+              placeholder="Is GCC Standard"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+              label="Is GCC Standard?"
+              required
+            />
           </div>
         </div>
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-field label="Current Insurance Status" required>
-              <x-select
-                v-model="assumptionsForm.current_insurance_status"
-                :options="currentInsuranceOptions"
-                placeholder="Current Insurance Status"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
+            <x-select
+              v-model="assumptionsForm.current_insurance_status"
+              :options="currentInsuranceOptions"
+              placeholder="Current Insurance Status"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+              label="Current Insurance Status"
+              required
+            />
           </div>
         </div>
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-field label="Year Of First Registration" required>
-              <x-select
-                v-model="assumptionsForm.year_of_first_registration"
-                :options="
-                  $page.props.yearsOfManufacture.map(year => {
-                    return { value: year.id.toString(), label: year.text };
-                  })
-                "
-                placeholder="Year Of First Registration"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="!assumptionState.isEditing"
-              />
-            </x-field>
+            <x-select
+              v-model="assumptionsForm.year_of_first_registration"
+              :options="
+                $page.props.yearsOfManufacture.map(year => {
+                  return { value: year.id.toString(), label: year.text };
+                })
+              "
+              placeholder="Year Of First Registration"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+              label="Year Of First Registration"
+              required
+            />
           </div>
         </div>
       </div>

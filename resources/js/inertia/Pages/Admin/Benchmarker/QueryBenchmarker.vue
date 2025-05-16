@@ -12,7 +12,7 @@ const form = useForm({
 const loader = ref(false);
 const exectionTime = ref(null);
 const errorMessage = ref(null);
-
+console.log('Query Benchmarker');
 const onSubmit = isValid => {
   if (isValid) {
     exectionTime.value = null;
@@ -63,30 +63,30 @@ const onSubmit = isValid => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid">
-      <x-field label="Iterations" required>
-        <x-input
-          type="number"
-          min="1"
-          max="5"
-          v-model="form.iterations"
-          placeholder="Iterations"
-          class="w-full"
-        />
-      </x-field>
+      <x-input
+        type="number"
+        min="1"
+        max="5"
+        v-model="form.iterations"
+        placeholder="Iterations"
+        class="w-full"
+        label="Iterations"
+        required
+      />
     </div>
     <div class="grid">
-      <x-field label="Query" required>
-        <x-textarea
-          :rules="[isRequired]"
-          type="text"
-          v-model="form.query"
-          :adjust-to-text="false"
-          class="w-full"
-          :error="form.errors.query"
-          rows="20"
-          columns="50"
-        />
-      </x-field>
+      <x-textarea
+        :rules="[isRequired]"
+        type="text"
+        v-model="form.query"
+        :adjust-to-text="false"
+        class="w-full"
+        :error="form.errors.query"
+        rows="20"
+        columns="50"
+        label="Query"
+        required
+      />
     </div>
 
     <p class="font-medium" v-if="exectionTime">

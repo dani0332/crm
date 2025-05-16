@@ -155,7 +155,9 @@ onMounted(() => {
 
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Policy Start Date</div>
-                  <div>{{ dateFormat(props?.quote?.policy_start_date) }}</div>
+                  <div>
+                    {{ dateFormat(props?.quote?.previous_policy_start_date) }}
+                  </div>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Previous Advisor</div>
@@ -180,15 +182,16 @@ onMounted(() => {
             class="flex justify-between gap-3 items-center"
             v-if="canAddBatchNumber"
           >
-            <x-field v-if="allowEdit" label="Renewal batch" required>
-              <x-input
-                v-model="policyForm.renewal_batch"
-                type="tel"
-                class="w-full md:w-64"
-                :rules="[isRequired]"
-                :error="policyForm.errors.renewal_batch"
-              />
-            </x-field>
+            <x-input
+              v-if="allowEdit"
+              label="Renewal batch"
+              required
+              v-model="policyForm.renewal_batch"
+              type="tel"
+              class="w-full md:w-64"
+              :rules="[isRequired]"
+              :error="policyForm.errors.renewal_batch"
+            />
             <div v-if="readOnlyMode.isDisable === true">
               <x-button v-if="allowEdit" color="primary" type="submit">
                 Update

@@ -78,6 +78,7 @@ final class QuoteStatusEnum extends Enum
     public const PaymentLinkRequestedByCustomer = 77;
     public const PaymentLinkInprogress = 78;
     public const PaymentLinkSentToCustomer = 79;
+    public const PaymentInitiated = 80;
 
     // This is use for lost reason id not for Quote status
     public const LOSTREASONID = 34;

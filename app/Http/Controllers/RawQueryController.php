@@ -124,6 +124,10 @@ class RawQueryController extends Controller
                 return response()->json(['error' => 'Invalid model type'], 400);
             }
 
+            if (! $request->has('uuid') || ! is_string($request->uuid) || trim($request->uuid) === '') {
+                return response()->json(['error' => 'Valid UUID is required'], 400);
+            }
+
             $entity = $this->fetchQuoteData($modelType, $request->uuid);
 
             return response()->json(['record' => $entity]);
@@ -143,7 +147,6 @@ class RawQueryController extends Controller
 
     private function fetchQuoteData(string $modelType, string $uuid)
     {
-        // dd($modelType);
         $query = $modelType::select($this->fieldsMap[$modelType])
             ->where('uuid', $uuid);
 
