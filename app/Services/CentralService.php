@@ -1337,7 +1337,6 @@ class CentralService extends BaseService
 
     }
 
-
     public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
     {
         try {

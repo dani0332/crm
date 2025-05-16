@@ -3,7 +3,6 @@
 namespace App\Observers;
 
 use App\Jobs\Audit\LogAllocation;
-use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\PersonalQuote;
 use App\Observers\Traits\Observable;
 use App\Observers\Traits\PersonalQuoteObservable;
