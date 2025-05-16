@@ -36,6 +36,10 @@ class LoggerService
 
         if ($feature) {
             self::startFeatureLogging($feature);
+
+            self::info("===== Logging Started with Ref ID: {$refID} for Feature: {$feature->value} =====");
+        } else {
+            self::info("===== Logging Started with Ref ID: {$refID} =====");
         }
     }
 
