@@ -523,15 +523,20 @@ class SearchService extends BaseService
             }
         });
 
-        // Apply first/last name filters
-        if ($request->has('member_first_name')) {
-            // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($request->member_first_name)]);
-        }
+        // Apply member name filters - merged condition
+        if ($request->has('member_first_name') || $request->has('member_last_name')) {
+            $name = [];
 
-        if ($request->has('member_last_name')) {
-            // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($request->member_last_name)]);
+            if ($request->has('member_first_name')) {
+                $name[] = $request->member_first_name;
+            }
+
+            if ($request->has('member_last_name')) {
+                $name[] = $request->member_last_name;
+            }
+            $fullName = implode(' ', $name);
+
+            $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($fullName)]);
         }
     }
 
@@ -582,6 +587,17 @@ class SearchService extends BaseService
     private function applyPaymentStatusFilter($query, $request, $isSendUpdateFilter): void
     {
         if ($request->has('date_type') && ! in_array($request->date_type, $this->paymentsDateFilters)) {
+            if ($isSendUpdateFilter) {
+                $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
+            } else {
+                $query->join('payments', 'personal_quotes.code', 'payments.code');
+            }
+        }
+
+        $hasPaymentsJoin = collect($query->joins ?? [])->pluck('table')->contains('payments');
+
+        // Join payments table if needed and not already joined
+        if (! $hasPaymentsJoin && $request->payment_status) {
             if ($isSendUpdateFilter) {
                 $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
             } else {

@@ -166,8 +166,8 @@ const availableFilters = reactive({
   advisors: [],
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
-  update_status: '',
-  send_update_type: '',
+  update_status: [],
+  send_update_type: [],
 });
 
 const dateTypesFilter = ref([
@@ -655,7 +655,7 @@ onMounted(() => {
       show-close
       backdrop
     >
-      <x-form :auto-focus="false">
+      <x-form :auto-focus="false" @keydown.enter="onSubmit">
         <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <x-tooltip placement="bottom">
@@ -995,7 +995,8 @@ onMounted(() => {
             placeholder="Search by Insurer Commission Tax Invoice No"
             label="Insurer Commission Tax Invoice No"
           />
-
+        </div>
+        <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
           <x-select
             v-if="isSendUpdateListView"
             v-model="availableFilters.update_status"
@@ -1028,7 +1029,7 @@ onMounted(() => {
           <x-select
             v-if="isSendUpdateListView"
             v-model="availableFilters.send_update_type"
-            placeholder="Search By Send Update Type"
+            placeholder="Search By Send Update..."
             :options="
               sendUpdateTypes.map(item => ({
                 value: item.id,
