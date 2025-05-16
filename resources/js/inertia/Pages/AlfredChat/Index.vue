@@ -251,15 +251,14 @@ const downloadReport = () => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-3 md:grid-cols-3 gap-4">
-      <x-field label="Ref-ID">
-        <x-input
-          v-model="filters.quoteId"
-          type="search"
-          name="code"
-          class="w-full"
-          placeholder="Search by Ref-ID"
-        />
-      </x-field>
+      <x-input
+        v-model="filters.quoteId"
+        type="search"
+        name="code"
+        class="w-full"
+        placeholder="Search by Ref-ID"
+        label="Ref-ID"
+      />
       <x-field label="Quote Type" required>
         <combo-box
           v-model="filters.quoteType"

@@ -33,7 +33,7 @@ const formFields = computed(() => {
 const quoteForm = useForm({
   first_name: props.quote?.first_name || null,
   last_name: props.quote?.last_name || null,
-  email: props.quote?.email || null,
+  email: props.quote?.email || null, // not used in update mode
   direction_code: props.quote?.direction_code
     ? props.quote?.direction_code
     : editMode.value &&
@@ -52,29 +52,26 @@ const quoteForm = useForm({
       ? '1'
       : editMode.value && props.quotePlans == null
         ? '0'
-        : null),
+        : null), // not used in update mode
   has_arrived_destination:
     props.quote?.has_arrived_destination?.toString() ||
     (editMode.value && props.quotePlans && props.quote.has_arrived_destination
       ? '1'
       : editMode.value && props.quotePlans == null
         ? '0'
-        : null),
+        : null), // not used in update mode
   coverage_code: props.quote?.coverage_code || null,
   uuid: editMode.value ? props.quote?.uuid : null,
-  mobile_no: props.quote?.mobile_no || null,
+  mobile_no: props.quote?.mobile_no || null, // not used in update mode
   nationality_id: props.quote?.nationality_id || null,
   destination_ids: props.quote?.destination_ids ?? [],
   start_date: props.quote?.start_date || null,
   end_date: props.quote?.end_date || null,
   region_cover_for_id: props.quote?.region_cover_for_id?.toString() || null,
   premium: props.quote?.premium || null,
-  policy_number: props.quote?.policy_number || null,
-  iam_possesion_type_id: props.quote?.iam_possesion_type_id || null,
-  ilivein_accommodation_type_id:
-    props.quote?.ilivein_accommodation_type_id || null,
+  policy_number: props.quote?.policy_number || null, // not used in update mode
   days_cover_for: props.quote?.days_cover_for || null,
-  members: [{ value: 'male', label: 'Male', primary: true }],
+  members: [{ value: 'male', label: 'Male', primary: true }], // not used in update mode
   edit_mode: editMode.value,
   departure_country_id: null,
 });
@@ -182,6 +179,14 @@ function onSubmit(isValid) {
     },
   };
 
+  quoteForm.transform(data => {
+    // For edit mode, remove fields that shouldn't be updated
+    if (editMode.value) {
+      const { mobile_no, email, policy_number, members, ...updateData } = data;
+      return updateData;
+    }
+    return data;
+  });
   quoteForm.submit(method, url, options);
 }
 
@@ -269,16 +274,19 @@ const disablePastDates = date => {
   return inputDate < today;
 };
 watch(
-  () => quoteForm?.destination_ids,
-  async destination_ids => {
-    if (destination_ids) {
-      await regionName(destination_ids); // Call the function to fetch advisors
+  () => quoteForm.destination_ids,
+  newDestinationIds => {
+    if (newDestinationIds) {
+      regionName(newDestinationIds); // Call the function to fetch advisors
     }
   },
+  { deep: true },
 );
+
 function updateRegionCover(id) {
   quoteForm.region_cover_for_id = String(id) ?? '';
 }
+
 const regionName = ids => {
   let countries = page.props.fields.destination_id?.options;
   const matchedValues = ids.map(id => {
@@ -389,52 +397,53 @@ watch(
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="Where will your journey take you?" required>
-          <x-select
-            v-model="quoteForm.direction_code"
-            :options="subTeamOptions"
-            class="w-full"
-            :rules="[isRequired]"
-            :error="quoteForm.errors.direction_code"
-          />
-        </x-field>
-        <x-field
+        <x-select
+          label="Where will your journey take you?"
+          required
+          v-model="quoteForm.direction_code"
+          :options="subTeamOptions"
+          class="w-full"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.direction_code"
+        />
+
+        <x-select
           v-if="quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND"
           :label="'Has your trip started?'"
           required
-        >
-          <x-select
-            v-model="quoteForm.has_arrived_uae"
-            :options="alreadylived"
-            class="w-full"
-            :rules="[isRequired]"
-            :error="quoteForm.errors.has_arrived_uae"
-          />
-        </x-field>
-        <x-field v-else :label="'Has your trip started?'" required>
-          <x-select
-            v-model="quoteForm.has_arrived_destination"
-            :options="alreadylived"
-            class="w-full"
-            :rules="[isRequired]"
-            :error="quoteForm.errors.has_arrived_destination"
-          />
-        </x-field>
+          v-model="quoteForm.has_arrived_uae"
+          :options="alreadylived"
+          class="w-full"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.has_arrived_uae"
+        />
+
+        <x-select
+          v-else
+          :label="'Has your trip started?'"
+          required
+          v-model="quoteForm.has_arrived_destination"
+          :options="alreadylived"
+          class="w-full"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.has_arrived_destination"
+        />
       </div>
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field v-if="isArrivedUAE()" label="Travel Coverage" required>
-          <x-select
-            v-model="quoteForm.coverage_code"
-            :options="
-              quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND
-                ? inboundCoverageCode
-                : outboundCoverageCode
-            "
-            class="w-full"
-            :rules="[isRequired]"
-            :error="quoteForm.errors.coverage_code"
-          />
-        </x-field>
+        <x-select
+          v-if="isArrivedUAE()"
+          label="Travel Coverage"
+          required
+          v-model="quoteForm.coverage_code"
+          :options="
+            quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND
+              ? inboundCoverageCode
+              : outboundCoverageCode
+          "
+          class="w-full"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.coverage_code"
+        />
 
         <x-select
           v-if="
@@ -457,6 +466,9 @@ watch(
           multiple
           truncate
           :error="quoteForm.errors.destination_ids"
+          virtual-list
+          :virtualListItemHeight="34"
+          :virtualListOverscan="5"
         >
           <template #content-footer>
             <ui-select-actions
@@ -469,7 +481,8 @@ watch(
             />
           </template>
         </x-select>
-        <x-field
+
+        <x-select
           label="Which regions do you need cover for?*"
           v-if="
             quoteForm.has_arrived_destination == '0' &&
@@ -478,78 +491,71 @@ watch(
             quoteForm.destination_ids?.length > 0
           "
           required
-        >
-          <x-select
-            v-model="quoteForm.region_cover_for_id"
-            :options="outboundRegions"
-            :disabled="true"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.region_cover_for_id"
-          />
-        </x-field>
-        <x-field v-if="isArrivedUAE()" label="Travel Start Date" required>
-          <DatePicker
-            v-model="quoteForm.start_date"
-            name="created_at_start"
-            :disabled-dates="disablePastDates"
-          />
-        </x-field>
-        <x-field
+          v-model="quoteForm.region_cover_for_id"
+          :options="outboundRegions"
+          :disabled="true"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.region_cover_for_id"
+        />
+        <DatePicker
+          v-if="isArrivedUAE()"
+          label="Travel Start Date"
+          required
+          v-model="quoteForm.start_date"
+          name="created_at_start"
+          :disabled-dates="disablePastDates"
+        />
+        <DatePicker
           v-if="
             quoteForm.coverage_code ==
               travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP && isArrivedUAE()
           "
           label="Travel End Date"
           required
-        >
-          <DatePicker
-            v-model="quoteForm.end_date"
-            name="end_date"
-            :disabled-dates="disablePastDates"
-            :rules="[isRequired]"
-          />
-        </x-field>
+          v-model="quoteForm.end_date"
+          name="end_date"
+          :disabled-dates="disablePastDates"
+          :rules="[isRequired]"
+        />
 
-        <x-field
+        <x-select
           v-if="quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND"
           label="Departing From"
           required
-        >
-          <x-select
-            v-model="quoteForm.departure_country_id"
-            :options="
-              fields.destination_id.options.map(option => ({
-                value: option.id,
-                label: option.text,
-              }))
-            "
-            class="w-full"
-            :rules="[isRequired]"
-            :error="quoteForm.errors.departure_country_id"
-            filterable
-            placeholder="Select departing from"
-          />
-        </x-field>
+          v-model="quoteForm.departure_country_id"
+          :options="
+            fields.destination_id.options.map(option => ({
+              value: option.id,
+              label: option.text,
+            }))
+          "
+          class="w-full"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.departure_country_id"
+          filterable
+          placeholder="Select departing from"
+        />
 
-        <x-field label="First Name" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            :rules="[isRequired]"
-            class="w-full"
-            maxLength="20"
-            :error="quoteForm.errors.first_name"
-          />
-        </x-field>
-        <x-field label="Last Name" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            :rules="[isRequired]"
-            class="w-full"
-            maxLength="50"
-            :error="quoteForm.errors.last_name"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          :rules="[isRequired]"
+          class="w-full"
+          maxLength="20"
+          :error="quoteForm.errors.first_name"
+          label="First Name"
+          required
+        />
+
+        <x-input
+          v-model="quoteForm.last_name"
+          :rules="[isRequired]"
+          class="w-full"
+          maxLength="50"
+          :error="quoteForm.errors.last_name"
+          label="Last Name"
+          required
+        />
 
         <x-select
           v-model="quoteForm.nationality_id"
@@ -566,30 +572,37 @@ watch(
           label="Nationality"
           required
           :error="quoteForm.errors.nationality_id"
+          virtual-list
+          :virtualListItemHeight="34"
+          :virtualListOverscan="5"
         />
-        <x-field v-if="editMode" label="Days Cover">
-          <x-input disabled v-model="quoteForm.days_cover_for" class="w-full" />
-        </x-field>
+        <x-input
+          v-if="editMode"
+          :value="quoteForm.days_cover_for"
+          :disabled="true"
+          class="w-full"
+          label="Days Cover"
+        />
 
-        <x-field label="Email">
-          <x-input
-            type="email"
-            v-model="quoteForm.email"
-            class="w-full"
-            :disabled="editMode"
-            :rules="[isEmail]"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
-        <x-field label="Mobile number" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            class="w-full"
-            :disabled="editMode"
-            :rules="[isRequired, isMobileNo]"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
+        <x-input
+          type="email"
+          v-model="quoteForm.email"
+          class="w-full"
+          :disabled="editMode"
+          :rules="[isEmail]"
+          :error="quoteForm.errors.email"
+          label="Email"
+        />
+
+        <x-input
+          v-model="quoteForm.mobile_no"
+          class="w-full"
+          :disabled="editMode"
+          :rules="[isRequired, isMobileNo]"
+          :error="quoteForm.errors.mobile_no"
+          label="Mobile number"
+          required
+        />
       </div>
 
       <template
@@ -634,40 +647,39 @@ watch(
               />
             </div>
           </div>
-          <x-field label="Date of Birth" required>
-            <DatePicker
-              v-model="travel.dob"
-              name="created_at_start"
-              format="dd-MM-yyyy"
-              :rules="[rules.isRequired]"
-              :error="quoteForm.errors.dob"
-            />
-          </x-field>
-          <x-field label="Gender" required>
-            <x-select
-              v-model="travel.gender"
-              placeholder="Gender"
-              :options="genderList"
-              :rules="[rules.isRequired]"
-              class="w-full"
-            />
-          </x-field>
-          <x-field
+          <DatePicker
+            v-model="travel.dob"
+            name="created_at_start"
+            format="dd-MM-yyyy"
+            :rules="[rules.isRequired]"
+            :error="quoteForm.errors.dob"
+            label="Date of Birth"
+            required
+          />
+
+          <x-select
+            v-model="travel.gender"
+            placeholder="Gender"
+            :options="genderList"
+            :rules="[rules.isRequired]"
+            class="w-full"
+            label="Gender"
+            required
+          />
+
+          <x-select
             v-if="
               quoteForm.direction_code != travelQuoteEnum.TRAVEL_UAE_INBOUND
             "
+            v-model="travel.uae_resident"
+            placeholder="Are you a UAE resident"
+            :options="isUAEResident"
+            :rules="[rules.isRequired]"
+            @change="checkUAEResident"
+            class="w-full"
             label="Are you a UAE resident"
             required
-          >
-            <x-select
-              v-model="travel.uae_resident"
-              placeholder="Are you a UAE resident"
-              :options="isUAEResident"
-              :rules="[rules.isRequired]"
-              @change="checkUAEResident"
-              class="w-full"
-            />
-          </x-field>
+          />
         </div>
       </template>
 

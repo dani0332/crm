@@ -15,19 +15,11 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
-class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
+class UniversalSearchDataMigration implements ShouldQueue
 {
     use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
-
-    /**
-     * The maximum number of unhandled exceptions to allow before failing.
-     *
-     * @var int
-     */
-    public $maxExceptions = 3;
 
     /**
      * The number of seconds the job can run before timing out.
@@ -36,12 +28,7 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      */
     public $timeout = 3600; // 1 hour
 
-    /**
-     * Indicates if the job should be marked as failed on timeout.
-     *
-     * @var bool
-     */
-    public $failOnTimeout = true;
+    public $tries = 1;
 
     /**
      * Whether to force process all entries, including previously processed ones
@@ -72,10 +59,10 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
      * @param  bool  $forceProcess  Whether to force processing of all entries
      * @return void
      */
-    public function __construct(bool $forceProcess = false)
+    public function __construct(bool $forceProcess, $lockKey)
     {
         $this->forceProcess = $forceProcess;
-        $this->lockPostfix = Carbon::now()->format('YmdHi');
+        $this->lockPostfix = $lockKey;
     }
 
     /**
@@ -115,19 +102,19 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
             })
             ->orderBy('id')
             ->chunkById(1000, function ($personalQuotes) use (&$totalUpdated, &$lastProcessedId, $funName) {
+                $chunkStartTime = microtime(true);
                 foreach ($personalQuotes as $personalQuote) {
                     $personalQuoteUpdateData = [];
                     $iterationStartTime = microtime(true);
 
-                    LoggerService::startQuoteLogging($personalQuote);
-                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Start : ',
-                        extra: ['insured_id' => $personalQuote->insured_id, 'quote_id' => $personalQuote->quote_id]);
+                    /*LoggerService::startQuoteLogging($personalQuote);
+                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Start : ', extra: ['insured_id' => $personalQuote->insured_id, 'quote_id' => $personalQuote->quote_id]);*/
 
                     $quoteType = QuoteTypes::getName($personalQuote->quote_type_id)->value;
                     $quote = $this->getSelectedQuoteObjectBy($quoteType, $personalQuote->uuid, 'uuid');
 
                     if (! $quote) {
-                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote not found.');
+                        /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote not found.'); */
                         $lastProcessedId = $personalQuote->id;
 
                         continue;
@@ -137,9 +124,9 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     $isPersonalQuote = $quote->getMorphClass() == PersonalQuote::class;
                     if (! $isPersonalQuote && ! $personalQuote->quote_id) {
                         $personalQuoteUpdateData['quote_id'] = $quote->id;
-                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', ['quote_id' => $quote->id]);
+                        /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' updated.', ['quote_id' => $quote->id]); */
                     } else {
-                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote is of Personal Quote Table.');
+                        /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' - Quote is of Personal Quote Table.'); */
                     }
 
                     // Find the entity mapping for this quote
@@ -154,12 +141,12 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                         if ($insured && ! $personalQuote->insured_id) {
                             $personalQuoteUpdateData['insured_id'] = $insured->id;
                         } else {
-                            LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.');
+                            /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity Mapping ID: '.$entityMapping->id.' - Entity ID: '.$entityMapping->entity_id.' - Insured not found.'); */
                             $lastProcessedId = $personalQuote->id;
                         }
 
                     } else {
-                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity mapping not found.');
+                        /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$quote->code.' - Entity mapping not found.'); */
                         $lastProcessedId = $personalQuote->id;
                     }
 
@@ -167,11 +154,11 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                     if (! empty($personalQuoteUpdateData)) {
                         $personalQuote->updateQuietly($personalQuoteUpdateData);
 
-                        LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' - Quote Code: '.$personalQuote->code.' updated.', extra: $personalQuoteUpdateData);
+                        /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' - Quote Code: '.$personalQuote->code.' updated.', extra: ['data' => $personalQuoteUpdateData]); */
                     }
                     $iterationEndTime = microtime(true);
-                    $executionTime = $iterationEndTime - $iterationStartTime;
-                    LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Updated Personal Quote ID: '.$personalQuote->id.' - Quote Code: '.$personalQuote->code.' iteration executuon time(seconds) : '.$executionTime);
+                    $iterationExecutionTime = $iterationEndTime - $iterationStartTime;
+                    /* LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Quote Code: '.$personalQuote->code.' iteration execution time(seconds) : '.$iterationExecutionTime, extra: ['Data' => $personalQuoteUpdateData]); */
 
                     $lastProcessedId = $personalQuote->id;
                     $totalUpdated++;
@@ -180,8 +167,10 @@ class MigrateInsuredDataToPersonalQuotesJob implements ShouldQueue
                 // Update the cache after each chunk to avoid losing progress
                 Cache::put($this->cacheKey, $lastProcessedId, now()->addDays(30));
 
+                $chunkEndTime = microtime(true);
+                $chunkExecutionTime = $chunkEndTime - $chunkStartTime;
                 // Report progress
-                LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Processed a chunk. Last processed ID in cache: '.$lastProcessedId);
+                LoggerService::info(self::CLASS_NAME.' fn:'.$funName.' Chunk execution time(seconds) : '.$chunkExecutionTime.' Processed a chunk. Last processed ID in cache: '.$lastProcessedId);
             });
 
         // Get final id from cache for reporting

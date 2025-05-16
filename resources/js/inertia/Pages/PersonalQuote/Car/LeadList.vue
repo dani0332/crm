@@ -626,9 +626,14 @@ const onExport = (url, isLoading = false, exportType = 'download') => {
     })
     .catch(err => {
       notification.error({
-        title: 'Unable to start an export',
+        title: err.response.data.message
+          ? err.response.data.message
+          : 'Unable to start an export',
         position: 'top',
       });
+      setTimeout(() => {
+        exportLoader.value = false;
+      }, 1000);
       throw err;
     });
 };

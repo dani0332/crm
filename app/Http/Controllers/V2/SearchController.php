@@ -20,6 +20,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\SearchService;
+use Illuminate\Support\Facades\DB;
 
 class SearchController extends Controller
 {
@@ -70,6 +71,7 @@ class SearchController extends Controller
     {
         $isEndorsementList = $exportSearchLeadsOrEndorsementsRequest->list == 'endorsements';
         $getLeadsOrEndorsements = app(SearchService::class)->getSearchLeads($isEndorsementList, true);
+        DB::setDefaultConnection('mysql');
         app(CentralService::class)->generateExportLogs();
         $exportFileName = 'InsuranceMarket.ae™ '.($isEndorsementList ? 'Send Update' : 'Lead').' List '.now()->format(config('constants.DATE_DISPLAY_FORMAT')).'.xlsx';
 

@@ -113,17 +113,15 @@ const showPriceModel = () => {
       <div class="w-full grid md:grid-cols-1 gap-3">
         <div>
           Total Price
-          <x-field class="w-full">
-            <x-input
-              class="w-full"
-              v-model="newTotalPrice"
-              :rules="[
-                rules.isRequired,
-                rules.isTotalAmountLess,
-                rules.verifyDecimalPlaces,
-              ]"
-            />
-          </x-field>
+          <x-input
+            class="w-full"
+            v-model="newTotalPrice"
+            :rules="[
+              rules.isRequired,
+              rules.isTotalAmountLess,
+              rules.verifyDecimalPlaces,
+            ]"
+          />
         </div>
       </div>
       <template #secondary-action>

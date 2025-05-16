@@ -549,15 +549,15 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="Buy Lead Status of Users" required>
-          <x-select
-            placeholder="Select Status"
-            :options="userBLStatuses || []"
-            filterable
-            v-model="filters.userBlStatus"
-            :rules="[isRequired]"
-          ></x-select>
-        </x-field>
+        <x-select
+          label="Buy Lead Status of Users"
+          required
+          placeholder="Select Status"
+          :options="userBLStatuses || []"
+          filterable
+          v-model="filters.userBlStatus"
+          :rules="[isRequired]"
+        ></x-select>
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button
