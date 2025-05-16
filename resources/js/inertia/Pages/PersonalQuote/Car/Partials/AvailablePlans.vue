@@ -143,6 +143,14 @@ const onUpdatePlan = () => {
     showInsurerError.value = false;
   }
 
+  if (planForm.car_value > 999999) {
+    notification.error({
+      title: 'Maximum car price is 999,999 AED',
+      position: 'top',
+    });
+    return;
+  }
+
   let addons = [];
   let tempAddons = planForm.addons;
   tempAddons.forEach(addon => {
@@ -342,6 +350,11 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                 size="sm"
                 type="number"
                 :disabled="page.props.lockLeadSectionsDetails.plan_selection"
+                :error="
+                  planForm.car_value > 999999
+                    ? 'Maximum car price is 999,999 AED'
+                    : ''
+                "
               />
             </div>
             <div class="grid sm:grid-cols-2">
