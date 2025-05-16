@@ -59,19 +59,22 @@ trait PrivateClient
         if ($exists) {
             try {
                 $pcpTagVersion = $configs->first()->version;
-                $model->whereNull('pc_qualified')->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
-                if (! $model->wasChanged()) {
+                if (is_null($model->pc_qualified)) {
+                    $model->pc_qualified = 1;
+                    $model->pcp_tag_version = $pcpTagVersion;
+                    $model->save();
+
                     PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
-                    LoggerService::info('PC qualified tag already applied on lead.');
-                } else {
                     LoggerService::info('PC qualified tag applied successfully on lead.');
+                } else {
+                    LoggerService::info('PC qualified tag already applied on lead.');
                 }
                 $customer = Customer::where([
                     'id' => $model->customer_id,
                 ])->first();
-                if ($customer && $customer->pcp_tag != 1) {
+                if ($customer && $customer->pcp_tag != true) {
                     $customer->ref_id = $model->code;
-                    $customer->update(['pcp_tag' => 1, 'pcp_tag_version' => $pcpTagVersion]);
+                    $customer->update(['pcp_tag' => true, 'pcp_tag_version' => $pcpTagVersion]);
 
                     LoggerService::info('PCP tag applied successfully on customer.', [
                         'customer_id' => $customer->id,
@@ -110,7 +113,12 @@ trait PrivateClient
     public function removePcpTag()
     {
         $customers = Customer::where('pcp_tag', true)->get();
-        $updateCustomers = [];
+
+        if ($customers->isEmpty()) {
+            LoggerService::info('No customers found with PCP tag.');
+
+            return;
+        }
 
         foreach ($customers as $customer) {
             $activeQualifiedLeadsCount = 0;
@@ -125,21 +133,21 @@ trait PrivateClient
             $activeQualifiedLeadsCount += $personalQuoteCount;
 
             if ($activeQualifiedLeadsCount === 0) {
-                $updateCustomers[] = $customer->id;
+                try {
+                    $customer = Customer::where('id', $customer->id)->first();
+                    $customer->update([
+                        'pcp_tag' => 0,
+                        'updated_at' => now(),
+                    ]);
+
+                    LoggerService::info('PCP tag removed successfully from customer: ', extra: [
+                        'customer_id' => $customer->id,
+                    ]);
+                } catch (\Exception $ex) {
+                    LoggerService::error('Error removing PCP tag.', exception: $ex);
+                    throw $ex;
+                }
             }
-        }
-        if (count($updateCustomers) > 0) {
-            try {
-                Customer::whereIn('id', $updateCustomers)->update(['pcp_tag' => false]);
-                LoggerService::info('PCP tag removed successfully from customers: ', extra: [
-                    'customers' => implode(', ', $updateCustomers),
-                ]);
-            } catch (\Exception $ex) {
-                LoggerService::error('Error removing PCP tag.', exception: $ex);
-                throw $ex;
-            }
-        } else {
-            LoggerService::warning('No customer found that had PCP Tag.');
         }
     }
 

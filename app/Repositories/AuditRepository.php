@@ -62,7 +62,53 @@ class AuditRepository extends BaseRepository
                 }
             }
         }
+        $results = $query->orderBy('created_at', 'desc')->get();
 
-        return $query->orderBy('created_at', 'desc')->get();
+        $results->transform(function ($audit) {
+            $newValues = json_decode($audit->new_values, true) ?? [];
+            $oldValues = json_decode($audit->old_values, true) ?? [];
+
+            $fieldMap = [
+                'pcp_tag' => 'PC-Customer',
+                'pc_qualified' => 'PC-Qualified',
+            ];
+
+            $transformValue = function ($value) {
+                if ($value === 1 || $value === '1') {
+                    return 'Yes';
+                } elseif ($value === 0 || $value === '0') {
+                    return 'Ex-PC';
+                } elseif (is_null($value)) {
+                    return 'No';
+                }
+
+                return $value;
+            };
+
+            $transformedNew = [];
+            foreach ($newValues as $key => $value) {
+                if (isset($fieldMap[$key])) {
+                    $transformedNew[$fieldMap[$key]] = $transformValue($value);
+                } else {
+                    $transformedNew[$key] = $value;
+                }
+            }
+
+            $transformedOld = [];
+            foreach ($oldValues as $key => $value) {
+                if (isset($fieldMap[$key])) {
+                    $transformedOld[$fieldMap[$key]] = $transformValue($value);
+                } else {
+                    $transformedOld[$key] = $value;
+                }
+            }
+
+            $audit->new_values = json_encode($transformedNew);
+            $audit->old_values = json_encode($transformedOld);
+
+            return $audit;
+        });
+
+        return $results;
     }
 }
