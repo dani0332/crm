@@ -1066,7 +1066,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $quotePayment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
         if ($quotePayment) {
             if (! $quotePayment->price_vat_applicable) {
-                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($quotePayment->frequency, $quotePayment->total_price, $modelType, $quote->id);
+                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat('updatePriceVatApplicableAndVat', $quotePayment->total_price, $modelType, $quote->id, $quotePayment->code);
                 $quotePayment->update([
                     'price_vat_applicable' => $priceWithoutVat,
                     'price_vat' => $vat,
@@ -1082,7 +1082,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         if ($splitPayment->sr_no === 1) {
                             $splitAmount = $splitPayment->payment_amount + $quotePayment->discount_value;
                         }
-                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitAmount, $modelType, $quote->id, count($paymentSplits));
+                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitAmount, $modelType, $quote->id, count($paymentSplits), $splitPayment->code);
                         $splitPayment->update([
                             'price_vat_applicable' => $priceWithoutVat,
                             'price_vat' => $vat,
