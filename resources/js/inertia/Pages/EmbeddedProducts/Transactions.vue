@@ -260,24 +260,26 @@ watch(
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="Email">
+        <div>
           <x-input
             v-model="filters.email"
             type="search"
             name="first_name"
             class="w-full"
             placeholder="Type here"
+            label="Email"
           />
-        </x-field>
-        <x-field label="Name">
+        </div>
+        <div>
           <x-input
             v-model="filters.name"
             type="search"
             name="last_name"
             class="w-full"
             placeholder="Type here"
+            label="Name"
           />
-        </x-field>
+        </div>
         <div>
           <x-tooltip placement="bottom">
             <label
@@ -290,16 +292,14 @@ watch(
               the client by the system
             </template>
           </x-tooltip>
-          <x-field>
-            <DatePicker
-              v-model="filters.date_of_purchase"
-              name="date_of_purchase"
-              class="w-full"
-              model-type="yyyy-MM-dd"
-              range
-              max-range="30"
-            />
-          </x-field>
+          <DatePicker
+            v-model="filters.date_of_purchase"
+            name="date_of_purchase"
+            class="w-full"
+            model-type="yyyy-MM-dd"
+            range
+            max-range="30"
+          />
         </div>
         <div>
           <x-tooltip placement="bottom">
@@ -312,32 +312,26 @@ watch(
               This is the month in which the EP product was issued to the client
             </template>
           </x-tooltip>
-          <x-field>
-            <DatePicker
-              v-model="filters.months"
-              name="months"
-              placeholder="Select month"
-              class="w-full"
-              month-picker
-              model-type="yyyy-MM"
-              format="MM-yyyy"
-            />
-          </x-field>
+          <DatePicker
+            v-model="filters.months"
+            name="months"
+            placeholder="Select month"
+            class="w-full"
+            month-picker
+            model-type="yyyy-MM"
+            format="MM-yyyy"
+          />
         </div>
-        <div>
-          <x-field
+        <div v-if="embeddedProduct.detail.short_code === ep_enums.COURIER">
+          <x-select
+            v-model="filters.sync_status"
+            placeholder="Select Sync Status"
+            :options="sync_statuses"
+            class="w-full"
+            filterable
+            filterPlaceholder="Filter Sync Status...."
             label="Sync Status"
-            v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
-          >
-            <x-select
-              v-model="filters.sync_status"
-              placeholder="Select Sync Status"
-              :options="sync_statuses"
-              class="w-full"
-              filterable
-              filterPlaceholder="Filter Sync Status...."
-            />
-          </x-field>
+          />
         </div>
       </div>
       <div class="flex flex-row-reverse gap-3">

@@ -103,17 +103,16 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="flex flex-wrap grid sm:grid-cols-2 md:grid-cols-2 gap-6">
-        <x-field label="Batch Type">
-          <x-select
-            v-model="filters.quote_type_id"
-            placeholder="Search by Batch Type"
-            :options="[
-              { value: 1, label: 'Motor' },
-              { value: -1, label: 'Non-motor' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
+        <x-select
+          v-model="filters.quote_type_id"
+          placeholder="Search by Batch Type"
+          :options="[
+            { value: 1, label: 'Motor' },
+            { value: -1, label: 'Non-motor' },
+          ]"
+          label="Batch Type"
+          class="w-full"
+        />
 
         <x-select
           v-model="filters.name"
