@@ -65,7 +65,7 @@ const tableHeader = [
     value: 'captured_sum',
   },
   {
-    text: 'Total Price',
+    text: 'Total Price (AED)',
     value: 'total_sum',
   },
 ];
