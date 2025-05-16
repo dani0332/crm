@@ -3,16 +3,16 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\EmailServices\CarEmailService;
-use App\Enums\QuoteStatusEnum;
 
 class SendPCPCarOCBEmailJob implements ShouldQueue
 {
@@ -38,9 +38,9 @@ class SendPCPCarOCBEmailJob implements ShouldQueue
             app(CarEmailService::class)->sendPCPOCBIntroEmail($carLead);
             $carLead->quote_status_id = QuoteStatusEnum::Quoted;
             $carLead->save();
-            LoggerService::info(self::class.' - Car PCP OCB  Switch is on | Time: '.now() . ' | Ref-ID: '.$carLead->uuid);
+            LoggerService::info(self::class.' - Car PCP OCB  Switch is on | Time: '.now().' | Ref-ID: '.$carLead->uuid);
         } else {
-            LoggerService::info(self::class.' - Car OCB PDP  Switch is off | Time: '.now() . ' | Ref-ID: '.$carLead->uuid);
+            LoggerService::info(self::class.' - Car OCB PDP  Switch is off | Time: '.now().' | Ref-ID: '.$carLead->uuid);
         }
         LoggerService::endLogging();
     }

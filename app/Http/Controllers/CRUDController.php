@@ -93,6 +93,7 @@ use App\Services\HomeQuoteService;
 use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
 use App\Services\Logger\LoggerService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
@@ -114,7 +115,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use App\Services\Logger\LoggerService;
 
 class CRUDController extends Controller
 {
@@ -2231,11 +2231,12 @@ class CRUDController extends Controller
         }
 
         // check if advisor belongs to PCP or not
-        $isPCPTeamAdvisor = !empty($carQuote->advisor_id) ? $this->carQuoteService->isPCPAdvisor($carQuote->advisor_id) : false;
-        LoggerService::info(self::class.' - PCP Team Advisor: ' . $isPCPTeamAdvisor . ' | Lead source: ' . $carQuote->source . ' | Ref-ID: ' . $carQuote->uuid . ' | time: ' . now());
+        $isPCPTeamAdvisor = ! empty($carQuote->advisor_id) ? $this->carQuoteService->isPCPAdvisor($carQuote->advisor_id) : false;
+        LoggerService::info(self::class.' - PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$carQuote->source.' | Ref-ID: '.$carQuote->uuid.' | time: '.now());
         if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
-               app(CarEmailService::class)->sendPCPOCBIntroEmail($carQuote);
-               return response()->json(['success' => 'OCB email sent to customer']);
+            app(CarEmailService::class)->sendPCPOCBIntroEmail($carQuote);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
         }
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);

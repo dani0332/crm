@@ -2,21 +2,21 @@
 
 namespace App\Jobs;
 
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\CarQuote;
+use App\Services\EmailServices\CarEmailService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\EmailServices\CarEmailService;
-use App\Models\CarQuote;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\LeadSourceEnum;
-use App\Services\Logger\LoggerService;
 
 class SendPCPFollowupsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     private $quoteUuid;
     public $tries = 3;
     public $timeout = 15;
@@ -27,7 +27,6 @@ class SendPCPFollowupsJob implements ShouldQueue
         $this->quoteUuid = $quoteUuid;
     }
 
-
     /**
      * Execute the job.
      */
@@ -37,9 +36,10 @@ class SendPCPFollowupsJob implements ShouldQueue
             $carLead = CarQuote::where('uuid', $this->quoteUuid)->first();
             if (! $carLead) {
                 LoggerService::info(self::class." -SendPCPFollowupsJob - CAR Lead Not Found - Ref ID: {$this->quoteUuid} | Time: ".now());
+
                 return;
             }
-            if(empty($carLead->pcp_flow_executed_at)){
+            if (empty($carLead->pcp_flow_executed_at)) {
                 LoggerService::info(self::class." - Sending PCP Motor follow-ups for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
                 $leadSources = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED];
                 $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead];
@@ -52,8 +52,7 @@ class SendPCPFollowupsJob implements ShouldQueue
                 } else {
                     LoggerService::info(self::class." - CAR Lead did not trigger PCP WorkFlow due to ineligible status (Status ID: {$carLead->quote_status_id}) - Ref ID: {$carLead->uuid} | Time: ".now());
                 }
-            }
-            else {
+            } else {
                 LoggerService::info(self::class." - PCP Motor follow-ups already sent for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
             }
 

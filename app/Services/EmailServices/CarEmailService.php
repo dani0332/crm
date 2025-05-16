@@ -25,10 +25,10 @@ use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\CarQuoteService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
-use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Storage;
 
 class CarEmailService extends BaseService
@@ -43,10 +43,10 @@ class CarEmailService extends BaseService
     public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false, $triggerOnlyWorkflow = false, bool $forceSicWorkflow = false)
     {
         $plans = $this->executePlansSelectionLogic($plans);
-        $isPCPTeamAdvisor = !empty($lead->advisor_id) ? $carQuoteService->isPCPAdvisor($lead->advisor_id) : false;
-        info(self::class . ' - PCP Team Advisor: ' . $isPCPTeamAdvisor . ' | Lead source: ' . $lead->source . ' | Ref-ID: ' . $lead->uuid . ' | time: ' . now());
-         // Determine the email template ID
-        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow,  $isPCPTeamAdvisor);
+        $isPCPTeamAdvisor = ! empty($lead->advisor_id) ? $carQuoteService->isPCPAdvisor($lead->advisor_id) : false;
+        info(self::class.' - PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$lead->source.' | Ref-ID: '.$lead->uuid.' | time: '.now());
+        // Determine the email template ID
+        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow, $isPCPTeamAdvisor);
 
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
@@ -298,14 +298,14 @@ class CarEmailService extends BaseService
         if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
 
             $emailTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::PCP_FOLLOWUP_TEMPLATE_ID)->first();
-            info('getEmailTemplateId PCP Follow-Up email template id: ' . $emailTemplate->value ?? '');
+            info('getEmailTemplateId PCP Follow-Up email template id: '.$emailTemplate->value ?? '');
             if (! empty($emailTemplate->value)) {
                 $emailTemplateId = (int) $emailTemplate->value;
-                info('fn: getEmailTemplateId PCP Follow-Up email template id: ' . $emailTemplateId .'| Ref-ID' . $lead->uuid . ' | time:' . now());
+                info('fn: getEmailTemplateId PCP Follow-Up email template id: '.$emailTemplateId.'| Ref-ID'.$lead->uuid.' | time:'.now());
+
                 return $emailTemplateId;
-            }
-            else {
-                info("PCP Follow-Up email template not found in Application Storage Ref-ID {$lead->uuid } | time:" . now());
+            } else {
+                info("PCP Follow-Up email template not found in Application Storage Ref-ID {$lead->uuid } | time:".now());
             }
         }
         if (count($plans) == 0) {
@@ -382,7 +382,7 @@ class CarEmailService extends BaseService
                     $lead->save();
 
                     if (! empty($response->headers['Run-Id'])) {
-                        $this->createQuoteFlowDetails($lead, $response ,QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS->value);
+                        $this->createQuoteFlowDetails($lead, $response, QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS->value);
                     }
                 } else {
                     info("NBMotorWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
@@ -435,7 +435,7 @@ class CarEmailService extends BaseService
                 QuoteFlowDetails::create([
                     'quote_uuid' => $lead->uuid,
                     'quote_type_id' => QuoteTypeId::Car,
-                    'flow_type' =>  $flowType ,
+                    'flow_type' => $flowType,
                     'flow_id' => $runId,
                     'started_at' => now(),
                 ]);
@@ -475,16 +475,17 @@ class CarEmailService extends BaseService
         }
     }
 
-    public function sendPCPFollowups($lead){
+    public function sendPCPFollowups($lead)
+    {
         try {
-            info(self::class." - Sending sendPCPFollowups followups email for lead: ".$lead->uuid.' | Time: '.now());
+            info(self::class.' - Sending sendPCPFollowups followups email for lead: '.$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::MOTOR_PCP_FOLLOWUPS);
             $birdMotorPCPEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_PCP_FOLLOWUPS)->first();
             if ($birdMotorPCPEvent) {
                 $response = app(BirdService::class)->triggerWebHookRequest($birdMotorPCPEvent->value, $emailData);
                 if (! empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($lead, $response ,QuoteFlowType::MOTOR_PCP_FOLLOWUPS->value);
+                    $this->createQuoteFlowDetails($lead, $response, QuoteFlowType::MOTOR_PCP_FOLLOWUPS->value);
                 }
                 LoggerService::info(self::class." - sendPCPFollowups event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
                 LoggerService::info(self::class." - sendPCPFollowups response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
@@ -500,9 +501,10 @@ class CarEmailService extends BaseService
         }
     }
 
-    public function sendPCPOCBIntroEmail($lead){
+    public function sendPCPOCBIntroEmail($lead)
+    {
         try {
-            LoggerService::info(self::class." - Sending sendPCPOCBIntroEmail followups email for lead: ".$lead->uuid.' | Time: '.now());
+            LoggerService::info(self::class.' - Sending sendPCPOCBIntroEmail followups email for lead: '.$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::MOTOR_PCP_OCB);
             $birdMotorPCPEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::MOTOR_PCP_FOLLOWUPS)->first();
