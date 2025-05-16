@@ -6,6 +6,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
+use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
@@ -46,6 +47,8 @@ class TravelQuoteObserver
         if (isset($dirty['advisor_id'])) {
             try {
                 $travelQuote->markLeadAllocationPassed();
+
+                LogAllocation::dispatch($travelQuote, QuoteTypes::TRAVEL);
 
                 // If advisor is not CHS advisor, then send FTC email
                 if (isCHSAdvisor($dirty['advisor_id'])) {

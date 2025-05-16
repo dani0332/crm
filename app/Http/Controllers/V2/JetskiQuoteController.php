@@ -46,7 +46,7 @@ class JetskiQuoteController extends Controller
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('JetskiQuote/Index', [
-            'quotes' => $quotes,
+            'quotes' => $quotes->simplePaginate(10)->withQueryString(),
             'renewalBatches' => $renewalBatches,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,

@@ -7,11 +7,11 @@ use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\QuoteTypes;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use App\Services\ProcessTracker\ProcessTrackerService;
 use App\Services\TravelAllocationService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class TravelAllocation implements Allocation
 {
@@ -41,11 +41,11 @@ class TravelAllocation implements Allocation
         ];
 
         try {
-            info(self::class." - executeSteps: Travel Allocation started for allocation id : {$this->allocationId}");
+            LoggerService::info(self::class." - executeSteps: Travel Allocation started for allocation id : {$this->allocationId}");
             $lead = $this->fetchLead();
 
             if (! $lead) {
-                info(self::class.' - executeSteps: Lead not found');
+                LoggerService::info(self::class.' - executeSteps: Lead not found');
 
                 $this->tracker->saveResult(ProcessTrackerAllocationEnum::LEAD_NOT_FOUND, [
                     '@statuses' => ['Fake', 'Duplicate', 'Lost'],
@@ -54,7 +54,7 @@ class TravelAllocation implements Allocation
                 $response = $this->travelAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 if ($lead->isAllocationInProgress()) {
-                    info("Allocation is already started at {$lead->allocation_started_at}");
+                    LoggerService::info("Allocation is already started at {$lead->allocation_started_at}");
 
                     return $this->travelAllocationService->createResponse(0, 'Allocation is in progress', Response::HTTP_OK);
                 }
@@ -66,7 +66,7 @@ class TravelAllocation implements Allocation
                 if (! $advisor) {
                     $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
 
-                    info(self::class.' - executeSteps: No advisor found');
+                    LoggerService::info(self::class.' - executeSteps: No advisor found');
 
                     $response = $this->travelAllocationService->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
 
@@ -81,8 +81,8 @@ class TravelAllocation implements Allocation
             $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
 
             $message = $th->getMessage() ?? '';
-            info('exception occurred in travel lead allocation with error : '.$message);
-            info('exception occurred in travel lead allocation with error stack as  : '.$th->getTraceAsString());
+            LoggerService::error('exception occurred in travel lead allocation with error : '.$message);
+            LoggerService::error('exception occurred in travel lead allocation with error stack as  : '.$th->getTraceAsString());
             $response = $this->travelAllocationService->createResponse(0, 'exception occurred in travel lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
 
             $this->tracker->saveResult(ProcessTrackerAllocationEnum::EXCEPTION_RAISED, summary: "Exception Occurred in Lead Allocation with error : {$message}");
@@ -111,7 +111,7 @@ class TravelAllocation implements Allocation
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($e->getMessage());
+            LoggerService::error($e->getMessage());
 
             $this->tracker->saveResult(ProcessTrackerAllocationEnum::EXCEPTION_RAISED, summary: "Assign Lead Failed with error : {$e->getMessage()}");
         }

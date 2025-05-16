@@ -24,4 +24,7 @@ final class WorkflowTypeEnum extends Enum
     public const CUSTOMER_NOTIFY_UNAVAILABLE_ADVIOSR = 'customer_notify_unavailable_advisor';
     public const INTRODUCTORY_EMAIL_TO_CUSTOMER = 'introductory_email_to_customer';
     public const SEND_POLICY_ISSUED_WHATSAPP_MESSAGE_TO_CUSTOMER = 'send_policy_issued_whatsapp_message_to_customer';
+    public const COMPANY_CAR_AUTOMATED_FOLLOWUPS = 'company_car_automated_followups';
+    public const COMPANY_CAR_OCB = 'company_car_ocb';
+    public const AIG_WORKFLOW = 'aig_workflow';
 }

@@ -2,13 +2,19 @@
 
 namespace App\Observers;
 
+use App\Enums\BusinessTypeOfInsuranceEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Jobs\Audit\LogAllocation;
 use App\Jobs\MAWelcomeJob;
 use App\Jobs\SendPolicyIssueWhatsappMessageJob;
 use App\Models\BusinessQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\BusinessQuoteService;
+use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
@@ -33,6 +39,43 @@ class BusinessQuoteObserver
     public function updated(BusinessQuote $businessQuote): void
     {
         $dirty = $businessQuote->getDirty();
+
+        $oldAdvisorId = $businessQuote->getOriginal('advisor_id') ?? null;
+
+        if (isset($dirty['advisor_id'])) {
+            $businessTypeInsurance = '';
+
+            LogAllocation::dispatch($businessQuote, QuoteTypes::BUSINESS);
+
+            switch ($businessQuote->business_type_of_insurance_id) {
+                case BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL:
+                    $businessTypeInsurance = QuoteTypes::GROUP_MEDICAL->value;
+                    break;
+                case BusinessTypeOfInsuranceIdEnum::PROPERTY:
+                    $businessTypeInsurance = BusinessTypeOfInsuranceEnum::PROPERTY;
+                    break;
+                case BusinessTypeOfInsuranceIdEnum::SEVERAL_INSURANCES:
+                    $businessTypeInsurance = BusinessTypeOfInsuranceEnum::SEVERAL_INSURANCES;
+                    break;
+                default:
+                    $businessTypeInsurance = QuoteTypes::CORPLINE->value;
+                    break;
+            }
+            if ($businessQuote->source != LeadSourceEnum::IMCRM && ! empty($businessTypeInsurance)) {
+                info(self::class." -  business_type_of_insurance ID: {$businessQuote->business_type_of_insurance_id} | Ref-ID: {$businessQuote->uuid} | Time: ".now());
+                info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$businessQuote->advisor_id} | Ref-ID: {$businessQuote->uuid}  | Time: ".now());
+
+                $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
+                info(self::class." Sending {$emailType} email to customer for  {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
+                $shortenedBusinessType = app(BusinessQuoteService::class)->formatInsuranceName($businessQuote->businessTypeOfInsurance->code ?? '');
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($businessQuote, $businessTypeInsurance, $oldAdvisorId, $shortenedBusinessType ?? []);
+                info(self::class." | {$emailType} email sent to customer for {$businessTypeInsurance} quote {$businessQuote->uuid} | Time: ".now());
+
+            } else {
+                info(self::class." - lead source: {$businessQuote->source} |  Advisor ID: {$businessQuote->advisor_id}  | businessTypeInsurance:{ $businessTypeInsurance} | Ref-ID: {$businessQuote->uuid} Time: ".now());
+            }
+
+        }
         if (
             isset($dirty['quote_status_id']) &&
             $businessQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
