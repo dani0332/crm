@@ -57,21 +57,6 @@ class SplitPaymentUpdateRequest extends FormRequest
                 $paymentSplit = PaymentSplits::find($request->splitPaymentId);
             }
 
-            // Check if payment method is Insurer Payment
-            if ($paymentSplit && $paymentSplit->payment_method === PaymentMethodsEnum::InsurerPayment) {
-                // Validate insurer receipt number is unique
-                if ($request->insurer_receipt_number) {
-                    $existingPayment = PaymentSplits::select('id')
-                        ->where('insurer_receipt_number', $request->insurer_receipt_number)
-                        ->limit(1)
-                        ->exists();
-
-                    if ($existingPayment) {
-                        $validator->errors()->add('error', 'This insurer receipt number has already been used');
-                    }
-                }
-            }
-
             // Check if payment method is INPL
             if ($paymentSplit && $paymentSplit->payment_method === PaymentMethodsEnum::InsureNowPayLater) {
                 return;
