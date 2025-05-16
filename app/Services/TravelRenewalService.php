@@ -83,7 +83,7 @@ class TravelRenewalService extends AllocationService
                 LoggerService::error('Error processing quote', exception: $e);
             }
 
-            Sleep::for(1)->second();
+            Sleep::for(3)->seconds();
         }
     }
     public function isDuplicateQuote($quote)
