@@ -21,6 +21,9 @@ class TravelAllocation implements Allocation
     public $teamId;
     public $tracker;
     private bool $overrideAdvisorId = false;
+    
+    // Default team ID (no specific team assignment) for travel team
+    private const DEFAULT_TEAM_ID = false;
 
     public function __construct(TravelAllocationService $travelAllocationService, ProcessTrackerService $tracker, $allocationId, $teamId = false, bool $overrideAdvisorId = false)
     {
@@ -128,7 +131,14 @@ class TravelAllocation implements Allocation
         }
     }
 
-    private function evaluateTeamId(TravelQuote $lead)
+    /**
+     * Evaluates and sets the appropriate team ID for the travel quote lead
+     * based on business rules and lead properties.
+     *
+     * @param TravelQuote $lead The lead to evaluate
+     * @return void
+     */
+    private function evaluateTeamId(TravelQuote $lead): void
     {
         if (!$lead || !$lead->uuid) {
             LoggerService::warning('Cannot evaluate team ID - invalid lead', extra: [
@@ -138,19 +148,36 @@ class TravelAllocation implements Allocation
         }
         
         // Extract lead properties with null safety
-        $isSIC = method_exists($lead, 'isSIC') ? $lead->isSIC(QuoteTypes::TRAVEL) : false;
-        $isAIG = method_exists($lead, 'isAIG') ? $lead->isAIG(QuoteTypes::TRAVEL) : false;
-        $isRequestedAdvisorOrPaymentAuthorized = method_exists($lead, 'isRequestedAdvisorOrPaymentAuthorized') ? $lead->isRequestedAdvisorOrPaymentAuthorized() : false;
+        $isSIC = $this->checkLeadMethod($lead, 'isSIC', [QuoteTypes::TRAVEL]);
+        $isAIG = $this->checkLeadMethod($lead, 'isAIG', [QuoteTypes::TRAVEL]);
+        $isRequestedAdvisorOrPaymentAuthorized = $this->checkLeadMethod($lead, 'isRequestedAdvisorOrPaymentAuthorized');
+        $isPaymentAuthorizedOrLinkRequested = $this->checkLeadMethod($lead, 'isPaymentAuthorizedOrLinkRequested');
+        $isLeadFromInstantAlfred = $this->checkLeadMethod($lead, 'isLeadFromInstantAlfred');
+        
         $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
         
-        // Simplified condition: either (SIC but not AIG) OR (AIG) leads with advisor requested/payment authorized
-        if ((($isSIC && !$isAIG) || $isAIG) && $isRequestedAdvisorOrPaymentAuthorized) {
+        // Determine team assignment based on business rules
+        $isAIGWithInstantAlfred = $isAIG && $isLeadFromInstantAlfred;
+        $isSICOrAIGWithRequestedAdvisor = (($isSIC && !$isAIG) || $isAIG) && $isRequestedAdvisorOrPaymentAuthorized;
+        $isNonSICNonAIGWithPayment = (!$isSIC && !$isAIG) && $isPaymentAuthorizedOrLinkRequested;
+        
+        // Apply team assignment rules
+        if ($isAIGWithInstantAlfred) {
+            // Rule 1: AIG leads from Instant Alfred go to default team
+            $this->teamId = self::DEFAULT_TEAM_ID;
+            $reason = "AIG and Lead from Instant Alfred";
+        } elseif ($isSICOrAIGWithRequestedAdvisor) {
+            // Rule 2: SIC or AIG leads with advisor requested or payment authorized
             $this->teamId = $sicUnassistedTeamId;
             $reason = $isAIG ? "AIG with advisor requested or payment authorized" : 
                               "SIC with advisor requested or payment authorized";
+        } elseif ($isNonSICNonAIGWithPayment) {
+            // Rule 3: Non-SIC, Non-AIG leads with payment authorized or link requested
+            $this->teamId = $sicUnassistedTeamId;
+            $reason = "Non-SIC, Non-AIG lead with payment authorized or link requested";
         } else {
-            // Default: All other leads have no specific team
-            $this->teamId = false;
+            // Rule 4: Default - all other leads have no specific team
+            $this->teamId = self::DEFAULT_TEAM_ID;
             $reason = "Default case - no specific team";
         }
         
@@ -160,7 +187,26 @@ class TravelAllocation implements Allocation
             'teamId' => $this->teamId,
             'isSIC' => $isSIC,
             'isAIG' => $isAIG,
-            'isRequestedAdvisorOrPaymentAuthorized' => $isRequestedAdvisorOrPaymentAuthorized
+            'isRequestedAdvisorOrPaymentAuthorized' => $isRequestedAdvisorOrPaymentAuthorized,
+            'isPaymentAuthorizedOrLinkRequested' => $isPaymentAuthorizedOrLinkRequested,
+            'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred
         ]);
+    }
+    
+    /**
+     * Helper method to safely check if a method exists and call it with parameters
+     *
+     * @param TravelQuote $lead The lead object
+     * @param string $methodName The method name to check and call
+     * @param array $params Optional parameters to pass to the method
+     * @return bool The result of the method call or false if method doesn't exist
+     */
+    private function checkLeadMethod(TravelQuote $lead, string $methodName, array $params = []): bool
+    {
+        if (!method_exists($lead, $methodName)) {
+            return false;
+        }
+        
+        return $lead->{$methodName}(...$params);
     }
 }

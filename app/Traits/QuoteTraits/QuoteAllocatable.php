@@ -12,6 +12,7 @@ use App\Models\QuoteTag;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use App\Enums\LeadAssignmentTriggerEnum;
 
 trait QuoteAllocatable
 {
@@ -238,5 +239,15 @@ trait QuoteAllocatable
     public function isAIG(QuoteTypes $quoteType): bool
     {
         return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
+    public function isLeadFromInstantAlfred(): bool
+    {
+        return $this->lead_assignment_trigger == LeadAssignmentTriggerEnum::INSTANT_ALFRED;
+    }
+
+    public function isPaymentAuthorizedOrLinkRequested()
+    {
+        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 }
