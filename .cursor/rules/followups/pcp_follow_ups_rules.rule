@@ -1,0 +1,234 @@
+---
+description: Rules to monitor and enforce business logic integrity of the PCP Follow-Ups feature
+globs:
+  - app/Jobs/SendPCPFollowupsJob.php
+  - app/Services/EmailServices/CarEmailService.php
+  - app/Enums/QuoteFlowType.php
+  - app/Enums/WorkflowTypeEnum.php
+  - app/Enums/ApplicationStorageEnums.php
+  - app/Enums/QuoteStatusEnum.php
+  - app/Enums/quoteStatusCode.php
+  - app/Enums/LeadSourceEnum.php
+  - app/Services/RenewalsUploadService.php
+  - app/Models/CarQuote.php
+  - app/Models/ApplicationStorage.php
+  - app/Jobs/SendPCPCarOCBEmailJob.php
+alwaysApply: true
+---
+
+# PCP Follow-Ups Business Logic Monitor
+
+## Critical Components Tracking
+
+You are responsible for monitoring critical components of the PCP Follow-Ups feature. When reviewing code changes, ensure they maintain the core business logic and integrity of these key components.
+
+## FollowUpCreationRule
+
+/*
+* This rule monitors the PCP follow-up job creation and scheduling logic
+* Critical components: Job constructor, dispatch mechanism, retry logic
+* Potential risks: Changes to retry parameters, job queue priority, or dispatch timing
+*/
+
+When analyzing changes to `SendPCPFollowupsJob.php`:
+- Ensure the job constructor properly accepts and stores the quoteUuid parameter
+- Verify retry/timeout/backoff parameters remain intact (tries=3, timeout=15, backoff=60)
+- Monitor the handle method's core flow:
+  1. Retrieve CarQuote via uuid
+  2. Check if pcp_flow_executed_at is empty (to prevent duplicates)
+  3. Validate lead status is among eligible statuses (QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead)
+  4. Verify lead source is not among excluded sources (REVIVAL, REVIVAL_PAID, REVIVAL_REPLIED)
+  5. Call CarEmailService->sendPCPFollowups
+  6. Update quote_status_id to QuoteStatusEnum::FollowedUp
+  7. Set pcp_flow_executed_at timestamp
+  8. Save changes to persist status
+
+Raise an alert if any of these steps are altered or removed.
+
+## StatusValidationRule
+
+/*
+* This rule monitors changes to status management and transition logic
+* Critical components: Status transition flow, status validation, timestamp tracking
+* Potential risks: Broken workflow, skipped state transitions, missing timestamp updates
+*/
+
+When reviewing code that deals with quote status transitions:
+- Preserve the transition flow: NewLead/Quoted → FollowedUp
+- Ensure status tracking with pcp_flow_executed_at timestamp
+- Maintain proper logging of status changes
+
+The core status transition pattern:
+```php
+$carLead->quote_status_id = QuoteStatusEnum::FollowedUp;
+$carLead->pcp_flow_executed_at = now();
+$carLead->save();
+```
+
+## IntegrationTriggerRule
+
+/*
+* This rule monitors external integrations for email and messaging
+* Critical components: Email template selection, template retrieval from storage
+* Potential risks: Broken template selection, missing application storage lookup
+*/
+
+When reviewing changes to `CarEmailService.php` and related template logic:
+- Verify the `sendPCPFollowups` method implementation maintains:
+  1. Proper template selection based on lead attributes
+  2. Fetching template IDs from ApplicationStorage with PCP_FOLLOWUP_TEMPLATE_ID key
+  3. Fallback logic when template IDs aren't available
+
+Pattern to monitor:
+```php
+$emailTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::PCP_FOLLOWUP_TEMPLATE_ID)->first();
+if (!empty($emailTemplate->value)) {
+    $emailTemplateId = (int)$emailTemplate->value;
+    // Use template ID
+}
+```
+
+## EnumConsistencyRule
+
+/*
+* This rule protects critical enum values and constants from modification
+* Critical components: Enum values, ApplicationStorage keys, status codes
+* Potential risks: Breaking feature references, incorrect mappings, invalid status codes
+*/
+
+Ensure these critical enum values remain unchanged:
+- `QuoteFlowType::MOTOR_PCP_FOLLOWUPS = 9`
+- `WorkflowTypeEnum::MOTOR_PCP_FOLLOWUPS = 'motor_pcp_followups'`
+- `ApplicationStorageEnums::PCP_FOLLOWUP_TEMPLATE_ID = 'PCP_FOLLOWUP_TEMPLATE_ID'`
+- `ApplicationStorageEnums::MOTOR_PCP_FOLLOWUP_SWITCH = 'MOTOR_PCP_FOLLOWUP_SWITCH'`
+- `ApplicationStorageEnums::MOTOR_PCP_OCB_SWITCH = 'MOTOR_PCP_OCB_SWITCH'`
+- `QuoteStatusEnum::FollowedUp` value
+
+Any modifications to these values would break the feature flow.
+
+## RenewalIntegrationRule
+
+/*
+* This rule monitors integration with the renewals upload process
+* Critical components: PCP advisor detection, source validation, dispatch logic
+* Potential risks: Broken integrations with renewal process, missed follow-up opportunities
+*/
+
+When monitoring `RenewalsUploadService.php`:
+- Preserve the PCP follow-up dispatch logic:
+
+  ```php
+  if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
+      $this->sendPCPFollowups($carQuote,$renewalsBatchEmail,$renewalQuoteProcess);
+      return;
+  }
+  ```
+
+- Ensure the `sendPCPFollowups` method properly:
+  1. Logs follow-up actions
+  2. Dispatches the email job for NewLead status quotes
+  3. Maintains proper delay timing (Carbon::now()->addMinutes(1))
+
+## DatabaseSchemaRule
+
+/*
+* This rule monitors required database schema components
+* Critical components: CarQuote model fields, status fields, tracking timestamps
+* Potential risks: Missing fields, renamed fields, altered data types
+*/
+
+The CarQuote model must maintain these fields:
+- `pcp_flow_executed_at` - Timestamp when PCP flow was executed
+- `quote_status_id` - Current status of the quote
+- `uuid` - Unique identifier for the quote
+- `source` - Source of the lead
+
+## WorkflowIntegrityRule
+
+/*
+* This rule monitors workflow execution order and integrity
+* Critical components: Step sequencing, duplication prevention, status recording
+* Potential risks: Process steps executed out of order, duplicated workflows
+*/
+
+Ensure these workflow execution rules remain intact:
+1. OCB emails should be sent before follow-ups
+2. Follow-ups should only process once per lead (pcp_flow_executed_at check)
+3. Status transitions must be properly recorded
+4. Error handling must capture and log exceptions
+
+## ErrorHandlingRule
+
+/*
+* This rule monitors error and edge case handling
+* Critical components: Try-catch blocks, null checks, logging calls
+* Potential risks: Silent failures, missing error handling, lost logging context
+*/
+
+Preserve these error handling patterns:
+```php
+if (!$carLead) {
+    LoggerService::info(self::class." -SendPCPFollowupsJob - CAR Lead Not Found - Ref ID: {$this->quoteUuid} | Time: ".now());
+    return;
+}
+```
+
+```php
+try {
+    // PCP follow-up logic
+} catch (\Throwable $th) {
+    LoggerService::info(self::class." - Exception encountered: '{$th->getMessage()}' - Ref ID: {$this->quoteUuid} | Time: ".now());
+    throw $th;
+}
+```
+
+## JobSchedulingRule
+
+/*
+* This rule monitors job scheduling patterns and timing
+* Critical components: Dispatch calls, delay parameters, job queuing
+* Potential risks: Incorrect timing, removed delays, broken queuing
+*/
+
+The job dispatch pattern should not be altered:
+```php
+SendPCPCarOCBEmailJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(1));
+```
+
+## LeadQualificationRule
+
+/*
+* This rule monitors lead filtering and qualification logic
+* Critical components: Source filtering, status checks, advisor validation
+* Potential risks: Processing ineligible leads, missing qualified leads
+*/
+
+### 1. Lead Source Filtering
+Ensure this filtering logic remains intact:
+```php
+$leadSources = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED];
+// Later used in: !in_array($carLead->source, $leadSources)
+```
+
+### 2. Status Eligibility
+Validate this status check is preserved:
+```php
+$eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead];
+// Later used in: in_array($carLead->quote_status_id, $eligibleStatuses)
+```
+
+### 3. PCP Advisor Detection
+Ensure this advisor check pattern is maintained:
+```php
+$isPCPTeamAdvisor = !empty($carQuote->advisor_id) ? $this->carQuoteService->isPCPAdvisor($carQuote->advisor_id) : false;
+```
+
+### 4. Duplicate Prevention Logic
+Preserve this duplicate prevention check:
+```php
+if(empty($carLead->pcp_flow_executed_at)) {
+    // Process follow-up
+} else {
+    // Log already sent
+}
+```
