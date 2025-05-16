@@ -1054,35 +1054,6 @@ onMounted(() => {
               />
             </template>
           </x-select>
-
-          <x-select
-            v-if="isSendUpdateListView"
-            v-model="availableFilters.send_update_type"
-            placeholder="Search By Send...."
-            :options="
-              sendUpdateTypes.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            label="Send Update Type"
-            multiple
-            truncate
-            filterable
-            filterPlaceholder="Filter Send Update Type...."
-          >
-            <template #content-footer>
-              <ui-select-actions
-                @select-all="
-                  availableFilters.send_update_type = sendUpdateTypes.map(
-                    item => item.id,
-                  )
-                "
-                @clear="availableFilters.send_update_type = []"
-              />
-            </template>
-          </x-select>
         </div>
       </x-form>
       <template #primary-action>
