@@ -66,6 +66,7 @@ defineProps({
   access: Object,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  isAllianceProvider: Boolean,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -3401,6 +3402,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
       :isPlanDetailSectionEnabled="false"
+      :isAllianceProvider="isAllianceProvider"
     />
 
     <PaymentTable
