@@ -254,7 +254,6 @@ const getQuote = () => {
       },
     })
     .then(res => {
-      console.log('success response', res);
 
       if (res.data.providerPlan.message) {
         errorMessage.value = res.data.providerPlan.message;
@@ -418,6 +417,11 @@ const validatePolicyTerm = value => {
   }
   return true;
 };
+
+const isNonNegative = value => {
+  if (value === null || value === undefined || value === '') return true;
+  return parseFloat(value) >= 0 || 'Value must be non-negative';
+};
 </script>
 
 <template>
@@ -466,6 +470,7 @@ const validatePolicyTerm = value => {
                   v-model="editForm.isDisabled"
                   color="success"
                   label="Hide"
+                  
                 />
               </div>
 
@@ -530,7 +535,7 @@ const validatePolicyTerm = value => {
                 <x-input
                   v-model="editForm.actualPremium"
                   :disabled="editForm.isApi"
-                  :rules="[isRequired, validatePriceRange]"
+                  :rules="[isRequired, validatePriceRange, isNonNegative]"
                   @input="handleActualPremium"
                   size="sm"
                   type="number"
@@ -562,7 +567,7 @@ const validatePolicyTerm = value => {
                 <x-input
                   v-model="editForm.sumAssured"
                   :disabled="editForm.isApi"
-                  :rules="[isRequired, validatePriceRange]"
+                  :rules="[isRequired, validatePriceRange, isNonNegative]"
                   size="sm"
                   type="number"
                   @keydown="
