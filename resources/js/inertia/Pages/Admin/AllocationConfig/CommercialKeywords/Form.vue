@@ -46,14 +46,14 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-1 gap-4">
-      <x-field label="Keyword Name" required>
-        <x-input
-          v-model="commercialForm.name"
-          class="w-full"
-          :rules="[isRequired]"
-          :error="$page.props.errors.name"
-        />
-      </x-field>
+      <x-input
+        v-model="commercialForm.name"
+        class="w-full"
+        :rules="[isRequired]"
+        :error="$page.props.errors.name"
+        label="Keyword Name"
+        required
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

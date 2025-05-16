@@ -124,17 +124,19 @@ const updateTeams = () => {
     <h2 class="my-3 font-semibold text-primary">{{ team.name }}:</h2>
     <x-form :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-        <x-field label="Min Price">
-          <x-input
-            type="number"
-            class="w-full"
-            v-model="team.min_price"
-            :hasError="minErrorTeam == team.name"
-          />
-        </x-field>
-        <x-field label="Max Price">
-          <x-input type="number" class="w-full" v-model="team.max_price" />
-        </x-field>
+        <x-input
+          type="number"
+          class="w-full"
+          v-model="team.min_price"
+          :hasError="minErrorTeam == team.name"
+          label="Min Price"
+        />
+        <x-input
+          label="Max Price"
+          type="number"
+          class="w-full"
+          v-model="team.max_price"
+        />
       </div>
     </x-form>
   </div>

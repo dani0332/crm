@@ -334,32 +334,32 @@ onUnmounted(() => (isActive.value = false));
   </div>
 
   <div>
-    <x-field label="Teams" class="w-64">
-      <x-select
-        v-model="filters.teamFilter"
-        name="team_name"
-        placeholder="Select Teams"
-        :options="
-          allTeams.map(item => ({
-            value: item.id,
-            label: item.name,
-          }))
-        "
-        @update:model-value="getDataForAdvisor()"
-        :loading="loader.bar"
-        filterable
-        filterPlaceholder="Filter Teams...."
-        multiple
-        truncate
-      >
-        <template #content-footer>
-          <ui-select-actions
-            @select-all="filters.teamFilter = allTeams.map(item => item.id)"
-            @clear="filters.teamFilter = []"
-          />
-        </template>
-      </x-select>
-    </x-field>
+    <x-select
+      label="Teams"
+      class="w-64"
+      v-model="filters.teamFilter"
+      name="team_name"
+      placeholder="Select Teams"
+      :options="
+        allTeams.map(item => ({
+          value: item.id,
+          label: item.name,
+        }))
+      "
+      @update:model-value="getDataForAdvisor()"
+      :loading="loader.bar"
+      filterable
+      filterPlaceholder="Filter Teams...."
+      multiple
+      truncate
+    >
+      <template #content-footer>
+        <ui-select-actions
+          @select-all="filters.teamFilter = allTeams.map(item => item.id)"
+          @clear="filters.teamFilter = []"
+        />
+      </template>
+    </x-select>
     <ChartsColumn
       :title="'Lead Assign Count Summary Per Advisor'"
       :yAxisTitle="'Lead Assign Count Summary Per Advisor'"
