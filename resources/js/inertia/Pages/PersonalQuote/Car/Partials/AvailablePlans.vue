@@ -313,6 +313,10 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
               <dt class="mt-2">Price:</dt>
               <x-input
                 v-model="planForm.actual_premium"
+                :disabled="
+                  !planForm.is_manual_update ||
+                  page.props.lockLeadSectionsDetails.plan_selection
+                "
                 size="sm"
                 type="number"
                 :error="
