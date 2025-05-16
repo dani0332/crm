@@ -1,4 +1,6 @@
 <script setup>
+import { watch } from 'vue';
+
 const props = defineProps({
   uuid: String,
   insuranceProviders: Array,
@@ -72,12 +74,7 @@ const lifeCoverToggled = true;
 
 const notification = useNotifications('toast');
 
-const paymentTerms = [
-  { value: 1, label: 'Monthly' },
-  { value: 3, label: 'Quarterly' },
-  { value: 6, label: 'Semi-Annually' },
-  { value: 12, label: 'Annually' },
-];
+
 
 const options = reactive({
   providerPlans: [],
@@ -242,6 +239,29 @@ const fetchProviderPlans = () => {
       options.loading = false;
     });
 };
+
+const paymentTerms = [
+  { value: 1, label: 'Monthly' },
+  { value: 3, label: 'Quarterly' },
+  { value: 6, label: 'Semi-Annually' },
+  { value: 12, label: 'Annually' },
+];
+
+const filteredPaymentTerms = computed(() => {
+  return createForm.providerId === 180
+    ? paymentTerms.filter(term => ![3, 6].includes(term.value))
+    : paymentTerms;
+});
+
+const validateCoverValue = value => {
+  if (value < 0) {
+    return 'Cover value must be non-negative';
+  }
+  if (value > createForm.sumAssured) {
+    return `Cover value must not exceed ${createForm.sumAssured}`;
+  }
+  return true;
+};
 </script>
 
 <template>
@@ -363,7 +383,7 @@ const fetchProviderPlans = () => {
             v-model="createForm.paymentTerm"
             placeholder="Select Payment Terms"
             class="w-full"
-            :options="paymentTerms"
+            :options="filteredPaymentTerms"
             :rules="[isRequired]"
           />
         </div>
@@ -451,7 +471,7 @@ const fetchProviderPlans = () => {
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.coverValue"
             min="0"
-            :rules="[isNonNegative]"
+            :rules="[isNonNegative, validateCoverValue]"
           />
           <x-toggle v-model="rider.active" color="success" size="lg" />
           <x-input
@@ -462,7 +482,6 @@ const fetchProviderPlans = () => {
             "
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.price"
-            min="0"
             :rules="[isNonNegative]"
           />
         </div>

@@ -52,12 +52,20 @@ const emit = defineEmits(['success', 'error']);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const active = ref(false);
 
+
 const paymentTerms = [
   { value: 1, label: 'Monthly' },
   { value: 3, label: 'Quarterly' },
   { value: 6, label: 'Semi-Annually' },
   { value: 12, label: 'Annually' },
 ];
+
+const filteredPaymentTerms = computed(() => {
+  return createForm.providerId === 180
+    ? paymentTerms.filter(term => ![3, 6].includes(term.value))
+    : paymentTerms;
+});
+
 
 const availableInsuranceProviders = computed(() => {
   return props.insuranceProviders;
@@ -355,6 +363,13 @@ const isNonNegative = value => {
   if (value === null || value === undefined || value === '') return true;
   return parseFloat(value) >= 0 || 'Value must be non-negative';
 };
+
+const validateCoverValue = value => {
+  if (value > createForm.sumAssured) {
+    return `Cover value must not exceed ${createForm.sumAssured}`;
+  }
+  return true;
+};
 </script>
 
 <template>
@@ -474,7 +489,7 @@ const isNonNegative = value => {
             v-model="createForm.paymentTerm"
             placeholder="Select Payment Terms"
             class="w-full"
-            :options="paymentTerms"
+            :options="filteredPaymentTerms"
             :rules="[isRequired]"
           />
         </div>
@@ -562,7 +577,7 @@ const isNonNegative = value => {
           }}</span>
           <x-input
             type="number"
-            min="0"
+            :rules="[isNonNegative, validateCoverValue]"
             step="any"
             @keydown="
               e => (e.key === 'e' || e.key === '-') && e.preventDefault()
@@ -574,7 +589,7 @@ const isNonNegative = value => {
           <x-toggle v-model="rider.active" color="success" size="lg" />
           <x-input
             type="number"
-            min="0"
+            :rules="[isNonNegative]"
             step="any"
             @keydown="
               e => (e.key === 'e' || e.key === '-') && e.preventDefault()

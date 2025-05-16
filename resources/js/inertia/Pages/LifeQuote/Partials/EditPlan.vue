@@ -66,12 +66,19 @@ const lifeCoverToggled = true;
 
 const notification = useNotifications('toast');
 
+
 const paymentTerms = [
   { value: 1, label: 'Monthly' },
   { value: 3, label: 'Quarterly' },
   { value: 6, label: 'Semi-Annually' },
   { value: 12, label: 'Annually' },
 ];
+
+const filteredPaymentTerms = computed(() => {
+  return editForm.providerId === 180
+    ? paymentTerms.filter(term => ![3, 6].includes(term.value))
+    : paymentTerms;
+});
 
 const options = reactive({
   providerPlans: [],
@@ -422,6 +429,13 @@ const isNonNegative = value => {
   if (value === null || value === undefined || value === '') return true;
   return parseFloat(value) >= 0 || 'Value must be non-negative';
 };
+
+const validateCoverValue = value => {
+  if (value > editForm.sumAssured) {
+    return `Cover value must not exceed ${editForm.sumAssured}`;
+  }
+  return true;
+};
 </script>
 
 <template>
@@ -597,7 +611,7 @@ const isNonNegative = value => {
                   v-model="editForm.paymentTerm"
                   placeholder="Select Payment Terms"
                   class="w-full"
-                  :options="paymentTerms"
+                  :options="filteredPaymentTerms"
                   :disabled="editForm.isApi"
                   :rules="[isRequired]"
                 />
@@ -724,7 +738,7 @@ const isNonNegative = value => {
                 <div class="col-span-2">
                   <x-input
                     :disabled="!rider.active"
-                    :rules="parseInt(rider.active) == 1 ? isRequired : []"
+                    :rules="rider.active ? [isRequired, isNonNegative, validateCoverValue] : []"
                     type="number"
                     @keydown="
                       e =>
@@ -750,7 +764,7 @@ const isNonNegative = value => {
                       e =>
                         (e.key === 'e' || e.key === '-') && e.preventDefault()
                     "
-                    min="0"
+                    :rules="[isNonNegative]"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="rider.price"
                   />
@@ -816,6 +830,7 @@ const isNonNegative = value => {
             </div>
           </TabPanel>
 
+          <!-- Inclusion -->
           <TabPanel>
             <div
               class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
@@ -831,6 +846,9 @@ const isNonNegative = value => {
               </div>
             </div>
           </TabPanel>
+
+          <!-- Exclusion -->
+
           <TabPanel>
             <div
               class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-6"
@@ -847,6 +865,7 @@ const isNonNegative = value => {
             </div>
           </TabPanel>
 
+          <!-- Policy Wordings -->
           <TabPanel>
             <dl class="grid md:grid-cols-2 gap-5 p-4">
               <div
