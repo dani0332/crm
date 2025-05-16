@@ -9,4 +9,6 @@ enum LoggerFeatureEnum: string
     case ALLOCATION_AUDIT = 'allocation-audit';
 
     case FTC_EMAIL = 'ftc-email';
+
+    case TRAVEL_RENEWALS = 'travel-renewals';
 }
