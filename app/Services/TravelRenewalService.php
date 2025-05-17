@@ -25,6 +25,7 @@ use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Support\Sleep;
 
 class TravelRenewalService extends AllocationService
 {
@@ -81,6 +82,8 @@ class TravelRenewalService extends AllocationService
                 // Log the exception or handle it as needed
                 LoggerService::error('Error processing quote', exception: $e);
             }
+
+            Sleep::for(3)->seconds();
         }
     }
     public function isDuplicateQuote($quote)
