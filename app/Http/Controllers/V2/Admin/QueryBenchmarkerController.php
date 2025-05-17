@@ -36,6 +36,14 @@ class QueryBenchmarkerController extends Controller
             'user' => Auth::user()->email,
         ]);
 
+        // Prevent fetching data if user doesn't have can_impersonate permission
+        if ($request->input('fetch_data', true) && !Auth::user()->can_impersonate) {
+            return response()->json([
+                'error' => true,
+                'message' => 'You do not have permission to fetch data.',
+            ]);
+        }
+
         $timeoutThreshold = getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS, 5000);
 
         DB::statement("SET SESSION max_execution_time = {$timeoutThreshold}");
@@ -52,7 +60,7 @@ class QueryBenchmarkerController extends Controller
             return response()->json([
                 'error' => true,
                 'message' => $e->getMessage(),
-            ], 500);
+            ]);
         }
     }
 }

@@ -153,6 +153,7 @@ const getTableHeaders = results => {
         @click="handleGetData"
         :loading="loader"
         :disabled="loader"
+        v-if="$page.props.auth.user.can_impersonate"
         type="button"
       >
         Get Data
