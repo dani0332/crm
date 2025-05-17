@@ -19,21 +19,9 @@ class VerifyLeadPreChecksPipe extends BaseAllocationPipe
 
         $isVerified = $this->verifyPreChecks();
 
-        if (! $lead) {
+        if (! $isVerified) {
             $this->throw('Lead does not meet pre-check criteria', self::NOT_FOUND);
         }
-
-        // Check for SIC with Company Registration Type - should skip allocation
-        if (isLeadSic($lead->uuid) && $lead->registration_type == CarRegistrationType::COMPANY) {
-            LoggerService::info(self::class." - Lead is SIC and Registration type Company Webform. Skipping allocation for Ref-ID: {$lead->uuid}");
-            $this->allocationRequest->markAsFailed();
-            $this->throw('Lead is SIC and the registration type is Company. Skipping allocation.', self::OK);
-        }
-
-        $this->allocationRequest->setLead($lead);
-
-        // Start the allocation process in the lead
-        $lead->startAllocation();
 
         return $next($request);
     }

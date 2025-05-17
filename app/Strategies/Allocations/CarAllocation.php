@@ -37,26 +37,19 @@ class CarAllocation implements Allocation
         );
 
         try {
-            $pipes = [
+
+            return Pipeline::send($allocationRequest)->through([
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
-                VerifyAlreadyInProgressAllocationPipe::class,
-            ];
+                // VerifyAlreadyInProgressAllocationPipe::class,
+                EvaluateTierPipe::class,
+                ValidateNationalityConfigPipe::class,
+                AssignTeamPipe::class,
+                FetchAvailableAdvisorPipe::class,
+                AssignLeadPipe::class,
+                MakeResponsePipe::class
+            ])->thenReturn();
 
-            if ($this->evaluateTierOnly) {
-                $pipes[] = EvaluateTierPipe::class;
-            } else {
-                $pipes = array_merge($pipes, [
-                    ValidateNationalityConfigPipe::class,
-                    AssignTeamPipe::class,
-                    FetchAvailableAdvisorPipe::class,
-                    AssignLeadPipe::class,
-                ]);
-            }
-
-            $pipes[] = MakeResponsePipe::class;
-
-            return Pipeline::send($allocationRequest)->through($pipes)->thenReturn();
         } catch (Exception $e) {
             return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }
