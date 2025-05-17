@@ -36,7 +36,7 @@ class QueryBenchmarkerService
             throw new Exception('Query must contain a WHERE clause for performance reasons.');
         }
 
-        // Check for sensitive data patterns in the query
+        // Check for sensitive data patterns in SELECT clause only, not in WHERE clause
         $sensitiveDataPatterns = [
             '/\b(email|e_mail|e-mail|mail|user_email|customer_email)\b/i',
             '/\b(phone|telephone|mobile|phone_number|mobile_number|contact_number|cell|cellphone)\b/i',
@@ -46,9 +46,20 @@ class QueryBenchmarkerService
             '/\b(address|street|city|postal_code|zip_code|zip)\b/i',
         ];
 
-        foreach ($sensitiveDataPatterns as $pattern) {
-            if (preg_match($pattern, $query)) {
-                throw new Exception('For security reasons, queries containing potential sensitive data (emails, phone numbers, addresses, etc.) are not allowed.');
+        // Extract SELECT clause from the query
+        if (preg_match('/select\s+(.*?)\s+from/is', $query, $matches)) {
+            $selectClause = $matches[1];
+
+            // If using SELECT *, we'll handle sensitive data via filterSensitiveData()
+            if (trim($selectClause) === '*') {
+                return;
+            }
+
+            // Check if the SELECT clause explicitly requests sensitive fields
+            foreach ($sensitiveDataPatterns as $pattern) {
+                if (preg_match($pattern, $selectClause)) {
+                    throw new Exception('For security reasons, explicitly selecting sensitive data (emails, phone numbers, addresses, etc.) is not allowed. Use SELECT * instead and sensitive fields will be redacted.');
+                }
             }
         }
     }
@@ -91,6 +102,7 @@ class QueryBenchmarkerService
 
             if ($fetch_data) {
                 $results = $this->runQuery($query);
+                $results = $this->filterSensitiveData($results);
                 $rowCount = count($results);
             }
 
@@ -115,5 +127,58 @@ class QueryBenchmarkerService
                 'message' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Filter sensitive data from query results
+     *
+     * @param  array  $results  The query results
+     * @return array Filtered results with sensitive fields removed
+     */
+    private function filterSensitiveData(array $results): array
+    {
+        if (empty($results)) {
+            return $results;
+        }
+
+        $sensitiveFields = [
+            // Email patterns
+            'email', 'e_mail', 'e-mail', 'mail', 'user_email', 'customer_email',
+            // Phone patterns
+            'phone', 'telephone', 'mobile', 'phone_number', 'mobile_number', 'contact_number', 'cell', 'cellphone',
+            // Password patterns
+            'password', 'passwd', 'pwd', 'user_password', 'hash', 'secret',
+            // ID patterns
+            'ssn', 'social_security', 'tax_id', 'national_id', 'id_number',
+            // Payment patterns
+            'credit_card', 'card_number', 'cc_number', 'payment_card',
+            // Address patterns
+            'address', 'street', 'city', 'postal_code', 'zip_code', 'zip',
+        ];
+
+        $filteredResults = [];
+        foreach ($results as $row) {
+            $filteredRow = [];
+            foreach ((array) $row as $key => $value) {
+                // Check if the column name contains any sensitive field pattern
+                $isSensitive = false;
+                foreach ($sensitiveFields as $field) {
+                    if (stripos($key, $field) !== false) {
+                        $isSensitive = true;
+                        break;
+                    }
+                }
+
+                // If sensitive, replace with redacted text
+                if ($isSensitive) {
+                    $filteredRow[$key] = '[REDACTED]';
+                } else {
+                    $filteredRow[$key] = $value;
+                }
+            }
+            $filteredResults[] = (object) $filteredRow;
+        }
+
+        return $filteredResults;
     }
 }
