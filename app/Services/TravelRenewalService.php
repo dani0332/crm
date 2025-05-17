@@ -70,7 +70,6 @@ class TravelRenewalService extends AllocationService
 
     public function createTravelRenewalLeads($quotes)
     {
-        dd($quotes->count());
         foreach ($quotes as $quote) {
             LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::TRAVEL_RENEWALS);
             try {
