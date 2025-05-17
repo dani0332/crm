@@ -17,7 +17,7 @@ class QueryBenchmarkerController extends Controller
 {
     public function __construct(public QueryBenchmarkerService $queryBenchmarkerService)
     {
-        $this->middleware('readonly_db');
+        // $this->middleware('readonly_db');
 
         $this->middleware('role:'.RolesEnum::Engineering);
     }
@@ -32,6 +32,7 @@ class QueryBenchmarkerController extends Controller
         Log::info('Query benchmark request', [
             'query' => $request->input('query'),
             'iterations' => $request->input('iterations', 1),
+            'fetch_data' => $request->input('fetch_data', true),
             'user' => Auth::user()->email,
         ]);
 
@@ -41,9 +42,10 @@ class QueryBenchmarkerController extends Controller
 
         $query = $request->input('query');
         $iterations = (int) $request->input('iterations', 1);
+        $fetch_data = (bool) $request->input('fetch_data', true);
 
         try {
-            $response = $this->queryBenchmarkerService->benchmark($query, $iterations);
+            $response = $this->queryBenchmarkerService->benchmark($query, $iterations, $fetch_data);
 
             return response()->json($response);
         } catch (Exception $e) {
