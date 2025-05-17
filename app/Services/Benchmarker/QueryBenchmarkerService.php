@@ -132,7 +132,7 @@ class QueryBenchmarkerService
     /**
      * Filter sensitive data from query results
      *
-     * @param array $results The query results
+     * @param  array  $results  The query results
      * @return array Filtered results with sensitive fields removed
      */
     private function filterSensitiveData(array $results): array
@@ -159,7 +159,7 @@ class QueryBenchmarkerService
         $filteredResults = [];
         foreach ($results as $row) {
             $filteredRow = [];
-            foreach ((array)$row as $key => $value) {
+            foreach ((array) $row as $key => $value) {
                 // Check if the column name contains any sensitive field pattern
                 $isSensitive = false;
                 foreach ($sensitiveFields as $field) {
@@ -176,7 +176,7 @@ class QueryBenchmarkerService
                     $filteredRow[$key] = $value;
                 }
             }
-            $filteredResults[] = (object)$filteredRow;
+            $filteredResults[] = (object) $filteredRow;
         }
 
         return $filteredResults;

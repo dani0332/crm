@@ -37,7 +37,7 @@ class QueryBenchmarkerController extends Controller
         ]);
 
         // Prevent fetching data if user doesn't have can_impersonate permission
-        if ($request->input('fetch_data', true) && !Auth::user()->can_impersonate) {
+        if ($request->input('fetch_data', true) && ! Auth::user()->can_impersonate) {
             return response()->json([
                 'error' => true,
                 'message' => 'You do not have permission to fetch data.',
