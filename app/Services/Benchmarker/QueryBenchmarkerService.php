@@ -63,7 +63,7 @@ class QueryBenchmarkerService
         if ($hasLimit) {
             // Extract the limit value to ensure it's not more than 1000
             preg_match('/\blimit\s+(\d+)(?:\s*,\s*\d+)?\b/i', $query, $matches);
-            $limitValue = isset($matches[1]) ? (int)$matches[1] : 0;
+            $limitValue = isset($matches[1]) ? (int) $matches[1] : 0;
 
             if ($limitValue > 1000) {
                 throw new Exception('Maximum allowed LIMIT is 1000 records.');
@@ -72,7 +72,8 @@ class QueryBenchmarkerService
             return DB::select($query);
         } else {
             // No LIMIT in the query, append LIMIT 1000
-            $query = rtrim($query, '; ') . ' LIMIT 1000';
+            $query = rtrim($query, '; ').' LIMIT 1000';
+
             return DB::select($query);
         }
     }
