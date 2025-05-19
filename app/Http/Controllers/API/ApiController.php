@@ -344,6 +344,7 @@ class ApiController extends Controller
      */
     public function tagPrivateClients(Request $request)
     {
+        LoggerService::info('private client tag exercise has been initiated');
 
         $request->validate([
             'batch_size' => 'required|integer|min:1|max:1000',
@@ -406,7 +407,7 @@ class ApiController extends Controller
             return apiResponse(
                 null,
                 Response::HTTP_OK,
-                'Private client tagging exercise has been initiated.'
+                'Private client tagging exercise has been completed.'
             );
         } catch (\Exception $e) {
             LoggerService::error('Error', exception: $e);
@@ -414,8 +415,9 @@ class ApiController extends Controller
             return apiResponse(
                 $e->getMessage(),
                 Response::HTTP_INTERNAL_SERVER_ERROR,
-                'An error occurred while initiating the private client tagging exercise.'
+                'An error occurred while completing the private client tagging exercise.'
             );
         }
+        LoggerService::info('private client tag exercise has been completed');
     }
 }
