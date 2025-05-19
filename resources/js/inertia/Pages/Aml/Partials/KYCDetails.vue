@@ -114,8 +114,8 @@ const kycFormDetails = useForm({
   quote_uuid: page.props.quoteRequest.uuid,
   quote_type_id: page.props.quoteType.id,
   insured_id: insuredDetails?.insured?.id,
-  first_name: insuredDetails?.insured?.insured_kyc?.first_name ?? null,
-  last_name: insuredDetails?.insured?.insured_kyc?.last_name ?? null,
+  first_name: insuredDetails?.insured?.insured_kyc?.first_name ?? insuredDetails?.insured?.first_name ?? null,
+  last_name: insuredDetails?.insured?.insured_kyc?.last_name ?? insuredDetails?.insured?.last_name ?? null,
   residential_address:
     (isScreeningIndividual
       ? insuredDetails?.insured?.insured_kyc?.residential_address
@@ -124,8 +124,8 @@ const kycFormDetails = useForm({
   email: page.props.quoteRequest.email,
   customer_tenure:
     insuredDetails?.insured?.insured_kyc?.customer_tenure ?? null,
-  id_type: insuredDetails?.insured?.id_type ?? null,
-  id_number: insuredDetails?.insured?.id_number ?? null,
+  id_type: insuredDetails?.insured?.insured_kyc?.id_type ?? insuredDetails?.insured?.id_type ?? null,
+  id_number: insuredDetails?.insured?.insured_kyc?.id_number ?? insuredDetails?.insured?.id_number ?? null,
   id_issue_date: convertDate(
     insuredDetails?.insured?.insured_kyc?.id_issuance_date,
   ),

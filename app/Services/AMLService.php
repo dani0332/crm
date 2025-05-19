@@ -870,7 +870,7 @@ class AMLService
                 $data['industry_type_text'] = LookupRepository::where('code', $insuredKycRequest['industry_type'])->where('key', LookupsEnum::COMPANY_TYPE)->value('text');
                 $data['legal_structure_text'] = LookupRepository::where('code', $insuredKycRequest['legal_structure'])->where('key', LookupsEnum::LEGAL_STRUCTURE)->value('text');
                 $data['issuance_place_text'] = LookupRepository::where('code', $insuredKycRequest['place_of_issue'])->where('key', LookupsEnum::ISSUANCE_PLACE)->value('text');
-                $data['document_type_text'] = LookupRepository::where('code', $insuredKycRequest['id_document_type'])->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
+                $data['document_type_text'] = LookupRepository::where('code', $insuredKycRequest['id_type'])->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
                 $data['issuing_authority_text'] = LookupRepository::where('code', $insuredKycRequest['issuing_authority'])->where('key', LookupsEnum::ISSUING_AUTHORITY)->value('text');
                 $data['manager_position_text'] = LookupRepository::where('code', $insuredKycRequest['manager_position'])->where('key', LookupsEnum::UBO_RELATION)->value('text');
                 $data['product_type'] = $quoteType.' Insurance';
@@ -891,6 +891,8 @@ class AMLService
                     InsuredKyc::updateOrCreate(
                         ['insured_id' => $insuredKycRequest['insured_id']], // Condition to find the record
                         [
+                            'first_name' => $insuredKycRequest['first_name'] ?? null,
+                            'last_name' => $insuredKycRequest['last_name'] ?? null,
                             'insured_id' => $insuredKycRequest['insured_id'],
                             'website' => $insuredKycRequest['website'] ?? null,
                             'legal_structure' => $insuredKycRequest['legal_structure'] ?? null,
@@ -965,6 +967,8 @@ class AMLService
                     InsuredKyc::updateOrCreate(
                         ['insured_id' => $insuredKycRequest['insured_id']],
                         [
+                            'first_name' => $insuredKycRequest['first_name'] ?? null,
+                            'last_name' => $insuredKycRequest['last_name'] ?? null,
                             'insured_id' => $insuredKycRequest['insured_id'],
                             'country_of_residence' => $insuredKycRequest['country_of_residence'],
                             'place_of_birth' => $insuredKycRequest['place_of_birth'],
