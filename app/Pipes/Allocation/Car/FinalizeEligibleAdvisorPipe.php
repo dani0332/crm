@@ -20,14 +20,17 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
 
         $eligibleAdvisors = $request->get('eligibleAdvisors');
 
+        $availableUserIds = collect($eligibleAdvisors)->pluck('user_id')->toArray();
+        LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
+
         if (! $request->hasNationalityConfig()) {
             $lead = $request->getLead();
             $teamId = $request->getTeamId();
             $rules = $request->get('rules');
-            $eligibleAdvisors = $this->determineFinalAdvisorIdsBasedOnRules($lead, $eligibleAdvisors, $rules, $teamId);
+            $availableUserIds = $this->determineFinalAdvisorIdsBasedOnRules($lead, $availableUserIds, $rules, $teamId);
         }
 
-        $advisorId = $this->getFinalAdvisorId($eligibleAdvisors);
+        $advisorId = $this->getFinalAdvisorId($availableUserIds);
         $advisor = User::find($advisorId);
 
         if (! $advisor) {
@@ -37,6 +40,8 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
 
             $this->throw('Advisor not found', self::OK);
         }
+
+        dd($advisor);
 
         $this->allocationRequest->setAdvisor($advisor);
 
@@ -78,12 +83,8 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
         return 0;
     }
 
-    private function determineFinalAdvisorIdsBasedOnRules(CarQuote $lead, $eligibleUsers, $rules, $teamId): mixed
+    private function determineFinalAdvisorIdsBasedOnRules(CarQuote $lead, $availableUserIds, $rules, $teamId): mixed
     {
-        // Extract user IDs from the eligible user data and convert them to an array.
-        $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
-        LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
-
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
