@@ -3,8 +3,9 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\QuoteTypes;
+use App\Pipes\Allocation\Car\ApplyRuleExclusionPipe;
 use App\Pipes\Allocation\Car\AssignLeadPipe;
-use App\Pipes\Allocation\Car\AssignTeamPipe;
+use App\Pipes\Allocation\Car\EvaluateTeamPipe;
 use App\Pipes\Allocation\Car\EvaluateTierPipe;
 use App\Pipes\Allocation\Car\FetchEligibleAdvisorsPipe;
 use App\Pipes\Allocation\Car\FetchTierUsersPipe;
@@ -47,8 +48,9 @@ class CarAllocation implements Allocation
                 // VerifyAlreadyInProgressAllocationPipe::class,
                 EvaluateTierPipe::class,
                 ValidateNationalityConfigPipe::class,
-                AssignTeamPipe::class,
+                EvaluateTeamPipe::class,
                 FetchTierUsersPipe::class,
+                ApplyRuleExclusionPipe::class,
                 FetchEligibleAdvisorsPipe::class,
                 FinalizeEligibleAdvisorPipe::class,
                 AssignLeadPipe::class,
