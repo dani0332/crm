@@ -777,6 +777,7 @@ watch(
             :options="nationalityOptions"
             placeholder="Select Nationality"
             class="w-full"
+            filterable
           />
         </x-field>
         <x-field label="Date of Birth">
