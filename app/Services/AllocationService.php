@@ -288,6 +288,19 @@ class AllocationService extends BaseService
 
         $request->endBuyLeadProcessing();
 
+        if ($request->isEvaluateTierOnlyRequest() && $request->getTier()) {
+            $tier = $request->getTier();
+            $lead = $request->getLead();
+
+            return [
+                'advisorId' => $lead->advisor_id,
+                'message' => 'Tier evaluated successfully',
+                'status' => Response::HTTP_OK,
+                'tierId' => $tier->id,
+                'tierName' => $tier->name,
+            ];
+        }
+
         if ($request->isAllocated() || $request->isSameAdvisor()) {
             $message = 'Lead allocated successfully';
 
@@ -296,7 +309,7 @@ class AllocationService extends BaseService
             }
 
             return [
-                'advisorId' => $request->get('advisor')->id,
+                'advisorId' => $request->get('advisor')?->id,
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
