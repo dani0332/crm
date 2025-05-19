@@ -648,4 +648,30 @@ class CarEmailService extends BaseService
         // Use a job to handle file deletion
         DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(5));
     }
+
+    public function sendCarCompanyCommercialOCB($lead){
+        try {
+            LoggerService::info(self::class.' - Sending Car Company Commercial OCB email for lead: '.$lead->uuid.' | Time: '.now());
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $pdfUrl = $this->attachCarCompanyOCBPDFToEmail($lead->uuid, $lead->code);
+            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::CAR_COMMERCIAL_OCB, pdfUrl: $pdfUrl);
+
+            $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+            if ($birdMotorEventNB) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
+                LoggerService::info(self::class." - sendCarCompanyCommercialOCB - Event triggered | Response: {$response->status_code} | Lead Ref-ID: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+
+                if (! empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response);
+                }
+            } else {
+                LoggerService::info(self::class." - sendCarCompanyCommercialOCB key not found for lead: Ref-ID: {$lead->uuid} | Time: ".now());
+            }
+
+            return $response ?? null;
+        } catch (\Throwable $th) {
+            LoggerService::error(self::class." - sendCarCompanyCommercialOCB - Error while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Error: {$th->getMessage()} | Time: ".now());
+        }
+    }
+
 }
