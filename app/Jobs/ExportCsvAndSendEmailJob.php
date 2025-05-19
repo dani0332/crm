@@ -10,13 +10,14 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 300; // 300 (5 minutes) 900 (15 minutes)
-    public $tries = 3;
+    public $tries = 1;
     public $backoff = 30;
     private $exportClass;
     private $recipientEmail;
@@ -34,6 +35,24 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         $this->exportClass = $exportClass;
         $this->recipientEmail = $recipientEmail;
         $this->requestParams = $requestParams;
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        $lockKey = md5(
+            $this->exportClass .
+            $this->recipientEmail .
+            json_encode($this->requestParams)
+        );
+
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease() // Don't release back to queue if locked
+                ->expireAfter(300) // Lock expires after 5 mins (same as timeout)
+        ];
     }
 
     /**
@@ -64,7 +83,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             $executionTime = round(microtime(true) - $startTime, 2);
             $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
 
-            Log::info("CSV export job completed successfully. Time: {$executionTime}s, Peak memory: {$peakMemory}MB");
+            Log::info("CSV export job completed successfully for {$this->requestParams['fileName']}. Time: {$executionTime}s, Peak memory: {$peakMemory}MB");
 
             // Explicitly mark as completed and delete the job
             if ($this->job) {
