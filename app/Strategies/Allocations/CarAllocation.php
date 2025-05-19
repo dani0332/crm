@@ -47,7 +47,7 @@ class CarAllocation implements Allocation
                 AssignTeamPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
-                MakeResponsePipe::class
+                MakeResponsePipe::class,
             ])->thenReturn();
 
         } catch (Exception $e) {

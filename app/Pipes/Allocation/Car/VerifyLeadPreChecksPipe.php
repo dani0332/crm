@@ -2,7 +2,6 @@
 
 namespace App\Pipes\Allocation\Car;
 
-use App\Enums\CarRegistrationType;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;

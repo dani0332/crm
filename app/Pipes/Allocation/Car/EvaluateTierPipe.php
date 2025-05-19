@@ -2,24 +2,26 @@
 
 namespace App\Pipes\Allocation\Car;
 
-use Closure;
-use Exception;
-use Carbon\Carbon;
-use App\Models\Tier;
-use App\Models\CarMake;
-use App\Enums\TiersEnum;
-use App\Models\CarModel;
 use App\Enums\CarPlanType;
+use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
+use App\Enums\InsuranceProvidersEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\TiersEnum;
+use App\Enums\TiersIdEnum;
+use App\Models\CarMake;
+use App\Models\CarModel;
+use App\Models\CarQuote;
+use App\Models\CarQuotePlanDetail;
 use App\Models\CommercialKeyword;
 use App\Models\InsuranceProvider;
-use App\Enums\CarRegistrationType;
-use App\Models\CarQuotePlanDetail;
-use App\Enums\InsuranceProvidersEnum;
-use App\Services\CarAllocationService;
-use App\Services\Logger\LoggerService;
+use App\Models\Tier;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
+use Closure;
+use Exception;
 
 class EvaluateTierPipe extends BaseAllocationPipe
 {
@@ -61,16 +63,71 @@ class EvaluateTierPipe extends BaseAllocationPipe
 
         if ($tier) {
             LoggerService::info('Checking if tier update is required');
-            $updatedTierId = $carAllocationService->updateTierBeforeEligibleUserIdentification($lead);
+            $updatedTierId = $this->updateTierBeforeEligibleUserIdentification();
 
-            if (! empty($updatedTierId) && $updatedTierId != $lead->tier_id) {
-                $lead->tier_id = $updatedTierId;
-                $lead->save();
-                $tier = $carAllocationService->getTier($updatedTierId);
+            if (! empty($updatedTierId) && $updatedTierId != $this->lead->tier_id) {
+                $this->lead->tier_id = $updatedTierId;
+                $this->lead->save();
+                $tier = $this->getTier($updatedTierId);
             }
         }
 
         return $tier;
+    }
+
+    private function updateTierBeforeEligibleUserIdentification()
+    {
+        LoggerService::info("lead payment status is : {$this->lead->payment_status_id} and tier id is : {$this->lead->tier_id} and sic advisor requested is : {$this->lead->sic_advisor_requested}");
+
+        if (($this->lead->payment_status_id == PaymentStatusEnum::AUTHORISED || $this->lead->sic_advisor_requested == 1) && $this->lead->tier_id == TiersIdEnum::TIER_R) {
+            LoggerService::info('SIC lead payment is made and tier is Tier R');
+            $tier = $this->findRenewalLeadTier();
+            if (! empty($tier) && $tier->id != $this->lead->tier_id) {
+                LoggerService::info('Tier is found and tier name is: '.$tier->name);
+                $this->updateLeadTier($tier);
+
+                return $tier->id;
+            } else {
+                return $this->lead->tier_id;
+            }
+        }
+    }
+
+    private function findRenewalLeadTier(): ?Tier
+    {
+        $carLead = $this->lead;
+
+        LoggerService::debug(self::class.'::findRenewalLeadTier - Car Lead Info', extra: [
+            'car_value' => $carLead->car_value,
+            'car_value_tier' => $carLead->car_value_tier,
+            'sic_flow_enabled' => $carLead->sic_flow_enabled,
+        ]);
+
+        $isSICFlowEnabled = $carLead->sic_flow_enabled;
+        $priceValue = $carLead->car_value_tier ?? $carLead->car_value;
+
+        if (empty($priceValue)) {
+            return null;
+        }
+
+        return Tier::where('is_active', 1)
+            ->where('min_price', '<=', $priceValue)
+            ->where('max_price', '>=', $priceValue)
+            ->where('can_handle_tpl', 0)
+            ->where('name', '!=', TiersEnum::TIER_R)
+            ->when($isSICFlowEnabled, function ($query) {
+                $query->where('name', '!=', TiersEnum::TIER_L);
+            })
+            ->first();
+    }
+
+    private function updateLeadTier($tier): void
+    {
+        CarQuote::where('id', $this->lead->id)->update([
+            'tier_id' => $tier->id,
+        ]);
+
+        LoggerService::info("Tier with name : {$tier->name} is assigned");
     }
 
     private function getTier($tierId)
@@ -100,7 +157,7 @@ class EvaluateTierPipe extends BaseAllocationPipe
             if (count($plans) > 0) {
                 LoggerService::info('More than one plan found');
                 // Determine the tier based on a value and return the first matching tier.
-                LoggerService::info(self::class."- More than one plan found against Tier based on value is being calculated for the lead");
+                LoggerService::info(self::class.'- More than one plan found against Tier based on value is being calculated for the lead');
                 $this->getTierBasedOnValue($tiersQuery);
 
                 return $tiersQuery->first();
@@ -138,7 +195,7 @@ class EvaluateTierPipe extends BaseAllocationPipe
             }
         } else {
             // Determine the tier based on a value and return the first matching tier.
-            LoggerService::info(self::class." - Tier based on value is being calculated for the lead");
+            LoggerService::info(self::class.' - Tier based on value is being calculated for the lead');
 
             $this->getTierBasedOnValue($tiersQuery);
 
@@ -160,7 +217,7 @@ class EvaluateTierPipe extends BaseAllocationPipe
         // Calculate the year of manufacture that is 15 years ago from the current date.
         $yearOfManufacture = now()->subYear(15)->year;
 
-        LoggerService::info(self::class . " - yearOfManufacture is: {$yearOfManufacture} and number of plans found are: ".count($plans));
+        LoggerService::info(self::class." - yearOfManufacture is: {$yearOfManufacture} and number of plans found are: ".count($plans));
 
         return [$plans, $yearOfManufacture];
     }
@@ -230,7 +287,7 @@ class EvaluateTierPipe extends BaseAllocationPipe
             ->first();
 
         if ($commercialCarMake && $commercialCarModel) {
-            LoggerService::info(self::class." - Commercial car make and model found for lead");
+            LoggerService::info(self::class.' - Commercial car make and model found for lead');
 
             return true;
         }
@@ -239,7 +296,7 @@ class EvaluateTierPipe extends BaseAllocationPipe
 
         foreach ($commercialKeywords as $keyword) {
             if (str_contains(strtolower(trim($this->lead->full_name)), strtolower(trim($keyword->name)))) {
-                LoggerService::info(self::class." - Commercial keywords found for lead");
+                LoggerService::info(self::class.' - Commercial keywords found for lead');
 
                 return true;
             }
