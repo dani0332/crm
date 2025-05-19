@@ -201,6 +201,7 @@ class SendUpdateLogService
                             'isMorph' => true,
                         ],
                         'quoteRequestEntityMapping' => [],
+                        'travelDestinations' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => TravelQuote::class,
@@ -349,9 +350,24 @@ class SendUpdateLogService
                 }
             } else {
                 $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
-                $newRelation = $relationObject->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
-                    ->fill($fillColumns);
-                $replicateObject->{$relation}()->save($newRelation);
+                // Check if relationObject is a Collection
+                if ($relationObject instanceof \Illuminate\Database\Eloquent\Collection) {
+                    // For collections like travelDestinations, we need to iterate through each item
+                    if ($relation == 'travelDestinations') {
+                        $fillColumns = array_merge($fillColumns, ['uuid' => $replicateObject->uuid]);
+                    }
+
+                    foreach ($relationObject as $item) {
+                        $newRelation = $item->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
+                            ->fill($fillColumns);
+                        $replicateObject->{$relation}()->save($newRelation);
+                    }
+                } else {
+                    // For single model objects
+                    $newRelation = $relationObject->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
+                        ->fill($fillColumns);
+                    $replicateObject->{$relation}()->save($newRelation);
+                }
             }
         }
     }
