@@ -86,7 +86,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $quote = $process->model;
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::POLICY_AUTOMATION);
 
-
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' started');
 
         try {
