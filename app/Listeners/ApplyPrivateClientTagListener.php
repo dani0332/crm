@@ -21,7 +21,7 @@ class ApplyPrivateClientTagListener
 
         LoggerService::startQuoteLogging(QuoteTypes::getName($event->quoteTypeId)->refId($event->lead->uuid), LoggerFeatureEnum::PCP_CLIENT);
 
-        $this->applyPcpTag($event->lead->id, $event->quoteTypeId);
+        $this->applyPcpTag($event->lead->uuid, $event->quoteTypeId);
 
         LoggerService::info('private client tag event has been ended.');
 

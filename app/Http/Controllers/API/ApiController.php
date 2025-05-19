@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
@@ -23,6 +25,7 @@ use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
+use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
@@ -33,11 +36,13 @@ use App\Services\BirdService;
 use App\Services\Cache\CacheManager;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
+use App\Services\Logger\LoggerService;
 use App\Services\NotificationService;
 use App\Services\OutboundEmailsHookService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PrivateClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -46,7 +51,7 @@ use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, PrivateClient;
 
     public $apiService;
     public $inboundEmailsHookService;
@@ -330,5 +335,87 @@ class ApiController extends Controller
     public function triggerAIGWorkflow(AIGWorkflowRequest $request)
     {
         return $this->apiService->triggerAIGWorkflow($request);
+    }
+
+    /**
+     * Process the one-time exercise to tag customers as Private Clients based on criteria
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function tagPrivateClients(Request $request)
+    {
+
+        $request->validate([
+            'batch_size' => 'required|integer|min:1|max:1000',
+            'offset' => 'required|integer',
+        ]);
+
+        try {
+
+            $batchSize = $request->input('batch_size');
+            $offset = $request->input('offset');
+
+            $customers = Customer::whereNull('pcp_tag')->limit($batchSize)->offset($offset)->get();
+
+            if ($customers->isEmpty()) {
+                LoggerService::info('No customers found without PCP tag.');
+
+                return apiResponse(
+                    null,
+                    Response::HTTP_OK,
+                    'No customers found without PCP tag.'
+                );
+            }
+
+            foreach ($customers as $customer) {
+                LoggerService::info('private client tag marking activity has been started on customer', extra: [
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->first_name.' '.$customer->last_name,
+                    'email' => $customer->email,
+                ]);
+
+                $activeLeads = $customer->personalQuote()
+                    ->whereNull('pc_qualified')
+                    ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
+                    ->whereNotNull('policy_expiry_date')
+                    ->where('policy_expiry_date', '>', now())
+                    ->get();
+
+                if ($activeLeads->isNotEmpty()) {
+
+                    LoggerService::info('Active leads found for customer');
+
+                    foreach ($activeLeads as $value) {
+                        LoggerService::startQuoteLogging(QuoteTypes::getName($value->quote_type_id)->refId($value->uuid), LoggerFeatureEnum::PCP_CLIENT);
+
+                        $this->applyPcpTag($value->uuid, $value->quote_type_id);
+
+                        LoggerService::endLogging();
+                    }
+                } else {
+                    LoggerService::info('No active leads found for customer');
+                }
+
+                LoggerService::info('private client tag marking activity has been ended on customer', extra: [
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->first_name.' '.$customer->last_name,
+                    'email' => $customer->email,
+                ]);
+            }
+
+            return apiResponse(
+                null,
+                Response::HTTP_OK,
+                'Private client tagging exercise has been initiated.'
+            );
+        } catch (\Exception $e) {
+            LoggerService::error('Error', exception: $e);
+
+            return apiResponse(
+                $e->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+                'An error occurred while initiating the private client tagging exercise.'
+            );
+        }
     }
 }

@@ -18,7 +18,7 @@ trait PrivateClient
     /**
      * Apply PCP conditions and update pcp_tag on insured table.
      */
-    public function applyPcpTag(int $leadId, int $quoteTypeId)
+    public function applyPcpTag(string $leadUuid, int $quoteTypeId)
     {
         $configs = $this->getActivePcpConfigs($quoteTypeId);
         if ($configs->isEmpty()) {
@@ -38,11 +38,11 @@ trait PrivateClient
             return false;
         }
 
-        $model = (new $modelClass)->find($leadId);
+        $model = (new $modelClass)->where('uuid', $leadUuid)->first();
         if (! $model) {
             LoggerService::warning('Lead not found.', extra: [
                 'quoteTypeId' => $quoteTypeId,
-                'leadId' => $leadId,
+                'leadId' => $leadUuid,
             ]);
 
             return false;
@@ -52,7 +52,7 @@ trait PrivateClient
         $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $tableColumns);
 
         $exists = (new $modelClass)
-            ->where('id', $leadId)
+            ->where('uuid', $leadUuid)
             ->where($this->buildConfigWhereClause($configs, $tableColumns, $hasSumInsuredCurrency, $model))
             ->exists();
 
@@ -102,7 +102,9 @@ trait PrivateClient
             }
         }
 
-        LoggerService::warning('Lead not matched PCP criteria.');
+        LoggerService::warning('Lead not matched PCP criteria.', extra: [
+            'tag_version_criteria' => json_decode($configs),
+        ]);
 
         return false;
     }
