@@ -57,7 +57,7 @@ class PostPrepaymentToSageJob implements ShouldQueue
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                    LoggerService::info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID :  '.$this->paymentSplit->id.' - sage conflict - updating status to pending', [
+                    LoggerService::info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID :  '.$this->paymentSplit->id.' - sage conflict - updating status to pending', extra:[
                         'sageProcessId' => $this->sageProcess->id,
                     ]);
                     $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
@@ -71,7 +71,7 @@ class PostPrepaymentToSageJob implements ShouldQueue
                 $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
             }
 
-            LoggerService::info(self::class.' fn: '.__FUNCTION__.' PostPrepaymentToSage : paymentSplitID  - '.$this->paymentSplit->id.' - Finished . Response : ', $response);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' PostPrepaymentToSage : paymentSplitID  - '.$this->paymentSplit->id.' - Finished . Response : ', extra: $response);
         } else {
             LoggerService::info(self::class.' fn: '.__FUNCTION__.'job:PostPrepaymentToSage - Process Skipped - Process ID: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
