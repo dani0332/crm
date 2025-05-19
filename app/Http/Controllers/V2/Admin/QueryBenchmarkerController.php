@@ -32,8 +32,17 @@ class QueryBenchmarkerController extends Controller
         Log::info('Query benchmark request', [
             'query' => $request->input('query'),
             'iterations' => $request->input('iterations', 1),
+            'fetch_data' => $request->input('fetch_data', true),
             'user' => Auth::user()->email,
         ]);
+
+        // Prevent fetching data if user doesn't have can_impersonate permission
+        if ($request->input('fetch_data', true) && ! Auth::user()->can_impersonate) {
+            return response()->json([
+                'error' => true,
+                'message' => 'You do not have permission to fetch data.',
+            ]);
+        }
 
         $timeoutThreshold = getAppStorageValueByKey(ApplicationStorageEnums::BENCHMARKING_QUERY_TIMEOUT_THRESHOLD_IN_MS, 5000);
 
@@ -41,16 +50,17 @@ class QueryBenchmarkerController extends Controller
 
         $query = $request->input('query');
         $iterations = (int) $request->input('iterations', 1);
+        $fetch_data = (bool) $request->input('fetch_data', true);
 
         try {
-            $response = $this->queryBenchmarkerService->benchmark($query, $iterations);
+            $response = $this->queryBenchmarkerService->benchmark($query, $iterations, $fetch_data);
 
             return response()->json($response);
         } catch (Exception $e) {
             return response()->json([
                 'error' => true,
                 'message' => $e->getMessage(),
-            ], 500);
+            ]);
         }
     }
 }

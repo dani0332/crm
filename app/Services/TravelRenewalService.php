@@ -13,22 +13,22 @@ use App\Enums\RegionCoverEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TravelQuoteEnum;
-use App\Jobs\Allocation\AssignTravelRenewalLeadJob;
 use App\Jobs\OCB\SendOCBTravelRenewalIntroEmailJob;
 use App\Jobs\TravelRenewalLeadCreationJob;
-use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\QuoteBatches;
 use App\Models\RenewalBatch;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
-use App\Models\User;
 use App\Services\Logger\LoggerService;
+use App\Services\Traits\RoundRobinPickable;
 use Carbon\Carbon;
 use Illuminate\Support\Sleep;
 
 class TravelRenewalService extends AllocationService
 {
+    use RoundRobinPickable;
+
     public function processTravelRenewalLeads()
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::TRAVEL_RENEWALS);
@@ -36,6 +36,9 @@ class TravelRenewalService extends AllocationService
         $renewalDaysThreshold = getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_RENEWALS_DAYS_THRESHOLD);
         $startDate = Carbon::now()->subDays((int) $renewalDaysThreshold);
         LoggerService::info(self::class." - Travel Renewal Leads processing started with Start Date: {$startDate}");
+
+        $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
+        $this->initRoundRobinAdvisors(QuoteTypes::TRAVEL, [RolesEnum::TravelAdvisor], $teamId);
 
         TravelQuote::whereIn('quote_status_id', [
             QuoteStatusEnum::TransactionApproved,
@@ -133,7 +136,10 @@ class TravelRenewalService extends AllocationService
                 'policyExpiryDate' => $policyExpiryDate,
             ];
             $travelQuotePayload = (object) $this->createTravelRenewalPayload($quote, $batch, $policyDates, $destinationIds, $members, $customer);
-            TravelRenewalLeadCreationJob::dispatch($travelQuotePayload)->delay(Carbon::now()->addMinutes(1));
+
+            $advisorId = $this->getNextRoundRobinAdvisorId();
+            TravelRenewalLeadCreationJob::dispatch($travelQuotePayload, $advisorId)->delay(Carbon::now()->addMinutes(1));
+
             LoggerService::info(self::class.' - Travel renewal lead creation job dispatched');
         } else {
             $logData = [
@@ -233,7 +239,7 @@ class TravelRenewalService extends AllocationService
         });
     }
 
-    public function createTravelRenewalLead($travelQuote)
+    public function createTravelRenewalLead($travelQuote, $advisorId)
     {
         try {
             $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
@@ -243,20 +249,11 @@ class TravelRenewalService extends AllocationService
 
                 LoggerService::info(self::class.' - TravelRenewalService Travel quote successfully saved and initiating lead allocation process.');
 
-                $this->dispatchLeadAllocationJob($response->quoteUID);
+                $this->leadAllocation($response->quoteUID, $advisorId);
             }
         } catch (\Exception $e) {
             LoggerService::error(self::class." - TravelRenewalService Error saving Travel quote Ref-ID: {$travelQuote->previousQuoteId}", exception: $e);
         }
-    }
-
-    public function dispatchLeadAllocationJob($quoteUID)
-    {
-        // Add a random delay between 10-50 seconds to ensure staggered processing
-        $delaySeconds = rand(10, 50);
-        AssignTravelRenewalLeadJob::dispatch($quoteUID)->delay(now()->addSeconds($delaySeconds));
-
-        LoggerService::info(self::class." - Lead allocation job dispatched with {$delaySeconds}s delay");
     }
 
     public function getRenewalBatch($newPolicyExpiryDate)
@@ -267,7 +264,7 @@ class TravelRenewalService extends AllocationService
             ->first();
     }
 
-    public function leadAllocation($quoteUID)
+    public function leadAllocation($quoteUID, $advisorId)
     {
         LoggerService::startQuoteLogging(QuoteTypes::TRAVEL->refId($quoteUID), LoggerFeatureEnum::TRAVEL_RENEWALS);
 
@@ -279,8 +276,6 @@ class TravelRenewalService extends AllocationService
 
             return false;
         }
-
-        $advisorId = $this->getTravelRenewalsAdvisor();
 
         if (! $advisorId) {
             LoggerService::info(self::class.' - No eligible advisor found');
@@ -336,35 +331,5 @@ class TravelRenewalService extends AllocationService
 
             $this->updateQuoteDetail($childLead->id);
         }
-    }
-
-    public function getTravelRenewalsAdvisor()
-    {
-        $teamId = getTeamId(TeamNameEnum::TRAVEL_RENEWALS);
-
-        $advisor = User::select('users.id as user_id', 'la.id as lead_allocation_id')
-            ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
-            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
-            ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-            ->when($teamId, function ($q) use ($teamId) {
-                $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $teamId));
-            })
-            ->whereIn('r.name', [RolesEnum::TravelAdvisor])
-            ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
-            ->orderBy('la.last_allocated', 'asc')
-            ->activeUser()
-            ->first();
-
-        if (! $advisor) {
-            return null;
-        }
-
-        $leadllocation = LeadAllocation::where('id', $advisor->lead_allocation_id)->first();
-        if ($leadllocation) {
-            $leadllocation->last_allocated = now()->timestamp;
-            $leadllocation->save();
-        }
-
-        return $advisor->user_id;
     }
 }
