@@ -308,11 +308,20 @@ class AllocationService extends BaseService
                 $message = 'Found same advisor as previous advisor so further allocation is skipped';
             }
 
-            return [
+            $data = [
                 'advisorId' => $request->get('advisor')?->id,
                 'message' => $message,
                 'status' => Response::HTTP_OK,
             ];
+
+            $tier = $request->getTier();
+
+            if ($tier) {
+                $data['tierId'] = $tier->id;
+                $data['tierName'] = $tier->name;
+            }
+
+            return $data;
         }
 
         if ($request->isFailed()) {
