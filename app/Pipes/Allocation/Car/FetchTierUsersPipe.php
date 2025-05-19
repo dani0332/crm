@@ -49,6 +49,8 @@ class FetchTierUsersPipe extends BaseAllocationPipe
 
         $this->allocationRequest->set('tierUserIds', $tierUserIds);
 
+        $this->allocationRequest->set('ruleUsers', $this->getRuleUsers());
+
         return $next($request);
     }
 
@@ -123,6 +125,8 @@ class FetchTierUsersPipe extends BaseAllocationPipe
     private function applyRuleExclusions($tierUserIds, $lead)
     {
         $rules = $this->getRulesForLeadSource($lead);
+
+        $this->allocationRequest->set('rules', $rules);
 
         if ($rules->isEmpty()) {
 

@@ -95,6 +95,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
     private function getBaseQuery($status, $userIds, $advisorId = null, $teamId = null)
     {
         $excludedUserIds = $this->getExcludedUserIds($teamId);
+        $this->allocationRequest->set('excludedUserIds', $excludedUserIds);
 
         $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
 
