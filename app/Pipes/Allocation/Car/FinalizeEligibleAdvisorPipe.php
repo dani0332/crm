@@ -41,8 +41,6 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
             $this->throw('Advisor not found', self::OK);
         }
 
-        dd($advisor);
-
         $this->allocationRequest->setAdvisor($advisor);
 
         $this->verifyIfAdvisorIsSameAsPreviousAdvisor($advisor);
