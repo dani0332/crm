@@ -114,13 +114,13 @@ function onSubmit(isValid) {
         </template>
       </x-select>
 
-      <x-field :label="'Active'" required>
-        <x-select
-          v-model="departmentForm.is_active"
-          :options="departmentStatus"
-          class="w-full"
-        />
-      </x-field>
+      <x-select
+        v-model="departmentForm.is_active"
+        :options="departmentStatus"
+        class="w-full"
+        :label="'Active'"
+        required
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

@@ -84,12 +84,6 @@
                             <p class="label-align-center">{{ isset($record->policy_number) ? $record->policy_number : '' }}</p>
                         </div>
                     </div>
-                    <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Policy Expiry Date</b></label>
-                        <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ isset($record->policy_expiry_date) ? $record->policy_expiry_date : '' }}</p>
-                        </div>
-                    </div>
                 </div>
                 <div class="item form-group">
                     <div class="col">
