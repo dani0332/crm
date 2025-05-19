@@ -431,7 +431,7 @@ const isNonNegative = value => {
 };
 
 const validateCoverValue = value => {
-  if (value > editForm.sumAssured) {
+  if (parseFloat(value) > parseFloat(editForm.sumAssured)) {
     return `Cover value must not exceed ${editForm.sumAssured}`;
   }
   return true;

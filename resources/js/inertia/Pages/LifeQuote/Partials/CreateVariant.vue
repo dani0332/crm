@@ -365,7 +365,7 @@ const isNonNegative = value => {
 };
 
 const validateCoverValue = value => {
-  if (value > createForm.sumAssured) {
+  if (parseFloat(value) > parseFloat(createForm.sumAssured)) {
     return `Cover value must not exceed ${createForm.sumAssured}`;
   }
   return true;
