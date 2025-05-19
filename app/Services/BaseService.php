@@ -460,11 +460,14 @@ class BaseService
 
         $this->addOrUpdateQuoteViewCount($lead, $quoteType->id(), $userId);
 
+        LoggerService::info(self::class.' - handleAssignment: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null'
+        ]);
         if (empty($lead->lead_assignment_trigger)) {
-            info(self::class.' - handleAssignment: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
+            LoggerService::info(self::class.' - handleAssignment: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
             $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
         }
-        
+
         $lead->save();
     }
 
@@ -478,8 +481,11 @@ class BaseService
 
         if ($lead->advisor_id && $lead->source === config('constants.SOURCE_NAME')) {
             $lead->assignment_type = AssignmentTypeEnum::SELF_ASSIGNED;
+            LoggerService::info(self::class.' - selfAssign: Checking lead_assignment_trigger', extra: [
+                'current_value' => $lead->lead_assignment_trigger ?? 'null'
+            ]);
             if (empty($lead->lead_assignment_trigger)) {
-                info(self::class.' - selfAssign: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
+                LoggerService::info(self::class.' - selfAssign: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
                 $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
             }
             $lead->saveQuietly();

@@ -480,8 +480,12 @@ class BikeAllocationService extends AllocationService
         $lead->cost_per_lead = $tier->cost_per_lead;
         $lead->auto_assigned = true;
         $lead->assignment_type = $assignmentType;
+
+        LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null'
+        ]);
         if (empty($lead->lead_assignment_trigger)) {
-            info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+            LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
             $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
         }
         // Get the latest quote batch and assign it to the lead.

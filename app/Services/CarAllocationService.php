@@ -884,9 +884,12 @@ class CarAllocationService extends AllocationService
         $lead->auto_assigned = true;
         $lead->sic_flow_enabled = 0;
         $lead->assignment_type = $assignmentType;
-        
+
+        LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null'
+        ]);
         if (empty($lead->lead_assignment_trigger)) {
-            info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+            LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
             $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
         }
 
