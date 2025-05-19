@@ -45,6 +45,8 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function handle(): void
     {
         $this->process = $this->process->refresh();
+        $quote = $this->process->model;
+
 
         info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
@@ -55,6 +57,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
 
             $quoteType = $this->process?->quote_type;
             $insuranceProvider = $this->process?->insuranceProvider;
+
 
             if (! $insuranceProvider) {
                 info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');

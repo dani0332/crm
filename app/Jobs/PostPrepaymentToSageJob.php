@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\SageEnum;
+use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -45,6 +47,7 @@ class PostPrepaymentToSageJob implements ShouldQueue
      */
     public function handle(): void
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SAGE_POST_PREPAYMENT);
         info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID : '.$this->paymentSplit->id.' - Started');
 
         $this->sageProcess = $this->sageProcess->refresh();
