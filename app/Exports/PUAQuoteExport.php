@@ -48,8 +48,6 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
             ]);
         }
 
-        
- 
         // Define all possible payment statusses
         $allStatuses = [
             'Payment Link Requested By Customer' => 0,
@@ -64,10 +62,8 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
             }
         }
 
-      
         $exportData->push((object) [' ' => ' ']);
-        $exportData->push((object) [' ' => ' ']);           
-
+        $exportData->push((object) [' ' => ' ']);
 
         // Add status counts to export data
         foreach ($allStatuses as $status => $count) {
@@ -76,7 +72,7 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithS
                 'Count' => $count,
             ]);
         }
-        
+
         return $exportData;
     }
 

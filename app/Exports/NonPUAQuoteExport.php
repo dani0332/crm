@@ -78,7 +78,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping, Wi
         }
 
         $exportData->push((object) [' ' => ' ']);
-        $exportData->push((object) [' ' => ' ']);           
+        $exportData->push((object) [' ' => ' ']);
 
         // Add status counts to export data
         foreach ($allStatuses as $status => $count) {

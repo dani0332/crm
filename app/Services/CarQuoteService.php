@@ -1911,17 +1911,17 @@ class CarQuoteService extends BaseService
             ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
             ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
             ->whereNotIn('q.uuid', function ($query) {
-            $query->select('q.uuid')
-                ->from('car_quote_plan_details as cqp')
-                ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
-                ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
-                ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
-                ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
-                ->whereNotNull('cqp.pua_premium')
-                ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
-                ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
-                ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
+                $query->select('q.uuid')
+                    ->from('car_quote_plan_details as cqp')
+                    ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+                    ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
+                    ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+                    ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+                    ->whereNotNull('cqp.pua_premium')
+                    ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+                    ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
             })
             ->orderBy('q.paid_at', 'desc')
             ->get();
@@ -2003,8 +2003,7 @@ class CarQuoteService extends BaseService
             ->where('t.parent_team_id', '=', $carTeam->id)
             ->groupBy('t.name')
             ->get();
-        
-                
+
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
 
