@@ -94,7 +94,8 @@ class ApplicationStorageSeeder extends Seeder
         // $this->seedStopDeduplicateScript();
         $this->seedAmlAutomation();
 
-        $this->seedYachtAndPetAdvisors();
+        // $this->seedYachtAndPetAdvisors();
+        $this->seedCycleAdvisors();
     }
 
     private function seedBirdWorkflowUrls()
@@ -369,6 +370,19 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::HOME_ADVISORS_FOR_PET],
             [
                 'value' => 'ghana.naeem@insurancemarket.ae,marialuisa.deguzman@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedCycleAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYCLE_ADVISORS],
+            [
+                'value' => 'marialuisa.deguzman@insurancemarket.ae,virgilio.ocon@insurancemarket.ae,ghana.naeem@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
