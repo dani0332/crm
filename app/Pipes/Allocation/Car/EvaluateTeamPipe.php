@@ -8,7 +8,7 @@ use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
 
-class AssignTeamPipe extends BaseAllocationPipe
+class EvaluateTeamPipe extends BaseAllocationPipe
 {
     /**
      * Handle the incoming request.
