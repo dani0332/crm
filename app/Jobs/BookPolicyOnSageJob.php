@@ -15,7 +15,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
-use Log;
 use Throwable;
 
 class BookPolicyOnSageJob implements ShouldQueue
@@ -93,7 +92,11 @@ class BookPolicyOnSageJob implements ShouldQueue
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
         }
 
-        Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$message);
+        if ($this->isFailedDueToAttempts($message)) {
+            LoggerService::info('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$message);
+        } else {
+            LoggerService::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$message);
+        }
 
         LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
@@ -107,6 +110,13 @@ class BookPolicyOnSageJob implements ShouldQueue
     {
         // release the WithoutOverlapping lock 5 minutes after the job has processed
         return [(new WithoutOverlapping($this->quote->code.'-'.$this->lockPostfix))->dontRelease()];
+    }
+
+    private function isFailedDueToAttempts($errorMessage): bool
+    {
+        $errorMessage = strtolower($errorMessage);
+
+        return str_contains($errorMessage, 'has been attempted too many times');
     }
 
 }

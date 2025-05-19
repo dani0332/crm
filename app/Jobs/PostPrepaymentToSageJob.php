@@ -13,7 +13,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class PostPrepaymentToSageJob implements ShouldQueue
@@ -48,7 +47,7 @@ class PostPrepaymentToSageJob implements ShouldQueue
     public function handle(): void
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::SAGE_POST_PREPAYMENT);
-        info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID : '.$this->paymentSplit->id.' - Started');
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID : '.$this->paymentSplit->id.' - Started');
 
         $this->sageProcess = $this->sageProcess->refresh();
 
@@ -60,27 +59,27 @@ class PostPrepaymentToSageJob implements ShouldQueue
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                    info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID :  '.$this->paymentSplit->id.' - sage conflict - updating status to pending', [
+                    LoggerService::info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID :  '.$this->paymentSplit->id.' - sage conflict - updating status to pending', extra: [
                         'sageProcessId' => $this->sageProcess->id,
                     ]);
                     $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
                 } else {
-                    info(self::class.' fn: '.__FUNCTION__.' paymentSplitID - '.$this->paymentSplit->id.' - posting failed - updating status to failed');
+                    LoggerService::info(self::class.' fn: '.__FUNCTION__.' paymentSplitID - '.$this->paymentSplit->id.' - posting failed - updating status to failed');
                     $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
                 }
 
             } else {
-                info(self::class.' fn: '.__FUNCTION__.': paymentSplitID  - '.$this->paymentSplit->id.' - Prepayment posted - updating status to completed');
+                LoggerService::info(self::class.' fn: '.__FUNCTION__.': paymentSplitID  - '.$this->paymentSplit->id.' - Prepayment posted - updating status to completed');
                 $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'PostPrepaymentToSageJob : paymentSplitID : '.$this->paymentSplit->id);
             }
 
-            info(self::class.' fn: '.__FUNCTION__.' PostPrepaymentToSage : paymentSplitID  - '.$this->paymentSplit->id.' - Finished . Response : ', $response);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' PostPrepaymentToSage : paymentSplitID  - '.$this->paymentSplit->id.' - Finished . Response : ', extra: $response);
         } else {
-            info(self::class.' fn: '.__FUNCTION__.'job:PostPrepaymentToSage - Process Skipped - Process ID: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.'job:PostPrepaymentToSage - Process Skipped - Process ID: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
 
         $this->sageApiService->scheduleSageProcesses($this->sageRequest->insurerID);
-        info(self::class.' fn: '.__FUNCTION__.' PostPrepaymentToSage : paymentSplitID  : scheduleSageProcesses triggered for  code -'.$this->paymentSplit->id.'Insurer - '.$this->sageRequest->insurerID);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' PostPrepaymentToSage : paymentSplitID  : scheduleSageProcesses triggered for  code -'.$this->paymentSplit->id.'Insurer - '.$this->sageRequest->insurerID);
     }
 
     public function failed(Throwable $exception)
@@ -93,10 +92,14 @@ class PostPrepaymentToSageJob implements ShouldQueue
             $this->sageApiService->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
         }
 
-        Log::error(self::class.' fn: '.__FUNCTION__.' : paymentSplitID  : '.$this->paymentSplit->id.' Error : '.$message);
+        if ($this->isFailedDueToAttempts($message)) {
+            LoggerService::info(self::class.' fn: '.__FUNCTION__.' : paymentSplitID  : '.$this->paymentSplit->id.' Error : '.$message);
+        } else {
+            LoggerService::error(self::class.' fn: '.__FUNCTION__.' : paymentSplitID  : '.$this->paymentSplit->id.' Error : '.$message);
+        }
 
         $this->sageApiService->scheduleSageProcesses($this->sageRequest->insurerID);
-        info(self::class.' fn: '.__FUNCTION__.' : scheduleSageProcesses fn:failed triggered for paymentSplitID -'.$this->paymentSplit->id.' Insurer - '.$this->sageRequest->insurerID);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' : scheduleSageProcesses fn:failed triggered for paymentSplitID -'.$this->paymentSplit->id.' Insurer - '.$this->sageRequest->insurerID);
 
     }
 
@@ -104,5 +107,12 @@ class PostPrepaymentToSageJob implements ShouldQueue
     {
         // release the WithoutOverlapping lock 5 minutes after the job has processed
         return [(new WithoutOverlapping($this->paymentSplit->id.'-'.$this->lockPostfix))->dontRelease()];
+    }
+
+    private function isFailedDueToAttempts($errorMessage): bool
+    {
+        $errorMessage = strtolower($errorMessage);
+
+        return str_contains($errorMessage, 'has been attempted too many times');
     }
 }
