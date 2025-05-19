@@ -2,85 +2,64 @@
 
 namespace App\Pipes\Allocation\Handlers;
 
+use App\Models\BuyLeadRequest;
+use App\Models\NationalityAllocationConfiguration;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
+
 trait AllocationRequestable
 {
-    public function getQuoteType()
+    public function setLead(Model $lead)
     {
-        return $this->quoteType;
+        $this->set('lead', $lead);
     }
 
-    public function getQuoteUUID()
+    public function getLead()
     {
-        return $this->quoteUUID;
+        return $this->get('lead');
     }
 
-    public function getTeamId()
+    public function setAdvisor(User $advisor)
     {
-        return $this->teamId;
+        $this->set('advisor', $advisor);
     }
 
-    public function isOverrideAdvisorRequest()
+    public function getAdvisor()
     {
-        return $this->overrideAdvisorId;
+        return $this->get('advisor');
     }
 
-    public function isReassignmentJob()
+    public function setNationalityConfig(NationalityAllocationConfiguration $config)
     {
-        return $this->isReassignmentJob;
+        $this->set('nationality_config', $config);
     }
 
-    public function getAssignmentType()
+    public function hasNationalityConfig()
     {
-        return $this->assignmentType;
+        return ! empty($this->get('nationality_config', null));
     }
 
-    public function getRefID()
+    public function setAdvisorIDs(array $advisorIds)
     {
-        return $this->getQuoteType()->refId($this->quoteUUID);
+        $this->set('advisor_ids', $advisorIds);
     }
 
-    public function model()
+    public function getAdvisorIDs()
     {
-        return $this->getQuoteType()->model();
+        return $this->get('advisor_ids', []);
     }
 
-    public function set($key, $value)
+    public function setBuyLeadRequest(BuyLeadRequest $buyLeadRequest)
     {
-        $this->collection->put($key, $value);
+        if ($buyLeadRequest) {
+            $this->markAsBuyLead();
+        }
+
+        $this->set('buy_lead_request', $buyLeadRequest);
     }
 
-    public function get($key, $default = null)
+    public function getBuyLeadRequest(): ?BuyLeadRequest
     {
-        return $this->collection->get($key, $default);
-    }
-
-    public function markAsSIC()
-    {
-        $this->set('sic', true);
-    }
-
-    public function isSIC()
-    {
-        return $this->get('sic', false);
-    }
-
-    public function markAsBuyLead()
-    {
-        $this->set('buy_lead', true);
-    }
-
-    public function isBuyLead()
-    {
-        return $this->get('buy_lead', false);
-    }
-
-    public function markAsAIG()
-    {
-        $this->set('aig', true);
-    }
-
-    public function isAIG()
-    {
-        return $this->get('aig', false);
+        return $this->get('buy_lead_request');
     }
 }

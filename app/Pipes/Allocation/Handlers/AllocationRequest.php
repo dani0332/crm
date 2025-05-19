@@ -4,15 +4,11 @@ namespace App\Pipes\Allocation\Handlers;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\QuoteTypes;
-use App\Models\BuyLeadRequest;
-use App\Models\NationalityAllocationConfiguration;
-use App\Models\User;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class AllocationRequest
 {
-    use AllocationRequestable;
+    use AllocationRequestable, AllocationRequestMarkable;
 
     protected Collection $collection;
 
@@ -22,82 +18,65 @@ class AllocationRequest
         protected $teamId,
         protected $overrideAdvisorId,
         protected bool $isReassignmentJob = false,
-        protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED
+        protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED,
+        protected $evaluateTierOnly = false
     ) {
         $this->collection = new Collection;
     }
 
-    public function markAsAllocated()
+    public function getQuoteType()
     {
-        $this->set('allocated', true);
+        return $this->quoteType;
     }
 
-    public function isAllocated()
+    public function getQuoteUUID()
     {
-        return $this->get('allocated', false);
+        return $this->quoteUUID;
     }
 
-    public function markAsFailed()
+    public function getTeamId()
     {
-        $this->set('failed', true);
+        return $this->teamId;
     }
 
-    public function isFailed()
+    public function isOverrideAdvisorRequest()
     {
-        return $this->get('failed', false);
+        return $this->overrideAdvisorId;
     }
 
-    public function setLead(Model $lead)
+    public function isReassignmentJob()
     {
-        $this->set('lead', $lead);
+        return $this->isReassignmentJob;
     }
 
-    public function getLead()
+    public function getAssignmentType()
     {
-        return $this->get('lead');
+        return $this->assignmentType;
     }
 
-    public function setAdvisor(User $advisor)
+    public function isEvaluateTierOnlyRequest()
     {
-        $this->set('advisor', $advisor);
+        return $this->evaluateTierOnly;
     }
 
-    public function getAdvisor()
+    public function getRefID()
     {
-        return $this->get('advisor');
+        return $this->getQuoteType()->refId($this->quoteUUID);
     }
 
-    public function setNationalityConfig(NationalityAllocationConfiguration $config)
+    public function model()
     {
-        $this->set('nationality_config', $config);
+        return $this->getQuoteType()->model();
     }
 
-    public function hasNationalityConfig()
+    public function set($key, $value)
     {
-        return ! empty($this->get('nationality_config', null));
+        $this->collection->put($key, $value);
     }
 
-    public function setAdvisorIDs(array $advisorIds)
+    public function get($key, $default = null)
     {
-        $this->set('advisor_ids', $advisorIds);
-    }
-
-    public function getAdvisorIDs()
-    {
-        return $this->get('advisor_ids', []);
-    }
-    public function setBuyLeadRequest(BuyLeadRequest $buyLeadRequest)
-    {
-        if ($buyLeadRequest) {
-            $this->markAsBuyLead();
-        }
-
-        $this->set('buy_lead_request', $buyLeadRequest);
-    }
-
-    public function getBuyLeadRequest(): ?BuyLeadRequest
-    {
-        return $this->get('buy_lead_request');
+        return $this->collection->get($key, $default);
     }
 
     public function endBuyLeadProcessing()
@@ -105,15 +84,5 @@ class AllocationRequest
         if ($this->isBuyLead() && $this->getBuyLeadRequest()) {
             $this->getBuyLeadRequest()->completeProcessing();
         }
-    }
-
-    public function markAsSameAdvisor()
-    {
-        $this->set('same_advisor', true);
-    }
-
-    public function isSameAdvisor()
-    {
-        return $this->get('same_advisor', false);
     }
 }
