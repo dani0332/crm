@@ -71,7 +71,7 @@ const availableInsuranceProviders = computed(() => {
   return props.insuranceProviders;
 });
 
-let errorMessage = null;
+const errorMessage = ref(null);
 let alreadyQuoted = ref(null);
 
 const createForm = reactive({
@@ -150,7 +150,7 @@ watch(
         : null;
     }
     createForm.insurerQuoteNo = null;
-    errorMessage = null;
+    errorMessage.value = null;
 
     // Handle rider data on plan change
     if (props.plan?.riders && props.plan.riders.length > 0) {
@@ -221,11 +221,11 @@ const getQuote = () => {
           riders: ridersData.value,
         },
         lang: 'en',
-      },
+      }, 
     })
     .then(res => {
       if (res.data.providerPlan.message) {
-        errorMessage = res.data.providerPlan.message;
+        errorMessage.value = res.data.providerPlan.message;
         return;
       }
       if (res.data) {
@@ -233,11 +233,11 @@ const getQuote = () => {
           0,
           Number(res.data.providerPlan.plan.actualPremium),
         );
-        errorMessage = null;
+        errorMessage.value = null;
       }
     })
     .catch(err => {
-      errorMessage = err.response.data.message;
+      errorMessage.value = err.response.data.message;
     })
     .finally(() => {
       createForm.getQuoteLoading = false;
@@ -260,7 +260,7 @@ const onSubmit = isValid => {
     })
     .then(res => {
       if (res?.data?.msg) {
-        alreadyQuoted = res.data.msg;
+        errorMessage.value = res.data.msg;
         return;
       }
 
@@ -281,7 +281,7 @@ const onSubmit = isValid => {
         err?.response?.data?.message &&
         err?.response?.data?.message.includes(alreadyQuotedMessage)
       ) {
-        alreadyQuoted = 'This plan detail is already quoted';
+        errorMessage.value = 'This plan detail is already quoted';
         return;
       }
 
@@ -525,12 +525,7 @@ const validateCoverValue = value => {
             :disabled="plan.isApi"
           />
         </div>
-        <div
-          v-if="errorMessage"
-          class="flex items-center justify-center text-red-500 font-medium"
-        >
-          <span>{{ errorMessage }}</span>
-        </div>
+        
       </div>
 
       <div class="mt-6">
@@ -606,7 +601,7 @@ const validateCoverValue = value => {
       <div class="flex justify-between w-full">
         <!-- Left side: Text -->
         <div class="flex justify-start">
-          <p class="text-red-500">{{ alreadyQuoted }}</p>
+          <p class="text-red-500">{{ errorMessage }}</p>
         </div>
 
         <!-- Right side: Button -->
