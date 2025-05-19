@@ -252,6 +252,10 @@ abstract class BaseAllocationPipe extends AllocationService
         $advisor = $this->allocationRequest->getAdvisor();
         $assignmentType = $this->resolveAssignmentType();
 
+        if (! empty($this->lead->advisor_id)) {
+            LoggerService::info("Was previously assigned to User ID: {$this->lead->advisor_id} and is now being assigned to User ID: {$advisor->id}");
+        }
+
         LoggerService::info(self::class.' - assignLead: Going to Assign Advisor');
         $previousAssignmentType = $this->lead->assignment_type;
         $previousAdvisorId = $this->lead->advisor_id;
@@ -262,15 +266,28 @@ abstract class BaseAllocationPipe extends AllocationService
 
         $quoteBatch = $this->getQuoteBatch();
         $this->lead->quote_batch_id = $quoteBatch->id;
+
+        if ($tier = $this->allocationRequest->getTier()) {
+            $this->lead->tier_id = $tier->id;
+            $this->lead->cost_per_lead = $tier->cost_per_lead;
+        }
+
+        if ($this->lead instanceof CarQuote) {
+            $this->lead->auto_assigned = true;
+        }
+
+        if ($this->lead instanceof CarQuote || $this->lead instanceof TravelQuote || $this->lead instanceof HealthQuote) {
+            $this->lead->sic_flow_enabled = 0;
+        }
+
         $this->lead->save();
+
+        LoggerService::info("Assigned to advisor {$advisor->name}, Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name} as {$assignmentType}");
 
         $this->lead->endAllocation();
 
         if ($this->allocationRequest->isBuyLead()) {
             $this->allocationRequest->getBuyLeadRequest()->buyLead($this->lead, $this->allocationRequest->getQuoteType());
-            LoggerService::info("Assigned to advisor {$advisor->name}, Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name} as {$assignmentType} Bought Lead");
-        } else {
-            LoggerService::info("Assigned to advisor {$advisor->name}, Quote Batch with ID: {$quoteBatch->id} and Name: {$quoteBatch->name} as {$assignmentType} Lead");
         }
 
         return [
@@ -293,7 +310,7 @@ abstract class BaseAllocationPipe extends AllocationService
             'isReAssignment' => $isReAssignment,
         ] = $this->assignToAdvisor();
 
-        $previousAdvisorAssignedDate = $this->updateQuoteDetail($this->lead->id);
+        $previousAdvisorAssignedDate = $this->updateQuoteDetail();
 
         if ($this->lead->source != LeadSourceEnum::REFERRAL) {
             LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
