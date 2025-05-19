@@ -10,6 +10,7 @@ use App\Enums\UserStatusEnum;
 use App\Exceptions\Allocation\AllocationException;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
 use App\Models\QuoteBatches;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -26,7 +27,7 @@ abstract class BaseAllocationPipe extends AllocationService
     public const SERVER_ERROR = Response::HTTP_INTERNAL_SERVER_ERROR;
 
     protected AllocationRequest $allocationRequest;
-    protected CarQuote|TravelQuote|HealthQuote|null $lead = null;
+    protected CarQuote|TravelQuote|HealthQuote|PersonalQuote|null $lead = null;
 
     protected function setRequest(AllocationRequest $allocationRequest, bool $startLogging = true)
     {

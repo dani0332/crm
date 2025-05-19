@@ -7,6 +7,7 @@ use App\Pipes\Allocation\Car\AssignLeadPipe;
 use App\Pipes\Allocation\Car\AssignTeamPipe;
 use App\Pipes\Allocation\Car\EvaluateTierPipe;
 use App\Pipes\Allocation\Car\FetchAvailableAdvisorPipe;
+use App\Pipes\Allocation\Car\FetchTierUsersPipe;
 use App\Pipes\Allocation\Car\VerifyLeadPreChecksPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
 use App\Pipes\Allocation\Common\MakeResponsePipe;
@@ -46,6 +47,7 @@ class CarAllocation implements Allocation
                 EvaluateTierPipe::class,
                 ValidateNationalityConfigPipe::class,
                 AssignTeamPipe::class,
+                FetchTierUsersPipe::class,
                 FetchAvailableAdvisorPipe::class,
                 AssignLeadPipe::class,
                 MakeResponsePipe::class,

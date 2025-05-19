@@ -19,7 +19,8 @@ class AllocationRequest
         protected $overrideAdvisorId,
         protected bool $isReassignmentJob = false,
         protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED,
-        protected $evaluateTierOnly = false
+        protected $evaluateTierOnly = false,
+        protected $reAssigFromAdvisorId = null
     ) {
         $this->collection = new Collection;
     }
@@ -32,6 +33,11 @@ class AllocationRequest
     public function getQuoteUUID()
     {
         return $this->quoteUUID;
+    }
+
+    public function setTeamId($teamId)
+    {
+        $this->teamId = $teamId;
     }
 
     public function getTeamId()
@@ -57,6 +63,11 @@ class AllocationRequest
     public function isEvaluateTierOnlyRequest()
     {
         return $this->evaluateTierOnly;
+    }
+
+    public function getReAssigFromAdvisorId()
+    {
+        return $this->reAssigFromAdvisorId;
     }
 
     public function getRefID()
