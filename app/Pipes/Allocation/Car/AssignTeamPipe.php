@@ -2,7 +2,6 @@
 
 namespace App\Pipes\Allocation\Car;
 
-use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
@@ -22,18 +21,18 @@ class AssignTeamPipe extends BaseAllocationPipe
         $teamId = $this->allocationRequest->getTeamId();
 
         // For SIC + PUA flow, adjust the team ID
-        if ($teamId && $lead->isSIC(QuoteTypes::CAR) && $lead->isPUA()) {
+        if ($teamId && $this->allocationRequest->isSIC() && $lead->isPUA()) {
             $sicTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
             if ($sicTeamId == $teamId) {
                 $teamId = getTeamId(TeamNameEnum::ORGANIC);
-                $this->allocationRequest->set('team_id', $teamId);
+                $this->allocationRequest->setTeamId($teamId);
             }
         }
 
         // For AIG Lead with SIC advisor request
-        if ($lead->isAIG(QuoteTypes::CAR) && empty($teamId) && $lead->sic_advisor_requested) {
+        if ($this->allocationRequest->isAIG() && empty($teamId) && $lead->sic_advisor_requested) {
             $teamId = getTeamId(TeamNameEnum::ORGANIC);
-            $this->allocationRequest->set('team_id', $teamId);
+            $this->allocationRequest->setTeamId($teamId);
             LoggerService::info('AIG lead detected with SIC advisor requested. Assigning to Organic team.');
         }
 
