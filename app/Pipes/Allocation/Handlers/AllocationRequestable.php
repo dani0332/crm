@@ -69,7 +69,7 @@ trait AllocationRequestable
         $this->set('tier', $tier);
     }
 
-    public function getTier()
+    public function getTier(): ?Tier
     {
         return $this->get('tier');
     }

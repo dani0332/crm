@@ -117,6 +117,8 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             if ($buyLeadRequest) {
                 $this->allocationRequest->setBuyLeadRequest($buyLeadRequest);
 
+                $buyLeadRequest->startProcessing();
+
                 return User::find($advisor->user_id);
             } else {
                 LoggerService::warning(self::class."::getBLAdvisorByStatus - Advisor found but Buy Lead Request not found for Advisor: {$advisor->user_id}");
