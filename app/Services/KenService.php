@@ -69,7 +69,7 @@ class KenService
                     'url' => $url,
                     'response' => $response,
                     'status_code' => $response->status(),
-                    'jsonResponse' => $response->json(),
+                    'jsonResponse' => $response->json() ?? $response->body(),
                 ]);
 
                 if (isset($response->json()['msg'])) {
@@ -78,7 +78,7 @@ class KenService
                     vAbort('KEN Service Exception');
                 }
             });
-
+            
         return $response->json();
     }
 }

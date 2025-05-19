@@ -4,6 +4,7 @@ namespace App\Jobs\Renewals;
 
 use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalsUploadLeads;
+use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -42,7 +43,24 @@ class UpdateRenewalQuotesJob implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        $renewalsUploadService->updateQuote($this->renewalQuoteProcess);
+        try {   
+            $renewalsUploadService->updateQuote($this->renewalQuoteProcess);
+        } catch (Throwable $e) {
+            LoggerService::error('Failed to update quote', [
+                'quote_uuid' => $quote->uuid ?? null,
+                'renewal_quote_process_id' => $this->renewalQuoteProcess->id,
+                'error' => $e->getMessage()
+            ]);
+
+            // Update the renewal quote process status
+            $renewalsUploadService->updateRenewalQuoteProcess(
+                $this->renewalQuoteProcess,
+                true,
+                ['Failed to update quote: ' . $e->getMessage()]
+            );
+
+            throw $e; // Re-throw to mark job as failed
+        }
     }
 
     /**

@@ -359,7 +359,7 @@ class RenewalsUploadService
 
                 LoggerService::info($logPrefix.' jobs dispatched');
             } else {
-                LoggerService::info($logPrefix.' no jobs to create quotes');
+                LoggerService::info($logPrefix.' no jobs to update quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
             }
         } catch (\Exception $exception) {
@@ -1191,12 +1191,11 @@ class RenewalsUploadService
             LoggerService::info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
 
             return $quote;
-        });
+        }); // 5 retries for deadlocks
 
         if ($isQuoteTypeHealth) {
-            $this->updateOrCreateHealthMembers($quote, $data);
+            $this->updateOrCreateHealthMembers($quote, $data, $renewalQuoteProcess);
         }
-
     }
 
     /**
@@ -1291,8 +1290,9 @@ class RenewalsUploadService
 
         if ($response) {
             $selectResponse = $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id);
-            if ($selectResponse && ($data['payment_link'] != '' || $data['payment_link'] != null)) {
-                $this->createHealthPayment($quote, $data);
+            LoggerService::info('Renewal: Health Plan Modify V2 Response ', ['selectResponse' => $selectResponse], ['ref_id' => $quote->uuid, 'premium' => $quote->premium]);
+            if ($selectResponse->totalPremium && ($data['payment_link'] != '' || $data['payment_link'] != null)) {
+                $this->createHealthPayment($quote, $data, $selectResponse->totalPremium);
             }
         }
 
@@ -1306,7 +1306,7 @@ class RenewalsUploadService
      * @param [type] $data
      * @return void
      */
-    private function updateOrCreateHealthMembers($quote, $data)
+    private function updateOrCreateHealthMembers($quote, $data, $renewalQuoteProcess)
     {
         $memberCategorySalaryMapping = [
             'Investor or Partner' => 2,
@@ -1420,6 +1420,9 @@ class RenewalsUploadService
         if ($addResponse || $updateResponse) {
             LoggerService::info('Renewal: Health Members added/updated successfully for UUID: ' . $quote->uuid, [], ['ref_id' => $quote->uuid]);
             $this->updateBasePricePlan($quote, $data);
+        } else {
+            LoggerService::info('Renewal: Health Members added/updated failed for UUID: ' . $quote->uuid, [], ['ref_id' => $quote->uuid]);
+            $this->updateRenewalQuoteProcess($renewalQuoteProcess, true, ['Health Members added/updated failed']);
         }
     }
 
@@ -1428,7 +1431,7 @@ class RenewalsUploadService
      *
      * @param [type] $quote
      * @param [type] $data
-     * @return void
+     * @return Object
      */
     private function selectHealthPlan($quote, $healthPlanId, $healthCoPaymentId)
     {
@@ -1456,14 +1459,14 @@ class RenewalsUploadService
      * @param [type] $data
      * @return void
      */
-    private function createHealthPayment($quote, $data)
+    private function createHealthPayment($quote, $data, $totalPremium)
     {
         $payment = $quote->payments()->latest()
             ->first();
-        $request = new StorePaymentRequest;
-        $request->user = auth()->user();
+        $newRequest = new StorePaymentRequest;
+        $newRequest->user = auth()->user();
         $quoteType = QuoteTypes::HEALTH->value;
-        $request->merge([
+        $newRequest->merge([
             'quote_id' => $quote->id,
             'code' => 'IP',
             'paymentCode' => $payment ? $payment->code : null,
@@ -1488,13 +1491,13 @@ class RenewalsUploadService
                 'credit_approval' => null,
                 'discount' => null,
                 'collection_date' => '2025-05-07T08:44:14.013Z',
-                'total_amount' => $quote->premium,
-                'total_price' => $quote->premium,
+                'total_amount' => $totalPremium,
+                'total_price' => $totalPremium,
                 'discount_value' => 0,
                 'payment_splits' => [
                     [
                         'sr_no' => 1,
-                        'payment_amount' => $quote->premium,
+                        'payment_amount' => $totalPremium,
                         'payment_method' => 'IPL',
                         'due_date' => '2025-05-07T08:44:14.013Z',
                         'discount_documents' => [],
@@ -1503,8 +1506,8 @@ class RenewalsUploadService
                 ],
             ],
         ]);
-        $response = $payment ? PaymentRepository::updateNewPayment($request) : PaymentRepository::createNewPayment($request);
 
+        $response = $payment ? PaymentRepository::updateNewPayment($newRequest) : PaymentRepository::createNewPayment($newRequest);
         return $response;
     }
 
@@ -2283,6 +2286,19 @@ class RenewalsUploadService
         LoggerService::info('Batch not found with year: '.$year.' and batch name: '.$batchName);
 
         return false;
+    }
+
+    public function updateRenewalQuoteProcess($renewalQuoteProcess, $failed = false, $validationErrors = [])
+    {
+        $renewalQuoteProcess->status = $failed ? RenewalProcessStatuses::BAD_DATA : RenewalProcessStatuses::PROCESSED;
+        $renewalQuoteProcess->validation_errors = $validationErrors;
+        $renewalQuoteProcess->fetch_plans_status = $failed ? FetchPlansStatuses::OUTDATED : FetchPlansStatuses::PENDING;
+        $renewalQuoteProcess->save();
+        $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+        $renewalUploadLead->status = $failed ? ProcessStatusCode::FAILED : ProcessStatusCode::COMPLETED;
+        $failed && $renewalUploadLead->cannot_upload += 1;
+        !$failed && $renewalUploadLead->good += 1;
+        $renewalUploadLead->save();
     }
 
     private function validateDate($date, $format = 'd/m/Y')
