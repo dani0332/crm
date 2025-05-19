@@ -33,7 +33,8 @@ class CarAllocation implements Allocation
             quoteType: QuoteTypes::CAR,
             quoteUUID: $this->uuid,
             teamId: $this->teamId,
-            overrideAdvisorId: $this->overrideAdvisorId
+            overrideAdvisorId: $this->overrideAdvisorId,
+            evaluateTierOnly: $this->evaluateTierOnly
         );
 
         try {

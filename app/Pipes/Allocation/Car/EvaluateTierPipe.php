@@ -52,7 +52,11 @@ class EvaluateTierPipe extends BaseAllocationPipe
 
         $this->allocationRequest->setLead($this->lead);
 
-        $this->allocationRequest->set('tier', $tier);
+        $this->allocationRequest->setTier($tier);
+
+        if ($this->allocationRequest->isEvaluateTierOnlyRequest()) {
+            $this->stop('Tier evaluated successfully');
+        }
 
         return $next($request);
     }

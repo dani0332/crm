@@ -137,6 +137,11 @@ abstract class BaseAllocationPipe extends AllocationService
         throw new AllocationException($message, $code);
     }
 
+    protected function stop(string $message, int $code = 200)
+    {
+        $this->throw($message, $code);
+    }
+
     protected function getQuoteBatch()
     {
         return QuoteBatches::latest()->first();

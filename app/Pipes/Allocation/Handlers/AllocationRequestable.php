@@ -4,6 +4,7 @@ namespace App\Pipes\Allocation\Handlers;
 
 use App\Models\BuyLeadRequest;
 use App\Models\NationalityAllocationConfiguration;
+use App\Models\Tier;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -61,5 +62,15 @@ trait AllocationRequestable
     public function getBuyLeadRequest(): ?BuyLeadRequest
     {
         return $this->get('buy_lead_request');
+    }
+
+    public function setTier(Tier $tier)
+    {
+        $this->set('tier', $tier);
+    }
+
+    public function getTier()
+    {
+        return $this->get('tier');
     }
 }
