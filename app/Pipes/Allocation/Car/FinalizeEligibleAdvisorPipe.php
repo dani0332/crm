@@ -2,29 +2,32 @@
 
 namespace App\Pipes\Allocation\Car;
 
-use App\Enums\QuoteTypes;
 use App\Models\BuyLeadRequest;
 use App\Models\CarQuote;
 use App\Models\LeadAllocation;
 use App\Models\Tier;
 use App\Models\User;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
 
 class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
 {
-    public function handle($request, Closure $next)
+    public function handle(AllocationRequest $request, Closure $next)
     {
         $this->setRequest($request);
 
         $eligibleAdvisors = $request->get('eligibleAdvisors');
-        $lead = $request->getLead();
-        $tier = $request->getTier();
-        $teamId = $request->getTeamId();
-        $rules = $request->get('rules');
 
-        $advisorId = $this->determineFinalUserId($lead, $eligibleAdvisors, $rules, $teamId, $tier);
+        if (! $request->hasNationalityConfig()) {
+            $lead = $request->getLead();
+            $teamId = $request->getTeamId();
+            $rules = $request->get('rules');
+            $eligibleAdvisors = $this->determineFinalAdvisorIdsBasedOnRules($lead, $eligibleAdvisors, $rules, $teamId);
+        }
+
+        $advisorId = $this->getFinalAdvisorId($eligibleAdvisors);
         $advisor = User::find($advisorId);
 
         if (! $advisor) {
@@ -42,7 +45,40 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
         return $next($request);
     }
 
-    private function determineFinalUserId(CarQuote $lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
+    private function getFinalAdvisorId($finalEligibleUserIds)
+    {
+        if ($this->allocationRequest->get('hasBuyLeadAdvisors')) {
+            return $this->evaluateBuyLeadAdvisor($finalEligibleUserIds, $this->allocationRequest->getTier());
+        }
+
+        // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
+        return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
+    }
+
+    private function evaluateBuyLeadAdvisor($finalEligibleUserIds, Tier $tier)
+    {
+        foreach ($finalEligibleUserIds as $advisorId) {
+            $buyLeadRequest = BuyLeadRequest::getRequest(
+                $this->allocationRequest->getQuoteType(),
+                $this->allocationRequest->isSIC(),
+                $advisorId,
+                $tier->isValue()
+            );
+
+            if ($buyLeadRequest) {
+                $this->allocationRequest->setBuyLeadRequest($buyLeadRequest);
+
+                LoggerService::info("Buy Lead Request {$buyLeadRequest->id} found for advisor ID: {$advisorId} and tier ID: {$tier->id}");
+                $this->allocationRequest->getBuyLeadRequest()->startProcessing();
+
+                return $advisorId;
+            }
+        }
+
+        return 0;
+    }
+
+    private function determineFinalAdvisorIdsBasedOnRules(CarQuote $lead, $eligibleUsers, $rules, $teamId): mixed
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
@@ -66,14 +102,11 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
             }
 
             // if finalEligibleUserIds count is zero then it means all rule users are unavailable
-            if (count($finalEligibleUserIds) == 0) {
-                //  check if the found rule is commercial rule
-                if ($rules->first()->ruleName == 'Commercial') {
-                    LoggerService::warning('All rule users are unavailable, so checking for commercial rule users regardless of availability.');
-                    // if commercial then we need to assign lead to one of the $ruleUserIds based on max cap
-                    // and other allocation criteria like round robin
-                    $finalEligibleUserIds = $this->fetchUsersOnAllocationCriteria($ruleUserIds);
-                }
+            if (count($finalEligibleUserIds) == 0 && $rules->first()?->ruleName == 'Commercial') {
+                LoggerService::warning('All rule users are unavailable, so checking for commercial rule users regardless of availability.');
+                // if commercial then we need to assign lead to one of the $ruleUserIds based on max cap
+                // and other allocation criteria like round robin
+                $finalEligibleUserIds = $this->fetchUsersOnAllocationCriteria($ruleUserIds);
             }
 
             LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
@@ -89,30 +122,7 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
             LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
 
-        if ($this->allocationRequest->get('hasBuyLeadAdvisors')) {
-            foreach ($finalEligibleUserIds as $advisorId) {
-                $buyLeadRequest = BuyLeadRequest::getRequest(
-                    $this->allocationRequest->getQuoteType(),
-                    $this->allocationRequest->isSIC(),
-                    $advisorId,
-                    $tier->isValue()
-                );
-
-                if ($buyLeadRequest) {
-                    $this->allocationRequest->setBuyLeadRequest($buyLeadRequest);
-
-                    LoggerService::info("Buy Lead Request {$buyLeadRequest->id} found for advisor ID: {$advisorId} and tier ID: {$tier->id}");
-                    $this->allocationRequest->getBuyLeadRequest()->startProcessing();
-
-                    return $advisorId;
-                }
-            }
-
-            return 0;
-        }
-
-        // Return the first user ID from the final eligible user IDs if any, otherwise return 0.
-        return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
+        return $finalEligibleUserIds;
     }
 
     private function getUserIdsFromRuleRecords($matchedRuleRecords): array
@@ -139,7 +149,7 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
         return LeadAllocation::with('leadAllocationUser')
             ->activeUser()
             ->whereIn('user_id', $ruleUserIds) // it will be the rule user ids for SAP rule only
-            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->where('quote_type_id', $this->allocationRequest->getQuoteType()->id())
             ->orderBy('last_allocated')
             ->pluck('user_id')
             ->toArray();
@@ -157,7 +167,7 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
         })
             ->whereIn('user_id', $ruleUserIds)
             ->whereNotIn('user_id', $excludedUserIds)
-            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->where('quote_type_id', $this->allocationRequest->getQuoteType()->id())
             ->activeUser()
             ->orderBy('last_allocated')
             ->pluck('user_id')
