@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
 use App\Models\Department;
 use App\Models\RenewalBatch;
@@ -34,11 +35,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use PDF;
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use App\Exports\UtmReportExport;
+use PDF;
 
 class ReportsController extends Controller
 {
@@ -338,10 +336,10 @@ class ReportsController extends Controller
     public function utmLeadsSaleReport(Request $request, ReportService $reportService)
     {
         $resp = $reportService->utmReport($request);
-        
+
         return inertia('Reports/UtmLeadsSale', [
             'quoteTypes' => $resp['lobs'],
-            'reportData' => $resp['records'],   
+            'reportData' => $resp['records'],
         ]);
     }
 
@@ -349,7 +347,7 @@ class ReportsController extends Controller
     {
         $resp = $reportService->utmReport($request);
         $data = $resp['records'];
-        
+
         return Excel::download(
             new UtmReportExport($data),
             'UTM Report.xlsx'
