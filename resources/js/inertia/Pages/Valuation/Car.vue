@@ -232,14 +232,14 @@ const getModelBasedOnQuote = () => {
         placeholder="Search by Trim"
       />
 
-      <x-field label="Year Of Manufacture" required>
-        <x-input
-          v-model="valuationForm.yearOfManufacture"
-          type="number"
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
+      <x-input
+        label="Year Of Manufacture"
+        required
+        v-model="valuationForm.yearOfManufacture"
+        type="number"
+        class="w-full"
+        :rules="[isRequired]"
+      />
     </div>
     <div class="flex justify-end gap-3 mb-4 mt-1">
       <div class="flex justify-end gap-3">

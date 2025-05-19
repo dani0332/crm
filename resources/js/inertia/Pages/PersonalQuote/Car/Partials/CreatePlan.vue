@@ -148,66 +148,66 @@ const getAddonVat = item => {
       </div>
       <div class="w-full md:w-1/2">
         <div class="flex flex-col gap-4">
-          <x-field label="Plan" required>
-            <x-select
-              v-model="addPlanForm.car_plan_id"
-              :rules="[isRequired]"
-              :options="insuranceProviderPlanOptions"
-              placeholder="Select plan"
-              class="w-full"
-              :loading="page.processing"
-            />
-          </x-field>
+          <x-select
+            label="Plan"
+            required
+            v-model="addPlanForm.car_plan_id"
+            :rules="[isRequired]"
+            :options="insuranceProviderPlanOptions"
+            placeholder="Select plan"
+            class="w-full"
+            :loading="page.processing"
+          />
         </div>
       </div>
     </div>
     <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
       <div class="w-full md:w-1/3">
-        <x-field label="Price without vat" required>
-          <x-input
-            v-model="addPlanForm.actual_premium"
-            :rules="[isRequired]"
-            class="w-full"
-            placeholder="Enter Price without vat"
-            type="number"
-            step="any"
-          />
-        </x-field>
+        <x-input
+          label="Price without vat"
+          required
+          v-model="addPlanForm.actual_premium"
+          :rules="[isRequired]"
+          class="w-full"
+          placeholder="Enter Price without vat"
+          type="number"
+          step="any"
+        />
       </div>
       <div class="w-full md:w-1/3">
-        <x-field label="Car value" required>
-          <x-input
-            v-model="addPlanForm.car_value"
-            :rules="[isRequired]"
-            class="w-full"
-            placeholder="Enter Car value"
-            type="number"
-            step="any"
-          />
-        </x-field>
+        <x-input
+          label="Car value"
+          required
+          v-model="addPlanForm.car_value"
+          :rules="[isRequired]"
+          class="w-full"
+          placeholder="Enter Car value"
+          type="number"
+          step="any"
+        />
       </div>
       <div class="w-full md:w-1/3">
-        <x-field label="Excess" required>
-          <x-input
-            v-model="addPlanForm.excess"
-            :rules="[isRequired]"
-            class="w-full"
-            placeholder="Enter excess"
-            type="number"
-            step="any"
-          />
-        </x-field>
+        <x-input
+          label="Excess"
+          required
+          v-model="addPlanForm.excess"
+          :rules="[isRequired]"
+          class="w-full"
+          placeholder="Enter excess"
+          type="number"
+          step="any"
+        />
       </div>
       <div class="w-full md:w-1/3">
-        <x-field label="Insurer Quote Number" required>
-          <x-input
-            v-model="addPlanForm.insurer_quote_no"
-            :rules="[isRequired]"
-            class="w-full"
-            placeholder="Enter Insurer Quote Number"
-            maxlength="50"
-          />
-        </x-field>
+        <x-input
+          label="Insurer Quote Number"
+          required
+          v-model="addPlanForm.insurer_quote_no"
+          :rules="[isRequired]"
+          class="w-full"
+          placeholder="Enter Insurer Quote Number"
+          maxlength="50"
+        />
       </div>
     </div>
 

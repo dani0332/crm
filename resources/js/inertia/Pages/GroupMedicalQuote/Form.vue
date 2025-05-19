@@ -86,118 +86,118 @@ function onSubmit(isValid) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="FIRST NAME" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.first_name"
-            maxLength="20"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.first_name"
+          maxLength="20"
+          label="FIRST NAME"
+          required
+        />
 
-        <x-field label="LAST NAME" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-            maxLength="20"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.last_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+          maxLength="20"
+          label="LAST NAME"
+          required
+        />
 
-        <x-field label="EMAIL" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :rules="[isRequired, isEmail]"
-            class="w-full"
-            :disabled="isEdit"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          :rules="[isRequired, isEmail]"
+          class="w-full"
+          :disabled="isEdit"
+          :error="quoteForm.errors.email"
+          label="EMAIL"
+          required
+        />
 
-        <x-field label="MOBILE NUMBER" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :rules="[isRequired, isMobileNo]"
-            class="w-full"
-            :disabled="isEdit"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          :rules="[isRequired, isMobileNo]"
+          class="w-full"
+          :disabled="isEdit"
+          :error="quoteForm.errors.mobile_no"
+          label="MOBILE NUMBER"
+          required
+        />
 
-        <x-field label="COMPANY NAME" required>
-          <x-input
-            v-model="quoteForm.company_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.company_name"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.company_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.company_name"
+          label="COMPANY NAME"
+          required
+        />
 
-        <x-field label="NUMBER OF EMPLOYEES" required>
-          <x-input
-            v-model="quoteForm.number_of_employees"
-            type="number"
-            :rules="[isRequired, isNumber, maxValidation(2147483645)]"
-            class="w-full"
-            :error="quoteForm.errors.number_of_employees"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.number_of_employees"
+          type="number"
+          :rules="[isRequired, isNumber, maxValidation(2147483645)]"
+          class="w-full"
+          :error="quoteForm.errors.number_of_employees"
+          label="NUMBER OF EMPLOYEES"
+          required
+        />
 
-        <x-field label="Business Insurance Type" required>
-          <x-select
-            v-model="quoteForm.business_type_of_insurance_id"
-            :options="
-              businessInsuranceType.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.business_type_of_insurance_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.business_type_of_insurance_id"
+          :options="
+            businessInsuranceType.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.business_type_of_insurance_id"
+          label="Business Insurance Type"
+          required
+        />
 
-        <x-field label="BRIEF DETAILS" required>
-          <x-textarea
-            v-model="quoteForm.brief_details"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.brief_details"
-          />
-        </x-field>
+        <x-textarea
+          v-model="quoteForm.brief_details"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.brief_details"
+          label="BRIEF DETAILS"
+          required
+        />
 
-        <x-field label="PRICE">
-          <x-input
-            v-model="quoteForm.premium"
-            type="number"
-            class="w-full"
-            :rules="[emptyOrDecimal]"
-            :error="quoteForm.errors.premium"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.premium"
+          type="number"
+          class="w-full"
+          :rules="[emptyOrDecimal]"
+          :error="quoteForm.errors.premium"
+          label="PRICE"
+        />
 
-        <x-field label="Group Medical Type" required v-if="isEdit">
-          <x-select
-            v-model="quoteForm.group_medical_type_id"
-            :options="
-              gmTypes.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.group_medical_type_id"
-          />
-        </x-field>
+        <x-select
+          v-if="isEdit"
+          v-model="quoteForm.group_medical_type_id"
+          :options="
+            gmTypes.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.group_medical_type_id"
+          label="Group Medical Type"
+          required
+        />
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

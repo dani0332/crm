@@ -166,8 +166,8 @@ const availableFilters = reactive({
   advisors: [],
   insurer_tax_invoice_number: '',
   insurer_commission_tax_invoice_number: '',
-  update_status: '',
-  send_update_type: '',
+  update_status: [],
+  send_update_type: [],
 });
 
 const dateTypesFilter = ref([
@@ -655,7 +655,7 @@ onMounted(() => {
       show-close
       backdrop
     >
-      <x-form :auto-focus="false">
+      <x-form :auto-focus="false" @keydown.enter="onSubmit">
         <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <x-tooltip placement="bottom">
@@ -674,108 +674,98 @@ onMounted(() => {
               placeholder="Search by Ref-ID"
             />
           </div>
-          <x-field label="Insured Name">
-            <x-input
-              v-model="availableFilters.insured_name"
-              type="search"
-              name="insured_name"
-              class="w-full"
-              placeholder="Search by Insured Name"
-            />
-          </x-field>
-          <x-field label="Member First Name">
-            <x-input
-              v-model="availableFilters.member_first_name"
-              type="search"
-              name="member_first_name"
-              class="w-full"
-              placeholder="Search by Member First Name"
-            />
-          </x-field>
-          <x-field label="Member Last Name">
-            <x-input
-              v-model="availableFilters.member_last_name"
-              type="search"
-              name="member_last_name"
-              class="w-full"
-              placeholder="Search by Member Last Name"
-            />
-          </x-field>
-          <x-field label="Company Name">
-            <x-input
-              v-model="availableFilters.company_name"
-              type="search"
-              name="company_name"
-              class="w-full"
-              placeholder="Search by Company Name"
-            />
-          </x-field>
-          <x-field label="Policy Number">
-            <x-input
-              v-model="availableFilters.policy_number"
-              type="search"
-              name="policy_number"
-              class="w-full"
-              placeholder="Search by Policy Number"
-            />
-          </x-field>
-          <x-field label="Mobile Number">
-            <x-input
-              v-model="availableFilters.mobile_no"
-              type="search"
-              name="mobile_no"
-              class="w-full"
-              placeholder="Search by Mobile Number"
-            />
-          </x-field>
-          <x-field label="Email">
-            <x-input
-              v-model="availableFilters.email"
-              type="search"
-              name="email"
-              class="w-full"
-              placeholder="Search by Email"
-            />
-          </x-field>
-          <x-field label="SU Ref-ID">
-            <x-input
-              v-model="availableFilters.su_code"
-              type="search"
-              name="su_code"
-              class="w-full"
-              placeholder="Search by SU Ref-ID"
-            />
-          </x-field>
-          <x-field label="Search By Date Type">
-            <x-select
-              v-model="availableFilters.date_type"
-              placeholder="Search By Date Type"
-              :options="dateTypesFilter"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Date Range">
-            <DatePicker
-              v-model="availableFilters.date_range"
-              :disabled="!availableFilters.date_type"
-              range
-              :max-range="365"
-              size="sm"
-              placeholder="Select Date Range"
-              model-type="yyyy-MM-dd"
-              :preset-dates="presetDates"
-              :helper="
-                availableFilters.date_type
+          <x-input
+            v-model="availableFilters.insured_name"
+            type="search"
+            name="insured_name"
+            class="w-full"
+            placeholder="Search by Insured Name"
+            label="Insured Name"
+          />
+          <x-input
+            v-model="availableFilters.member_first_name"
+            type="search"
+            name="member_first_name"
+            class="w-full"
+            placeholder="Search by Member First Name"
+            label="Member First Name"
+          />
+          <x-input
+            v-model="availableFilters.member_last_name"
+            type="search"
+            name="member_last_name"
+            class="w-full"
+            placeholder="Search by Member Last Name"
+            label="Member Last Name"
+          />
+          <x-input
+            v-model="availableFilters.company_name"
+            type="search"
+            name="company_name"
+            class="w-full"
+            placeholder="Search by Company Name"
+            label="Company Name"
+          />
+          <x-input
+            v-model="availableFilters.policy_number"
+            type="search"
+            name="policy_number"
+            class="w-full"
+            placeholder="Search by Policy Number"
+            label="Policy Number"
+          />
+          <x-input
+            v-model="availableFilters.mobile_no"
+            type="search"
+            name="mobile_no"
+            class="w-full"
+            placeholder="Search by Mobile Number"
+            label="Mobile Number"
+          />
+          <x-input
+            v-model="availableFilters.email"
+            type="search"
+            name="email"
+            class="w-full"
+            placeholder="Search by Email"
+            label="Email"
+          />
+          <x-input
+            v-model="availableFilters.su_code"
+            type="search"
+            name="su_code"
+            class="w-full"
+            placeholder="Search by SU Ref-ID"
+            label="SU Ref-ID"
+          />
+          <x-select
+            v-model="availableFilters.date_type"
+            placeholder="Search By Date Type"
+            :options="dateTypesFilter"
+            class="w-full"
+            label="Search By Date Type"
+          />
+          <DatePicker
+            v-model="availableFilters.date_range"
+            :disabled="!availableFilters.date_type"
+            range
+            :max-range="365"
+            size="sm"
+            placeholder="Select Date Range"
+            model-type="yyyy-MM-dd"
+            :preset-dates="presetDates"
+            :helper="
+              availableFilters.date_type
+                ? ''
+                : availableFilters.company_name ||
+                    availableFilters.policy_number ||
+                    availableFilters.insurer_tax_invoice_number ||
+                    availableFilters.insurer_commission_tax_invoice_number
                   ? ''
-                  : availableFilters.company_name ||
-                      availableFilters.policy_number ||
-                      availableFilters.insurer_tax_invoice_number ||
-                      availableFilters.insurer_commission_tax_invoice_number
-                    ? ''
-                    : 'Please select the date type first'
-              "
-            />
-          </x-field>
+                  : 'Please select the date type first'
+            "
+            label="Date Range"
+          />
 
           <x-select
             v-model="availableFilters.quote_status"
@@ -833,20 +823,20 @@ onMounted(() => {
             </template>
           </x-select>
 
-          <x-field label="Line of Business" v-if="checkMemberOrCompanyFilter">
-            <x-select
-              v-model="availableFilters.line_of_business"
-              placeholder="Search by Line of Business"
-              :options="
-                quoteTypes.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))
-              "
-              class="w-full"
-              key="line_of_business"
-            />
-          </x-field>
+          <x-select
+            v-if="checkMemberOrCompanyFilter"
+            v-model="availableFilters.line_of_business"
+            placeholder="Search by Line of Business"
+            :options="
+              quoteTypes.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+            key="line_of_business"
+            label="Line of Business"
+          />
 
           <x-select
             v-else
@@ -985,34 +975,28 @@ onMounted(() => {
             </template>
           </x-select>
 
-          <x-field
+          <x-input
             v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+            v-model="availableFilters.insurer_tax_invoice_number"
+            type="search"
+            name="insurer_tax_invoice_number"
+            class="w-full"
+            placeholder="Search by Insurer Tax Invoice No"
             label="Insurer Tax Invoice No"
-          >
-            <x-input
-              v-model="availableFilters.insurer_tax_invoice_number"
-              type="search"
-              name="insurer_tax_invoice_number"
-              class="w-full"
-              placeholder="Search by Insurer Tax Invoice No"
-            />
-          </x-field>
-          <x-field
+          />
+          <x-input
             v-if="
               can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
             "
+            v-model="availableFilters.insurer_commission_tax_invoice_number"
+            type="search"
+            name="insurer_commission_tax_invoice_number"
+            class="w-full !text-xs"
+            placeholder="Search by Insurer Commission Tax Invoice No"
             label="Insurer Commission Tax Invoice No"
-            class="!text-xs"
-          >
-            <x-input
-              v-model="availableFilters.insurer_commission_tax_invoice_number"
-              type="search"
-              name="insurer_commission_tax_invoice_number"
-              class="w-full"
-              placeholder="Search by Insurer Commission Tax Invoice No"
-            />
-          </x-field>
-
+          />
+        </div>
+        <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
           <x-select
             v-if="isSendUpdateListView"
             v-model="availableFilters.update_status"
@@ -1045,36 +1029,7 @@ onMounted(() => {
           <x-select
             v-if="isSendUpdateListView"
             v-model="availableFilters.send_update_type"
-            placeholder="Search By Send Update Type"
-            :options="
-              sendUpdateTypes.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            label="Send Update Type"
-            multiple
-            truncate
-            filterable
-            filterPlaceholder="Filter Send Update Type...."
-          >
-            <template #content-footer>
-              <ui-select-actions
-                @select-all="
-                  availableFilters.send_update_type = sendUpdateTypes.map(
-                    item => item.id,
-                  )
-                "
-                @clear="availableFilters.send_update_type = []"
-              />
-            </template>
-          </x-select>
-
-          <x-select
-            v-if="isSendUpdateListView"
-            v-model="availableFilters.send_update_type"
-            placeholder="Search By Send...."
+            placeholder="Search By Send Update..."
             :options="
               sendUpdateTypes.map(item => ({
                 value: item.id,
