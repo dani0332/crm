@@ -121,36 +121,32 @@ const allowStatusUpdate = computed(() => {
           </div>
           <div class="w-full md:w-2/3">
             <div class="flex flex-col gap-4">
-              <x-field
-                label="Lost Reason"
-                class="uppercase"
+              <x-select
+                v-model="quoteStatusForm.lost_reason_id"
+                :options="
+                  lostReasons?.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                placeholder="Lost Reason is required"
+                class="w-full"
+                label="LOST REASON"
                 required
                 v-if="
                   quoteStatusForm.quote_status_id ==
                   page.props.quoteStatusEnum?.Lost
                 "
-              >
-                <x-select
-                  v-model="quoteStatusForm.lost_reason_id"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="quoteStatusForm.errors.lost_reason_id"
-                />
-              </x-field>
-              <x-field class="uppercase" label="Transaction Type">
-                <x-input
-                  type="text"
-                  v-model="quote.transaction_type_text"
-                  class="w-full"
-                  :disabled="true"
-                />
-              </x-field>
+                :error="quoteStatusForm.errors.lost_reason_id"
+              />
+
+              <x-input
+                type="text"
+                v-model="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+                label="TRANSACTION TYPE"
+              />
             </div>
           </div>
         </div>

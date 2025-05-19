@@ -523,56 +523,57 @@ const insurerAMLStatusOption = computed(() => {
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="First Name">
-          <x-input
-            v-model="filters.first_name"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Search by First Name"
-          />
-        </x-field>
-        <x-field label="Last Name">
-          <x-input
-            v-model="filters.last_name"
-            type="search"
-            name="last_name"
-            class="w-full"
-            placeholder="Search by Last Name"
-          />
-        </x-field>
-        <x-field label="Email">
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="email"
-            class="w-full"
-            placeholder="Search by Email"
-          />
-        </x-field>
-        <x-field label="Mobile Number">
-          <x-input
-            v-model="filters.mobile_no"
-            type="search"
-            name="mobile_no"
-            class="w-full"
-            placeholder="Search by Mobile Number"
-          />
-        </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
-            v-model="filters.created_at_start"
-            name="created_at_start"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker
-            v-model="filters.created_at_end"
-            name="created_at_end"
-            class="w-full"
-          />
-        </x-field>
+
+        <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          class="w-full"
+          placeholder="Search by First Name"
+          label="First Name"
+        />
+
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          class="w-full"
+          placeholder="Search by Last Name"
+          label="Last Name"
+        />
+
+        <x-input
+          v-model="filters.email"
+          type="search"
+          name="email"
+          class="w-full"
+          placeholder="Search by Email"
+          label="Email"
+        />
+
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
+        />
+
+        <DatePicker
+          v-model="filters.created_at_start"
+          name="created_at_start"
+          class="w-full"
+          label="Created Date Start"
+        />
+
+        <DatePicker
+          v-model="filters.created_at_end"
+          name="created_at_end"
+          class="w-full"
+          label="Created Date End"
+        />
+
         <DatePicker
           v-model="filters.advisor_assigned_date"
           name="created_at_start"
@@ -580,6 +581,7 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
+
         <x-select
           v-model="filters.quote_status_id"
           name="quote_status_id"
@@ -605,6 +607,7 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
+
         <x-select
           v-model="filters.insurer_aml_status"
           name="insurer_aml_status"
@@ -627,18 +630,19 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
+
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
+
         <x-select
           v-if="
             !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor])
@@ -662,30 +666,31 @@ const insurerAMLStatusOption = computed(() => {
             />
           </template>
         </x-select>
-        <x-field label="Renewal">
-          <x-select
-            v-model="filters.is_renewal"
-            placeholder="Search by Renewal"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 'Yes', label: 'Yes' },
-              { value: 'No', label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Is Ecommerce">
-          <x-select
-            v-model="filters.is_ecommerce"
-            placeholder="Search by Ecommerce"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 'Yes', label: 'Yes' },
-              { value: 'No', label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
+
+        <x-select
+          v-model="filters.is_renewal"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
+          label="Renewal"
+        />
+
+        <x-select
+          v-model="filters.is_ecommerce"
+          placeholder="Search by Ecommerce"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
+          label="Is Ecommerce"
+        />
+
         <x-input
           v-model="filters.previous_quote_policy_number_text"
           type="text"
@@ -694,6 +699,7 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Policy Number"
         />
+
         <x-select
           v-model="filters.renewal_batch_id"
           placeholder="Search by Renewal Batch"
@@ -724,6 +730,7 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+
         <DatePicker
           v-model="filters.booking_date"
           label="Booking Date"
@@ -732,6 +739,7 @@ const insurerAMLStatusOption = computed(() => {
           multi-calendars
           multi-calendars-solo
         />
+
         <DatePicker
           v-model="filters.last_modified_date"
           name="created_at_start"
@@ -749,6 +757,7 @@ const insurerAMLStatusOption = computed(() => {
           class="w-full"
           placeholder="Insurer Tax Invoice No"
         />
+
         <x-input
           v-if="
             can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)

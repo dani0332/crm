@@ -300,148 +300,137 @@ const validateDateRange = () => {
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="First Name">
-          <x-input
-            v-model="filters.first_name"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Search by First Name"
-          />
-        </x-field>
-        <x-field label="Last Name">
-          <x-input
-            v-model="filters.last_name"
-            type="search"
-            name="last_name"
-            class="w-full"
-            placeholder="Search by Last Name"
-          />
-        </x-field>
-        <x-field label="Email">
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="email"
-            class="w-full"
-            placeholder="Search by Email"
-          />
-        </x-field>
-        <x-field label="Mobile Number">
-          <x-input
-            v-model="filters.mobile_no"
-            type="search"
-            name="mobile_no"
-            class="w-full"
-            placeholder="Search by Mobile Number"
-          />
-        </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
-            v-model="filters.created_at_start"
-            type="date"
-            name="created_at_start"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker
-            v-model="filters.created_at_end"
-            type="date"
-            name="created_at_end"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Lead Status" v-if="isAllowed">
-          <x-select
-            v-model="filters.quote_status_id"
-            name="quote_status"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-            multiple
-            class="w-full"
-            filterable
-            truncate
-          >
-            <template #content-footer>
-              <ui-select-actions
-                @select-all="
-                  filters.quote_status_id = leadStatusOptions.map(
-                    item => item.value,
-                  )
-                "
-                @clear="filters.quote_status_id = []"
-              />
-            </template>
-          </x-select>
-        </x-field>
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
-        <x-field label="Advisor" v-if="isAllowed">
-          <x-select
-            v-model="filters.advisors"
-            name="advisors"
-            placeholder="Search by Advisor"
-            :options="advisorOptions"
-            multiple
-            class="w-full"
-            filterable
-            truncate
-          >
-            <template #content-footer>
-              <ui-select-actions
-                @select-all="
-                  filters.advisors = advisorOptions.map(item => item.value)
-                "
-                @clear="filters.advisors = []"
-              />
-            </template>
-          </x-select>
-        </x-field>
-        <x-field label="Is E-Commerce">
-          <x-select
-            v-model="filters.is_ecommerce"
-            placeholder="Search by Ecommerce"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Renewal Batch">
-          <x-input
-            v-model="filters.renewal_batch"
-            type="search"
-            name="renewal_batch"
-            class="w-full"
-            placeholder="Search by Renewal Batch"
-          />
-        </x-field>
-        <x-field label="Renewal">
-          <x-select
-            :disabled="!props.areBothTeamsPresent"
-            v-model="filters.is_renewal"
-            placeholder="Search by Renewal"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 'Yes', label: 'Yes' },
-              { value: 'No', label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
+        <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          class="w-full"
+          placeholder="Search by First Name"
+          label="First Name"
+        />
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          class="w-full"
+          placeholder="Search by Last Name"
+          label="Last Name"
+        />
+        <x-input
+          v-model="filters.email"
+          type="search"
+          name="email"
+          class="w-full"
+          placeholder="Search by Email"
+          label="Email"
+        />
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
+        />
+        <DatePicker
+          v-model="filters.created_at_start"
+          type="date"
+          name="created_at_start"
+          class="w-full"
+          label="Created Date Start"
+        />
+        <DatePicker
+          v-model="filters.created_at_end"
+          type="date"
+          name="created_at_end"
+          class="w-full"
+          label="Created Date End"
+        />
+        <x-select
+          v-if="isAllowed"
+          v-model="filters.quote_status_id"
+          name="quote_status"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
+          multiple
+          class="w-full"
+          filterable
+          truncate
+          label="Lead Status"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status_id = leadStatusOptions.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.quote_status_id = []"
+            />
+          </template>
+        </x-select>
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
+        <x-select
+          v-if="isAllowed"
+          v-model="filters.advisors"
+          name="advisors"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          multiple
+          class="w-full"
+          filterable
+          truncate
+          label="Advisor"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
+        <x-select
+          v-model="filters.is_ecommerce"
+          placeholder="Search by Ecommerce"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          label="Is E-Commerce"
+        />
+        <x-input
+          v-model="filters.renewal_batch"
+          type="search"
+          name="renewal_batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+          label="Renewal Batch"
+        />
+        <x-select
+          :disabled="!props.areBothTeamsPresent"
+          v-model="filters.is_renewal"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
+          label="Renewal"
+        />
         <x-input
           v-model="filters.previous_quote_policy_number_text"
           type="text"

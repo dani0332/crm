@@ -116,16 +116,15 @@ function onSubmit(isValid) {
         </template>
       </x-select>
 
-      <x-field label="Is Active">
-        <x-select
-          v-model="quadrantForm.is_active"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-        />
-      </x-field>
+      <x-select
+        v-model="quadrantForm.is_active"
+        class="w-full"
+        :options="[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]"
+        label="Is Active"
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

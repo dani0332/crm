@@ -391,47 +391,47 @@ const providerId = computed(() => {
       @submit="addPayment"
     >
       <div class="w-full grid md:grid-cols-2 gap-5">
-        <x-field label="Price Including VAT" required>
-          <x-input
-            class="w-full"
-            :rules="[rules.isRequired, rules.amount]"
-            v-model="paymentMethodsForm.amount"
-          />
-        </x-field>
-        <x-field label="Collection Type" required>
-          <x-select
-            class="w-full"
-            v-model="paymentMethodsForm.collection_type"
-            :disabled="true"
-            :options="collectionTypes"
-            :rules="[rules.isRequired]"
-          >
-          </x-select>
-        </x-field>
-        <x-field label="Payment Method" required>
-          <x-select
-            class="w-full md:col-span-2"
-            v-model="paymentMethodsForm.payment_method"
-            :options="paymentMethods"
-            :disabled="true"
-            :rules="[rules.isRequired]"
-          >
-          </x-select>
-        </x-field>
-        <x-field
+        <x-input
+          label="Price Including VAT"
+          required
+          class="w-full"
+          :rules="[rules.isRequired, rules.amount]"
+          v-model="paymentMethodsForm.amount"
+        />
+
+        <x-select
+          label="Collection Type"
+          required
+          class="w-full"
+          v-model="paymentMethodsForm.collection_type"
+          :disabled="true"
+          :options="collectionTypes"
+          :rules="[rules.isRequired]"
+        >
+        </x-select>
+
+        <x-select
+          label="Payment Method"
+          required
+          class="w-full md:col-span-2"
+          v-model="paymentMethodsForm.payment_method"
+          :options="paymentMethods"
+          :disabled="true"
+          :rules="[rules.isRequired]"
+        >
+        </x-select>
+
+        <x-select
           v-if="isCommercialVehicles"
           label="Insurance Provider"
           required
-        >
-          <x-select
-            class="w-full md:col-span-2"
-            v-model="insurance_provider_id"
-            :options="insuranceProviderOptions"
-            placeholder="Select Insurance provider"
-            :rules="[rules.isRequired]"
-          >
-          </x-select>
-        </x-field>
+          class="w-full md:col-span-2"
+          v-model="insurance_provider_id"
+          :options="insuranceProviderOptions"
+          placeholder="Select Insurance provider"
+          :rules="[rules.isRequired]"
+        />
+
         <p class="text-sm text-gray-500" v-else>
           Provider Name:
           <span class="text-primary-800">{{ providerName }}</span>
@@ -441,17 +441,15 @@ const providerId = computed(() => {
           Plan Name :
           <span class="text-primary-800">{{ getPlanName }}</span>
         </p>
-        <x-field
+
+        <x-input
           label="Payment Reference"
           required
           v-if="paymentMethodsForm.payment_method != 'CC'"
-        >
-          <x-input
-            class="w-full md:col-span-2"
-            :rules="[rules.isRequired, rules.reference]"
-            v-model="paymentMethodsForm.payment_reference"
-          />
-        </x-field>
+          class="w-full md:col-span-2"
+          :rules="[rules.isRequired, rules.reference]"
+          v-model="paymentMethodsForm.payment_reference"
+        />
       </div>
       <template #secondary-action>
         <x-button ghost tabindex="-1" @click="createPaymentModal = false">
