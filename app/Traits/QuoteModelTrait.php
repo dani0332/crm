@@ -96,13 +96,23 @@ trait QuoteModelTrait
                     LeadSourceEnum::REVIVAL_PAID,
                 ])->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias, $quoteTypeId) {
+                // Exclude leads with SIC tag
                 $query->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
                     $query->distinct()
                         ->select('quote_uuid')
                         ->from('quote_tags')
                         ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
-                })->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
+                })
+                // Also exclude leads with AIG tag
+                ->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                        ->where('quote_tags.quote_type_id', $quoteTypeId);
+                })
+                ->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
                 $query->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,
@@ -303,7 +313,7 @@ trait QuoteModelTrait
 
     public function hasOneOfPaidStatus(): bool
     {
-        return $this->payments && $this->payments->count() > 0 && 
+        return $this->payments && $this->payments->count() > 0 &&
                $this->payments->contains(function (Payment $payment) {
                    return $payment->hasOneOfPaidStatus();
                });
@@ -316,61 +326,62 @@ trait QuoteModelTrait
 
         $segment = QuoteSegmentEnum::tryFrom($segmentFilter);
 
+        // Handle specific segment filter case
         if ($segmentFilter && $segmentFilter !== strtolower(QuoteSegmentEnum::ALL->label())) {
             return $segment->label();
         }
 
-        if ($segmentFilter && $segmentFilter == strtolower(QuoteSegmentEnum::ALL->label())) {
-            $matchedSegments = [];
+        // Fetch all relevant tags in one query
+        $tagNames = QuoteTag::where('quote_uuid', $lead->uuid)
+            ->where('quote_type_id', $quoteTypeId)
+            ->pluck('name')
+            ->map(fn ($name) => strtolower($name))
+            ->toArray();
 
-            // Fetch all relevant tags in one query
-            $tagNames = QuoteTag::where('quote_uuid', $lead->uuid)
-                ->where('quote_type_id', $quoteTypeId)
-                ->pluck('name')
-                ->map(fn ($name) => strtolower($name))
-                ->toArray();
+        $leadSource = $lead->source;
 
-            $leadSource = $lead->source;
+        $isProduction = config('constants.APP_ENV') == EnvEnum::PRODUCTION;
+        $marketSource = $isProduction ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE;
 
-            $isProduction = config('constants.APP_ENV') == EnvEnum::PRODUCTION;
-            $marketSource = $isProduction ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE;
+        // This section handles both "ALL" filter and export case (no filter)
+        // Priority: AIG check first
+        if (in_array(strtolower(QuoteSegmentEnum::AIG->tag()), $tagNames)) {
+            return QuoteSegmentEnum::AIG->label();
+        }
 
-            // Priority: AIG check first
-            if (in_array(strtolower(QuoteSegmentEnum::AIG->tag()), $tagNames)) {
-                return QuoteSegmentEnum::AIG->label();
-            }
+        $matchedSegments = [];
 
-            // Check SIC
-            if (
-                in_array(strtolower(QuoteSegmentEnum::SIC->tag()), $tagNames) &&
-                ! in_array($leadSource, [
-                    LeadSourceEnum::REVIVAL,
-                    LeadSourceEnum::REVIVAL_REPLIED,
-                    LeadSourceEnum::REVIVAL_PAID,
-                ]) &&
-                str_contains($leadSource, $marketSource)
-            ) {
-                $matchedSegments[] = QuoteSegmentEnum::SIC->label();
-            }
-
-            // Check NON-SIC
-            if (
-                ! in_array(strtolower(QuoteSegmentEnum::SIC->tag()), $tagNames) &&
-                str_contains($leadSource, $marketSource)
-            ) {
-                $matchedSegments[] = QuoteSegmentEnum::NON_SIC->label();
-            }
-
-            // Check SIC-REVIVAL
-            if (in_array($leadSource, [
+        // Check SIC
+        if (
+            in_array(strtolower(QuoteSegmentEnum::SIC->tag()), $tagNames) &&
+            ! in_array($leadSource, [
                 LeadSourceEnum::REVIVAL,
                 LeadSourceEnum::REVIVAL_REPLIED,
                 LeadSourceEnum::REVIVAL_PAID,
-            ])) {
-                $matchedSegments[] = QuoteSegmentEnum::SIC_REVIVAL->label();
-            }
-
-            return implode(', ', $matchedSegments);
+            ]) &&
+            str_contains($leadSource, $marketSource)
+        ) {
+            $matchedSegments[] = QuoteSegmentEnum::SIC->label();
         }
+
+        // Check NON-SIC - ensure it's neither SIC nor AIG and has the right source
+        if (
+            ! in_array(strtolower(QuoteSegmentEnum::SIC->tag()), $tagNames) &&
+            ! in_array(strtolower(QuoteSegmentEnum::AIG->tag()), $tagNames) &&
+            str_contains($leadSource, $marketSource)
+        ) {
+            $matchedSegments[] = QuoteSegmentEnum::NON_SIC->label();
+        }
+
+        // Check SIC-REVIVAL
+        if (in_array($leadSource, [
+            LeadSourceEnum::REVIVAL,
+            LeadSourceEnum::REVIVAL_REPLIED,
+            LeadSourceEnum::REVIVAL_PAID,
+        ])) {
+            $matchedSegments[] = QuoteSegmentEnum::SIC_REVIVAL->label();
+        }
+
+        return implode(', ', $matchedSegments);
     }
 }
