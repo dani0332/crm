@@ -2,11 +2,10 @@
 
 namespace App\Pipes\Allocation\Car;
 
-use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
+use App\Models\CarQuoteRequestDetail;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
-use App\Services\CarAllocationService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use Closure;
@@ -21,24 +20,16 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        $lead = $this->allocationRequest->getLead();
         $advisor = $this->allocationRequest->getAdvisor();
-        $tier = $this->allocationRequest->get('tier');
 
         DB::beginTransaction();
 
         try {
-            $carAllocationService = app(CarAllocationService::class);
-            $carAllocationService->processLeadAssignment(
-                $lead,
-                $advisor->id,
-                $tier,
-                AssignmentTypeEnum::SYSTEM_ASSIGNED
-            );
+            $this->assign();
 
             // Send WhatsApp notification for non-renewal leads
-            if ($lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($lead, $advisor->id);
+            if ($this->lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+                app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($this->lead, $advisor->id);
             }
 
             $this->allocationRequest->markAsAllocated();
@@ -52,5 +43,18 @@ class AssignLeadPipe extends BaseAllocationPipe
         }
 
         return $next($request);
+    }
+
+    protected function updateQuoteDetail()
+    {
+        // Log information about the update operation.
+        LoggerService::info('About to update car quote detail record');
+
+        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $this->lead->id)->first();
+        $oldAdvisorAssignedDate = $carQuoteDetail->advisor_assigned_date ?? '';
+        $this->upsertQuoteDetail($this->lead->id, CarQuoteRequestDetail::class, 'car_quote_request_id');
+
+        // Return the old advisor assigned date, if applicable.
+        return $oldAdvisorAssignedDate;
     }
 }
