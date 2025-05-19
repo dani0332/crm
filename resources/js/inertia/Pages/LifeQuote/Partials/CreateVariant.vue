@@ -600,12 +600,12 @@ const validateCoverValue = value => {
     <template #actions>
       <div class="flex justify-between w-full">
         <!-- Left side: Text -->
-        <div class="flex justify-start">
-          <p class="text-red-500">{{ errorMessage }}</p>
+        <div class="flex-1 flex items-start mr-4 overflow-hidden">
+          <p class="text-red-500 text-sm break-words">{{ errorMessage }}</p>
         </div>
 
         <!-- Right side: Button -->
-        <div class="flex justify-end">
+        <div class="flex-shrink-0 flex justify-end">
           <x-button class="mr-2" @click="shown = false"> Cancel </x-button>
           <x-button
             @click="getQuote"
