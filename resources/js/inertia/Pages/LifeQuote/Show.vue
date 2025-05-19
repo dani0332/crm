@@ -1947,12 +1947,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">Authorised AT</dt>
+                <dt class="font-medium uppercase">Authorised AT {{ quote.id }} </dt>
                 <dd>{{ quote?.payments[0]?.authorized_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">PAID AT</dt>
-                <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
+                <dd>{{ quote?.paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
@@ -1964,14 +1964,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
-                <dd v-if="quote.payment_gateway == null">N/A</dd>
-                <dd v-else>
-                  {{
-                    quote.payment_gateway == 'NGENIUS'
-                      ? 'CREDIT CARD'
-                      : quote.payment_gateway
-                  }}
-                </dd>
+                <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
