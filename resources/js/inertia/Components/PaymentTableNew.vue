@@ -176,6 +176,7 @@ const modal2Ref = ref(null);
 const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
+const showInsurerReceiptNumberInputField = ref(false);
 
 const familyEmployeDiscount = [
   quoteTypeCodeEnum.Car,
@@ -1923,6 +1924,7 @@ const editPaymentModal = async (
   capture_approval,
 ) => {
   isTransactionCaptureButtonEnabled.value = true;
+  showInsurerReceiptNumberInputField.value = false;
 
   if (
     sr_no === 0 &&
@@ -1952,6 +1954,13 @@ const editPaymentModal = async (
     return false;
   }
 
+  // Check and enable insurer receipt number input field
+  if(split_payment_id) {
+    const splitPayment = payment?.payment_splits?.find(split => split.id === split_payment_id);
+    if(payment.collection_type === 'insurer' && splitPayment && splitPayment.payment_method.code == paymentMethodsEnums.InsurerPayment) {
+      showInsurerReceiptNumberInputField.value = true;
+    }
+  }
   // Payment Capture Validation for GIG
   if (
     capture_approval == 1 &&
@@ -6490,7 +6499,7 @@ onBeforeMount(() => {
                     </x-field>
                   </div>
                 </div>
-                <div class="w-1/2 px-2">
+                <div class="w-1/2 px-2" v-if="showInsurerReceiptNumberInputField">
                   <div>
                     <x-tooltip class="tooltip-display">
                       <span
