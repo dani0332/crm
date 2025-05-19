@@ -544,12 +544,13 @@ const companyConcernOptions = [
   { label: 'Sub Entity', value: 'SubEntity' },
 ];
 
-const companyTypeOptions = computed(() => {
+const industryTypeOptions = computed(() => {
   return page.props.companyTypes.map(comp_type => ({
     value: comp_type.code,
     label: comp_type.text,
   }));
 });
+
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
     value: em.id,
