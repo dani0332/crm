@@ -347,7 +347,7 @@ class ApiController extends Controller
         LoggerService::info('private client tag exercise has been initiated');
 
         $request->validate([
-            'batch_size' => 'required|integer|min:1|max:1000',
+            'batch_size' => 'required|integer|min:1',
             'offset' => 'required|integer',
         ]);
 
@@ -356,7 +356,7 @@ class ApiController extends Controller
             $batchSize = $request->input('batch_size');
             $offset = $request->input('offset');
 
-            $customers = Customer::whereNull('pcp_tag')->limit($batchSize)->offset($offset)->get();
+            $customers = Customer::whereNull('pcp_tag')->limit($batchSize)->offset($offset)->orderBy('created_at', 'desc')->get();
 
             if ($customers->isEmpty()) {
                 LoggerService::info('No customers found without PCP tag.');
