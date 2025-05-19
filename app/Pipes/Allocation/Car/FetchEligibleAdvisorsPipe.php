@@ -1,0 +1,163 @@
+<?php
+
+namespace App\Pipes\Allocation\Car;
+
+use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
+use App\Enums\UserStatusEnum;
+use App\Models\BuyLeadRequest;
+use App\Models\CarQuote;
+use App\Models\LeadAllocation;
+use App\Models\Team;
+use App\Models\Tier;
+use App\Models\User;
+use App\Models\UserTeams;
+use App\Pipes\Allocation\Common\BaseAllocationPipe;
+use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\Logger\LoggerService;
+use Closure;
+
+class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
+{
+    /**
+     * Handle the incoming request.
+     */
+    public function handle(AllocationRequest $request, Closure $next)
+    {
+        $this->setRequest($request);
+
+        $tierUserIds = $request->get('tierUserIds');
+        $lead = $request->getLead();
+        $tier = $request->getTier();
+        $teamId = $request->getTeamId();
+        $prevAdvisorId = $request->getReAssigFromAdvisorId();
+
+        $eligibleAdvisors = $this->fetchEligibleUsersByStatus($lead, $tier, $tierUserIds, $prevAdvisorId, $teamId);
+
+        $request->set('eligibleAdvisors', $eligibleAdvisors);
+
+        return $next($request);
+    }
+
+    private function fetchEligibleUsersByStatus(CarQuote $lead, Tier $tier, $tierUserIds, $advisorId, $teamId)
+    {
+        $tierUserIds = is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray();
+        LoggerService::info(self::class."::fetchEligibleUsersByStatus - Users against tierID {$tier->id} and tier name: {$tier->name} are: ".json_encode($tierUserIds));
+
+        $advisors = [];
+
+        if ($lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($tier->isValue() || $tier->isVolume())) {
+            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId);
+        }
+
+        if (empty($advisors)) {
+            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId);
+        }
+
+        return $advisors ?? [];
+    }
+
+    private function fetchAdvisors(string $findAdvisorFn, Tier $tier, $tierUserIds, $advisorId, $teamId)
+    {
+        $statusOrder = $this->getOnlineStatusesInOrder();
+
+        foreach ($statusOrder as $status) {
+            $eligibleUsers = $this->{$findAdvisorFn}($status, $tier, $tierUserIds, $advisorId, $teamId);
+
+            if ($eligibleUsers && count($eligibleUsers) > 0) {
+                LoggerService::info(self::class.'::fetchAdvisors - Eligble Users found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+
+                return $eligibleUsers->toArray();
+            }
+            LoggerService::info(self::class.'::fetchAdvisors - No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+        }
+
+        return [];
+    }
+
+    private function getExcludedUserIds($teamId = null)
+    {
+        // Define a list of excluded team names.
+        $excludedTeams = [TeamNameEnum::AFFINITY];
+
+        // If team is not available, it should not be assigned.
+        if (empty($teamId) || $teamId == 0 || $teamId == getTeamId(TeamNameEnum::ORGANIC)) {
+            $excludedTeams[] = TeamNameEnum::SIC_UNASSISTED;
+        }
+
+        // Retrieve the IDs of excluded teams.
+        $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
+
+        // Retrieve the user IDs associated with excluded teams.
+        return UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->get();
+    }
+
+    private function getBaseQuery($status, $userIds, $advisorId = null, $teamId = null)
+    {
+        $excludedUserIds = $this->getExcludedUserIds($teamId);
+
+        $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
+
+        // Create a query to fetch lead allocations with their associated users.
+        $query = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
+            // Filter by advisor status.
+            $query->where('status', $status);
+        })
+            ->whereIn('user_id', $userIds)
+            ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
+                $query->whereNotIn('user_id', $excludedUserIds);
+            })
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->activeUser();
+
+        // Exclude a specific advisor if an advisor ID is provided.
+        if (! empty($advisorId)) {
+            $query->where('user_id', '!=', $advisorId);
+        }
+
+        return $query;
+    }
+
+    private function getBLAdvisorsByStatus($status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
+    {
+        LoggerService::info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status}");
+        $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $this->allocationRequest->isSIC(), $tier->isValue());
+        LoggerService::info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
+
+        $userIds = array_values(array_intersect(
+            $buyLeadRequestedUserIds,
+            $tierUserIds
+        ));
+
+        $advisors = $this->getBaseQuery($status, $userIds, $advisorId, $teamId)
+            ->where('buy_lead_status', true)
+            ->where(function ($query) {
+                $query->whereRaw('buy_lead_allocation_count < buy_lead_max_capacity')->orWhere('buy_lead_max_capacity', '=', -1);
+            })
+            ->orderBy('buy_lead_last_allocated')
+            ->get();
+
+        if ($advisors->count() > 0) {
+            $this->allocationRequest->set('hasBuyLeadAdvisors', true);
+
+            LoggerService::info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray()).' found');
+        }
+
+        return $advisors;
+    }
+
+    public function getAdvisorsByStatus($status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
+    {
+        LoggerService::info(self::class."::getAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status}");
+
+        return $this->getBaseQuery($status, $tierUserIds, $advisorId, $teamId)
+            ->where('normal_allocation_enabled', true)
+            ->where(function ($query) {
+                // Apply allocation count and max capacity conditions.
+                $query->whereRaw('allocation_count < max_capacity')->orWhere('max_capacity', -1);
+            })
+            ->orderBy('last_allocated')
+            ->get();
+    }
+
+}

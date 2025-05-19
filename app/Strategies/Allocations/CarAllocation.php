@@ -6,7 +6,7 @@ use App\Enums\QuoteTypes;
 use App\Pipes\Allocation\Car\AssignLeadPipe;
 use App\Pipes\Allocation\Car\AssignTeamPipe;
 use App\Pipes\Allocation\Car\EvaluateTierPipe;
-use App\Pipes\Allocation\Car\FetchAvailableAdvisorPipe;
+use App\Pipes\Allocation\Car\FetchEligibleAdvisorsPipe;
 use App\Pipes\Allocation\Car\FetchTierUsersPipe;
 use App\Pipes\Allocation\Car\VerifyLeadPreChecksPipe;
 use App\Pipes\Allocation\Common\FetchLeadPipe;
@@ -48,7 +48,7 @@ class CarAllocation implements Allocation
                 ValidateNationalityConfigPipe::class,
                 AssignTeamPipe::class,
                 FetchTierUsersPipe::class,
-                FetchAvailableAdvisorPipe::class,
+                FetchEligibleAdvisorsPipe::class,
                 AssignLeadPipe::class,
                 MakeResponsePipe::class,
             ])->thenReturn();
