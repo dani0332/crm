@@ -394,7 +394,7 @@ class CarAllocationService extends AllocationService
         $tierUserIds = $this->applyRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
         // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
-        if ($lead->isEligibleForOrganicAssignmentForPlanB()) {
+        if ($lead->isEligibleForOrganicAssignmentForPlanB(QuoteTypes::CAR)) {
             LoggerService::info(self::class.'::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor');
             $teamId = getTeamId(TeamNameEnum::ORGANIC);
         }

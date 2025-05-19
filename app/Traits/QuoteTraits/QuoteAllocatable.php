@@ -164,10 +164,10 @@ trait QuoteAllocatable
         return $this->insuranceProvider?->payment_gateway_id === PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK;
     }
 
-    public function isEligibleForOrganicAssignmentForPlanB(): bool
+    public function isEligibleForOrganicAssignmentForPlanB(QuoteTypes $quoteType): bool
     {
         return $this->isInsurerPlanB()
-            && $this->isSIC(QuoteTypes::CAR)
+            && $this->isSIC($quoteType)
             && ! $this->sic_advisor_requested
             && $this->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
