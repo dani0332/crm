@@ -383,11 +383,7 @@ const validateCoverValue = value => {
     @submit="onSubmit"
   >
     <div class="mx-auto p-6 bg-white rounded-lg">
-      <h2
-        class="bg-gray-100 text-gray-700 font-semibold text-center rounded-lg px-6 py-3 -mt-4 mb-2"
-      >
-        {{ props.plan.planName }}
-      </h2>
+      <h2 class="bg-gray-100 text-gray-700 font-semibold text-center rounded-lg px-6 py-3 -mt-4 mb-2">{{ props.plan.providerName }} - {{ props.plan.planName }}</h2>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block font-medium text-gray-700 mb-1"
