@@ -109,6 +109,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
             ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->when($this->allocationRequest->hasNationalityConfig(), fn ($q) => $q->whereIn('user_id', $this->allocationRequest->getAdvisorIDs()))
             ->activeUser();
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -136,6 +137,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
                 $query->whereRaw('buy_lead_allocation_count < buy_lead_max_capacity')->orWhere('buy_lead_max_capacity', '=', -1);
             })
             ->orderBy('buy_lead_last_allocated')
+            ->logRawSql()
             ->get();
 
         if ($advisors->count() > 0) {
@@ -158,6 +160,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
                 $query->whereRaw('allocation_count < max_capacity')->orWhere('max_capacity', -1);
             })
             ->orderBy('last_allocated')
+            ->logRawSql()
             ->get();
     }
 
