@@ -922,10 +922,6 @@ const sortPlans = incommingPlans => {
 };
 
 watchEffect(() => {
-  listQuotePlansFiltered.value = plansTable.data
-    .slice()
-    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
-
   if (
     planFilters?.insurer?.length === 0 ||
     planFilters?.insurer?.length === undefined
@@ -3694,7 +3690,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             size="sm"
             color="#ff5e00"
             type="submit"
-            @click="onPlanFiltersSubmit"
+            @click.prevent="onPlanFiltersSubmit"
           >
             Apply
           </x-button>

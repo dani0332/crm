@@ -170,12 +170,6 @@ onMounted(() => {
                   <div>{{ props?.quote?.policy_number }}</div>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <div class="font-medium">Policy Expiry Date</div>
-                  <div>
-                    {{ dateFormat(props?.quote?.previous_policy_expiry_date) }}
-                  </div>
-                </div>
-                <div class="grid sm:grid-cols-2">
                   <div class="font-medium">Lost reason</div>
                   <div>
                     {{ props?.quote?.lost_reason }}
