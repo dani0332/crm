@@ -755,8 +755,17 @@ class TravelQuoteService extends BaseService
         $travelQuote->nationality_id = $request->nationality_id;
         $travelQuote->premium = $request->premium;
         $travelQuote->dob = $request->dob;
-        if ($travelQuote->days_cover_for != $request->days_cover_for || $travelQuote->destination_id != $request->destination_id || $travelQuote->currently_located_in_id != $request->currently_located_in_id || $travelQuote->travel_cover_for_id != $request->travel_cover_for_id || $travelQuote->region_cover_for_id != $request->region_cover_for_id
-    || $travelQuote->departure_country_id != $request->departure_country_id || $travelQuote->start_date != $request->start_date || $travelQuote->end_date != $request->end_date || $travelQuote->direction_code != $request->direction_code) {
+        if (
+            $travelQuote->days_cover_for != $request->days_cover_for ||
+            $travelQuote->destination_id != $request->destination_id ||
+            $travelQuote->currently_located_in_id != $request->currently_located_in_id ||
+            $travelQuote->travel_cover_for_id != $request->travel_cover_for_id ||
+            $travelQuote->region_cover_for_id != $request->region_cover_for_id ||
+            $travelQuote->departure_country_id != $request->departure_country_id ||
+            $travelQuote->start_date != $request->start_date ||
+            $travelQuote->end_date != $request->end_date ||
+            $travelQuote->direction_code != $request->direction_code
+        ) {
             $travelQuote->quote_updated_at = Carbon::now();
         }
         $travelQuote->days_cover_for = $request->days_cover_for;
@@ -790,6 +799,38 @@ class TravelQuoteService extends BaseService
 
         $travelQuote->details = $request->details;
         $travelQuote->save();
+
+        if (! empty($request->destination_ids)) {
+            $travelQuote->load('travelDestinations');
+
+            $existingIds = $travelQuote->travelDestinations->pluck('destination_id')->toArray();
+            $newIds = $request->destination_ids;
+
+            // Determine which IDs need to be inserted and which to delete
+            $idsToInsert = array_diff($newIds, $existingIds);
+            $idsToDelete = array_diff($existingIds, $newIds);
+
+            // Delete outdated destinations
+            if (! empty($idsToDelete)) {
+                TravelDestination::where([
+                    'uuid' => $id,
+                    'quote_id' => $travelQuote->id,
+                    'customer_id' => $travelQuote->customer_id,
+                ])->whereIn('destination_id', $idsToDelete)->delete();
+            }
+
+            // Insert new destinations
+            if (! empty($idsToInsert)) {
+                $destinationData = array_map(fn ($destinationId) => [
+                    'uuid' => $id,
+                    'quote_id' => $travelQuote->id,
+                    'customer_id' => $travelQuote->customer_id,
+                    'destination_id' => $destinationId,
+                ], $idsToInsert);
+
+                TravelDestination::insert($destinationData);
+            }
+        }
 
         if (isset($request->return_to_view)) {
             return redirect('quote/travel/'.$id)->with('success', 'Travel Quote has been updated');
