@@ -280,61 +280,6 @@ class AllocationService extends BaseService
         return $resp;
     }
 
-    public function resolveAllocationResponse(AllocationRequest $request, ?Exception $exception = null): array
-    {
-        if ($lead = $request->get('lead')) {
-            $lead->endAllocation();
-        }
-
-        $request->endBuyLeadProcessing();
-
-        if ($request->isEvaluateTierOnlyRequest() && $request->getTier()) {
-            $tier = $request->getTier();
-            $lead = $request->getLead();
-
-            return [
-                'advisorId' => $lead->advisor_id,
-                'message' => 'Tier evaluated successfully',
-                'status' => Response::HTTP_OK,
-                'tierId' => $tier->id,
-                'tierName' => $tier->name,
-            ];
-        }
-
-        if ($request->isAllocated() || $request->isSameAdvisor()) {
-            $message = 'Lead allocated successfully';
-
-            if ($request->isSameAdvisor()) {
-                $message = 'Found same advisor as previous advisor so further allocation is skipped';
-            }
-
-            $data = [
-                'advisorId' => $request->get('advisor')?->id,
-                'message' => $message,
-                'status' => Response::HTTP_OK,
-            ];
-
-            $tier = $request->getTier();
-
-            if ($tier) {
-                $data['tierId'] = $tier->id;
-                $data['tierName'] = $tier->name;
-            }
-
-            return $data;
-        }
-
-        if ($request->isFailed()) {
-            $this->leadAllocationFailed($request->getQuoteUUID(), $request->getQuoteType());
-        }
-
-        return [
-            'advisorId' => 0,
-            'message' => $exception ? $exception->getMessage() : 'Lead allocation failed',
-            'status' => $exception ? $exception->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR,
-        ];
-    }
-
     public function shouldProceedWithReAllocation($allocationSwitchName)
     {
         // Fetch reassignment start and end times
@@ -359,5 +304,59 @@ class AllocationService extends BaseService
         LoggerService::info('Reassignment with public holiday check: '.$shouldProceed);
 
         return $shouldProceed;
+    }
+
+    public function resolveAllocationResponse(AllocationRequest $request, ?Exception $exception = null): array
+    {
+        if ($lead = $request->getLead()) {
+            $lead->endAllocation();
+        }
+
+        $request->endBuyLeadProcessing();
+
+        if ($request->isEvaluateTierOnlyRequest() && $request->getTier()) {
+            $tier = $request->getTier();
+
+            return [
+                'advisorId' => $lead->advisor_id,
+                'message' => 'Tier evaluated successfully',
+                'status' => Response::HTTP_OK,
+                'tierId' => $tier->id,
+                'tierName' => $tier->name,
+            ];
+        }
+
+        if ($request->isAllocated() || $request->isSameAdvisor()) {
+            $message = 'Lead allocated successfully';
+
+            if ($request->isSameAdvisor()) {
+                $message = 'Found same advisor as previous advisor so further allocation is skipped';
+            }
+
+            $data = [
+                'advisorId' => $request->get('advisor')?->id || $lead?->advisor_id,
+                'message' => $message,
+                'status' => Response::HTTP_OK,
+            ];
+
+            $tier = $request->getTier();
+
+            if ($tier) {
+                $data['tierId'] = $tier->id;
+                $data['tierName'] = $tier->name;
+            }
+
+            return $data;
+        }
+
+        if ($request->isFailed()) {
+            $this->leadAllocationFailed($request->getQuoteUUID(), $request->getQuoteType());
+        }
+
+        return [
+            'advisorId' => 0,
+            'message' => $exception ? $exception->getMessage() : 'Lead allocation failed',
+            'status' => $exception ? $exception->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR,
+        ];
     }
 }
