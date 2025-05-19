@@ -113,7 +113,6 @@ trait PrivateClient
     public function removePcpTag()
     {
         $customers = Customer::where('pcp_tag', true)->get();
-
         if ($customers->isEmpty()) {
             LoggerService::info('No customers found with PCP tag.');
 
@@ -121,33 +120,48 @@ trait PrivateClient
         }
 
         foreach ($customers as $customer) {
-            $activeQualifiedLeadsCount = 0;
 
-            $personalQuoteCount = $customer->personalQuote()
+            LoggerService::info('Starting to check active qualified leads for customer', extra: [
+                'customer_id' => $customer->id,
+                'customer_name' => $customer->first_name.' '.$customer->last_name,
+                'email' => $customer->email,
+            ]);
+
+            $activeQualifiedLeads = $customer->personalQuote()
                 ->where('pc_qualified', true)
                 ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                 ->whereNotNull('policy_expiry_date')
                 ->where('policy_expiry_date', '>', now())
-                ->count();
+                ->exists();
 
-            $activeQualifiedLeadsCount += $personalQuoteCount;
-
-            if ($activeQualifiedLeadsCount === 0) {
+            if (! $activeQualifiedLeads) {
+                LoggerService::info('No active qualified leads found for customer', extra: [
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->first_name.' '.$customer->last_name,
+                    'email' => $customer->email,
+                ]);
                 try {
                     $customer = Customer::where('id', $customer->id)->first();
                     $customer->update([
-                        'pcp_tag' => 0,
+                        'pcp_tag' => false,
                         'updated_at' => now(),
                     ]);
 
-                    LoggerService::info('PCP tag removed successfully from customer: ', extra: [
+                    LoggerService::info('PCP tag removed successfully from customer', extra: [
                         'customer_id' => $customer->id,
+                        'customer_name' => $customer->first_name.' '.$customer->last_name,
+                        'email' => $customer->email,
                     ]);
+
+                    return true;
                 } catch (\Exception $ex) {
                     LoggerService::error('Error removing PCP tag.', exception: $ex);
                     throw $ex;
                 }
             }
+            LoggerService::info('Active qualified leads found for customer', extra: [
+                'customer_id' => $customer->id,
+            ]);
         }
     }
 

@@ -18,6 +18,9 @@ class Customer extends Model implements AuditableContract
     protected $guarded = ['ref_id'];
     protected $appends = ['pcp_tag_formatted'];
     public $ref_id;
+    protected $casts = [
+        'pcp_tag' => 'boolean',
+    ];
     /**
      * customer detail relation
      *
