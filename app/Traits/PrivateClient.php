@@ -65,7 +65,9 @@ trait PrivateClient
                     $model->save();
 
                     PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
-                    LoggerService::info('PC qualified tag applied successfully on lead.');
+                    LoggerService::info('PC qualified tag applied successfully on lead.', extra: [
+                        'tag_version_criteria' => json_decode($configs),
+                    ]);
                 } else {
                     LoggerService::info('PC qualified tag already applied on lead.');
                 }
@@ -76,8 +78,11 @@ trait PrivateClient
                     $customer->ref_id = $model->code;
                     $customer->update(['pcp_tag' => true, 'pcp_tag_version' => $pcpTagVersion]);
 
-                    LoggerService::info('PCP tag applied successfully on customer.', [
+                    LoggerService::info('PCP tag applied successfully on customer.', extra: [
                         'customer_id' => $customer->id,
+                        'customer_name' => $customer->first_name.' '.$customer->last_name,
+                        'email' => $customer->email,
+                        'tag_version_criteria' => json_decode($configs),
                     ]);
 
                     return true;
@@ -85,6 +90,9 @@ trait PrivateClient
 
                 LoggerService::warning('PCP tag already applied on customer.', [
                     'customer_id' => $customer->id,
+                    'customer_name' => $customer->first_name.' '.$customer->last_name,
+                    'email' => $customer->email,
+                    'tag_version_criteria' => json_decode($configs),
                 ]);
 
                 return false;
