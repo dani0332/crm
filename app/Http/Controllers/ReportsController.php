@@ -13,6 +13,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Exports\UtmReportExport;
 use App\Factories\ManagementReportServiceFactory;
+use App\Http\Requests\UTMReportRequest;
 use App\Models\Department;
 use App\Models\RenewalBatch;
 use App\Models\Team;
@@ -37,7 +38,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
-use App\Http\Requests\UTMReportRequest;
 
 class ReportsController extends Controller
 {
