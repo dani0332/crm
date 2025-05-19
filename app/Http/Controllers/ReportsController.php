@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
+use App\Http\Requests\UTMReportRequest;
 
 class ReportsController extends Controller
 {
@@ -333,7 +334,7 @@ class ReportsController extends Controller
         ];
     }
 
-    public function utmLeadsSaleReport(Request $request, ReportService $reportService)
+    public function utmLeadsSaleReport(UTMReportRequest $request, ReportService $reportService)
     {
         $resp = $reportService->utmReport($request);
 
@@ -343,7 +344,7 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function exportUtmReport(Request $request, ReportService $reportService)
+    public function exportUtmReport(UTMReportRequest $request, ReportService $reportService)
     {
         $resp = $reportService->utmReport($request);
         $data = $resp['records'];
