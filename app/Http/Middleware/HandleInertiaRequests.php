@@ -737,7 +737,7 @@ class HandleInertiaRequests extends Middleware
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(
-                                auth()->user()->can(PermissionsEnum::SIC_HEALTH_CONFIG), // TODO: change permission
+                                auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),
                                 'Nationality Allocation',
                                 route('admin.nationality-allocation-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])

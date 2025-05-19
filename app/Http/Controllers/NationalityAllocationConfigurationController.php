@@ -15,7 +15,7 @@ class NationalityAllocationConfigurationController extends Controller
 {
     public function __construct(protected NationalityAllocationService $nationalityAllocationService)
     {
-        $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG); // TODO: change permission
+        $this->middleware('permission:'.PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG);
     }
 
     public function index(Request $request)
