@@ -45,7 +45,7 @@ class CarAllocation implements Allocation
             return Pipeline::send($allocationRequest)->through([
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
-                // VerifyAlreadyInProgressAllocationPipe::class,
+                VerifyAlreadyInProgressAllocationPipe::class,
                 EvaluateTierPipe::class,
                 ValidateNationalityConfigPipe::class,
                 EvaluateTeamPipe::class,
