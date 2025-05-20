@@ -19,7 +19,6 @@ use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Models\User;
-use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
 use stdClass;
 
