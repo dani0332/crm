@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\PrivateClientUpdatedEvent;
+use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\LifeQuote;
@@ -45,6 +46,7 @@ class LifeQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $lifeQuote->transaction_approved_at];
         }
         if (isset($dirty['advisor_id'])) {
+            LogAllocation::dispatch($lifeQuote, QuoteTypes::LIFE);
 
             if ($lifeQuote->source != LeadSourceEnum::IMCRM) {
 

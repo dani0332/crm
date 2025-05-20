@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\HealthRatingEligibility;
 use App\Models\InslyInsuranceProvider;
 use App\Models\InsuranceProvider;
+use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\DB;
 
 class InsuranceProviderRepository extends BaseRepository
@@ -21,6 +22,8 @@ class InsuranceProviderRepository extends BaseRepository
 
     public function fetchByQuoteTypeMapping($quoteTypeId)
     {
+        LoggerService::info('fn:fetchByQuoteTypeMapping - Start - InsuranceProviderRepository');
+
         return DB::table('insurance_provider_quote_type')
             ->select([
                 'insurance_provider.id',

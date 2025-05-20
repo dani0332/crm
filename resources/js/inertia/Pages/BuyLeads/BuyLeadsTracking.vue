@@ -83,26 +83,27 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Line of Business" required>
-        <x-select
-          placeholder="Select LOB"
-          :options="props.lobs || []"
-          filterable
-          v-model="filters.quote_type"
-          :rules="[isRequired]"
-        ></x-select>
-      </x-field>
-      <x-field label="Requested Date" required>
-        <DatePicker
-          v-model="filters.date"
-          name="created_at_start"
-          format="dd-MM-yyyy"
-          :rules="[isRequired]"
-          range
-          :max-range="30"
-          placeholder="Select Request Submitted Date"
-        />
-      </x-field>
+      <x-select
+        label="Line of Business"
+        required
+        placeholder="Select LOB"
+        :options="props.lobs || []"
+        filterable
+        v-model="filters.quote_type"
+        :rules="[isRequired]"
+      ></x-select>
+
+      <DatePicker
+        v-model="filters.date"
+        name="created_at_start"
+        format="dd-MM-yyyy"
+        :rules="[isRequired]"
+        range
+        :max-range="30"
+        placeholder="Select Request Submitted Date"
+        label="Requested Date"
+        required
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

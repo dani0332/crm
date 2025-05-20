@@ -19,11 +19,13 @@ class RolePermissionSeeder extends Seeder
         // $this->searchModulePermissions();
         // $this->createBusinessIntelligenceUnitRole();
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
-        // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
+        $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
         $this->addBridgerSkipPermission();
         $this->addPostPrepaymentButtonPermission();
+        $this->addInsurerPaymentLinkPermission();
         $this->sendUpdateCancelPermission();
+        // $this->addPolicyDetailsAddVatPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -112,17 +114,19 @@ class RolePermissionSeeder extends Seeder
 
     private function addVoidPaymentEmbeddedPermission(): void
     {
-        $role = Role::where('name', RolesEnum::EpAdmin)->first();
+        $roles = Role::whereIn('name', [RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])->get();
         $permission = Permission::firstOrCreate([
-            'name' => PermissionsEnum::PAYMENTS_VOID,
+            'name' => PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_VOID,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        if (! $role->hasPermissionTo($permission)) {
-            $role->givePermissionTo($permission);
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
         }
     }
 
@@ -139,6 +143,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::SKIP_BRIDGER_AML,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addInsurerPaymentLinkPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::INSURER_PAYMENT_LINK,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
@@ -185,6 +200,17 @@ class RolePermissionSeeder extends Seeder
     {
         Permission::firstOrCreate([
             'name' => PermissionsEnum::CANCEL_SEND_UPDATE,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+    private function addPolicyDetailsAddVatPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::POLICY_DETAILS_ADD_VAT,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

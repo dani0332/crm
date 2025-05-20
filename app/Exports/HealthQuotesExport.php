@@ -18,9 +18,18 @@ class HealthQuotesExport
         $this->genderOptions = app(CRUDService::class)->getGenderOptions();
     }
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return app(HealthQuoteService::class)->getGridData()->get();
+        return app(HealthQuoteService::class)->getGridData(requestParams: $requestParams)->get();
+    }
+
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery($requestParams = [])
+    {
+        return app(HealthQuoteService::class)->getGridData(requestParams: $requestParams);
     }
 
     public function headings(): array

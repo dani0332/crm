@@ -10,10 +10,10 @@ use App\Events\QuoteEmailUpdated;
 use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use Auth;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel

@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
+use App\Models\HomeQuote;
 use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
 use App\Models\PetQuote;
@@ -20,6 +21,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\InslyDataService;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
@@ -38,7 +40,7 @@ class InslyDetailRepository extends BaseRepository
 
     public function buildSearchClause(string $field, mixed $value, string $type = FilterTypes::EXACT)
     {
-        if (is_null($value) || $value === '') {
+        if (is_null($value) || $value === '' || empty($value)) {
             return null;
         }
 
@@ -113,6 +115,8 @@ class InslyDetailRepository extends BaseRepository
         $page = max((int) request()->get('page', 1), 1);
         $perPage = 15;
         $skip = ($page - 1) * $perPage;
+
+        LoggerService::info('InslyDetailRepository - getDataByIndex.', extra: request()->only(['policy_number', 'email', 'mobile_no']));
 
         $must = array_values(array_filter([
             $this->buildSearchClause('policy_no', request()->get('policy_number'), FilterTypes::EXACT),
@@ -383,9 +387,9 @@ class InslyDetailRepository extends BaseRepository
                 // create lead in case no record found
                 $payLoad = $this->prePareData($policy, $quoteType, $isPersonalQuote);
                 $payLoad['advisor_id'] = $advisorId;
-                info('InslyLead - Payload: '.json_encode($payLoad));
+                LoggerService::info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
-                info('InslyLead - created Lead Id : '.json_encode($id));
+                LoggerService::info('InslyLead - created Lead Id : '.json_encode($id));
                 if (! empty($id)) {
                     $obj = $model::where('id', $id)->first();
                     switch (ucfirst($quoteType)) {
@@ -402,7 +406,7 @@ class InslyDetailRepository extends BaseRepository
                                 ['car_quote_request_id' => $obj->id],
                                 ['insly_id' => $policy->_id]
                             );
-                            info('fetchSaveToImcrm - leadId : '.$obj->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
+                            LoggerService::info('fetchSaveToImcrm - leadId : '.$obj->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                             break;
 
                         case QuoteTypes::LIFE->value:
@@ -413,8 +417,12 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::HOME->value:
-                            $obj->homeQuoteRequestDetail()->updateOrCreate(
-                                ['home_quote_request_id' => $obj->id],
+                            $obj->homeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new HomeQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;
@@ -526,10 +534,10 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
 
         if ($insurer = $policy['policy']['insurer'] ?? null) {
-            info('Fetching Insurance Provider Id from Legacy Lead policy no: '.$policy['policy_no'].' and Insurer: '.trim($insurer));
+            LoggerService::info('Fetching Insurance Provider Id from Legacy Lead policy no: '.$policy['policy_no'].' and Insurer: '.trim($insurer));
             $insuranceProviderId = InsuranceProviderRepository::getInslyProviderId(trim($insurer));
             $dataArr['insurance_provider_id'] = $insuranceProviderId;
-            info('Assign Insurance Provider Id: '.$insuranceProviderId.' against Insurer: '.trim($insurer).' Legacy Lead policy no: '.$policy['policy_no']);
+            LoggerService::info('Assign Insurance Provider Id: '.$insuranceProviderId.' against Insurer: '.trim($insurer).' Legacy Lead policy no: '.$policy['policy_no']);
         }
 
         $dataArr['policy_issuance_date'] = now()->format('Y-m-d');

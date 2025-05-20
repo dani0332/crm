@@ -16,7 +16,9 @@ class SetReadDbConnection
      */
     public function handle(Request $request, Closure $next): Response
     {
-        DB::setDefaultConnection('mysql_read');
+        if (app()->environment('production')) {
+            DB::setDefaultConnection('mysql_read');
+        }
 
         return $next($request);
     }

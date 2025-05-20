@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EnvEnum;
@@ -697,7 +698,7 @@ if (! function_exists('getIMLogo')) {
         $imLogo = 'images/logo-new.png';
 
         if ($latest) {
-            $imLogo = 'images/im_logo_23k-hi.png';
+            $imLogo = 'images/im_logo_24k-hi.png';
         }
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
@@ -1230,6 +1231,9 @@ if (! function_exists('getAssignmentTypeText')) {
             case 6:
                 $assignmentText = 'ReAssigned as Bought Lead';
                 break;
+            case 7:
+                $assignmentText = 'Self Assigned';
+                break;
             default:
                 break;
         }
@@ -1567,10 +1571,11 @@ if (! function_exists('getInsuranceProvider')) {
 
             if (! empty($quoteDetails)) {
                 $quoteDetails->fill(['full_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name]);
-                $isCommercialVehicle = app(\App\Services\LeadAllocationService::class)->isCommercialVehicles($quoteDetails);
                 $vehicleType = \App\Models\VehicleType::find($quoteDetails?->vehicle_type_id)?->text;
 
-                if ($isCommercialVehicle || ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD && $vehicleType == strtoupper(QuoteTypes::BIKE->value))) {
+                if ($quoteDetails?->source == \App\Enums\LeadSourceEnum::RENEWAL_UPLOAD
+                && $vehicleType == strtoupper(QuoteTypes::BIKE->value)
+                && $quoteDetails?->registration_type === CarRegistrationType::PERSONAL) {
                     return $payment?->insuranceProvider;
                 }
             }

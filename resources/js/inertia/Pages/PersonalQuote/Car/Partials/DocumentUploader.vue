@@ -58,11 +58,14 @@ const confirmDeleteData = reactive({
   member: null,
   activity: null,
   contact: null,
+  doc_id: null,
+  doc_uuid: null,
 });
 
-const onDocDelete = name => {
+const onDocDelete = (doc_id, doc_uuid) => {
   modals.docConfirm = true;
-  confirmDeleteData.docs = name;
+  confirmDeleteData.doc_id = doc_id;
+  confirmDeleteData.doc_uuid = doc_uuid;
 };
 
 const confirmDeleteDoc = () => {
@@ -70,8 +73,8 @@ const confirmDeleteDoc = () => {
   router.post(
     `/documents/delete`,
     {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
+      doc_id: confirmDeleteData.doc_id,
+      doc_uuid: confirmDeleteData.doc_uuid,
     },
     {
       preserveScroll: true,
@@ -182,13 +185,13 @@ const uploadFile = (doc, filesWithInfo) => {
           {{ item.doc_name }}
         </a>
       </template>
-      <template #item-action="{ doc_name }">
+      <template #item-action="{ id, doc_uuid }">
         <div>
           <x-button
             size="xs"
             color="error"
             outlined
-            @click.prevent="onDocDelete(doc_name)"
+            @click.prevent="onDocDelete(id, doc_uuid)"
           >
             Delete
           </x-button>

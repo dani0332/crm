@@ -54,7 +54,7 @@ class RenewalQuotesExport
         ];
     }
 
-    public function collection()
+    public function collection($requestParams = [])
     {
         return $this->query->get();
     }

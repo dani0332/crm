@@ -87,55 +87,76 @@ onMounted(() => {
   <Head title="TPL Conversion" />
   <div class="flex flex-col h-[85vh]">
     <div class="flex gap-3 justify-end">
-      <x-field label="Segment" v-if="can(permissionsEnum.SEGMENT_FILTER)">
-        <ComboBox
-          v-model="filters.segment_filter"
-          placeholder="Select Segment"
-          :options="quoteSegments"
-          class="w-full"
-          :single="true"
-        />
-      </x-field>
-      <x-field label="Teams">
-        <ComboBox
-          v-model="filters.team_filter"
-          name="team_name"
-          placeholder="Select Teams"
-          :options="
-            allTeams.map(item => ({
-              value: item.id,
-              label: item.name,
-            }))
-          "
-          :disabled="can(permissionsEnum.ViewTeamsFilters)"
-        />
-      </x-field>
-      <x-field label="Advisor">
-        <ComboBox
-          v-model="filters.userFilter"
-          placeholder="Select Advisor"
-          :options="
-            advisors.map(item => ({
-              value: item.id,
-              label: item.name,
-            }))
-          "
-          :disabled="filters.team_filter.length == 0"
-          :class="{ 'cursor-no-drop': filters.team_filter.length == 0 }"
-        />
-      </x-field>
-      <x-field label="Commercial">
-        <x-select
-          v-model="filters.isCommercial"
-          placeholder="Select any option"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          class="w-full"
-        />
-      </x-field>
+      <x-select
+        v-if="can(permissionsEnum.SEGMENT_FILTER)"
+        v-model="filters.segment_filter"
+        placeholder="Select Segment"
+        :options="quoteSegments"
+        class="w-full min-w-[200px]"
+        filterable
+        filterPlaceholder="Filter Segment...."
+        label="Segment"
+      />
+      <x-select
+        v-model="filters.team_filter"
+        placeholder="Select Teams"
+        :options="
+          allTeams.map(item => ({
+            value: item.id,
+            label: item.name,
+          }))
+        "
+        :disabled="can(permissionsEnum.ViewTeamsFilters)"
+        filterable
+        filterPlaceholder="Filter Teams...."
+        class="w-full min-w-[200px]"
+        multiple
+        truncate
+        label="Teams"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="filters.team_filter = allTeams.map(item => item.id)"
+            @clear="filters.team_filter = []"
+          />
+        </template>
+      </x-select>
+      <x-select
+        v-model="filters.userFilter"
+        placeholder="Select Advisor"
+        :options="
+          advisors.map(item => ({
+            value: item.id,
+            label: item.name,
+          }))
+        "
+        :disabled="filters.team_filter.length == 0"
+        :class="{ 'cursor-no-drop': filters.team_filter.length == 0 }"
+        multiple
+        truncate
+        class="w-full min-w-[200px]"
+        filterable
+        filterPlaceholder="Filter Advisor...."
+        label="Advisor"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="filters.userFilter = advisors.map(item => item.id)"
+            @clear="filters.userFilter = []"
+          />
+        </template>
+      </x-select>
+      <x-select
+        v-model="filters.isCommercial"
+        placeholder="Select any option"
+        :options="[
+          { value: 'All', label: 'All' },
+          { value: 'Yes', label: 'Yes' },
+          { value: 'No', label: 'No' },
+        ]"
+        class="w-full"
+        label="Commercial"
+      />
     </div>
     <ChartsColumn
       :title="'TPL CONVERSION REPORT'"

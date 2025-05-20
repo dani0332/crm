@@ -1,11 +1,11 @@
 <script setup>
 import ActivePolicies from './Partials/ActivePolicies.vue';
 import EndingPolicies from './Partials/EndingPolicies.vue';
+import Endorsement from './Partials/Endorsement.vue';
+import Installment from './Partials/Installment.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
 import SalesSummary from './Partials/SaleSummary.vue';
 import Transaction from './Partials/Transaction.vue';
-import Installment from './Partials/Installment.vue';
-import Endorsement from './Partials/Endorsement.vue';
 
 const props = defineProps({
   reportData: Object,
@@ -35,7 +35,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 const isReportCategoryEmpty = ref(false);
 
-const { isRequired } = useRules();
+const { isRequired, maxSelections } = useRules();
 
 const filters = reactive({
   reportCategory: props.defaultFilters.reportCategory,
@@ -531,13 +531,25 @@ watch(
             What is the department you want to see?
           </template>
         </x-tooltip>
-        <ComboBox
+        <x-select
           v-model="filters.teams"
           placeholder="Search By Teams"
           :options="teams"
           deselect-all
           @update:modelValue="onTeamChange($event)"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teams.map(item => item.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div>
         <x-tooltip position="top">
@@ -548,14 +560,27 @@ watch(
           </label>
           <template #tooltip> What is the team you want to see? </template>
         </x-tooltip>
-        <ComboBox
+        <x-select
           v-model="filters.subTeams"
           placeholder="Search By Teams"
           :options="subTeams"
-          :maxLimit="3"
           deselect-all
           :loading="loaders.subTeams"
-        />
+          filterable
+          filterPlaceholder="Filter Sub Teams...."
+          class="w-full"
+          multiple
+          truncate
+          :rules="[maxSelections(3)]"
+          helper="You can select up to 3 sub teams"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.subTeams = subTeams.map(item => item.value)"
+              @clear="filters.subTeams = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div>
         <x-tooltip position="top">
@@ -568,13 +593,28 @@ watch(
             What is the lead source you want to see?
           </template>
         </x-tooltip>
-        <ComboBox
+        <x-select
           v-model="filters.leadSources"
           placeholder="Search by Lead Source"
           :options="leadSource"
-          :maxLimit="10"
           deselect-all
-        />
+          filterable
+          filterPlaceholder="Filter Lead Source...."
+          class="w-full"
+          multiple
+          truncate
+          :rules="[maxSelections(10)]"
+          helper="You can select up to 10 lead sources"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.leadSources = leadSource.map(item => item.value)
+              "
+              @clear="filters.leadSources = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div>
         <x-tooltip position="top">
@@ -628,23 +668,37 @@ watch(
             Based on which UTM source will the report be presented?
           </template>
         </x-tooltip>
-        <ComboBox
-          :single="true"
+        <x-select
           v-model="filters.utmGroupBy"
           placeholder="Search by Lead Source"
           :options="umtGroup"
           deselect-all
+          filterable
+          filterPlaceholder="Filter UTM Group...."
+          class="w-full"
         />
       </div>
-      <x-field label="Departments">
-        <ComboBox
-          :single="false"
-          v-model="filters.department_id"
-          placeholder="Search by Department"
-          :options="departments"
-          deselect-all
-        />
-      </x-field>
+      <x-select
+        label="Departments"
+        v-model="filters.department_id"
+        placeholder="Search by Department"
+        :options="departments"
+        filterable
+        filterPlaceholder="Filter Department...."
+        class="w-full"
+        multiple
+        truncate
+        :rules="[maxSelections(3)]"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.department_id = departments.map(item => item.value)
+            "
+            @clear="filters.department_id = []"
+          />
+        </template>
+      </x-select>
       <div v-if="filters.reportCategory != 'Sales Summary'">
         <x-tooltip position="top">
           <label
@@ -654,13 +708,24 @@ watch(
           </label>
           <template #tooltip> Line of Business assigned to the user </template>
         </x-tooltip>
-        <ComboBox
-          :single="false"
+        <x-select
           v-model="filters.lob"
           placeholder="Filter by Line of Business"
           :options="lobs"
           deselect-all
-        />
+          filterable
+          filterPlaceholder="Filter Line of Business...."
+          class="w-full"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.lob = lobs.map(item => item.value)"
+              @clear="filters.lob = []"
+            />
+          </template>
+        </x-select>
       </div>
       <x-field label="Private Clients" v-if="['Transaction', 'Installment', 'Endorsement', 'Sales Detail'].includes(filters.reportCategory)" > 
         <ComboBox
