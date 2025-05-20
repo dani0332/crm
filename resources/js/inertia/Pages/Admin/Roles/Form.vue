@@ -71,14 +71,14 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="NAME" required>
-        <x-input
-          v-model="roleForm.name"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="$page.props.errors.name"
-        />
-      </x-field>
+      <x-input
+        v-model="roleForm.name"
+        :rules="[isRequired]"
+        class="w-full"
+        :error="$page.props.errors.name"
+        label="NAME"
+        required
+      />
 
       <x-select
         label="PERMISSIONS"

@@ -76,9 +76,12 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="flex flex-wrap gap-6">
-      <x-field class="flex-1" label="Keyword Name" required>
-        <x-input class="w-full" v-model="filters.name" />
-      </x-field>
+      <x-input
+        label="Keyword Name"
+        required
+        class="w-full flex-1"
+        v-model="filters.name"
+      />
       <div class="self-center mt-2 flex justify-end gap-3">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
         <x-button size="sm" color="primary" @click.prevent="onReset">

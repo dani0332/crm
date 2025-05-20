@@ -348,15 +348,15 @@ const formatDate = date => {
     is-form
     @submit="onSubmit"
   >
-    <x-field label="Lost Reason" required>
-      <x-select
-        v-model="leadForm.lostreason"
-        :options="lostReasonsOptions"
-        placeholder="Lost Reason is required"
-        class="w-full"
-        :rules="[isRequired]"
-      />
-    </x-field>
+    <x-select
+      label="Lost Reason"
+      required
+      v-model="leadForm.lostreason"
+      :options="lostReasonsOptions"
+      placeholder="Lost Reason is required"
+      class="w-full"
+      :rules="[isRequired]"
+    />
     <template #secondary-action>
       <x-button
         tabindex="-1"

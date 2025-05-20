@@ -981,9 +981,11 @@ class SendEmailCustomerService extends BaseService
 
     public function sendUpdateToCustomerEmail($emailTemplateId, $emailData, $tag, $quoteTypeId)
     {
+        LoggerService::info('fn:sendUpdateToCustomerEmail - SendEmailCustomerService, email sending started', extra: [
+            'emailTemplateId' => $emailTemplateId,
+            'tag' => $tag,
+        ]);
         try {
-            LoggerService::info('fn: sendUpdateEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
-
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
             $headers = [
@@ -1008,8 +1010,10 @@ class SendEmailCustomerService extends BaseService
             }
 
             $sendUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_UPDATE_EMAIL);
-            LoggerService::info('send update email fetched. email: '.$sendUpdateEmail);
-            LoggerService::info('template id is : '.$emailTemplateId);
+            LoggerService::info('Send Update email and templateId fetched', extra: [
+                'email' => $sendUpdateEmail,
+                'templateId' => $emailTemplateId,
+            ]);
 
             $body = [
                 'sender' => [
@@ -1033,7 +1037,7 @@ class SendEmailCustomerService extends BaseService
             $ebServiceTeam = [];
             if ($checkIsHealthOrGroupMedical) {
                 $ebServiceEmail = getAppStorageValueByKey(ApplicationStorageEnums::IM_EB_SERVICE_TEAM_EMAIL);
-                LoggerService::info('IM EB Service team email fetched. email: '.$ebServiceEmail);
+                LoggerService::info('IM EB Service team email fetched', extra: ['email' => $ebServiceEmail]);
                 $ebServiceTeam = [[
                     'email' => $ebServiceEmail,
                     'name' => 'IM EB Service',
@@ -1056,7 +1060,7 @@ class SendEmailCustomerService extends BaseService
             $body['cc'] = array_merge($ccAdvisor, $ebServiceTeam);
 
             $sendPolicyUpdateEmail = getAppStorageValueByKey(ApplicationStorageEnums::SEND_POLICY_UPDATE_EMAIL);
-            LoggerService::info('Send Policy Update email fetched. email: '.$sendPolicyUpdateEmail);
+            LoggerService::info('Send Policy Update email fetched', extra: ['email' => $sendPolicyUpdateEmail]);
 
             $body['bcc'] = [[
                 'email' => $sendPolicyUpdateEmail,
@@ -1074,7 +1078,7 @@ class SendEmailCustomerService extends BaseService
 
             $message = json_decode($clientRequest->getBody()->getContents());
             if (isset($message->messageId)) {
-                LoggerService::info('fn: sendUpdateToCustomerEmail, email sending completed. messageId: '.$message->messageId);
+                LoggerService::info('fn:sendUpdateToCustomerEmail, email sending completed', extra: ['messageId' => $message->messageId]);
                 $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
                 $responseCode = $clientRequest->getStatusCode();
 
@@ -1087,8 +1091,12 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
-            $responseDetail = 'Send Update Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
-            LoggerService::info($responseDetail);
+            LoggerService::error('Send Update Email failed', extra: [
+                'Code/Message' => $responseCode,
+                'CustomerEmail' => $emailData->customerEmail,
+                'QuoteCdbId' => $quoteCdbId,
+                'Class' => get_class(),
+            ], exception: $ex);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }
