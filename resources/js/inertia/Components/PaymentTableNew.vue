@@ -206,6 +206,9 @@ const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
 const showInsurerReceiptNumberInputField = ref(false);
+const isInsurerReceiptNumberExistsModalOpen = ref(false);
+const insurerReceiptNumberCheckInProcess = ref(false);
+const paymentForm = ref();
 
 const familyEmployeDiscount = [
   quoteTypeCodeEnum.Car,
@@ -1709,6 +1712,10 @@ const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
 };
 
+const closeInsurerReceiptNumberExistsModal = () => {
+  isInsurerReceiptNumberExistsModalOpen.value = false;
+};
+
 const handleDeletePayment = async () => {
   let retryData = {
     payment_split_id: deleteSplitPaymentId.value,
@@ -1735,6 +1742,32 @@ const handleDeletePayment = async () => {
       },
     });
 };
+
+const checkInsurerReceiptNumber = () => {
+  if(showInsurerReceiptNumberInputField.value && paymentMethodsForm.insurer_receipt_number) {
+    insurerReceiptNumberCheckInProcess.value = true;
+    axios
+      .get(`/payments/${props.quoteType}/${paymentMethodsForm.insurer_receipt_number}/check-insurer-receipt-number`)
+      .then(res => {
+      if(res.data.status) {
+        paymentForm.value?.$el?.requestSubmit();
+        } else {
+          isInsurerReceiptNumberExistsModalOpen.value = true;
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: err?.response?.data?.message || 'Insurer receipt number check failed',
+          position: 'top',
+        });
+      })
+      .finally(() => {
+        insurerReceiptNumberCheckInProcess.value = false;
+      });
+  } else {
+    paymentForm.value?.$el?.requestSubmit();
+  }
+}
 
 const editPaymentModal = async (
   payment,
@@ -2278,6 +2311,7 @@ const validateInsurerPaymentLink = () => {
 };
 
 const addPayment = isValid => {
+  isInsurerReceiptNumberExistsModalOpen.value = false;
   if (
     insurerPaymentLinkIndex.value >= 0 &&
     paymentMethodsForm.insurerPaymentLink
@@ -3638,7 +3672,7 @@ onBeforeMount(() => {
           show-close
           backdrop
         >
-          <x-form @submit="addPayment" :auto-focus="false">
+          <x-form @submit="addPayment" ref="paymentForm" :auto-focus="false">
             <div class="w-full grid md:grid-cols-2 gap-3">
               <div>
                 <ToolTip
@@ -5568,30 +5602,42 @@ onBeforeMount(() => {
                     >
                       Approve
                     </x-button>
-                    <x-button
+                    <template
                       v-if="
                         (isApproveClicked ||
                           (isCreditApprovalView && !isDeclineClicked)) &&
                         isTransactionCaptureButtonEnabled
                       "
-                      class="mr-2 focus:outline-black"
-                      size="sm"
-                      color="#ff5e00"
-                      type="submit"
-                      tabindex="0"
-                      :loading="paymentMethodsForm.processing"
-                      :disabled="
-                        isApproveConfirmed || !isTransactionCaptureButtonEnabled
-                      "
                     >
-                      <template v-if="isCreditApprovalView && isCreditCardView">
+                      <x-button
+                        v-if="isCreditApprovalView && isCreditCardView"
+                        class="mr-2 focus:outline-black"
+                        size="sm"
+                        color="#ff5e00"
+                        type="submit"
+                        tabindex="0"
+                        :loading="paymentMethodsForm.processing"
+                        :disabled="
+                          isApproveConfirmed || !isTransactionCaptureButtonEnabled
+                        "
+                      >
                         Capture
-                      </template>
-                      <template v-else-if="isVerificationAllowed">
+                      </x-button>
+                      <x-button
+                        v-else
+                        class="mr-2 focus:outline-black"
+                        size="sm"
+                        color="#ff5e00"
+                        @click="checkInsurerReceiptNumber"
+                        tabindex="0"
+                        :loading="paymentMethodsForm.processing || insurerReceiptNumberCheckInProcess"
+                        :disabled="
+                          isApproveConfirmed || !isTransactionCaptureButtonEnabled
+                        "
+                      >
                         Approve
-                      </template>
-                      <template v-else> Approve </template>
-                    </x-button>
+                      </x-button>
+                    </template>
                   </div>
                 </div>
               </template>
@@ -5745,6 +5791,77 @@ onBeforeMount(() => {
                   >
                     <span>Confirm</span></x-button
                   >
+                </div>
+              </div>
+            </div>
+            <div
+              class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+              v-if="isInsurerReceiptNumberExistsModalOpen"
+            >
+              <div
+                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+              >
+                <div class="modal-confirm-header text-base text-white bg-white">
+                  <div
+                    class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
+                  >
+                    <div class="flex items-center space-x-2">
+                      Duplicate Insurer Receipt Number Detected
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span
+                        @click="closeInsurerReceiptNumberExistsModal"
+                        class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          tabindex="0"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          class="w-4 h-4 text-gray-800"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          ></path>
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="w-full h-full mt-2 flex flex-col items-center">
+                  <div
+                    class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
+                  >
+                    <div class="text-left text-md">
+                      <span> 
+                        The insurer receipt number you entered already exists in the system.
+                        Do you want to proceed with using the same receipt number again?
+                      </span
+                      >
+                    </div>
+                  </div>
+                  <div class="w-full mt-4 flex justify-center gap-4">
+                    <x-button
+                      size="lg"
+                      @click="closeInsurerReceiptNumberExistsModal"
+                      class="px-6 py-2 bg-white text-orange-600 border border-orange-500 hover:bg-orange-50"
+                    >
+                      <span>No</span>
+                    </x-button>
+
+                    <x-button
+                      size="lg"
+                      type="submit"
+                      color="orange"
+                      class="px-6 py-2"
+                    >
+                      <span>Yes</span>
+                    </x-button>
+                  </div>
                 </div>
               </div>
             </div>

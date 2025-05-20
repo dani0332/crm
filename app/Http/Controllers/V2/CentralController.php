@@ -821,4 +821,11 @@ class CentralController extends Controller
 
         return response()->json($response);
     }
+
+    public function checkInsurerReceiptNumber($quoteType, $receiptNumber)
+    {
+        $response = app(CentralService::class)->checkInsurerReceiptNumber($quoteType, $receiptNumber);
+
+        return response()->json($response);
+    }
 }
