@@ -8,6 +8,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Services\Logger\LoggerService;
 use App\Services\SplitPaymentService;
 
 class PaymentObserver
@@ -31,7 +32,7 @@ class PaymentObserver
         }
         // If payment status is changed to PAID, update the payment split to update the updated_at field of the payment split which is called the payment split observer
         if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->isDirty('payment_status_id') && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-            info('Payment:Observer - Payment status changed to '.PaymentStatusEnum::PAID.' for payment code: '.$payment->code);
+            LoggerService::info('Payment:Observer - Payment status changed to '.PaymentStatusEnum::PAID.' for payment code: '.$payment->code);
             $payment->paymentSplits()->first()->touch();
         }
     }
@@ -61,7 +62,7 @@ class PaymentObserver
             $payment->send_update_log_id
         );
 
-        info('Payment:Observer VAT updated for '.$payment->code.' - priceWithoutVat: '.$priceWithoutVat.' - vat: '.$vat);
+        LoggerService::info('Payment:Observer VAT updated for '.$payment->code.' - priceWithoutVat: '.$priceWithoutVat.' - vat: '.$vat);
 
         Payment::withoutEvents(function () use ($payment, $priceWithoutVat, $vat) {
             $payment->update([

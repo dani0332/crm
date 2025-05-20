@@ -2013,14 +2013,13 @@ const updateProfileDetails = isValid => {
               class="w-full"
               :error="leadStatusForm.errors.lostReason"
             />
-            <x-field class="" label="Transaction Type">
-              <x-input
-                type="text"
-                :value="quote.transaction_type_text"
-                class="w-full"
-                :disabled="true"
-              />
-            </x-field>
+            <x-input
+              type="text"
+              label="Transaction Type"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
           </div>
         </div>
       </div>

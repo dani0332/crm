@@ -240,7 +240,7 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 
-    public function TravelDestinations()
+    public function travelDestinations()
     {
         return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
     }

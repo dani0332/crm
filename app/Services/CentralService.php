@@ -1002,6 +1002,8 @@ class CentralService extends BaseService
 
     public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
     {
+        LoggerService::info('fn:updateSendUpdateStatusLogs - Start - CentralService');
+
         SendUpdateStatusLog::updateOrCreate([
             'send_update_log_id' => $sendUpdateLogId,
             'previous_status' => $previousStatus,
@@ -1010,10 +1012,16 @@ class CentralService extends BaseService
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
+
+        LoggerService::info('SendUpdateLog status changed', extra: [
+            'previousStatus' => $previousStatus,
+            'current_status' => $currentStatus,
+        ]);
     }
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
+        LoggerService::info('fn:checkStatusSUStatusLogs - Start - CentralService');
         $sendUpdateStatusArray = is_string($sendUpdateStatus) ? [$sendUpdateStatus] : $sendUpdateStatus;
 
         $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatusArray) {
@@ -1164,11 +1172,6 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote);
 
-        $isCaptureButtonEnabled = false;
-        if ($insuranceProvider) {
-            $isCaptureButtonEnabled = $this->isCaptureButtonEnabledForProvider($insuranceProvider->code, $quoteTypeId);
-        }
-
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
 
@@ -1192,7 +1195,7 @@ class CentralService extends BaseService
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'commissionInPayments' => $commissionInPayments,
             'isADNICProvider' => $isADNICProvider,
-            'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
+            'isCaptureButtonEnabled' => true,
         ];
 
         // If payment object is provided, check commission status and merge with TAP configuration
@@ -1570,7 +1573,7 @@ class CentralService extends BaseService
         return in_array($insuranceProviderCode, $enabledProviders);
     }
 
-    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
     {
         try {
             $data = [
@@ -1582,11 +1585,15 @@ class CentralService extends BaseService
             return Ken::request('/capture-payment-validation', 'put', $data);
 
         } catch (\Throwable $th) {
-            LoggerService::error('capturePaymentValidation failed: '.$th->getMessage(), [
-                'uuid' => $uuid,
-                'quoteTypeId' => $quoteTypeId,
-                'captureAmount' => $captureAmount,
-            ]);
+            LoggerService::error('capturePaymentValidation failed',
+                context: [
+                    'ref_id' => $quoteCode,
+                ],
+                extra: [
+                    'quoteTypeId' => $quoteTypeId,
+                    'captureAmount' => $captureAmount,
+                ],
+                exception: $th);
 
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }

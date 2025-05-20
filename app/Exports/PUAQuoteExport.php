@@ -7,8 +7,9 @@ use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
+class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping, WithStrictNullComparison
 {
     use Exportable;
 
@@ -44,6 +45,31 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
             $exportData->push((object) [
                 'Team' => $team->Team,
                 'Total' => $team->Total,
+            ]);
+        }
+
+        // Define all possible payment statusses
+        $allStatuses = [
+            'Payment Link Requested By Customer' => 0,
+            'Payment Link In Progress' => 0,
+            'Payment Link Sent To Customer' => 0,
+        ];
+
+        // Count leads by status
+        foreach ($leads as $lead) {
+            if (isset($allStatuses[$lead->leadstatus])) {
+                $allStatuses[$lead->leadstatus]++;
+            }
+        }
+
+        $exportData->push((object) [' ' => ' ']);
+        $exportData->push((object) [' ' => ' ']);
+
+        // Add status counts to export data
+        foreach ($allStatuses as $status => $count) {
+            $exportData->push((object) [
+                'Quote Status' => $status,
+                'Count' => $count,
             ]);
         }
 
@@ -88,6 +114,11 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
             return [
                 'Teams',
                 'Total Count',
+            ];
+        } elseif (isset($quote->{'Quote Status'})) {
+            return [
+                $quote->{'Quote Status'},
+                $quote->{'Count'},
             ];
         }
 

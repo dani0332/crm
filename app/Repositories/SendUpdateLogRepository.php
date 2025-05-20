@@ -18,6 +18,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -35,11 +36,13 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchCreate($data)
     {
+        LoggerService::info('fn:fetchCreate - Start - SendUpdateLogRepository');
         try {
             $category = $data['childCategory']['slug']; // EF, EN, CI, CIR, CPU, CPD.
             $count = $this->fetchGetCount($category); // get count of send update log by category.
             $baseCode = $category.'-'.date('m').date('y').'-'; // CPD-0824- or EF-0824- etc.
             $code = $baseCode.($count + 1); // CPD-0824-48 or EF-0824-48 etc.
+            LoggerService::info('Code generated for new send update log', extra: ['code' => $code]);
             $quoteServiceFile = $insuranceProviderId = $plan_id = null;
 
             $attempts = 0;
@@ -50,10 +53,12 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             if ($attempts >= 10) {
+                LoggerService::info('Send Update Log Code generation failed after 10 attempts');
                 vAbort('Send Update Log Code generation failed.');
             }
 
             $uuid = strtoupper(Str::random(6));
+            LoggerService::info('UUID generated for new send update log', extra: ['code' => $code, 'uuid' => $uuid]);
 
             $personalQuote = $this->updatePersonalQuote($data['quote_uuid'], $data['quote_type_id'], []);
 
@@ -79,7 +84,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $category, $plan_id);
             } elseif ($quote->insly_id || $quote->insly_migrated) {
                 $insuranceProviderId = $quote?->insurance_provider_id ?? null;
-                info('Insurance Provider ID: '.$insuranceProviderId.' selected for Send Update (Legacy) - uuid: '.$uuid.' quote_uuid: '.$data['quote_uuid']);
+                LoggerService::info('Insurance Provider ID: '.$insuranceProviderId.' selected for Send Update (Legacy) - uuid: '.$uuid.' quote_uuid: '.$data['quote_uuid']);
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
@@ -94,6 +99,12 @@ class SendUpdateLogRepository extends BaseRepository
                 QuoteStatusLog::create([
                     'quote_type_id' => $data['quote_type_id'],
                     'quote_request_id' => $data['personal_quote_id'],
+                    'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
+                ]);
+
+                LoggerService::info('Quote status changed', extra: [
+                    'code' => $code,
+                    'uuid' => $uuid,
                     'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
                 ]);
 
@@ -114,11 +125,13 @@ class SendUpdateLogRepository extends BaseRepository
                 'created_by' => auth()->user()->id,
             ], $policyDetails));
 
-            info('Send Update Log created successfully - uuid: '.$sendUpdate->uuid.' quote_uuid: '.$sendUpdate->quote_uuid);
+            LoggerService::info('Send Update Log created successfully - uuid: '.$sendUpdate->uuid.' quote_uuid: '.$sendUpdate->quote_uuid);
         } catch (\Exception $ex) {
             $sendUpdate = (object) [
                 'message' => $ex->getMessage(),
             ];
+
+            LoggerService::error('Unable to create SendUpdateLog', exception: $ex);
         }
 
         return $sendUpdate;
@@ -136,6 +149,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchUpdateLog($id, $data)
     {
+        LoggerService::info('fn:fetchUpdateLog - Start - SendUpdateLogRepository');
+
         try {
             $sendUpdate = $this->find($id)->update([
                 'notes' => $data['notes'],
@@ -149,14 +164,24 @@ class SendUpdateLogRepository extends BaseRepository
             $sendUpdate = (object) [
                 'message' => $ex->getMessage(),
             ];
+
+            LoggerService::error('Unable to update SendUpdateLog', exception: $ex);
         }
 
         return $sendUpdate;
     }
 
+    /**
+     * Fetches and returns the count of records with a specific code pattern for the current month
+     * in code where clause, added - hyphen sign to get actual difference like CI and CIR.
+     *
+     * @param  string  $code  The code prefix to search for (will be matched with a trailing hyphen)
+     * @return int The count of matching records for the current month
+     */
     public function fetchGetCount($code)
     {
-        // in code where clause, added - hyphen sign to get actual difference like CI and CIR.
+        LoggerService::info('fn:fetchGetCount - Start - SendUpdateLogRepository');
+
         return $this->where('code', 'like', "%$code-%")->whereMonth('created_at', '=', date('m'))->count();
     }
 
@@ -169,6 +194,7 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchUpdateLogPriceDetails($data)
     {
+        LoggerService::info('fn:fetchUpdateLogPriceDetails - Start - SendUpdateLogRepository');
         try {
             $sendUpdate = $this->find($data['id']);
             if (! in_array($sendUpdate->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER])) {
@@ -185,14 +211,15 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'status' => $status ?? $sendUpdate->status,
             ]);
-            if ($sendUpdate->payments[0]) {
+            if ($sendUpdate->payments->isNotEmpty() && $sendUpdate->payments[0]) {
                 app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $sendUpdate->payments[0]);
             }
         } catch (\Exception $ex) {
-            info('SendUpdate id: '.$data['id'].' '.$ex->getMessage());
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
+
+            LoggerService::error('Unable to update SendUpdateLog Price details', exception: $ex);
         }
 
         return $result;
@@ -221,6 +248,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSavePolicyDetails($data)
     {
+        LoggerService::info('fn:fetchSavePolicyDetails - Start - SendUpdateLogRepository');
+
         $sendUpdate = $this->find($data['id']);
         try {
             $result = $sendUpdate->update([
@@ -240,7 +269,7 @@ class SendUpdateLogRepository extends BaseRepository
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
-            info('Unable to save Policy Details - SendUpdateUUID: '.$sendUpdate->uuid.' - Error: '.$ex->getMessage());
+            LoggerService::error('Unable to save Policy Details', exception: $ex);
         }
 
         return $result;
@@ -248,6 +277,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSaveProviderDetails($data)
     {
+        LoggerService::info('fn:fetchSaveProviderDetails - Start - SendUpdateLogRepository');
+
         try {
             $result = $this->find($data['send_update_log_id'])->update([
                 'insurance_provider_id' => $data['insurance_provider_id'],
@@ -256,6 +287,8 @@ class SendUpdateLogRepository extends BaseRepository
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
+
+            LoggerService::error('Unable to update ProviderDetails', exception: $ex);
         }
 
         return $result;
@@ -263,16 +296,17 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSendUpdateToCustomer($request)
     {
+        LoggerService::info('fn:fetchSendUpdateToCustomer - SendUpdateLogRepository');
         $sendUpdateLog = $this->find($request['sendUpdateId']);
         if (empty($sendUpdateLog->notes)) {
             $response[] = ['status' => 500, 'message' => 'Notes are required to send update to customer'];
 
             return $response;
         }
-        info('fn:SendUpdateToCustomer - Process Start - SendUpdateCode: '.$sendUpdateLog->code);
 
         try {
             if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+                LoggerService::info('Send and Update Book Button found');
                 $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement((object) $request);
                 $response[] = ['status' => $endorsementResponse['status'] ? 200 : 500, 'message' => $endorsementResponse['message']];
 
@@ -286,10 +320,10 @@ class SendUpdateLogRepository extends BaseRepository
             if ($request['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
                 if (! empty($sendUpdateLog->emirates_id)) {
-                    info('fn:SendUpdateToCustomer - Updating Emirates ID - SendUpdateCode: '.$sendUpdateLog->code.' - Emirates ID: '.$sendUpdateLog->emirates_id);
+                    LoggerService::info('fn:SendUpdateToCustomer - Updating Emirates ID - SendUpdateCode: '.$sendUpdateLog->code.' - Emirates ID: '.$sendUpdateLog->emirates_id);
                     $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
                 } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) {
-                    info('fn:SendUpdateToCustomer - Updating Seating Capacity - SendUpdateCode: '.$sendUpdateLog->code.' - Seating Capacity: '.$sendUpdateLog->seating_capacity);
+                    LoggerService::info('fn:SendUpdateToCustomer - Updating Seating Capacity - SendUpdateCode: '.$sendUpdateLog->code.' - Seating Capacity: '.$sendUpdateLog->seating_capacity);
                     $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                 }
             }
@@ -301,10 +335,11 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             SendUpdateToCustomerJob::dispatch($sendUpdateLog, $request)->onQueue('insly');
-            info('fn:SendUpdateToCustomer - Process End - SendUpdateCode: '.$sendUpdateLog->code.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
+            LoggerService::info('fn:SendUpdateToCustomer - Process End - SendUpdateCode: '.$sendUpdateLog->code.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
-            info('fn:SendUpdateToCustomer - Failed - SendUpdateCode: '.$sendUpdateLog->code.' - Error : '.json_encode($ex->getMessage()));
             $response = ['status' => 500, 'message' => 'Something went wrong, please try again later'];
+
+            LoggerService::error('Unable to SendUpdateToCustomer', exception: $ex);
         }
 
         return $response;
@@ -312,6 +347,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSaveBookingDetails($data)
     {
+        LoggerService::info('fn:fetchSaveBookingDetails - Start - SendUpdateLogRepository');
+
         $sendUpdate = $this->find($data['id']);
         try {
             $sendUpdateLogService = app(SendUpdateLogService::class);
@@ -342,13 +379,14 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             $result = $sendUpdate->update($bookingDetails);
+            LoggerService::info('Send Update Log Updated successfully');
             $sendUpdate->save(); // This save is used because sometime object not refresh properly
             $sendUpdate->refresh();
 
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
-                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
+                LoggerService::info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
                 app(CentralService::class)->synchronizePaymentInformation($sendUpdate, $payment);
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
@@ -361,7 +399,7 @@ class SendUpdateLogRepository extends BaseRepository
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
-            info('Unable to save Booking Details - SendUpdateCode: '.$sendUpdate->code.' - Error: '.$ex->getMessage());
+            LoggerService::error('Unable to save Booking Details', exception: $ex);
         }
 
         return $result;
@@ -402,6 +440,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSendUpdateOptions($quoteTypeId, $parentId, $status, $businessInsuranceTypeId = null)
     {
+        LoggerService::info('fn:fetchSendUpdateOptions - Start - SendUpdateLogRepository');
+
         $query = Lookup::where('quote_type_id', $quoteTypeId)->where('parent_id', $parentId);
         if ($quoteTypeId == QuoteTypeId::Business && in_array($status, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN])) {
             if (! in_array($businessInsuranceTypeId, [quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet), quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)])) {
@@ -444,6 +484,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchGetLogByTaxInvoiceNumber($data)
     {
+        LoggerService::info('fn:fetchGetLogByTaxInvoiceNumber - Start - SendUpdateLogRepository');
+
         return $this->where('insurer_tax_invoice_number', $data['taxInvoiceNo'])
             ->where('quote_uuid', $data['quoteUuid'])
             ->first() ?? null;
@@ -451,6 +493,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchGetSendUpdateLogInvoices($quoteTypeId, $quoteUuid)
     {
+        LoggerService::info('fn:fetchGetSendUpdateLogInvoices - Start - SendUpdateLogRepository');
+
         return $this->query()
             ->where('quote_uuid', $quoteUuid)
             ->where('quote_type_id', $quoteTypeId)
@@ -489,7 +533,7 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchCancelSendUpdate($sendUpdateLogId, $cancelReason)
     {
         $sendUpdate = SendUpdateLog::where('id', $sendUpdateLogId)->firstOrFail();
-        info('function fetchCancelSendUpdate started - send update code: '.$sendUpdate->code);
+        LoggerService::info('fn:fetchCancelSendUpdate - SendUpdateLogRepository');
 
         try {
             $oldStatus = $sendUpdate->status;
@@ -500,7 +544,7 @@ class SendUpdateLogRepository extends BaseRepository
             ]);
             app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $oldStatus, SendUpdateLogStatusEnum::REQUEST_CANCELLED);
 
-            info('Send Update Log cancelled successfully - code: '.$sendUpdate->code.', Status changed from '.$oldStatus.' to '.SendUpdateLogStatusEnum::REQUEST_CANCELLED);
+            LoggerService::info('SendUpdateLog cancelled successfully');
 
             if (in_array($sendUpdate?->category?->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($sendUpdate?->option?->code == SendUpdateLogStatusEnum::MPC)) {
                 $quoteType = QuoteTypes::getName($sendUpdate->quote_type_id)->value;
@@ -530,16 +574,20 @@ class SendUpdateLogRepository extends BaseRepository
                     'updated_at' => Carbon::now(),
                 ]);
 
-                info('Quote status updated successfully - quote UUID: '.$quote->uuid.', Status changed from '.$previousStatusId.' to '.$beforeEndorsementStatusId);
+                LoggerService::info('Quote status updated successfully', extra: [
+                    'quoteUUID' => $quote->uuid,
+                    'previousStatusId' => $previousStatusId,
+                    'newStatusId' => $beforeEndorsementStatusId,
+                ]);
             }
 
             $response = ['message' => 'Send Update Log cancelled successfully.', 'status' => 200];
         } catch (\Exception $ex) {
-            info('Error while cancelling Send Update Log - code: '.$sendUpdate->code.' - Exception: '.$ex->getMessage());
+            LoggerService::error('Error while cancelling SendUpdateLog', exception: $ex);
 
             $response = ['message' => 'Error while cancelling Send Update Log.', 'status' => 500];
         }
-        info('function fetchCancelSendUpdate ended - send update code: '.$sendUpdate->code);
+        LoggerService::info('fn:fetchCancelSendUpdate ended');
 
         return $response;
     }

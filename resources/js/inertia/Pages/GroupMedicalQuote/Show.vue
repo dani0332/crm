@@ -1053,14 +1053,13 @@ const allowStatusUpdate = computed(() => {
                 :error="leadStatusForm.errors.lostReason"
                 :disabled="lockLeadSectionsDetails.lead_status"
               />
-              <x-field label="Transaction Type">
-                <x-input
-                  type="text"
-                  v-model="quote.transaction_type_text"
-                  class="w-full"
-                  :disabled="true"
-                />
-              </x-field>
+              <x-input
+                type="text"
+                v-model="quote.transaction_type_text"
+                class="w-full"
+                label="Transaction Type"
+                :disabled="true"
+              />
             </div>
           </div>
           <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
