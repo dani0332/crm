@@ -1614,8 +1614,13 @@ const isCommercialVehicle = computed(() => {
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Car Detail</h2>
-        <x-button v-if="record?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
-            Private Client
+        <x-button
+          v-if="record?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
         </x-button>
       </template>
       <template #default>
@@ -2052,7 +2057,10 @@ const isCommercialVehicle = computed(() => {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ record.transaction_approved_at }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="can(permissionEnum.VIEW_PCP)">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ record.pc_qualified_formatted }}</dd>
               </div>

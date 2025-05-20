@@ -64,8 +64,13 @@ const dateFormat = date =>
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Jetski Detail</h2>
-        <x-button v-if="quote.customer?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
-         Private Client
+        <x-button
+          v-if="quote.customer?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
         </x-button>
       </template>
     </StickyHeader>
@@ -321,7 +326,7 @@ const dateFormat = date =>
         </template>
       </Collapsible>
     </div>
-    
+
     <LastYearPolicyDetail
       v-if="
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||

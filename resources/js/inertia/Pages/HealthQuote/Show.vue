@@ -1861,8 +1861,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
         >
           Stale for {{ countDays }}
         </p>
-        <x-button v-if="quote?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
-         Private Client
+        <x-button
+          v-if="quote?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
         </x-button>
       </template>
 
@@ -2223,8 +2228,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ quote.transaction_approved_at }}</dd>
-              </div> 
-              <div class="grid sm:grid-cols-2" v-if="can(permissionEnum.VIEW_PCP)">
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ quote.pc_qualified_formatted }}</dd>
               </div>

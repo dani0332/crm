@@ -363,11 +363,16 @@ function capitalizeString(str) {
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Bike Detail</h2>
-        <x-button v-if="record?.customer?.pcp_tag == true" size="sm" color="#BFA100" tag="div">
-            Private Client
+        <x-button
+          v-if="record?.customer?.pcp_tag == true"
+          size="sm"
+          color="#BFA100"
+          tag="div"
+        >
+          Private Client
         </x-button>
       </template>
-      
+
       <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
         <div class="flex gap-2">
           <Link
@@ -409,7 +414,10 @@ function capitalizeString(str) {
               v-if="!isDisabled"
               :href="route('bike-quotes-edit', quote.uuid)"
             >
-              <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+              <x-button
+                size="sm"
+                tag="div"
+                v-if="readOnlyMode.isDisable === true"
                 >Edit</x-button
               >
             </Link>
@@ -453,12 +461,14 @@ function capitalizeString(str) {
             :href="route('bike-quotes-list')"
             preserve-scroll
           >
-            <x-button size="sm" color="primary" tag="div"> Bike Quotes </x-button>
+            <x-button size="sm" color="primary" tag="div">
+              Bike Quotes
+            </x-button>
           </Link>
         </div>
       </div>
     </StickyHeader>
- 
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center flex-wrap gap-2">
         <h2 class="text-lg font-semibold text-primary-800">E-COM Detail</h2>
@@ -752,7 +762,10 @@ function capitalizeString(str) {
                 <dt class="font-medium">TRANSACTION APPROVED AT</dt>
                 <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
-              <div class="grid sm:grid-cols-2" v-if="can(permissionEnum.VIEW_PCP)">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="can(permissionEnum.VIEW_PCP)"
+              >
                 <dt class="font-medium">PC-Qualified</dt>
                 <dd>{{ quote.pc_qualified_formatted }}</dd>
               </div>
@@ -885,8 +898,8 @@ function capitalizeString(str) {
               <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">PRIVATE CLIENT</dt>
-                  <dd>{{ quote.customer.pcp_tag_formatted}}</dd>
+              <dt class="font-medium">PRIVATE CLIENT</dt>
+              <dd>{{ quote.customer.pcp_tag_formatted }}</dd>
             </div>
             <RiskRatingScoreDetails
               v-if="quote"

@@ -727,7 +727,17 @@ watch(
           </template>
         </x-select>
       </div>
-      <x-field label="Private Clients" v-if="['Transaction', 'Installment', 'Endorsement', 'Sales Detail'].includes(filters.reportCategory)" > 
+      <x-field
+        label="Private Clients"
+        v-if="
+          [
+            'Transaction',
+            'Installment',
+            'Endorsement',
+            'Sales Detail',
+          ].includes(filters.reportCategory)
+        "
+      >
         <ComboBox
           :single="false"
           v-model="filters.pcp_tag"
