@@ -1,6 +1,7 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
+import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 
@@ -259,10 +260,21 @@ const genderSelect = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return page.props.leadStatuses.map(status => {
+    var statusDisabled = false;
+    // below status are not editable by advisor
+    if (status.id == page.props.quoteStatusEnum.PaymentLinkSentToCustomer) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    if (status.id == page.props.quoteStatusEnum.PaymentInitiated) {
+      statusDisabled = !can(permissionsEnum.SUPER_LEAD_STATUS_CHANGE);
+    }
+    return {
+      value: status.id,
+      label: status.text,
+      disabled: statusDisabled,
+    };
+  });
 });
 
 const nationalityOptions = computed(() => {
@@ -675,6 +687,7 @@ const plansTable = reactive({
 });
 
 const onLoadAvailablePlansData = async () => {
+  plansTable.isLoading = true;
   let data = {
     jsonData: true,
   };
@@ -683,6 +696,7 @@ const onLoadAvailablePlansData = async () => {
     .post(url, data)
     .then(res => {
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+
       getSmallestCopayRateAsDefaultValue();
       plansTable.data.forEach(plan => {
         if (plan.isManualPlan) {
@@ -708,6 +722,9 @@ const onLoadAvailablePlansData = async () => {
         title: 'Error loading plans',
         position: 'top',
       });
+    })
+    .finally(() => {
+      plansTable.isLoading = false;
     });
 };
 
@@ -905,10 +922,6 @@ const sortPlans = incommingPlans => {
 };
 
 watchEffect(() => {
-  listQuotePlansFiltered.value = plansTable.data
-    .slice()
-    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
-
   if (
     planFilters?.insurer?.length === 0 ||
     planFilters?.insurer?.length === undefined
@@ -1003,9 +1016,16 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
   let smallestCopayLoadingPrice = 0;
+  let smallestCopayAdjustedPrice = 0;
   plansTable.data.forEach(element => {
     defaultCopayId = element.selectedCopayId;
     element.ratesPerCopay?.forEach(function callback(value, index) {
+      const safeNumber = val => {
+        if (val === null || val === undefined) return 0;
+        const num = Number(val);
+        return isNaN(num) ? 0 : num;
+      };
+
       if (
         element.selectedCopayId &&
         defaultCopayId == value.healthPlanCoPaymentId
@@ -1014,6 +1034,9 @@ const getSmallestCopayRateAsDefaultValue = () => {
         smallestCopayVAT = Number(value.vat);
         smallestCopayLoadingPrice = Number(
           value.loadingPrice ? value.loadingPrice : 0,
+        );
+        smallestCopayAdjustedPrice = safeNumber(
+          value.adjustedPrice ? value.adjustedPrice : 0,
         );
         defaultCopayId = element.selectedCopayId;
       } else if (
@@ -1026,12 +1049,18 @@ const getSmallestCopayRateAsDefaultValue = () => {
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
           );
+          smallestCopayAdjustedPrice = safeNumber(
+            value.adjustedPrice ? value.adjustedPrice : 0,
+          );
           defaultCopayId = value.healthPlanCoPaymentId;
         } else if (value.discountPremium < smallestCopayValue) {
           smallestCopayValue = Number(value.discountPremium);
           smallestCopayVAT = Number(value.vat);
           smallestCopayLoadingPrice = Number(
             value.loadingPrice ? value.loadingPrice : 0,
+          );
+          smallestCopayAdjustedPrice = safeNumber(
+            value.adjustedPrice ? value.adjustedPrice : 0,
           );
           defaultCopayId = value.healthPlanCoPaymentId;
         }
@@ -1059,11 +1088,13 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
       element.selectedCopayId = selectedCoPay.id;
       element.loadingPrice = smallestCopayLoadingPrice;
+      element.adjustedPrice = smallestCopayAdjustedPrice;
     } else {
       element.selectedCopayId = defaultCopayId;
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
       element.loadingPrice = smallestCopayLoadingPrice;
+      element.adjustedPrice = smallestCopayAdjustedPrice;
     }
     element.coPayments.forEach(function callback(value, index) {
       if (value.id == element.selectedCopayId) {
@@ -1136,33 +1167,6 @@ const documentsTableItems = computed(() => {
     };
   });
 });
-
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
-const confirmDeleteDoc = () => {
-  quoteDocumentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        quoteDocumentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
-};
 
 //activities
 const activityTable = [
@@ -2408,12 +2412,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
                       placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Emirate of Registration...."
                     />
                   </dd>
                 </div>
@@ -2431,21 +2436,21 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
                       placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Industry Type...."
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       @update:modelValue="entityTypeChange($event)"
-                      :single="true"
                       v-model:modelValue="customerProfileForm.entity_type_code"
                       placeholder="SELECT ENTITY TYPE"
                       :options="[
@@ -2453,6 +2458,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      filterable
+                      filterPlaceholder="Filter Entity Type...."
                     />
                   </dd>
                 </div>
@@ -2754,12 +2761,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 placeholder="Last Name"
                 :rules="[isRequired]"
               />
-              <ComboBox
+              <x-select
                 v-model="memberForm.nationality_id"
                 label="Nationality"
                 :options="nationalityOptions"
                 placeholder="Select Nationality"
-                :single="true"
+                filterable
+                filterPlaceholder="Filter Nationality...."
                 :hasError="memberFieldReq.nationality"
               />
 
@@ -3102,14 +3110,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   :error="leadStatusForm.errors.lostReason"
                   :disabled="lockLeadSectionsDetails.lead_status"
                 />
-                <x-field class="" label="Transaction Type">
-                  <x-input
-                    type="text"
-                    v-model="quote.transaction_type_text"
-                    class="w-full"
-                    :disabled="true"
-                  />
-                </x-field>
+                <x-input
+                  label="Transaction Type"
+                  type="text"
+                  v-model="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
 
                 <div class="flex flex-col gap-4"></div>
               </div>
@@ -3232,137 +3239,142 @@ const applyEmiratesIdNumMasking = emiratesId =>
 
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex flex-wrap gap-3 justify-end mb-3">
-            <x-button-group v-if="selectedPlans.length > 0" size="sm">
-              <x-button
-                @click.prevent="onTogglePlans(false)"
-                :loading="toggleLoader"
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Show
-              </x-button>
-              <x-button
-                @click.prevent="onTogglePlans(true)"
-                :loading="toggleLoader"
-                v-if="readOnlyMode.isDisable === true"
-              >
-                Hide
-              </x-button>
-            </x-button-group>
 
-            <x-button
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              color="emerald"
-              @click.prevent="onExportPlans"
-              :loading="exportLoader"
-            >
-              Download PDF
-            </x-button>
-            <x-tooltip placement="top" align="left">
+          <div v-if="plansTable.isLoading" class="flex justify-center my-8">
+            <x-spinner size="lg" />
+          </div>
+          <template v-else>
+            <div class="flex flex-wrap gap-3 justify-end mb-3">
+              <x-button-group v-if="selectedPlans.length > 0" size="sm">
+                <x-button
+                  @click.prevent="onTogglePlans(false)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Show
+                </x-button>
+                <x-button
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Hide
+                </x-button>
+              </x-button-group>
+
               <x-button
-                @click.prevent="validateEmailSending"
+                v-if="selectedPlans.length > 0"
                 size="sm"
-                color="orange"
-                :disabled="doesEmailStatusExist || isOcaButtonDisabled"
-                v-if="readOnlyMode.isDisable === true"
+                color="emerald"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
               >
-                Send OCA Email to Customer
+                Download PDF
               </x-button>
-              <template #tooltip>
-                <div>
-                  When clicked, this button sends the One Click Apply (OCA)
-                  email to the customer with updated rates and coverage options,
-                  helping them finalize their purchase with ease.
-                </div>
-              </template>
-            </x-tooltip>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="validateEmailSending"
+                  size="sm"
+                  color="orange"
+                  :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Send OCA Email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Apply (OCA)
+                    email to the customer with updated rates and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
 
-            <x-button
-              v-if="plansTable.data.length > 0"
-              size="sm"
-              color="orange"
-              @click.prevent="
-                onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
-              "
-            >
-              Copy Link
-            </x-button>
-            <x-modal
-              v-model="modals.sendConfirm"
-              title="Send Email"
-              show-close
-              backdrop
-            >
-              <p>Are you sure send email to customer?</p>
-              <template #actions>
-                <div class="text-right space-x-4">
-                  <x-button
-                    size="sm"
-                    ghost
-                    @click.prevent="modals.sendConfirm = false"
-                  >
-                    Cancel
-                  </x-button>
-                  <x-button
-                    size="sm"
-                    color="error"
-                    @click.prevent="confirmSendEmail"
-                    :loading="loader.link"
-                  >
-                    Send
-                  </x-button>
-                </div>
-              </template>
-            </x-modal>
-            <x-badge
-              size="sm"
-              color="error"
-              outlined
-              animated
-              :show="planFiltersCount > 0"
-            >
               <x-button
                 v-if="plansTable.data.length > 0"
                 size="sm"
-                color="primary"
-                @click.prevent="modals.planFilters = true"
+                color="orange"
+                @click.prevent="
+                  onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
+                "
               >
-                Filters
+                Copy Link
               </x-button>
-              <template #content> {{ planFiltersCount }} </template>
-            </x-badge>
-
-            <AddPlanButtonTemplate v-slot="{ isDisabled }">
-              <x-button
-                v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
+              <x-modal
+                v-model="modals.sendConfirm"
+                title="Send Email"
+                show-close
+                backdrop
+              >
+                <p>Are you sure send email to customer?</p>
+                <template #actions>
+                  <div class="text-right space-x-4">
+                    <x-button
+                      size="sm"
+                      ghost
+                      @click.prevent="modals.sendConfirm = false"
+                    >
+                      Cancel
+                    </x-button>
+                    <x-button
+                      size="sm"
+                      color="error"
+                      @click.prevent="confirmSendEmail"
+                      :loading="loader.link"
+                    >
+                      Send
+                    </x-button>
+                  </div>
+                </template>
+              </x-modal>
+              <x-badge
                 size="sm"
-                color="emerald"
-                @click.prevent="modals.createPlan = true"
-                :disabled="isDisabled"
+                color="error"
+                outlined
+                animated
+                :show="planFiltersCount > 0"
               >
-                Add Plan
-              </x-button>
-            </AddPlanButtonTemplate>
+                <x-button
+                  v-if="plansTable.data.length > 0"
+                  size="sm"
+                  color="primary"
+                  @click.prevent="modals.planFilters = true"
+                >
+                  Filters
+                </x-button>
+                <template #content> {{ planFiltersCount }} </template>
+              </x-badge>
 
-            <x-tooltip
-              v-if="page.props.lockLeadSectionsDetails.plan_selection"
-              position="left"
-              align="center"
-              class="yoyo-tip"
-            >
-              <AddPlanButtonReuseTemplate :isDisabled="true" />
-              <template #tooltip>
-                <div class="whitespace-normal text-xs">
-                  No further actions can be taken on an issued policy. For
-                  changes, such as a change in insurer, go to 'Send Update',
-                  select 'Add Update', and choose 'Cancellation from inception
-                  and reissuance.
-                </div>
-              </template>
-            </x-tooltip>
-            <AddPlanButtonReuseTemplate v-else />
+              <AddPlanButtonTemplate v-slot="{ isDisabled }">
+                <x-button
+                  v-if="can(permissionsEnum.ADD_MANUAL_HEALTH_PLAN)"
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="modals.createPlan = true"
+                  :disabled="isDisabled"
+                >
+                  Add Plan
+                </x-button>
+              </AddPlanButtonTemplate>
 
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.plan_selection"
+                position="left"
+                align="center"
+                class="yoyo-tip"
+              >
+                <AddPlanButtonReuseTemplate :isDisabled="true" />
+                <template #tooltip>
+                  <div class="whitespace-normal text-xs">
+                    No further actions can be taken on an issued policy. For
+                    changes, such as a change in insurer, go to 'Send Update',
+                    select 'Add Update', and choose 'Cancellation from inception
+                    and reissuance.
+                  </div>
+                </template>
+              </x-tooltip>
+              <AddPlanButtonReuseTemplate v-else />
+            </div>
             <DataTable
               ref="planDataTable"
               v-model:items-selected="selectedPlans"
@@ -3426,6 +3438,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   basmah,
                   vat,
                   loadingPrice,
+                  adjustedPrice,
                 }"
               >
                 {{
@@ -3434,7 +3447,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       (policyFee || 0) +
                       (basmah || 0) +
                       vat +
-                      (loadingPrice || 0),
+                      (loadingPrice || 0) +
+                      (adjustedPrice || 0),
                   )
                 }}
               </template>
@@ -3523,7 +3537,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </div>
               </template>
             </DataTable>
-          </div>
+          </template>
         </template>
       </Collapsible>
     </div>
@@ -3558,15 +3572,29 @@ const applyEmiratesIdNumMasking = emiratesId =>
       backdrop
     >
       <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
-        <ComboBox
+        <x-select
           v-model="planFilters.insurer"
           label="Insurer"
           :options="insuranceProviders"
           :loading="planFilters.processing"
-          select-all
-          deselect-all
-        />
-        <ComboBox
+          filterable
+          filterPlaceholder="Filter Insurer...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                planFilters.insurer = insuranceProviders.map(
+                  insurer => insurer.value,
+                )
+              "
+              @clear="planFilters.insurer = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="planFilters.network"
           :label="
             planFilters.insurer?.length == 0
@@ -3575,9 +3603,23 @@ const applyEmiratesIdNumMasking = emiratesId =>
           "
           :options="options.network"
           :disabled="planFilters.insurer?.length == 0"
-          select-all
-          deselect-all
-        />
+          filterable
+          filterPlaceholder="Filter Network...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                planFilters.network = options.network.map(
+                  network => network.value,
+                )
+              "
+              @clear="planFilters.network = []"
+            />
+          </template>
+        </x-select>
         <div>
           <x-tooltip placement="right">
             <label
@@ -3618,14 +3660,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
           />
         </div>
 
-        <ComboBox
+        <x-select
           v-model="planFilters.plan_types"
           :label="'Plan Type'"
           :options="planTypes"
           :disabled="planFilters.plan_types?.length == 0"
-          select-all
-          deselect-all
-        />
+          filterable
+          filterPlaceholder="Filter Plan Type...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                planFilters.plan_types = planTypes.map(
+                  planType => planType.value,
+                )
+              "
+              @clear="planFilters.plan_types = []"
+            />
+          </template>
+        </x-select>
       </div>
 
       <template #actions>
@@ -3634,7 +3690,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             size="sm"
             color="#ff5e00"
             type="submit"
-            @click="onPlanFiltersSubmit"
+            @click.prevent="onPlanFiltersSubmit"
           >
             Apply
           </x-button>
@@ -4003,6 +4059,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
       :expanded="sectionExpanded"
+    />
+
+    <FtcEmailTrack
+      :quoteType="$page.props.modelType"
+      :type="modelClass"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
     />
 
     <AuditLogs

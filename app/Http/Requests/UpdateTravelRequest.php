@@ -32,18 +32,24 @@ class UpdateTravelRequest extends FormRequest
             return strpos($value, 'required') !== false;
         });
 
+        // Explicitly exclude email and mobile_no from required properties
+        unset($requireProperties['email']);
+        unset($requireProperties['mobile_no']);
+
         $rules = [];
         foreach ($requireProperties as $key => $value) {
+            $rule = ['required'];
             if ($key == 'first_name' || $key == 'last_name') {
-                $rule[] = 'max:255';
-            } else {
-                $rule[] = 'max:1000';
+                $rule[] = 'between:1,20';
             }
 
-            $rule = ['required'];
-            if ($key == 'email' || $key == 'mobile_no') {
-                continue;
+            if ($key == 'departure_country_id') {
+                $rule = ['required_if:has_arrived_uae,1'];
             }
+            if ($key == 'destination_ids') {
+                $rule = ['required_if:has_arrived_destination,0'];
+            }
+
             $rules[$key] = $rule;
         }
 

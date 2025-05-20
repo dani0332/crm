@@ -97,65 +97,67 @@ onMounted(() => setInitialState());
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="NAME" required>
-        <x-input
-          v-model="teamForm.name"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="$page.props.errors.name"
-        />
-      </x-field>
-      <x-field label="RECORD TYPE" required>
-        <x-select
-          v-model="teamForm.type"
-          :rules="[isRequired]"
-          class="w-full"
-          :options="[
-            { value: 1, label: 'Product' },
-            { value: 2, label: 'Team' },
-            { value: 3, label: 'SubTeam' },
-          ]"
-          :error="$page.props.errors.type"
-        />
-      </x-field>
+      <x-input
+        v-model="teamForm.name"
+        :rules="[isRequired]"
+        class="w-full"
+        :error="$page.props.errors.name"
+        placeholder="Enter Team Name"
+        label="NAME"
+        required
+      />
+      <x-select
+        v-model="teamForm.type"
+        :rules="[isRequired]"
+        class="w-full"
+        :options="[
+          { value: 1, label: 'Product' },
+          { value: 2, label: 'Team' },
+          { value: 3, label: 'SubTeam' },
+        ]"
+        :error="$page.props.errors.type"
+        label="RECORD TYPE"
+        required
+      />
     </div>
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="PARENT">
-        <ComboBox
-          :single="true"
-          :rules="teamForm.type != 1 ? [isRequired] : []"
-          v-model="teamForm.parent_team_id"
-          :options="computedParent"
-          :disabled="teamForm.type == 1"
-          :hasError="validParentId"
-        />
-      </x-field>
-      <x-field label="SLABS COUNT" required>
-        <x-input
-          v-model="teamForm.slabs_count"
-          :rules="[isRequired]"
-          class="w-full"
-          type="number"
-        />
-      </x-field>
+      <x-select
+        v-model="teamForm.parent_team_id"
+        :options="computedParent"
+        :rules="teamForm.type != 1 ? [isRequired] : []"
+        :disabled="teamForm.type == 1"
+        label="PARENT"
+        placeholder="Select Parent"
+        filterPlaceholder="Filter parent...."
+        :required="teamForm.type != 1 ? true : false"
+        filterable
+      />
+
+      <x-input
+        v-model="teamForm.slabs_count"
+        :rules="[isRequired]"
+        class="w-full"
+        type="number"
+        label="SLABS COUNT"
+        required
+      />
     </div>
     <div class="grid sm:grid-cols-1 gap-4">
-      <x-field label="ACTIVE">
-        <x-select
-          v-model="teamForm.is_active"
-          :options="[
-            {
-              value: true,
-              label: 'Yes',
-            },
-            {
-              value: false,
-              label: 'No',
-            },
-          ]"
-          class="w-full"
-        ></x-select>
-      </x-field>
+      <x-select
+        v-model="teamForm.is_active"
+        :options="[
+          {
+            value: true,
+            label: 'Yes',
+          },
+          {
+            value: false,
+            label: 'No',
+          },
+        ]"
+        label="ACTIVE"
+        class="w-full"
+      ></x-select>
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

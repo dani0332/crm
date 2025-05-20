@@ -22,11 +22,12 @@ class BridgerAMLJob implements ShouldQueue
     private $customerType;
     private $bridgerAPIToken;
     private $loginCustomerEmail;
+    private $isAutomation;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($bridgerAPIToken, $payload, $quoteDetails, $quoteTypeID, $customerType, $loginCustomerEmail)
+    public function __construct($bridgerAPIToken, $payload, $quoteDetails, $quoteTypeID, $customerType, $loginCustomerEmail, $isAutomation = false)
     {
         $this->bridgerAPIToken = $bridgerAPIToken;
         $this->payload = $payload;
@@ -34,6 +35,7 @@ class BridgerAMLJob implements ShouldQueue
         $this->quoteTypeID = $quoteTypeID;
         $this->customerType = $customerType;
         $this->loginCustomerEmail = $loginCustomerEmail ?? '';
+        $this->isAutomation = $isAutomation;
     }
 
     /**
@@ -48,7 +50,8 @@ class BridgerAMLJob implements ShouldQueue
                 $this->quoteDetails,
                 $this->quoteTypeID,
                 $this->customerType,
-                $this->loginCustomerEmail
+                $this->loginCustomerEmail,
+                isAutomation: $this->isAutomation
             );
 
         } catch (\Exception $exception) {

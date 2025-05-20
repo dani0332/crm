@@ -11,13 +11,13 @@ use App\Enums\QuoteTypes;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\QuoteBatches;
+use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class LifeQuoteService extends BaseService
 {
@@ -78,6 +78,7 @@ class LifeQuoteService extends BaseService
                 'lqr.policy_expiry_date',
                 'lqr.device',
                 DB::raw('DATE_FORMAT(lqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+                DB::raw('DATE_FORMAT(lqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
                 'lqr.policy_start_date',
                 'lqr.previous_quote_policy_premium',
                 'lqr.customer_id',
@@ -140,6 +141,8 @@ class LifeQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::LifeQuote, $request, $response);
+
+            $this->selfAssign(QuoteTypes::LIFE, $response->quoteUID);
         }
 
         return $response;
@@ -604,7 +607,7 @@ class LifeQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        LoggerService::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);

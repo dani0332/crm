@@ -99,27 +99,35 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-      <x-field label="Created Start Date">
-        <DatePicker
-          v-model="filters.created_at"
-          placeholder="Created Start Date"
-        />
-      </x-field>
-      <x-field label="Created End Date">
-        <DatePicker
-          v-model="filters.created_at_end"
-          placeholder="Created End Date"
-        />
-      </x-field>
-      <x-field label="Tire Name">
-        <x-input v-model="filters.name" type="text" class="w-full" />
-      </x-field>
-      <x-field label="Min Price">
-        <x-input v-model="filters.min_price" type="number" class="w-full" />
-      </x-field>
-      <x-field label="Max Price">
-        <x-input v-model="filters.max_price" type="number" class="w-full" />
-      </x-field>
+      <DatePicker
+        label="Created Start Date"
+        v-model="filters.created_at"
+        placeholder="Created Start Date"
+      />
+
+      <DatePicker
+        label="Created End Date"
+        v-model="filters.created_at_end"
+        placeholder="Created End Date"
+      />
+      <x-input
+        label="Tire Name"
+        v-model="filters.name"
+        type="text"
+        class="w-full"
+      />
+      <x-input
+        label="Min Price"
+        v-model="filters.min_price"
+        type="number"
+        class="w-full"
+      />
+      <x-input
+        label="Max Price"
+        v-model="filters.max_price"
+        type="number"
+        class="w-full"
+      />
     </div>
     <div class="flex justify-end gap-3">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

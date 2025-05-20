@@ -62,29 +62,28 @@ const resetFilters = () => {
   <x-divider class="my-4" />
   <x-form :auto-focus="false" @submit="getRoleByName">
     <div class="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
-      <x-field label="NAME" required>
-        <x-input
-          class="w-full"
-          v-model="filters.name"
-          placeholder="Search by name"
-        />
-      </x-field>
-      <x-field label="PERMISSION" required>
-        <x-select
-          class="w-full"
-          v-model="filters.permission"
-          :options="
-            permissions.map(permission => ({
-              label: permission.name,
-              value: permission.id,
-            }))
-          "
-          option-text="name"
-          option-value="id"
-          placeholder="Search by permission"
-          filterable
-        />
-      </x-field>
+      <x-input
+        class="w-full"
+        v-model="filters.name"
+        label="NAME"
+        placeholder="Search by name"
+      />
+
+      <x-select
+        label="PERMISSION"
+        class="w-full"
+        v-model="filters.permission"
+        :options="
+          permissions.map(permission => ({
+            label: permission.name,
+            value: permission.id,
+          }))
+        "
+        option-text="name"
+        option-value="id"
+        placeholder="Search by permission"
+        filterable
+      />
     </div>
     <div class="flex justify-end gap-3 mt-4">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

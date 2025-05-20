@@ -73,144 +73,139 @@ const gender = computed(() => {
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="FIRST NAME" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.first_name"
-            maxLength="20"
-          />
-        </x-field>
-        <x-field label="LAST NAME" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-            maxLength="50"
-          />
-        </x-field>
-        <x-field label="EMAIL" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :disabled="editMode"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
-        <x-field label="MOBILE NUMBER" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :rules="[isRequired, isMobileNo]"
-            :disabled="editMode"
-            class="w-full"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
-        <x-field label="DATE OF BIRTH">
-          <DatePicker
-            v-model="quoteForm.dob"
-            :utc="false"
-            model-type="yyyy-MM-dd"
-            name="created_at_start"
-          />
-        </x-field>
-        <x-field label="NATIONALITY">
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="
-              nationalities.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            placeholder="Nationality"
-          />
-        </x-field>
-        <x-field label="GENDER">
-          <x-select
-            v-model="quoteForm.gender"
-            :options="gender"
-            placeholder="Gender"
-          />
-        </x-field>
-        <x-field label="COMPANY NAME">
-          <x-input
-            v-model="quoteForm.company_name"
-            type="text"
-            class="w-full"
-            :error="quoteForm?.errors?.company_name"
-          />
-        </x-field>
-        <x-field label="COMPANY ADDRESS">
-          <x-input
-            v-model="quoteForm.company_address"
-            type="text"
-            class="w-full"
-            :error="quoteForm?.errors?.company_address"
-          />
-        </x-field>
-        <x-field label="BOAT DETAILS" required>
-          <x-input
-            v-model="quoteForm.boat_details"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.boat_details"
-          />
-        </x-field>
-        <x-field label="ENGINE DETAILS" required>
-          <x-input
-            v-model="quoteForm.engine_details"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.engine_details"
-          />
-        </x-field>
-        <x-field label="CLAIM EXPERIENCE" required>
-          <x-input
-            v-model="quoteForm.claim_experience"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.claim_experience"
-          />
-        </x-field>
-        <x-field label="SUM INSURED" required>
-          <x-input
-            v-model="quoteForm.asset_value"
-            type="number"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.asset_value"
-          />
-        </x-field>
-        <x-field label="USE" required>
-          <x-input
-            v-model="quoteForm.use"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.use"
-          />
-        </x-field>
-        <x-field label="OPERATOR EXPERIENCE" required>
-          <x-input
-            v-model="quoteForm.operator_experience"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.operator_experience"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.first_name"
+          maxLength="20"
+          label="FIRST NAME"
+          required
+        />
+        <x-input
+          v-model="quoteForm.last_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+          maxLength="50"
+          label="LAST NAME"
+          required
+        />
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          :disabled="editMode"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.email"
+          label="EMAIL"
+          required
+        />
+        <x-input
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          :rules="[isRequired, isMobileNo]"
+          :disabled="editMode"
+          class="w-full"
+          :error="quoteForm.errors.mobile_no"
+          label="MOBILE NUMBER"
+          required
+        />
+        <DatePicker
+          v-model="quoteForm.dob"
+          :utc="false"
+          model-type="yyyy-MM-dd"
+          name="created_at_start"
+          label="DATE OF BIRTH"
+        />
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          placeholder="Nationality"
+          filterable
+          label="NATIONALITY"
+        />
+        <x-select
+          v-model="quoteForm.gender"
+          :options="gender"
+          placeholder="Gender"
+          label="GENDER"
+        />
+        <x-input
+          v-model="quoteForm.company_name"
+          type="text"
+          class="w-full"
+          :error="quoteForm?.errors?.company_name"
+          label="COMPANY NAME"
+        />
+        <x-input
+          v-model="quoteForm.company_address"
+          type="text"
+          class="w-full"
+          :error="quoteForm?.errors?.company_address"
+          label="COMPANY ADDRESS"
+        />
+        <x-input
+          v-model="quoteForm.boat_details"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.boat_details"
+          label="BOAT DETAILS"
+          required
+        />
+        <x-input
+          v-model="quoteForm.engine_details"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.engine_details"
+          label="ENGINE DETAILS"
+          required
+        />
+        <x-input
+          v-model="quoteForm.claim_experience"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.claim_experience"
+          label="CLAIM EXPERIENCE"
+          required
+        />
+        <x-input
+          v-model="quoteForm.asset_value"
+          type="number"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.asset_value"
+          label="SUM INSURED"
+          required
+        />
+        <x-input
+          v-model="quoteForm.use"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.use"
+          label="USE"
+          required
+        />
+        <x-input
+          v-model="quoteForm.operator_experience"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.operator_experience"
+          label="OPERATOR EXPERIENCE"
+          required
+        />
       </div>
 
       <x-divider class="my-4" />

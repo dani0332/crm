@@ -16,6 +16,47 @@ const props = defineProps({
 
 const emit = defineEmits(['onLoadAvailablePlansData']);
 
+const handlePriceInput = (e, option) => {
+  option.price =
+    e.target.value && !isNaN(e.target.value) ? parseFloat(e.target.value) : 0;
+};
+
+const formatPrice = option => {
+  if (option.price) {
+    option.price = parseFloat(option.price).toFixed(2);
+  }
+};
+
+// Format all prices in addons
+const formatAllPrices = () => {
+  if (planForm.addons && planForm.addons.length) {
+    planForm.addons.forEach(addon => {
+      if (addon.addonOptions && addon.addonOptions.length) {
+        addon.addonOptions.forEach(option => {
+          formatPrice(option);
+        });
+      }
+    });
+  }
+};
+
+const validateNumberInput = e => {
+  const charCode = e.which ? e.which : e.keyCode;
+  // Allow: backspace, delete, tab, escape, enter, arrows
+  if (
+    [8, 9, 27, 13, 37, 38, 39, 40, 46].indexOf(charCode) !== -1 ||
+    // Allow numbers
+    (charCode >= 48 && charCode <= 57) ||
+    // Allow decimal point (.) but only if not already present
+    (charCode === 190 && !e.target.value.includes('.')) ||
+    (charCode === 110 && !e.target.value.includes('.'))
+  ) {
+    return true;
+  }
+  e.preventDefault();
+  return false;
+};
+
 const listQuotePlansMembers = computed(() => {
   return props.plan.listQuotePlansMembers.map((item, index) => {
     return { ...item, index };
@@ -125,6 +166,11 @@ const onUpdatePlan = () => {
       },
     });
 };
+
+// Format prices on initial load
+onMounted(() => {
+  formatAllPrices();
+});
 </script>
 
 <template>
@@ -192,11 +238,13 @@ const onUpdatePlan = () => {
                   <span class="w-60">{{ option.value }}</span>
                   <x-input
                     class="w-20 mr-10"
-                    :value="option.price"
                     :disabled="!option.isSelected"
                     size="sm"
-                    v-model="option.price"
-                    type="number"
+                    type="text"
+                    :modelValue="option.price || 0.0"
+                    @input="handlePriceInput($event, option)"
+                    @blur="formatPrice(option)"
+                    @keydown="validateNumberInput"
                   />
                   <x-toggle
                     v-model="option.isSelected"

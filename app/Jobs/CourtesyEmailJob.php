@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Facades\Capi;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,6 +32,10 @@ class CourtesyEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
+        if (isset($this->quoteData['quoteUID'])) {
+            LoggerService::startQuoteLogging($this->quoteData['quoteUID']);
+        }
+
         $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $this->quoteData);
 
         info('Courtesy Email CAPI - Payload  : '.json_encode($this->quoteData).' - Response - : '.json_encode($response));

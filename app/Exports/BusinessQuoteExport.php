@@ -10,9 +10,18 @@ class BusinessQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true);
+        return BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true, requestParams: $requestParams)->get();
+    }
+
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery($requestParams = [])
+    {
+        return BusinessQuoteRepository::getData(QuoteTypes::CORPLINE->value, true, requestParams: $requestParams);
     }
 
     public function headings(): array
@@ -29,6 +38,7 @@ class BusinessQuoteExport
             'ADVISOR',
             'LEAD STATUS',
             'CREATED DATE',
+            'ADVISOR ASSIGNED DATE',
             'LAST MODIFIED DATE',
             'PREMIUM',
             'NUMBER OF EMPLOYEES',
@@ -57,6 +67,7 @@ class BusinessQuoteExport
             optional($quote->advisor)->name,
             optional($quote->quoteStatus)->text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            isset($quote->businessQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->businessQuoteRequestDetail->advisor_assigned_date)) : '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->premium ? $quote->premium : $quote->price_with_vat,
             $quote->number_of_employees,

@@ -19,7 +19,7 @@ class RetentionReportExport
         $this->isShowBatchColumn = app(RetentionReportService::class)->isShowBatchColumn($this->data);
     }
 
-    public function collection()
+    public function collection($requestParams = [])
     {
         return $this->data;
     }

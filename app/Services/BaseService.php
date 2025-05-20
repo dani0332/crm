@@ -6,9 +6,11 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Jobs\Audit\LogAllocation;
 use App\Models\GenericModel;
 use App\Models\QuoteViewCount;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -350,7 +352,7 @@ class BaseService
             return;
         }
 
-        info('Previous assignment type is : '.$previousAssignmentType);
+        LoggerService::info('Previous assignment type is : '.$previousAssignmentType);
         // Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
@@ -387,10 +389,10 @@ class BaseService
 
             // Update allocation counts based on assignment type (if applicable)
             if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                info('About to deduct from auto assignment count for previous advisor');
+                LoggerService::info('About to deduct from auto assignment count for previous advisor');
                 $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
             } elseif (! $isSystemAssigned && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                info('About to deduct from manual assignment count for previous advisor');
+                LoggerService::info('About to deduct from manual assignment count for previous advisor');
                 $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
             }
 
@@ -451,12 +453,28 @@ class BaseService
 
         $oldAdvisorAssignedDate = $this->updateDetailRecord($lead->id, $detailModel, $foreignKey);
 
-        info("Manual assignment done for lead : {$lead->uuid} and old advisor assigned date is : {$oldAdvisorAssignedDate}");
+        LoggerService::info("Manual assignment done for lead : {$lead->uuid} and old advisor assigned date is : {$oldAdvisorAssignedDate}");
 
         $this->upsertManualAllocationCount($lead->advisor_id, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType->id());
 
         $this->addOrUpdateQuoteViewCount($lead, $quoteType->id(), $userId);
 
         $lead->save();
+    }
+
+    public function selfAssign(QuoteTypes $quoteType, string $uuid)
+    {
+        $lead = $quoteType->model()->where('uuid', $uuid)->first();
+
+        if (! $lead) {
+            return;
+        }
+
+        if ($lead->advisor_id && $lead->source === config('constants.SOURCE_NAME')) {
+            $lead->assignment_type = AssignmentTypeEnum::SELF_ASSIGNED;
+            $lead->saveQuietly();
+
+            LogAllocation::dispatch($lead, $quoteType);
+        }
     }
 }

@@ -289,18 +289,30 @@ const nbFollowupTemplates = [
           placeholder="Search by Renewal Batch"
         />
 
-        <x-field label="Quote Batch">
-          <ComboBox
-            v-model="filters.quote_batch_id"
-            placeholder="Search by Quote Batch"
-            :options="
-              quoteBatches.map(quoteBatch => ({
-                value: quoteBatch.id,
-                label: quoteBatch.name,
-              }))
-            "
-          />
-        </x-field>
+        <x-select
+          label="Quote Batch"
+          v-model="filters.quote_batch_id"
+          placeholder="Search by Quote Batch"
+          :options="
+            quoteBatches.map(quoteBatch => ({
+              value: quoteBatch.id,
+              label: quoteBatch.name,
+            }))
+          "
+          filterable
+          filterPlaceholder="Filter Quote Batch...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_batch_id = quoteBatches.map(item => item.value)
+              "
+              @clear="filters.quote_batch_id = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div class="flex justify-end gap-3 mb-5">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

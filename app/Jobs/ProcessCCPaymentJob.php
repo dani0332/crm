@@ -12,6 +12,7 @@ use App\Models\CcPaymentProcess;
 use App\Models\PaymentSplits;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteTagService;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
@@ -56,20 +57,20 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
     {
         $splitPaymentCode = $this->splitPaymentCode;
 
-        info("Processing CC Payment Job: {$this->ccPaymentProcessId}, Payment Split Code: {$splitPaymentCode}");
+        LoggerService::info("Processing CC Payment Job: {$this->ccPaymentProcessId}, Payment Split Code: {$splitPaymentCode}");
 
         $ccPaymentProcess = CcPaymentProcess::find($this->ccPaymentProcessId);
 
         // CC payment process only once status queued if not then skip
         if ($ccPaymentProcess->status !== PaymentProcessJobEnum::QUEUED) {
-            info("Skipping CC Payment Job: {$this->ccPaymentProcessId}, Already Processed Current Status: {$ccPaymentProcess->status}, Payment Split Code: {$splitPaymentCode}");
+            LoggerService::info("Skipping CC Payment Job: {$this->ccPaymentProcessId}, Already Processed Current Status: {$ccPaymentProcess->status}, Payment Split Code: {$splitPaymentCode}");
 
             return;
         }
 
         // Update status to IN_PROCESS
         $ccPaymentProcess->update(['status' => PaymentProcessJobEnum::IN_PROCESS]);
-        info("Status changed to IN_PROCESS for Payment ID: {$this->ccPaymentProcessId}, Payment Split Code: {$splitPaymentCode}");
+        LoggerService::info("Status changed to IN_PROCESS for Payment ID: {$this->ccPaymentProcessId}, Payment Split Code: {$splitPaymentCode}");
 
         // Process the split payment approval
         $isProcessComplete = app(SplitPaymentService::class)->processSplitPaymentApprove(
@@ -82,14 +83,14 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 
         // If sage receipt is not generated or any of process is break we are not processing further
         if (! $isProcessComplete) {
-            info("Process not completed for Payment Split: {$this->splitPaymentCode} Aborting further processing, Payment Split Code: {$splitPaymentCode}");
+            LoggerService::info("Process not completed for Payment Split: {$this->splitPaymentCode} Aborting further processing, Payment Split Code: {$splitPaymentCode}");
 
             return;
         }
 
         $paymentSplit = PaymentSplits::find($ccPaymentProcess->payment_splits_id);
         if (! $paymentSplit || ! $paymentSplit->payment) {
-            info("Payment Split or Payment record not found for Split ID: {$ccPaymentProcess->payment_splits_id}, Payment Split Code: {$splitPaymentCode}");
+            LoggerService::info("Payment Split or Payment record not found for Split ID: {$ccPaymentProcess->payment_splits_id}, Payment Split Code: {$splitPaymentCode}");
 
             return;
         }
@@ -105,14 +106,15 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
             ->exists();
 
         // If conditions not met then skip the job like payment is not insurer & no cc payment and payemnt is not piad
-        info("CC Payment Job - Payment Details: Status ID: {$payment->payment_status_id}, Has CC Payment: ".($hasAnyCCPayment ? 'Yes' : 'No').' has Insurer Payment: '.($isInsurerPayment ? 'Yes' : 'No').", Payment Split Code: {$splitPaymentCode} is Payment Capture: ".($isPaymentCapture ? 'Yes' : 'No'));
+        LoggerService::info("CC Payment Job - Payment Details: Status ID: {$payment->payment_status_id}, Has CC Payment: ".($hasAnyCCPayment ? 'Yes' : 'No').' has Insurer Payment: '.($isInsurerPayment ? 'Yes' : 'No').", Payment Split Code: {$splitPaymentCode} is Payment Capture: ".($isPaymentCapture ? 'Yes' : 'No'));
         if (! $isPaymentCapture || ! $isInsurerPayment || ! $hasAnyCCPayment) {
-            info("CC Payment Job skipped: Payment conditions not met for Payment ID: {$this->ccPaymentProcessId} Payment Split Code: {$splitPaymentCode} ");
+            LoggerService::info("CC Payment Job skipped: Payment conditions not met for Payment ID: {$this->ccPaymentProcessId} Payment Split Code: {$splitPaymentCode} ");
 
             return;
         }
 
         $quote = $this->getQuoteObject($ccPaymentProcess->quote_type, $ccPaymentProcess->quoteable_id);
+        LoggerService::startQuoteLogging($quote);
         $isPaymentGatewayTap = $payment->isPaymentGatewayTap();
 
         // For personal LOB we can get value from personal quote  quote_type_id
@@ -121,16 +123,16 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
         } else {
             $quoteTypeId = QuoteTypes::getIdFromValue($ccPaymentProcess->quote_type);
         }
-        info("Quote ID: {$quote->id}, Send Update Log ID: {$payment->send_update_log_id}, Payment Split Code: {$splitPaymentCode} Quote Type ID: {$quoteTypeId}");
+        LoggerService::info("Quote ID: {$quote->id}, Send Update Log ID: {$payment->send_update_log_id}, Payment Split Code: {$splitPaymentCode} Quote Type ID: {$quoteTypeId}");
         $isCapturePaymentStarted = app(QuoteTagService::class)->isCapturePaymentStarted($quote->uuid, $quoteTypeId, $payment->send_update_log_id);
 
         // We are not relaying on insurance provider we are only relying on quote tag if found entry with 1 then we are good to go
-        info("Payment Gateway TAP: {$isPaymentGatewayTap}, Is quote tag(TPCPS) entry found: ".($isCapturePaymentStarted ? 'Yes' : 'No').", Payment Split Code: {$splitPaymentCode}");
+        LoggerService::info("Payment Gateway TAP: {$isPaymentGatewayTap}, Is quote tag(TPCPS) entry found: ".($isCapturePaymentStarted ? 'Yes' : 'No').", Payment Split Code: {$splitPaymentCode}");
         if ($quote && $isCapturePaymentStarted) {
-            info('CC Payment Job - Is Send Update Exists: '.! empty($payment->send_update_log_id).' - Send Update Log Id: '.$payment->send_update_log_id ?? '');
+            LoggerService::info('CC Payment Job - Is Send Update Exists: '.! empty($payment->send_update_log_id).' - Send Update Log Id: '.$payment->send_update_log_id ?? '');
             if (! empty($payment->send_update_log_id) && $isPaymentGatewayTap) {
                 $sendUpdateLog = SendUpdateLog::where('id', $payment->send_update_log_id)->first();
-                info("CC Payment Job: Executing Send update case - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:".$sendUpdateLog->code);
+                LoggerService::info("CC Payment Job: Executing Send update case - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:".$sendUpdateLog->code);
                 QuoteTag::where([
                     'quote_uuid' => $quote->uuid,
                     'send_update_log_id' => $payment->send_update_log_id,
@@ -149,11 +151,11 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                     'quoteCode' => $quote->code,
                 ];
 
-                info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode((array) $sendUpdateRequest));
+                LoggerService::info('CC Payment Job: Executing Endorsement Booking Process - Child Payment Code: '.$splitPaymentCode.' SendUpdateCode:'.$sendUpdateLog->code.' - Payload: '.json_encode((array) $sendUpdateRequest), extra: (array) $sendUpdateRequest);
 
                 return app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
             } else {
-                info("CC Payment Job: Executing Booking Process Payment Split Code: {$splitPaymentCode}");
+                LoggerService::info("CC Payment Job: Executing Booking Process Payment Split Code: {$splitPaymentCode}");
 
                 QuoteTag::where('quote_uuid', $quote->uuid)
                     ->where('name', QuoteTagEnums::TAP_PAYMENT_CAPTURE_PROCESS_START)
@@ -170,16 +172,16 @@ class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
                 return (new SageApiService)->postBookPolicyToSage($request, $quote);
             }
         } else {
-            info("Booking policy or update not triggered for Payment Split Code: {$splitPaymentCode} - Quote tag (TPCPS) entry found: ".($isCapturePaymentStarted ? 'Yes' : 'No'));
+            LoggerService::info("Booking policy or update not triggered for Payment Split Code: {$splitPaymentCode} - Quote tag (TPCPS) entry found: ".($isCapturePaymentStarted ? 'Yes' : 'No'));
         }
 
-        info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
+        LoggerService::info("CC Payment Job Ended: Child payment code: {$splitPaymentCode}, Split ID: {$ccPaymentProcess->payment_splits_id}");
 
     }
 
     public function failed(\Throwable $exception): void
     {
-        info("Payment Split Code: {$this->splitPaymentCode} CC Payment Job failed for: {$this->ccPaymentProcessId}, Error: {$exception->getMessage()} ");
+        LoggerService::error("Payment Split Code: {$this->splitPaymentCode} CC Payment Job failed for: {$this->ccPaymentProcessId} ", exception: $exception);
         $ccPaymentProcess = CcPaymentProcess::find($this->ccPaymentProcessId);
         $ccPaymentProcess->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
     }

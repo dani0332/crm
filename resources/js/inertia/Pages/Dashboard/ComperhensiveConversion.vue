@@ -418,69 +418,121 @@ const insuranceForOptions = computed(() => {
   <Head title="Comprehensive Conversion" />
   <div class="flex flex-col h-[85vh] comprehensive-conversion-container">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-      <x-field label="LOB">
-        <x-select
-          v-model="filters.lob"
-          :options="quoteTypesOptions"
-          class="w-full"
-          @update:model-value="onLobChange"
-        />
-      </x-field>
+      <x-select
+        v-model="filters.lob"
+        :options="quoteTypesOptions"
+        class="w-full"
+        @update:model-value="onLobChange"
+        label="LOB"
+      />
 
-      <x-field label="Teams" v-if="canShow('teams')">
-        <ComboBox
-          v-model="filters.teams"
-          name="team_name"
-          placeholder="Select Teams"
-          :options="teamOptions"
-          @update:model-value="onTeamChange"
-          :loading="loaders.teamsOptions"
-          :disabled="can(permissionsEnum.ViewTeamsFilters)"
-        />
-      </x-field>
-      <x-field label="Sub Teams" v-if="canShow('sub_teams')">
-        <ComboBox
-          v-model="filters.sub_teams"
-          name="team_name"
-          placeholder="Select Sub Teams"
-          :options="subteamOptions"
-          @update:model-value="onSubTeamChange"
-          :loading="loaders.subteamOptions"
-          :disabled="can(permissionsEnum.ViewTeamsFilters)"
-        />
-      </x-field>
-      <x-field :label="getAdvisorLabel()">
-        <ComboBox
-          v-model="filters.advisors"
-          placeholder="Select Advisor"
-          :options="advisorOptions"
-          :loading="loaders.advisorOptions"
-        />
-      </x-field>
+      <x-select
+        v-if="canShow('teams')"
+        v-model="filters.teams"
+        name="team_name"
+        placeholder="Select Teams"
+        :options="teamOptions"
+        @update:model-value="onTeamChange"
+        :loading="loaders.teamsOptions"
+        :disabled="can(permissionsEnum.ViewTeamsFilters)"
+        filterable
+        filterPlaceholder="Filter Teams...."
+        multiple
+        truncate
+        label="Teams"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="filters.teams = teamOptions.map(item => item.value)"
+            @clear="filters.teams = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-if="canShow('sub_teams')"
+        v-model="filters.sub_teams"
+        name="team_name"
+        placeholder="Select Sub Teams"
+        :options="subteamOptions"
+        @update:model-value="onSubTeamChange"
+        :loading="loaders.subteamOptions"
+        :disabled="can(permissionsEnum.ViewTeamsFilters)"
+        filterable
+        filterPlaceholder="Filter Sub Teams...."
+        multiple
+        truncate
+        label="Sub Teams"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.sub_teams = subteamOptions.map(item => item.value)
+            "
+            @clear="filters.sub_teams = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="filters.advisors"
+        placeholder="Select Advisor"
+        :options="advisorOptions"
+        :loading="loaders.advisorOptions"
+        filterable
+        filterPlaceholder="Filter Advisor...."
+        multiple
+        truncate
+        :label="getAdvisorLabel()"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.advisors = advisorOptions.map(item => item.value)
+            "
+            @clear="filters.advisors = []"
+          />
+        </template>
+      </x-select>
+
       <x-tooltip placement="top" v-if="canShow('tiers')">
         <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike">
           Development for Bike Tiers still in progress
         </template>
         <template #tooltip v-else> Select Tiers </template>
 
-        <x-field class="w-full" label="Tiers">
-          <ComboBox
-            :disabled="filters.lob === quoteTypeCodeEnum.Bike"
-            :class="{
-              'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
-            }"
-            v-model="filters.tiers"
-            name="team_name"
-            placeholder="Select Teams"
-            :options="
-              Object.keys(filterOptions.tiers).map(key => ({
-                value: key,
-                label: filterOptions.tiers[key],
-              }))
-            "
-          />
-        </x-field>
+        <x-select
+          :disabled="filters.lob === quoteTypeCodeEnum.Bike"
+          :class="{
+            'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
+          }"
+          v-model="filters.tiers"
+          name="team_name"
+          placeholder="Select Teams"
+          :options="
+            Object.keys(filterOptions.tiers).map(key => ({
+              value: key,
+              label: filterOptions.tiers[key],
+            }))
+          "
+          filterable
+          filterPlaceholder="Filter Tiers...."
+          multiple
+          truncate
+          label="Tiers"
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.tiers = filterOptions.tiers.map(item => item.value)
+              "
+              @clear="filters.tiers = []"
+            />
+          </template>
+        </x-select>
       </x-tooltip>
+
       <x-select
         v-if="canShow('isEmbeddedProducts')"
         v-model="filters.isEmbeddedProducts"
@@ -491,53 +543,54 @@ const insuranceForOptions = computed(() => {
           { value: 'false', label: 'No' },
         ]"
       />
-      <x-field label="Commercial" v-if="canShow('isCommercial')">
-        <x-select
-          v-model="filters.isCommercial"
-          placeholder="Select any option"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Insurance Type" v-if="canShow('insurance_type')">
-        <x-select
-          v-model="filters.insurance_type"
-          label=""
-          placeholder="Select insurance type"
-          :options="[
-            { value: '', label: 'Select insurance type' },
-            ...insuranceTypeOptions,
-          ]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Insurance For" v-if="canShow('insurance_for')">
-        <x-select
-          v-model="filters.insurance_for"
-          placeholder="Select insurance for"
-          :options="[
-            { value: '', label: 'Select insurance for' },
-            ...insuranceForOptions,
-          ]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field
-        label="Segment"
+
+      <x-select
+        v-if="canShow('isCommercial')"
+        v-model="filters.isCommercial"
+        placeholder="Select any option"
+        :options="[
+          { value: 'All', label: 'All' },
+          { value: 'Yes', label: 'Yes' },
+          { value: 'No', label: 'No' },
+        ]"
+        class="w-full"
+        label="Commercial"
+      />
+
+      <x-select
+        v-if="canShow('insurance_type')"
+        v-model="filters.insurance_type"
+        placeholder="Select insurance type"
+        :options="[
+          { value: '', label: 'Select insurance type' },
+          ...insuranceTypeOptions,
+        ]"
+        class="w-full"
+        label="Insurance Type"
+      />
+
+      <x-select
+        v-if="canShow('insurance_for')"
+        v-model="filters.insurance_for"
+        placeholder="Select insurance for"
+        :options="[
+          { value: '', label: 'Select insurance for' },
+          ...insuranceForOptions,
+        ]"
+        class="w-full"
+        label="Insurance For"
+      />
+
+      <x-select
         v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')"
-      >
-        <ComboBox
-          v-model="filters.segment_filter"
-          placeholder="Select Segment"
-          :options="quoteSegments"
-          class="w-full"
-          :single="true"
-        />
-      </x-field>
+        v-model="filters.segment_filter"
+        placeholder="Select Segment"
+        :options="quoteSegments"
+        class="w-full"
+        filterable
+        filterPlaceholder="Filter Segment...."
+        label="Segment"
+      />
     </div>
     <ChartsColumn
       :title="'COMPREHENSIVE CONVERSION REPORT'"

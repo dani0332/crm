@@ -108,49 +108,45 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-      <x-field label="EMAIL">
-        <x-input
-          v-model="filters.email"
-          class="w-full"
-          type="email"
-          placeholder="Search by email"
-        />
-      </x-field>
-      <x-field label="NAME">
-        <x-input
-          class="w-full"
-          v-model="filters.name"
-          placeholder="Search by name"
-        />
-      </x-field>
-      <x-field label="ROLE">
-        <x-select
-          :modelValue="filters.role"
-          :options="props.roles.map(role => ({ label: role, value: role }))"
-          class="w-full"
-          filterable
-          placeholder="Search by role"
-          clearable
-          @update:modelValue="val => updateFilter('role', val)"
-        >
-        </x-select>
-      </x-field>
-      <x-field label="PERMISSION">
-        <x-select
-          :modelValue="filters.permission"
-          :options="
-            permissions.map(permission => ({
-              label: permission,
-              value: permission,
-            }))
-          "
-          class="w-full"
-          filterable
-          placeholder="Search by permission"
-          @update:modelValue="val => updateFilter('permission', val)"
-        >
-        </x-select>
-      </x-field>
+      <x-input
+        label="EMAIL"
+        v-model="filters.email"
+        class="w-full"
+        type="email"
+        placeholder="Search by email"
+      />
+      <x-input
+        label="NAME"
+        v-model="filters.name"
+        class="w-full"
+        placeholder="Search by name"
+      />
+      <x-select
+        label="ROLE"
+        :modelValue="filters.role"
+        :options="props.roles.map(role => ({ label: role, value: role }))"
+        class="w-full"
+        filterable
+        placeholder="Search by role"
+        clearable
+        @update:modelValue="val => updateFilter('role', val)"
+      >
+      </x-select>
+      <x-select
+        label="PERMISSION"
+        :modelValue="filters.permission"
+        :options="
+          permissions.map(permission => ({
+            label: permission,
+            value: permission,
+          }))
+        "
+        class="w-full"
+        filterable
+        placeholder="Search by permission"
+        @update:modelValue="val => updateFilter('permission', val)"
+      >
+      </x-select>
     </div>
     <div class="flex justify-end gap-3">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
