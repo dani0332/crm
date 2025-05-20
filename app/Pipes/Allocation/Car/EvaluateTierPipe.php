@@ -155,6 +155,13 @@ class EvaluateTierPipe extends BaseAllocationPipe
         // Query to get all active tiers.
         $tiersQuery = Tier::where('is_active', 1);
 
+        if ($this->lead->registration_type == CarRegistrationType::COMPANY) {
+            $this->getTierBasedOnValue($tiersQuery);
+            LoggerService::info(self::class.' - Registration type is company. Calculating tier based on value');
+
+            return $tiersQuery->first();
+        }
+
         // Check if the car's year of manufacture is newer than 15 years.
         if ($this->lead->year_of_manufacture < $yearOfManufacture) {
             // Check if more than one plan is found against the car lead.
