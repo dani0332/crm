@@ -10,6 +10,7 @@ use App\Models\PersonalQuote;
 use App\Models\PrivateClientConfig;
 use App\Services\Logger\LoggerService;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use OwenIt\Auditing\Models\Audit;
 
@@ -58,44 +59,53 @@ trait PrivateClient
 
         if ($exists) {
             try {
-                $pcpTagVersion = $configs->first()->version;
-                if (is_null($model->pc_qualified)) {
-                    $model->pc_qualified = 1;
-                    $model->pcp_tag_version = $pcpTagVersion;
-                    $model->save();
+                DB::transaction(function () use ($configs, $model) {
+                    $pcpTagVersion = $configs->first()->version;
+                    $wasLeadUpdated = false;
+                    $wasCustomerUpdated = false;
 
-                    PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
-                    LoggerService::info('PC qualified tag applied successfully on lead.', extra: [
-                        'tag_version_criteria' => json_decode($configs),
-                    ]);
-                } else {
-                    LoggerService::info('PC qualified tag already applied on lead.');
-                }
-                $customer = Customer::where([
-                    'id' => $model->customer_id,
-                ])->first();
-                if ($customer && $customer->pcp_tag != true) {
-                    $customer->ref_id = $model->code;
-                    $customer->update(['pcp_tag' => true, 'pcp_tag_version' => $pcpTagVersion]);
+                    if (is_null($model->pc_qualified)) {
+                        $model->pc_qualified = 1;
+                        $model->pcp_tag_version = $pcpTagVersion;
+                        $model->save();
 
-                    LoggerService::info('PCP tag applied successfully on customer.', extra: [
-                        'customer_id' => $customer->id,
-                        'customer_name' => $customer->first_name.' '.$customer->last_name,
-                        'email' => $customer->email,
-                        'tag_version_criteria' => json_decode($configs),
-                    ]);
+                        PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
+                        $wasLeadUpdated = true;
+                        LoggerService::info('PC qualified tag applied successfully on lead.', extra: [
+                            'tag_version_criteria' => json_decode($configs),
+                        ]);
+                    }
 
-                    return true;
-                }
+                    $customer = Customer::where([
+                        'id' => $model->customer_id,
+                    ])->first();
 
-                LoggerService::warning('PCP tag already applied on customer.', [
-                    'customer_id' => $customer->id,
-                    'customer_name' => $customer->first_name.' '.$customer->last_name,
-                    'email' => $customer->email,
-                    'tag_version_criteria' => json_decode($configs),
-                ]);
+                    if ($customer && $customer->pcp_tag != true) {
+                        $customer->ref_id = $model->code;
+                        $customer->update(['pcp_tag' => true, 'pcp_tag_version' => $pcpTagVersion]);
+                        $wasCustomerUpdated = true;
+                        LoggerService::info('PCP tag applied successfully on customer.', extra: [
+                            'customer_id' => $customer->id,
+                            'customer_name' => $customer->first_name.' '.$customer->last_name,
+                            'email' => $customer->email,
+                            'tag_version_criteria' => json_decode($configs),
+                        ]);
+                    }
 
-                return false;
+                    if (! $wasLeadUpdated) {
+                        LoggerService::warning('PC qualified tag already applied on lead.', extra: [
+                            'applied_tag_version' => $model->pcp_tag_version,
+                        ]);
+                    }
+                    if ($customer && ! $wasCustomerUpdated) {
+                        LoggerService::warning('PCP tag already applied on customer.', extra: [
+                            'customer_id' => $customer->id,
+                            'customer_name' => $customer->first_name.' '.$customer->last_name,
+                            'email' => $customer->email,
+                            'applied_tag_version' => $customer->pcp_tag_version,
+                        ]);
+                    }
+                });
             } catch (Exception $ex) {
                 LoggerService::error('Error applying PCP tag.', exception: $ex);
                 throw $ex;
@@ -105,8 +115,6 @@ trait PrivateClient
         LoggerService::warning('Lead not matched PCP criteria.', extra: [
             'tag_version_criteria' => json_decode($configs),
         ]);
-
-        return false;
     }
 
     /**

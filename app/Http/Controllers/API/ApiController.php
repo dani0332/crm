@@ -392,6 +392,8 @@ class ApiController extends Controller
                         $this->applyPcpTag($value->uuid, $value->quote_type_id);
 
                         LoggerService::endLogging();
+
+                        sleep(1);
                     }
                 } else {
                     LoggerService::info('No active leads found for customer');
@@ -402,6 +404,8 @@ class ApiController extends Controller
                     'customer_name' => $customer->first_name.' '.$customer->last_name,
                     'email' => $customer->email,
                 ]);
+
+                sleep(2);
             }
 
             return apiResponse(
