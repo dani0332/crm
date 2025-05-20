@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Common;
 
 use App\Pipes\Allocation\Handlers\AllocationRequest;
+use App\Services\Logger\LoggerService;
 use App\Services\NationalityAllocationService;
 use Closure;
 
@@ -20,7 +21,11 @@ class ValidateNationalityConfigPipe extends BaseAllocationPipe
 
         $this->allocationRequest->setNationalityConfig($config);
 
-        $this->allocationRequest->setAdvisorIDs(NationalityAllocationService::getUserIDs($config));
+        $advisorIds = NationalityAllocationService::getUserIDs($config);
+
+        $this->allocationRequest->setAdvisorIDs($advisorIds);
+
+        LoggerService::info("Nationality Config found for Nationality ID: {$this->lead->nationality_id} | Advisor IDs: ".implode(', ', $advisorIds));
 
         return $next($request);
     }
