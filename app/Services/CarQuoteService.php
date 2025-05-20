@@ -40,7 +40,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use PDF;
@@ -2132,7 +2131,7 @@ class CarQuoteService extends BaseService
             return ! empty($pcpTeamId) && UserTeams::where('user_id', $user_id)->where('team_id', $pcpTeamId)->exists();
 
         } catch (\Exception $e) {
-            info(self::class.' - Error checking PCP advisor status: '.$e->getMessage(), [
+            LoggerService::info(self::class.' - Error checking PCP advisor status: '.$e->getMessage(), [
                 'user_id' => $user_id,
                 'trace' => $e->getTraceAsString(),
             ]);

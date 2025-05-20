@@ -254,4 +254,12 @@ trait TeamHierarchyTrait
     {
         return DB::table('user_manager')->where('manager_id', auth()->id())->pluck('user_id')->toArray() ?? [];
     }
+
+    public function getTeamUserIds($teamId)
+    {
+        if (!$teamId) {
+            return [];
+        }
+        return UserTeams::where('team_id', $teamId)->pluck('user_id')->toArray();
+    }
 }

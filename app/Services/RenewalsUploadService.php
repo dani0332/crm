@@ -1353,7 +1353,7 @@ class RenewalsUploadService
                 $this->attachPdfIfNeeded($carQuote, $listQuotePlans, $emailData);
 
                 $responseCode = $this->sendEmail($carQuote, $emailTemplateId, $emailData);
-                $this->handleResponse($responseCode, $carQuote, $renewalsBatchEmail, $renewalQuoteProcess, $isPCPTeamAdvisor);
+                $this->handleResponse($responseCode, $carQuote, $renewalsBatchEmail, $renewalQuoteProcess);
             }
 
             LoggerService::info('Renewals OCB Email completed for uuid: '.$carQuote->uuid);
@@ -1532,7 +1532,7 @@ class RenewalsUploadService
      * @param  RenewalsBatchEmails  $renewalsBatchEmail
      * @param  RenewalQuoteProcess  $renewalQuoteProcess
      */
-    private function handleResponse($responseCode, $carQuote, $renewalsBatchEmail, $renewalQuoteProcess, $isPCPTeamAdvisor = false)
+    private function handleResponse($responseCode, $carQuote, $renewalsBatchEmail, $renewalQuoteProcess)
     {
         LoggerService::info('Renewals OCB Email response: '.$responseCode);
 

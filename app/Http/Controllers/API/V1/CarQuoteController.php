@@ -14,12 +14,17 @@ use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;
 use App\Services\QuoteStatusService;
 use Illuminate\Http\Request;
+use App\Models\Team;
+use App\Enums\TeamNameEnum;
+use App\Traits\TeamHierarchyTrait;
 
 class CarQuoteController extends Controller
 {
     /**
      * @return void
      */
+    use TeamHierarchyTrait;
+
     public function index()
     {
         $quotes = CarQuoteRepository::select(
@@ -32,6 +37,7 @@ class CarQuoteController extends Controller
 
     public function getFollowupLeads()
     {
+        $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->value('id') ?? null;
         $quotes = CarQuoteRepository::select(['id', 'code', 'uuid', 'advisor_id', 'renewal_batch', 'quote_batch_id'])
             ->whereHas('carQuoteRequestDetail', function ($q) {
                 $q->whereNotNull('ocb_sent_date');
@@ -40,6 +46,7 @@ class CarQuoteController extends Controller
                 $q->whereNotNull('ocb_sent_date');
             }])->whereNotIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID])
             ->where('quote_status_id', '<>', QuoteStatusEnum::Duplicate)
+            ->whereNotIn('advisor_id',$this->getTeamUserIds($pcpTeamId))
             ->filter()
             ->simplePaginate((request()->limit ?? 100));
 

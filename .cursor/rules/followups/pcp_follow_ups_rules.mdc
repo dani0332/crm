@@ -1,19 +1,7 @@
 ---
-description: Rules to monitor and enforce business logic integrity of the PCP Follow-Ups feature
+description:
 globs:
-  - app/Jobs/SendPCPFollowupsJob.php
-  - app/Services/EmailServices/CarEmailService.php
-  - app/Enums/QuoteFlowType.php
-  - app/Enums/WorkflowTypeEnum.php
-  - app/Enums/ApplicationStorageEnums.php
-  - app/Enums/QuoteStatusEnum.php
-  - app/Enums/quoteStatusCode.php
-  - app/Enums/LeadSourceEnum.php
-  - app/Services/RenewalsUploadService.php
-  - app/Models/CarQuote.php
-  - app/Models/ApplicationStorage.php
-  - app/Jobs/SendPCPCarOCBEmailJob.php
-alwaysApply: true
+alwaysApply: false
 ---
 
 # PCP Follow-Ups Business Logic Monitor
