@@ -4,6 +4,7 @@ namespace App\Services\OCR;
 
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Events\OcrNotifications;
 use App\Models\DocumentType;
 use App\Services\QuoteDocumentService;
 use Exception;
@@ -89,7 +90,7 @@ class OCRService
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
         $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
-
+        event(new OcrNotifications($quote, 'end', 'OCR processing completed'));
         if ($data) {
             return $this->fill(
                 $quote,

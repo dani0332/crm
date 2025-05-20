@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\Skip;
+use App\Events\OcrNotifications;
 
 class PopulateDocumentData implements ShouldQueue
 {
@@ -44,42 +45,52 @@ class PopulateDocumentData implements ShouldQueue
      */
     public function handle()
     {
+        // Notify start
+        event(new OcrNotifications($this->quote, 'start', 'OCR processing started'));
+
         LoggerService::startQuoteLogging($this->quote, LoggerFeatureEnum::OCR);
 
         if (! $this->validateMimeType()) {
             info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
-
+            event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed: Invalid file type'));
             return;
         }
 
-        $isSuccess = app(OCRService::class)->process(
-            $this->quoteType,
-            $this->quote,
-            $this->documentType,
-            $this->documentPath,
-            $this->fileMimeType,
-        );
+        try {
+            $isSuccess = app(OCRService::class)->process(
+                $this->quoteType,
+                $this->quote,
+                $this->documentType,
+                $this->documentPath,
+                $this->fileMimeType,
+            );
 
-        if ($isSuccess === null) {
-            info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
-
-            return;
-        }
-
-        if ($isSuccess) {
-            info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
-        } else {
-            info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
-
-            if ($this->attempts() >= $this->tries) {
-                $errorMessage = "Maximum attempts reached for {$this->quoteType?->value} & Document Type {$this->documentType?->code}";
-                info(self::class." - {$errorMessage}");
-
-                $this->fail(new Exception($errorMessage));
-            } else {
-                // Retry the job
-                $this->release(now()->addMinutes(2 * $this->attempts()));
+            if ($isSuccess === null) {
+                info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+                event(new OcrNotifications($this->quote, 'end', 'OCR processing skipped'));
+                return;
             }
+
+            if ($isSuccess) {
+                info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+                event(new OcrNotifications($this->quote, 'end', 'OCR processing completed'));
+            } else {
+                info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+                event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed'));
+
+                if ($this->attempts() >= $this->tries) {
+                    $errorMessage = "Maximum attempts reached for {$this->quoteType?->value} & Document Type {$this->documentType?->code}";
+                    info(self::class." - {$errorMessage}");
+                    event(new OcrNotifications($this->quote, 'fail', $errorMessage));
+                    $this->fail(new Exception($errorMessage));
+                } else {
+                    // Retry the job
+                    $this->release(now()->addMinutes(2 * $this->attempts()));
+                }
+            }
+        } catch (\Exception $e) {
+            event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed', $e->getMessage()));
+            throw $e;
         }
 
         LoggerService::endLogging();

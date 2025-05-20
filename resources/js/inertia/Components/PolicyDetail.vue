@@ -1,5 +1,6 @@
 <script setup>
 import moment from 'moment';
+import { ref, onMounted, onUnmounted } from 'vue';
 const { isRequired } = useRules();
 
 const page = usePage();
@@ -444,6 +445,12 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  console.log('mounted policy detail ocr notification');
+  window.addEventListener('ocr-notification', handleOcrNotification);
+});
+onUnmounted(() => {
+  console.log('unmounted policy detail ocr notification');
+  window.removeEventListener('ocr-notification', handleOcrNotification);
 });
 
 watch(
@@ -484,6 +491,14 @@ const calculateTotalPrice = () => {
   policyDetailsForm.amount_with_vat = amountWithVat;
   policyDetailsForm.vat = vat;
 };
+
+const ocrLoading = ref(false);
+
+function handleOcrNotification(e) {
+  const { status } = e.detail;
+  if (status === 'start') ocrLoading.value = true;
+  else if (status === 'end' || status === 'fail') ocrLoading.value = false;
+}
 </script>
 
 <template>
@@ -596,6 +611,7 @@ const calculateTotalPrice = () => {
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
                   :error="policyDetailsForm.errors.quote_policy_start_date"
+                  :loading="ocrLoading"
                 />
               </div>
             </div>
