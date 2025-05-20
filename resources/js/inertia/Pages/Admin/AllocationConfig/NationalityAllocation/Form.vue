@@ -78,17 +78,70 @@ const fetchAdvisors = quoteTypeId => {
         response.data.data &&
         response.data.data.length > 0
       ) {
-        userOptions.value = response.data.data.map(user => ({
+        // Get current user selections
+        const currentSelections = configForm.user_ids || [];
+
+        // Create a map of new options
+        const newOptions = response.data.data.map(user => ({
           value: user.id,
           label: user.name,
         }));
+
+        // If we're in edit mode and have selections, ensure they exist in options
+        if (isEdit.value && currentSelections.length > 0) {
+          // Get existing selected users that aren't in the new options
+          const existingSelectedUsers =
+            props.configuration?.users
+              ?.filter(
+                user =>
+                  currentSelections.includes(user.id) &&
+                  !newOptions.some(option => option.value === user.id),
+              )
+              .map(user => ({
+                value: user.id,
+                label: user.name,
+              })) || [];
+
+          // Combine existing selected users with new options
+          userOptions.value = [...existingSelectedUsers, ...newOptions];
+        } else {
+          userOptions.value = newOptions;
+        }
       } else {
-        userOptions.value = [];
+        // If no users returned but we have selections in edit mode, preserve them
+        if (
+          isEdit.value &&
+          configForm.user_ids?.length > 0 &&
+          props.configuration?.users
+        ) {
+          userOptions.value = props.configuration.users
+            .filter(user => configForm.user_ids.includes(user.id))
+            .map(user => ({
+              value: user.id,
+              label: user.name,
+            }));
+        } else {
+          userOptions.value = [];
+        }
       }
     })
     .catch(error => {
       console.error('Error fetching advisors:', error);
-      userOptions.value = [];
+      // Preserve existing selected users on error
+      if (
+        isEdit.value &&
+        configForm.user_ids?.length > 0 &&
+        props.configuration?.users
+      ) {
+        userOptions.value = props.configuration.users
+          .filter(user => configForm.user_ids.includes(user.id))
+          .map(user => ({
+            value: user.id,
+            label: user.name,
+          }));
+      } else {
+        userOptions.value = [];
+      }
     })
     .finally(() => {
       advisorsLoading.value = false;
@@ -104,8 +157,14 @@ if (isEdit.value && configForm.quote_type_id) {
 watch(
   () => configForm.quote_type_id,
   newQuoteTypeId => {
-    // Reset user_ids when quote type changes
-    configForm.user_ids = [];
+    // Only reset user_ids when not in edit mode or when deliberately changing quote type
+    if (
+      !isEdit.value ||
+      (isEdit.value && newQuoteTypeId !== props.configuration?.quote_type_id)
+    ) {
+      configForm.user_ids = [];
+    }
+
     if (newQuoteTypeId) {
       fetchAdvisors(newQuoteTypeId);
     } else {
