@@ -88,8 +88,10 @@ class ReportService extends BaseService
                 DB::raw('COUNT('.$quoteRequestTable.'_detail.id) as leads_count'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN 1 ELSE NULL END) as authorized'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as captured'),
+                DB::raw('COUNT(CASE  WHEN quote_status_id = '.QuoteStatusEnum::PolicyBooked.' THEN 1 ELSE NULL END) as booked_policies'),
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN premium  ELSE 0 END) as authorized_sum'),
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN premium  ELSE 0 END) as captured_sum'),
+                DB::raw('sum(CASE WHEN quote_status_id = '.QuoteStatusEnum::PolicyBooked.' THEN price_with_vat ELSE 0 END) as total_sum'),
             )
                 ->join($quoteRequestTable.'_detail', $quoteRequestTable.'.id', $quoteRequestTable.'_detail.'.$quoteRequestTable.'_id')->groupBy($groupBy)
                 ->whereNotIn($quoteRequestTable.'.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
@@ -97,6 +99,7 @@ class ReportService extends BaseService
             if ($isGroupMedical) {
                 $query->where('business_type_of_insurance_id', QuoteTypeId::Business);
             }
+
             if (! empty($groupByOne)) {
                 $query->where($groupByOne, '<>', '');
             }
@@ -109,6 +112,7 @@ class ReportService extends BaseService
 
                 $query->whereBetween($quoteRequestTable.'.created_at', [$dateFrom, $dateTo]);
             }
+
             $records = $query->get();
 
             $records->map(function ($item) use ($groupBy) {
