@@ -51,7 +51,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
             if (! $personalQuote->advisor_id) {
                 $validator->errors()->add('error', 'Please select advisor');
             }
-            
+
             if (! $personalQuote->email) {
                 $validator->errors()->add('error', 'Customer email is required');
             }
