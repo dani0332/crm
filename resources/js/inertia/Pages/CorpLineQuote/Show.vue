@@ -183,6 +183,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  storageUrl: {
+    type: String,
+    required: true,
+  },
 });
 
 const page = usePage();
