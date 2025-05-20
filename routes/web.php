@@ -520,8 +520,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         })->where('id', '[A-Z0-9]+')->name('quotes.home.show');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
-        Route::resource('home', CRUDController::class)->except(['show']);
-        Route::resource('business', CRUDController::class);
+        // Route::resource('home', CRUDController::class)->except(['show']);
+        // Route::resource('business', CRUDController::class);
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
         Route::resource('business', BusinessQuoteController::class);

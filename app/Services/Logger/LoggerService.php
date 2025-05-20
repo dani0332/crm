@@ -36,6 +36,10 @@ class LoggerService
 
         if ($feature) {
             self::startFeatureLogging($feature);
+
+            self::info("===== Logging Started with Ref ID: {$refID} for Feature: {$feature->value} =====");
+        } else {
+            self::info("===== Logging Started with Ref ID: {$refID} =====");
         }
     }
 
@@ -144,5 +148,12 @@ class LoggerService
         self::addExtra($extra);
 
         Log::emergency($message, $context);
+    }
+
+    public static function sql(string $title, $queryInstance)
+    {
+        $sql = $queryInstance->toRawSql();
+
+        self::debug("{$title} Query", ['sql' => $sql]);
     }
 }

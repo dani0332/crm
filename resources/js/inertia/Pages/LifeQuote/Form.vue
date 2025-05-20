@@ -75,187 +75,176 @@ function onSubmit(isValid) {
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="First Name" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.first_name"
-            maxLength="20"
-          />
-        </x-field>
-        <x-field label="Last Name" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-            maxLength="50"
-          />
-        </x-field>
-        <x-field label="Email" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :rules="[isRequired]"
-            :disabled="editMode"
-            class="w-full"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
-        <x-field label="Mobile Number" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :rules="[isRequired, isMobileNo]"
-            class="w-full"
-            :disabled="editMode"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
-        <x-field label="Date of Birth">
-          <DatePicker v-model="quoteForm.dob" input-classes="w-full" />
-        </x-field>
-        <x-field label="Nationality">
-          <x-select
-            v-model="quoteForm.nationality_id"
-            :options="
-              nationalities.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.nationality_id"
-          />
-        </x-field>
-        <x-field label="Gender">
-          <x-select
-            v-model="quoteForm.gender"
-            :options="[
-              { value: 'Male', label: 'Male' },
-              { value: 'Female', label: 'Female' },
-            ]"
-            class="w-full"
-            :error="quoteForm.errors.gender"
-          />
-        </x-field>
-        <x-field label="Sum Insured Value">
-          <x-input
-            v-model="quoteForm.sum_insured_value"
-            type="number"
-            class="w-full"
-            :error="quoteForm.errors.sum_insured_value"
-          />
-        </x-field>
-        <x-field label="PRICE">
-          <x-input
-            v-model="quoteForm.premium"
-            type="number"
-            class="w-full"
-            :error="quoteForm.errors.premium"
-          />
-        </x-field>
-        <x-field label="Currency">
-          <x-select
-            v-model="quoteForm.sum_insured_currency_id"
-            :options="
-              currency.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.sum_insured_currency_id"
-          />
-        </x-field>
-        <x-field label="Purpose of Insurance">
-          <x-select
-            v-model="quoteForm.purpose_of_insurance_id"
-            :options="
-              purposeOfInsurance.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.purpose_of_insurance_id"
-          />
-        </x-field>
-        <x-field label="Marital Status">
-          <x-select
-            v-model="quoteForm.marital_status_id"
-            :options="
-              maritalStatus.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.marital_status_id"
-          />
-        </x-field>
-
-        <x-field label="Children">
-          <x-select
-            v-model="quoteForm.children_id"
-            :options="
-              children.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.children_id"
-          />
-        </x-field>
-        <x-field label="Type of Insurance">
-          <x-select
-            v-model="quoteForm.tenure_of_insurance_id"
-            :options="
-              typeOfInsurance.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.tenure_of_insurance_id"
-          />
-        </x-field>
-        <x-field label="Tenure of Cover">
-          <x-select
-            v-model="quoteForm.number_of_years_id"
-            :options="
-              numberOfYears.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.number_of_years_id"
-          />
-        </x-field>
-        <x-field label="Smoker">
-          <x-select
-            v-model="quoteForm.is_smoker"
-            :options="[
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-            :error="quoteForm.errors.is_smoker"
-          />
-        </x-field>
-        <x-field label="Others Info">
-          <x-input
-            v-model="quoteForm.others_info"
-            type="text"
-            class="w-full"
-            :error="quoteForm.errors.others_info"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.first_name"
+          maxLength="20"
+          label="First Name"
+          required
+        />
+        <x-input
+          v-model="quoteForm.last_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+          maxLength="50"
+          label="Last Name"
+          required
+        />
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          :rules="[isRequired]"
+          :disabled="editMode"
+          class="w-full"
+          :error="quoteForm.errors.email"
+          label="Email"
+          required
+        />
+        <x-input
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          :rules="[isRequired, isMobileNo]"
+          class="w-full"
+          :disabled="editMode"
+          :error="quoteForm.errors.mobile_no"
+          label="Mobile Number"
+          required
+        />
+        <DatePicker
+          v-model="quoteForm.dob"
+          input-classes="w-full"
+          label="Date of Birth"
+        />
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.nationality_id"
+          label="Nationality"
+        />
+        <x-select
+          v-model="quoteForm.gender"
+          :options="[
+            { value: 'Male', label: 'Male' },
+            { value: 'Female', label: 'Female' },
+          ]"
+          class="w-full"
+          :error="quoteForm.errors.gender"
+          label="Gender"
+        />
+        <x-input
+          v-model="quoteForm.sum_insured_value"
+          type="number"
+          class="w-full"
+          :error="quoteForm.errors.sum_insured_value"
+          label="Sum Insured Value"
+        />
+        <x-input
+          v-model="quoteForm.premium"
+          type="number"
+          class="w-full"
+          :error="quoteForm.errors.premium"
+          label="PRICE"
+        />
+        <x-select
+          v-model="quoteForm.sum_insured_currency_id"
+          :options="
+            currency.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.sum_insured_currency_id"
+          label="Currency"
+        />
+        <x-select
+          v-model="quoteForm.purpose_of_insurance_id"
+          :options="
+            purposeOfInsurance.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.purpose_of_insurance_id"
+          label="Purpose of Insurance"
+        />
+        <x-select
+          v-model="quoteForm.marital_status_id"
+          :options="
+            maritalStatus.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.marital_status_id"
+          label="Marital Status"
+        />
+        <x-select
+          v-model="quoteForm.children_id"
+          :options="
+            children.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.children_id"
+          label="Children"
+        />
+        <x-select
+          v-model="quoteForm.tenure_of_insurance_id"
+          :options="
+            typeOfInsurance.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.tenure_of_insurance_id"
+          label="Type of Insurance"
+        />
+        <x-select
+          v-model="quoteForm.number_of_years_id"
+          :options="
+            numberOfYears.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.number_of_years_id"
+          label="Tenure of Cover"
+        />
+        <x-select
+          v-model="quoteForm.is_smoker"
+          :options="[
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :error="quoteForm.errors.is_smoker"
+          label="Smoker"
+        />
+        <x-input
+          v-model="quoteForm.others_info"
+          type="text"
+          class="w-full"
+          :error="quoteForm.errors.others_info"
+          label="Others Info"
+        />
       </div>
 
       <x-divider class="my-4" />
