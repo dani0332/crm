@@ -17,6 +17,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
@@ -1171,8 +1172,8 @@ class SagePayloadFactory
         $latestEndorsementCode = '';
         $endorsementSubType = '';
 
-        if (isset($quote->personal_quote_id) && $quote?->personal_quote_id) {
-            $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
+        if ($quote?->personal_quote_id && $quote?->send_update_log_id) {
+            $latestEndorsement = SendUpdateLog::where('id', $quote->send_update_log_id)->first();
             $latestEndorsementCode = $latestEndorsement?->code;
 
             if (! empty($latestEndorsement->option_id)) {
