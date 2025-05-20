@@ -10,7 +10,6 @@ use App\Jobs\ReAssignHealthLeadsJob;
 use App\Jobs\ReAssignLeads;
 use App\Services\ApplicationStorageService;
 use App\Services\BikeAllocationService;
-use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -61,7 +60,7 @@ class LeadsReassignment extends Command
         $isHoliday = $this->isHoliday();
 
         if ($shouldProceed && ! now()->isWeekend() && ! $isHoliday) {
-            dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), 0));
+            dispatch(new ReAssignCarLeadsJob(0));
             info('Car lead reassignment job  for '.$currentIteration.' is dispatched');
 
             dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), 0));

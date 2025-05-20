@@ -18,7 +18,6 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\UserStatusAuditLog;
 use App\Services\BikeAllocationService;
-use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -100,7 +99,7 @@ class UpdateUserStatus extends Command
                         $bikeId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Bike)->first()?->id;
                         if ($this->userHaveProduct($userId, $carId)) {
                             info('System triggered car reassignment job for user : '.$session->user->name);
-                            ReAssignCarLeadsJob::dispatch(new CarAllocationService, $userId);
+                            ReAssignCarLeadsJob::dispatch($userId);
                         }
                         if ($this->userHaveProduct($userId, $healthId)) {
                             info('System triggered health reassignment job for user : '.$session->user->name);

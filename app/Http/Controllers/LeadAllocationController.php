@@ -15,7 +15,6 @@ use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
-use App\Services\CarAllocationService;
 use App\Services\CRUDService;
 use App\Services\HealthAllocationService;
 use App\Services\LeadAllocationService;
@@ -158,7 +157,7 @@ class LeadAllocationController extends Controller
                             $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
                             if ($this->userHaveProduct($item['userId'], $car?->id)) {
                                 info('user belong to car so dispatching car reassignment job');
-                                dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $item['userId']));
+                                dispatch(new ReAssignCarLeadsJob($item['userId']));
                             }
 
                             $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
