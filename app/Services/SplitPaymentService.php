@@ -692,11 +692,6 @@ class SplitPaymentService
                 $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quoteModel, $payment, $paymentSplit, $amountCollected);
                 if ($sageResponse['status']) {
                     LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageResponse['message']}");
-
-                    $this->handleWithDeadlockRetries(function () use ($paymentSplit, $sageResponse) {
-                        $paymentSplit->sage_reciept_id = $sageResponse['documentNumber'];
-                        $paymentSplit->save();
-                    }, $maxRetries);
                 } else {
                     $sageMessage = $sageResponse['message'];
                     LoggerService::info("Sage receipt creation failed for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with error: {$sageMessage}");
