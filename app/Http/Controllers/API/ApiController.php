@@ -380,11 +380,16 @@ class ApiController extends Controller
                     ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                     ->whereNotNull('policy_expiry_date')
                     ->where('policy_expiry_date', '>', now())
+                    ->orderBy('created_at')
                     ->get();
 
                 if ($activeLeads->isNotEmpty()) {
 
-                    LoggerService::info('Active leads found for customer');
+                    LoggerService::info('Active leads found for customer', extra: [
+                        'customer_id' => $customer->id,
+                        'customer_name' => $customer->first_name.' '.$customer->last_name,
+                        'email' => $customer->email,
+                    ]);
 
                     foreach ($activeLeads as $value) {
                         LoggerService::startQuoteLogging(QuoteTypes::getName($value->quote_type_id)->refId($value->uuid), LoggerFeatureEnum::PCP_CLIENT);
@@ -393,10 +398,13 @@ class ApiController extends Controller
 
                         LoggerService::endLogging();
 
-                        sleep(1);
                     }
                 } else {
-                    LoggerService::info('No active leads found for customer');
+                    LoggerService::warning('No active leads found for customer', extra: [
+                        'customer_id' => $customer->id,
+                        'customer_name' => $customer->first_name.' '.$customer->last_name,
+                        'email' => $customer->email,
+                    ]);
                 }
 
                 LoggerService::info('private client tag marking activity has been ended on customer', extra: [
@@ -405,7 +413,6 @@ class ApiController extends Controller
                     'email' => $customer->email,
                 ]);
 
-                sleep(2);
             }
 
             return apiResponse(

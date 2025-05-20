@@ -65,10 +65,7 @@ trait PrivateClient
                     $wasCustomerUpdated = false;
 
                     if (is_null($model->pc_qualified)) {
-                        $model->pc_qualified = 1;
-                        $model->pcp_tag_version = $pcpTagVersion;
-                        $model->save();
-
+                        $model->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
                         PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
                         $wasLeadUpdated = true;
                         LoggerService::info('PC qualified tag applied successfully on lead.', extra: [
@@ -106,6 +103,8 @@ trait PrivateClient
                         ]);
                     }
                 });
+
+                return true;
             } catch (Exception $ex) {
                 LoggerService::error('Error applying PCP tag.', exception: $ex);
                 throw $ex;
@@ -115,6 +114,8 @@ trait PrivateClient
         LoggerService::warning('Lead not matched PCP criteria.', extra: [
             'tag_version_criteria' => json_decode($configs),
         ]);
+
+        return false;
     }
 
     /**
