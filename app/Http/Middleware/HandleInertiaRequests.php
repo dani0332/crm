@@ -330,7 +330,7 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        true,
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_EXPORT),
                         'Export Buy Leads',
                         route('buy-leads.request.export'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
