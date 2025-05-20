@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use Illuminate\Foundation\Http\FormRequest;
@@ -46,6 +47,15 @@ class SendUpdateCustomerValidationRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
+            $personalQuote = PersonalQuote::where('id', $this->sendUpdate->personal_quote_id)->first();
+            if (! $personalQuote->advisor_id) {
+                $validator->errors()->add('error', 'Please select advisor');
+            }
+            
+            if (! $personalQuote->email) {
+                $validator->errors()->add('error', 'Customer email is required');
+            }
+
             $this->sendUpdateDocuemnts = $this->sendUpdate?->documents()->pluck('document_type_code');
             $category = $this->sendUpdate?->category?->code;
             $option = $this->sendUpdate?->option?->code;
