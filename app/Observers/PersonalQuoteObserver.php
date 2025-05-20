@@ -2,12 +2,9 @@
 
 namespace App\Observers;
 
-<<<<<<< HEAD
 use App\Enums\QuoteStatusEnum;
 use App\Events\PrivateClientUpdatedEvent;
-=======
 use App\Jobs\Audit\LogAllocation;
->>>>>>> develop
 use App\Models\PersonalQuote;
 use App\Observers\Traits\Observable;
 use App\Observers\Traits\PersonalQuoteObservable;
@@ -46,7 +43,6 @@ class PersonalQuoteObserver
         if ($personalQuote->isDirty('quote_status_id')) {
             $this->handleQuoteStatusChange($personalQuote);
         }
-<<<<<<< HEAD
 
         if (
             isset($dirty['quote_status_id']) &&
@@ -54,7 +50,5 @@ class PersonalQuoteObserver
         ) {
             event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
         }
-=======
->>>>>>> develop
     }
 }
