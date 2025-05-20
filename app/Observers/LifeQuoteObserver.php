@@ -2,13 +2,16 @@
 
 namespace App\Observers;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -41,7 +44,23 @@ class LifeQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $lifeQuote->transaction_approved_at];
         }
+        if (isset($dirty['advisor_id'])) {
+            LogAllocation::dispatch($lifeQuote, QuoteTypes::LIFE);
 
+            if ($lifeQuote->source != LeadSourceEnum::IMCRM) {
+
+                $oldAdvisorId = $lifeQuote->getOriginal('advisor_id');
+                info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$lifeQuote->advisor_id} | Time: ".now());
+
+                $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
+                info(self::class." Sending {$emailType} email to customer for life quote {$lifeQuote->uuid} | Time: ".now());
+                app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($lifeQuote, QuoteTypes::LIFE->value, $oldAdvisorId);
+                info(self::class." | {$emailType} email sent to customer for life quote {$lifeQuote->uuid} | Time: ".now());
+
+            } else {
+                info("LifeQuoteObserver - lead source: {$lifeQuote->source} |  Advisor ID: {$lifeQuote->advisor_id} | Time: ".now());
+            }
+        }
         $this->syncQuote($lifeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {

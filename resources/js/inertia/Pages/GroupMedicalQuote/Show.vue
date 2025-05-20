@@ -813,12 +813,12 @@ const allowStatusUpdate = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -848,13 +848,13 @@ const allowStatusUpdate = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="companyConcernOptions"
-                      placeholder="SELECT COMPANY CONCERN"
                       class="w-full"
+                      placeholder="SELECT COMPANY CONCERN"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>
@@ -1053,14 +1053,13 @@ const allowStatusUpdate = computed(() => {
                 :error="leadStatusForm.errors.lostReason"
                 :disabled="lockLeadSectionsDetails.lead_status"
               />
-              <x-field label="Transaction Type">
-                <x-input
-                  type="text"
-                  v-model="quote.transaction_type_text"
-                  class="w-full"
-                  :disabled="true"
-                />
-              </x-field>
+              <x-input
+                type="text"
+                v-model="quote.transaction_type_text"
+                class="w-full"
+                label="Transaction Type"
+                :disabled="true"
+              />
             </div>
           </div>
           <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
@@ -1223,7 +1222,7 @@ const allowStatusUpdate = computed(() => {
 
     <lead-raw-data
       :modelType="'Business'"
-      :code="$page.props.quote.code"
+      :uuid="$page.props.quote.uuid"
     ></lead-raw-data>
   </div>
 </template>

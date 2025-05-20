@@ -7,7 +7,9 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\PolicyIssuanceJob;
 use App\Models\PolicyIssuance;
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
+use Carbon\Carbon;
 
 class PolicyIssuanceService
 {
@@ -113,7 +115,7 @@ class PolicyIssuanceService
             $policyIssuanceQuery->chunk(100, function ($policyIssuanceProcesses) {
                 foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' dispatch automation job');
-                    PolicyIssuanceJob::dispatch($policyIssuanceProcess->id)->onQueue('policy-issuance-automation');
+                    PolicyIssuanceJob::dispatch($policyIssuanceProcess)->onQueue('policy-issuance-automation');
                     info('automation:'.$this->className.' fn:'.__FUNCTION__.' PID: '.$policyIssuanceProcess->id.' automation job dispatched');
                 }
             });
@@ -121,6 +123,82 @@ class PolicyIssuanceService
             info('automation:'.$this->className.' fn:'.__FUNCTION__.' No Records found for Quote Type: '.$quoteType.', Insurer : '.$insuranceProvider?->code.' - Statuses : '.json_encode($statuses));
         }
 
+    }
+
+    /**
+     * Process policy issuance entries that are stuck in processing status
+     */
+    public function processStuckPolicyIssuances()
+    {
+        $fifteenMinutesAgo = Carbon::now()->subMinutes(15);
+
+        // Find all policy issuance entries stuck in processing status for more than 15 minutes
+        $stuckPolicyIssuanceAutomations = PolicyIssuance::where('status', PolicyIssuanceEnum::PROCESSING_STATUS)->where('updated_at', '<', $fifteenMinutesAgo);
+
+        $count = $stuckPolicyIssuanceAutomations->count();
+        LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Found '.$count.' stuck policy issuance processes');
+
+        $stuckPolicyIssuanceAutomations->chunk(1000, function ($policyIssuanceAutomations) {
+            foreach ($policyIssuanceAutomations as $policyIssuance) {
+                try {
+                    LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' trigger for policy issuance ID: '.$policyIssuance->id);
+
+                    $this->markPolicyIssuanceFailed($policyIssuance);
+
+                    LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' triggered for policy issuance ID: '.$policyIssuance->id);
+                } catch (\Exception $e) {
+                    LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Exception occurred while processing policy issuance ID: '.$policyIssuance->id.'. Error: '.$e->getMessage());
+                }
+            }
+        });
+
+    }
+
+    /**
+     * Mark a policy issuance as failed and handle the related processes
+     */
+    private function markPolicyIssuanceFailed(PolicyIssuance $policyIssuance)
+    {
+        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Policy Issuance ID : '.$policyIssuance->id.' Started');
+
+        $quote = $policyIssuance->model;
+        $quoteType = $policyIssuance?->quote_type;
+        $insuranceProvider = $policyIssuance?->insuranceProvider;
+
+        if (! $insuranceProvider) {
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$quote->code.' - Insurance Provider not found');
+
+            return;
+        }
+        $insurerPolicyAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+
+        $updatePolicyIssuanceData['status'] = PolicyIssuanceEnum::FAILED_STATUS;
+
+        if (! $quote) {
+            info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote not found for policy issuance ID: '.$policyIssuance?->id);
+            if (! $policyIssuance->message) {
+                $updatePolicyIssuanceData['message'] = json_encode(['error' => 'Quote not found']);
+            }
+            $policyIssuance->update($updatePolicyIssuanceData);
+
+            return;
+        }
+
+        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Processing Quote: '.$quote->code.' - Policy Issuance ID: '.$policyIssuance?->id);
+
+        // Update policy issuance status to failed
+        if (! $policyIssuance->message) {
+            $updatePolicyIssuanceData['message'] = json_encode(['error' => 'Policy issuance process stuck for more than 15 minutes']);
+        }
+        $policyIssuance->update($updatePolicyIssuanceData);
+
+        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Policy issuance marked as failed for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
+
+        $insurerApiStatus = $insurerPolicyAutomation->getInsurerAPIStatusByStep($policyIssuance);
+
+        $insurerPolicyAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, $insurerApiStatus, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+
+        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Completed processing for Quote: '.$quote->code.' and Policy Issuance ID : '.$policyIssuance?->id);
     }
 
 }

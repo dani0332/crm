@@ -178,7 +178,12 @@ class RenewalBatch extends Model implements AuditableContract
     public function monthName(): Attribute
     {
         return Attribute::make(
-            get: fn () => Carbon::parse("{$this->year}-{$this->month}")->format('M')
+            get: function () {
+                $year = $this->year ?? now()->year;
+                $month = $this->month ?? now()->month;
+
+                return Carbon::parse("{$year}-{$month}")->format('M');
+            }
         );
     }
 }

@@ -78,33 +78,33 @@ function onSubmit(isValid) {
       {{ customerForm?.errors?.error }}
     </x-alert>
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="First Name" required>
-        <x-input
-          v-model="customerForm.first_name"
-          :rules="[isRequired]"
-          class="w-full"
-          type="text"
-          :error="customerForm.errors.first_name"
-        />
-      </x-field>
-      <x-field label="Last Name" required>
-        <x-input
-          v-model="customerForm.last_name"
-          :rules="[isRequired]"
-          class="w-full"
-          type="text"
-          :error="customerForm.errors.last_name"
-        />
-      </x-field>
-      <x-field label="Email" required>
-        <x-input
-          v-model="customerForm.email"
-          :rules="[isRequired, isEmail]"
-          class="w-full"
-          type="email"
-          :error="customerForm.errors.email"
-        />
-      </x-field>
+      <x-input
+        v-model="customerForm.first_name"
+        :rules="[isRequired]"
+        class="w-full"
+        type="text"
+        label="First Name"
+        required
+        :error="customerForm.errors.first_name"
+      />
+      <x-input
+        v-model="customerForm.last_name"
+        :rules="[isRequired]"
+        class="w-full"
+        type="text"
+        label="Last Name"
+        required
+        :error="customerForm.errors.last_name"
+      />
+      <x-input
+        v-model="customerForm.email"
+        :rules="[isRequired, isEmail]"
+        class="w-full"
+        type="email"
+        label="Email"
+        required
+        :error="customerForm.errors.email"
+      />
       <x-input
         v-model="customerForm.mobile_no"
         type="tel"
@@ -132,12 +132,13 @@ function onSubmit(isValid) {
         label="Date of Birth"
         :hasError="customerForm.errors.dob"
       />
-      <ComboBox
+      <x-select
         v-model="customerForm.nationality_id"
         label="Nationality"
-        :single="true"
         :options="nationalityOptions"
         :error="customerForm.errors.nationality_id"
+        filterable
+        filterPlaceholder="Filter Nationality...."
       />
       <div class="flex gap-5">
         <x-form-group v-model="customerForm.has_alfred_access">

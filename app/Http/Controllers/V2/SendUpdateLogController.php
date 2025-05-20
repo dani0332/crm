@@ -16,6 +16,7 @@ use App\Http\Requests\ReversalEntriesRequest;
 use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SaveProviderDetailsRequest;
+use App\Http\Requests\SendUpdateCancelRequest;
 use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Http\Requests\SendUpdateValidationRequest;
@@ -34,6 +35,7 @@ use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
@@ -54,6 +56,8 @@ class SendUpdateLogController extends Controller
      */
     public function store(Request $request)
     {
+        LoggerService::startQuoteLogging($request->quote_code);
+        LoggerService::info('fn:store - Start - SendUpdateLogController');
         try {
             DB::beginTransaction();
 
@@ -70,6 +74,7 @@ class SendUpdateLogController extends Controller
 
             $this->updateQuoteLeadStatus($requestData, 'create');
             if ($categoryCode == SendUpdateLogStatusEnum::CIR) {
+                LoggerService::startQuoteLogging($response->code);
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = app(SendUpdateLogService::class)->createChildLead($quoteModel, $requestData, $quoteType->code);
@@ -79,13 +84,13 @@ class SendUpdateLogController extends Controller
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            info('Create send update - Failed - Error : '.$exception->getMessage());
+            LoggerService::error('Create send update - Failed', extra: ['exception' => $exception->getMessage()]);
 
             return redirect()->back()->with('error', 'Failed to create send update');
         }
 
         if (! empty($childLeadResponse)) {
-            if ($childLeadResponse['childLeadsCount'] == 0) {
+            if ($childLeadResponse['childLeadsCount'] == 0 || ($quoteType->code == quoteTypeCode::Travel && $childLeadResponse['childLeadsCount'])) {
                 if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
                     return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
@@ -116,6 +121,8 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        LoggerService::startQuoteLogging($sendUpdateLog->code);
+        LoggerService::info('fn:show - Start - SendUpdateLogController');
         $isSentOrBooked = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             SendUpdateLogStatusEnum::UPDATE_BOOKED]) || in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, SendUpdateLogStatusEnum::UPDATE_BOOKED]);
 
@@ -143,6 +150,10 @@ class SendUpdateLogController extends Controller
 
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
+        }
+
+        if ($quoteType == quoteTypeCode::Travel) {
+            $sendUpdateLog->load('travelPlan.insuranceProvider');
         }
 
         $categoryCode = $sendUpdateLog->category?->code;
@@ -257,6 +268,7 @@ class SendUpdateLogController extends Controller
             'disableMainBtn' => $this->sendUpdateLogService->disableMainBtn($sendUpdateLog, $sendUpdatePayments, $bookingDetails['brokerCommission']),
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'cancelOptions' => app(LookupService::class)->getSendUpdateCancelOptions(),
         ]);
     }
 
@@ -288,6 +300,7 @@ class SendUpdateLogController extends Controller
 
     public function updateQuoteLeadStatus($data, $type)
     {
+        LoggerService::info('fn:updateQuoteLeadStatus - Start - SendUpdateLogController');
         $quoteUuid = $data['quote_uuid'];
 
         $quoteTypeId = $data['quote_type_id'];
@@ -303,7 +316,6 @@ class SendUpdateLogController extends Controller
         $model = PersonalQuote::class;
 
         if ($type === 'create') {
-
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                     if ($subType && $subType['slug'] === 'MPC') {
@@ -346,7 +358,6 @@ class SendUpdateLogController extends Controller
                     break;
             }
         } else {
-
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                 case SendUpdateLogStatusEnum::CI:
@@ -374,6 +385,9 @@ class SendUpdateLogController extends Controller
 
     public function savePriceDetails(Request $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:savePriceDetails - Start - SendUpdateLogController');
+
         $data = $request->all();
 
         SendUpdateLogRepository::updateLogPriceDetails($data);
@@ -383,6 +397,9 @@ class SendUpdateLogController extends Controller
 
     public function savePolicyDetails(SavePolicyDetailsRequest $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:savePolicyDetails - Start - SendUpdateLogController');
+
         SendUpdateLogRepository::savePolicyDetails($request->validated());
 
         return redirect()->back();
@@ -390,6 +407,9 @@ class SendUpdateLogController extends Controller
 
     public function saveBookingDetails(SaveBookingDetailsRequest $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:saveBookingDetails - Start - SendUpdateLogController');
+
         SendUpdateLogRepository::saveBookingDetails($request->validated());
 
         return redirect()->back();
@@ -397,6 +417,9 @@ class SendUpdateLogController extends Controller
 
     public function getReversalEntries(ReversalEntriesRequest $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:getReversalEntries - Start - SendUpdateLogController');
+
         $reversalEntries = app(SendUpdateLogService::class)->getReversalEntries($request->validated());
 
         return response()->json($reversalEntries);
@@ -404,6 +427,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startQuoteLogging($sendUpdateCustomerValidationRequest->code);
+        LoggerService::info('fn:sendUpdateCustomerValidation - Start - SendUpdateLogController');
+
         $sendUpdateCustomerValidatedRequest = $sendUpdateCustomerValidationRequest->validated();
         $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($sendUpdateCustomerValidatedRequest);
         $response = ['message' => $message];
@@ -420,6 +446,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startQuoteLogging($updateToCustomerRequest->code);
+        LoggerService::info('fn:sendUpdateToCustomer - Start - SendUpdateLogController');
+
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
         if (isset($suEmailProcess['status']) && $suEmailProcess['status'] == 500) {
@@ -431,6 +460,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateValidation(SendUpdateValidationRequest $sendUpdateValidationRequest)
     {
+        LoggerService::startQuoteLogging($sendUpdateValidationRequest->code);
+        LoggerService::info('fn:sendUpdateValidation - Start - SendUpdateLogController');
+
         $sendUpdateFirstPayment = Payment::where('send_update_log_id', $sendUpdateValidationRequest->sendUpdateId)->first();
         if (! isset($sendUpdateValidationRequest->paymentValidated)) {
             $insufficientPaymentCheck = false;
@@ -451,6 +483,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startQuoteLogging($sendUpdateRequest->code);
+        LoggerService::info('fn:sendUpdate - Start - SendUpdateLogController');
+
         $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
         $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
 
@@ -460,17 +495,20 @@ class SendUpdateLogController extends Controller
             return response()->json(['message' => $responseMessage], 500);
         }
 
-        info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
+        LoggerService::info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate');
         app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
 
         (new SageApiService)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
-        info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
+        LoggerService::info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
 
         return response()->json(['message' => $endorsementResponse['message'] ?? 'Something went wrong'], $endorsementResponse['status'] ? 200 : 500);
     }
 
     public function getOptions(Request $request)
     {
+        LoggerService::startQuoteLogging($request->quote_uuid);
+        LoggerService::info('fn:getOptions - Start - SendUpdateLogController');
+
         $options = SendUpdateLogRepository::sendUpdateOptions($request->quoteTypeId, $request->parentId, $request->status, $request->businessInsuranceTypeId);
 
         return response()->json([
@@ -480,8 +518,21 @@ class SendUpdateLogController extends Controller
 
     public function saveProviderDetails(SaveProviderDetailsRequest $request)
     {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:saveProviderDetails - Start - SendUpdateLogController');
+
         SendUpdateLogRepository::saveProviderDetails($request->validated());
 
         return redirect()->back();
+    }
+
+    public function sendUpdateCancel(SendUpdateCancelRequest $request)
+    {
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:sendUpdateCancel - Start - SendUpdateLogController');
+
+        $response = SendUpdateLogRepository::cancelSendUpdate($request->send_update_log_id, $request->cancel_reason);
+
+        return response()->json(['message' => $response['message']], $response['status']);
     }
 }

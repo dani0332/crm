@@ -92,154 +92,158 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Lead Type" required>
-        <x-select
-          v-model="leadForm.tm_lead_types_id"
-          :options="
-            tmLeadTypes.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
-      <x-field label="Customer Name" required>
-        <x-input
-          v-model="leadForm.customer_name"
-          type="text"
-          :rules="[isRequired]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Insurance Type" required>
-        <x-select
-          v-model="leadForm.tm_insurance_types_id"
-          :options="
-            tmInsuranceTypes.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-          :rules="[isRequired]"
-          @update:modelValue="handleshowCarKeys($event)"
-        />
-      </x-field>
-      <x-field label="Email Address" required>
-        <x-input
-          v-model="leadForm.email_address"
-          type="email"
-          :rules="[isRequired, isEmail]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Phone Number" required>
-        <x-input
-          v-model="leadForm.phone_number"
-          type="tel"
-          :rules="[isRequired, isMobileNo]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Enquiry date" required>
-        <DatePicker
-          v-model="leadForm.enquiry_date"
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
-      <x-field label="Allocation date" required>
-        <DatePicker
-          class="w-full"
-          v-model="leadForm.allocation_date"
-          :rules="[isRequired]"
-        />
-      </x-field>
-      <x-field label="DOB">
-        <DatePicker class="w-full" v-model="leadForm.dob" />
-      </x-field>
+      <x-select
+        v-model="leadForm.tm_lead_types_id"
+        :options="
+          tmLeadTypes.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        class="w-full"
+        :rules="[isRequired]"
+        label="Lead Type"
+        required
+      />
+      <x-input
+        v-model="leadForm.customer_name"
+        type="text"
+        :rules="[isRequired]"
+        class="w-full"
+        label="Customer Name"
+        required
+      />
+      <x-select
+        v-model="leadForm.tm_insurance_types_id"
+        :options="
+          tmInsuranceTypes.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        class="w-full"
+        :rules="[isRequired]"
+        @update:modelValue="handleshowCarKeys($event)"
+        label="Insurance Type"
+        required
+      />
+      <x-input
+        v-model="leadForm.email_address"
+        type="email"
+        :rules="[isRequired, isEmail]"
+        class="w-full"
+        label="Email Address"
+        required
+      />
+      <x-input
+        v-model="leadForm.phone_number"
+        type="tel"
+        :rules="[isRequired, isMobileNo]"
+        class="w-full"
+        label="Phone Number"
+        required
+      />
+      <DatePicker
+        v-model="leadForm.enquiry_date"
+        class="w-full"
+        :rules="[isRequired]"
+        label="Enquiry date"
+        required
+      />
+      <DatePicker
+        class="w-full"
+        v-model="leadForm.allocation_date"
+        :rules="[isRequired]"
+        label="Allocation date"
+        required
+      />
+      <DatePicker class="w-full" v-model="leadForm.dob" label="DOB" />
     </div>
     <div v-show="showCarKeys" class="grid sm:grid-cols-2 gap-4 mt-4">
-      <x-field label="Car Type of Insurance" required>
-        <x-select
-          v-model="leadForm.car_type_insurance_id"
-          :options="
-            carTypeInsurances.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Years of driving" required>
-        <x-select
-          v-model="leadForm.years_of_driving_id"
-          :options="
-            yearsOfDrivings.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Car Make" required>
-        <x-select
-          v-model="leadForm.car_make_id"
-          :options="
-            carMakes.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Car Model" required>
-        <x-select
-          v-model="leadForm.car_model_id"
-          :options="
-            carModels.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Year of Manufacture">
-        <DatePicker class="w-full" v-model="leadForm.year_of_manufacture" />
-      </x-field>
-      <x-field label="Emirates of Registration" required>
-        <x-select
-          v-model="leadForm.emirates_of_registration_id"
-          :options="
-            emiratesOfRegistrations.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Car Value" required>
-        <x-input v-model="leadForm.car_value" type="text" class="w-full" />
-      </x-field>
-      <x-field label="Nationality" required>
-        <x-select
-          v-model="leadForm.nationality_id"
-          :options="
-            nationalities.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-      </x-field>
+      <x-select
+        v-model="leadForm.car_type_insurance_id"
+        :options="
+          carTypeInsurances.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        class="w-full"
+        label="Car Type of Insurance"
+        required
+      />
+      <x-select
+        v-model="leadForm.years_of_driving_id"
+        :options="
+          yearsOfDrivings.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        class="w-full"
+        label="Years of driving"
+        required
+      />
+      <x-select
+        v-model="leadForm.car_make_id"
+        :options="
+          carMakes.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        class="w-full"
+        label="Car Make"
+        required
+      />
+      <x-select
+        v-model="leadForm.car_model_id"
+        :options="
+          carModels.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        class="w-full"
+        label="Car Model"
+        required
+      />
+      <DatePicker
+        class="w-full"
+        v-model="leadForm.year_of_manufacture"
+        label="Year of Manufacture"
+      />
+      <x-select
+        v-model="leadForm.emirates_of_registration_id"
+        :options="
+          emiratesOfRegistrations.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        class="w-full"
+        label="Emirates of Registration"
+        required
+      />
+      <x-input
+        v-model="leadForm.car_value"
+        type="text"
+        class="w-full"
+        label="Car Value"
+        required
+      />
+      <x-select
+        v-model="leadForm.nationality_id"
+        :options="
+          nationalities.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        class="w-full"
+        label="Nationality"
+        required
+      />
     </div>
 
     <x-divider class="my-4" />

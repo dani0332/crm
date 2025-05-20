@@ -118,34 +118,33 @@ watch(
 
     <x-form @submit="search" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-field label="Quote Type">
-          <x-select
-            v-model="filters.quoteType"
-            placeholder="Select Quote Type"
-            :options="quoteTypes"
-            class="w-full"
-            :rules="[isRequired]"
-            @update:model-value="resolveProcessTypes"
-          />
-        </x-field>
-        <x-field :label="(filters.quoteType || '') + ' UUID'">
-          <x-input
-            v-model="filters.uuid"
-            type="search"
-            class="w-full"
-            :placeholder="'Type ' + (filters.quoteType || '') + ' UUID'"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="Process Type">
-          <x-select
-            v-model="filters.processType"
-            placeholder="Select Process Type"
-            :options="processTypes"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
+        <x-select
+          label="Quote Type"
+          v-model="filters.quoteType"
+          placeholder="Select Quote Type"
+          :options="quoteTypes"
+          class="w-full"
+          :rules="[isRequired]"
+          @update:model-value="resolveProcessTypes"
+        />
+
+        <x-input
+          :label="(filters.quoteType || '') + ' UUID'"
+          v-model="filters.uuid"
+          type="search"
+          class="w-full"
+          :placeholder="'Type ' + (filters.quoteType || '') + ' UUID'"
+          :rules="[isRequired]"
+        />
+
+        <x-select
+          label="Process Type"
+          v-model="filters.processType"
+          placeholder="Select Process Type"
+          :options="processTypes"
+          class="w-full"
+          :rules="[isRequired]"
+        />
         <DatePicker
           v-model="filters.startEndDate"
           label="Date Range"
