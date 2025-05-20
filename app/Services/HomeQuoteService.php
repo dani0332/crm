@@ -18,6 +18,7 @@ use App\Models\DocumentType;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceProviderPlan;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -1332,6 +1333,50 @@ class HomeQuoteService extends BaseService
         info('Home Quote Plans PDF generated for quote: '.$data['quote_uuid']);
 
         return ['pdf' => $pdf, 'name' => $pdfName];
+    }
+
+    public function createRenewalPlan(string $quoteUID, array $data){
+        $planId = InsuranceProviderPlan::where([
+            'text' => $data['plan_name'], 
+            'quote_type_id' => QuoteTypeId::Home,
+        ])->value('id');
+
+        $request = array([
+            'planId' => $planId,
+            'actualPremium' => $data['premium'],
+            'discountPremium' => $data['premium'],
+            'isDisabled' => false, 
+            'isManualUpdate' => false,
+            'insurerQuoteNumber' => $data['insurer_quote_no'] ?? null,
+        ]);
+
+        return $this->createManualPlan($quoteUID, $request, false, true); 
+    }
+
+    
+    public function createManualPlan(string $quoteUID, array $data, $isUpdate = false, $isRenewal = false){        
+
+        $request = [
+            'quoteUID' => $quoteUID, 
+            'update' => $isUpdate, 
+            'plans' => $data
+        ]; 
+
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-home-quote-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+
+        $apiCreds = [
+            'apiEndPoint' => $apiEndPoint,
+            'apiToken' => $apiToken,
+            'apiTimeout' => $apiTimeout,
+            'apiUserName' => $apiUserName,
+            'apiPassword' => $apiPassword,
+        ];
+
+        return $this->httpService->processRequest($request, $apiCreds);
     }
 
     private function getHomeQuoteFlags($homeQuote): array

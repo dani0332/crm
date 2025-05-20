@@ -71,7 +71,8 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
     {
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed', extra: [
             'batch' => $this->batch,
-        ], exception: $exception);
+            'exception' => $exception->getMessage(),
+        ]);
         $this->renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
     }
 }

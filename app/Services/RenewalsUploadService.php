@@ -687,16 +687,61 @@ class RenewalsUploadService
         }
     }
 
+
+     /**
+     * fetch plans for Home Quote Plans.
+     *
+     * @return false|void
+     */
     public function fetchHomeQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
-        // $leadData = (object) $renewalQuoteProcess->data;
+        $leadData = (object) $renewalQuoteProcess->data;
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type); // Home
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
-        LoggerService::info('Job Started new');
+        $logPrefix = 'FetchPlans FN: fetchHomeQuotePlans';
+
+        LoggerService::info("$logPrefix  - Fetching plans");
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
+
+            LoggerService::info("$logPrefix  - Lead Data", [
+                'leadData' => $leadData,
+                'insuranceProvider' => $leadData->insurance_provider,
+                'planId' => $leadData->plan_name,
+                'premium' => $leadData->premium,
+            ]);
+            /* create manual plan if insurance provider, plan and premium is available */ 
+            if (! empty($leadData->insurance_provider) && ! empty($leadData->plan_name) && ! empty($leadData->premium)) {
+     
+                LoggerService::info("$logPrefix  - Creating Renewal manual plan for Quote", [
+                    'quoteUID' => $quote->uuid,
+                ]);
+
+                $createManualPlan = app(HomeQuoteService::class)->createRenewalPlan($quote->uuid, $renewalQuoteProcess->data);
+
+                LoggerService::info("$logPrefix  - createManualPlan $createManualPlan"); 
+
+                if (is_int($createManualPlan) && $createManualPlan == 200) {
+                    LoggerService::info("$logPrefix  - plan created successfully", [
+                        'quoteUID' => $quote->uuid
+                    ]);
+                    
+                } else {
+                    $error = (is_string($createManualPlan)) ? ('Error: '.$createManualPlan) : '';
+
+                    if (isset($createManualPlan->message)) {
+                        $error = 'Error: '.$createManualPlan->message;
+                    }
+
+                    LoggerService::error("$logPrefix  - plan creation failed. fetch plans skipped $error UUID: $quote->uuid");
+
+                    RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+                    return false;
+                }
+
+            }
 
             $plansResponse = $this->getPlansNonMotor($quote->uuid, $quoteType->code);
             if ($plansResponse) {

@@ -68,7 +68,8 @@ class FetchHomeRenewalsPlansJob implements ShouldQueue
     {
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
             'renewalStatusProcessId' => $this->renewalStatusProcess->id,
-        ], exception: $exception);
+            'exception' => $exception->getMessage(),
+        ]);
         RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['status' => ProcessStatusCode::FAILED]);
     }
 }

@@ -209,7 +209,7 @@ class HomeEmailService extends BaseService
         $tempUrlPDF = $this->attachHomeOCBPDFToEmail($lead->uuid);
 
         if (! empty($tempUrlPDF)) {
-            $data['tempUrlPDF'] = $tempUrlPDF;
+            $data->tempUrlPDF = $tempUrlPDF;
         }
 
         return (object) $data;

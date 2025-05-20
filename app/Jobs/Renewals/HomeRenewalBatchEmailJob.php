@@ -77,7 +77,8 @@ class HomeRenewalBatchEmailJob implements ShouldQueue, StackableJob
     {
         LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
-        ], exception: $exception);
+            'exception' => $exception->getMessage(),
+        ]);
         RenewalsBatchEmails::where('id', $this->renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
 }
