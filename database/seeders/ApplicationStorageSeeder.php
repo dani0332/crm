@@ -92,7 +92,7 @@ class ApplicationStorageSeeder extends Seeder
         // );
         // $this->seedBenchmarking();
         // $this->seedStopDeduplicateScript();
-        $this->seedAmlAutomation();
+        // $this->seedAmlAutomation();
 
         // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
