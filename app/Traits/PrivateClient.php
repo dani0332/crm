@@ -151,7 +151,6 @@ trait PrivateClient
                     'email' => $customer->email,
                 ]);
                 try {
-                    $customer = Customer::where('id', $customer->id)->first();
                     $customer->update([
                         'pcp_tag' => false,
                         'updated_at' => now(),

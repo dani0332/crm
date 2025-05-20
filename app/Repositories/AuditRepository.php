@@ -74,9 +74,9 @@ class AuditRepository extends BaseRepository
             ];
 
             $transformValue = function ($value) {
-                if ($value === 1 || $value === '1') {
+                if ($value === 1 || $value === true) {
                     return 'Yes';
-                } elseif ($value === 0 || $value === '0') {
+                } elseif ($value === 0 || $value === false) {
                     return 'Ex-PC';
                 } elseif (is_null($value)) {
                     return 'No';
