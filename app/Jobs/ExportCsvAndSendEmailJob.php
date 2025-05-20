@@ -6,11 +6,11 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
 {
@@ -35,24 +35,6 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         $this->exportClass = $exportClass;
         $this->recipientEmail = $recipientEmail;
         $this->requestParams = $requestParams;
-    }
-
-    /**
-     * Get the middleware the job should pass through.
-     */
-    public function middleware(): array
-    {
-        $lockKey = md5(
-            $this->exportClass .
-            $this->recipientEmail .
-            json_encode($this->requestParams)
-        );
-
-        return [
-            (new WithoutOverlapping($lockKey))
-                ->dontRelease() // Don't release back to queue if locked
-                ->expireAfter(300) // Lock expires after 5 mins (same as timeout)
-        ];
     }
 
     /**
@@ -123,5 +105,22 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     public function failed(\Throwable $exception)
     {
         Log::error("CSV export job for {$this->requestParams['fileName']} has permanently failed: {$exception->getMessage()}");
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        $lockKey = md5(
+            $this->exportClass.
+            $this->recipientEmail
+        );
+
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease() // Don't release back to queue if locked
+                ->expireAfter(300), // Lock expires after 5 mins (same as timeout)
+        ];
     }
 }
