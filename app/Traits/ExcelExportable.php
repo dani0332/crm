@@ -139,7 +139,7 @@ trait ExcelExportable
             // Use the query builder version of collection if available
             if (method_exists($this, 'getQuery')) {
                 // Process data in memory-efficient chunks
-                logger()->info('Starting CSV data export with chunking');
+                logger()->info('Starting CSV export with chunking');
                 $query = $this->getQuery($requestParams);
 
                 // Use database chunking for efficient memory usage
