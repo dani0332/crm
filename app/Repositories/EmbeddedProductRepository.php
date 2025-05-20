@@ -265,7 +265,7 @@ class EmbeddedProductRepository extends BaseRepository
     private function canVoidPayment($transaction)
     {
         if (
-            auth()->user()->can(PermissionsEnum::PAYMENTS_VOID)
+            auth()->user()->can(PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_VOID)
             && $transaction
         ) {
             return $transaction->payment_status_id == PaymentStatusEnum::AUTHORISED;
