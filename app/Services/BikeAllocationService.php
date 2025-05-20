@@ -397,29 +397,29 @@ class BikeAllocationService extends AllocationService
         LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
 
         if ($this->hasNationalityConfig) {
-            return count($availableUserIds) > 0 ? reset($availableUserIds) : 0;
-        }
-
-        if (count($rules) > 0) {
-            // If there are rules, retrieve user IDs from the rule records.
-            $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
-
-            LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
-
-            // Find the intersection of available user IDs and rule user IDs.
-            $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
-
-            LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
+            $finalEligibleUserIds = $availableUserIds;
         } else {
-            // If no rules are found, get user IDs from rule lead sources.
-            $ruleUsers = $this->getRuleUsers();
+            if (count($rules) > 0) {
+                // If there are rules, retrieve user IDs from the rule records.
+                $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
 
-            LoggerService::info('No rule found so filtering rule users: '.json_encode($ruleUsers));
+                LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
 
-            // Find the difference between available user IDs and rule users.
-            $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
+                // Find the intersection of available user IDs and rule user IDs.
+                $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
 
-            LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+                LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
+            } else {
+                // If no rules are found, get user IDs from rule lead sources.
+                $ruleUsers = $this->getRuleUsers();
+
+                LoggerService::info('No rule found so filtering rule users: '.json_encode($ruleUsers));
+
+                // Find the difference between available user IDs and rule users.
+                $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
+
+                LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+            }
         }
 
         $finalEligibleUserIds = $this->fetchOnlyBikeEligibleAdvisors($finalEligibleUserIds);
