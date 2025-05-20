@@ -257,9 +257,10 @@ trait TeamHierarchyTrait
 
     public function getTeamUserIds($teamId)
     {
-        if (!$teamId) {
+        if (! $teamId) {
             return [];
         }
+
         return UserTeams::where('team_id', $teamId)->pluck('user_id')->toArray();
     }
 }
