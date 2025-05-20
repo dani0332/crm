@@ -825,13 +825,6 @@ class SageApiService
                 continue;
             }
             $createPrepaymentReceiptResponse = $this->createPrepaymentPremiumReceipt($sageRequest, $quote, $payment, $paymentSplit);
-            $documentNumber = $createPrepaymentReceiptResponse['documentNumber'];
-            if ($documentNumber) {
-                $this->handleWithDeadlockRetries(function () use ($paymentSplit, $documentNumber) {
-                    $paymentSplit->update(['sage_reciept_id' => $documentNumber]);
-                }, 5);
-
-            }
             $prepaymentResponses[] = $createPrepaymentReceiptResponse;
 
         }
@@ -882,9 +875,12 @@ class SageApiService
         }
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
-            $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
-            $response['documentNumber'] = $documentNumberForReceipt;
-
+            if (! $paymentSplit->sage_reciept_id) {
+                $documentNumberForReceipt = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+                $this->handleWithDeadlockRetries(function () use ($paymentSplit, $documentNumberForReceipt) {
+                    $paymentSplit->update(['sage_reciept_id' => $documentNumberForReceipt]);
+                }, 5);
+            }
             LoggerService::info(self::class.' fn:'.__FUNCTION__.' SAGE API :  Quote Code : '.$quote->code.' payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
             if ($isLiveApiCallStep2) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $paymentSplit, $quote, 2, 4, SageEnum::STATUS_SUCCESS, $sageRequest->advisor_id);
