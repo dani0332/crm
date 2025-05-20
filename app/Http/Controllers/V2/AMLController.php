@@ -333,7 +333,6 @@ class AMLController extends Controller
         $quoteType = QuoteType::where('id', $quoteTypeId)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $quoteRequestId);
 
-        dd($quoteObject->toArray());
         LoggerService::startQuoteLogging($quoteRequest);
         LoggerService::info('fn:amlQuoteDetails - AMLController');
 
