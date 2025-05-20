@@ -57,11 +57,15 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function resolveLead()
     {
-        $lead = $this->getBaseLead();
+        $lead = $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getQuoteUUID())->first();
 
         if (! $lead) {
+            LoggerService::info('Lead not found');
+
             $this->throw('Lead not found', self::NOT_FOUND);
         }
+
+        $this->logLeadData($lead);
 
         $this->allocationRequest->setLead($lead);
 
@@ -104,21 +108,6 @@ abstract class BaseAllocationPipe extends AllocationService
         }
 
         LoggerService::info(self::class.'::logLeadData', $data);
-    }
-
-    protected function getBaseLead(): ?Model
-    {
-        $lead = $this->allocationRequest->model()->where('uuid', $this->allocationRequest->getQuoteUUID())->first();
-
-        if (! $lead) {
-            LoggerService::info('Lead not found');
-
-            return null;
-        }
-
-        $this->logLeadData($lead);
-
-        return $lead;
     }
 
     protected function getLeadBaseQuery()
@@ -180,7 +169,8 @@ abstract class BaseAllocationPipe extends AllocationService
                 $isBuyLead,
                 fn ($q) => $q->orderBy('la.buy_lead_last_allocated', 'asc'),
                 fn ($q) => $q->orderBy('la.last_allocated', 'asc'),
-            );
+            )
+            ->when($this->allocationRequest->isReassignmentJob() && $this->allocationRequest->getReAssigFromAdvisorId(), fn ($q) => $q->where('users.id', '!=', $this->allocationRequest->getReAssigFromAdvisorId()));
     }
 
     protected function getOnlineStatusesInOrder()
