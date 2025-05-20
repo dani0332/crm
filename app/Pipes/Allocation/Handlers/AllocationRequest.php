@@ -15,14 +15,16 @@ class AllocationRequest
     public function __construct(
         protected QuoteTypes $quoteType,
         protected $quoteUUID,
-        protected $teamId,
-        protected $overrideAdvisorId,
+        protected $teamId = null,
+        protected $overrideAdvisorId = false,
         protected bool $isReassignmentJob = false,
         protected $assignmentType = AssignmentTypeEnum::SYSTEM_ASSIGNED,
         protected $evaluateTierOnly = false,
         protected $reAssigFromAdvisorId = null
     ) {
         $this->collection = new Collection;
+
+        $this->reAssigFromAdvisorId = ! empty($this->reAssigFromAdvisorId) && $this->reAssigFromAdvisorId != 0 ? $this->reAssigFromAdvisorId : null;
     }
 
     public function getQuoteType()
