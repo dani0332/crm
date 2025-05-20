@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\TravelQuoteEnum;
 use App\Events\QuoteEmailUpdated;
@@ -237,7 +239,7 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 
-    public function TravelDestinations()
+    public function travelDestinations()
     {
         return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
     }
@@ -335,5 +337,10 @@ class TravelQuote extends Model implements AuditableContract
     public function payment()
     {
         return $this->morphOne(Payment::class, 'paymentable')->mainLeadPayment();
+    }
+
+    public function isPaymentAuthorizedOrPaymentLinkRequested()
+    {
+        return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
 }

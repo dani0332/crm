@@ -72,39 +72,59 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Quadrant Name" required>
-        <x-input
-          v-model="quadrantForm.name"
-          class="w-full"
-          :error="quadrantForm.errors.name"
-        />
-      </x-field>
-      <x-field label="Tiers Name">
-        <ComboBox
-          v-model="quadrantForm.quad_tiers"
-          :options="quad_tiers"
-          :multiple="true"
-          :error="quadrantForm.errors.quad_tiers"
-        />
-      </x-field>
-      <x-field label="Quad Users">
-        <ComboBox
-          v-model="quadrantForm.quad_users"
-          :options="quad_users"
-          :multiple="true"
-          :error="quadrantForm.errors.quad_users"
-        />
-      </x-field>
-      <x-field label="Is Active">
-        <x-select
-          v-model="quadrantForm.is_active"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-        />
-      </x-field>
+      <x-input
+        required
+        label="Quadrant Name"
+        v-model="quadrantForm.name"
+        class="w-full"
+        :error="quadrantForm.errors.name"
+        placeholder="Enter Quadrant Name"
+      />
+      <x-select
+        v-model="quadrantForm.quad_tiers"
+        label="Tiers Name"
+        :options="quad_tiers"
+        multiple
+        filterable
+        filterPlaceholder="Filter Tiers...."
+        placeholder="Select Tiers"
+        required
+        :rules="[isRequired]"
+        :error="quadrantForm.errors.quad_tiers"
+      />
+      <x-select
+        v-model="quadrantForm.quad_users"
+        label="Quad Users"
+        :options="quad_users"
+        multiple
+        filterable
+        filterPlaceholder="Filter Quad Users...."
+        placeholder="Select Quad Users"
+        required
+        :rules="[isRequired]"
+        :error="quadrantForm.errors.quad_users"
+        truncate
+        class="w-full"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              quadrantForm.quad_users = quad_users.map(item => item.value)
+            "
+            @clear="quadrantForm.quad_users = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        v-model="quadrantForm.is_active"
+        class="w-full"
+        :options="[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]"
+        label="Is Active"
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

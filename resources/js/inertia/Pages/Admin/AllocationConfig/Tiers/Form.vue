@@ -84,105 +84,109 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Tiers Users">
-        <ComboBox
-          v-model="tierForm.tier_user"
-          :multiple="true"
-          :options="tierUsers"
-          :selected="selectedUsers"
-          :error="tierForm.errors.tier_user"
-        />
-      </x-field>
-      <x-field label="Is Ecommerce?">
-        <x-select
-          v-model="tierForm.can_handle_ecommerce"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-          :error="tierForm.errors.can_handle_ecommerce"
-        />
-      </x-field>
-      <x-field label="Null Value?">
-        <x-select
-          v-model="tierForm.can_handle_null_value"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-          :error="tierForm.errors.can_handle_null_value"
-        />
-      </x-field>
+      <x-select
+        v-model="tierForm.tier_user"
+        label="Tiers Users"
+        :options="tierUsers"
+        multiple
+        filterable
+        filterPlaceholder="Filter Tiers Users...."
+        placeholder="Select Tiers Users"
+        required
+        :rules="[isRequired]"
+        :error="tierForm.errors.tier_user"
+        truncate
+        class="w-full"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="tierForm.tier_user = tierUsers.map(item => item.value)"
+            @clear="tierForm.tier_user = []"
+          />
+        </template>
+      </x-select>
+      <x-select
+        label="Is Ecommerce?"
+        v-model="tierForm.can_handle_ecommerce"
+        class="w-full"
+        :options="[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]"
+        :error="tierForm.errors.can_handle_ecommerce"
+      />
+      <x-select
+        label="Null Value?"
+        v-model="tierForm.can_handle_null_value"
+        class="w-full"
+        :options="[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]"
+        :error="tierForm.errors.can_handle_null_value"
+      />
 
-      <x-field label="IS TPL?">
-        <x-select
-          v-model="tierForm.can_handle_tpl"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-          :error="tierForm.errors.can_handle_tpl"
-        />
-      </x-field>
+      <x-select
+        v-model="tierForm.can_handle_tpl"
+        class="w-full"
+        :options="[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]"
+        :error="tierForm.errors.can_handle_tpl"
+        label="IS TPL?"
+      />
 
-      <x-field label="Renewal (TPL_RENEWALS)?">
-        <x-select
-          v-model="tierForm.is_tpl_renewals"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-          :error="tierForm.errors.is_tpl_renewals"
-        />
-      </x-field>
-      <x-field label="Is Active?">
-        <x-select
-          v-model="tierForm.is_active"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-          :error="tierForm.errors.is_active"
-        />
-      </x-field>
-      <x-field label="Tier Name" required>
-        <x-input
-          v-model="tierForm.name"
-          class="w-full"
-          :error="tierForm.errors.name"
-        />
-      </x-field>
-      <x-field label="Min Price">
-        <x-input
-          v-model="tierForm.min_price"
-          :rule="[isNumber]"
-          type="number"
-          class="w-full"
-          :error="tierForm.errors.min_price"
-        />
-      </x-field>
-      <x-field label="Max Price">
-        <x-input
-          v-model="tierForm.max_price"
-          class="w-full"
-          :rule="[isNumber]"
-          type="number"
-          :error="tierForm.errors.max_price"
-        />
-      </x-field>
-      <x-field label="Cost Per Lead">
-        <x-input
-          v-model="tierForm.cost_per_lead"
-          class="w-full"
-          type="number"
-          :error="tierForm.errors.cost_per_lead"
-        />
-      </x-field>
+      <x-select
+        label="Renewal (TPL_RENEWALS)?"
+        v-model="tierForm.is_tpl_renewals"
+        class="w-full"
+        :options="[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]"
+        :error="tierForm.errors.is_tpl_renewals"
+      />
+      <x-select
+        label="Is Active?"
+        v-model="tierForm.is_active"
+        class="w-full"
+        :options="[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]"
+        :error="tierForm.errors.is_active"
+      />
+      <x-input
+        v-model="tierForm.name"
+        class="w-full"
+        :error="tierForm.errors.name"
+        label="Tier Name"
+        required
+      />
+      <x-input
+        v-model="tierForm.min_price"
+        :rule="[isNumber]"
+        type="number"
+        class="w-full"
+        :error="tierForm.errors.min_price"
+        label="Min Price"
+      />
+      <x-input
+        v-model="tierForm.max_price"
+        class="w-full"
+        :rule="[isNumber]"
+        type="number"
+        :error="tierForm.errors.max_price"
+        label="Max Price"
+      />
+      <x-input
+        v-model="tierForm.cost_per_lead"
+        class="w-full"
+        type="number"
+        :error="tierForm.errors.cost_per_lead"
+        label="Cost Per Lead"
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

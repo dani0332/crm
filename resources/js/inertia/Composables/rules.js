@@ -11,7 +11,10 @@ export const useRules = () => {
     return true;
   };
 
-  const isRequired = v => !!v || 'This field is required';
+  // const isRequired = v => !!v || 'This field is required'; // will remove after testing
+  const isRequired = v =>
+    (!!v && (Array.isArray(v) ? v.length > 0 : true)) ||
+    'This field is required';
 
   const allowEmpty = v => true || 'This field is required';
 
@@ -141,6 +144,16 @@ export const useRules = () => {
     return !v || Number(v) >= min || `The minimum value is ${min}.`;
   };
 
+  // Add maxSelections rule for multiple select components
+  const maxSelections = max => v => {
+    return (
+      !v ||
+      !Array.isArray(v) ||
+      v.length <= max ||
+      `You can select up to ${max} items only.`
+    );
+  };
+
   return {
     name,
     isEmail,
@@ -165,5 +178,6 @@ export const useRules = () => {
     maxCharacters,
     emiratesNumber,
     minValue,
+    maxSelections,
   };
 };

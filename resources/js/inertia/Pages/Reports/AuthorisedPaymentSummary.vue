@@ -7,6 +7,7 @@ const props = defineProps({
   fieldDisable: Boolean,
 });
 
+const { maxSelections } = useRules();
 const loaders = reactive({
   table: false,
 });
@@ -243,7 +244,7 @@ const registrationTypeOptions = [
   { value: 'All', label: 'All' },
   ...Object.values(carRegistrationTypeEnum).map(item => ({
     value: item,
-    label: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
   })),
 ];
 
@@ -251,7 +252,7 @@ const vehicleUseOptions = [
   { value: 'All', label: 'All' },
   ...Object.values(carVehicleUseEnum).map(item => ({
     value: item,
-    label: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
   })),
 ];
 
@@ -267,15 +268,24 @@ const isVehicleUseDisabled = computed(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Teams">
-        <ComboBox
-          v-model="filters.teams"
-          placeholder="Search By Teams"
-          :options="teams"
-          :max-limit="3"
-          deselect-all
-        />
-      </x-field>
+      <x-select
+        label="Teams"
+        v-model="filters.teams"
+        placeholder="Search By Teams"
+        :options="teams"
+        :rules="[maxSelections(3)]"
+        deselect-all
+        filterable
+        filterPlaceholder="Filter Teams...."
+        truncate
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="filters.teams = teams.map(team => team.value)"
+            @clear="filters.teams = []"
+          />
+        </template>
+      </x-select>
       <x-select
         v-model="filters.quoteType"
         label="Line of Business"
@@ -298,7 +308,7 @@ const isVehicleUseDisabled = computed(() => {
         :options="vehicleUseOptions"
       />
       <div v-if="fieldDisable">
-        <ComboBox
+        <x-select
           v-model="filters.userIds"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -308,7 +318,21 @@ const isVehicleUseDisabled = computed(() => {
               label: team.name,
             }))
           "
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.userIds = props.advisor.original.advisors.map(
+                  advisor => advisor.id,
+                )
+              "
+              @clear="filters.userIds = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div v-else>
         <x-input
@@ -320,7 +344,7 @@ const isVehicleUseDisabled = computed(() => {
         />
       </div>
 
-      <ComboBox
+      <x-select
         v-model="filters.statusId"
         label="Lead Status"
         placeholder="Search by Status"
@@ -330,7 +354,20 @@ const isVehicleUseDisabled = computed(() => {
             label: status.text,
           }))
         "
-      />
+        filterable
+        filterPlaceholder="Filter Lead Status...."
+        truncate
+        multiple
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.statusId = props.leadStatuses.map(status => status.id)
+            "
+            @clear="filters.statusId = []"
+          />
+        </template>
+      </x-select>
     </div>
     <div class="flex gap-3 pt-3">
       <x-button
@@ -369,16 +406,16 @@ const isVehicleUseDisabled = computed(() => {
       >
     </div>
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-      <x-field label="Custom Date" v-if="isCustomDate">
-        <DatePicker
-          v-model="filters.customDate"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
-          size="sm"
-          model-type="yyyy-MM-dd"
-        />
-      </x-field>
+      <DatePicker
+        v-model="filters.customDate"
+        placeholder="Select Start & End Date"
+        range
+        :max-range="92"
+        size="sm"
+        model-type="yyyy-MM-dd"
+        label="Custom Date"
+        v-if="isCustomDate"
+      />
     </div>
 
     <div class="flex gap-3 justify-end">

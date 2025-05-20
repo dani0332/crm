@@ -116,6 +116,8 @@ class HealthAllocationService extends AllocationService
             LoggerService::warning('No team found - price starting from is null');
             $lead->is_error_email_sent = true;
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
+
+            return;
         }
 
         $healthTeam = Team::where('allocation_threshold_enabled', true)
@@ -283,7 +285,6 @@ class HealthAllocationService extends AllocationService
         $lead->assignment_type = $assignmentType;
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
-        $lead->quote_status_id = QuoteStatusEnum::Quoted;
         $lead->save();
 
         $lead->endAllocation();

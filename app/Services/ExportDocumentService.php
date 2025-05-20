@@ -9,8 +9,8 @@ use App\Http\Resources\ProformaPaymentRequestResource;
 use App\Interfaces\ExportDocumentInterface;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
+use PDF;
 
 class ExportDocumentService extends BaseService implements ExportDocumentInterface
 {

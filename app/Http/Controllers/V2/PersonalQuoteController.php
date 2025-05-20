@@ -14,6 +14,7 @@ use App\Http\Requests\QuotesDocumentRequest;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\CentralService;
 use App\Services\CustomerService;
+use App\Services\QuoteDocumentService;
 use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -62,6 +63,13 @@ class PersonalQuoteController extends Controller
 
         if ($hasErrors) {
             return back()->with('error', implode(', ', $errors));
+        }
+
+        if ($request->document_type_code === DocumentTypeCode::HPD) {
+            $quote = $this->getQuoteObject($request->quote_type, $quoteId);
+            if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink()) {
+                app(QuoteDocumentService::class)->updateQuoteAndPaymentStatusToPaymentPending($quote);
+            }
         }
 
         app(CentralService::class)->updateQuoteInformation($request->folder_path, $quoteId);

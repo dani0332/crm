@@ -142,47 +142,47 @@ class User extends Authenticatable implements AuditableContract
 
     public function isRenewalUser()
     {
-        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalAdvisor, RolesEnum::CarRenewalManager]);
+        return $this->hasAnyRole([RolesEnum::CarRenewalAdvisor, RolesEnum::CarRenewalManager]);
     }
 
     public function isRenewalAdvisor()
     {
-        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HomeRenewalAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::PetRenewalAdvisor]);
+        return $this->hasAnyRole([RolesEnum::CarRenewalAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HomeRenewalAdvisor, RolesEnum::LifeRenewalAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::PetRenewalAdvisor]);
     }
 
     public function isRenewalManager()
     {
-        return Auth::user()->hasAnyRole([RolesEnum::CarRenewalManager, RolesEnum::HealthRenewalManager, RolesEnum::HomeRenewalManager, RolesEnum::LifeRenewalManager, RolesEnum::GMRenewalManager, RolesEnum::CorpLineRenewalManager, RolesEnum::PetRenewalManager]);
+        return $this->hasAnyRole([RolesEnum::CarRenewalManager, RolesEnum::HealthRenewalManager, RolesEnum::HomeRenewalManager, RolesEnum::LifeRenewalManager, RolesEnum::GMRenewalManager, RolesEnum::CorpLineRenewalManager, RolesEnum::PetRenewalManager]);
     }
 
     public function isNewBusinessManager()
     {
-        return Auth::user()->hasAnyRole([RolesEnum::PetNewBusinessManager]);
+        return $this->hasAnyRole([RolesEnum::PetNewBusinessManager]);
     }
 
     public function isNewBusinessAdvisor()
     {
-        return Auth::user()->hasAnyRole([RolesEnum::CarNewBusinessAdvisor]);
+        return $this->hasAnyRole([RolesEnum::CarNewBusinessAdvisor]);
     }
 
     public function isHealthManager()
     {
-        return Auth::user()->hasRole(RolesEnum::HealthManager);
+        return $this->hasRole(RolesEnum::HealthManager);
     }
 
     public function isCarManager()
     {
-        return Auth::user()->hasRole(RolesEnum::CarManager);
+        return $this->hasRole(RolesEnum::CarManager);
     }
 
     public function isCarAdvisor()
     {
-        return Auth::user()->hasRole(RolesEnum::CarAdvisor);
+        return $this->hasRole(RolesEnum::CarAdvisor);
     }
 
     public function isAdvisor()
     {
-        $userRoles = Auth::user()->usersroles()->get();
+        $userRoles = $this->usersroles()->get();
         $isAdvisor = false;
         foreach ($userRoles as $userRole) {
             if (str_contains(strtolower($userRole->name), 'advisor')) {
@@ -195,7 +195,7 @@ class User extends Authenticatable implements AuditableContract
 
     public function isSpecificTeamAdvisor($teamType)
     {
-        $userRoles = Auth::user()->usersroles()->get();
+        $userRoles = $this->usersroles()->get();
         $isAdvisor = false;
         foreach ($userRoles as $userRole) {
             if (str_contains(strtolower($userRole->name), strtolower($teamType).'_advisor')) {
@@ -208,7 +208,7 @@ class User extends Authenticatable implements AuditableContract
 
     public function isAdmin()
     {
-        return Auth::user()->hasRole(RolesEnum::Admin);
+        return $this->hasRole(RolesEnum::Admin);
     }
 
     public function isEngineer()

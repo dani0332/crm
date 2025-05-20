@@ -14,6 +14,7 @@ use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\CompanyCarFollowupJob;
 use App\Jobs\CompanyCarOCBJob;
+use App\Jobs\DeleteTempOCBPDFFileJob;
 use App\Jobs\NBMotorFollowupEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -23,10 +24,12 @@ use App\Models\QuoteFlowDetails;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
+use App\Services\CarQuoteService;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class CarEmailService extends BaseService
 {
@@ -383,12 +386,11 @@ class CarEmailService extends BaseService
         }
     }
 
-    public function buildNBMotorFollowupEmailData($lead, $advisor, $type, $templateType = null)
+    public function buildNBMotorFollowupEmailData($lead, $advisor, $type, $templateType = null, $pdfUrl = null)
     {
         return (object) [
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
-            'uuid' => $lead->uuid,
             'refID' => $lead->code,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
@@ -407,6 +409,7 @@ class CarEmailService extends BaseService
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
             'createdAt' => $lead->created_at,
+            'pdfUrl' => $pdfUrl,
         ];
     }
 
@@ -421,15 +424,15 @@ class CarEmailService extends BaseService
                     'flow_type' => QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS->value,
                     'flow_id' => $runId,
                 ]);
-                info("NBMotorWorkFlow  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info(self::class." - createQuoteFlowDetails  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             } else {
-                info("NBMotorWorkFlow  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                LoggerService::info(self::class." - createQuoteFlowDetails  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } catch (\Throwable $th) {
-            $errorMessage = "NBMotorWorkFlow-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
-            info($errorMessage);
-            info("NBMotorWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
-            throw $th;
+            $errorMessage = self::class." - createQuoteFlowDetails-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            LoggerService::error($errorMessage);
+            LoggerService::error(self::class." - createQuoteFlowDetails-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+
         }
     }
 
@@ -528,34 +531,33 @@ class CarEmailService extends BaseService
     public function sendCompanyCarWorkFlow($lead)
     {
         try {
-            LoggerService::info('Sending Company Car followups email for lead: '.$lead->uuid.' | Time: '.now());
+            LoggerService::info(self::class.' - Sending Company Car followups email for lead: '.$lead->uuid.' | Time: '.now());
             if (empty($lead->nb_flow_executed_at)) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
                 $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::COMPANY_CAR_AUTOMATED_FOLLOWUPS);
                 $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
                 if ($birdMotorEventNB) {
                     $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                    LoggerService::info("CompanyCarWorkFlow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                    LoggerService::info("CompanyCarWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+                    LoggerService::info(self::class." - CompanyCarWorkFlow - Event triggered | Response: {$response->status_code} | Lead Ref-ID: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
                     $lead->nb_flow_executed_at = now();
-                    LoggerService::info("CompanyCarWorkFlow lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+
                     $lead->save();
 
                     if (! empty($response->headers['Run-Id'])) {
                         $this->createQuoteFlowDetails($lead, $response);
                     }
                 } else {
-                    LoggerService::info("CompanyCarWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                    LoggerService::info(self::class." - CompanyCarWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
                 }
             } else {
-                LoggerService::info("CompanyCarWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
+                LoggerService::info(self::class." - CompanyCarWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
             }
 
             return $response ?? null;
         } catch (\Throwable $th) {
-            $errorMessage = "CompanyCarWorkFlow-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            $errorMessage = self::class." - CompanyCarWorkFlow-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             LoggerService::error($errorMessage);
-            LoggerService::error("CompanyCarWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            LoggerService::error(self::class." - CompanyCarWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
 
         }
     }
@@ -565,15 +567,13 @@ class CarEmailService extends BaseService
         try {
             LoggerService::info('Sending Company Car OCB email for lead: '.$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::COMPANY_CAR_OCB);
+            $pdfUrl = $this->attachCarCompanyOCBPDFToEmail($lead->uuid, $lead->code);
+            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor, WorkflowTypeEnum::COMPANY_CAR_OCB, pdfUrl: $pdfUrl);
+
             $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
             if ($birdMotorEventNB) {
                 $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                LoggerService::info("CompanyCarOCB event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                LoggerService::info("CompanyCarWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
-                $lead->nb_flow_executed_at = now();
-                LoggerService::info("CompanyCarOCB lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-                $lead->save();
+                LoggerService::info("CompanyCarOCB - Event triggered | Response: {$response->status_code} | Lead Ref-ID: {$lead->uuid} | Quote StatusID: {$lead->quote_status_id} | Time: ".now());
 
                 if (! empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($lead, $response);
@@ -589,5 +589,63 @@ class CarEmailService extends BaseService
             LoggerService::error("CompanyCarOCB-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
 
         }
+    }
+
+    public function attachCarCompanyOCBPDFToEmail($quoteUID, $code = null)
+    {
+        try {
+            LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - Generating PDF Ref-ID: '.$quoteUID);
+
+            $quotePlans = app(CarQuoteService::class)->getQuotePlans($quoteUID);
+
+            // Generate the PDF
+            $planIds = [];
+            if (isset($quotePlans->quotes->plans)) {
+                $planIds = collect($quotePlans->quotes->plans)
+                    ->filter(function ($plan) {
+                        return ! $plan->isDisabled && $plan->isRatingAvailable;
+                    })
+                    ->sortByDesc('isRenewal')
+                    ->pluck('id')
+                    ->take(5)
+                    ->toArray() ?? [];
+            }
+
+            if (empty($planIds)) {
+                LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - No plans found for Ref-ID: '.$quoteUID);
+
+                return '';
+            }
+
+            $pdfFile = app(CarQuoteService::class)->exportPlansPdf(QuoteTypes::CAR->value, ['quote_uuid' => $quoteUID, 'plan_ids' => $planIds]);
+
+            $pdfContent = $pdfFile['pdf']->output(); // Use output() to get raw PDF content
+
+            // Generate a unique temporary file path
+            $tempFilePath = 'temp/'.uniqid().'.pdf';
+            Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
+
+            // Generate a public URL
+            $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+                $tempFilePath,
+                now()->addMinutes(10)
+            );
+            // Schedule deletion after 5 minutes
+            $this->scheduleFileDeletion($tempFilePath);
+
+            LoggerService::info(self::class.' - attachCarCompanyOCBPDFToEmail - Public URL generated for Ref-ID: '.$quoteUID.' | URL: '.$publicUrl);
+
+            return $publicUrl;
+        } catch (\Exception $e) {
+            // Log the error details
+            LoggerService::error(self::class." - Error: attachCarCompanyOCBPDFToEmail - Error attaching PDF  | Message: {$e->getMessage()} | File: {$e->getFile()} | Line: {$e->getLine()}", context: ['ref_id' => $code]);
+
+            return false;
+        }
+    }
+    protected function scheduleFileDeletion($filePath)
+    {
+        // Use a job to handle file deletion
+        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(5));
     }
 }

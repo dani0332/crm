@@ -89,45 +89,60 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Rule Name" required>
-        <x-input
-          v-model="ruleForm.name"
-          class="w-full"
-          :error="ruleForm.errors.name"
-        />
-      </x-field>
+      <x-input
+        label="Rule Name"
+        required
+        v-model="ruleForm.name"
+        class="w-full"
+        :error="ruleForm.errors.name"
+      />
 
-      <x-field label="Rule Type" required>
-        <ComboBox
-          v-model="ruleForm.rule_type"
-          :single="true"
-          :options="ruleTypes"
-          :selected="selectedRuleType ? [selectedRuleType] : []"
-          :error="ruleForm.errors.rule_type"
-        />
-      </x-field>
+      <x-select
+        v-model="ruleForm.rule_type"
+        label="Rule Type"
+        :options="ruleTypes"
+        :error="ruleForm.errors.rule_type"
+        filterable
+        filterPlaceholder="Filter Rule Type...."
+        placeholder="Select Rule Type"
+        required
+        :rules="[isRequired]"
+      />
 
-      <x-field label="Rule Users" required>
-        <ComboBox
-          v-model="ruleForm.rule_users"
-          :multiple="true"
-          :options="ruleUsers"
-          :selected="selectedUsers"
-          :error="ruleForm.errors.rule_users"
-        />
-      </x-field>
+      <x-select
+        v-model="ruleForm.rule_users"
+        label="Rule Users"
+        :options="ruleUsers"
+        :error="ruleForm.errors.rule_users"
+        multiple
+        filterable
+        filterPlaceholder="Filter Rule Users...."
+        placeholder="Select Rule Users"
+        required
+        :rules="[isRequired]"
+        truncate
+        class="w-full"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              ruleForm.rule_users = ruleUsers.map(item => item.value)
+            "
+            @clear="ruleForm.rule_users = []"
+          />
+        </template>
+      </x-select>
 
-      <x-field label="Is Active?">
-        <x-select
-          v-model="ruleForm.is_active"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-          :error="ruleForm.errors.is_active"
-        />
-      </x-field>
+      <x-select
+        label="Is Active?"
+        v-model="ruleForm.is_active"
+        class="w-full"
+        :options="[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]"
+        :error="ruleForm.errors.is_active"
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

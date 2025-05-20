@@ -15,4 +15,6 @@ final class PaymentGatewayIdEnum extends Enum
     public const PAYMENT_GATEWAY_CHECKOUT_TEXT = 'checkout';
     public const PAYMENT_GATEWAY_TAP = 3;
     public const PAYMENT_GATEWAY_TAP_TEXT = 'tap';
+    public const PAYMENT_GATEWAY_PL = 4;
+    public const PAYMENT_GATEWAY_PL_TEXT = 'pl';
 }

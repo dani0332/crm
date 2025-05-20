@@ -71,181 +71,177 @@ function onSubmit(isValid) {
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="FIRST NAME" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.first_name"
-            maxLength="20"
-          />
-        </x-field>
-        <x-field label="LAST NAME" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-            maxLength="50"
-          />
-        </x-field>
-        <x-field label="EMAIL" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :disabled="editMode"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
-        <x-field label="MOBILE NUMBER" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :disabled="editMode"
-            :rules="[isRequired, isMobileNo]"
-            class="w-full"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
-        <x-field label="DATE OF BIRTH">
-          <DatePicker
-            v-model="quoteForm.dob"
-            :utc="false"
-            model-type="yyyy-MM-dd"
-            name="created_at_start"
-          />
-        </x-field>
-        <x-field label="NATIONALITY">
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="
-              nationalities.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            placeholder="Nationality"
-          />
-        </x-field>
-        <x-field label="GENDER">
-          <x-select
-            v-model="quoteForm.customer_gender"
-            :options="[
-              { value: 'Male', label: 'Male' },
-              { value: 'Female', label: 'Female' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="TYPE OF PET" required>
-          <x-select
-            v-model="quoteForm.pet_type_id"
-            type="text"
-            maxlength="3"
-            :rules="[isRequired]"
-            :options="
-              pet_types.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.pet_type_id"
-          />
-        </x-field>
-        <x-field label="BREED OF PET" required>
-          <x-input
-            v-model="quoteForm.breed_of_pet1"
-            type="tel"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.breed_of_pet1"
-          />
-        </x-field>
-        <x-field label="AGE OF PET" required>
-          <x-select
-            v-model="quoteForm.pet_age_id"
-            type="number"
-            :rules="[isRequired]"
-            :options="
-              pet_ages.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.pet_age_id"
-          />
-        </x-field>
-        <x-field label="IS NEUTERED">
-          <x-select
-            v-model="quoteForm.is_neutered"
-            :options="[
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-            :error="quoteForm.errors.is_neutered"
-          />
-        </x-field>
-        <x-field label="IS MICROCHIPPED">
-          <x-select
-            v-model="quoteForm.is_microchipped"
-            :options="[
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-            :error="quoteForm.errors.is_microchipped"
-          />
-        </x-field>
-        <x-field label="MICROCHIP NO">
-          <x-input
-            v-model="quoteForm.microchip_no"
-            type="text"
-            class="w-full"
-            :error="quoteForm.errors.microchip_no"
-          />
-        </x-field>
-        <x-field label="IS MIXED BREED">
-          <x-select
-            v-model="quoteForm.is_mixed_breed"
-            :options="[
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-            :error="quoteForm.errors.is_mixed_breed"
-          />
-        </x-field>
-        <x-field label="HAS INJURY">
-          <x-select
-            v-model="quoteForm.has_injury"
-            :options="[
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-            :error="quoteForm.errors.has_injury"
-          />
-        </x-field>
-        <x-field label="PET'S GENDER" required>
-          <x-select
-            v-model="quoteForm.gender"
-            :rules="[isRequired]"
-            :options="[
-              { value: 'Male', label: 'Male' },
-              { value: 'Female', label: 'Female' },
-            ]"
-            class="w-full"
-            :error="quoteForm.errors.gender"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.first_name"
+          maxLength="20"
+          label="FIRST NAME"
+          required
+        />
+        <x-input
+          v-model="quoteForm.last_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+          maxLength="50"
+          label="LAST NAME"
+          required
+        />
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          :disabled="editMode"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.email"
+          label="EMAIL"
+          required
+        />
+        <x-input
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          :disabled="editMode"
+          :rules="[isRequired, isMobileNo]"
+          class="w-full"
+          :error="quoteForm.errors.mobile_no"
+          label="MOBILE NUMBER"
+          required
+        />
+        <DatePicker
+          v-model="quoteForm.dob"
+          :utc="false"
+          model-type="yyyy-MM-dd"
+          name="created_at_start"
+          label="DATE OF BIRTH"
+        />
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :rules="[isRequired]"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.nationality_id"
+          label="NATIONALITY"
+          filterable
+          placeholder="Search by Nationality"
+          required
+        />
+        <x-select
+          v-model="quoteForm.customer_gender"
+          :options="[
+            { value: 'Male', label: 'Male' },
+            { value: 'Female', label: 'Female' },
+          ]"
+          class="w-full"
+          label="GENDER"
+        />
+        <x-select
+          v-model="quoteForm.pet_type_id"
+          type="text"
+          maxlength="3"
+          :rules="[isRequired]"
+          :options="
+            pet_types.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.pet_type_id"
+          label="TYPE OF PET"
+          required
+        />
+        <x-input
+          v-model="quoteForm.breed_of_pet1"
+          type="tel"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.breed_of_pet1"
+          label="BREED OF PET"
+          required
+        />
+        <x-select
+          v-model="quoteForm.pet_age_id"
+          type="number"
+          :rules="[isRequired]"
+          :options="
+            pet_ages.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.pet_age_id"
+          label="AGE OF PET"
+          required
+        />
+        <x-select
+          v-model="quoteForm.is_neutered"
+          :options="[
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :error="quoteForm.errors.is_neutered"
+          label="IS NEUTERED"
+        />
+        <x-select
+          v-model="quoteForm.is_microchipped"
+          :options="[
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :error="quoteForm.errors.is_microchipped"
+          label="IS MICROCHIPPED"
+        />
+        <x-input
+          v-model="quoteForm.microchip_no"
+          type="text"
+          class="w-full"
+          :error="quoteForm.errors.microchip_no"
+          label="MICROCHIP NO"
+        />
+        <x-select
+          v-model="quoteForm.is_mixed_breed"
+          :options="[
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :error="quoteForm.errors.is_mixed_breed"
+          label="IS MIXED BREED"
+        />
+        <x-select
+          v-model="quoteForm.has_injury"
+          :options="[
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :error="quoteForm.errors.has_injury"
+          label="HAS INJURY"
+        />
+        <x-select
+          v-model="quoteForm.gender"
+          :rules="[isRequired]"
+          :options="[
+            { value: 'Male', label: 'Male' },
+            { value: 'Female', label: 'Female' },
+          ]"
+          class="w-full"
+          :error="quoteForm.errors.gender"
+          label="PET'S GENDER"
+          required
+        />
       </div>
 
       <x-divider class="my-4" />

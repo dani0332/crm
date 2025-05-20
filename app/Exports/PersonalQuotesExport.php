@@ -31,26 +31,26 @@ class PersonalQuotesExport
         ];
     }
 
-    public function collection()
+    public function collection($requestParams)
     {
         switch (ucfirst($this->quoteType)) {
             case QuoteTypes::BIKE->value:
-                return BikeQuoteRepository::getData(true);
+                return BikeQuoteRepository::getData(true, requestParams: $requestParams);
 
             case QuoteTypes::YACHT->value:
-                return YachtQuoteRepository::getData(true);
+                return YachtQuoteRepository::getData(true, requestParams: $requestParams);
 
             case QuoteTypes::PET->value:
-                return PetQuoteRepository::getData(true);
+                return PetQuoteRepository::getData(true, requestParams: $requestParams);
 
             case QuoteTypes::CYCLE->value:
-                return CycleQuoteRepository::getData(true);
+                return CycleQuoteRepository::getData(true, requestParams: $requestParams);
 
             case QuoteTypes::JETSKI->value:
-                return JetskiQuoteRepository::getData(true);
+                return JetskiQuoteRepository::getData(true, requestParams: $requestParams);
 
             case QuoteTypes::HOME->value:
-                return HomeQuoteRepository::getData(true);
+                return HomeQuoteRepository::getData(true, requestParams: $requestParams);
 
             default:
                 return abort(404);
@@ -217,7 +217,7 @@ class PersonalQuotesExport
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
                     isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-                    $quote->premium ? $quote->premium : $quote->price_with_vat,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
                     $quote->source,
                     optional($quote->currentlyInsuredWith)->text,
@@ -239,7 +239,7 @@ class PersonalQuotesExport
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
                     isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-                    $quote->premium ? $quote->premium : $quote->price_with_vat,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
                     $quote->source,
                     optional($quote->currentlyInsuredWith)->text,
@@ -265,7 +265,7 @@ class PersonalQuotesExport
                     optional($quote->quoteDetail)->transapp_code,
                     $quote->source,
                     optional($quote->petQuoteRequestDetail)->lostReason?->text,
-                    $quote->premium ? $quote->premium : $quote->price_with_vat,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
                     optional($quote->petQuote)->petType?->text,
                     optional($quote->petQuote)->breed_of_pet1,
@@ -296,7 +296,7 @@ class PersonalQuotesExport
                     date(config('constants.datetime_format'), strtotime($quote->created_at)),
                     isset($quote->quoteDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->quoteDetail->advisor_assigned_date)) : '',
                     date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-                    $quote->premium ? $quote->premium : $quote->price_with_vat,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
                     $quote->source,
                     $quote->is_ecommerce ? 'Yes' : 'No',
@@ -320,7 +320,7 @@ class PersonalQuotesExport
                     $quote?->homeQuote?->homeQuoteRequestDetail?->transapp_code,
                     $quote->source,
                     $quote?->homeQuote?->homeQuoteRequestDetail?->lostReason?->text,
-                    $quote->premium,
+                    ! empty($quote->premium) ? $quote->premium : $quote->price_with_vat,
                     $quote->policy_number,
                     $quote->renewal_batch,
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',

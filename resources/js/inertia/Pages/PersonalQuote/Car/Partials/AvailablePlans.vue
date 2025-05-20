@@ -143,6 +143,14 @@ const onUpdatePlan = () => {
     showInsurerError.value = false;
   }
 
+  if (planForm.actual_premium > 999999) {
+    notification.error({
+      title: 'Maximum premium should be upto AED 999,999',
+      position: 'top',
+    });
+    return;
+  }
+
   let addons = [];
   let tempAddons = planForm.addons;
   tempAddons.forEach(addon => {
@@ -311,6 +319,11 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                 "
                 size="sm"
                 type="number"
+                :error="
+                  planForm.actual_premium > 999999
+                    ? 'Maximum premium should be upto AED 999,999'
+                    : ''
+                "
               />
             </div>
             <div class="grid sm:grid-cols-2">

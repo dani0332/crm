@@ -24,6 +24,7 @@ class QueryBenchmarkRequest extends FormRequest
         return [
             'query' => 'required|string',
             'iterations' => 'integer|min:1|max:5',
+            'fetch_data' => 'boolean',
         ];
     }
 }

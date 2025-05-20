@@ -7,6 +7,7 @@ use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
+use App\Http\Controllers\API\V1\FtcEmailLogController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BaseDiscountController;
@@ -87,6 +88,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Services\AddBatchForNonMotors;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -157,7 +159,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
 
-    Route::get('{quoteType}/report-export', [CentralController::class, 'exportLeads'])->name('retention-export');
+    Route::get('{quoteType}/report-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('retention-export');
     Route::get('/reports/retention-report', [ReportsController::class, 'renderRetentionReport'])->name('retentionn-report');
     Route::get('/reports/fetch-retention-leads-data', [ReportsController::class, 'fetchRetentionLeadsData'])->name('fetch-retention-leads-data');
     Route::post('/reports/fetch-batch-by-date', [ReportsController::class, 'fetchBatchByDates']);
@@ -196,8 +198,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/management-report', [ReportsController::class, 'renderSaleManagementReport'])->name('management-report');
         Route::get('/reports/total-premium', [ReportsController::class, 'totalPremiumLeadsSaleReport'])->name('total-premium-leads-sales-report');
         Route::get('/personal-quotes/car/car-quotes-search', [CarQuoteController::class, 'index'])->name('car-quotes-search');
-
-        Route::post('/personal-quotes/car/pdf', [CarQuoteController::class, 'generatePdfwithSnappy']);
 
         Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
         Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
@@ -313,6 +313,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/retry-payment', [CentralController::class, 'retrySplitPayment'])->name('approve-payments')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/delete-split-payment', [CentralController::class, 'deleteSplitPayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/void-payment', [CentralController::class, 'voidPayment'])->name('payments-void')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/remove-insurer-payment-link', [CentralController::class, 'removeInsurerPaymentLink'])->name('payments-remove-insurer-payment-link');
+
     Route::post('/payments/{quoteType}/payments-capture-validation', [CentralController::class, 'paymentsCaptureValidtion'])->name('capture-validation');
     Route::post('/payments/{quoteType}/delete-payment', [CentralController::class, 'deletePayment'])->name('payments-delete');
 
@@ -440,6 +442,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ]);
         Route::post('add-insly-advisor/{user}', [UserController::class, 'addInslyAdvisor']);
         Route::resource('departments', DepartmentController::class);
+
+        Route::get('/sync-migrate-insured-and-quote-id-to-personal-quote/{force?}', function ($force = null) {
+            $forceProcess = (bool) $force;
+            \App\Jobs\UniversalSearchDataMigration::dispatchSync($forceProcess, Carbon::now()->format('YmdHi'))->onQueue('renewals');
+
+            return '<h3>Quote and Insured ID migration job has been dispatched. Please check the logs for detailed progress and completion status.</h3>';
+        })->name('admin.sync-migrate-insured-and-quote-id-to-personal-quote');
+
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
             Route::get('/view/{commercialKeyword}', [CommercialKeywordsController::class, 'show'])->name('admin.commercial.keywords.show');
@@ -510,8 +520,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         })->where('id', '[A-Z0-9]+')->name('quotes.home.show');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
-        Route::resource('home', CRUDController::class)->except(['show']);
-        Route::resource('business', CRUDController::class);
+        // Route::resource('home', CRUDController::class)->except(['show']);
+        // Route::resource('business', CRUDController::class);
 
         Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
         Route::resource('business', BusinessQuoteController::class);
@@ -566,6 +576,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
 
         Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
+    });
+
+    Route::group(['prefix' => 'ftc'], function () {
+        Route::get('email-logs', [FtcEmailLogController::class, 'index']);
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
@@ -702,6 +716,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
     Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);
+    Route::post('/generate-insurer-payment-link-new', [CentralController::class, 'generateInsurerPaymentLink']);
 
     Route::resource('members', MembersDetailController::class);
     Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
@@ -740,9 +755,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     // Sending NB Car Followups
     Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
-
-    Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
-    Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+    Route::group(['middleware' => ['readonly_db']], function () {
+        Route::get('search-leads', [SearchController::class, 'index'])->name('search-leads');
+        Route::get('search-all-export', [SearchController::class, 'searchExport'])->name('search-export');
+    });
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
     Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
