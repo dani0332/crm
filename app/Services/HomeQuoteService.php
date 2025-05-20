@@ -1335,32 +1335,33 @@ class HomeQuoteService extends BaseService
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
 
-    public function createRenewalPlan(string $quoteUID, array $data){
+    public function createRenewalPlan(string $quoteUID, array $data)
+    {
         $planId = InsuranceProviderPlan::where([
-            'text' => $data['plan_name'], 
+            'text' => $data['plan_name'],
             'quote_type_id' => QuoteTypeId::Home,
         ])->value('id');
 
-        $request = array([
+        $request = [[
             'planId' => $planId,
             'actualPremium' => $data['premium'],
             'discountPremium' => $data['premium'],
-            'isDisabled' => false, 
+            'isDisabled' => false,
             'isManualUpdate' => false,
             'insurerQuoteNumber' => $data['insurer_quote_no'] ?? null,
-        ]);
+        ]];
 
-        return $this->createManualPlan($quoteUID, $request, false, true); 
+        return $this->createManualPlan($quoteUID, $request, false, true);
     }
 
-    
-    public function createManualPlan(string $quoteUID, array $data, $isUpdate = false, $isRenewal = false){        
+    public function createManualPlan(string $quoteUID, array $data, $isUpdate = false, $isRenewal = false)
+    {
 
         $request = [
-            'quoteUID' => $quoteUID, 
-            'update' => $isUpdate, 
-            'plans' => $data
-        ]; 
+            'quoteUID' => $quoteUID,
+            'update' => $isUpdate,
+            'plans' => $data,
+        ];
 
         $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-home-quote-plan';
         $apiToken = config('constants.KEN_API_TOKEN');

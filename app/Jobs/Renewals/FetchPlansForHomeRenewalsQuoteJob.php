@@ -70,7 +70,7 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue, StackableJob
     public function failed(Throwable $exception)
     {
 
-        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed. '.$exception->getMessage(). ' Line: '.$exception->getLine(), extra: [
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed. '.$exception->getMessage().' Line: '.$exception->getLine(), extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
             'exception' => $exception->getMessage(),
         ]);

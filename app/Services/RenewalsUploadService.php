@@ -687,8 +687,7 @@ class RenewalsUploadService
         }
     }
 
-
-     /**
+    /**
      * fetch plans for Home Quote Plans.
      *
      * @return false|void
@@ -712,22 +711,22 @@ class RenewalsUploadService
                 'planId' => $leadData->plan_name,
                 'premium' => $leadData->premium,
             ]);
-            /* create manual plan if insurance provider, plan and premium is available */ 
+            /* create manual plan if insurance provider, plan and premium is available */
             if (! empty($leadData->insurance_provider) && ! empty($leadData->plan_name) && ! empty($leadData->premium)) {
-     
+
                 LoggerService::info("$logPrefix  - Creating Renewal manual plan for Quote", [
                     'quoteUID' => $quote->uuid,
                 ]);
 
                 $createManualPlan = app(HomeQuoteService::class)->createRenewalPlan($quote->uuid, $renewalQuoteProcess->data);
 
-                LoggerService::info("$logPrefix  - createManualPlan $createManualPlan"); 
+                LoggerService::info("$logPrefix  - createManualPlan $createManualPlan");
 
                 if (is_int($createManualPlan) && $createManualPlan == 200) {
                     LoggerService::info("$logPrefix  - plan created successfully", [
-                        'quoteUID' => $quote->uuid
+                        'quoteUID' => $quote->uuid,
                     ]);
-                    
+
                 } else {
                     $error = (is_string($createManualPlan)) ? ('Error: '.$createManualPlan) : '';
 
@@ -738,6 +737,7 @@ class RenewalsUploadService
                     LoggerService::error("$logPrefix  - plan creation failed. fetch plans skipped $error UUID: $quote->uuid");
 
                     RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+
                     return false;
                 }
 
