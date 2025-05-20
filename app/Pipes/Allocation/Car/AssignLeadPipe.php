@@ -9,7 +9,6 @@ use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use Closure;
-use Illuminate\Support\Facades\DB;
 
 class AssignLeadPipe extends BaseAllocationPipe
 {
@@ -20,29 +19,19 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        $advisor = $this->allocationRequest->getAdvisor();
-
-        DB::beginTransaction();
-
-        try {
-            $this->assign();
-
-            // Send WhatsApp notification for non-renewal leads
-            if ($this->lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
-                app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($this->lead, $advisor->id);
-            }
-
-            $this->allocationRequest->markAsAllocated();
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            LoggerService::error($e->getMessage(), exception: $e);
-            $this->allocationRequest->markAsFailed();
-            $this->throw('Lead allocation failed: '.$e->getMessage(), self::SERVER_ERROR);
-        }
+        $this->assign(function () {
+            $this->sendWhatsappNotificationToCustomer();
+        });
 
         return $next($request);
+    }
+
+    private function sendWhatsappNotificationToCustomer()
+    {
+        if ($this->lead->source != LeadSourceEnum::RENEWAL_UPLOAD) {
+            $advisor = $this->allocationRequest->getAdvisor();
+            app(SendEmailCustomerService::class)->sendWhatsappNotificationToCustomer($this->lead, $advisor->id);
+        }
     }
 
     protected function updateQuoteDetail()

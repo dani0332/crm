@@ -17,8 +17,10 @@ use App\Models\User;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\AllocationService;
 use App\Services\Logger\LoggerService;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 abstract class BaseAllocationPipe extends AllocationService
 {
@@ -292,29 +294,44 @@ abstract class BaseAllocationPipe extends AllocationService
 
     protected function assign(?callable $afterAssign = null)
     {
-        [
-            'advisor' => $advisor,
-            'assignmentType' => $assignmentType,
-            'previousAdvisorId' => $previousAdvisorId,
-            'previousAssignmentType' => $previousAssignmentType,
-            'isReAssignment' => $isReAssignment,
-        ] = $this->assignToAdvisor();
+        DB::beginTransaction();
 
-        $previousAdvisorAssignedDate = $this->updateQuoteDetail();
+        try {
+            [
+                'advisor' => $advisor,
+                'assignmentType' => $assignmentType,
+                'previousAdvisorId' => $previousAdvisorId,
+                'previousAssignmentType' => $previousAssignmentType,
+                'isReAssignment' => $isReAssignment,
+            ] = $this->assignToAdvisor();
 
-        if ($this->lead->source != LeadSourceEnum::REFERRAL) {
-            LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
+            $previousAdvisorAssignedDate = $this->updateQuoteDetail();
 
-            $quoteTypeId = $this->allocationRequest->getQuoteType()->id();
+            if ($this->lead->source != LeadSourceEnum::REFERRAL) {
+                LoggerService::info(self::class.' - lead source is not referral so about to update allocation record');
 
-            match ($assignmentType) {
-                AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($advisor->id, $quoteTypeId, $this->allocationRequest->isBuyLead()),
-                default => $this->adjustAllocationCounts($advisor->id, $this->lead, $previousAdvisorId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId, $this->allocationRequest->isBuyLead()),
-            };
-        }
+                $quoteTypeId = $this->allocationRequest->getQuoteType()->id();
 
-        if ($afterAssign) {
-            $afterAssign($isReAssignment, $previousAdvisorId, $previousAssignmentType);
+                match ($assignmentType) {
+                    AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($advisor->id, $quoteTypeId, $this->allocationRequest->isBuyLead()),
+                    default => $this->adjustAllocationCounts($advisor->id, $this->lead, $previousAdvisorId, $previousAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId, $this->allocationRequest->isBuyLead()),
+                };
+            }
+
+            $this->allocationRequest->markAsAllocated();
+
+            DB::commit();
+
+            if ($afterAssign) {
+                $afterAssign($isReAssignment, $previousAdvisorId, $previousAssignmentType);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            LoggerService::error($e->getMessage(), exception: $e);
+
+            $this->allocationRequest->markAsFailed();
+            $this->throw('Lead allocation failed: '.$e->getMessage(), self::SERVER_ERROR);
         }
     }
 

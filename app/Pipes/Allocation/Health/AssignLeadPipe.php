@@ -11,7 +11,6 @@ use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
-use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class AssignLeadPipe extends BaseAllocationPipe
@@ -23,24 +22,9 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        DB::beginTransaction();
-
-        try {
-            $this->assign(function ($isReAssignment, $previousAdvisorId) {
-                $this->sendIntroEmail($isReAssignment, $previousAdvisorId);
-            });
-
-            $this->allocationRequest->markAsAllocated();
-
-            DB::commit();
-        } catch (\Exception $e) {
-            $this->allocationRequest->markAsFailed();
-
-            DB::rollBack();
-            LoggerService::error($e->getMessage(), exception: $e);
-
-            $this->throw('Lead allocation failed', self::SERVER_ERROR);
-        }
+        $this->assign(function ($isReAssignment, $previousAdvisorId) {
+            $this->sendIntroEmail($isReAssignment, $previousAdvisorId);
+        });
 
         return $next($request);
     }

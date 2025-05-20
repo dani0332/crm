@@ -5,9 +5,7 @@ namespace App\Pipes\Allocation\Travel;
 use App\Models\TravelQuoteRequestDetail;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
-use App\Services\Logger\LoggerService;
 use Closure;
-use Illuminate\Support\Facades\DB;
 
 class AssignLeadPipe extends BaseAllocationPipe
 {
@@ -21,22 +19,7 @@ class AssignLeadPipe extends BaseAllocationPipe
     {
         $this->setRequest($request);
 
-        DB::beginTransaction();
-
-        try {
-            $this->assign();
-
-            $this->allocationRequest->markAsAllocated();
-
-            DB::commit();
-        } catch (\Exception $e) {
-            $this->allocationRequest->markAsFailed();
-
-            DB::rollBack();
-            LoggerService::error($e->getMessage(), exception: $e);
-
-            $this->throw('Lead allocation failed', self::SERVER_ERROR);
-        }
+        $this->assign();
 
         return $next($request);
     }
