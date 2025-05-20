@@ -23,6 +23,7 @@ class BuyLeadController extends Controller
     public function __construct(public BuyLeadService $buyLeadService)
     {
         $this->middleware('permission:' . PermissionsEnum::BUY_LEADS, ['only' => ['show', 'tracking']]);
+        $this->middleware('permission:' . PermissionsEnum::BUY_LEADS_EXPORT, ['only' => ['export', 'exportBuyLeadsData']]);
     }
 
     public function fetchRate(BuyLeadsRateFetchRequest $request)
