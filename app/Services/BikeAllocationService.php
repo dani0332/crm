@@ -246,6 +246,8 @@ class BikeAllocationService extends AllocationService
 
     public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $bikeLead)
     {
+        $this->resetProps();
+
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
         LoggerService::info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
 
@@ -260,8 +262,6 @@ class BikeAllocationService extends AllocationService
         if (! $isReassignmentJob) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
-
-        $this->resetProps();
 
         $this->resolveNationalityConfig($bikeLead);
 
