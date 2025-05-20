@@ -1774,9 +1774,15 @@ const editPaymentModal = async (
   }
 
   // Check and enable insurer receipt number input field
-  if(split_payment_id) {
-    const splitPayment = payment?.payment_splits?.find(split => split.id === split_payment_id);
-    if(payment.collection_type === 'insurer' && splitPayment && splitPayment.payment_method.code == paymentMethodsEnums.InsurerPayment) {
+  if (split_payment_id) {
+    const splitPayment = payment?.payment_splits?.find(
+      split => split.id === split_payment_id,
+    );
+    if (
+      payment.collection_type === 'insurer' &&
+      splitPayment &&
+      splitPayment.payment_method.code == paymentMethodsEnums.InsurerPayment
+    ) {
       showInsurerReceiptNumberInputField.value = true;
     }
   }
@@ -5329,7 +5335,10 @@ onBeforeMount(() => {
                     </x-field>
                   </div>
                 </div>
-                <div class="w-1/2 px-2" v-if="showInsurerReceiptNumberInputField">
+                <div
+                  class="w-1/2 px-2"
+                  v-if="showInsurerReceiptNumberInputField"
+                >
                   <div>
                     <x-tooltip class="tooltip-display">
                       <span
