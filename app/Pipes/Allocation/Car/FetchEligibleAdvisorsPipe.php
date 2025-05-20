@@ -30,16 +30,15 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         $lead = $request->getLead();
         $tier = $request->getTier();
         $teamId = $request->getTeamId();
-        $prevAdvisorId = $request->getReAssigFromAdvisorId();
 
-        $eligibleAdvisors = $this->fetchEligibleUsersByStatus($lead, $tier, $tierUserIds, $prevAdvisorId, $teamId);
+        $eligibleAdvisors = $this->fetchEligibleUsersByStatus($lead, $tier, $tierUserIds, $teamId);
 
         $request->set('eligibleAdvisors', $eligibleAdvisors);
 
         return $next($request);
     }
 
-    private function fetchEligibleUsersByStatus(CarQuote $lead, Tier $tier, $tierUserIds, $advisorId, $teamId)
+    private function fetchEligibleUsersByStatus(CarQuote $lead, Tier $tier, $tierUserIds, $teamId)
     {
         $tierUserIds = is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray();
         LoggerService::info(self::class."::fetchEligibleUsersByStatus - Users against tierID {$tier->id} and tier name: {$tier->name} are: ".json_encode($tierUserIds));
@@ -47,17 +46,17 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         $advisors = [];
 
         if ($lead->isBuyLeadApplicable($this->allocationRequest->isSIC()) && ($tier->isValue() || $tier->isVolume())) {
-            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId);
+            $advisors = $this->fetchAdvisors('getBLAdvisorsByStatus', $tier, $tierUserIds, $teamId);
         }
 
         if (empty($advisors)) {
-            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $advisorId, $teamId);
+            $advisors = $this->fetchAdvisors('getAdvisorsByStatus', $tier, $tierUserIds, $teamId);
         }
 
         return $advisors ?? [];
     }
 
-    private function fetchAdvisors(string $findAdvisorFn, Tier $tier, $tierUserIds, $advisorId, $teamId)
+    private function fetchAdvisors(string $findAdvisorFn, Tier $tier, $tierUserIds, $teamId)
     {
         $statusOrder = $this->getOnlineStatusesInOrder();
 
@@ -65,7 +64,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         $this->allocationRequest->set('excludedUserIds', $excludedUserIds);
 
         foreach ($statusOrder as $status) {
-            $eligibleUsers = $this->{$findAdvisorFn}($status, $tier, $tierUserIds, $advisorId);
+            $eligibleUsers = $this->{$findAdvisorFn}($status, $tier, $tierUserIds);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
                 LoggerService::info(self::class.'::fetchAdvisors - Eligble Users found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
@@ -95,7 +94,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         return UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->pluck('user_id')->toArray();
     }
 
-    private function getBaseQuery($status, $userIds, $advisorId = null)
+    private function getBaseQuery($status, $userIds)
     {
         $excludedUserIds = $this->allocationRequest->get('excludedUserIds');
 
@@ -113,14 +112,15 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
             ->activeUser();
 
         // Exclude a specific advisor if an advisor ID is provided.
-        if (! empty($advisorId)) {
-            $query->where('user_id', '!=', $advisorId);
+        $prevAdvisorId = $this->allocationRequest->getReAssigFromAdvisorId();
+        if (! empty($prevAdvisorId)) {
+            $query->where('user_id', '!=', $prevAdvisorId);
         }
 
         return $query;
     }
 
-    private function getBLAdvisorsByStatus($status, Tier $tier, $tierUserIds, $advisorId = null)
+    private function getBLAdvisorsByStatus($status, Tier $tier, $tierUserIds)
     {
         LoggerService::info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status}");
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $this->allocationRequest->isSIC(), $tier->isValue());
@@ -131,7 +131,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
             $tierUserIds
         ));
 
-        $advisors = $this->getBaseQuery($status, $userIds, $advisorId)
+        $advisors = $this->getBaseQuery($status, $userIds)
             ->where('buy_lead_status', true)
             ->where(function ($query) {
                 $query->whereRaw('buy_lead_allocation_count < buy_lead_max_capacity')->orWhere('buy_lead_max_capacity', '=', -1);
@@ -149,11 +149,11 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
         return $advisors;
     }
 
-    public function getAdvisorsByStatus($status, Tier $tier, $tierUserIds, $advisorId = null)
+    public function getAdvisorsByStatus($status, Tier $tier, $tierUserIds)
     {
         LoggerService::info(self::class."::getAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status}");
 
-        return $this->getBaseQuery($status, $tierUserIds, $advisorId)
+        return $this->getBaseQuery($status, $tierUserIds)
             ->where('normal_allocation_enabled', true)
             ->where(function ($query) {
                 // Apply allocation count and max capacity conditions.

@@ -32,14 +32,13 @@ class FetchTierUsersPipe extends BaseAllocationPipe
 
     private function getEligibleUserForAllocation()
     {
-        $advisorId = $this->allocationRequest->getReAssigFromAdvisorId();
         $lead = $this->allocationRequest->getLead();
         $tier = $this->allocationRequest->getTier();
         $teamId = $this->allocationRequest->getTeamId();
         $leadSource = $lead->source;
 
         // Get initial tier users
-        $tierUserIds = $this->getTierUserIds($tier, $advisorId);
+        $tierUserIds = $this->getTierUserIds($tier);
         $tierUserIds = $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
         // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
@@ -56,11 +55,13 @@ class FetchTierUsersPipe extends BaseAllocationPipe
         return $tierUserIds;
     }
 
-    private function getTierUserIds(Tier $tier, mixed $advisorId)
+    private function getTierUserIds(Tier $tier)
     {
+        $prevAdvisorId = $this->allocationRequest->getReAssigFromAdvisorId();
+
         $tierUserIds = TierUser::where('tier_id', $tier->id)
-            ->when($advisorId, function ($query) use ($advisorId) {
-                $query->where('user_id', '!=', $advisorId);
+            ->when($prevAdvisorId, function ($query) use ($prevAdvisorId) {
+                $query->where('user_id', '!=', $prevAdvisorId);
             })
             ->pluck('user_id')
             ->toArray();
