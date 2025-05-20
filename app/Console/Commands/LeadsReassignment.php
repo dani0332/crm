@@ -10,7 +10,6 @@ use App\Jobs\ReAssignHealthLeadsJob;
 use App\Jobs\ReAssignLeads;
 use App\Services\ApplicationStorageService;
 use App\Services\BikeAllocationService;
-use App\Services\HealthAllocationService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 
@@ -63,7 +62,7 @@ class LeadsReassignment extends Command
             dispatch(new ReAssignCarLeadsJob(0));
             info('Car lead reassignment job  for '.$currentIteration.' is dispatched');
 
-            dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), 0));
+            dispatch(new ReAssignHealthLeadsJob(0));
             info('Health lead reassignment job  for '.$currentIteration.' is dispatched');
 
             dispatch(new ReAssignBikeLeadsJob(app(BikeAllocationService::class), 0));

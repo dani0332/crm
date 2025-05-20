@@ -18,7 +18,6 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\UserStatusAuditLog;
 use App\Services\BikeAllocationService;
-use App\Services\HealthAllocationService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -103,7 +102,7 @@ class UpdateUserStatus extends Command
                         }
                         if ($this->userHaveProduct($userId, $healthId)) {
                             info('System triggered health reassignment job for user : '.$session->user->name);
-                            ReAssignHealthLeadsJob::dispatch(new HealthAllocationService, $userId);
+                            ReAssignHealthLeadsJob::dispatch($userId);
                         }
                         if ($this->userHaveProduct($userId, $bikeId)) {
                             info('System triggered bike reassignment job for user : '.$session->user->name);
