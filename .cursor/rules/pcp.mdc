@@ -1,0 +1,113 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Private Client Portal (PCP) Feature Guide
+
+## Overview
+The Private Client (PCP) is a feature that identifies and manages high-value clients based on specific criteria. This guide outlines the implementation details and best practices for working with PCP functionality.
+
+## Key Components
+
+### Models
+- [PrivateClientConfig.php](mdc:app/Models/PrivateClientConfig.php) - Configuration model for PCP rules
+- [Customer.php](mdc:app/Models/Customer.php) - Customer model with PCP tag functionality
+
+### Traits
+- [PrivateClient.php](mdc:app/Traits/PrivateClient.php) - Core PCP functionality trait
+
+### Events & Listeners
+- [ApplyPrivateClientTagListener.php](mdc:app/Listeners/ApplyPrivateClientTagListener.php) - Handles PCP tag application
+
+## Implementation Guidelines
+
+### PCP Tag Management
+1. PCP tags are managed through the `pcp_tag` field in the Customer model
+2. Tags can have the following states:
+   - Yes (1) - Active private client
+   - No (Null) - Not a private client
+   - Ex-PC (0) - Former private client EX-PC
+
+### PC Qualification
+1. The `pc_qualified` field is used to track qualification status:
+   - True (1) - Customer meets PCP qualification criteria
+   - False (0) - Customer does not meet PCP qualification criteria
+2. Qualification is determined by:
+   - Meeting minimum criteria defined in PCP configurations
+   - Passing validation checks in the PrivateClient trait
+   - Automatic updates through the ApplyPrivateClientTagListener
+3. Usage:
+   - Check qualification status before applying PCP tags
+   - Use in conjunction with pcp_tag for complete status tracking
+   - Include in customer profile displays and reports
+
+### Configuration
+1. PCP rules are stored in the `pcp_config` table
+2. Each configuration includes:
+   - quote_type_id
+   - field_name
+   - operator
+   - value
+   - currency_type_id
+   - status
+   - version
+   - active_version
+
+### Frontend Components
+1. PCP tag display:
+   - Use the gold color (#BFA100) for PCP tags
+   - Display in customer profiles and quote details
+   - Include in list views with filtering options
+
+2. Filtering:
+   - Implement PCP filters in all quote list views
+   - Use consistent options across all views:
+     ```javascript
+     [
+       { value: 'all', label: 'All' },
+       { value: 1, label: 'Yes' },
+       { value: 'no', label: 'No' },
+       { value: 0, label: 'Ex-Pc' }
+     ]
+     ```
+
+### Security
+1. PCP-related permissions:
+   - VIEW_PCP - Required to view PCP qualification status
+   - Additional permissions may be required for configuration management
+
+### Best Practices
+1. Always use the PrivateClient trait for PCP-related operations
+2. Implement proper logging for PCP tag changes
+3. Use versioning for PCP configurations
+4. Validate PCP criteria before applying tags
+5. Handle currency conversions appropriately
+6. Implement proper error handling and rollback mechanisms
+
+### Database Structure
+1. Required fields in pcp_config:
+   - id (primary key)
+   - quote_type_id (foreign key)
+   - field_name
+   - operator
+   - value
+   - currency_type_id
+   - status
+   - version
+   - active_version
+   - created_at, updated_at timestamps
+
+### Error Handling
+1. Implement proper error messages for:
+   - Invalid configurations
+   - Failed tag applications
+   - Permission issues
+2. Log all PCP-related errors with appropriate context
+3. Implement rollback mechanisms for failed operations
+
+### Performance Considerations
+1. Cache PCP configurations where appropriate
+2. Optimize database queries for PCP tag checks
+3. Implement proper indexing on PCP-related fields
+4. Use eager loading for related data
