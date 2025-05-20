@@ -98,9 +98,7 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
     {
         $excludedUserIds = $this->allocationRequest->get('excludedUserIds');
 
-        // Create a query to fetch lead allocations with their associated users.
-        $query = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
-            // Filter by advisor status.
+        return LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($status) {
             $query->where('status', $status);
         })
             ->whereIn('user_id', $userIds)
@@ -109,15 +107,8 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
             })
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->when($this->allocationRequest->hasNationalityConfig(), fn ($q) => $q->whereIn('user_id', $this->allocationRequest->getAdvisorIDs()))
-            ->activeUser();
-
-        // Exclude a specific advisor if an advisor ID is provided.
-        $prevAdvisorId = $this->allocationRequest->getReAssigFromAdvisorId();
-        if (! empty($prevAdvisorId)) {
-            $query->where('user_id', '!=', $prevAdvisorId);
-        }
-
-        return $query;
+            ->activeUser()
+            ->when($this->allocationRequest->getReAssigFromAdvisorId(), fn ($q) => $q->where('user_id', '!=', $this->allocationRequest->getReAssigFromAdvisorId()));
     }
 
     private function getBLAdvisorsByStatus($status, Tier $tier, $tierUserIds)
