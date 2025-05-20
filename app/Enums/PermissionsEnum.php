@@ -249,6 +249,7 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
     public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
     public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
+    public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';

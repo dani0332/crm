@@ -406,16 +406,16 @@ const isVehicleUseDisabled = computed(() => {
       >
     </div>
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-      <x-field label="Custom Date" v-if="isCustomDate">
-        <DatePicker
-          v-model="filters.customDate"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
-          size="sm"
-          model-type="yyyy-MM-dd"
-        />
-      </x-field>
+      <DatePicker
+        v-model="filters.customDate"
+        placeholder="Select Start & End Date"
+        range
+        :max-range="92"
+        size="sm"
+        model-type="yyyy-MM-dd"
+        label="Custom Date"
+        v-if="isCustomDate"
+      />
     </div>
 
     <div class="flex gap-3 justify-end">

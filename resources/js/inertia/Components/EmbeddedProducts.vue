@@ -656,21 +656,13 @@ const onAddDocumentSubmit = event => {
               </x-button>
               <x-button
                 v-if="
-                  [
-                    paymentStatusEnum.DRAFT,
-                    paymentStatusEnum.AUTHORISED,
-                    paymentStatusEnum.CANCELLED,
-                  ].includes(
-                    getFirstPriceWithTransaction(item.prices)?.transactions[0]
-                      ?.payment_status_id,
-                  ) &&
+                  item.can_void_payment &&
                   getFirstPriceWithTransaction(item.prices)?.transactions[0]
                     ?.payments[0]?.payment_gateway_id ==
                     paymentGatewayEnum.PAYMENT_GATEWAY_TAP
                 "
                 size="xs"
                 color="#ff5e00"
-                :disabled="!item.can_void_payment"
                 @click.prevent="voidPaymentFormAction(item)"
               >
                 Void Payment

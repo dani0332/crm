@@ -330,6 +330,7 @@ const cancelSendUpdate = () => {
     .post('send-update-cancel', {
       cancel_reason: cancelForm.cancel_reason,
       send_update_log_id: props.sendUpdateLog.id,
+      code: props.sendUpdateLog.code,
     })
     .then(response => {
       if (response.status === 200) {

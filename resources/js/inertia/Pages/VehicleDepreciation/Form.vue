@@ -155,86 +155,95 @@ onMounted(() => {
       </x-select>
     </div>
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="First Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.first_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Second Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.second_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Third Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.third_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Fourth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.fourth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Fifth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.fifth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Sixth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.sixth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Seventh Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.seventh_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Eighth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.eighth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Ninth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.ninth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Tenth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.tenth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.first_year"
+        type="number"
+        class="w-full"
+        label="First Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.second_year"
+        type="number"
+        class="w-full"
+        label="Second Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.third_year"
+        type="number"
+        class="w-full"
+        label="Third Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.fourth_year"
+        type="number"
+        class="w-full"
+        label="Fourth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.fifth_year"
+        type="number"
+        class="w-full"
+        label="Fifth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.sixth_year"
+        type="number"
+        class="w-full"
+        label="Sixth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.seventh_year"
+        type="number"
+        class="w-full"
+        label="Seventh Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.eighth_year"
+        type="number"
+        class="w-full"
+        label="Eighth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.ninth_year"
+        type="number"
+        class="w-full"
+        label="Ninth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.tenth_year"
+        type="number"
+        class="w-full"
+        label="Tenth Year"
+        required
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3">
