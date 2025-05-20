@@ -92,7 +92,7 @@ let tableData = props.leadsOrEndorsementData.data;
 function getTableHeader() {
   return [
     { text: 'Ref-ID', value: 'code', sortingOrder: 1 },
-    { text: 'Private Client', value: 'pcp_tag_formatted', sortingOrder: 2},
+    { text: 'Private Client', value: 'pcp_tag_formatted', sortingOrder: 2 },
     { text: 'First Name', value: 'first_name', sortingOrder: 3 },
     { text: 'Last Name', value: 'last_name', sortingOrder: 4 },
     { text: 'Company Name', value: 'company_name', sortingOrder: 5 },
