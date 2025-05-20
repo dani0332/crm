@@ -333,7 +333,7 @@ class AMLController extends Controller
         $quoteType = QuoteType::where('id', $quoteTypeId)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $quoteRequestId);
 
-        LoggerService::startQuoteLogging($quoteRequest);
+        LoggerService::startQuoteLogging($quoteObject);
         LoggerService::info('fn:amlQuoteDetails - AMLController');
 
         if (isset(request()->decisonsForUpdatePortal)) {
