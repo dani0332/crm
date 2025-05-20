@@ -47,7 +47,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
-            $personalQuote = PersonalQuote::where('id', $this->sendUpdate->personal_quote_id)->first();
+            $personalQuote = PersonalQuote::where('id', $this->sendUpdate->personal_quote_id)->select('advisor_id', 'email')->first();
             if (! $personalQuote->advisor_id) {
                 $validator->errors()->add('error', 'Please select advisor');
             }
