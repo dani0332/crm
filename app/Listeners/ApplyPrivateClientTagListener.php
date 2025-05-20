@@ -17,9 +17,9 @@ class ApplyPrivateClientTagListener
      */
     public function handle(PrivateClientUpdatedEvent $event): void
     {
-        LoggerService::info('private client tag event has been triggered.');
-
         LoggerService::startQuoteLogging(QuoteTypes::getName($event->quoteTypeId)->refId($event->lead->uuid), LoggerFeatureEnum::PCP_CLIENT);
+
+        LoggerService::info('private client tag event has been triggered.');
 
         $this->applyPcpTag($event->lead->uuid, $event->quoteTypeId);
 
