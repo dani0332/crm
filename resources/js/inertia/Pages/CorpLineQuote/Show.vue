@@ -187,6 +187,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  amlStatusName: {
+    type: String,
+    required: true,
+  },
 });
 
 const page = usePage();

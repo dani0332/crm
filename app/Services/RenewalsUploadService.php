@@ -866,6 +866,12 @@ class RenewalsUploadService
                 $this->syncQuote($quote, $quoteData);
             }
 
+            // Sync quote_id of lob table to personal quote table for allowed LOBs
+            $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
+            if (! $isQuotePersonal && in_array($quoteType->id, $allowedQuoteTypes)) {
+                $this->updatePersonalQuote($quote->uuid, $quoteType->id, ['quote_id' => $quote->id]);
+            }
+
             if ($isQuotePersonal) {
                 $quote->quoteDetail()->create($detailData);
             } else {
