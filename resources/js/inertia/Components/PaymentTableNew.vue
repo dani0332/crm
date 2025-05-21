@@ -3359,6 +3359,7 @@ const isChildPaymentDeletable = computed(() => {
 });
 
 const getPlanName = computed(() => {
+  console.log(props.quoteRequest);
   const plan = planDetail.value;
   if (props.quoteType === quoteTypeCodeEnum.Bike) {
     return plan ? props.quoteRequest.car_plan.text : 'Not Available';

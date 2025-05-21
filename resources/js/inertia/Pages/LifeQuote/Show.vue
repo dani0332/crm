@@ -1947,7 +1947,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">Authorised AT {{ quote.id }} </dt>
+                <dt class="font-medium uppercase">Authorised AT</dt>
                 <dd>{{ quote?.payments[0]?.authorized_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">

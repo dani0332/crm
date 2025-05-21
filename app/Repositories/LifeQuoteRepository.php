@@ -167,9 +167,9 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
-            'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
+        $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality','lifeQuote.previousAdvisor','lifeQuote.lifeQuoteRequestDetail.lostReason',
+            'lifeQuote.purposeOfInsurance', 'lifeQuote.children', 'lifeQuote.currency', 'lifeQuote.insuranceTenure', 'lifeQuote.numberOfYears', 'lifeQuote.maritalStatus',
+            'lifeQuote.paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
             'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod',
             'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob', 'insured',
             'quoteRequestEntityMapping' => function ($entityMapping) {
@@ -188,10 +188,10 @@ class LifeQuoteRepository extends BaseRepository
                         'purposeOfInsurance',
                         'insuranceTenure',
                         'numberOfYears',
+                        'previousAdvisor',
                     ]);
                 },
                 'quoteDetail.lostReason:id,text',
-                'quoteDetail.previousAdvisor',
                 'paymentStatus',
                 'customer.additionalContactInfo',
                 'transactionType',
