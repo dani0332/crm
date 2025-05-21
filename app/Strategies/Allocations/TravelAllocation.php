@@ -22,7 +22,7 @@ class TravelAllocation implements Allocation
 
     public function execute()
     {
-        $alloctionRequest = new AllocationRequest(
+        $allocationRequest = new AllocationRequest(
             quoteType: QuoteTypes::TRAVEL,
             quoteUUID: $this->uuid,
             teamId: $this->teamId,
@@ -31,7 +31,7 @@ class TravelAllocation implements Allocation
 
         try {
 
-            return Pipeline::send($alloctionRequest)->through([
+            return Pipeline::send($allocationRequest)->through([
                 FetchLeadPipe::class,
                 VerifyLeadPreChecksPipe::class,
                 VerifyAlreadyInProgressAllocationPipe::class,
@@ -43,7 +43,7 @@ class TravelAllocation implements Allocation
             ])->thenReturn();
 
         } catch (Exception $e) {
-            return app(AllocationService::class)->resolveAllocationResponse($alloctionRequest, $e);
+            return app(AllocationService::class)->resolveAllocationResponse($allocationRequest, $e);
         }
     }
 }
