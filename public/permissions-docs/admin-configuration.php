@@ -269,7 +269,7 @@
     </div>
     
     <footer>
-        <p>IMCRM Permissions Documentation © 2023</p>
+        <p>IMCRM Permissions Documentation © 2025</p>
     </footer>
 </body>
 </html> 
