@@ -43,8 +43,6 @@ const serverOptions = ref({
   sortType: 'desc',
 });
 
-console.log(page.props.quotes);
-
 const tableHeader = [
   { text: 'REF-ID', value: 'code' },
   { text: 'PC Customer', value: 'customer.pcp_tag_formatted' },

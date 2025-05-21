@@ -205,14 +205,14 @@ trait Filterable
 
     public function scopeFilterByPrivateClient($query, $filter)
     {
-        if ($filter != 'all') {
-            if ($filter == 'no') {
-                $query->whereRelation('customer', function ($q) {
-                    $q->WhereNull('pcp_tag');
-                });
-            } else {
-                $query->whereRelation('customer', 'customer.pcp_tag', $filter);
-            }
+        if ($filter == 'all') {
+            return;
         }
+
+        $query->whereRelation('customer', function ($q) use ($filter) {
+            $filter == 'no'
+                ? $q->whereNull('pcp_tag')
+                : $q->where('pcp_tag', $filter);
+        });
     }
 }

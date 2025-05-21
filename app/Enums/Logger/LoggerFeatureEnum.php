@@ -11,5 +11,5 @@ enum LoggerFeatureEnum: string
     case FTC_EMAIL = 'ftc-email';
 
     case TRAVEL_RENEWALS = 'travel-renewals';
-    case PCP_CLIENT = 'private client';
+    case PCP_CLIENT = 'private-client';
 }
