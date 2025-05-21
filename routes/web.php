@@ -509,7 +509,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::post('fetch-rate', [BuyLeadController::class, 'fetchRate'])->name('buy-leads.rate.fetch');
             Route::post('submit', [BuyLeadController::class, 'submit'])->name('buy-leads.request.submit');
             Route::get('export', [BuyLeadController::class, 'export'])->name('buy-leads.request.export');
-            Route::get('export-data', [BuyLeadController::class, 'exportBuyLeadsData'])->name('buy-leads.request.export-data');
+            Route::get('export-data', [BuyLeadController::class, 'exportBuyLeadsData'])->middleware(SetReadDbConnection::class)->name('buy-leads.request.export-data');
         });
     });
 
