@@ -1,4 +1,4 @@
-<?php 
+<?php
 // Car Insurance Permissions Documentation
 ?>
 <!DOCTYPE html>
