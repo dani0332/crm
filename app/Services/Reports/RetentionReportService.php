@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Models\PersonalQuote;
 use App\Models\RenewalBatch;
@@ -22,6 +23,7 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RetentionReportService extends BaseService
 {
@@ -75,6 +77,66 @@ class RetentionReportService extends BaseService
         ];
     }
 
+    private function getPolicyBookedStatuses()
+    {
+        return [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::POLICY_BOOKING_FAILED];
+    }
+
+    private function getPolicyCancelledStatuses()
+    {
+        return [QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::CancellationPending];
+    }
+
+    private function getSalesQuery($asAtDate, $quoteType)
+    {
+        $quoteType = QuoteTypes::from($quoteType);
+
+        $tableName = $quoteType->model()->getTable();
+        $isPersonalQuote = $quoteType->isPersonalQuote();
+
+        $bookedStatuses = implode(',', $this->getPolicyBookedStatuses());
+        $cancelledStatuses = implode(',', $this->getPolicyCancelledStatuses());
+        $policyBooked = QuoteStatusEnum::PolicyBooked;
+
+        if ($isPersonalQuote) {
+            $quoteRequestCondition = 'AND qsl.quote_request_id = personal_quotes.id';
+        } else {
+            $quoteRequestCondition = "
+                AND qsl.quote_request_id = (
+                    SELECT id FROM {$tableName}
+                    WHERE personal_quote_id = personal_quotes.id
+                    LIMIT 1
+                )";
+        }
+
+        $queryTemplate = '
+            SUM(
+                CASE
+                    WHEN quote_status_id IN (:bookingStatuses) {dateCondition} THEN 1
+                    WHEN quote_status_id IN (:cancelledStatuses)
+                        AND EXISTS (
+                            SELECT 1 FROM quote_status_log qsl
+                            WHERE qsl.quote_type_id = personal_quotes.quote_type_id
+                            {quoteRequestCondition}
+                            AND qsl.previous_quote_status_id = :policyBooked
+                            AND qsl.current_quote_status_id = personal_quotes.quote_status_id
+                        ) THEN 1
+                    ELSE 0
+                END
+            ) as sales
+        ';
+
+        $dateCondition = $asAtDate ? "AND personal_quotes.policy_booking_date <= '{$asAtDate}'" : '';
+
+        return strtr($queryTemplate, [
+            '{dateCondition}' => $dateCondition,
+            '{quoteRequestCondition}' => $quoteRequestCondition,
+            ':bookingStatuses' => $bookedStatuses,
+            ':cancelledStatuses' => $cancelledStatuses,
+            ':policyBooked' => $policyBooked,
+        ]);
+    }
+
     /**
      * Builds the query for retrieving retention report data based on the provided model and request parameters.
      *
@@ -84,23 +146,16 @@ class RetentionReportService extends BaseService
     {
         $asAtDate = isset($request['asAtDate']) ? Carbon::parse($request['asAtDate'])->endOfDay() : null;
 
-        $getSalesSumQuery = function () use ($asAtDate) {
-            $bookedStatus = QuoteStatusEnum::PolicyBooked;
-            if ($asAtDate) {
-                return "SUM(CASE WHEN quote_status_id = {$bookedStatus} AND personal_quotes.policy_booking_date <= '{$asAtDate}' THEN 1 ELSE 0 END) as sales";
-            }
-
-            return "SUM(CASE WHEN quote_status_id = {$bookedStatus} THEN 1 ELSE 0 END) as sales";
-        };
+        $policyCanceledAndReissued = QuoteStatusEnum::PolicyCancelledReissued;
 
         // Initialize the query with the necessary select statements and joins
         $query = PersonalQuote::query()
             ->selectRaw("renewal_batch_id, renewal_batch, MONTHNAME({$this->monthColumnName}) as `month`,
             users.name as `advisor_name`,
-            COUNT(DISTINCT(personal_quotes.id)) AS total,
+            COUNT(DISTINCT(personal_quotes.id)) - SUM(CASE WHEN personal_quotes.quote_status_id = {$policyCanceledAndReissued} THEN 1 ELSE 0 END) AS total,
             SUM(CASE WHEN quote_status_id = ".QuoteStatusEnum::Lost.' THEN 1 ELSE 0 END) as lost,
             SUM(CASE WHEN quote_status_id IN ('.QuoteStatusEnum::Fake.', '.QuoteStatusEnum::Duplicate.") THEN 1 ELSE 0 END) as invalid,
-            {$getSalesSumQuery()},
+            {$this->getSalesQuery($asAtDate, $this->getQuoteType($request))},
             advisor_id")
             ->join('users', 'advisor_id', '=', 'users.id');
         // Apply general filters to the query based on the request parameters
@@ -221,8 +276,39 @@ class RetentionReportService extends BaseService
                     $query->whereIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
                     break;
                 case RetentionReportEnum::SALES:
-                    // Filter for sales (policy booked)
-                    $query->where('quote_status_id', QuoteStatusEnum::PolicyBooked);
+                    $quoteType = QuoteTypes::from($this->getQuoteType($filters));
+
+                    $query->whereIn('quote_status_id', $this->getPolicyBookedStatuses());
+
+                    $query->orWhere(function ($subQuery) use ($quoteType) {
+                        $tableName = $quoteType->model()->getTable();
+                        $isPersonalQuote = $quoteType->isPersonalQuote();
+                        $cancelledStatuses = $this->getPolicyCancelledStatuses();
+                        $policyBooked = QuoteStatusEnum::PolicyBooked;
+
+                        if ($isPersonalQuote) {
+                            $quoteRequestCondition = 'qsl.quote_request_id = personal_quotes.id';
+                        } else {
+                            $quoteRequestCondition = "qsl.quote_request_id = (
+                                SELECT id FROM {$tableName}
+                                WHERE personal_quote_id = personal_quotes.id
+                                LIMIT 1
+                            )";
+                        }
+
+                        $subQuery->whereIn('quote_status_id', $cancelledStatuses)
+                            ->whereExists(function ($existsQuery) use ($quoteRequestCondition, $policyBooked) {
+                                $existsQuery->select(DB::raw(1))
+                                    ->from('quote_status_log as qsl')
+                                    ->whereRaw('qsl.quote_type_id = personal_quotes.quote_type_id')
+                                    ->whereRaw($quoteRequestCondition)
+                                    ->where('qsl.previous_quote_status_id', $policyBooked)
+                                    ->whereRaw('qsl.current_quote_status_id = personal_quotes.quote_status_id');
+                            });
+                    });
+                    break;
+                case RetentionReportEnum::TOTAL:
+                    $query->whereNot('quote_status_id', QuoteStatusEnum::PolicyCancelledReissued);
                     break;
             }
         }
