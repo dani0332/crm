@@ -104,10 +104,16 @@ const complianceRules = computed(() => {
     can(permissionsEnum.AMLDecisionUpdateTrueMatch);
   return hasPermission ? [isRequired] : [];
 });
+
 function activePatternField() {
-  if (hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) {
-    patternFieldDisable.value = false;
-  }
+  const isCompliance =
+    hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser);
+  const canUpdateAmlDecision =
+    can(permissionsEnum.AMLDecisionUpdate) ||
+    can(permissionsEnum.AMLDecisionUpdateTrueMatch);
+
+  // Enable the pattern field if the user is compliance or has update permission
+  patternFieldDisable.value = !(isCompliance || canUpdateAmlDecision);
 }
 const kycFormDetails = useForm({
   customer_id: page.props.quoteRequest.customer_id,
@@ -819,7 +825,7 @@ watch(
     <div class="flex justify-between gap-4 mb-1">
       <x-label>Is the customer a PEP?</x-label>
       <div class="grid md:grid-cols-2">
-        <x-form-group v-model="kycFormDetails.pep" :rule="complianceRules">
+        <x-form-group v-model="kycFormDetails.pep" :rules="complianceRules">
           <x-radio :value="1" label="Yes" :disabled="complianceDisable" />
           <x-radio :value="2" label="No" :disabled="complianceDisable" />
         </x-form-group>
@@ -1018,7 +1024,7 @@ watch(
             class="w-full"
             :single="true"
             :disabled="patternFieldDisable"
-            :rules="[isRequired]"
+            :rules="complianceRules"
           />
         </x-field>
         <x-field label="Transaction Activities">
@@ -1029,7 +1035,7 @@ watch(
             class="w-full"
             :single="true"
             :disabled="patternFieldDisable"
-            :rules="[isRequired]"
+            :rules="complianceRules"
           />
         </x-field>
       </template>
@@ -1041,7 +1047,7 @@ watch(
           class="w-full"
           :single="true"
           :disabled="patternFieldDisable"
-          :rules="[isRequired]"
+          :rules="complianceRules"
         />
       </x-field>
     </dl>
