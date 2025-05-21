@@ -71,7 +71,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
                     $q->whereNotIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $sicUnassistedTeamId));
                 }
             })
-            ->when($this->lead->isSIC($this->allocationRequest->getQuoteType()), function ($q) {
+            ->when($this->allocationRequest->isSIC(), function ($q) {
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
             ->logRawSql()

@@ -359,7 +359,7 @@ abstract class BaseAllocationPipe extends AllocationService
 
             $this->allocationRequest->markAsSameAdvisor();
 
-            $this->throw('Advisor is same as previous advisor', self::OK);
+            $this->throw('Eligible Advisor is already assigned to this lead', self::OK);
         }
 
     }
