@@ -490,7 +490,7 @@ const validateCoverValue = value => {
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.coverValue"
             min="0"
-            :rules="[isNonNegative, validateCoverValue]"
+            :rules="rider.active ? [isNonNegative, validateCoverValue, isRequired] : []"
           />
           <x-toggle v-model="rider.active" color="success" size="lg" />
           <x-input
@@ -499,7 +499,7 @@ const validateCoverValue = value => {
             @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.price"
-            :rules="[isNonNegative]"
+            :rules="rider.active ? [isNonNegative, isRequired] : []"
           />
         </div>
       </div>

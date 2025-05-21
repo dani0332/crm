@@ -239,8 +239,8 @@ const getQuote = () => {
 
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
-    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
-    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+    price: isNaN(rider.price) ? 0 : Number(parseFloat(rider.price).toFixed(2)) || 0,
+    coverValue: isNaN(rider.coverValue) ? 0 : Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
 
   createForm.sumAssured = Number(parseFloat(createForm.sumAssured).toFixed(2)) || 0;
@@ -259,7 +259,7 @@ const getQuote = () => {
           sumAssured: parseFloat(createForm.sumAssured).toFixed(2),
           policyTerm: createForm.policyTerm,
           paymentTerm: createForm.paymentTerm,
-          riders: ridersData.value,
+          riders: processedRiders,
         },
         lang: 'en',
       }, 
@@ -607,7 +607,7 @@ const validateCoverValue = value => {
           }}</span>
           <x-input
             type="number"
-            :rules="[isNonNegative, validateCoverValue]"
+            :rules="rider.active ? [isNonNegative, validateCoverValue, isRequired] : []"
             step="any"
             @keydown="e => preventInvalidInputs(e, false)"
             :disabled="!rider.active"
@@ -617,7 +617,7 @@ const validateCoverValue = value => {
           <x-toggle v-model="rider.active" color="success" size="lg" />
           <x-input
             type="number"
-            :rules="[isNonNegative]"
+            :rules="rider.active && props.plan.isManualPlan ? [isNonNegative, isRequired] : []"
             step="any"
             @keydown="e => preventInvalidInputs(e, false)"
             class="w-full h-10 p-2 rounded-md"
