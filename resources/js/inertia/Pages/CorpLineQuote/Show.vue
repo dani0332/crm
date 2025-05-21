@@ -183,6 +183,14 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  storageUrl: {
+    type: String,
+    required: true,
+  },
+  amlStatusName: {
+    type: String,
+    required: true,
+  },
 });
 
 const page = usePage();
@@ -734,7 +742,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
         >
-          Stale foor {{ countDays }}
+          Stale for {{ countDays }}
         </p>
       </template>
       <template #default v-if="readOnlyMode.isDisable === true">
