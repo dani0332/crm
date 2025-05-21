@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -75,7 +76,6 @@ class SendUpdateLogService
             'payment_status_id',
             'payment_status_date',
             'payment_gateway',
-            'previous_policy_expiry_date',
             'previous_quote_policy_premium',
             'price_vat_applicable',
             'paid_at',
@@ -420,6 +420,25 @@ class SendUpdateLogService
 
             if ($quoteTypeCode == quoteTypeCode::Travel) {
                 $updateReplicateDetails['parent_id'] = null;
+            }
+
+            if ($replicateObject->previous_policy_expiry_date) {
+                // If it's an INSLY or RENEWAL_UPLOAD quote, always copy previous_policy_expiry_date
+                if ($replicateObject->insly_migrated || in_array($replicateObject->source, [LeadSourceEnum::INSLY, LeadSourceEnum::RENEWAL_UPLOAD])) {
+                    $shouldCopyPreviousPolicyExpiry = true;
+                } else {
+                    // Otherwise check if insly_id exists in appropriate relation
+                    if (checkPersonalQuotes($quoteTypeCode)) {
+                        $shouldCopyPreviousPolicyExpiry = isset($replicateObject->quoteDetail) && ! empty($replicateObject?->quoteDetail->insly_id);
+                    } else {
+                        $relationName = strtolower($quoteTypeCode).'QuoteRequestDetail';
+                        $shouldCopyPreviousPolicyExpiry = isset($replicateObject->$relationName) && ! empty($replicateObject?->$relationName->insly_id);
+                    }
+                }
+                // Set previous_policy_expiry_date based on conditions
+                $updateReplicateDetails['previous_policy_expiry_date'] = $shouldCopyPreviousPolicyExpiry ?
+                    Carbon::parse($replicateObject->previous_policy_expiry_date)->format(config('constants.DB_DATE_FORMAT_MATCH')) :
+                    null;
             }
 
             $replicateObject->fill($updateReplicateDetails)->save();
