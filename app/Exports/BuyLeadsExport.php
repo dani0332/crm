@@ -20,7 +20,6 @@ class BuyLeadsExport implements FromCollection, WithHeadings, WithMapping, WithS
     use Exportable;
 
     protected $type;
-
     protected Collection $data;
 
     /**
