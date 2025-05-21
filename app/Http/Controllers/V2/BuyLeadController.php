@@ -169,8 +169,10 @@ class BuyLeadController extends Controller
             ->get();
 
         // File paths
-        $file1 = 'buy_leads_summary.xlsx';
-        $file2 = 'buy_leads_detailed.xlsx';
+        $start = $startDate->format('d-m-Y');
+        $end = $endDate->format('d-m-Y');
+        $file1 = "buy_leads_summary_{$start}_{$end}.xlsx";
+        $file2 = "buy_leads_detailed_{$start}_{$end}.xlsx";
         // Create ZIP using robust logic (mirroring CentralController)
         $zipFileName = 'buy_leads_export_' . now()->format('Ymd_His') . '.zip';
         $zipFilePath = storage_path('temp/' . $zipFileName);
