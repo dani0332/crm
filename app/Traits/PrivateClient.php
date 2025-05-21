@@ -131,56 +131,48 @@ trait PrivateClient
      */
     public function removePcpTag()
     {
-        $customers = Customer::where('pcp_tag', true)->get();
-        if ($customers->isEmpty()) {
-            LoggerService::info('No customers found with PCP tag.');
-
-            return;
-        }
-
-        foreach ($customers as $customer) {
-
-            LoggerService::info('Starting to check active qualified leads for customer', extra: [
-                'customer_id' => $customer->id,
-                'customer_name' => $customer->first_name.' '.$customer->last_name,
-                'email' => $customer->email,
-            ]);
-
-            $activeQualifiedLeads = $customer->personalQuote()
-                ->where('pc_qualified', true)
-                ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-                ->whereNotNull('policy_expiry_date')
-                ->where('policy_expiry_date', '>', now())
-                ->exists();
-
-            if (! $activeQualifiedLeads) {
-                LoggerService::info('No active qualified leads found for customer', extra: [
-                    'customer_id' => $customer->id,
-                    'customer_name' => $customer->first_name.' '.$customer->last_name,
-                    'email' => $customer->email,
-                ]);
-                try {
-                    $customer->update([
-                        'pcp_tag' => false,
-                        'updated_at' => now(),
-                    ]);
-
-                    LoggerService::info('PCP tag removed successfully from customer', extra: [
+        Customer::where('pcp_tag', true)
+            ->with(['personalQuote' => function ($query) {
+                $query->where('pc_qualified', true)
+                    ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
+                    ->whereNotNull('policy_expiry_date')
+                    ->where('policy_expiry_date', '>', now());
+            }])
+            ->chunk(100, function ($customers) {
+                foreach ($customers as $customer) {
+                    LoggerService::info('Starting to check active qualified leads for customer', extra: [
                         'customer_id' => $customer->id,
                         'customer_name' => $customer->first_name.' '.$customer->last_name,
                         'email' => $customer->email,
                     ]);
 
-                    return true;
-                } catch (\Exception $ex) {
-                    LoggerService::error('Error removing PCP tag.', exception: $ex);
-                    throw $ex;
+                    if (! $customer->personalQuote) {
+                        LoggerService::info('No active qualified leads found for customer', extra: [
+                            'customer_id' => $customer->id,
+                            'customer_name' => $customer->first_name.' '.$customer->last_name,
+                            'email' => $customer->email,
+                        ]);
+                        try {
+                            $customer->update([
+                                'pcp_tag' => false,
+                            ]);
+
+                            LoggerService::info('PCP tag removed successfully from customer', extra: [
+                                'customer_id' => $customer->id,
+                                'customer_name' => $customer->first_name.' '.$customer->last_name,
+                                'email' => $customer->email,
+                            ]);
+                        } catch (\Exception $ex) {
+                            LoggerService::error('Error removing PCP tag.', exception: $ex);
+                            throw $ex;
+                        }
+                    } else {
+                        LoggerService::info('Active qualified leads found for customer', extra: [
+                            'customer_id' => $customer->id,
+                        ]);
+                    }
                 }
-            }
-            LoggerService::info('Active qualified leads found for customer', extra: [
-                'customer_id' => $customer->id,
-            ]);
-        }
+            });
     }
 
     protected function getActivePcpConfigs(int $quoteTypeId)
