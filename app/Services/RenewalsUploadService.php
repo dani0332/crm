@@ -1298,8 +1298,8 @@ class RenewalsUploadService
                 $homeOwnerOccupancyTypeId = (! empty($data['occupancy_status_for_owners'])) ? RangeLookup::where('text', $data['occupancy_status_for_owners'])->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)->first()->id : null;
                 $homeSubAreaId = (! empty($data['location_area'])) ? SubArea::where('text', $data['location_area'])->first()->id : null;
                 $homeCoverageTypeId = (! empty($data['cover_required'])) ? RangeLookup::where('text', $data['cover_required'])->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)->first()->id : null;
-                $homeContents = (! empty($data['contents'])) ? $data['contents'] : null;
-                $homePersonalBelongings = (! empty($data['personal_belongings'])) ? $data['personal_belongings'] : null;
+                $homeContents = (! empty($data['contents'])) ? RangeLookup::where('text', $data['contents'])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null;
+                $homePersonalBelongings = (! empty($data['personal_belongings'])) ?  RangeLookup::where('text', $data['personal_belongings'])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
                 $homeBuildingAed = (! empty($data['building'])) ? $data['building'] : null;
                 $homeInsuranceProvider = (! empty($data['insurance_provider'])) ? InsuranceProvider::where('code', $data['insurance_provider'])->first()->id : null;
                 $homePlanName = (! empty($data['plan_name'])) ? $data['plan_name'] : null;
@@ -1418,8 +1418,8 @@ class RenewalsUploadService
                 $quoteData['owner_occupancy_type_id'] = $homeOwnerOccupancyTypeId;
                 $quoteData['sub_area_id'] = $homeSubAreaId;
                 $quoteData['coverage_type_id'] = $homeCoverageTypeId;
-                $quoteData['contents_aed'] = $homeContents;
-                $quoteData['personal_belongings_aed'] = $homePersonalBelongings;
+                $quoteData['contents_value_id'] = $homeContents;
+                $quoteData['personal_belongings_value_id'] = $homePersonalBelongings;
                 $quoteData['building_value'] = $homeBuildingAed;
                 $quoteData['building_aed'] = $homeBuildingAed;
                 $quoteData['renewal_upload_insurance_provider_id'] = $homeInsuranceProvider;
