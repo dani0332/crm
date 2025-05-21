@@ -19,6 +19,36 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
+const preventInvalidInputs = (e, allowDecimals = true) => {
+  const invalidChars = ['e', '-'];
+  if (!allowDecimals) {
+    invalidChars.push('.');
+  }
+  if (invalidChars.includes(e.key)) {
+    e.preventDefault();
+    return;
+  }
+  
+  // Limit to 2 decimal places
+  if (allowDecimals && e.key === '.') {
+    const value = e.target.value;
+    if (value.includes('.')) {
+      e.preventDefault();
+      return;
+    }
+  }
+  
+  // Check if input would create more than 2 decimal places
+  if (allowDecimals && /^\d$/.test(e.key)) {
+    const value = e.target.value;
+    const dotIndex = value.indexOf('.');
+    if (dotIndex !== -1 && value.length - dotIndex > 2 && e.target.selectionStart > dotIndex) {
+      e.preventDefault();
+    }
+  }
+};
+
+
 const validatePriceRange = value => {
   if (!value) return true;
   const price = parseFloat(value);
@@ -206,6 +236,17 @@ const getQuote = () => {
     return;
   }
 
+
+  const processedRiders = ridersData.value.map(rider => ({
+    ...rider,
+    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
+    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+  }));
+
+  createForm.sumAssured = Number(parseFloat(createForm.sumAssured).toFixed(2)) || 0;
+  createForm.actualPremium = Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
+  createForm.riders = processedRiders;
+
   axios
     .post(`/personal-quotes/get-life-provider-plan`, {
       data: {
@@ -248,10 +289,18 @@ const onSubmit = isValid => {
   if (!isValid) {
     return;
   }
+
+  const processedRiders = ridersData.value.map(rider => ({
+    ...rider,
+    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
+    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+  }));
+
   createForm.loading = true;
-  createForm.sumAssured = parseFloat(createForm.sumAssured).toFixed(2);
-  createForm.actualPremium = parseFloat(createForm.actualPremium).toFixed(2);
-  createForm.riders = ridersData.value;
+  createForm.sumAssured = Number(parseFloat(createForm.sumAssured).toFixed(2)) || 0;
+  createForm.actualPremium = Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
+  createForm.riders = processedRiders;
+
 
   axios
     .post('/personal-quotes/life-plan-manual-create', {
@@ -452,9 +501,7 @@ const validateCoverValue = value => {
               type="number"
               min="0"
               step="any"
-              @keydown="
-                e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-              "
+              @keydown="e => preventInvalidInputs(e, true)"
             />
           </div>
         </div>
@@ -471,9 +518,7 @@ const validateCoverValue = value => {
             type="number"
             min="0"
             step="any"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, false)"
           />
         </div>
 
@@ -503,9 +548,7 @@ const validateCoverValue = value => {
             type="number"
             min="0"
             step="any"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, true)"
             :disabled="plan.isApi"
           />
         </div>
@@ -536,9 +579,7 @@ const validateCoverValue = value => {
             type="number"
             min="0"
             step="any"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
             v-model="createForm.sumAssured"
             disabled
@@ -549,9 +590,7 @@ const validateCoverValue = value => {
             type="number"
             min="0"
             step="any"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
             v-model="createForm.actualPremium"
             disabled
@@ -570,9 +609,7 @@ const validateCoverValue = value => {
             type="number"
             :rules="[isNonNegative, validateCoverValue]"
             step="any"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, false)"
             :disabled="!rider.active"
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.coverValue"
@@ -582,9 +619,7 @@ const validateCoverValue = value => {
             type="number"
             :rules="[isNonNegative]"
             step="any"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, false)"
             class="w-full h-10 p-2 rounded-md"
             :disabled="!rider.active || !props.plan.isManualPlan"
             v-model="rider.price"

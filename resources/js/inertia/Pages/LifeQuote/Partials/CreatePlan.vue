@@ -11,6 +11,35 @@ const props = defineProps({
 
 const { isRequired } = useRules();
 
+const preventInvalidInputs = (e, allowDecimals = true) => {
+  const invalidChars = ['e', '-'];
+  if (!allowDecimals) {
+    invalidChars.push('.');
+  }
+  if (invalidChars.includes(e.key)) {
+    e.preventDefault();
+    return;
+  }
+  
+  // Limit to 2 decimal places
+  if (allowDecimals && e.key === '.') {
+    const value = e.target.value;
+    if (value.includes('.')) {
+      e.preventDefault();
+      return;
+    }
+  }
+  
+  // Check if input would create more than 2 decimal places
+  if (allowDecimals && /^\d$/.test(e.key)) {
+    const value = e.target.value;
+    const dotIndex = value.indexOf('.');
+    if (dotIndex !== -1 && value.length - dotIndex > 2 && e.target.selectionStart > dotIndex) {
+      e.preventDefault();
+    }
+  }
+};
+
 // Add validation for non-negative numbers
 const isNonNegative = value => {
   if (value === null || value === undefined || value === '') return true;
@@ -128,14 +157,13 @@ const onSubmit = isValid => {
   // Convert riders' price and coverValue to floats
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
-    price: parseFloat(rider.price) || 0,
-    coverValue: parseFloat(rider.coverValue) || 0,
+    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
+    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
 
   // Ensure numeric form values are properly converted
-  createForm.sumAssured = parseFloat(createForm.sumAssured).toFixed(2) || 0;
-  createForm.actualPremium =
-    parseFloat(createForm.actualPremium).toFixed(2) || 0;
+  createForm.sumAssured = Number( parseFloat(createForm.sumAssured).toFixed(2)) || 0;
+  createForm.actualPremium = Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
   createForm.policyTerm = parseInt(createForm.policyTerm) || 0;
 
   createForm.riders = processedRiders;
@@ -351,9 +379,7 @@ const validateCoverValue = value => {
               :rules="[isRequired, isNonNegative, validatePriceRange]"
               class="w-full"
               type="number"
-              @keydown="
-                e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-              "
+              @keydown="e => preventInvalidInputs(e, true)"
             />
           </div>
         </div>
@@ -369,9 +395,7 @@ const validateCoverValue = value => {
             class="w-full"
             type="number"
             min="0"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, false)"
           />
         </div>
 
@@ -399,9 +423,7 @@ const validateCoverValue = value => {
             :rules="[isRequired, isNonNegative, validatePriceRange]"
             class="w-full"
             type="number"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, true)"
           />
         </div>
 
@@ -427,9 +449,7 @@ const validateCoverValue = value => {
           <span class="text-gray-700">Included</span>
           <x-input
             type="number"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
             v-model="createForm.sumAssured"
             min="0"
@@ -465,9 +485,8 @@ const validateCoverValue = value => {
           <x-input
             type="number"
             :disabled="!rider.active"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, false)"
+
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.coverValue"
             min="0"
@@ -477,9 +496,7 @@ const validateCoverValue = value => {
           <x-input
             type="number"
             :disabled="!rider.active"
-            @keydown="
-              e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-            "
+            @keydown="e => preventInvalidInputs(e, true)"
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.price"
             :rules="[isNonNegative]"

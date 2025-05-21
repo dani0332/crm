@@ -39,6 +39,36 @@ let overallLoadingState = ref(false);
 let totalPrice = props.selectedPlan.actualPremium;
 let errorMessage = ref(null);
 
+// Prevent invalid input chars for numeric fields (e, -, .)
+const preventInvalidInputs = (e, allowDecimals = true) => {
+  const invalidChars = ['e', '-'];
+  if (!allowDecimals) {
+    invalidChars.push('.');
+  }
+  if (invalidChars.includes(e.key)) {
+    e.preventDefault();
+    return;
+  }
+  
+  // Limit to 2 decimal places
+  if (allowDecimals && e.key === '.') {
+    const value = e.target.value;
+    if (value.includes('.')) {
+      e.preventDefault();
+      return;
+    }
+  }
+  
+  // Check if input would create more than 2 decimal places
+  if (allowDecimals && /^\d$/.test(e.key)) {
+    const value = e.target.value;
+    const dotIndex = value.indexOf('.');
+    if (dotIndex !== -1 && value.length - dotIndex > 2 && e.target.selectionStart > dotIndex) {
+      e.preventDefault();
+    }
+  }
+};
+
 const formatDate = timestamp => {
   return moment(timestamp).format('DD-MM-YYYY HH:mm:ss');
 };
@@ -131,19 +161,20 @@ const onSubmit = isValid => {
   if (!isValid) {
     return;
   }
-  editForm.actualPremium = parseFloat(editForm.actualPremium).toFixed(2);
-  editForm.sumAssured = parseFloat(editForm.sumAssured).toFixed(2);
-
+  editForm.actualPremium = Number(parseFloat(editForm.actualPremium).toFixed(2));
+  editForm.sumAssured = Number(parseFloat(editForm.sumAssured).toFixed(2));
+  editForm.overallLoading = Number(parseFloat(editForm.overallLoading).toFixed(2));
   extraAttr.loading = true;
 
   // Ensure riders have numeric values by converting strings to floats and preventing negative values
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
-    price: Math.max(0, parseFloat(rider.price) || 0),
-    loading: Math.max(0, parseFloat(rider.loading) || 0),
-    final_price: Math.max(0, parseFloat(rider.final_price) || 0),
-    coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
+    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
+    loading: Number(parseFloat(rider.loading).toFixed(2)) || 0,
+    final_price: Number(parseFloat(rider.final_price).toFixed(2)) || 0,
+    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
+
 
   editForm.riders = processedRiders;
 
@@ -237,12 +268,15 @@ const getQuote = () => {
   // Ensure riders have numeric values by converting strings to floats and preventing negative values
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
-    price: Math.max(0, parseFloat(rider.price) || 0),
-    loading: Math.max(0, parseFloat(rider.loading) || 0),
-    final_price: Math.max(0, parseFloat(rider.final_price) || 0),
-    coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
+    price: isNaN(rider.price) ? parseFloat(0) : parseFloat(Number(rider.price).toFixed(2)),
+    loading: isNaN(rider.loading) ? parseFloat(0) : parseFloat(Number(rider.loading).toFixed(2)),
+    final_price: isNaN(rider.final_price) ? parseFloat(0) : parseFloat(Number(rider.final_price).toFixed(2)),
+    coverValue: isNaN(rider.coverValue) ? parseFloat(0) : parseFloat(Number(rider.coverValue).toFixed(2)),
   }));
 
+  editForm.sumAssured = Number(parseFloat(editForm.sumAssured).toFixed(2));
+  editForm.actualPremium = Number(parseFloat(editForm.actualPremium).toFixed(2));
+ 
   axios
     .post(`/personal-quotes/get-life-provider-plan`, {
       data: {
@@ -293,7 +327,7 @@ onMounted(() => {
     ridersData.value = props.selectedPlan.riders.map(rider => ({
       riderId: rider.id,
       active: rider.active ?? 0,
-      price: parseInt(rider.price) || 0,
+      price: parseFloat(rider.price) || 0,
       coverValue: rider.coverValue ?? 0,
       text: rider.text,
       loading: parseInt(rider?.loading) ?? 0,
@@ -553,9 +587,7 @@ const validateCoverValue = value => {
                   @input="handleActualPremium"
                   size="sm"
                   type="number"
-                  @keydown="
-                    e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-                  "
+                  @keydown="e => preventInvalidInputs(e, true)"
                 />
               </div>
 
@@ -584,9 +616,7 @@ const validateCoverValue = value => {
                   :rules="[isRequired, validatePriceRange, isNonNegative]"
                   size="sm"
                   type="number"
-                  @keydown="
-                    e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-                  "
+                  @keydown="e => preventInvalidInputs(e, true)"
                 />
               </div>
 
@@ -599,9 +629,7 @@ const validateCoverValue = value => {
                   size="sm"
                   type="number"
                   min="0"
-                  @keydown="
-                    e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-                  "
+                  @keydown="e => preventInvalidInputs(e, false)"
                 />
               </div>
 
@@ -662,10 +690,7 @@ const validateCoverValue = value => {
                 <div class="col-span-2">
                   <x-input
                     type="number"
-                    @keydown="
-                      e =>
-                        (e.key === 'e' || e.key === '-') && e.preventDefault()
-                    "
+                    @keydown="e => preventInvalidInputs(e, false)"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="editForm.sumAssured"
                     min="0"
@@ -684,10 +709,7 @@ const validateCoverValue = value => {
                 <div class="col-span-2">
                   <x-input
                     type="number"
-                    @keydown="
-                      e =>
-                        (e.key === 'e' || e.key === '-') && e.preventDefault()
-                    "
+                    @keydown="e => preventInvalidInputs(e, false)"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="editForm.actualPremium"
                     disabled
@@ -699,10 +721,7 @@ const validateCoverValue = value => {
                 >
                   <x-input
                     type="number"
-                    @keydown="
-                      e =>
-                        (e.key === 'e' || e.key === '-') && e.preventDefault()
-                    "
+                    @keydown="e => preventInvalidInputs(e, false)"
                     class="w-full h-10 p-2 rounded-md"
                     disabled
                   />
@@ -710,10 +729,7 @@ const validateCoverValue = value => {
                 <div class="col-span-1">
                   <x-input
                     type="number"
-                    @keydown="
-                      e =>
-                        (e.key === 'e' || e.key === '-') && e.preventDefault()
-                    "
+                    @keydown="e => preventInvalidInputs(e, false)"
                     v-if="props.selectedPlan.isUnderwritten"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="editForm.actualPremium"
@@ -740,10 +756,7 @@ const validateCoverValue = value => {
                     :disabled="!rider.active"
                     :rules="rider.active ? [isRequired, isNonNegative, validateCoverValue] : []"
                     type="number"
-                    @keydown="
-                      e =>
-                        (e.key === 'e' || e.key === '-') && e.preventDefault()
-                    "
+                    @keydown="e => preventInvalidInputs(e, false)"
                     min="0"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="rider.coverValue"
@@ -760,10 +773,7 @@ const validateCoverValue = value => {
                     :disabled="
                       !props.selectedPlan.isManualPlan || !rider.active
                     "
-                    @keydown="
-                      e =>
-                        (e.key === 'e' || e.key === '-') && e.preventDefault()
-                    "
+                    @keydown="e => preventInvalidInputs(e, true)"
                     :rules="[isNonNegative]"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="rider.price"
@@ -782,10 +792,7 @@ const validateCoverValue = value => {
                       editForm.overallLoading > 0 ||
                       rider.final_price > 0
                     "
-                    @keydown="
-                      e =>
-                        (e.key === 'e' || e.key === '-') && e.preventDefault()
-                    "
+                    @keydown="e => preventInvalidInputs(e, true)"
                     min="0"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="rider.loading"
@@ -805,10 +812,7 @@ const validateCoverValue = value => {
                       editForm.overallLoading > 0 ||
                       rider.loading > 0
                     "
-                    @keydown="
-                      e =>
-                        (e.key === 'e' || e.key === '-') && e.preventDefault()
-                    "
+                    @keydown="e => preventInvalidInputs(e, true)"
                     min="0"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="rider.final_price"
@@ -817,10 +821,7 @@ const validateCoverValue = value => {
                   <div
                     v-else
                     type="number"
-                    @keydown="
-                      e =>
-                        (e.key === 'e' || e.key === '-') && e.preventDefault()
-                    "
+                    @keydown="e => preventInvalidInputs(e, false)"
                     class="appearance-none block w-16 ml-2 placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]"
                   >
                     {{ computedFinalPrice(rider) }}
@@ -893,7 +894,7 @@ const validateCoverValue = value => {
           <!-- Price section aligned to the left -->
           <div class="flex flex-row">
             <dt class="font-bold text-lg ml-4">Total Price:</dt>
-            <dd class="text-lg">&nbsp; AED {{ actualPremium }}</dd>
+            <dd class="text-lg">&nbsp; AED {{ Number(actualPremium.toFixed(2)) }}</dd>
           </div>
 
           <!-- Timestamps aligned to the right -->
@@ -941,7 +942,7 @@ const validateCoverValue = value => {
             <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
             <div class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
-              <dd class="text-sm">&nbsp; AED {{ editForm.actualPremium }}</dd>
+              <dd class="text-sm">&nbsp; AED {{ parseFloat(editForm.actualPremium).toFixed(2) }}</dd>
             </div>
           </div>
           <!-- Timestamps aligned to the right -->
@@ -986,9 +987,7 @@ const validateCoverValue = value => {
               <span class="mr-2">Overall Loading:</span>
               <x-input
                 type="number"
-                @keydown="
-                  e => (e.key === 'e' || e.key === '-') && e.preventDefault()
-                "
+                @keydown="e => preventInvalidInputs(e, false)"
                 @input="updatePriceWithOverloading()"
                 :disabled="overallLoadingState"
                 min="0"
@@ -1001,7 +1000,7 @@ const validateCoverValue = value => {
             <!-- Total Price section -->
             <div class="flex items-center">
               <span class="font-bold mr-2">Total Price:</span>
-              <span class="">AED {{ actualPremium }}</span>
+              <span class="">AED {{ parseFloat(actualPremium).toFixed(2) }}</span>
             </div>
           </div>
         </div>
