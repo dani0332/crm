@@ -5,6 +5,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 defineProps({
   quote: Object,
@@ -1387,8 +1388,12 @@ onMounted(() => {
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
+  window.addEventListener('ocr-notification', handleOcrNotification);
+  
 });
-
+onUnmounted(() => {
+  window.removeEventListener('ocr-notification', handleOcrNotification);
+});
 //activities
 const emailEventsTable = [
   { text: 'Type', value: 'type' },
@@ -1721,6 +1726,16 @@ const isCommercialVehicle = computed(() => {
   }
   return isCConditionMeet;
 });
+
+const ocrLoading = ref(false);
+
+function handleOcrNotification(e) {
+  console.log('handleOcrNotification', e);
+  const { status } = e.detail;
+  if (status === 'start') ocrLoading.value = true;
+  else if (status === 'end' || status === 'fail') ocrLoading.value = false;
+}
+
 </script>
 
 <template>
@@ -3938,6 +3953,7 @@ const isCommercialVehicle = computed(() => {
       :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
       :payments="payments"
+      :showOcrNotification="ocrLoading.value"
     />
 
     <QuoteDocument

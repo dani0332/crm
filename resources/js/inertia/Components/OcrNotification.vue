@@ -14,10 +14,10 @@ const listen = () => {
   worker = new SharedWorker('/build/workers/pusher.worker.js');
   worker.port.addEventListener('message', e => {
     console.log('ocr notification message', e);
-    console.log('policy detail uuid', page.props.policyDetail);
-    if (e.data.uuid === page.props.policyDetail.uuid) {
+    console.log('policy detail uuid', page.props.quote);
+    if (e.data.uuid === page.props.quote.uuid) {
       notificationData.value = {
-        title: 'OCR',
+        title: 'OCR Notification',
         message: e.data.message,
         status: e.data.status,
         uuid: e.data.uuid,
