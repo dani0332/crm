@@ -879,7 +879,10 @@ watch(
         .get(url)
         .then(res => {
           if (res.data.length > 0) {
-            options.network = res.data;
+            options.network = useArrayUnique(
+              res.data,
+              (a, b) => a.value === b.value,
+            );
           } else {
             options.network = [];
           }
