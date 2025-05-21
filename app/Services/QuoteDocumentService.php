@@ -566,7 +566,7 @@ class QuoteDocumentService extends BaseService
     {
 
         // Create a simple watermark PDF
-        $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
+        $watermarkPdf = storage_path('temp/watermark_'.uniqid().$uuid.'.pdf');
         $fpdf = new Fpdi;
         $fpdf->AddPage();
         $fpdf->Image(public_path('images/watermark1.png'), 0, 0, $fpdf->GetPageWidth(), $fpdf->GetPageHeight());
