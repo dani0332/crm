@@ -52,9 +52,8 @@ trait PrivateClient
         }
 
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
-        $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $tableColumns);
 
-        $exists = $query->where($this->buildConfigWhereClause($configs, $tableColumns, $hasSumInsuredCurrency, $model))->exists();
+        $exists = $query->where($this->buildConfigWhereClause($configs, $tableColumns, $model))->exists();
 
         if ($exists) {
             try {
@@ -196,21 +195,21 @@ trait PrivateClient
         return $this->columnsCache[$modelClass];
     }
 
-    protected function buildConfigWhereClause($configs, $tableColumns, $hasSumInsuredCurrency, $model)
+    protected function buildConfigWhereClause($configs, $tableColumns, $model)
     {
-        return function ($outerQuery) use ($configs, $tableColumns, $hasSumInsuredCurrency, $model) {
+        return function ($outerQuery) use ($configs, $tableColumns, $model) {
             foreach ($configs as $config) {
                 $field = trim($config->field_name);
                 if (! in_array($field, $tableColumns)) {
                     continue;
                 }
-
+                $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $tableColumns);
                 $operator = strtolower(trim($config->operator));
                 $value = trim($config->value);
                 $currency_type_id = trim($config->currency_type_id);
                 $values = array_map('trim', explode(',', $value));
 
-                $outerQuery->orWhere(function ($q) use ($field, $operator, $value, $values, $hasSumInsuredCurrency, $currency_type_id, $model) {
+                $outerQuery->orWhere(function ($q) use ($field, $operator, $value, $values, $currency_type_id, $model, $hasSumInsuredCurrency) {
                     match ($operator) {
                         'in' => $q->whereIn($field, $values),
                         'not in' => $q->whereNotIn($field, $values),
@@ -224,7 +223,7 @@ trait PrivateClient
                         default => null,
                     };
 
-                    if ($hasSumInsuredCurrency && isset($model->sum_insured_currency_id)) {
+                    if ($hasSumInsuredCurrency && ! is_null($model->sum_insured_currency_id) && ! empty($model->sum_insured_currency_id)) {
                         $q->where('sum_insured_currency_id', $currency_type_id);
                     }
                 });
