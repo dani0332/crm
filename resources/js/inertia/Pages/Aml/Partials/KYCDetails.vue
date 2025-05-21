@@ -106,8 +106,11 @@ const complianceRules = computed(() => {
 });
 
 function activePatternField() {
-  const isCompliance = hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser);
-  const canUpdateAmlDecision = can(permissionsEnum.AMLDecisionUpdate) || can(permissionsEnum.AMLDecisionUpdateTrueMatch);
+  const isCompliance =
+    hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser);
+  const canUpdateAmlDecision =
+    can(permissionsEnum.AMLDecisionUpdate) ||
+    can(permissionsEnum.AMLDecisionUpdateTrueMatch);
 
   // Enable the pattern field if the user is compliance or has update permission
   patternFieldDisable.value = !(isCompliance || canUpdateAmlDecision);
