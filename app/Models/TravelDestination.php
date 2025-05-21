@@ -10,6 +10,21 @@ class TravelDestination extends Model
     use HasFactory;
 
     protected $table = 'travel_destination';
+    public $timestamps = true;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'quote_id',
+        'uuid',
+        'destination_id',
+        'customer_id',
+        'created_at',
+        'updated_at',
+    ];
 
     public function destination()
     {

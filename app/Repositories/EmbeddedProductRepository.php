@@ -195,8 +195,9 @@ class EmbeddedProductRepository extends BaseRepository
                 'prices' => function ($query) {
                     $query->where('is_active', 1);
                 },
-                'prices.transactions' => function ($query) use ($quoteRequestId) {
+                'prices.transactions' => function ($query) use ($quoteTypeId, $quoteRequestId) {
                     $query->where('quote_request_id', $quoteRequestId);
+                    $query->where('quote_type_id', $quoteTypeId);
                 },
                 'prices.transactions.payments',
                 'prices.transactions.travelAnnualPayments',
@@ -264,7 +265,7 @@ class EmbeddedProductRepository extends BaseRepository
     private function canVoidPayment($transaction)
     {
         if (
-            auth()->user()->can(PermissionsEnum::PAYMENTS_VOID)
+            auth()->user()->can(PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_VOID)
             && $transaction
         ) {
             return $transaction->payment_status_id == PaymentStatusEnum::AUTHORISED;
@@ -1048,11 +1049,11 @@ class EmbeddedProductRepository extends BaseRepository
                 $codes = $quoteBatch->pluck('c1_code')->map(function ($code) {
                     return 'MDX-'.$code;
                 })->toArray();
-                $EpsToUpdate = EmbeddedTransaction::whereIn('code', $codes)->get()->pluck('code')->toArray();
+                $epsToUpdate = EmbeddedTransaction::whereIn('code', $codes)->get()->pluck('code')->toArray();
 
-                if (! empty($EpsToUpdate)) {
-                    EmbeddedTransaction::whereIn('code', $EpsToUpdate)->update(['is_selected' => 1]);
-                    info('EP Renewals - Updated EPs for batch: '.$batchName.' - count: '.count($EpsToUpdate));
+                if (! empty($epsToUpdate)) {
+                    EmbeddedTransaction::whereIn('code', $epsToUpdate)->update(['is_selected' => 1]);
+                    info('EP Renewals - Updated EPs for batch: '.$batchName.' - count: '.count($epsToUpdate));
                 }
             });
         }

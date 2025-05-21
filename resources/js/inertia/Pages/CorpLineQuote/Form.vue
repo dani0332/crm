@@ -103,116 +103,114 @@ function onSubmit(isValid) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="FIRST NAME" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.first_name"
-            maxLength="20"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.first_name"
+          maxLength="20"
+          required
+          label="FIRST NAME"
+        />
 
-        <x-field label="LAST NAME" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-            maxLength="50"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.last_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+          maxLength="50"
+          required
+          label="LAST NAME"
+        />
 
-        <x-field label="EMAIL" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :disabled="isEdit"
-            :rules="[isRequired, isEmail]"
-            class="w-full"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          :disabled="isEdit"
+          :rules="[isRequired, isEmail]"
+          class="w-full"
+          :error="quoteForm.errors.email"
+          required
+          label="EMAIL"
+        />
 
-        <x-field label="MOBILE NUMBER" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :disabled="isEdit"
-            :rules="[isRequired, isMobileNo]"
-            class="w-full"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          :disabled="isEdit"
+          :rules="[isRequired, isMobileNo]"
+          class="w-full"
+          :error="quoteForm.errors.mobile_no"
+          required
+          label="MOBILE NUMBER"
+        />
 
-        <x-field label="COMPANY NAME">
-          <x-input
-            v-model="quoteForm.company_name"
-            type="text"
-            class="w-full"
-            :error="quoteForm.errors.company_name"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.company_name"
+          type="text"
+          class="w-full"
+          :error="quoteForm.errors.company_name"
+          label="COMPANY NAME"
+        />
 
-        <x-field label="COMPANY ADDRESS">
-          <x-input
-            v-model="quoteForm.company_address"
-            type="text"
-            class="w-full"
-            :error="quoteForm.errors.company_address"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.company_address"
+          type="text"
+          class="w-full"
+          :error="quoteForm.errors.company_address"
+          label="COMPANY ADDRESS"
+        />
 
-        <x-field label="NUMBER OF EMPLOYEES" required>
-          <x-input
-            v-model="quoteForm.number_of_employees"
-            type="number"
-            :rules="[isRequired, isNumber, maxValidation(2147483645)]"
-            class="w-full"
-            :error="quoteForm.errors.number_of_employees"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.number_of_employees"
+          type="number"
+          :rules="[isRequired, isNumber, maxValidation(2147483645)]"
+          class="w-full"
+          :error="quoteForm.errors.number_of_employees"
+          required
+          label="NUMBER OF EMPLOYEES"
+        />
 
-        <x-field label="BUSINESS INSURANCE TYPE" required>
-          <x-select
-            v-model="quoteForm.business_type_of_insurance_id"
-            :options="businessInsuranceTypeOptions"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.business_type_of_insurance_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.business_type_of_insurance_id"
+          :options="businessInsuranceTypeOptions"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.business_type_of_insurance_id"
+          required
+          label="BUSINESS INSURANCE TYPE"
+        />
 
-        <x-field label="GENDER" required>
-          <x-select
-            v-model="quoteForm.gender"
-            :options="genderOptions"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.gender"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.gender"
+          :options="genderOptions"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.gender"
+          required
+          label="GENDER"
+        />
 
-        <x-field label="PRICE" required>
-          <x-input
-            v-model="quoteForm.premium"
-            type="number"
-            :rules="[emptyOrDecimal]"
-            class="w-full"
-            :error="quoteForm.errors.premium"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.premium"
+          type="number"
+          :rules="[emptyOrDecimal]"
+          class="w-full"
+          :error="quoteForm.errors.premium"
+          required
+          label="PRICE"
+        />
 
-        <x-field label="BRIEF DETAILS" required>
-          <x-textarea
-            v-model="quoteForm.brief_details"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.brief_details"
-          />
-        </x-field>
+        <x-textarea
+          v-model="quoteForm.brief_details"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.brief_details"
+          required
+          label="BRIEF DETAILS"
+        />
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

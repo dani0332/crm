@@ -78,6 +78,7 @@ class LifeQuoteService extends BaseService
                 'lqr.policy_expiry_date',
                 'lqr.device',
                 DB::raw('DATE_FORMAT(lqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+                DB::raw('DATE_FORMAT(lqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
                 'lqr.policy_start_date',
                 'lqr.previous_quote_policy_premium',
                 'lqr.customer_id',
@@ -140,6 +141,8 @@ class LifeQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::LifeQuote, $request, $response);
+
+            $this->selfAssign(QuoteTypes::LIFE, $response->quoteUID);
         }
 
         return $response;

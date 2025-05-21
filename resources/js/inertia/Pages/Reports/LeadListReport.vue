@@ -8,7 +8,7 @@ const loaders = reactive({
   table: false,
 });
 
-const { isRequired } = useRules();
+const { isRequired, maxSelections } = useRules();
 
 const filters = reactive({
   uuid: '',
@@ -17,7 +17,7 @@ const filters = reactive({
   leadSources: [],
   teams: [],
   is_ecommerce: '',
-  payment_status: '',
+  payment_status: [],
   page: 1,
 });
 
@@ -127,71 +127,130 @@ const tableHeader = reactive([
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Search">
-        <x-input
-          v-model="filters.uuid"
-          type="text"
-          class="w-full"
-          placeholder="Search By Ref i.e CAR-12345678"
-        />
-      </x-field>
-      <x-field label="Advisor Assigned Date" required>
-        <DatePicker
-          v-model="filters.advisorAssignedDates"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
-          size="sm"
-          model-type="yyyy-MM-dd"
-          :rules="[isRequired]"
-        />
-      </x-field>
-      <x-field label="Tiers">
-        <ComboBox
-          v-model="filters.tiers"
-          placeholder="Search by Tiers"
-          :options="tiers"
-          :max-limit="3"
-        />
-      </x-field>
-      <x-field label="Lead Source">
-        <ComboBox
-          v-model="filters.leadSources"
-          placeholder="Search by Lead Source"
-          :options="leadSource"
-          :max-limit="3"
-        />
-      </x-field>
+      <x-input
+        label="Search"
+        v-model="filters.uuid"
+        type="text"
+        class="w-full"
+        placeholder="Search By Ref i.e CAR-12345678"
+      />
+
+      <DatePicker
+        label="Advisor Assigned Date"
+        required
+        v-model="filters.advisorAssignedDates"
+        placeholder="Select Start & End Date"
+        range
+        :max-range="92"
+        size="sm"
+        model-type="yyyy-MM-dd"
+        :rules="[isRequired]"
+      />
+      <x-select
+        label="Tiers"
+        v-model="filters.tiers"
+        placeholder="Search by Tiers"
+        :options="tiers"
+        multiple
+        :rules="[maxSelections(3)]"
+        helper="You can select up to 3 tiers"
+        class="w-full"
+        filterable
+        filterPlaceholder="Filter Tiers...."
+        truncate
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="filters.tiers = tiers.map(tier => tier.value)"
+            @clear="filters.tiers = []"
+          />
+        </template>
+      </x-select>
+      <x-select
+        label="Lead Source"
+        v-model="filters.leadSources"
+        placeholder="Search by Lead Source"
+        virtualList
+        :virtual-list-item-height="34"
+        :virtual-list-overscan="10"
+        :options="leadSource"
+        multiple
+        :rules="[maxSelections(3)]"
+        class="w-full"
+        filterable
+        filterPlaceholder="Filter Lead Source...."
+        helper="You can select up to 3 lead sources"
+        truncate
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.leadSources = leadSource.map(
+                leadSource => leadSource.value,
+              )
+            "
+            @clear="filters.leadSources = []"
+          />
+        </template>
+      </x-select>
     </div>
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Teams">
-        <ComboBox
-          v-model="filters.teams"
-          placeholder="Search By Teams"
-          :options="teams"
-          :max-limit="3"
-        />
-      </x-field>
-      <x-field label="Is Ecommerce">
-        <x-select
-          v-model="filters.is_ecommerce"
-          placeholder="Search by Ecommerce"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Payment Status">
-        <ComboBox
-          v-model="filters.payment_status"
-          placeholder="Search By Payment Status"
-          :options="paymentStatus"
-          :max-limit="3"
-        />
-      </x-field>
+      <x-select
+        label="Teams"
+        v-model="filters.teams"
+        placeholder="Search By Teams"
+        :options="teams"
+        multiple
+        :rules="[maxSelections(3)]"
+        class="w-full"
+        filterable
+        filterPlaceholder="Filter Teams...."
+        helper="You can select up to 3 teams"
+        truncate
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="filters.teams = teams.map(team => team.value)"
+            @clear="filters.teams = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        label="Is Ecommerce"
+        v-model="filters.is_ecommerce"
+        placeholder="Search by Ecommerce"
+        :options="[
+          { value: 'All', label: 'All' },
+          { value: 'Yes', label: 'Yes' },
+          { value: 'No', label: 'No' },
+        ]"
+        class="w-full"
+      />
+      <x-select
+        v-model="filters.payment_status"
+        placeholder="Search By Payment Status"
+        :options="paymentStatus"
+        multiple
+        :rules="[maxSelections(3)]"
+        helper="You can select up to 3 payment status"
+        class="w-full"
+        filterable
+        filterPlaceholder="Filter Payment Status...."
+        truncate
+        label="Payment Status"
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.payment_status = paymentStatus.map(
+                paymentStatus => paymentStatus.value,
+              )
+            "
+            @clear="filters.payment_status = []"
+          />
+        </template>
+      </x-select>
     </div>
     <div class="flex gap-3 justify-end">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

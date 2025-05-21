@@ -585,6 +585,7 @@ function capitalizeString(str) {
 
 const availablePlansTable = reactive({
   data: [],
+  isLoading: false,
   columns: [
     {
       text: 'Provider Name',
@@ -627,6 +628,7 @@ const selectedPlanIds = computed(() => {
 const availableAllPlans = ref([]);
 
 const onLoadAvailablePlansData = async () => {
+  availablePlansTable.isLoading = true;
   const url = `/quotes/home/available-plans/${page.props.quote.uuid}`;
   const data = {
     jsonData: true,
@@ -643,9 +645,11 @@ const onLoadAvailablePlansData = async () => {
       availablePlansTable.data = homePlans.quotes.plans;
       availableAllPlans.value = homePlans.quotes.plans;
       homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
-    } else {
     }
-  } catch (error) {}
+  } catch (error) {
+  } finally {
+    availablePlansTable.isLoading = false;
+  }
 };
 
 const onTogglePlans = toggle => {
@@ -1054,7 +1058,9 @@ const shouldShowPlanDetailsSection = computed(() => {
   const cutoffDate = new Date('2025-04-10T21:30:00+04:00');
   const str = page.props.quote.created_at;
 
-  const match = str.match(/(\d+)-([A-Za-z]+)-(\d+)\s+(\d+):(\d+)(am|pm)/i);
+  const match = str.match(
+    /^(\d{1,2})-([A-Za-z]{3,9})-(\d{4})\s+(\d{1,2}):(\d{2})(am|pm)$/i,
+  );
   if (!match) return false;
 
   const [_, day, monthStr, year, hour, min, ampm] = match;
@@ -1717,12 +1723,12 @@ const shouldShowPlanDetailsSection = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -1740,28 +1746,28 @@ const shouldShowPlanDetailsSection = computed(() => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
-                      placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      placeholder="SELECT INDUSTRY TYPE"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      placeholder="SELECT ENTITY TYPE"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="[
                         { label: 'Parent', value: 'Parent' },
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      placeholder="SELECT ENTITY TYPE"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>
@@ -2044,7 +2050,14 @@ const shouldShowPlanDetailsSection = computed(() => {
             </p>
           </div>
           <div v-else>
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
+              <x-spinner size="lg" />
+            </div>
             <DataTable
+              v-else
               v-model:items-selected="selectedPlans"
               table-class-name="tablefixed"
               :headers="availablePlansTable.columns"
@@ -2165,7 +2178,14 @@ const shouldShowPlanDetailsSection = computed(() => {
             show-close
             backdrop
           >
-            <LazyAvailablePlan :plan="planDetails" />
+            <LazyAvailablePlan
+              :plan="planDetails"
+              @onLoadAvailablePlansData="
+                () => {
+                  onLoadAvailablePlansData();
+                }
+              "
+            />
           </x-modal>
         </template>
       </Collapsible>
