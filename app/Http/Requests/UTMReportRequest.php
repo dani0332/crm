@@ -21,6 +21,11 @@ class UTMReportRequest extends FormRequest
      */
     public function rules(): array
     {
+
+        if (empty($this->all())) {
+            return [];
+        }
+
         return [
             'quote_type_id' => 'required',
             'group_by_one' => 'required',
