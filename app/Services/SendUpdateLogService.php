@@ -951,6 +951,7 @@ class SendUpdateLogService
             'insurance_provider_id' => $preparedDetailsForEndorsement['payment']->insurance_provider_id, // TODO:: Need to verify this field
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
             'code' => $sendUpdateRequest->quoteCode,
+            'send_update_log_id' => $sendUpdateLog?->id,
         ];
 
         // Handle TapPay insurer payment against credit card and if payment available in Send update then create Receipt
