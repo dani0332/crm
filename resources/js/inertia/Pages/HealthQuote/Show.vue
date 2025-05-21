@@ -869,7 +869,9 @@ const options = reactive({
 watch(
   () => planFilters?.insurer,
   value => {
-    if (value) {
+    console.log(value);
+    if (value && planFilters.insurer && planFilters.insurer.length > 0) {
+      planFilters.network = [];
       options.loading = true;
       const ids = planFilters.insurer.map(item => {
         return item;
@@ -879,15 +881,17 @@ watch(
         .get(url)
         .then(res => {
           if (res.data.length > 0) {
+            options.network.length = 0;
             options.network = useArrayUnique(
               res.data,
               (a, b) => a.value === b.value,
             );
           } else {
-            options.network = [];
+            options.network.length = 0;
           }
         })
         .catch(err => {
+          console.log(err);
           notification.error({
             title: 'Error!',
             position: 'top',
@@ -896,8 +900,11 @@ watch(
         .finally(() => {
           options.loading = false;
         });
+    } else {
+      options.network.length = 0;
     }
   },
+  { deep: true },
 );
 
 const listQuotePlansFiltered = ref([]);
