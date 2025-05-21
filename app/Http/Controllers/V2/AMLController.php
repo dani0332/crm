@@ -358,8 +358,8 @@ class AMLController extends Controller
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
                     app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
-                    if (! empty(request()->complianceComment)) {
-                        app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComment);
+                    if (! empty(request()->complianceComponent)) {
+                        app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComponent);
                     }
                 }
 

@@ -51,7 +51,7 @@ const passingDecisions = [
   props.amlDecisionStatusCode.TRUE_MATCH_ACCEPT_RISK,
 ];
 
-const complianceComment = reactive({
+const complianceComponent = reactive({
   insured_id: props.insured?.id ?? null,
   customer_id: props.customerId ?? null,
   pep: props.insured?.insured_kyc?.pep ?? null,
@@ -130,7 +130,7 @@ function submitDecision(decision) {
           aml_decision: decision,
           decisonsForUpdatePortal: [JSON.stringify(decisionSelected.value)],
           result_id: JSON.parse(props.aml.results)[0].ResultID,
-          complianceComment: complianceComment,
+          complianceComponent: complianceComponent,
         },
       })
       .then(response => {
@@ -565,7 +565,7 @@ function fieldValidationsperson() {
       <x-label>Is the customer a PEP?</x-label>
       <div class="grid md:grid-cols-2 mb-4 mt-2">
         <x-select
-          v-model="complianceComment.pep"
+          v-model="complianceComponent.pep"
           :options="[
             { value: 1, label: 'Yes' },
             { value: 2, label: 'No' },
@@ -582,7 +582,7 @@ function fieldValidationsperson() {
       </x-label>
       <div class="grid md:grid-cols-2 mb-4 mt-2">
         <x-select
-          v-model="complianceComment.financial_sanctions"
+          v-model="complianceComponent.financial_sanctions"
           :options="[
             { value: 1, label: 'Yes' },
             { value: 2, label: 'No' },
@@ -596,7 +596,7 @@ function fieldValidationsperson() {
       <x-label>Does the customer have dual nationality?</x-label>
       <div class="grid md:grid-cols-2 mb-4 mt-2">
         <x-select
-          v-model="complianceComment.dual_nationality"
+          v-model="complianceComponent.dual_nationality"
           :options="[
             { value: 1, label: 'Yes' },
             { value: 2, label: 'No' },
@@ -611,7 +611,7 @@ function fieldValidationsperson() {
       <x-label v-else>Does the Company name or Subsidiary/Affiliate entities feature in any sanction list?</x-label>
       <div class="grid md:grid-cols-2 mb-4 mt-2">
         <x-select
-          v-model="complianceComment.in_sanction_list"
+          v-model="complianceComponent.in_sanction_list"
           :options="[
             { value: 1, label: 'Yes' },
             { value: 2, label: 'No' },
@@ -626,7 +626,7 @@ function fieldValidationsperson() {
       <x-label v-else>Does the customer intend to deal with any country listed in the Sanctions List?</x-label>
       <div class="grid md:grid-cols-2 mb-4 mt-2">
         <x-select
-          v-model="complianceComment.deal_sanction_list"
+          v-model="complianceComponent.deal_sanction_list"
           :options="[
             { value: 1, label: 'Yes' },
             { value: 2, label: 'No' },
@@ -641,7 +641,7 @@ function fieldValidationsperson() {
       <x-label v-else>Do the customer or subsidiary/ affiliate entities have operations in any High-Risk Countries?</x-label>
       <div class="grid md:grid-cols-2 mb-4 mt-2">
         <x-select
-          v-model="complianceComment.is_operation_high_risk"
+          v-model="complianceComponent.is_operation_high_risk"
           :options="[
             { value: 1, label: 'Yes' },
             { value: 2, label: 'No' },
@@ -656,7 +656,7 @@ function fieldValidationsperson() {
         <x-label>Is the Natural Person an Owner/Shareholder/Partner in any Organization?</x-label>
         <div class="grid md:grid-cols-2 mb-4 mt-2">
           <x-select
-            v-model="complianceComment.is_partner"
+            v-model="complianceComponent.is_partner"
             :options="[
               { value: 1, label: 'Yes' },
               { value: 2, label: 'No' },
@@ -672,7 +672,7 @@ function fieldValidationsperson() {
         <x-label>Is There A Sanction Match On The Owner/Partners/Bod, Senior Management, Group Company, Holding Company Or Related Company Names?</x-label>
         <div class="grid md:grid-cols-2 mb-4 mt-2">
           <x-select
-            v-model="complianceComment.is_sanction_match"
+            v-model="complianceComponent.is_sanction_match"
             :options="[
               { value: 1, label: 'Yes' },
               { value: 2, label: 'No' },
@@ -686,7 +686,7 @@ function fieldValidationsperson() {
         <x-label>Does the company have any subsidiary, affiliate, branch, or group/holding company in FATF-listed high-risk monitored jurisdiction?</x-label>
         <div class="grid md:grid-cols-2 mb-4 mt-2">
           <x-select
-            v-model="complianceComment.in_fatf"
+            v-model="complianceComponent.in_fatf"
             :options="[
               { value: 1, label: 'Yes' },
               { value: 2, label: 'No' },
@@ -700,7 +700,7 @@ function fieldValidationsperson() {
         <x-label>Is the owner/ Shareholder/ Partner/Director of the company from High-Risk countries?</x-label>
         <div class="grid md:grid-cols-2 mb-4 mt-2">
           <x-select
-            v-model="complianceComment.is_owner_high_risk"
+            v-model="complianceComponent.is_owner_high_risk"
             :options="[
               { value: 1, label: 'Yes' },
               { value: 2, label: 'No' },
@@ -717,7 +717,7 @@ function fieldValidationsperson() {
         <template v-if="!isScreeningIndividual">
           <x-field label="Transaction Volume">
             <x-select
-              v-model="complianceComment.transaction_volume"
+              v-model="complianceComponent.transaction_volume"
               :options="transactionVolumeOptions"
               placeholder="Transaction Volume"
               class="w-full"
@@ -727,7 +727,7 @@ function fieldValidationsperson() {
           </x-field>
           <x-field label="Transaction Activities">
             <x-select
-              v-model="complianceComment.transaction_activities"
+              v-model="complianceComponent.transaction_activities"
               :options="transactionActivitiesOptions"
               placeholder="Transaction Activities"
               class="w-full"
@@ -738,7 +738,7 @@ function fieldValidationsperson() {
         </template>
         <x-field label="Transaction Pattern Changes">
           <x-select
-            v-model="complianceComment.transaction_pattern"
+            v-model="complianceComponent.transaction_pattern"
             :options="transactionPatternOptions"
             placeholder="Transaction Pattern Changes"
             class="w-full"
