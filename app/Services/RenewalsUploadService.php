@@ -1292,7 +1292,9 @@ class RenewalsUploadService
             $selectResponse = $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id);
             LoggerService::info('Renewal: Health Plan Modify V2 Response ', ['selectResponse' => $selectResponse], ['ref_id' => $quote->uuid, 'premium' => $quote->premium]);
             if ($selectResponse->totalPremium && ($data['payment_link'] != '' || $data['payment_link'] != null)) {
-                $this->createHealthPayment($quote, $data, $selectResponse->totalPremium);
+                $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
+                $premium = isset($ecomDetails['priceWithVAT']) ? $ecomDetails['priceWithVAT'] : $selectResponse->totalPremium;
+                $this->createHealthPayment($quote, $data, $premium);
             }
         }
 
@@ -1463,6 +1465,7 @@ class RenewalsUploadService
     {
         $payment = $quote->payments()->latest()
             ->first();
+        LoggerService::info('Renewal: Health Payment total premium: '.$totalPremium);
         $newRequest = new StorePaymentRequest;
         $newRequest->user = auth()->user();
         $quoteType = QuoteTypes::HEALTH->value;
