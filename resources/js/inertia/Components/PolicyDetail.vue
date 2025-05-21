@@ -35,7 +35,6 @@ const props = defineProps({
     default: false,
   },
 });
-console.log('showOcrNotification', props.showOcrNotification);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useNotifications('toast');
@@ -488,7 +487,6 @@ const calculateTotalPrice = () => {
   policyDetailsForm.amount_with_vat = amountWithVat;
   policyDetailsForm.vat = vat;
 };
-
 </script>
 
 <template>
@@ -507,12 +505,13 @@ const calculateTotalPrice = () => {
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Policy Number <span class="text-red-500">*</span></label
+                    >Policy Number {{ showOcrNotification ? ' (Loading)' : ''
+                    }}<span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
-                    <span>{{
-                      productionProcessTooltipEnum.POLICY_NUMBER
-                    }}</span>
+                    <span
+                      >{{ productionProcessTooltipEnum.POLICY_NUMBER }}
+                    </span>
                   </template>
                 </x-tooltip>
                 <x-input

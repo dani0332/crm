@@ -1389,7 +1389,6 @@ onMounted(() => {
     getFollowUpsByQuote();
   }
   window.addEventListener('ocr-notification', handleOcrNotification);
-  
 });
 onUnmounted(() => {
   window.removeEventListener('ocr-notification', handleOcrNotification);
@@ -1735,7 +1734,6 @@ function handleOcrNotification(e) {
   if (status === 'start') ocrLoading.value = true;
   else if (status === 'end' || status === 'fail') ocrLoading.value = false;
 }
-
 </script>
 
 <template>
@@ -3953,7 +3951,7 @@ function handleOcrNotification(e) {
       :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
       :payments="payments"
-      :showOcrNotification="ocrLoading.value"
+      :showOcrNotification="ocrLoading"
     />
 
     <QuoteDocument
