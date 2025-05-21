@@ -4,26 +4,22 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Exports\BuyLeadsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BuyLeads\BuyLeadsRateFetchRequest;
 use App\Http\Requests\BuyLeads\RequestBuyLeadsRequest;
 use App\Services\BuyLeads\BuyLeadService;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use App\Exports\BuyLeadsExport;
 use App\Services\Logger\LoggerService;
-use Illuminate\Support\Facades\Storage;
-use Maatwebsite\Excel\Facades\Excel;
-use ZipArchive;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BuyLeadController extends Controller
 {
     public function __construct(public BuyLeadService $buyLeadService)
     {
-        $this->middleware('permission:' . PermissionsEnum::BUY_LEADS, ['only' => ['show', 'tracking']]);
-        $this->middleware('permission:' . PermissionsEnum::BUY_LEADS_EXPORT, ['only' => ['export', 'exportBuyLeadsData']]);
+        $this->middleware('permission:'.PermissionsEnum::BUY_LEADS, ['only' => ['show', 'tracking']]);
+        $this->middleware('permission:'.PermissionsEnum::BUY_LEADS_EXPORT, ['only' => ['export', 'exportBuyLeadsData']]);
     }
 
     public function fetchRate(BuyLeadsRateFetchRequest $request)
@@ -45,7 +41,7 @@ class BuyLeadController extends Controller
 
     public function show()
     {
-        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
         $data['requests'] = $this->buyLeadService->getTodaysRequests();
 
         return inertia('BuyLeads/BuyLeadsRequest', $data);
@@ -63,7 +59,7 @@ class BuyLeadController extends Controller
     public function tracking()
     {
         $quoteType = QuoteTypes::tryFrom(request()->get('quote_type'));
-        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
+        $data['lobs'] = collect(QuoteTypes::withLabels())->filter(fn ($type) => in_array($type['value'], [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value]))->values()->toArray();
         [$startDate, $endDate] = request('date');
 
         if ($quoteType && $startDate && $endDate) {
@@ -161,7 +157,7 @@ class BuyLeadController extends Controller
                     ->where('blr.quote_type_id', '=', 3);
             })
             ->leftJoin('quote_status as qs', function ($join) {
-                $join->on('qs.id', '=', DB::raw("CASE WHEN blr.quote_type_id = 1 THEN cqr.quote_status_id WHEN blr.quote_type_id = 3 THEN hqr.quote_status_id ELSE NULL END"));
+                $join->on('qs.id', '=', DB::raw('CASE WHEN blr.quote_type_id = 1 THEN cqr.quote_status_id WHEN blr.quote_type_id = 3 THEN hqr.quote_status_id ELSE NULL END'));
             })
             ->whereBetween('blrl.created_at', [$startDate, $endDate])
             ->groupBy('blrl.quote_id', 'blrl.quote_type_id')
@@ -174,8 +170,8 @@ class BuyLeadController extends Controller
         $file1 = "buy_leads_summary_{$start}_{$end}.xlsx";
         $file2 = "buy_leads_detailed_{$start}_{$end}.xlsx";
         // Create ZIP using robust logic (mirroring CentralController)
-        $zipFileName = 'buy_leads_export_' . now()->format('Ymd_His') . '.zip';
-        $zipFilePath = storage_path('temp/' . $zipFileName);
+        $zipFileName = 'buy_leads_export_'.now()->format('Ymd_His').'.zip';
+        $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new \ZipArchive;
 
         if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
@@ -198,7 +194,7 @@ class BuyLeadController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Error processing exports: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Error processing exports: '.$e->getMessage()], 500);
         }
 
         $zip->close();

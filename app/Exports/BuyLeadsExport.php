@@ -20,16 +20,13 @@ class BuyLeadsExport implements FromCollection, WithHeadings, WithMapping, WithS
     use Exportable;
 
     protected $type;
-    /**
-     * @var Collection
-     */
+
     protected Collection $data;
 
     /**
      * Constructor
      *
-     * @param Collection|array $data
-     * @param string|null $type
+     * @param  Collection|array  $data
      */
     public function __construct($data, ?string $type = null)
     {
@@ -39,8 +36,6 @@ class BuyLeadsExport implements FromCollection, WithHeadings, WithMapping, WithS
 
     /**
      * Return the collection for export
-     *
-     * @return Collection
      */
     public function collection(): Collection
     {
@@ -50,8 +45,6 @@ class BuyLeadsExport implements FromCollection, WithHeadings, WithMapping, WithS
 
     /**
      * Define the Excel headings
-     *
-     * @return array
      */
     public function headings(): array
     {
@@ -81,14 +74,14 @@ class BuyLeadsExport implements FromCollection, WithHeadings, WithMapping, WithS
                 'Log Created At',
             ];
         }
+
         return [];
     }
 
     /**
      * Map each row for export
      *
-     * @param object $row
-     * @return array
+     * @param  object  $row
      */
     public function map($row): array
     {
@@ -118,6 +111,7 @@ class BuyLeadsExport implements FromCollection, WithHeadings, WithMapping, WithS
                 $row->created_at ?? '',
             ];
         }
+
         return [];
     }
-} 
+}
