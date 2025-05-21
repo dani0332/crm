@@ -5799,7 +5799,7 @@ onBeforeMount(() => {
               v-if="isInsurerReceiptNumberExistsModalOpen"
             >
               <div
-                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+                class="modal-confirm-container receipt-number-exists-modal-container bg-white w-full max-w-full overflow-hidden rounded-lg"
               >
                 <div class="modal-confirm-header text-base text-white bg-white">
                   <div
@@ -5837,7 +5837,7 @@ onBeforeMount(() => {
                     class="text-lg font-semibold px-6 py-4 border-b flex justify-between items-start"
                   >
                     <div class="text-left text-md">
-                      <span> 
+                      <span class="text-sm"> 
                         The insurer receipt number you entered already exists in the system.
                         Do you want to proceed with using the same receipt number again?
                       </span
@@ -6412,5 +6412,9 @@ onBeforeMount(() => {
 .manage-payment-table-parent-div::-webkit-scrollbar {
   width: 6px;
   background-color: #c1c1c1;
+}
+.receipt-number-exists-modal-container {
+  max-height: 270px;
+  max-width: 630px;
 }
 </style>
