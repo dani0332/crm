@@ -597,7 +597,7 @@ class QuoteDocumentService extends BaseService
 
         // Simple check - if file doesn't exist or is too small, try Ghostscript
         if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
-            LoggerService::error("PDFtk background failed, trying Ghostscript for UUID: $uuid");
+            LoggerService::info("PDFtk background failed, trying Ghostscript for UUID: $uuid - Output: ".(empty($output) ? 'No output' : implode("\n", $output)));
             $this->ghostscriptWatermark($sourceFilePath, $outputPath, $uuid);
         }
 
