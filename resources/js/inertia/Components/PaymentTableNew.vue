@@ -267,23 +267,22 @@ const isisUpfrontFrequency = computed(
 
 const isPaymentAuthorized = computed(() => {
   const payments = props.payments;
-   if(payments.length > 0) {
-     const notPaidStatusIds = [
-       paymentStatusEnum.AUTHORISED,
-       paymentStatusEnum.PARTIALLY_PAID,
-       paymentStatusEnum.PARTIAL_CAPTURED
-     ];
-     const hasNotPaidPayments = payments.some(payment =>
-       notPaidStatusIds.includes(payment.payment_status_id)
-     );
-     if (hasNotPaidPayments) {
-       return payments.some(payment =>
-         payment.payment_splits.some(item => item.payment_method.code === 'CC')
-       );
-     }
-
+  if (payments.length > 0) {
+    const notPaidStatusIds = [
+      paymentStatusEnum.AUTHORISED,
+      paymentStatusEnum.PARTIALLY_PAID,
+      paymentStatusEnum.PARTIAL_CAPTURED,
+    ];
+    const hasNotPaidPayments = payments.some(payment =>
+      notPaidStatusIds.includes(payment.payment_status_id),
+    );
+    if (hasNotPaidPayments) {
+      return payments.some(payment =>
+        payment.payment_splits.some(item => item.payment_method.code === 'CC'),
+      );
+    }
   }
-  return false
+  return false;
 });
 const isCustomFrequency = computed(
   () => paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM,
@@ -3516,7 +3515,9 @@ onBeforeMount(() => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <Toasty v-if="isPaymentAuthorized">Payment is authorised. Please capture the payment</Toasty>
+    <Toasty v-if="isPaymentAuthorized"
+      >Payment is authorised. Please capture the payment</Toasty
+    >
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex justify-between items-center">
