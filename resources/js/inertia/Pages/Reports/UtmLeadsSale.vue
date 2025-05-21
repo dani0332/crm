@@ -112,7 +112,6 @@ onMounted(() => {
   setQueryStringFilters();
 });
 
-
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
     value: status.id,
@@ -124,7 +123,7 @@ function exportToExcel() {
   Object.keys(filters).forEach(
     key => filters[key] === '' && delete filters[key],
   );
-  
+
   window.location.href = route('utm-report-export', filters);
 }
 </script>
@@ -161,7 +160,6 @@ function exportToExcel() {
           :rules="[isRequired]"
         />
 
-
         <x-select
           v-model="filters.group_by_one"
           label="Group by One"
@@ -173,9 +171,8 @@ function exportToExcel() {
             { value: 'utm_campaign', label: 'UTM Campaign' },
           ]"
         >
-        <template #content-footer>
+          <template #content-footer>
             <div class="p-2">
-              
               <x-button
                 size="xs"
                 block
@@ -185,11 +182,10 @@ function exportToExcel() {
               >
                 Clear Selection
               </x-button>
-          </div>
-
+            </div>
           </template>
         </x-select>
-        
+
         <x-select
           v-model="filters.group_by_two"
           label="Group by Two"
@@ -201,29 +197,29 @@ function exportToExcel() {
           ]"
         >
           <template #content-footer>
-              <div class="p-2">
-                
-                <x-button
-                  size="xs"
-                  block
-                  light
-                  color="red"
-                  @click="filters.group_by_two = ''"
-                >
-                  Clear Selection
-                </x-button>
+            <div class="p-2">
+              <x-button
+                size="xs"
+                block
+                light
+                color="red"
+                @click="filters.group_by_two = ''"
+              >
+                Clear Selection
+              </x-button>
             </div>
-
-            </template>
+          </template>
         </x-select>
-
-        
-        
       </div>
 
       <div class="flex justify-between gap-3 mb-4">
         <div>
-          <x-button size="sm" color="success" @click.prevent="exportToExcel" :disabled="!reportData || reportData.length === 0">
+          <x-button
+            size="sm"
+            color="success"
+            @click.prevent="exportToExcel"
+            :disabled="!reportData || reportData.length === 0"
+          >
             Export
           </x-button>
         </div>
