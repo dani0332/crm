@@ -566,7 +566,7 @@ class QuoteDocumentService extends BaseService
     {
 
         // Create a simple watermark PDF
-        $watermarkPdf = storage_path('temp/watermark_'.$docName.'.pdf');
+        $watermarkPdf = storage_path('temp/watermark_'.$docName);
         $fpdf = new Fpdi;
         $fpdf->AddPage();
         $fpdf->Image(public_path('images/watermark1.png'), 0, 0, $fpdf->GetPageWidth(), $fpdf->GetPageHeight());
@@ -598,7 +598,7 @@ class QuoteDocumentService extends BaseService
         // Simple check - if file doesn't exist or is too small, try Ghostscript
         if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
             LoggerService::info("PDFtk background failed, trying Ghostscript for UUID: $uuid - Output: ".(empty($output) ? 'No output' : implode("\n", $output)));
-            $this->ghostscriptWatermark($sourceFilePath, $outputPath, $uuid);
+            $this->ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid);
         }
 
         // Clean up the watermark file
@@ -619,10 +619,10 @@ class QuoteDocumentService extends BaseService
      * @param  string  $uuid  Document UUID
      * @return void
      */
-    private function ghostscriptWatermark($sourceFilePath, $outputPath, $uuid)
+    private function ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid)
     {
         // Create a new watermark PDF for Ghostscript with even higher transparency
-        $watermarkPdfGs = storage_path('temp/watermark_gs_'.uniqid().$uuid.'.pdf');
+        $watermarkPdfGs = storage_path('temp/watermark_gs_'.$docName);
         $fpdfGs = new Fpdi;
         $fpdfGs->AddPage();
         $fpdfGs->Image(public_path('images/watermark1.png'), 0, 0, $fpdfGs->GetPageWidth(), $fpdfGs->GetPageHeight());
