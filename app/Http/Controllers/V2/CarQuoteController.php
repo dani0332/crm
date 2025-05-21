@@ -15,11 +15,15 @@ use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
 use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CarQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -61,8 +65,8 @@ class CarQuoteController extends Controller
             $personalQuotes = CarQuoteRepository::getData()->withQueryString();
         }
 
-        $advisors = CarQuoteRepository::getAdvisors();
-        $quoteBatches = QuoteBatches::get();
+        $advisors = Cache::remember('car_quote_advusors', now()->addMinutes(5), fn () => CarQuoteRepository::getAdvisors());
+        $quoteBatches = Cache::remember('quote_batches', now()->addHour(), fn () => QuoteBatches::get());
 
         return inertia('CarQuote/Index', [
             'quotes' => $personalQuotes,

@@ -76,7 +76,7 @@ class YachtQuoteController extends Controller
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('YachtQuote/Index', [
-            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
+            'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'renewalBatches' => $renewalBatches,

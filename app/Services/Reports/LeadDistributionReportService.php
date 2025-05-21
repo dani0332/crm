@@ -3,6 +3,8 @@
 namespace App\Services\Reports;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\CarRegistrationType;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
@@ -55,6 +57,8 @@ class LeadDistributionReportService extends BaseService
             'page' => $request->page,
             'tiers' => $request->tiers,
             'isCommercial' => $request->isCommercial,
+            'registration_type' => $request->registration_type,
+            'vehicle_use' => $request->vehicle_use,
         ];
     }
 
@@ -185,10 +189,10 @@ class LeadDistributionReportService extends BaseService
                 });
             })
             ->when($lob === quoteTypeCode::GroupMedical, function ($q) {
-                $q->where('business_type_of_insurance_id', 5); // 5 is the id for group medical
+                $q->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
             ->when($lob === quoteTypeCode::CORPLINE, function ($q) {
-                $q->where('business_type_of_insurance_id', '!=', 5); // other than 5 is the id for corpline
+                $q->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
             })
             ->groupBy('teams.name')
             ->orderBy('teams.name');
@@ -318,6 +322,12 @@ class LeadDistributionReportService extends BaseService
             })
             ->when(isset($filters->isCommercial) && $filters->isCommercial !== 'All', function ($q) use ($filters) {
                 $q->where('car_model.is_commercial', $filters->isCommercial === 'true');
+            })
+            ->when(isset($filters->registration_type) && $filters->registration_type !== 'All', function ($q) use ($filters) {
+                $q->where('car_quote_request.registration_type', $filters->registration_type);
+            })
+            ->when(isset($filters->vehicle_use) && $filters->vehicle_use !== 'All' && $filters->registration_type == CarRegistrationType::COMPANY, function ($q) use ($filters) {
+                $q->where('car_quote_request.vehicle_use', $filters->vehicle_use);
             })
             ->when(! empty($filters->sic_advisor_requested) && $filters->sic_advisor_requested !== 'All', function ($q) use ($filters) {
                 $q->where('car_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);

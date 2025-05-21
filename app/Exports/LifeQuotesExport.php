@@ -9,9 +9,9 @@ class LifeQuotesExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams)
     {
-        return LifeQuoteRepository::exportData();
+        return LifeQuoteRepository::exportData($requestParams);
     }
 
     public function headings(): array
@@ -23,6 +23,7 @@ class LifeQuotesExport
             'LEAD STATUS',
             'ADVISOR',
             'CREATED DATE',
+            'ADVISOR ASSIGNED DATE',
             'LAST MODIFIED DATE',
             'TRANSAPP CODE',
             'PREMIUM',
@@ -48,6 +49,7 @@ class LifeQuotesExport
             optional($quote->quoteStatus)->text ?? '',
             optional($quote->advisor)->name,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            isset($quote->lifeQuoteRequestDetail->advisor_assigned_date) ? date(config('constants.datetime_format'), strtotime($quote->lifeQuoteRequestDetail->advisor_assigned_date)) : '',
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->transapp_code,
             $quote->premium ? $quote->premium : $quote->price_with_vat,

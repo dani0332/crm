@@ -31,6 +31,7 @@ class UpdateToCustomerRequest extends FormRequest
             'paymentValidated' => 'boolean',
             'inslyMigrated' => 'boolean',
             'isEmailSent' => 'boolean',
+            'quoteCode' => 'sometimes',
         ];
 
         if (isset($this->action) && $this->action == SendUpdateLogStatusEnum::ACTION_SNBU) {

@@ -32,11 +32,9 @@ class AMLCheckRequest extends FormRequest
                 'insured_last_name' => 'required|max:200',
             ];
 
-            if ($this->quote_type == QuoteTypes::CAR->value) {
-                $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
+            if (in_array($this->quote_type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value, QuoteTypes::HOME->value])) {
                 $rules['get_quote_email_gig'] = 'nullable|email:rfc,dns';
             }
-
         }
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {
@@ -50,6 +48,12 @@ class AMLCheckRequest extends FormRequest
             ];
         }
 
+        $rules['customer_type'] = 'required|string';
+
+        if ($this->quote_type == QuoteTypes::CAR) {
+            $rules['chassis_number'] = 'required|string|min:8|max:17|regex:/^[a-zA-Z0-9]+$/';
+        }
+
         return $rules;
     }
 
@@ -57,6 +61,7 @@ class AMLCheckRequest extends FormRequest
     {
         return [
             'chassis_number' => 'The entered value does not meet the required length of 8 to 17 characters. Please check and confirm',
+            'get_quote_email_gig' => 'Email in GIG portal must be a valid email address',
         ];
     }
 }

@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AIGWorkflowRequest;
+use App\Http\Requests\Api\ClearCacheRequest;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\BirdOutBoundWebhookRequest;
 use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\EmailEventsRequest;
@@ -18,14 +22,20 @@ use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
+use App\Jobs\HomeSyncSALJob;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
+use App\Models\Payment;
 use App\Models\QuoteFlowDetails;
+use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
 use App\Services\BirdService;
+use App\Services\Cache\CacheManager;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
+use App\Services\OutboundEmailsHookService;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -40,13 +50,15 @@ class ApiController extends Controller
 
     public $apiService;
     public $inboundEmailsHookService;
+    public $outboundEmailsHookService;
     protected $emailStatusService;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService, OutboundEmailsHookService $outboundEmailsHookService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
         $this->emailStatusService = $emailStatusService;
+        $this->outboundEmailsHookService = $outboundEmailsHookService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -233,5 +245,90 @@ class ApiController extends Controller
     public function Ken2Connectivity()
     {
         return Ken::renewalRequest('/get-connectivity-check', 'get');
+    }
+
+    public function birdOutboundEmailsHook(BirdOutBoundWebhookRequest $request)
+    {
+        return $this->outboundEmailsHookService->handleOutboundEmailsHook($request);
+    }
+    public function duplicateEntries()
+    {
+        return DeDuplicateQuoteDetailScript::run();
+    }
+
+    public function markAutoCaptureFailed($quoteUuid, $quoteType)
+    {
+        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' - Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType);
+
+        $quote = $this->getQuoteObject($quoteType, $quoteUuid);
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->with('paymentSplits')->first();
+        }
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+        if ($insuranceProvider) {
+            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.', Insurance Provider: '.$insuranceProvider->code.' - Update statuses and lead allocate');
+            $insuranceProviderAutomation = (new PolicyIssuanceService)->init($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation?->updateQuoteApiIssuanceStatusAndAllocate($quote, PolicyIssuanceEnum::AUTO_CAPTURE_FAILED_STATUS_ID, PolicyIssuanceEnum::POLICY_ISSUANCE_API_STATUS_NO_ID);
+            info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.', Insurance Provider: '.$insuranceProvider->code.' - Statuses updated and allocation triggered');
+
+            return response()->json(['status' => true, 'message' => 'Insurer and API Issuance statuses updated and Lead allocation is triggered successfully']);
+        }
+
+        info('class:'.basename(self::class).' fn:'.__FUNCTION__.' Quote UUID: '.$quoteUuid.', Quote Type: '.$quoteType.',  Insurance Provider: '.$insuranceProvider?->code.' - Status update and allocation failed');
+
+        return response()->json(['success' => false, 'message' => 'Failed to update Insurer and API Issuance statuses and lead allocation!']);
+    }
+
+    public function homeSyncSAL(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required|string', // Ensure quoteUID is present
+        ]);
+
+        Log::info('Received request to sync SAL data.', ['quoteUID' => $request->quoteUID]);
+
+        try {
+            HomeSyncSALJob::dispatch($request->all());
+
+            Log::info('SAL sync job dispatched.', ['quoteUID' => $request->quoteUID]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'SAL sync job has been queued.',
+                'quoteUID' => $request->quoteUID,
+            ], 202);
+        } catch (\Exception $e) {
+            Log::error('SAL sync failed.', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'quoteUID' => $request->quoteUID,
+                'request' => $request->all(),
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while syncing SAL data.',
+                'error_details' => $e->getMessage(),
+                'quoteUID' => $request->quoteUID,
+            ], 500);
+        }
+    }
+
+    public function forgetCache(ClearCacheRequest $request)
+    {
+        CacheManager::forget($request->getKey());
+
+        return apiResponse(null, Response::HTTP_OK, 'Cache cleared successfully');
+    }
+
+    public function triggerAIGWorkflow(AIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerAIGWorkflow($request);
     }
 }

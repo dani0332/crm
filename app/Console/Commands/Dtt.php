@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -70,18 +69,6 @@ class Dtt extends Command
             LeadSourceEnum::TM_ORGANIC, LeadSourceEnum::TM_RENEWALS, LeadSourceEnum::TM_SP_RENEWAL, LeadSourceEnum::TM_WHATSAPP, LeadSourceEnum::TPL_COMP, LeadSourceEnum::TPL_Renewal, LeadSourceEnum::TPL_RENEWALS, LeadSourceEnum::TRAVEL_INSURANCEMARKET_AE, LeadSourceEnum::WALK_IN_CLIENT, LeadSourceEnum::WEB,
         ];
 
-        $excludePaymentStatuses = [
-            PaymentStatusEnum::CAPTURED,
-            PaymentStatusEnum::PAID,
-            PaymentStatusEnum::PARTIAL_CAPTURED,
-            PaymentStatusEnum::PARTIALLY_PAID,
-        ];
-
-        $excludeAmlStatuses = [
-            AMLStatusCode::AMLScreeningCleared,
-            AMLStatusCode::AMLScreeningFailed,
-        ];
-
         $jobs = [];
         $logPrefix = 'CarRevivalLeadsCreationJob -';
         $leads = CarQuote::select(
@@ -126,10 +113,7 @@ class Dtt extends Command
 
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
 
-            ->where(function ($query) use ($excludePaymentStatuses, $excludeAmlStatuses) {
-                $query->whereIn('aml_status', $excludeAmlStatuses)
-                    ->whereNotIn('payment_status_id', $excludePaymentStatuses);
-            })
+            ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
 
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
             ->get();

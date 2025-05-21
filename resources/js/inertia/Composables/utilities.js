@@ -11,7 +11,8 @@ export const useCleanObj = reactive => {
       reactive[key] === undefined ||
       reactive[key] === '' ||
       reactive[key] === false ||
-      reactive[key].length === 0
+      reactive[key].length === 0 ||
+      (typeof reactive[key] === 'string' && reactive[key].trim() === '')
     ) {
       delete reactive[key];
     }
@@ -45,7 +46,7 @@ export const useGetShowPageRoute = (
 
   const routesObj = {
     1: route('car.show', uuid),
-    2: route('home.show', uuid),
+    2: route('home-quotes-show', uuid),
     3: route('health.show', uuid),
     4: route('life-quotes-show', uuid),
     5: business_route,
@@ -338,11 +339,11 @@ export function getQuoteType(id, returnType = 'code') {
   return types[id] ? types[id][returnType] : '';
 }
 
-export function buildCdbidLink(quote_uuid, quote_type_id) {
+export function buildCdbidLink(quote_uuid, quote_type_id, customLabel = null) {
   if (quote_uuid) {
     const url = `${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${quote_uuid}`;
     const CDBID = `${getQuoteType(quote_type_id, 'code')}-${quote_uuid.toUpperCase()}`;
-    return `<a target="_blank" class="text-primary-500 hover:underline flex items-center space-x-1" href="${url}">${CDBID}</a>`;
+    return `<a target="_blank" class="text-primary-500 hover:underline flex items-center space-x-1" href="${url}">${customLabel || CDBID}</a>`;
   } else {
     return '';
   }
@@ -373,14 +374,26 @@ export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
   return axios
     .post('/quotes/export-logs/create', payload)
-    .then(res => {
-      return res.data.success;
+    .then(async res => {
+      const exportResponse = await axios
+        .get(payload.url)
+        .then(resp => {
+          return resp.data;
+        })
+        .catch(err => {
+          throw err;
+        });
+      res.data.message = exportResponse.message;
+      return res;
     })
     .catch(err => {
       throw err;
     })
     .finally(() => {
-      window.open(payload.url);
+      // Cleanup operations if needed
+      if (payload.exportType !== 'email') {
+        window.open(payload.url);
+      }
     });
 };
 
@@ -433,6 +446,7 @@ export const validateField = (form, fieldValue, errorField, validationRule) => {
     return true;
   }
 };
+
 export const applyEmiratesNumberMasking = emiratesId => {
   let emiratesIDNumber = emiratesId.replace(/\D/g, '');
   if (emiratesIDNumber?.length > 15) {
@@ -458,4 +472,11 @@ export const applyEmiratesNumberMasking = emiratesId => {
   }
 
   return emiratesIDNumber;
+};
+
+export const useGenerateOptions = (items, valueKey, labelKey) => {
+  return items.map(item => ({
+    value: item[valueKey],
+    label: item[labelKey],
+  }));
 };

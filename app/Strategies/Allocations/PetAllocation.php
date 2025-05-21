@@ -2,9 +2,11 @@
 
 namespace App\Strategies\Allocations;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 
 class PetAllocation extends BaseAllocation
 {
@@ -14,25 +16,27 @@ class PetAllocation extends BaseAllocation
         return null;
     }
 
-    private function findEligibleAdvisor(array $statusOrder, $role)
+    private function findEligibleAdvisor(array $statusOrder, $role, $emails = [])
     {
         foreach ($statusOrder as $status) {
-            info(self::class." - trying to get {$role} with current status: {$status}");
-            $eligibleUser = $this->getAdvisorBaseQuery($status, [$role])->first();
+            LoggerService::info(self::class." - trying to get {$role} with current status: {$status}");
+            $eligibleUser = $this->getAdvisorBaseQuery($status, [$role])->whereIn('users.email', $emails)->first();
 
             if ($eligibleUser) {
-                info(self::class." - eligible {$role} found with status: {$status}, user id: {$eligibleUser->user_id}");
+                LoggerService::info(self::class." - eligible {$role} found with status: {$status}, user id: {$eligibleUser->user_id}");
 
                 return User::find($eligibleUser->user_id);
             }
         }
+
+        LoggerService::info(self::class." - no eligible {$role} found for the given status order.");
 
         return null;
     }
 
     public function fetchAvailableAdvisor($isReassignmentJob = false)
     {
-        info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$this->teamId}");
+        LoggerService::info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$this->teamId}");
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
@@ -43,11 +47,14 @@ class PetAllocation extends BaseAllocation
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
-        if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor)) {
+        $petAdvisorEmails = $this->getAdvisorEmails(ApplicationStorageEnums::PET_ADVISORS);
+        if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor, $petAdvisorEmails)) {
             return $advisor;
         }
 
         // If no pet advisor, find home advisor
-        return $this->findEligibleAdvisor($statusOrder, RolesEnum::HomeAdvisor);
+        $homeAdvisorEmails = $this->getAdvisorEmails(ApplicationStorageEnums::HOME_ADVISORS_FOR_PET);
+
+        return $this->findEligibleAdvisor($statusOrder, RolesEnum::HomeAdvisor, $homeAdvisorEmails);
     }
 }

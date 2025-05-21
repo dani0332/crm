@@ -7,11 +7,14 @@ const props = defineProps({
   fieldDisable: Boolean,
 });
 
+const { maxSelections } = useRules();
 const loaders = reactive({
   table: false,
 });
 const notification = useToast();
 const page = usePage();
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 
 // const { isRequired } = useRules();
 
@@ -26,6 +29,8 @@ const filters = reactive({
   selectedAdvisor: '',
   userIds: [],
   statusId: [],
+  registration_type: 'All',
+  vehicle_use: 'All',
   page: 1,
 });
 
@@ -217,6 +222,8 @@ watch(
   newQuoteType => {
     if (newQuoteType) {
       onSubmit(true);
+      filters.registration_type = 'All';
+      filters.vehicle_use = 'All';
     }
   },
 );
@@ -228,6 +235,30 @@ onMounted(() => {
     filters.selectedAdvisor = data[0].value;
   }
 });
+
+const isCarLob = computed(() => {
+  return filters.quoteType === 'Car Insurance';
+});
+
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
 </script>
 <template>
   <Head title="Authorised Payment Report" />
@@ -237,23 +268,47 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Teams">
-        <ComboBox
-          v-model="filters.teams"
-          placeholder="Search By Teams"
-          :options="teams"
-          :max-limit="3"
-          deselect-all
-        />
-      </x-field>
+      <x-select
+        label="Teams"
+        v-model="filters.teams"
+        placeholder="Search By Teams"
+        :options="teams"
+        :rules="[maxSelections(3)]"
+        deselect-all
+        filterable
+        filterPlaceholder="Filter Teams...."
+        truncate
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="filters.teams = teams.map(team => team.value)"
+            @clear="filters.teams = []"
+          />
+        </template>
+      </x-select>
       <x-select
         v-model="filters.quoteType"
         label="Line of Business"
         placeholder="Select Line of Business"
         :options="quoteTypesOptions"
       />
+
+      <x-select
+        v-if="isCarLob"
+        v-model="filters.registration_type"
+        label="Registration Type"
+        placeholder="Select any option"
+        :options="registrationTypeOptions"
+      />
+      <x-select
+        v-if="isCarLob && isVehicleUseDisabled"
+        v-model="filters.vehicle_use"
+        label="Vehicle Use"
+        placeholder="Select any option"
+        :options="vehicleUseOptions"
+      />
       <div v-if="fieldDisable">
-        <ComboBox
+        <x-select
           v-model="filters.userIds"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -263,7 +318,21 @@ onMounted(() => {
               label: team.name,
             }))
           "
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.userIds = props.advisor.original.advisors.map(
+                  advisor => advisor.id,
+                )
+              "
+              @clear="filters.userIds = []"
+            />
+          </template>
+        </x-select>
       </div>
       <div v-else>
         <x-input
@@ -275,7 +344,7 @@ onMounted(() => {
         />
       </div>
 
-      <ComboBox
+      <x-select
         v-model="filters.statusId"
         label="Lead Status"
         placeholder="Search by Status"
@@ -285,7 +354,20 @@ onMounted(() => {
             label: status.text,
           }))
         "
-      />
+        filterable
+        filterPlaceholder="Filter Lead Status...."
+        truncate
+        multiple
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.statusId = props.leadStatuses.map(status => status.id)
+            "
+            @clear="filters.statusId = []"
+          />
+        </template>
+      </x-select>
     </div>
     <div class="flex gap-3 pt-3">
       <x-button
@@ -324,16 +406,16 @@ onMounted(() => {
       >
     </div>
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-      <x-field label="Custom Date" v-if="isCustomDate">
-        <DatePicker
-          v-model="filters.customDate"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
-          size="sm"
-          model-type="yyyy-MM-dd"
-        />
-      </x-field>
+      <DatePicker
+        v-model="filters.customDate"
+        placeholder="Select Start & End Date"
+        range
+        :max-range="92"
+        size="sm"
+        model-type="yyyy-MM-dd"
+        label="Custom Date"
+        v-if="isCustomDate"
+      />
     </div>
 
     <div class="flex gap-3 justify-end">

@@ -19,6 +19,7 @@ const page = usePage();
 const dataTableRef = ref();
 const isMounted = ref(false);
 const isDirty = ref(false);
+const { maxSelections } = useRules();
 
 const advisorOptions = ref(
   Object.keys(page.props.filterOptions.advisors).map(key => ({
@@ -252,7 +253,6 @@ const rolesEnum = page.props.rolesEnum;
 let avgImRetentionArr = {};
 let avgRawRetentionArr = {};
 
-let monthlyIMAverages = {};
 let monthlyRawAverages = {};
 let totalAllocationList = [];
 let renewedCountsList = [];
@@ -286,20 +286,13 @@ function calculateValuesAndHighlight() {
     let dynamicIndexForTotalByValueSegment =
       'total_by_value_segment_advisors_for_' + item.name;
 
-    let dynamicIndexForCarSoldByVolumeSegment =
-      'car_sold_by_volume_segment_for_' + item.name;
-    let dynamicIndexForCarSoldByValueSegment =
-      'car_sold_by_value_segment_for_' + item.name;
-
     if (segmentFilter == 'volume') {
       item.total_allocated_leads = item[dynamicIndexForTotalByVolumeSegment];
       item.renewed = item[dynamicIndexForRenewedByVolumeSegment];
-      item.car_sold = item[dynamicIndexForCarSoldByVolumeSegment];
       // item.early_renewal = item.early_renewal_by_volume_segment    // tempory hidden don't remove
     } else if (segmentFilter == 'value') {
       item.total_allocated_leads = item[dynamicIndexForTotalByValueSegment];
       item.renewed = item[dynamicIndexForRenewedByValueSegment];
-      item.car_sold = item[dynamicIndexForCarSoldByValueSegment];
       // item.early_renewal = item.early_renewal_by_value_segment   // tempory hidden don't remove
     }
   });
@@ -334,45 +327,10 @@ function calculateValuesAndHighlight() {
     let dynamicIndexForTotalByValueSegment =
       'total_by_value_segment_advisors_for_' + item.name;
 
-    let dynamicIndexForCarSoldByVolumeSegment =
-      'car_sold_by_volume_segment_for_' + item.name;
-    let dynamicIndexForCarSoldByValueSegment =
-      'car_sold_by_value_segment_for_' + item.name;
-
     let fontColorAssigned = false;
-    let advisorRetention = (
-      (parseInt(item.renewed) /
-        (parseInt(item.total_allocated_leads) - parseInt(item.car_sold))) *
-      // - parseInt(item.early_renewal) // tempory hidden don't remove
-      100
-    ).toFixed(2);
-    advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
-
-    let imRetention = 0.0;
     let rawRetention = 0.0;
     let overallRawRetention = 0.0;
 
-    if (
-      item.total_allocated_leads_by_all_advisors != undefined ||
-      (item.total_allocated_leads_by_all_advisors == '' &&
-        item.renewed_by_all_advisors != undefined) ||
-      item.renewed_by_all_advisors == ''
-    ) {
-      imRetention = (
-        (parseInt(item.renewed_by_all_advisors) /
-          (parseInt(item.total_allocated_leads_by_all_advisors) -
-            parseInt(item.car_sold_by_all_advisors))) *
-        // - parseInt(item.early_renewal_by_all_advisors) // tempory hidden don't remove
-        100
-      ).toFixed(2);
-    } else {
-      imRetention = (
-        (parseInt(item.renewed) /
-          (parseInt(item.total_allocated_leads) - parseInt(item.car_sold))) *
-        // - parseInt(item.early_renewal) // tempory hidden don't remove
-        100
-      ).toFixed(2);
-    }
     rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(
       2,
     );
@@ -384,12 +342,13 @@ function calculateValuesAndHighlight() {
             100
           ).toFixed(2)
         : rawRetention;
-    imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
+
+    let advisorRetention = rawRetention;
+    let imRetention = overallRawRetention;
 
     let valueSegmentConversion = (
       (parseInt(item[dynamicIndexForRenewedByValueSegment]) /
-        (parseInt(item[dynamicIndexForTotalByValueSegment]) -
-          parseInt(item[dynamicIndexForCarSoldByValueSegment]))) *
+        parseInt(item[dynamicIndexForTotalByValueSegment])) *
       // - parseInt(item.early_renewal_by_value_segment) // tempory hidden don't remove
       100
     ).toFixed(2);
@@ -398,8 +357,7 @@ function calculateValuesAndHighlight() {
 
     let volumeSegmentConversion = (
       (parseInt(item[dynamicIndexForRenewedByVolumeSegment]) /
-        (parseInt(item[dynamicIndexForTotalByVolumeSegment]) -
-          parseInt(item[dynamicIndexForCarSoldByVolumeSegment]))) *
+        parseInt(item[dynamicIndexForTotalByVolumeSegment])) *
       // - parseInt(item.early_renewal_by_volume_segment) // tempory hidden don't remove
       100
     ).toFixed(2);
@@ -408,28 +366,16 @@ function calculateValuesAndHighlight() {
 
     const monthlySum = calculateMonthlySum(reportDataRef, index);
 
-    let ratioCarSoldUncontactable = (
-      (parseInt(item.car_sold) /
-        // + parseInt(item.uncontactable)
-        parseInt(item.total_allocated_leads)) *
-      100
-    ).toFixed(2);
-
-    ratioCarSoldUncontactable =
-      ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
-    item.ratioCarSoldUncontactable =
-      ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
-    item.advisorRetention =
-      advisorRetention == 'NaN' ? '0.00' : advisorRetention;
     item.volumeSegmentConversion =
       volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
     item.valueSegmentConversion =
       valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
-    item.imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
     item.monthlySum = monthlySum == 'NaN' ? '0.00' : monthlySum;
     item.rawRetention = rawRetention == 'NaN' ? '0.00' : rawRetention;
     item.overallRawRetention =
       overallRawRetention == 'NaN' ? '0.00' : overallRawRetention;
+    item.advisorRetention = item.rawRetention;
+    item.imRetention = item.overallRawRetention;
     item.rowSpan = currentRowSpan;
 
     item.highlight =
@@ -528,7 +474,6 @@ function calculateValuesAndHighlight() {
       });
     }
   });
-  monthlyIMAverages = calculateMonthlyAverages(avgImRetentionArr);
   monthlyRawAverages = calculateMonthlyAverages(avgRawRetentionArr);
   // reset arrays
   avgImRetentionArr = {};
@@ -572,7 +517,6 @@ onMounted(() => {
 const calculateMonthlySum = (data, index) => {
   let totalRenewed = 0;
   let totalAllocated = 0;
-  let totalCarSold = 0;
   // let totalEarlyRenewal = 0; // tempory hidden don't remove
   currentRowSpan = 0;
 
@@ -583,7 +527,6 @@ const calculateMonthlySum = (data, index) => {
       totalRenewed = parseInt(totalRenewed) + parseInt(data[index].renewed);
       totalAllocated =
         parseInt(totalAllocated) + parseInt(data[index].total_allocated_leads);
-      totalCarSold = parseInt(totalCarSold) + parseInt(data[index].car_sold);
       // totalEarlyRenewal = parseInt(totalEarlyRenewal) + parseInt(data[index].early_renewal); // tempory hidden don't remove
       index++;
       lastMonthSummedIndex = index;
@@ -591,11 +534,11 @@ const calculateMonthlySum = (data, index) => {
     }
 
     renewedCountsList[currentMonthValue] = totalRenewed;
-    totalAllocationList[currentMonthValue] = totalAllocated - totalCarSold;
+    totalAllocationList[currentMonthValue] = totalAllocated;
     // + totalEarlyRenewal // tempory hidden don't remove
 
     let result =
-      (totalRenewed / (totalAllocated - totalCarSold)) *
+      (totalRenewed / totalAllocated) *
       // - totalEarlyRenewal // tempory hidden don't remove
       100;
 
@@ -645,7 +588,7 @@ watch(
           model-type="yyyy-MM-dd"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.batchNo"
           label="Batch Number"
           placeholder="Search by Batch Number"
@@ -655,10 +598,26 @@ watch(
               label: filterOptions.batches[key],
             }))
           "
-          :max-limit="15"
-        />
+          multiple
+          truncate
+          filterable
+          :rules="[maxSelections(15)]"
+          filterPlaceholder="Filter Batches...."
+          helper="You can select up to 15 batches"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.batchNo = filterOptions.batches.map(
+                  batch => batch.value,
+                )
+              "
+              @clear="filters.batchNo = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -677,9 +636,20 @@ watch(
             }))
           "
           @update:model-value="onTeamChange"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(team => team.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -692,9 +662,22 @@ watch(
           placeholder="Search by Sub Team"
           class="w-full"
           :options="subTeamsOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Sub Teams...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.subTeams = subTeamsOptions.map(subTeam => subTeam.value)
+              "
+              @clear="filters.subTeams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -708,7 +691,20 @@ watch(
           placeholder="Search by Advisors"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
 
         <x-select
           v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager])"
@@ -772,42 +768,7 @@ watch(
                 <th
                   class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
                 >
-                  Approved Car Sold
-                </th>
-                <!-- <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                    Approved Early Renewals  // tempory hidden don't remove
-                                </th> -->
-                <th
-                  v-if="
-                    hasAnyRole([
-                      rolesEnum.CarManager,
-                      rolesEnum.RenewalsManager,
-                      rolesEnum.SeniorManagement,
-                      rolesEnum.Accounts,
-                    ])
-                  "
-                  class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-                >
-                  Ratio - Approved Car Sold
-                  <!-- and Uncontactable -->
-                </th>
-
-                <th
-                  class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-                >
-                  Total Allocations (excluding approved car sold)
-                </th>
-
-                <th
-                  class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-                >
-                  Advisor Retention
-                </th>
-                <th
-                  class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-                  v-if="hasRole(rolesEnum.CarAdvisor) != true"
-                >
-                  Raw Retention
+                  Advisor retention
                 </th>
                 <th
                   class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
@@ -836,48 +797,12 @@ watch(
                 <td class="x-table-cell px-3 py-4 align-middle">
                   {{ item.total_allocated_leads?.toLocaleString() || 0 }}
                 </td>
-                <td class="x-table-cell px-3 py-4 align-middle">
-                  {{ item.car_sold?.toLocaleString() || 0 }}
-                </td>
                 <!-- <td class="x-table-cell px-3 py-4 align-middle">
                         {{ item.early_renewal.toLocaleString() }} // tempory hidden don't remove
                     </td> -->
                 <td
-                  v-if="
-                    hasAnyRole([
-                      rolesEnum.CarManager,
-                      rolesEnum.RenewalsManager,
-                      rolesEnum.SeniorManagement,
-                      rolesEnum.Accounts,
-                    ])
-                  "
-                  class="x-table-cell px-3 py-4 align-middle"
-                >
-                  {{ item.ratioCarSoldUncontactable }}%
-                </td>
-                <td class="x-table-cell px-3 py-4 align-middle">
-                  <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
-                  <p v-if="item.total_allocated_leads == 0">0</p>
-                  <p v-else>
-                    {{
-                      (
-                        parseInt(item.total_allocated_leads) -
-                        parseInt(item.car_sold)
-                      )
-                        // + parseInt(item.early_renewal) // tempory hidden don't remove
-                        .toLocaleString()
-                    }}
-                  </p>
-                </td>
-                <td
                   :class="item.advisorRetentionClass"
                   class="x-table-cell px-3 py-4 align-middle"
-                >
-                  {{ item.advisorRetention }}%
-                </td>
-                <td
-                  class="x-table-cell px-3 py-4 align-middle"
-                  v-if="hasRole(rolesEnum.CarAdvisor) != true"
                 >
                   {{ item.rawRetention }}%
                 </td>
@@ -931,13 +856,6 @@ watch(
                 >
                   Relative Retention
                 </th>
-
-                <th
-                  class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-                  v-if="hasRole(rolesEnum.CarAdvisor) != true"
-                >
-                  Overall Raw Retention
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -966,7 +884,7 @@ watch(
                     {{
                       parseFloat(item.valueSegmentConversion) > 0
                         ? (
-                            parseFloat(item.advisorRetention) -
+                            parseFloat(item.rawRetention) -
                             parseFloat(item.valueSegmentConversion)
                           ).toFixed(2) + '%'
                         : 'N/A'
@@ -978,31 +896,25 @@ watch(
                     {{
                       parseFloat(item.volumeSegmentConversion) > 0
                         ? (
-                            parseFloat(item.advisorRetention) -
+                            parseFloat(item.rawRetention) -
                             parseFloat(item.volumeSegmentConversion)
                           ).toFixed(2) + '%'
                         : 'N/A'
                     }}
                   </p>
                 </td>
-                <td class="x-table-cell px-3 py-4 align-middle">
-                  {{ item.imRetention }}%
+                <td class="x-table-cell px-3 py-4 align-middle text-center">
+                  <p>{{ item.overallRawRetention }}%</p>
                 </td>
                 <td class="x-table-cell px-3 py-4 align-middle">
                   <p>
                     {{
                       (
-                        parseFloat(item.advisorRetention) -
-                        parseFloat(item.imRetention)
+                        parseFloat(item.rawRetention) -
+                        parseFloat(item.overallRawRetention)
                       ).toFixed(2)
                     }}%
                   </p>
-                </td>
-                <td
-                  v-if="hasRole(rolesEnum.CarAdvisor) != true"
-                  class="x-table-cell px-3 py-4 align-middle text-center"
-                >
-                  <p>{{ item.overallRawRetention }}%</p>
                 </td>
               </tr>
             </tbody>
@@ -1033,28 +945,16 @@ watch(
               >
                 AVERAGE IM RETENTION
               </th>
-              <th
-                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-              >
-                AVERAGE RAW RETENTION
-              </th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="(value, index) in monthlyIMAverages"
+              v-for="(value, index) in monthlyRawAverages"
               :key="index"
               class="border-b border-gray-200 align-top"
             >
               <td class="x-table-cell px-3 py-4 align-middle">
                 {{ index }}
-              </td>
-              <td class="x-table-cell px-3 py-4 align-middle">
-                {{
-                  monthlyIMAverages[index]
-                    ? monthlyIMAverages[index].toFixed(2)
-                    : 0
-                }}%
               </td>
               <td class="x-table-cell px-3 py-4 align-middle">
                 {{

@@ -1,6 +1,8 @@
 <script setup>
 defineProps({
   embeddedProduct: Object,
+  ep_enums: Object,
+  sync_statuses: Object,
 });
 
 const dateFormat = date =>
@@ -11,6 +13,7 @@ const serverOptions = ref({
   sortBy: 'id',
   sortType: 'desc',
 });
+const notification = useToast();
 
 const loader = reactive({
   table: false,
@@ -22,8 +25,12 @@ const filters = reactive({
   email: '',
   name: '',
   date_of_purchase: '',
+  sync_status: 'all',
   months: '',
 });
+
+const getLink = (quote_uuid, quote_type_id, ref_id) =>
+  buildCdbidLink(quote_uuid, quote_type_id, ref_id);
 
 const page = usePage();
 
@@ -38,6 +45,7 @@ const tableHeader = [
   { text: 'DOB', value: 'dob' },
   { text: 'AGE', value: 'age' },
   { text: 'PASSPORT', value: 'passport_number' },
+  { text: 'Sync Status', value: 'sync_status', sortable: true },
   { text: 'NATIONALITY', value: 'nationality' },
   { text: 'Vehicle', value: 'vehicle' },
   { text: 'Contact Number', value: 'contact_number' },
@@ -135,6 +143,53 @@ function exportReport() {
   window.open(url + '?' + new URLSearchParams(data).toString());
 }
 
+const syncingRecords = ref([]);
+
+function reSync(code) {
+  if (confirm('Are you sure ?')) {
+    syncingRecords.value = [...syncingRecords.value, code];
+    axios
+      .post(route('embedded-products.courier.re-sync', code), {})
+      .then(res => {
+        if (syncingRecords.value.length <= 1 && res?.data?.ok) {
+          router.get(
+            route(
+              'embedded-products.reports.certificates',
+              page.props.embeddedProduct.detail.id,
+            ),
+            {
+              replace: true,
+              preserveScroll: true,
+              preserveState: true,
+            },
+          );
+        }
+        if (res?.data?.ok) {
+          notification.success({
+            title: res?.data?.message,
+            position: 'top',
+          });
+        } else {
+          notification.warning({
+            title: res?.data?.message,
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: err?.message,
+          position: 'top',
+        });
+      })
+      .finally(() => {
+        syncingRecords.value = syncingRecords.value.filter(
+          record => record !== code,
+        );
+      });
+  }
+}
+
 onMounted(() => {
   setQueryFilters();
 });
@@ -205,24 +260,26 @@ watch(
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="Email">
+        <div>
           <x-input
             v-model="filters.email"
             type="search"
             name="first_name"
             class="w-full"
             placeholder="Type here"
+            label="Email"
           />
-        </x-field>
-        <x-field label="Name">
+        </div>
+        <div>
           <x-input
             v-model="filters.name"
             type="search"
             name="last_name"
             class="w-full"
             placeholder="Type here"
+            label="Name"
           />
-        </x-field>
+        </div>
         <div>
           <x-tooltip placement="bottom">
             <label
@@ -235,16 +292,14 @@ watch(
               the client by the system
             </template>
           </x-tooltip>
-          <x-field>
-            <DatePicker
-              v-model="filters.date_of_purchase"
-              name="date_of_purchase"
-              class="w-full"
-              model-type="yyyy-MM-dd"
-              range
-              max-range="30"
-            />
-          </x-field>
+          <DatePicker
+            v-model="filters.date_of_purchase"
+            name="date_of_purchase"
+            class="w-full"
+            model-type="yyyy-MM-dd"
+            range
+            max-range="30"
+          />
         </div>
         <div>
           <x-tooltip placement="bottom">
@@ -267,6 +322,17 @@ watch(
             format="MM-yyyy"
           />
         </div>
+        <div v-if="embeddedProduct.detail.short_code === ep_enums.COURIER">
+          <x-select
+            v-model="filters.sync_status"
+            placeholder="Select Sync Status"
+            :options="sync_statuses"
+            class="w-full"
+            filterable
+            filterPlaceholder="Filter Sync Status...."
+            label="Sync Status"
+          />
+        </div>
       </div>
       <div class="flex flex-row-reverse gap-3">
         <div class="flex justify-self-end gap-3">
@@ -283,7 +349,15 @@ watch(
     <DataTable
       v-model:server-options="serverOptions"
       table-class-name=""
-      :headers="tableHeader"
+      :headers="
+        tableHeader.filter(header => {
+          if (header.value === 'sync_status') {
+            return embeddedProduct.detail.short_code === ep_enums.COURIER;
+          }
+
+          return true;
+        })
+      "
       :loading="loader.table"
       :items="embeddedProduct.transactions.data || []"
       border-cell
@@ -297,6 +371,44 @@ watch(
         >
           {{ id }}
         </Link>
+      </template>
+
+      <template
+        #item-ref_id="item"
+        v-if="embeddedProduct.detail.short_code === ep_enums.COURIER"
+      >
+        <SanitizeHtml
+          v-if="item.quote_request"
+          :html="
+            getLink(item.quote_request?.uuid, item.quote_type_id, item.ref_id)
+          "
+          class="text-primary-500 hover:underline"
+          :key="item.ref_id"
+        />
+      </template>
+
+      <template #item-sync_status="item">
+        <x-tooltip>
+          <label class="border-b-2 border-dotted border-black uppercase">{{
+            item?.sync_status?.status
+          }}</label>
+          <template #tooltip>
+            <span class="custom-tooltip-content">{{
+              item?.sync_status?.message
+            }}</span>
+          </template>
+        </x-tooltip>
+        <button class="ml-3" title="Sync" @click="reSync(item.ref_id)">
+          <x-spinner
+            v-if="
+              syncingRecords.includes(item.ref_id) &&
+              item?.sync_status?.is_syncable
+            "
+            size="sm"
+            class="text-primary"
+          />
+          <x-icon v-else icon="reset" color="green" size="sm" />
+        </button>
       </template>
 
       <template #item-company_name="{ insurance_provider }">

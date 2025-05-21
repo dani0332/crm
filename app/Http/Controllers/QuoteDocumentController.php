@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -124,6 +125,10 @@ class QuoteDocumentController extends Controller
 
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
 
+        if ($request->document_type_code === DocumentTypeCode::TRVLPAS) {
+            $this->stopHapexReminder($quote);
+        }
+
         // update quote status - production process
         app(CentralService::class)->updateQuoteInformation($quoteType, $request->quote_id);
 
@@ -143,6 +148,10 @@ class QuoteDocumentController extends Controller
         }
         foreach ($request->file as $file) {
             $this->quoteDocumentService->uploadQuoteDocument($file['file'], $request->all(), $quote);
+        }
+
+        if (method_exists($quote, 'hasInsurerPaymentLink') && $quote->hasInsurerPaymentLink() && $request->document_type_code === DocumentTypeCode::HPD) {
+            $this->quoteDocumentService->updateQuoteAndPaymentStatusToPaymentPending($quote);
         }
 
         return redirect()->back()->with('success', 'Document Uploaded Successfully');
@@ -270,10 +279,10 @@ class QuoteDocumentController extends Controller
     public function destroy(Request $request)
     {
         request()->validate([
-            'docName' => 'required|string',
-            'quoteId' => 'required|integer',
+            'doc_id' => 'required|integer',
+            'doc_uuid' => 'required|string',
         ]);
-        $document = QuoteDocument::where('doc_name', $request->docName)->where('quote_documentable_id', $request->quoteId)->first();
+        $document = QuoteDocument::where('id', $request->doc_id)->where('doc_uuid', $request->doc_uuid)->first();
         if (! $document) {
             return redirect()->back()->with('message', 'Document not found');
         }
@@ -325,6 +334,7 @@ class QuoteDocumentController extends Controller
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+        info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
 
         return true;
     }

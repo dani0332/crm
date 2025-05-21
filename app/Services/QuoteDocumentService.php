@@ -5,12 +5,15 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\WatermarkDocTypesEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
@@ -18,14 +21,13 @@ use App\Models\InsuranceProvider;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
-use setasign\Fpdi\PdfParser\StreamReader;
 
 class QuoteDocumentService extends BaseService
 {
@@ -56,6 +58,8 @@ class QuoteDocumentService extends BaseService
 
     public function getQuoteDocumentsForUpload($quoteTypeId, $options = null)
     {
+        LoggerService::info('fn:getQuoteDocumentsForUpload - Start - QuoteDocumentService');
+
         $query = DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true]);
         if ($options) {
             $query = $query->whereIn('code', $options);
@@ -103,7 +107,10 @@ class QuoteDocumentService extends BaseService
         // check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
-            // Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
+            // LoggerService::info('Document deleted', [
+            //     'quote_uuid' => $data['quote_uuid'],
+            //     'doc_name' => $data['doc_name']
+            // ]);
 
             return response()->json(['message' => 'document deleted successfully']);
         }
@@ -118,11 +125,14 @@ class QuoteDocumentService extends BaseService
      * @param  $uuid
      * @return \Illuminate\Http\JsonResponse
      */
-    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false)
+    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false)
     {
+        LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
+
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
+        // dd($documentType);
 
         $isWaterMarkQualifyDoc = $this->getWatermarkProperty($quote, $documentType);
 
@@ -171,6 +181,20 @@ class QuoteDocumentService extends BaseService
                 if (! $uploaded) {
                     return false;
                 }
+            } elseif ($isHomeSAL) {
+                $originalName = $data['pdf_filename'].'.pdf';
+
+                // Generate a unique filename
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+                $fileMimeType = 'application/pdf';
+
+                // Set the filename for Azure storage
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $filePathAzure = 'documents/homeSAL/'.$fileNameAzure;
+                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                if (! $uploaded) {
+                    return false;
+                }
             } else {
                 $originalName = sanitizeFileName($fileOrBase64->getClientOriginalName());
 
@@ -203,18 +227,24 @@ class QuoteDocumentService extends BaseService
                 'created_by_id' => auth()->id(),
             ]);
 
-            if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc) {
+            if (ucfirst(request('quoteType')) == QuoteTypes::TRAVEL->value && $documentType->code == DocumentTypeCode::TRVLPAS) {
+                SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+                LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
+            }
+
+            if ($isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc && ! $isHomeSAL) {
                 WatermarkDocumentsJob::dispatch(
-                    $quoteDocument->id, $data['quote_uuid'], $documentType->id
+                    $quoteDocument->id,
+                    $data['quote_uuid'],
+                    $documentType->id
                 )->afterCommit();
             } else {
-                info('Watermark job not dispatched - Ref: '.$quote->code);
+                LoggerService::info('Watermark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
-
         } catch (\Exception $exception) {
-            Log::info('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
+            LoggerService::error('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
@@ -241,9 +271,11 @@ class QuoteDocumentService extends BaseService
             return false;
         }
 
-        if (! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||
+        if (
+            ! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||
             ! isset($record->premium) || ! isset($record->policy_expiry_date) || ! isset($record->plan_id) ||
-            $record->advisor_id != auth()->user()->id) {
+            $record->advisor_id != auth()->user()->id
+        ) {
             return 0;
         }
 
@@ -269,6 +301,8 @@ class QuoteDocumentService extends BaseService
      */
     public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null, $isSendUpdate = false)
     {
+        LoggerService::info('fn:getQuoteDocuments - Start - QuoteDocumentService');
+
         if ($isSendUpdate) {
             $quote = SendUpdateLog::find($recordId);
         } else {
@@ -368,6 +402,8 @@ class QuoteDocumentService extends BaseService
      */
     public function paymentDocumentTypesOptions($quoteTypeId): array
     {
+        LoggerService::info('fn:paymentDocumentTypesOptions - Start - QuoteDocumentService');
+
         $mapping = [
             QuoteTypeId::Car => ['CPD', 'CPDR', 'CDPDR'],
             QuoteTypeId::Health => ['HPD', 'HPDR', 'HDPDR'],
@@ -380,6 +416,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Yacht => ['YPD', 'YPDR', 'YDPDR'],
             QuoteTypeId::Business => ['GMQPD', 'GMQPDR', 'GMQDPDR'],
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
+            QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
         ];
 
         return $mapping[$quoteTypeId] ?? [];
@@ -407,10 +444,12 @@ class QuoteDocumentService extends BaseService
                 if (strpos($policyWording->link, $baseUrl) !== 0) {
                     $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
                 }
+                $link = preg_replace('/[\n\r\t]+/', '', $policyWording->link);
+                $extension = pathinfo($link, PATHINFO_EXTENSION); // Get extension first
 
                 return [
                     'url' => preg_replace('/\s+$/m', '', $policyWording->link),
-                    'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.pathinfo($policyWording->link, PATHINFO_EXTENSION),
+                    'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.trim($extension),
                 ];
             });
 
@@ -465,9 +504,14 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $docName = time().'_'.$docName;
+        $docName = uniqid().'_'.$docName;
 
         $outputFile = $outputPath = storage_path('temp/'.$docName);
+        // Check if file already exists, generate new name if it does
+        while (file_exists($outputPath)) {
+            $docName = uniqid().'_'.$docName;
+            $outputFile = $outputPath = storage_path('temp/'.$docName);
+        }
 
         $azureFilePath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$file;
 
@@ -475,56 +519,142 @@ class QuoteDocumentService extends BaseService
         $fileContent = file_get_contents($encodedUrl);
 
         if (! $fileContent) {
-            Log::error("Unable to read file azureFilePath: $azureFilePath ");
+            LoggerService::error("Unable to read file azureFilePath: $azureFilePath ");
             throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
         }
 
-        $tempFilePath = storage_path('temp/temp_'.$docName);
-        file_put_contents($tempFilePath, $fileContent);
+        // Save the source file
+        $sourceFilePath = storage_path('temp/source_'.$docName);
+        file_put_contents($sourceFilePath, $fileContent);
 
-        // Convert the PDF to a version compatible with FPDI
-        shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+        try {
+            // Use PDFtk as our primary watermarking approach
+            return $this->applyPdftkWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
+        } catch (\Exception $e) {
+            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid");
 
-        sleep(3);
-
-        if (! file_exists($outputFile)) {
-            Log::error("Unable to read file outputFile: $outputFile ");
-            throw new \Exception("Unable to read file outputFile: $outputFile");
-        }
-
-        $pdf = new Fpdi;
-
-        $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
-
-        info('watermark job started for Quote: '.$uuid.' source file read successfully. File path: '.$outputFile);
-        $watermarkImagePath = public_path('images/watermark1.png');
-        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
-
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $pdf->importPage($pageNo);
-            $size = $pdf->getTemplateSize($templateId);
-
-            // Log::info('Page size: '.json_encode($size));
-
-            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            // Add watermark
-            if ($size['orientation'] === 'P') {
-                $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
-            } else {
-                $pdf->Image($watermarkImageAA4Path, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+            // Incase applyPdftkWatermark() fails/throw exception. Made sure that we delete the file that it created.
+            $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
+            if (file_exists($watermarkPdf ?? '')) {
+                unlink($watermarkPdf);
             }
 
-            $pdf->useTemplate($templateId);
+            // If watermarking fails completely, use the original file without watermark
+            if (file_exists($sourceFilePath)) {
+                // Copy the original file to the output path
+                copy($sourceFilePath, $outputPath);
+                LoggerService::info("Using unwatermarked original file due to error for UUID: $uuid");
+
+                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+            }
+
+            // If we can't even use the original file, re-throw the exception
+            throw $e;
+        }
+    }
+
+    /**
+     * Apply PDF watermarking using PDFtk
+     * This is our primary method for applying watermarks to PDFs
+     *
+     * @param  string  $sourceFilePath  Source PDF file path
+     * @param  string  $outputPath  Output PDF file path
+     * @param  string  $docName  Document name
+     * @param  string  $uuid  Document UUID
+     * @param  object  $documentType  Document type object
+     * @return array Watermarked media info
+     */
+    private function applyPdftkWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
+    {
+
+        // Create a simple watermark PDF
+        $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
+        $fpdf = new Fpdi;
+        $fpdf->AddPage();
+        $fpdf->Image(public_path('images/watermark1.png'), 0, 0, $fpdf->GetPageWidth(), $fpdf->GetPageHeight());
+        $fpdf->Output($watermarkPdf, 'F');
+
+        // Check if PDFtk is installed
+        $pdftk_check_output = [];
+        $pdftk_check_return = 0;
+        exec('which pdftk 2>&1', $pdftk_check_output, $pdftk_check_return);
+
+        // LoggerService::info("PDFtk availability check for UUID: $uuid");
+        // LoggerService::info('PDFtk path: '.(empty($pdftk_check_output) ? 'Not found' : implode("\n", $pdftk_check_output)));
+        // end Check if PDFtk is installed
+
+        // Use PDFtk's background operation to apply watermark behind content
+        $pdftk_command = 'pdftk '.escapeshellarg($sourceFilePath).
+            ' background '.escapeshellarg($watermarkPdf).
+            ' output '.escapeshellarg($outputPath).' 2>&1';
+
+        // Execute the command and capture output
+        $output = [];
+        $returnVar = 0;
+        exec($pdftk_command, $output, $returnVar);
+
+        // Show detailed output from command execution for direct debugging
+        // LoggerService::info("PDFtk command execution details for UUID: $uuid");
+        // LoggerService::info('PDFtk Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
+
+        // Simple check - if file doesn't exist or is too small, try Ghostscript
+        if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
+            LoggerService::error("PDFtk background failed, trying Ghostscript for UUID: $uuid");
+            $this->ghostscriptWatermark($sourceFilePath, $outputPath, $uuid);
         }
 
-        $pdf->Output($outputPath, 'F');
-
-        // Delete the temporary file
-        if (file_exists($tempFilePath)) {
-            unlink($tempFilePath);
+        // Clean up the watermark file
+        if (file_exists($watermarkPdf)) {
+            unlink($watermarkPdf);
         }
 
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+
+    }
+
+    /**
+     * Apply watermark using Ghostscript when PDFtk methods fail
+     * This is the last attempt before falling back to the original file
+     *
+     * @param  string  $sourceFilePath  Source PDF file path
+     * @param  string  $outputPath  Output PDF file path
+     * @param  string  $uuid  Document UUID
+     * @return void
+     */
+    private function ghostscriptWatermark($sourceFilePath, $outputPath, $uuid)
+    {
+        // Create a new watermark PDF for Ghostscript with even higher transparency
+        $watermarkPdfGs = storage_path('temp/watermark_gs_'.$uuid.'.pdf');
+        $fpdfGs = new Fpdi;
+        $fpdfGs->AddPage();
+        $fpdfGs->Image(public_path('images/watermark1.png'), 0, 0, $fpdfGs->GetPageWidth(), $fpdfGs->GetPageHeight());
+        $fpdfGs->Output($watermarkPdfGs, 'F');
+
+        // Try Ghostscript with the more transparent watermark (content first, then watermark)
+        $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
+                  '-dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dSubsetFonts=false '.
+                  '-dCompatibilityLevel=1.4 -dPrinted=false '.
+                  '-sOutputFile='.escapeshellarg($outputPath).' '.
+                  escapeshellarg($sourceFilePath).' '.escapeshellarg($watermarkPdfGs).' 2>&1';
+
+        // Execute command and capture output for debugging
+        $output = [];
+        $returnVar = 0;
+        exec($gsCommand, $output, $returnVar);
+
+        // Show detailed output for direct debugging
+        // LoggerService::info('Ghostscript Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
+
+        // Clean up
+        if (file_exists($watermarkPdfGs)) {
+            unlink($watermarkPdfGs);
+        }
+
+        // If Ghostscript also failed, just use the original file
+        if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
+            LoggerService::error("Ghostscript watermarking failed for UUID: $uuid");
+            throw new \Exception("Ghostscript watermarking failed for UUID: $uuid");
+        }
     }
 
     /**
@@ -730,5 +860,34 @@ class QuoteDocumentService extends BaseService
         $encodedUrl = $basePath.$encodedFileName;
 
         return $encodedUrl;
+    }
+
+    public function isDocumentExists($quoteType, $quoteId, $documentType)
+    {
+        $quoteModel = 'App\\Models\\'.ucfirst($quoteType).'Quote';
+
+        return QuoteDocument::where('quote_documentable_type', $quoteModel)
+            ->where('quote_documentable_id', $quoteId)
+            ->where('document_type_code', $documentType)
+            ->exists();
+    }
+
+    /**
+     * This function use update payment statuses on payments and payment_split table
+     *
+     * @param [type] $quote
+     * @return void
+     */
+    public function updateQuoteAndPaymentStatusToPaymentPending($quote)
+    {
+        $quote->quote_status_id = QuoteStatusEnum::PaymentPending;
+        $quote->save();
+        $payment = $quote->getLastPaymentWithInsurerPaymentLink();
+        $payment->payment_status_id = PaymentStatusEnum::PENDING;
+        foreach ($payment->paymentSplits as $split) {
+            $split->payment_status_id = PaymentStatusEnum::PENDING;
+            $split->save();
+        }
+        $payment->save();
     }
 }

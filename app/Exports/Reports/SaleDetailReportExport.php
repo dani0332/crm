@@ -15,6 +15,7 @@ class SaleDetailReportExport extends BaseReportsExport
             'Transactions',
             'Policy Start Date',
             'Payment Due Date',
+            'Payment Ref ID',
             'Team',
             'Price (VAT applicable)',
             'Total VAT',
@@ -28,6 +29,7 @@ class SaleDetailReportExport extends BaseReportsExport
             'Collects',
             'Tax Invoice Number',
             'Tax Invoice Date',
+            'Lead Status',
             'Transaction Payment Status',
             'Date Paid',
             'Collected Amount',
@@ -56,6 +58,7 @@ class SaleDetailReportExport extends BaseReportsExport
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ?? 'N/A',
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
+            $quote->code ?? 'N/A',
             $quote->team ?? 'N/A',
             $this->resolveNumberFormat($quote->price_vat_applicable ?? 0),
             $this->resolveNumberFormat($quote->vat ?? 0),
@@ -69,6 +72,7 @@ class SaleDetailReportExport extends BaseReportsExport
             $quote->collects ?? 'N/A',
             $quote->insurer_tax_invoice_number ?? 'N/A',
             $quote->insurer_tax_invoice_date ?? 'N/A',
+            $quote->transaction_quote_status ?? 'N/A',
             $quote->transaction_payment_status ?? 'N/A',
             $quote->date_paid ?? 'N/A',
             $this->resolveNumberFormat($quote->collected_amount ?? 0),
@@ -90,6 +94,6 @@ class SaleDetailReportExport extends BaseReportsExport
 
     public static function afterSheet(AfterSheet $event)
     {
-        self::performSum($event, ['I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'W']);
+        self::performSum($event, ['J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'X']);
     }
 }

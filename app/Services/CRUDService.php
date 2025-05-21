@@ -21,7 +21,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
-use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
@@ -35,13 +34,13 @@ use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\CentralTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use PDF;
 
 class CRUDService extends BaseService
@@ -111,8 +110,15 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($model->modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
-            ->getGridData($model, $request);
+        $dataQuery = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+            ->getGridData(model: $model);
+
+        if ($request->has('debug') && $request->debug == 'true') {
+            echo $dataQuery->toRawSql();
+            exit;
+        }
+
+        return $dataQuery;
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $leadType)
@@ -258,6 +264,7 @@ class CRUDService extends BaseService
             $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
 
             $previousQuoteStatus = $entity->quote_status_id;
+
             // if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
                 $entity->quote_status_id = QuoteStatusEnum::Quoted;
@@ -275,6 +282,16 @@ class CRUDService extends BaseService
                 $entity->quote_status_date = now();
                 if ($entity->stale_at) {
                     $entity->stale_at = null;
+                }
+            }
+
+            if (
+                strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+            ) {
+                // Only allow if quote has payment link history and payment method is insurer payment link
+                if (method_exists($entity, 'hasInsurerPaymentLink') && $entity->hasInsurerPaymentLink() && ! $entity->canUpdateToTransactionApproved() && ! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+                    // throw new \Exception('Cannot update to Transaction Approved status. Quote must have payment link history.');
+                    return ['entity' => $entity, 'error' => 'Cannot update to Transaction Approved status. Quote must have payment initiated and payment link sent to customer.'];
                 }
             }
 
@@ -344,19 +361,6 @@ class CRUDService extends BaseService
                 }
             }
 
-            if (
-                strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
-                && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-            ) {
-
-                if (
-                    $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-                    || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
-                    || $request->leadStatus == QuoteStatusEnum::TransactionApproved
-                ) {
-                    CammyJob::dispatch($entity, 'unsub');
-                }
-            }
             $quoteTypeId = constant(QuoteTypeId::class.'::'.$request->modelType);
 
             $activityResponse = false;
@@ -414,7 +418,7 @@ class CRUDService extends BaseService
             $query->whereIn('r.name', [RolesEnum::CarAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
             if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
-                auth()->user()->hasAnyPermission(
+                app('auth')->user()->hasAnyPermission(
                     PermissionsEnum::HEALTH_QUOTES_ACCESS,
                     PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS
                 )
@@ -619,7 +623,7 @@ class CRUDService extends BaseService
                 $maxAttempts = 3;
                 for ($i = 0; $i < $maxAttempts; $i++) {
                     try {
-                        info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action.");
+                        LoggerService::info($quoteModel->uuid." Attempt $i: Trying to update or insert payment action with payment amount {$amount}.");
                         PaymentAction::updateOrInsert(
                             ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
                             [
@@ -630,12 +634,12 @@ class CRUDService extends BaseService
                                 'is_manager_approved' => 1,
                             ]
                         );
-                        info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
+                        LoggerService::info($quoteModel->uuid." Attempt $i: Successfully updated or inserted payment action type CAPTURE.");
                         break;
                     } catch (\Illuminate\Database\QueryException $e) {
-                        Log::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
+                        LoggerService::error($quoteModel->uuid." Attempt $i: Failed to update or insert payment action type CAPTURE. Error: ".$e->getMessage());
                         if ($i == $maxAttempts - 1) {
-                            Log::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');
+                            LoggerService::error($quoteModel->uuid.' All attempts failed. Aborting operation payment action type CAPTURE.');
                             vAbort('Capture failed please try again later.');
                         }
                         sleep(1); // Wait before retrying
@@ -680,7 +684,7 @@ class CRUDService extends BaseService
         ];
 
         $paymentGatewayEndpoint = PaymentGatewayEnum::getName($data['payment_gateway_id']);
-        info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
+        LoggerService::info('Payment code: '.$data['uuid'].' Payment Gateway Endpoint: '.$paymentGatewayEndpoint);
         $response = Marshall::request('/payment/'.$paymentGatewayEndpoint.'/capture', 'post', $planData);
 
         return $response;
@@ -712,40 +716,45 @@ class CRUDService extends BaseService
                 $paymentMethod = '';
                 $paymentAuthorized = 0;
 
+                $paymentMethodMap = [
+                    PaymentMethodsEnum::Cash => 'Cash',
+                    PaymentMethodsEnum::BankTransfer => 'Bank Transfer',
+                    PaymentMethodsEnum::CreditCard => 'Credit Card',
+                    PaymentMethodsEnum::Cheque => 'Cheque',
+                    PaymentMethodsEnum::PostDatedCheque => 'PostDatedCheque',
+                    PaymentMethodsEnum::InsurerPayment => 'Insurer Payment',
+                    PaymentMethodsEnum::PartialPayment => 'Partial Payment',
+                    PaymentMethodsEnum::MultiplePayment => 'Multiple Payment',
+                    PaymentMethodsEnum::CreditApproval => 'Credit Approval',
+                    PaymentMethodsEnum::ProformaPaymentRequest => 'Proforma Payment Request',
+                ];
+
                 foreach ($quote->payments as $payment) {
-                    $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 :
-                        (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 :
-                            (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_ONE_RATING) ? 1 : 1));
+                    $paymentCode = strtolower($payment->payment_methods_code);
+
+                    // Determine the current score based on payment methods
+                    if (in_array($paymentCode, Kyc::PAYMENT_MODE_THREE_RATING)) {
+                        $currentScore = 3;
+                    } elseif (in_array($paymentCode, Kyc::PAYMENT_MODE_TWO_RATING)) {
+                        $currentScore = 2;
+                    } elseif (in_array($paymentCode, Kyc::PAYMENT_MODE_ONE_RATING)) {
+                        $currentScore = 1;
+                    } else {
+                        $currentScore = 1;
+                    }
+
+                    // Update the top score and corresponding payment method
                     if ($currentScore > $paymentTopScore) {
                         $paymentTopScore = $currentScore;
-                        if ($payment->payment_methods_code === PaymentMethodsEnum::Cash) {
-                            $paymentMethod = 'Cash';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::BankTransfer) {
-                            $paymentMethod = 'Bank Transfer';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::CreditCard) {
-                            $paymentMethod = 'Credit Card';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::Cheque) {
-                            $paymentMethod = 'Cheque';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::PostDatedCheque) {
-                            $paymentMethod = 'PostDatedCheque';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::InsurerPayment) {
-                            $paymentMethod = 'Insurer Payment';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::PartialPayment) {
-                            $paymentMethod = 'Partial Payment';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::MultiplePayment) {
-                            $paymentMethod = 'Multiple Payment';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::CreditApproval) {
-                            $paymentMethod = 'Credit Approval';
-                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::ProformaPaymentRequest) {
-                            $paymentMethod = 'Proforma Payment Request';
-                        } else {
-                            $paymentMethod = 'Insure Now Pay Later';
-                        }
+                        $paymentMethod = $paymentMethodMap[$payment->payment_methods_code] ?? 'Insure Now Pay Later';
                     }
-                    if ($payment->premium_authorized != null) {
+
+                    // Accumulate the authorized premium
+                    if ($payment->premium_authorized !== null) {
                         $paymentAuthorized += $payment->premium_authorized;
                     }
                 }
+
                 $quoteType = QuoteType::where('code', ucfirst($type))->first();
                 $amlStatus = (AMLService::checkAMLStatusFailed($quoteType->id, $quote->id));
                 $amlLogsValue = ['score' => 1, 'value' => 'No'];
@@ -828,7 +837,7 @@ class CRUDService extends BaseService
                         $text = 'No';
                         $score = 1;
                     }
-                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold “Dual Nationality”?', 'value' => $text];
+                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold "Dual Nationality"?', 'value' => $text];
                     $customerScore += $score;
 
                     if ($customerDetail->deal_sanction_list == 1) {
@@ -1053,9 +1062,7 @@ class CRUDService extends BaseService
         $paymentAuthorized = 0;
         $paymentMethod = '';
         foreach ($quote->payments as $payment) {
-            $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 :
-                (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 :
-                    (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_ONE_RATING) ? 1 : 1));
+            $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_ONE_RATING) ? 1 : 1));
             if ($currentScore > $paymentTopScore) {
                 $paymentTopScore = $currentScore;
                 if ($payment->payment_methods_code === PaymentMethodsEnum::Cash) {

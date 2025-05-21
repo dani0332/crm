@@ -28,9 +28,9 @@ const emit = defineEmits(['update:selectedPlanChanged']);
 
 const updateSelectedPlan = () => {
   isLoading.value = true;
-
   let data = {
     plan_id: props.plan.id,
+    provider_code: props.plan?.providerCode ?? null,
   };
 
   if (props.quoteType.toLocaleLowerCase() == 'health') {
@@ -65,7 +65,6 @@ const updateSelectedPlan = () => {
       data.plan_id = props.plan.id;
     }
   }
-
   data.insurance_provider_id = props.insuranceProviderId;
   data.code = props.code;
   axios

@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use App\Enums\CollectionTypeEnum;
-use App\Enums\InsurerProviderEnum;
 use App\Enums\PaymentGatewayIdEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -27,11 +27,17 @@ class Payment extends Model implements Auditable
         'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by',
         'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'total_payments', 'credit_approval', 'frequency', 'discount_type', 'discount_reason', 'custom_reason', 'notes', 'total_price', 'collection_date', 'payer_name', 'paid_by',
         'discount_value', 'total_amount', 'payment_allocation_status', 'decline_reason_id', 'decline_custom_reason', 'discount_custom_reason',
-        'commission_vat', 'commission_without_vat', 'commission_vat_applicable', 'commission_vat_not_applicable', 'commission', 'tax_invoice_number', 'broker_invoice_number', 'insurer_invoice_date', 'invoice_description', 'insurer_tax_number', 'transaction_payment_status', 'insurer_commmission_invoice_number', 'commmission_percentage',
+        'commission_vat', 'commission_without_vat', 'commission_vat_applicable', 'commission_vat_not_applicable', 'commission', 'tax_invoice_number', 'broker_invoice_number', 'insurer_invoice_date', 'invoice_description', 'insurer_payment_link', 'insurer_tax_number', 'transaction_payment_status', 'insurer_commmission_invoice_number', 'commmission_percentage',
         'send_update_log_id', 'policy_expiry_date', 'paymentable_id', 'paymentable_type', 'price_vat_applicable', 'price_vat',
 
     ];
     protected $forceDeleting = true;
+    protected $casts = [
+        'authorized_at' => 'datetime',
+    ];
+    protected $appends = [
+        'authorized_at_formatted',
+    ];
 
     public function transformAudit(array $data): array
     {
@@ -238,15 +244,44 @@ class Payment extends Model implements Auditable
         return $this->collection_type == CollectionTypeEnum::INSURER;
     }
 
-    public function isCaptureButtonEnabled($quoteTypeId, $quoteDetails)
-    {
-        $insuranceProvider = getInsuranceProvider($this, $quoteTypeId, $quoteDetails);
-
-        return in_array($insuranceProvider?->code, [InsurerProviderEnum::GIG_INSURANCE, InsurerProviderEnum::RAK_INSURANCE, InsurerProviderEnum::TOKIO_MARINE, InsurerProviderEnum::QATAR_INSURANCE, InsurerProviderEnum::ALLIANCE_INSURANCE]);
-    }
-
     public function isPaymentGatewayTap()
     {
         return $this->payment_gateway_id == PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP;
+    }
+
+    /**
+     * Check if payment has any splits with IPL payment method
+     *
+     * @return bool
+     */
+    public function hasInsurerPaymentLink()
+    {
+        return $this->paymentSplits()
+            ->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink)
+            ->exists();
+    }
+
+    /**
+     * Get all payment splits that have IPL payment method
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function getInsurerLinkPaymentSplits()
+    {
+        return $this->paymentSplits()
+            ->where('payment_method', PaymentMethodsEnum::InsurerPaymentLink)
+            ->get();
+    }
+
+    public function authorizedAtFormatted(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->authorized_at ? Carbon::parse($this->authorized_at)->format('d-m-Y') : null,
+        );
+    }
+
+    public function homePlan()
+    {
+        return $this->belongsTo(PersonalPlan::class, 'plan_id');
     }
 }

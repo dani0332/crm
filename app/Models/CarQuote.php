@@ -7,22 +7,24 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
+use App\Traits\Filterable;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use Auth;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
 {
-    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+    use Auditable, Filterable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',
     ];
+    protected $appends = ['insurer_aml_status_text', 'assignment_type_text', 'dob_formatted', 'previous_policy_expiry_date_formatted'];
     protected $guarded = [];
     public $filterables = [
         'code' => FilterTypes::EXACT,
@@ -181,7 +183,7 @@ class CarQuote extends BaseModel
 
     public function insuranceProvider()
     {
-        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text', 'code', 'payment_gateway_id']);
     }
 
     public function car_model_id()
@@ -316,7 +318,7 @@ class CarQuote extends BaseModel
 
     public function quoteViewCount()
     {
-        return $this->hasOne(QuoteViewCount::class, 'quote_id', 'id')->where('quote_type_id', 1);
+        return $this->hasOne(QuoteViewCount::class, 'quote_id', 'id')->where('quote_type_id', QuoteTypeId::Car);
     }
 
     public function updatedBy()

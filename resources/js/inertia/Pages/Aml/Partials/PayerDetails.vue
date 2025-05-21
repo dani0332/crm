@@ -221,31 +221,32 @@ function onMemberSubmit(isValid) {
     <template #default>
       <x-form @submit="onMemberSubmit" :auto-focus="false">
         <div class="grid md:grid-cols-2 mb-5 gap-4">
-          <x-field label="Payer Name" required>
-            <x-input
-              v-model="memberForm.first_name"
-              :rules="[isRequired, rules.nameCheck]"
-              placeholder="Payer Name"
-              type="text"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Nationality">
-            <ComboBox
-              :single="true"
-              v-model="memberForm.nationality_id"
-              placeholder="Select Nationality"
-              :options="nationalitiesOptions"
-              class="w-full"
-            />
-          </x-field>
-          <x-field label="Date Of Birth">
-            <DatePicker
-              v-model="memberForm.dob"
-              placeholder="Date of Birth"
-              class="w-full"
-            />
-          </x-field>
+          <x-input
+            v-model="memberForm.first_name"
+            :rules="[isRequired, rules.nameCheck]"
+            placeholder="Payer Name"
+            type="text"
+            class="w-full"
+            label="Payer Name"
+            required
+          />
+          <x-select
+            v-model="memberForm.nationality_id"
+            placeholder="Select Nationality"
+            :options="nationalitiesOptions"
+            class="w-full"
+            filterable
+            filterPlaceholder="Filter Nationality...."
+            label="Nationality"
+          />
+
+          <DatePicker
+            label="Date Of Birth"
+            v-model="memberForm.dob"
+            placeholder="Date of Birth"
+            class="w-full"
+            teleport
+          />
         </div>
         <div class="flex justify-end">
           <x-button type="submit" size="sm" color="orange" :loading="isLoading">

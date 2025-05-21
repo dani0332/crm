@@ -274,6 +274,16 @@ onMounted(() => {});
           name="created_at_end"
           label="Created Date End"
         />
+        <DatePicker
+          v-model="filters.assigned_to_date_start"
+          name="assigned_to_date_start"
+          label="Advisor Assigned Date Start"
+        />
+        <DatePicker
+          v-model="filters.assigned_to_date_end"
+          name="assigned_to_date_end"
+          label="Advisor Assigned Date End"
+        />
         <x-select
           v-model="filters.sub_team"
           label="Sub Team"
@@ -282,14 +292,30 @@ onMounted(() => {});
           class="w-full"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.quote_status"
           label="Lead Status"
           name="quote_status"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
-        />
-        <ComboBox
+          filterable
+          filterPlaceholder="Filter Lead Status...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.quote_status = leadStatusOptions.map(
+                  status => status.value,
+                )
+              "
+              @clear="filters.quote_status = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-if="
             !hasAnyRole([
               rolesEnum.RMAdvisor,
@@ -301,7 +327,21 @@ onMounted(() => {});
           label="Advisor"
           placeholder="Search by Advisor"
           :options="modifiedAdvisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisor...."
+          multiple
+          truncate
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-model="filters.is_ecommerce"
           label="Is Ecommerce"
@@ -354,19 +394,6 @@ onMounted(() => {});
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
-        />
-
-        <DatePicker
-          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
-          v-model="filters.assigned_to_date_start"
-          name="assigned_to_date_start"
-          label="Advisor Assigned Date Start"
-        />
-        <DatePicker
-          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
-          v-model="filters.assigned_to_date_end"
-          name="assigned_to_date_end"
-          label="Advisor Assigned Date End"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

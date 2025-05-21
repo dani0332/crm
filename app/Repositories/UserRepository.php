@@ -80,7 +80,7 @@ class UserRepository extends BaseRepository
             $roles = [strtoupper($modelType).'_ADVISOR'];
         }
 
-        return $this->with(['roles' => fn ($q) => $q->whereIn('name', $roles)])
+        return $this->with(['roles'])
             ->whereHas('roles', function ($q) use ($roles) {
                 $q->whereIn('name', $roles);  // todo: add required roles here
             })->get();
@@ -137,12 +137,17 @@ class UserRepository extends BaseRepository
             RolesEnum::Advisor,
         ];
 
+        // Filter to existing roles only
         $existingRoles = Role::whereIn('name', $roles)->pluck('name')->toArray();
 
-        return User::role($existingRoles)
+        // Use Spatie's whereHas method which builds a single efficient query
+        return User::query()
+            ->whereHas('roles', function ($query) use ($existingRoles) {
+                $query->whereIn('name', $existingRoles);
+            })
+            ->where('is_active', 1)
             ->select('name', 'id')
             ->orderBy('name')
-            ->where('is_active', 1)
             ->get()
             ->toArray();
     }
