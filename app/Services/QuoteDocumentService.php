@@ -622,7 +622,7 @@ class QuoteDocumentService extends BaseService
     private function ghostscriptWatermark($sourceFilePath, $outputPath, $uuid)
     {
         // Create a new watermark PDF for Ghostscript with even higher transparency
-        $watermarkPdfGs = storage_path('temp/watermark_gs_'.$uuid.'.pdf');
+        $watermarkPdfGs = storage_path('temp/watermark_gs_'.uniqid().$uuid.'.pdf');
         $fpdfGs = new Fpdi;
         $fpdfGs->AddPage();
         $fpdfGs->Image(public_path('images/watermark1.png'), 0, 0, $fpdfGs->GetPageWidth(), $fpdfGs->GetPageHeight());
