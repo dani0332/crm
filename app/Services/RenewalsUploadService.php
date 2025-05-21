@@ -57,6 +57,7 @@ use App\Models\CurrentlyLocatedIn;
 use App\Models\Customer;
 use App\Models\CustomerMembers;
 use App\Models\Emirate;
+use App\Models\FtcEmailLog;
 use App\Models\HealthPlan;
 use App\Models\HealthPlanCoPayment;
 use App\Models\HealthQuote;
@@ -2209,6 +2210,10 @@ class RenewalsUploadService
                             }
                             if ($quoteExist != null && isset($quoteExist)) {
                                 $insuranceProvider = $quoteExist->currentlyInsured;
+                                $linkUsed = FtcEmailLog::where('quote_trackable_id', '!=', $quoteExist->id)->where('link', $leadData->payment_link)->exists();
+                                if ($linkUsed) {
+                                    $leadValidationErrors->push('You have already sent this payment link for another lead. Please verify and ensure each lead is sent a unique link to avoid processing errors');
+                                }
                                 if ($insuranceProvider != null && $insuranceProvider->payment_gateway_id != PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL) {
                                     $leadValidationErrors->push('Payment Gateway is not supported for health quotes');
                                 }

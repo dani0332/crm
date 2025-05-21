@@ -120,12 +120,12 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
                 $data = $validator->getData();
                 $currentRow = $data[$index];
 
+                $premiumCount = $currentRow[7] == 0 || $currentRow[7] == null || $currentRow[7] == '' ? 1 : count(array_filter(explode('|', $currentRow[7])));
                 $memberCount = count(array_filter(explode('|', $value)));
-                $premiumCount = count(array_filter(explode('|', $currentRow[7] ?? '')));
-                $dobCount = count(array_filter(explode('|', $currentRow[10] ?? '')));
-                $nationalityCount = count(array_filter(explode('|', $currentRow[11] ?? '')));
-                $genderCount = count(array_filter(explode('|', $currentRow[12] ?? '')));
-                $emirateCount = count(array_filter(explode('|', $currentRow[14] ?? '')));
+                $dobCount = count(array_filter(explode('|', $currentRow[10])));
+                $nationalityCount = count(array_filter(explode('|', $currentRow[11])));
+                $genderCount = count(array_filter(explode('|', $currentRow[12])));
+                $emirateCount = count(array_filter(explode('|', $currentRow[14])));
 
                 if (! ($memberCount === $dobCount &&
                     $memberCount === $premiumCount &&
@@ -148,12 +148,24 @@ class UploadAndUpdateHealthImport implements SkipsOnFailure, ToModel, WithBatchI
             'member_gender' => ['index' => 12, 'title' => 'Gender', 'rules' => 'required|max:50'],
             'member_category' => ['index' => 13, 'title' => 'Member Category', 'rules' => 'required|max:300'],
             'member_emirate_of_visa' => ['index' => 14, 'title' => 'Emirate of Visa', 'rules' => 'required|max:100'],
-            'payment_link' => ['index' => 15, 'title' => 'Payment Link', 'rules' => 'nullable|max:1000'],
+            'payment_link' => ['index' => 15, 'title' => 'Payment Link', 'rules' => ['nullable', 'max:1000', function ($attribute, $value, $onFailure) {
+                if ($value == '' || $value == null) {
+                    return;
+                }
+                if (! $this->validateUrl($value)) {
+                    $onFailure('Invalid url provided for '.$attribute);
+                }
+            }]],
             'previous_policy_premium' => ['index' => 16, 'title' => 'Previous Policy Premium', 'rules' => 'required|max:15'],
             'notes' => ['index' => 17, 'title' => 'Notes', 'rules' => 'max:500'],
         ];
 
         return $columns;
+    }
+
+    public function validateUrl($value)
+    {
+        return filter_var($value, FILTER_VALIDATE_URL);
     }
 
     /**

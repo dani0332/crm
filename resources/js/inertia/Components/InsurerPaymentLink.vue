@@ -108,6 +108,15 @@ defineExpose({
   closeNotification, // Now accessible via the parent ref
   quotePaymentLinkChanged,
 });
+
+
+const ButtonCondition = computed(() => {
+  if(isLinkChanged.value || (page.props.quote.source == 'Renewal_upload' && props.paymentForm.status == 'edit' && (props.paymentForm.insurerPaymentLink != '' || props.paymentForm.insurerPaymentLink != null))){
+    return 'Send Insurer Payment Link';
+  } else {
+    return 'Updates';
+  }
+});
 </script>
 <template>
   <!-- Cancel the payment link Modal -->
@@ -198,7 +207,7 @@ defineExpose({
       class="focus:outline-black"
       :loading="paymentForm.processing"
     >
-      {{ isLinkChanged ? 'Send Insurer Payment Link' : 'Updates' }}
+      {{ ButtonCondition }}
     </x-button>
   </div>
 </template>
