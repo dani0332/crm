@@ -179,21 +179,15 @@ class ManagementReport
             });
         }
 
-        if (! empty($pcpTag)) {
-            if (! in_array('all', $pcpTag)) {
-                if (in_array('no', $pcpTag)) {
-                    $filteredTags = array_diff($pcpTag, ['no']);
-                    $query->where(function ($q) use ($filteredTags) {
-                        $q->whereNull('pcp_tag');
-                        if (! empty($filteredTags)) {
-                            $q->orWhereIn('pcp_tag', $filteredTags);
-                        }
-                    });
-                } else {
-                    $query->whereIn('pcp_tag', $pcpTag);
-                }
-            }
-        }
+        $query->when(! empty($pcpTag) && ! in_array('all', $pcpTag), function ($q) use ($pcpTag) {
+            $filteredTags = array_diff($pcpTag, ['no']);
+            $hasNoTag = in_array('no', $pcpTag);
+
+            $q->when($hasNoTag, function ($subQ) use ($filteredTags) {
+                $subQ->whereNull('pcp_tag')
+                    ->when(! empty($filteredTags), fn ($q) => $q->orWhereIn('pcp_tag', $filteredTags));
+            }, fn ($q) => $q->whereIn('pcp_tag', $pcpTag));
+        });
 
         $query->whereIn('personal_quotes.quote_type_id', $lobsIds);
     }
