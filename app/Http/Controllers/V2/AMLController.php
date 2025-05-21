@@ -237,7 +237,7 @@ class AMLController extends Controller
      *
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function show(AML $aml)
+    public function show(AML $aml, $insuredId = null, $customerId = null)
     {
         LoggerService::info('fn:show - AMLController');
 
@@ -246,6 +246,7 @@ class AMLController extends Controller
         $aml->quote_type_text = $aml->quotetype->text;
         $quoteType = QuoteType::where('id', $aml->quote_type_id)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $aml->quote_request_id);
+        $insured = Insured::where('id', $insuredId)->with('insuredKyc')->first() ?? null;
 
         if (isset($amlResults->Watchlist)) {
             $amlResults = collect($amlResults->Watchlist->Matches)->filter(function ($value) use ($manualStatusUpdateIM) {
@@ -263,6 +264,9 @@ class AMLController extends Controller
             'quoteStatusCode' => quoteStatusCode::asArray(),
             'amlDecisionStatusCode' => AMLDecisionStatusEnum::asArray(),
             'quoteObject' => $quoteObject,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'insured' => $insured ?? null,
+            'customerId' => $customerId ?? null,
         ]);
     }
 
@@ -354,6 +358,9 @@ class AMLController extends Controller
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
                     app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                    if (! empty(request()->complianceComment)) {
+                        app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComment);
+                    }
                 }
 
                 $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];

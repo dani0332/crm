@@ -1132,4 +1132,45 @@ class AMLService
 
         return $data;
     }
+
+    public function saveKYCComplianceQuestions($complianceQuestions)
+    {
+        LoggerService::info('fn:saveKYCComplianceQuestions - AMLService', extra: [
+            'insured_id' => $complianceQuestions['insured_id'],
+        ]);
+
+        try {
+            $sameFields = [
+                'pep' => $complianceQuestions['pep'] ?? null,
+                'financial_sanctions' => $complianceQuestions['financial_sanctions'] ?? null,
+                'dual_nationality' => $complianceQuestions['dual_nationality'] ?? null,
+                'in_sanction_list' => $complianceQuestions['in_sanction_list'] ?? null,
+                'deal_sanction_list' => $complianceQuestions['deal_sanction_list'] ?? null,
+                'is_operation_high_risk' => $complianceQuestions['is_operation_high_risk'] ?? null,
+                'transaction_pattern' => $complianceQuestions['transaction_pattern'] ?? null,
+                'is_partner' => $complianceQuestions['is_partner'] ?? null,
+            ];
+
+            InsuredKyc::updateOrCreate([
+                'insured_id' => $complianceQuestions['insured_id'],
+            ], array_merge($sameFields, [
+                'is_sanction_match' => $complianceQuestions['is_sanction_match'] ?? null,
+                'in_fatf' => $complianceQuestions['in_fatf'] ?? null,
+                'is_owner_high_risk' => $complianceQuestions['is_owner_high_risk'] ?? null,
+                'transaction_volume' => $complianceQuestions['transaction_volume'] ?? null,
+                'transaction_activities' => $complianceQuestions['transaction_activities'] ?? null,
+                'customer_id' => $complianceQuestions['customer_id'] ?? null,
+            ]));
+
+            // this should be removed after data migration.
+            if (isset($complianceQuestions['customer_id']) && $complianceQuestions['customer_id'] != null) {
+                CustomerDetail::where('customer_id', $complianceQuestions['customer_id'])->update($sameFields);
+            }
+
+            LoggerService::info('KYCComplianceQuestions updated');
+        } catch (Exception $exception) {
+            LoggerService::error('KYCComplianceQuestions failed to update', exception: $exception);
+        }
+    }
+
 }
