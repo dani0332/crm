@@ -682,6 +682,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Permissions Docs',
+                        url('/permissions-docs/index.php'),
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true, 'target' => '_blank'])
+                    )
+                    ->addIf(
                         auth()->user()->hasAnyPermission([
                             PermissionsEnum::RULE_CONFIG_LIST,
                             PermissionsEnum::QUAD_CONFIG_LIST,
