@@ -39,7 +39,9 @@ trait PrivateClient
             return false;
         }
 
-        $model = (new $modelClass)->where('uuid', $leadUuid)->first();
+        $query = (new $modelClass)->where('uuid', $leadUuid);
+        $model = $query->first();
+
         if (! $model) {
             LoggerService::warning('Lead not found.', extra: [
                 'quoteTypeId' => $quoteTypeId,
@@ -52,10 +54,7 @@ trait PrivateClient
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
         $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $tableColumns);
 
-        $exists = (new $modelClass)
-            ->where('uuid', $leadUuid)
-            ->where($this->buildConfigWhereClause($configs, $tableColumns, $hasSumInsuredCurrency, $model))
-            ->exists();
+        $exists = $query->where($this->buildConfigWhereClause($configs, $tableColumns, $hasSumInsuredCurrency, $model))->exists();
 
         if ($exists) {
             try {
