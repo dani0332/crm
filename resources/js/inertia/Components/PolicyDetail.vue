@@ -1,6 +1,6 @@
 <script setup>
 import moment from 'moment';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, h, defineComponent } from 'vue';
 const { isRequired } = useRules();
 
 const page = usePage();
@@ -487,6 +487,26 @@ const calculateTotalPrice = () => {
   policyDetailsForm.amount_with_vat = amountWithVat;
   policyDetailsForm.vat = vat;
 };
+
+// Define a custom field wrapper component to handle loading state consistently
+const FieldLoader = defineComponent({
+  props: {
+    loading: {
+      type: Boolean,
+      default: false
+    }
+  },
+  setup(props, { slots }) {
+    return () => h('div', { class: 'relative' }, [
+      slots.default && slots.default(),
+      props.loading && h('div', {
+        class: 'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10'
+      }, [
+        h('div', { class: 'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full' })
+      ])
+    ])
+  }
+});
 </script>
 
 <template>
@@ -505,8 +525,7 @@ const calculateTotalPrice = () => {
                 <x-tooltip
                   ><label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Policy Number {{ showOcrNotification ? ' (Loading)' : ''
-                    }}<span class="text-red-500">*</span></label
+                    >Policy Number<span class="text-red-500">*</span></label
                   >
                   <template #tooltip>
                     <span
@@ -514,19 +533,21 @@ const calculateTotalPrice = () => {
                     </span>
                   </template>
                 </x-tooltip>
-                <x-input
-                  v-model="policyDetailsForm.quote_policy_number"
-                  type="text"
-                  placeholder="Policy Number"
-                  class="w-full"
-                  :custom-error="
-                    rules.quote_policy_number(
-                      policyDetailsForm.quote_policy_number,
-                    )
-                  "
-                  :rules="[rules.quote_policy_number]"
-                  :disabled="!policyDetailsState.isEditing"
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <x-input
+                    v-model="policyDetailsForm.quote_policy_number"
+                    type="text"
+                    placeholder="Policy Number"
+                    class="w-full"
+                    :custom-error="
+                      rules.quote_policy_number(
+                        policyDetailsForm.quote_policy_number,
+                      )
+                    "
+                    :rules="[rules.quote_policy_number]"
+                    :disabled="!policyDetailsState.isEditing"
+                  />
+                </FieldLoader>
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
@@ -540,12 +561,14 @@ const calculateTotalPrice = () => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <DatePicker
-                  v-model="policyDetailsForm.quote_policy_issuance_date"
-                  :disabled="!policyDetailsState.isEditing"
-                  :rules="[isRequired]"
-                  class="w-full"
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <DatePicker
+                    v-model="policyDetailsForm.quote_policy_issuance_date"
+                    :disabled="!policyDetailsState.isEditing"
+                    :rules="[isRequired]"
+                    class="w-full"
+                  />
+                </FieldLoader>
               </div>
             </div>
 
@@ -568,20 +591,22 @@ const calculateTotalPrice = () => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-input
-                  v-model="policyDetailsForm.price_vat_notapplicable"
-                  @change="calculateVatAmount(true)"
-                  :rules="[rules.price_vat_not_applicable]"
-                  type="number"
-                  placeholder="Price (VAT NOT APPLICABLE)"
-                  class="w-full"
-                  :disabled="
-                    !policyDetailsState.isEditing ||
-                    (page.props.quoteType != quoteTypeCodeEnum.Life &&
-                      page.props.quoteType != quoteTypeCodeEnum.Business &&
-                      page.props.quoteType != quoteTypeCodeEnum.Health)
-                  "
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <x-input
+                    v-model="policyDetailsForm.price_vat_notapplicable"
+                    @change="calculateVatAmount(true)"
+                    :rules="[rules.price_vat_not_applicable]"
+                    type="number"
+                    placeholder="Price (VAT NOT APPLICABLE)"
+                    class="w-full"
+                    :disabled="
+                      !policyDetailsState.isEditing ||
+                      (page.props.quoteType != quoteTypeCodeEnum.Life &&
+                        page.props.quoteType != quoteTypeCodeEnum.Business &&
+                        page.props.quoteType != quoteTypeCodeEnum.Health)
+                    "
+                  />
+                </FieldLoader>
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
@@ -593,15 +618,16 @@ const calculateTotalPrice = () => {
                     <span>{{ productionProcessTooltipEnum.START_DATE }}</span>
                   </template>
                 </x-tooltip>
-                <DatePicker
-                  v-model="policyDetailsForm.quote_policy_start_date"
-                  :rules="[isRequired, rules.policy_start_date]"
-                  placeholder="Start Date"
-                  class="w-full"
-                  :disabled="!policyDetailsState.isEditing"
-                  :error="policyDetailsForm.errors.quote_policy_start_date"
-                  :loading="showOcrNotification"
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <DatePicker
+                    v-model="policyDetailsForm.quote_policy_start_date"
+                    :rules="[isRequired, rules.policy_start_date]"
+                    placeholder="Start Date"
+                    class="w-full"
+                    :disabled="!policyDetailsState.isEditing"
+                    :error="policyDetailsForm.errors.quote_policy_start_date"
+                  />
+                </FieldLoader>
               </div>
             </div>
 
@@ -621,20 +647,22 @@ const calculateTotalPrice = () => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-input
-                  v-model="policyDetailsForm.price_vat_applicable"
-                  @change="calculateVatAmount(true)"
-                  :rules="[rules.price_vat_applicable]"
-                  type="number"
-                  placeholder="Price (VAT APPLICABLE)"
-                  class="w-full"
-                  :disabled="
-                    !policyDetailsState.isEditing ||
-                    (page.props.quoteType == quoteTypeCodeEnum.Life &&
-                      page.props.quoteType != quoteTypeCodeEnum.Business &&
-                      page.props.quoteType != quoteTypeCodeEnum.Health)
-                  "
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <x-input
+                    v-model="policyDetailsForm.price_vat_applicable"
+                    @change="calculateVatAmount(true)"
+                    :rules="[rules.price_vat_applicable]"
+                    type="number"
+                    placeholder="Price (VAT APPLICABLE)"
+                    class="w-full"
+                    :disabled="
+                      !policyDetailsState.isEditing ||
+                      (page.props.quoteType == quoteTypeCodeEnum.Life &&
+                        page.props.quoteType != quoteTypeCodeEnum.Business &&
+                        page.props.quoteType != quoteTypeCodeEnum.Health)
+                    "
+                  />
+                </FieldLoader>
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
@@ -646,14 +674,16 @@ const calculateTotalPrice = () => {
                     <span>{{ productionProcessTooltipEnum.EXPIRY_DATE }}</span>
                   </template>
                 </x-tooltip>
-                <DatePicker
-                  v-model="policyDetailsForm.quote_policy_expiry_date"
-                  :rules="[isRequired, rules.policy_expiry_date]"
-                  placeholder="Expiry Date"
-                  class="w-full"
-                  :disabled="!policyDetailsState.isEditing"
-                  :error="policyDetailsForm.errors.quote_policy_expiry_date"
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <DatePicker
+                    v-model="policyDetailsForm.quote_policy_expiry_date"
+                    :rules="[isRequired, rules.policy_expiry_date]"
+                    placeholder="Expiry Date"
+                    class="w-full"
+                    :disabled="!policyDetailsState.isEditing"
+                    :error="policyDetailsForm.errors.quote_policy_expiry_date"
+                  />
+                </FieldLoader>
               </div>
             </div>
 
@@ -670,17 +700,19 @@ const calculateTotalPrice = () => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-input
-                  v-model="policyDetailsForm.vat"
-                  type="number"
-                  placeholder="Total VAT Amount"
-                  class="w-full"
-                  :disabled="
-                    !can(permissionsEnum.POLICY_DETAILS_ADD_VAT) ||
-                    !policyDetailsState.isEditing
-                  "
-                  @change="calculateTotalPrice"
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <x-input
+                    v-model="policyDetailsForm.vat"
+                    type="number"
+                    placeholder="Total VAT Amount"
+                    class="w-full"
+                    :disabled="
+                      !can(permissionsEnum.POLICY_DETAILS_ADD_VAT) ||
+                      !policyDetailsState.isEditing
+                    "
+                    @change="calculateTotalPrice"
+                  />
+                </FieldLoader>
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
@@ -692,14 +724,16 @@ const calculateTotalPrice = () => {
                     <span>{{ productionProcessTooltipEnum.TOTAL_PRICE }}</span>
                   </template>
                 </x-tooltip>
-                <x-input
-                  v-model="policyDetailsForm.amount_with_vat"
-                  type="number"
-                  placeholder="Price"
-                  class="w-full"
-                  readonly
-                  :disabled="true"
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <x-input
+                    v-model="policyDetailsForm.amount_with_vat"
+                    type="number"
+                    placeholder="Price"
+                    class="w-full"
+                    readonly
+                    :disabled="true"
+                  />
+                </FieldLoader>
               </div>
             </div>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
@@ -718,19 +752,21 @@ const calculateTotalPrice = () => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-input
-                  v-model="policyDetailsForm.quote_plan_insurer_quote_number"
-                  type="text"
-                  placeholder="Insurer Quote Number"
-                  :custom-error="
-                    rules.quote_plan_insurer_quote_number(
-                      policyDetailsForm.quote_plan_insurer_quote_number,
-                    )
-                  "
-                  :rules="[rules.quote_plan_insurer_quote_number]"
-                  class="w-full"
-                  :disabled="!policyDetailsState.isEditing"
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <x-input
+                    v-model="policyDetailsForm.quote_plan_insurer_quote_number"
+                    type="text"
+                    placeholder="Insurer Quote Number"
+                    :custom-error="
+                      rules.quote_plan_insurer_quote_number(
+                        policyDetailsForm.quote_plan_insurer_quote_number,
+                      )
+                    "
+                    :rules="[rules.quote_plan_insurer_quote_number]"
+                    class="w-full"
+                    :disabled="!policyDetailsState.isEditing"
+                  />
+                </FieldLoader>
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
@@ -744,29 +780,32 @@ const calculateTotalPrice = () => {
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-select
-                  v-model="policyDetailsForm.quote_policy_issuance_status"
-                  class="w-full"
-                  placeholder="Select any option"
-                  :disabled="!policyDetailsState.isEditing"
-                  :options="policyIssuanceStatusOptions"
-                />
+                <FieldLoader :loading="showOcrNotification">
+                  <x-select
+                    v-model="policyDetailsForm.quote_policy_issuance_status"
+                    class="w-full"
+                    placeholder="Select any option"
+                    :disabled="!policyDetailsState.isEditing"
+                    :options="policyIssuanceStatusOptions"
+                  />
+                </FieldLoader>
               </div>
             </div>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
-                <x-input
-                  v-if="
-                    policyDetailsForm.quote_policy_issuance_status ==
-                    quoteIssuanceStatusEnum.Other
-                  "
-                  v-model="policyDetailsForm.quote_policy_issuance_status_other"
-                  type="text"
-                  label="Additionl Info"
-                  placeholder="Additionl Info"
-                  class="w-full"
-                  :disabled="!policyDetailsState.isEditing"
-                />
+                <FieldLoader :loading="showOcrNotification" v-if="
+                  policyDetailsForm.quote_policy_issuance_status ==
+                  quoteIssuanceStatusEnum.Other
+                ">
+                  <x-input
+                    v-model="policyDetailsForm.quote_policy_issuance_status_other"
+                    type="text"
+                    label="Additionl Info"
+                    placeholder="Additionl Info"
+                    class="w-full"
+                    :disabled="!policyDetailsState.isEditing"
+                  />
+                </FieldLoader>
               </div>
             </div>
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">

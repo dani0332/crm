@@ -3979,6 +3979,7 @@ function handleOcrNotification(e) {
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :showOcrNotification="ocrLoading"
     />
 
     <SendUpdates

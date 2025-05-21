@@ -5,6 +5,7 @@ const notification = useNotifications('toast');
 import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
 import NProgress from 'nprogress';
 const { isRequired } = useRules();
+import { h, defineComponent } from 'vue';
 
 const props = defineProps({
   quote: {
@@ -39,6 +40,11 @@ const props = defineProps({
     required: false,
     type: Boolean,
     default: true,
+  },
+  showOcrNotification: {
+    required: false,
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -741,6 +747,25 @@ const isDisabledSendPCB = computed(() => {
     }
   }
 });
+
+const FieldLoader = defineComponent({
+  props: {
+    loading: {
+      type: Boolean,
+      default: false
+    }
+  },
+  setup(props, { slots }) {
+    return () => h('div', { class: 'relative' }, [
+      slots.default && slots.default(),
+      props.loading && h('div', {
+        class: 'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10'
+      }, [
+        h('div', { class: 'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full' })
+      ])
+    ])
+  }
+});
 </script>
 
 <template>
@@ -868,14 +893,16 @@ const isDisabledSendPCB = computed(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <DatePicker
-                    v-model="bpForm.invoice_date"
-                    type="date"
-                    placeholder="Insurer Invoice Date"
-                    class="w-full"
-                    :disabled="!bp.isEditing"
-                    :rules="[isRequired]"
-                  />
+                  <FieldLoader :loading="showOcrNotification">
+                    <DatePicker
+                      v-model="bpForm.invoice_date"
+                      type="date"
+                      placeholder="Insurer Invoice Date"
+                      class="w-full"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                      />
+                  </FieldLoader>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -910,13 +937,15 @@ const isDisabledSendPCB = computed(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input
-                    v-model="bpForm.insurer_tax_invoice_number"
-                    placeholder="Insurer Tax Invoice Number"
-                    class="w-full"
-                    :disabled="!bp.isEditing"
-                    :rules="[isRequired]"
-                  />
+                  <FieldLoader :loading="showOcrNotification">
+                    <x-input
+                      v-model="bpForm.insurer_tax_invoice_number"
+                      placeholder="Insurer Tax Invoice Number"
+                      class="w-full"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </FieldLoader>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -955,13 +984,15 @@ const isDisabledSendPCB = computed(() => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input
-                    v-model="bpForm.insurer_commmission_invoice_number"
-                    placeholder="Insurer Commission Tax Invoice Number"
-                    class="w-full"
-                    :disabled="!bp.isEditing"
-                    :rules="[isRequired]"
-                  />
+                  <FieldLoader :loading="showOcrNotification">
+                    <x-input
+                      v-model="bpForm.insurer_commmission_invoice_number"
+                      placeholder="Insurer Commission Tax Invoice Number"
+                      class="w-full"
+                      :disabled="!bp.isEditing"
+                      :rules="[isRequired]"
+                    />
+                  </FieldLoader>
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -999,15 +1030,44 @@ const isDisabledSendPCB = computed(() => {
                 <dd>
                   <template v-if="commissionVatNotApplicableTooltip">
                     <x-tooltip class="w-full">
+                      <FieldLoader :loading="showOcrNotification">
+                        <x-input
+                          v-model="bpForm.commission_vat_not_applicable"
+                          @change="calculateCommission"
+                          placeholder="Commission VAT NOT APPLICABLE"
+                          class="w-full"
+                          :disabled="
+                            disableCommissionVatNotApplicable ||
+                            bpForm.isCommissionDisabled
+                          "
+                        />
+                        <div
+                          v-if="
+                            !disableCommissionVatNotApplicable &&
+                            !bp.isAllowedToUpdateCommission
+                          "
+                          class="x-input-footer text-xs mt-1"
+                        >
+                          <p class="text-error-500 dark:text-error-400">
+                            {{ commissionErrorMessage }}
+                          </p>
+                        </div>
+                      </FieldLoader>
+                      <template #tooltip>
+                        <span class="custom-tooltip-content">{{
+                          commissionVatNotApplicableTooltip
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </template>
+                  <template v-else>
+                    <FieldLoader :loading="showOcrNotification">
                       <x-input
                         v-model="bpForm.commission_vat_not_applicable"
                         @change="calculateCommission"
                         placeholder="Commission VAT NOT APPLICABLE"
                         class="w-full"
-                        :disabled="
-                          disableCommissionVatNotApplicable ||
-                          bpForm.isCommissionDisabled
-                        "
+                        :disabled="disableCommissionVatNotApplicable"
                       />
                       <div
                         v-if="
@@ -1020,32 +1080,7 @@ const isDisabledSendPCB = computed(() => {
                           {{ commissionErrorMessage }}
                         </p>
                       </div>
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          commissionVatNotApplicableTooltip
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </template>
-                  <template v-else>
-                    <x-input
-                      v-model="bpForm.commission_vat_not_applicable"
-                      @change="calculateCommission"
-                      placeholder="Commission VAT NOT APPLICABLE"
-                      class="w-full"
-                      :disabled="disableCommissionVatNotApplicable"
-                    />
-                    <div
-                      v-if="
-                        !disableCommissionVatNotApplicable &&
-                        !bp.isAllowedToUpdateCommission
-                      "
-                      class="x-input-footer text-xs mt-1"
-                    >
-                      <p class="text-error-500 dark:text-error-400">
-                        {{ commissionErrorMessage }}
-                      </p>
-                    </div>
+                    </FieldLoader>
                   </template>
                 </dd>
               </div>
@@ -1084,6 +1119,35 @@ const isDisabledSendPCB = computed(() => {
                 <dd>
                   <template v-if="commissionVatApplicableTooltip">
                     <x-tooltip class="w-full">
+                      <FieldLoader :loading="showOcrNotification">
+                        <x-input
+                          v-model="bpForm.commission_vat_applicable"
+                          @change="calculateCommission"
+                          placeholder="Commission VAT APPLICABLE"
+                          class="w-full"
+                          :disabled="disableCommissionVatApplicable"
+                        />
+                        <div
+                          v-if="
+                            !disableCommissionVatApplicable &&
+                            !bp.isAllowedToUpdateCommission
+                          "
+                          class="x-input-footer text-xs mt-1"
+                        >
+                          <p class="text-error-500 dark:text-error-400">
+                            {{ commissionErrorMessage }}
+                          </p>
+                        </div>
+                      </FieldLoader>
+                      <template #tooltip>
+                        <span class="custom-tooltip-content">{{
+                          commissionVatApplicableTooltip
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </template>
+                  <template v-else>
+                    <FieldLoader :loading="showOcrNotification">
                       <x-input
                         v-model="bpForm.commission_vat_applicable"
                         @change="calculateCommission"
@@ -1102,33 +1166,7 @@ const isDisabledSendPCB = computed(() => {
                           {{ commissionErrorMessage }}
                         </p>
                       </div>
-
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          commissionVatApplicableTooltip
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </template>
-                  <template v-else>
-                    <x-input
-                      v-model="bpForm.commission_vat_applicable"
-                      @change="calculateCommission"
-                      placeholder="Commission VAT APPLICABLE"
-                      class="w-full"
-                      :disabled="disableCommissionVatApplicable"
-                    />
-                    <div
-                      v-if="
-                        !disableCommissionVatApplicable &&
-                        !bp.isAllowedToUpdateCommission
-                      "
-                      class="x-input-footer text-xs mt-1"
-                    >
-                      <p class="text-error-500 dark:text-error-400">
-                        {{ commissionErrorMessage }}
-                      </p>
-                    </div>
+                    </FieldLoader>
                   </template>
                 </dd>
               </div>
