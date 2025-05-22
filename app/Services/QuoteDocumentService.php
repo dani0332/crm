@@ -586,9 +586,20 @@ class QuoteDocumentService extends BaseService
             $templateId = $fpdf->importPage($pageNo);
             $size = $fpdf->getTemplateSize($templateId);
             $fpdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+
+            // Select watermark image based on orientation
+            $watermarkImage = $size['orientation'] === 'P'
+                ? public_path('images/watermark1.png')
+                : public_path('images/watermarkAA4.png');
+
+            // Log page dimensions for debugging
+            LoggerService::info("Page $pageNo for UUID: $uuid: orientation={$size['orientation']}, width={$size['width']}, height={$size['height']}");
+
+            // Place the watermark image to cover the entire page
             $fpdf->Image(
-                public_path('images/watermark1.png'),
-                0, 0, $size['width'], $size['height']
+                $watermarkImage,
+                0, 0, $size['width'], $size['height'],
+                '', '', '', false, 300, '', false, false, 0
             );
         }
         $fpdf->Output($watermarkPdf, 'F');
