@@ -447,6 +447,8 @@ const activityEdit = data => {
     : null;
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
+  activityForm.quote_id = page.props.quote.id;
+  
 };
 
 const onActivitySubmit = isValid => {

@@ -66,14 +66,13 @@ const filters = reactive({
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  quote_status: [],
+  quote_status_id: [],
   advisor_id: [],
   renewal_batch_id: [],
   payment_due_date: '',
   is_ecommerce: '',
   payment_status_id: '',
   previous_quote_policy_number_text: '',
-  page: 1,
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   last_modified_date: null,
@@ -120,13 +119,14 @@ const filterButtonStatuses = [
 ];
 
 const handleSelectedFilters = selectedFilters => {
+  console.log(selectedFilters); 
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
     filters.created_at_end = selectedFilters.created_at_end;
   }
 
   if (selectedFilters.quote_status) {
-    filters.quote_status = selectedFilters.quote_status;
+    filters.quote_status_id = selectedFilters.quote_status;
   }
 
   filterQuotes(true);
@@ -301,10 +301,11 @@ function filterQuotes(isValid) {
     }
   }
 
-  serverOptions.value.page = 1;
+  // serverOptions.value.page = 1;
 
   const filtersCleaned = cleanObj(filters);
   filtersCount.value = Object.keys(filtersCleaned).length;
+  console.log(filtersCleaned); 
 
   router.visit(route('life-quotes-card'), {
     method: 'get',
@@ -318,7 +319,6 @@ function filterQuotes(isValid) {
       loader.table = false;
     },
     onBefore: () => {
-      filters.page = 1;
       loader.table = true;
     },
   });
@@ -436,8 +436,8 @@ let planTypes = [
         </x-field>
         <x-field label="Lead Status">
           <ComboBox
-            v-model="filters.quote_status"
-            name="quote_status"
+            v-model="filters.quote_status_id"
+            name="quote_status_id"
             placeholder="Search by Lead Status"
             :options="
               leadStatuses.map(item => ({

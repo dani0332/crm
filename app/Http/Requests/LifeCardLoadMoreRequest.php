@@ -23,7 +23,7 @@ class LifeCardLoadMoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|in:'.QuoteStatusEnum::NewLead.','.QuoteStatusEnum::Quoted.','.QuoteStatusEnum::FollowedUp.','.QuoteStatusEnum::InNegotiation,
+            'status' => 'required|in:'.QuoteStatusEnum::Quoted.','.QuoteStatusEnum::FollowedUp.','.QuoteStatusEnum::InNegotiation.','.QuoteStatusEnum::ApplicationSubmitted.','.QuoteStatusEnum::PolicyBooked,
         ];
     }
 
