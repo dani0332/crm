@@ -535,7 +535,7 @@ class QuoteDocumentService extends BaseService
 
             // Incase applyPdftkWatermark() fails/throw exception. Made sure that we delete the file that it created.
             $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
-            if (file_exists($watermarkPdf)) {
+            if (file_exists($watermarkPdf ?? '')) {
                 unlink($watermarkPdf);
             }
 
@@ -550,11 +550,6 @@ class QuoteDocumentService extends BaseService
 
             // If we can't even use the original file, re-throw the exception
             throw $e;
-        } finally {
-            // after everything remove the sourceFile from storage/temp
-            if (file_exists($sourceFilePath)) {
-                unlink($sourceFilePath);
-            }
         }
     }
 
@@ -572,36 +567,11 @@ class QuoteDocumentService extends BaseService
     private function applyPdftkWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
     {
 
-        // Remove password protection if present
-        $processedFilePath = $this->isPdfProtected($sourceFilePath, $uuid)
-            ? $this->removePdfProtection($sourceFilePath, $uuid)
-            : $sourceFilePath;
-
-        // Create a watermark PDF with the same number of pages as the source
+        // Create a simple watermark PDF
         $watermarkPdf = storage_path('temp/watermark_'.$docName);
         $fpdf = new Fpdi;
-        $pageCount = $fpdf->setSourceFile($processedFilePath);
-
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $fpdf->importPage($pageNo);
-            $size = $fpdf->getTemplateSize($templateId);
-            $fpdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-
-            // Select watermark image based on orientation
-            $watermarkImage = $size['orientation'] === 'P'
-                ? public_path('images/watermark1.png')
-                : public_path('images/watermarkAA4.png');
-
-            // Log page dimensions for debugging
-            LoggerService::info("Page $pageNo for UUID: $uuid: orientation={$size['orientation']}, width={$size['width']}, height={$size['height']}");
-
-            // Place the watermark image to cover the entire page
-            $fpdf->Image(
-                $watermarkImage,
-                0, 0, $size['width'], $size['height'],
-                '', '', '', false, 300, '', false, false, 0
-            );
-        }
+        $fpdf->AddPage();
+        $fpdf->Image(public_path('images/watermark1.png'), 0, 0, $fpdf->GetPageWidth(), $fpdf->GetPageHeight());
         $fpdf->Output($watermarkPdf, 'F');
 
         // Check if PDFtk is installed
@@ -609,13 +579,12 @@ class QuoteDocumentService extends BaseService
         $pdftk_check_return = 0;
         exec('which pdftk 2>&1', $pdftk_check_output, $pdftk_check_return);
 
-        if ($pdftk_check_return !== 0) {
-            LoggerService::error("PDFtk not found for UUID: $uuid");
-            throw new \Exception('PDFtk is not installed');
-        }
+        // LoggerService::info("PDFtk availability check for UUID: $uuid");
+        // LoggerService::info('PDFtk path: '.(empty($pdftk_check_output) ? 'Not found' : implode("\n", $pdftk_check_output)));
+        // end Check if PDFtk is installed
 
-        // Use pdftk's background operation to apply watermark to all pages
-        $pdftk_command = 'pdftk '.escapeshellarg($processedFilePath).
+        // Use PDFtk's background operation to apply watermark behind content
+        $pdftk_command = 'pdftk '.escapeshellarg($sourceFilePath).
             ' background '.escapeshellarg($watermarkPdf).
             ' output '.escapeshellarg($outputPath).' 2>&1';
 
@@ -623,7 +592,6 @@ class QuoteDocumentService extends BaseService
         $output = [];
         $returnVar = 0;
         exec($pdftk_command, $output, $returnVar);
-        //        logger()->debug("Forcing Ghostscript");
 
         // Show detailed output from command execution for direct debugging
         // LoggerService::info("PDFtk command execution details for UUID: $uuid");
@@ -638,10 +606,6 @@ class QuoteDocumentService extends BaseService
         // Clean up the watermark file
         if (file_exists($watermarkPdf)) {
             unlink($watermarkPdf);
-        }
-
-        if (file_exists($processedFilePath) && $processedFilePath !== $sourceFilePath) {
-            unlink($processedFilePath);
         }
 
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
@@ -659,118 +623,38 @@ class QuoteDocumentService extends BaseService
      */
     private function ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid)
     {
-        // Preprocess the PDF with Ghostscript for FPDI compatibility
-        $tempFilePath = storage_path('temp/preprocessed_'.$uuid.'.pdf');
+        // Create a new watermark PDF for Ghostscript with even higher transparency
+        $watermarkPdfGs = storage_path('temp/watermark_gs_'.$docName);
+        $fpdfGs = new Fpdi;
+        $fpdfGs->AddPage();
+        $fpdfGs->Image(public_path('images/watermark1.png'), 0, 0, $fpdfGs->GetPageWidth(), $fpdfGs->GetPageHeight());
+        $fpdfGs->Output($watermarkPdfGs, 'F');
+
+        // Try Ghostscript with the more transparent watermark (content first, then watermark)
         $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
-            '-dPDFSETTINGS=/prepress -dCompatibilityLevel=1.7 '.
-            '-dEmbedAllFonts=true -dSubsetFonts=false -dCompressPages=false '.
-            '-sOutputFile='.escapeshellarg($tempFilePath).' '.
-            escapeshellarg($sourceFilePath).' 2>&1';
+                  '-dPDFSETTINGS=/prepress -dEmbedAllFonts=true -dSubsetFonts=false '.
+                  '-dCompatibilityLevel=1.4 -dPrinted=false '.
+                  '-sOutputFile='.escapeshellarg($outputPath).' '.
+                  escapeshellarg($sourceFilePath).' '.escapeshellarg($watermarkPdfGs).' 2>&1';
 
-        $output = shell_exec($gsCommand);
+        // Execute command and capture output for debugging
+        $output = [];
+        $returnVar = 0;
+        exec($gsCommand, $output, $returnVar);
 
-        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
-            LoggerService::error("Ghostscript preprocessing failed for UUID: $uuid. Output: $output");
-            throw new \Exception('Ghostscript preprocessing failed');
+        // Show detailed output for direct debugging
+        // LoggerService::info('Ghostscript Command output: '.(empty($output) ? 'No output' : implode("\n", $output)));
+
+        // Clean up
+        if (file_exists($watermarkPdfGs)) {
+            unlink($watermarkPdfGs);
         }
 
-        // Apply watermark with FPDI
-        $pdf = new Fpdi;
-        $pageCount = $pdf->setSourceFile($tempFilePath);
-
-        $watermarkImagePath = public_path('images/watermark1.png');
-        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
-
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $pdf->importPage($pageNo);
-            $size = $pdf->getTemplateSize($templateId);
-            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-
-            // Add watermark based on orientation
-            if ($size['orientation'] === 'P') {
-                $pdf->Image(
-                    $watermarkImagePath,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
-            } else {
-                $pdf->Image(
-                    $watermarkImageAA4Path,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
-            }
-
-            // Layer the original page content over the watermark
-            $pdf->useTemplate($templateId);
+        // If Ghostscript also failed, just use the original file
+        if ($returnVar !== 0 || ! file_exists($outputPath) || filesize($outputPath) < 100) {
+            LoggerService::error("Ghostscript watermarking failed for UUID: $uuid");
+            throw new \Exception("Ghostscript watermarking failed for UUID: $uuid");
         }
-
-        $pdf->Output($outputPath, 'F');
-
-        // Clean up temporary file
-        if (file_exists($tempFilePath)) {
-            unlink($tempFilePath);
-        }
-
-        // Check if the output file was created successfully
-        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
-            LoggerService::error("FPDI watermarking failed for UUID: $uuid");
-            throw new \Exception('FPDI watermarking failed');
-        }
-
-        LoggerService::info("Successfully applied watermark with Ghostscript and FPDI for UUID: $uuid");
-
-    }
-
-    private function isPdfProtected($sourceFile, $uuid)
-    {
-        $pdftk_command = 'pdftk '.escapeshellarg($sourceFile).' dump_data 2>&1';
-        $output = shell_exec($pdftk_command);
-
-        // Check for encryption or password indicators
-        if (strpos($output, 'Encrypt') !== false ||
-            strpos($output, 'OwnerPassword') !== false ||
-            strpos($output, 'UserPassword') !== false ||
-            strpos($output, 'OWNER OR USER PASSWORD REQUIRED') !== false) {
-            LoggerService::info("PDF is protected for UUID: $uuid. Output: $output");
-
-            return true;
-        }
-
-        // If pdftk fails to read the PDF, assume it’s protected to be safe
-        if (strpos($output, 'Error:') !== false || empty($output)) {
-            LoggerService::warning("pdftk dump_data failed or no output for UUID: $uuid, assuming protected");
-
-            return true;
-        }
-
-        LoggerService::info("PDF is not protected for UUID: $uuid");
-
-        return false;
-    }
-
-    private function removePdfProtection($sourceFile, $uuid)
-    {
-        $unprotectedPath = storage_path('temp/unprotected_'.basename($sourceFile));
-        $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
-            '-dPDFSETTINGS=/prepress -dCompatibilityLevel=1.7 '.
-            '-dEmbedAllFonts=true -dSubsetFonts=false -dCompressPages=false '.
-            '-sOutputFile='.escapeshellarg($unprotectedPath).' '.
-            escapeshellarg($sourceFile).' 2>&1';
-
-        LoggerService::info("Removing PDF protection for UUID: $uuid with command: $gsCommand");
-        $output = shell_exec($gsCommand);
-        LoggerService::info("Ghostscript output for UUID: $uuid: $output");
-
-        if (file_exists($unprotectedPath) && filesize($unprotectedPath) > 100) {
-            LoggerService::info("Successfully removed protection for UUID: $uuid");
-
-            return $unprotectedPath;
-        }
-
-        LoggerService::error("Failed to remove PDF protection for UUID: $uuid. Output: $output");
-
-        return $sourceFile;
     }
 
     /**
