@@ -1255,10 +1255,7 @@ class TravelQuoteService extends BaseService
         $duplicateLead->save();
 
         if ($duplicateLead) {
-            $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
-            if (in_array(QuoteTypeId::Travel, $allowedQuoteTypes)) {
-                $this->updatePersonalQuote($duplicateLead->uuid, QuoteTypeId::Travel, ['quote_id' => $duplicateLead->id]);
-            }
+            $this->updatePersonalQuote($duplicateLead->uuid, QuoteTypeId::Travel, ['quote_id' => $duplicateLead->id]);
             // update morph relation in payments table
             $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
 
