@@ -869,7 +869,6 @@ const options = reactive({
 watch(
   () => planFilters?.insurer,
   value => {
-    console.log(value);
     if (value && planFilters.insurer && planFilters.insurer.length > 0) {
       planFilters.network = [];
       options.loading = true;
@@ -891,7 +890,6 @@ watch(
           }
         })
         .catch(err => {
-          console.log(err);
           notification.error({
             title: 'Error!',
             position: 'top',
@@ -902,6 +900,7 @@ watch(
         });
     } else {
       options.network.length = 0;
+      planFilters.network = [];
     }
   },
   { deep: true },
