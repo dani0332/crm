@@ -255,7 +255,6 @@ const getPaymentTermTitle = months => {
   return mapping[months] || '';
 };
 
-
 const getTotalAnnualPremium = (paymentTerm, premium) => {
   const paymentTermTitle = getPaymentTermTitle(paymentTerm);
   const mapping = {
@@ -448,7 +447,6 @@ const activityEdit = data => {
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
   activityForm.quote_id = page.props.quote.id;
-  
 };
 
 const onActivitySubmit = isValid => {

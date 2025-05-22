@@ -119,7 +119,7 @@ const filterButtonStatuses = [
 ];
 
 const handleSelectedFilters = selectedFilters => {
-  console.log(selectedFilters); 
+  console.log(selectedFilters);
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
     filters.created_at_end = selectedFilters.created_at_end;
@@ -305,7 +305,7 @@ function filterQuotes(isValid) {
 
   const filtersCleaned = cleanObj(filters);
   filtersCount.value = Object.keys(filtersCleaned).length;
-  console.log(filtersCleaned); 
+  console.log(filtersCleaned);
 
   router.visit(route('life-quotes-card'), {
     method: 'get',

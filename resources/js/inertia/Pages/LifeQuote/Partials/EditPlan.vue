@@ -49,7 +49,7 @@ const preventInvalidInputs = (e, allowDecimals = true) => {
     e.preventDefault();
     return;
   }
-  
+
   // Limit to 2 decimal places
   if (allowDecimals && e.key === '.') {
     const value = e.target.value;
@@ -58,12 +58,16 @@ const preventInvalidInputs = (e, allowDecimals = true) => {
       return;
     }
   }
-  
+
   // Check if input would create more than 2 decimal places
   if (allowDecimals && /^\d$/.test(e.key)) {
     const value = e.target.value;
     const dotIndex = value.indexOf('.');
-    if (dotIndex !== -1 && value.length - dotIndex > 2 && e.target.selectionStart > dotIndex) {
+    if (
+      dotIndex !== -1 &&
+      value.length - dotIndex > 2 &&
+      e.target.selectionStart > dotIndex
+    ) {
       e.preventDefault();
     }
   }
@@ -95,7 +99,6 @@ const active = ref(false);
 const lifeCoverToggled = true;
 
 const notification = useNotifications('toast');
-
 
 const paymentTerms = [
   { value: 1, label: 'Monthly' },
@@ -150,7 +153,8 @@ const editForm = reactive({
   isManualPlan: props.selectedPlan.isManualPlan,
   version: props.selectedPlan.version,
   isApi: props.selectedPlan.isApi,
-  isManualUpdate: props.selectedPlan.isManualPlan || props.selectedPlan.isApi ? true : false,
+  isManualUpdate:
+    props.selectedPlan.isManualPlan || props.selectedPlan.isApi ? true : false,
   overallLoading: 0,
 });
 
@@ -161,9 +165,13 @@ const onSubmit = isValid => {
   if (!isValid) {
     return;
   }
-  editForm.actualPremium = Number(parseFloat(editForm.actualPremium).toFixed(2));
+  editForm.actualPremium = Number(
+    parseFloat(editForm.actualPremium).toFixed(2),
+  );
   editForm.sumAssured = Number(parseFloat(editForm.sumAssured).toFixed(2));
-  editForm.overallLoading = Number(parseFloat(editForm.overallLoading).toFixed(2));
+  editForm.overallLoading = Number(
+    parseFloat(editForm.overallLoading).toFixed(2),
+  );
   extraAttr.loading = true;
 
   // Ensure riders have numeric values by converting strings to floats and preventing negative values
@@ -174,7 +182,6 @@ const onSubmit = isValid => {
     final_price: Number(parseFloat(rider.final_price).toFixed(2)) || 0,
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
-
 
   editForm.riders = processedRiders;
 
@@ -268,15 +275,25 @@ const getQuote = () => {
   // Ensure riders have numeric values by converting strings to floats and preventing negative values
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
-    price: isNaN(rider.price) ? parseFloat(0) : parseFloat(Number(rider.price).toFixed(2)),
-    loading: isNaN(rider.loading) ? parseFloat(0) : parseFloat(Number(rider.loading).toFixed(2)),
-    final_price: isNaN(rider.final_price) ? parseFloat(0) : parseFloat(Number(rider.final_price).toFixed(2)),
-    coverValue: isNaN(rider.coverValue) ? parseFloat(0) : parseFloat(Number(rider.coverValue).toFixed(2)),
+    price: isNaN(rider.price)
+      ? parseFloat(0)
+      : parseFloat(Number(rider.price).toFixed(2)),
+    loading: isNaN(rider.loading)
+      ? parseFloat(0)
+      : parseFloat(Number(rider.loading).toFixed(2)),
+    final_price: isNaN(rider.final_price)
+      ? parseFloat(0)
+      : parseFloat(Number(rider.final_price).toFixed(2)),
+    coverValue: isNaN(rider.coverValue)
+      ? parseFloat(0)
+      : parseFloat(Number(rider.coverValue).toFixed(2)),
   }));
 
   editForm.sumAssured = Number(parseFloat(editForm.sumAssured).toFixed(2));
-  editForm.actualPremium = Number(parseFloat(editForm.actualPremium).toFixed(2));
- 
+  editForm.actualPremium = Number(
+    parseFloat(editForm.actualPremium).toFixed(2),
+  );
+
   axios
     .post(`/personal-quotes/get-life-provider-plan`, {
       data: {
@@ -295,7 +312,6 @@ const getQuote = () => {
       },
     })
     .then(res => {
-
       if (res.data.providerPlan.message) {
         errorMessage.value = res.data.providerPlan.message;
         return;
@@ -518,7 +534,6 @@ const validateCoverValue = value => {
                   v-model="editForm.isDisabled"
                   color="success"
                   label="Hide"
-                  
                 />
               </div>
 
@@ -754,7 +769,11 @@ const validateCoverValue = value => {
                 <div class="col-span-2">
                   <x-input
                     :disabled="!rider.active"
-                    :rules="rider.active ? [isRequired, isNonNegative, validateCoverValue] : []"
+                    :rules="
+                      rider.active
+                        ? [isRequired, isNonNegative, validateCoverValue]
+                        : []
+                    "
                     type="number"
                     @keydown="e => preventInvalidInputs(e, false)"
                     min="0"
@@ -894,7 +913,9 @@ const validateCoverValue = value => {
           <!-- Price section aligned to the left -->
           <div class="flex flex-row">
             <dt class="font-bold text-lg ml-4">Total Price:</dt>
-            <dd class="text-lg">&nbsp; AED {{ Number(actualPremium.toFixed(2)) }}</dd>
+            <dd class="text-lg">
+              &nbsp; AED {{ Number(actualPremium.toFixed(2)) }}
+            </dd>
           </div>
 
           <!-- Timestamps aligned to the right -->
@@ -942,7 +963,9 @@ const validateCoverValue = value => {
             <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
             <div class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
-              <dd class="text-sm">&nbsp; AED {{ parseFloat(editForm.actualPremium).toFixed(2) }}</dd>
+              <dd class="text-sm">
+                &nbsp; AED {{ parseFloat(editForm.actualPremium).toFixed(2) }}
+              </dd>
             </div>
           </div>
           <!-- Timestamps aligned to the right -->
@@ -1000,7 +1023,9 @@ const validateCoverValue = value => {
             <!-- Total Price section -->
             <div class="flex items-center">
               <span class="font-bold mr-2">Total Price:</span>
-              <span class="">AED {{ parseFloat(actualPremium).toFixed(2) }}</span>
+              <span class=""
+                >AED {{ parseFloat(actualPremium).toFixed(2) }}</span
+              >
             </div>
           </div>
         </div>

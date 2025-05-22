@@ -20,7 +20,7 @@ const preventInvalidInputs = (e, allowDecimals = true) => {
     e.preventDefault();
     return;
   }
-  
+
   // Limit to 2 decimal places
   if (allowDecimals && e.key === '.') {
     const value = e.target.value;
@@ -29,12 +29,16 @@ const preventInvalidInputs = (e, allowDecimals = true) => {
       return;
     }
   }
-  
+
   // Check if input would create more than 2 decimal places
   if (allowDecimals && /^\d$/.test(e.key)) {
     const value = e.target.value;
     const dotIndex = value.indexOf('.');
-    if (dotIndex !== -1 && value.length - dotIndex > 2 && e.target.selectionStart > dotIndex) {
+    if (
+      dotIndex !== -1 &&
+      value.length - dotIndex > 2 &&
+      e.target.selectionStart > dotIndex
+    ) {
       e.preventDefault();
     }
   }
@@ -103,8 +107,6 @@ const lifeCoverToggled = true;
 
 const notification = useNotifications('toast');
 
-
-
 const options = reactive({
   providerPlans: [],
   loading: false,
@@ -162,8 +164,10 @@ const onSubmit = isValid => {
   }));
 
   // Ensure numeric form values are properly converted
-  createForm.sumAssured = Number( parseFloat(createForm.sumAssured).toFixed(2)) || 0;
-  createForm.actualPremium = Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
+  createForm.sumAssured =
+    Number(parseFloat(createForm.sumAssured).toFixed(2)) || 0;
+  createForm.actualPremium =
+    Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
   createForm.policyTerm = parseInt(createForm.policyTerm) || 0;
 
   createForm.riders = processedRiders;
@@ -486,11 +490,14 @@ const validateCoverValue = value => {
             type="number"
             :disabled="!rider.active"
             @keydown="e => preventInvalidInputs(e, false)"
-
             class="w-full h-10 p-2 rounded-md"
             v-model="rider.coverValue"
             min="0"
-            :rules="rider.active ? [isNonNegative, validateCoverValue, isRequired] : []"
+            :rules="
+              rider.active
+                ? [isNonNegative, validateCoverValue, isRequired]
+                : []
+            "
           />
           <x-toggle v-model="rider.active" color="success" size="lg" />
           <x-input

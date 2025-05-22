@@ -28,7 +28,7 @@ const preventInvalidInputs = (e, allowDecimals = true) => {
     e.preventDefault();
     return;
   }
-  
+
   // Limit to 2 decimal places
   if (allowDecimals && e.key === '.') {
     const value = e.target.value;
@@ -37,17 +37,20 @@ const preventInvalidInputs = (e, allowDecimals = true) => {
       return;
     }
   }
-  
+
   // Check if input would create more than 2 decimal places
   if (allowDecimals && /^\d$/.test(e.key)) {
     const value = e.target.value;
     const dotIndex = value.indexOf('.');
-    if (dotIndex !== -1 && value.length - dotIndex > 2 && e.target.selectionStart > dotIndex) {
+    if (
+      dotIndex !== -1 &&
+      value.length - dotIndex > 2 &&
+      e.target.selectionStart > dotIndex
+    ) {
       e.preventDefault();
     }
   }
 };
-
 
 const validatePriceRange = value => {
   if (!value) return true;
@@ -82,7 +85,6 @@ const emit = defineEmits(['success', 'error']);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const active = ref(false);
 
-
 const paymentTerms = [
   { value: 1, label: 'Monthly' },
   { value: 3, label: 'Quarterly' },
@@ -95,7 +97,6 @@ const filteredPaymentTerms = computed(() => {
     ? paymentTerms.filter(term => ![3, 6].includes(term.value))
     : paymentTerms;
 });
-
 
 const availableInsuranceProviders = computed(() => {
   return props.insuranceProviders;
@@ -236,15 +237,20 @@ const getQuote = () => {
     return;
   }
 
-
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
-    price: isNaN(rider.price) ? 0 : Number(parseFloat(rider.price).toFixed(2)) || 0,
-    coverValue: isNaN(rider.coverValue) ? 0 : Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+    price: isNaN(rider.price)
+      ? 0
+      : Number(parseFloat(rider.price).toFixed(2)) || 0,
+    coverValue: isNaN(rider.coverValue)
+      ? 0
+      : Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
 
-  createForm.sumAssured = Number(parseFloat(createForm.sumAssured).toFixed(2)) || 0;
-  createForm.actualPremium = Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
+  createForm.sumAssured =
+    Number(parseFloat(createForm.sumAssured).toFixed(2)) || 0;
+  createForm.actualPremium =
+    Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
   createForm.riders = processedRiders;
 
   axios
@@ -262,7 +268,7 @@ const getQuote = () => {
           riders: processedRiders,
         },
         lang: 'en',
-      }, 
+      },
     })
     .then(res => {
       if (res.data.providerPlan.message) {
@@ -297,10 +303,11 @@ const onSubmit = isValid => {
   }));
 
   createForm.loading = true;
-  createForm.sumAssured = Number(parseFloat(createForm.sumAssured).toFixed(2)) || 0;
-  createForm.actualPremium = Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
+  createForm.sumAssured =
+    Number(parseFloat(createForm.sumAssured).toFixed(2)) || 0;
+  createForm.actualPremium =
+    Number(parseFloat(createForm.actualPremium).toFixed(2)) || 0;
   createForm.riders = processedRiders;
-
 
   axios
     .post('/personal-quotes/life-plan-manual-create', {
@@ -432,7 +439,11 @@ const validateCoverValue = value => {
     @submit="onSubmit"
   >
     <div class="mx-auto p-6 bg-white rounded-lg">
-      <h2 class="bg-gray-100 text-gray-700 font-semibold text-center rounded-lg px-6 py-3 -mt-4 mb-2">{{ props.plan.providerName }} - {{ props.plan.planName }}</h2>
+      <h2
+        class="bg-gray-100 text-gray-700 font-semibold text-center rounded-lg px-6 py-3 -mt-4 mb-2"
+      >
+        {{ props.plan.providerName }} - {{ props.plan.planName }}
+      </h2>
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block font-medium text-gray-700 mb-1"
@@ -564,7 +575,6 @@ const validateCoverValue = value => {
             :disabled="plan.isApi"
           />
         </div>
-        
       </div>
 
       <div class="mt-6">
@@ -607,7 +617,11 @@ const validateCoverValue = value => {
           }}</span>
           <x-input
             type="number"
-            :rules="rider.active ? [isNonNegative, validateCoverValue, isRequired] : []"
+            :rules="
+              rider.active
+                ? [isNonNegative, validateCoverValue, isRequired]
+                : []
+            "
             step="any"
             @keydown="e => preventInvalidInputs(e, false)"
             :disabled="!rider.active"
@@ -617,7 +631,11 @@ const validateCoverValue = value => {
           <x-toggle v-model="rider.active" color="success" size="lg" />
           <x-input
             type="number"
-            :rules="rider.active && props.plan.isManualPlan ? [isNonNegative, isRequired] : []"
+            :rules="
+              rider.active && props.plan.isManualPlan
+                ? [isNonNegative, isRequired]
+                : []
+            "
             step="any"
             @keydown="e => preventInvalidInputs(e, false)"
             class="w-full h-10 p-2 rounded-md"
