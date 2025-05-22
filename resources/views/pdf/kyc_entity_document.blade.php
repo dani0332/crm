@@ -165,7 +165,7 @@
                 </tr>
                 <tr>
                     <td>Registered address:</td>
-                    <td>{{ $data['registered_address'] }}</td>
+                    <td>{{ $data['residential_address'] }}</td>
                 </tr>
                 <tr>
                     <td>Website:</td>

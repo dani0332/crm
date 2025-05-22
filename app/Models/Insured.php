@@ -17,4 +17,9 @@ class Insured extends Model implements AuditableContract
     {
         return $this->belongsTo(Nationality::class);
     }
+
+    public function insuredKyc()
+    {
+        return $this->hasOne(InsuredKyc::class, 'insured_id', 'id');
+    }
 }
