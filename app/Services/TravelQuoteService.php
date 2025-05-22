@@ -32,6 +32,7 @@ use App\Repositories\CustomerMembersRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PersonalQuoteSyncTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -47,6 +48,7 @@ class TravelQuoteService extends BaseService
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
+    use PersonalQuoteSyncTrait;
     use RolePermissionConditions;
 
     public function __construct(LeadAllocationService $leadAllocationService, protected TravelQuoteQueryBuilder $travelQuoteQueryBuilder)
@@ -1253,6 +1255,7 @@ class TravelQuoteService extends BaseService
         $duplicateLead->save();
 
         if ($duplicateLead) {
+            $this->updatePersonalQuote($duplicateLead->uuid, QuoteTypeId::Travel, ['quote_id' => $duplicateLead->id]);
             // update morph relation in payments table
             $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
 
