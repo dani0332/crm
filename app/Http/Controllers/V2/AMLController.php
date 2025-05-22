@@ -282,6 +282,10 @@ class AMLController extends Controller
             '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
 
         $kycLogs = app(AMLService::class)->getKYCLogs($quoteTypeId, $quoteRequestId);
+        $isAnyEscalated = $kycLogs->isNotEmpty() ? count($kycLogs->filter(function($log) {
+            return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
+        })) : 0;
+
         $lookups = app(AMLService::class)->getAMLLookups();
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
         $entityDetails = app(AMLService::class)->getEntityDetails($quoteTypeId, $quoteRequestId); // TODO:: this will only for customer member mapping, this will remove when customer member mapping updated with insured
@@ -329,6 +333,7 @@ class AMLController extends Controller
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
+            'isAnyEscalated' => $isAnyEscalated,
         ], $businessPayload ?? []));
     }
 
