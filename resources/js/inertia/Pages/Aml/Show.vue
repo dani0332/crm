@@ -430,7 +430,7 @@ function fieldValidationsperson() {
           {{ aml.search_type }}
         </template>
       </DataTable>
-      <div v-if="amlResults.length" class="flex justify-end">
+      <div v-if="amlResults.length" class="flex justify-end mb-4">
         <x-button
           class="mt-2 ml-2"
           color="emerald"
@@ -465,6 +465,11 @@ function fieldValidationsperson() {
           True Match - Accept Risk
         </x-button>
       </div>
+  
+      <AuditLogs
+        :type="`App\\Models\\InsuredKyc`"
+        :id="props.insured?.id"
+      />
       <x-modal
         v-model="decisionNotesModal"
         :title="`${decisionModalHeading}`"

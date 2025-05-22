@@ -1151,16 +1151,21 @@ class AMLService
                 'is_partner' => $complianceQuestions['is_partner'] ?? null,
             ];
 
-            InsuredKyc::updateOrCreate([
+            $kycData = array_merge($sameFields, [
                 'insured_id' => $complianceQuestions['insured_id'],
-            ], array_merge($sameFields, [
                 'is_sanction_match' => $complianceQuestions['is_sanction_match'] ?? null,
                 'in_fatf' => $complianceQuestions['in_fatf'] ?? null,
                 'is_owner_high_risk' => $complianceQuestions['is_owner_high_risk'] ?? null,
                 'transaction_volume' => $complianceQuestions['transaction_volume'] ?? null,
                 'transaction_activities' => $complianceQuestions['transaction_activities'] ?? null,
                 'customer_id' => $complianceQuestions['customer_id'] ?? null,
-            ]));
+            ]);
+
+            if ($insuredKyc = InsuredKyc::where('insured_id', $complianceQuestions['insured_id'])->first()) {
+                $insuredKyc->update($kycData);
+            } else {
+                InsuredKyc::create($kycData);
+            }
 
             // this should be removed after data migration.
             if (isset($complianceQuestions['customer_id']) && $complianceQuestions['customer_id'] != null) {

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
+use App\Models\Insured;
+use App\Models\InsuredKyc;
 use App\Models\InsurerRequestResponse;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
@@ -47,6 +49,9 @@ class AuditableController extends Controller
         if ($request->auditableType === 'App\Models\SendUpdateLog') {
             $code = $this->getSendUpdatePaymentCode($request->auditableId);
             $documentIds = $this->getSendUpdateDocumentIds($request->auditableId);
+        } elseif ($request->auditableType === 'App\Models\InsuredKyc') {
+            $insuredKyc = InsuredKyc::where('insured_id', $request->auditableId)->select('id')->first();
+            $request->auditableId = $insuredKyc->id;
         }
 
         $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
