@@ -16,7 +16,7 @@ const configForm = useForm({
   quote_type_id: props.configuration?.quote_type_id ?? '',
   nationality_id: props.configuration?.nationality_id ?? '',
   user_ids: props.configuration?.users?.map(user => user.id) ?? [],
-  is_sic_enabled: props.configuration?.is_sic_enabled ?? false,
+  should_skip_sic: props.configuration?.should_skip_sic ?? false,
   is_active: props.configuration?.activated_at !== null,
 });
 
@@ -261,15 +261,15 @@ function onSubmit(isValid) {
       </x-field>
 
       <div class="grid sm:grid-cols-2 gap-4 sm:col-span-2">
-        <x-field label="SIC">
+        <x-field label="Should Skip SIC">
           <label class="flex items-center space-x-2 cursor-pointer">
             <x-toggle
-              v-model="configForm.is_sic_enabled"
+              v-model="configForm.should_skip_sic"
               color="success"
               size="lg"
             />
             <span class="text-sm text-gray-600">
-              {{ configForm.is_sic_enabled ? 'Enabled' : 'Disabled' }}
+              {{ configForm.should_skip_sic ? 'Yes' : 'No' }}
             </span>
           </label>
         </x-field>

@@ -34,7 +34,7 @@ class NationalityAllocationService
         $configuration = NationalityAllocationConfiguration::create([
             'quote_type_id' => $data['quote_type_id'],
             'nationality_id' => $data['nationality_id'],
-            'is_sic_enabled' => $data['is_sic_enabled'] ?? false,
+            'should_skip_sic' => $data['should_skip_sic'] ?? false,
             'activated_at' => $data['activated_at'] ?? null,
             'created_by' => $userId,
             'updated_by' => $userId,

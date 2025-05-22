@@ -40,8 +40,8 @@ class NationalityAllocationConfigurationController extends Controller
                     $query->inactive();
                 }
             })
-            ->when($request->filled('is_sic_enabled'), function ($query) use ($request) {
-                $query->where('is_sic_enabled', $request->is_sic_enabled);
+            ->when($request->filled('should_skip_sic'), function ($query) use ($request) {
+                $query->where('should_skip_sic', $request->should_skip_sic);
             })
             ->latest()
             ->paginate(10)
@@ -54,7 +54,7 @@ class NationalityAllocationConfigurationController extends Controller
             'configurations' => $configurations,
             'nationalities' => $nationalities,
             'quoteTypes' => $quoteTypes,
-            'filters' => $request->only(['quote_type_id', 'nationality_id', 'created_at', 'created_at_end', 'status', 'is_sic_enabled']),
+            'filters' => $request->only(['quote_type_id', 'nationality_id', 'created_at', 'created_at_end', 'status', 'should_skip_sic']),
         ]);
     }
 
@@ -78,7 +78,7 @@ class NationalityAllocationConfigurationController extends Controller
             'nationality_id' => 'required|exists:nationality,id',
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
-            'is_sic_enabled' => 'boolean',
+            'should_skip_sic' => 'boolean',
             'is_active' => 'boolean',
         ]);
 
@@ -96,7 +96,7 @@ class NationalityAllocationConfigurationController extends Controller
         $data = [
             'quote_type_id' => $validated['quote_type_id'],
             'nationality_id' => $validated['nationality_id'],
-            'is_sic_enabled' => $validated['is_sic_enabled'] ?? false,
+            'should_skip_sic' => $validated['should_skip_sic'] ?? false,
             'activated_at' => $validated['is_active'] ? now() : null,
             'user_ids' => $validated['user_ids'],
         ];
@@ -135,7 +135,7 @@ class NationalityAllocationConfigurationController extends Controller
             'nationality_id' => 'required|exists:nationality,id',
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
-            'is_sic_enabled' => 'boolean',
+            'should_skip_sic' => 'boolean',
             'is_active' => 'boolean',
         ]);
 
@@ -153,7 +153,7 @@ class NationalityAllocationConfigurationController extends Controller
         $nationalityAllocationConfig->update([
             'quote_type_id' => $validated['quote_type_id'],
             'nationality_id' => $validated['nationality_id'],
-            'is_sic_enabled' => $validated['is_sic_enabled'] ?? false,
+            'should_skip_sic' => $validated['should_skip_sic'] ?? false,
             'updated_by' => Auth::id(),
             'activated_at' => $validated['is_active'] ? ($nationalityAllocationConfig->activated_at ?? now()) : null,
         ]);

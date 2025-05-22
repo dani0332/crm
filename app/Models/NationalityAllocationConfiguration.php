@@ -18,17 +18,17 @@ class NationalityAllocationConfiguration extends Model implements AuditableContr
         'nationality_id',
         'created_by',
         'updated_by',
-        'is_sic_enabled',
+        'should_skip_sic',
         'activated_at',
     ];
     protected $casts = [
-        'is_sic_enabled' => 'boolean',
+        'should_skip_sic' => 'boolean',
         'activated_at' => 'datetime',
     ];
     protected $auditInclude = [
         'quote_type_id',
         'nationality_id',
-        'is_sic_enabled',
+        'should_skip_sic',
         'activated_at',
     ];
 

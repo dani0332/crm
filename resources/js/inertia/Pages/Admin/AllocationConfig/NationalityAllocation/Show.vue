@@ -173,17 +173,17 @@ const formatAuditChanges = log => {
         </div>
 
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">SIC</dt>
+          <dt class="font-medium">Should Skip SIC</dt>
           <dd>
             <span
               :class="[
                 'px-2 py-1 text-xs font-medium rounded-full',
-                configuration.is_sic_enabled
+                configuration.should_skip_sic
                   ? 'bg-green-100 text-green-800'
                   : 'bg-red-100 text-red-800',
               ]"
             >
-              {{ configuration.is_sic_enabled ? 'Enabled' : 'Disabled' }}
+              {{ configuration.should_skip_sic ? 'Yes' : 'No' }}
             </span>
           </dd>
         </div>

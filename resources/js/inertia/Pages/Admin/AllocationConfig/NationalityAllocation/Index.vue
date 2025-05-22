@@ -30,7 +30,7 @@ const filters = reactive({
   created_at: props.filters?.created_at ?? '',
   created_at_end: props.filters?.created_at_end ?? '',
   status: props.filters?.status ?? '',
-  is_sic_enabled: props.filters?.is_sic_enabled ?? '',
+  should_skip_sic: props.filters?.should_skip_sic ?? '',
   page: 1,
 });
 
@@ -42,7 +42,7 @@ const tableHeader = [
   { text: 'Quote Type', value: 'quote_type.text' },
   { text: 'Nationality', value: 'nationality.text' },
   { text: 'No. of Assigned Advisors', value: 'users' },
-  { text: 'SIC', value: 'is_sic_enabled' },
+  { text: 'Should Skip SIC', value: 'should_skip_sic' },
   { text: 'Status', value: 'activated_at' },
   { text: 'Created Date', value: 'created_at' },
   { text: 'Actions', value: 'actions' },
@@ -68,8 +68,8 @@ const statusOptions = [
 ];
 
 const sicOptions = [
-  { value: '1', label: 'Enabled' },
-  { value: '0', label: 'Disabled' },
+  { value: '1', label: 'Yes' },
+  { value: '0', label: 'No' },
 ];
 
 // Track Inertia events
@@ -181,11 +181,11 @@ function onConfirmDelete() {
           placeholder="Select Status"
         />
       </x-field>
-      <x-field label="SIC">
+      <x-field label="Should Skip SIC">
         <x-select
-          v-model="filters.is_sic_enabled"
+          v-model="filters.should_skip_sic"
           :options="sicOptions"
-          placeholder="Select SIC"
+          placeholder="Select Status"
         />
       </x-field>
       <x-field label="Created Date Start">
@@ -254,17 +254,17 @@ function onConfirmDelete() {
       </div>
     </template>
 
-    <template #item-is_sic_enabled="{ is_sic_enabled }">
+    <template #item-should_skip_sic="{ should_skip_sic }">
       <div>
         <span
           :class="[
             'px-2 py-1 text-xs font-medium rounded-full',
-            is_sic_enabled
+            should_skip_sic
               ? 'bg-green-100 text-green-800'
               : 'bg-red-100 text-red-800',
           ]"
         >
-          {{ is_sic_enabled ? 'Enabled' : 'Disabled' }}
+          {{ should_skip_sic ? 'Yes' : 'No' }}
         </span>
       </div>
     </template>
