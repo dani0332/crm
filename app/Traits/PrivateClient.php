@@ -5,115 +5,77 @@ namespace App\Traits;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
-use App\Models\Insured;
 use App\Models\PersonalQuote;
 use App\Models\PrivateClientConfig;
 use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use OwenIt\Auditing\Models\Audit;
 
 trait PrivateClient
 {
     /**
-     * Apply PCP conditions and update pcp_tag on insured table.
+     * Apply PCP conditions and update pcp_tag on customer profile.
      */
-    public function applyPcpTag(string $leadUuid, int $quoteTypeId)
+    public function applyPcpTag(string $leadUuid, int $quoteTypeId): bool
     {
+        // Early validation
         $configs = $this->getActivePcpConfigs($quoteTypeId);
         if ($configs->isEmpty()) {
             LoggerService::warning('No active PCP configurations found.', extra: [
                 'quoteTypeId' => $quoteTypeId,
             ]);
-
             return false;
         }
 
         $modelClass = QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
-        if (! class_exists($modelClass)) {
+        if (!class_exists($modelClass)) {
             LoggerService::warning('Model class not found.', extra: [
                 'quoteTypeId' => $quoteTypeId,
             ]);
-
             return false;
         }
 
-        $query = (new $modelClass)->where('uuid', $leadUuid);
-        $model = $query->first();
+        // Find the lead model
+        $model = $this->findLeadModel($modelClass, $leadUuid, $quoteTypeId);
+        if (!$model) {
+            return false;
+        }
 
-        if (! $model) {
+        // Check if lead matches PCP criteria
+        if (!$this->doesLeadMatchPcpCriteria($model, $configs, $modelClass)) {
+            LoggerService::warning('Lead not matched PCP criteria.', extra: [
+                'tag_version_criteria' => $configs->toArray(),
+            ]);
+            return false;
+        }
+
+        // Apply PCP tags
+        return $this->applyPcpTagsToLeadAndCustomer($model, $configs);
+    }
+
+    private function findLeadModel(string $modelClass, string $leadUuid, int $quoteTypeId)
+    {
+        $model = (new $modelClass)->where('uuid', $leadUuid)->first();
+        
+        if (!$model) {
             LoggerService::warning('Lead not found.', extra: [
                 'quoteTypeId' => $quoteTypeId,
                 'leadId' => $leadUuid,
             ]);
-
-            return false;
         }
+        
+        return $model;
+    }
 
+    private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass): bool
+    {
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
-
-        $exists = $query->where($this->buildConfigWhereClause($configs, $tableColumns, $model))->exists();
-
-        if ($exists) {
-            try {
-                DB::transaction(function () use ($configs, $model) {
-                    $pcpTagVersion = $configs->first()->version;
-                    $wasLeadUpdated = false;
-                    $wasCustomerUpdated = false;
-
-                    if (is_null($model->pc_qualified)) {
-                        $model->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
-                        PersonalQuote::where('uuid', $model->uuid)->update(['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion]);
-                        $wasLeadUpdated = true;
-                        LoggerService::info('PC qualified tag applied successfully on lead.', extra: [
-                            'tag_version_criteria' => json_decode($configs),
-                        ]);
-                    }
-
-                    $customer = Customer::where([
-                        'id' => $model->customer_id,
-                    ])->first();
-
-                    if ($customer && $customer->pcp_tag != true) {
-                        $customer->ref_id = $model->code;
-                        $customer->update(['pcp_tag' => true, 'pcp_tag_version' => $pcpTagVersion]);
-                        $wasCustomerUpdated = true;
-                        LoggerService::info('PCP tag applied successfully on customer.', extra: [
-                            'customer_id' => $customer->id,
-                            'customer_name' => $customer->first_name.' '.$customer->last_name,
-                            'email' => $customer->email,
-                            'tag_version_criteria' => json_decode($configs),
-                        ]);
-                    }
-
-                    if (! $wasLeadUpdated) {
-                        LoggerService::warning('PC qualified tag already applied on lead.', extra: [
-                            'applied_tag_version' => $model->pcp_tag_version,
-                        ]);
-                    }
-                    if ($customer && ! $wasCustomerUpdated) {
-                        LoggerService::warning('PCP tag already applied on customer.', extra: [
-                            'customer_id' => $customer->id,
-                            'customer_name' => $customer->first_name.' '.$customer->last_name,
-                            'email' => $customer->email,
-                            'applied_tag_version' => $customer->pcp_tag_version,
-                        ]);
-                    }
-                });
-
-                return true;
-            } catch (Exception $ex) {
-                LoggerService::error('Error applying PCP tag.', exception: $ex);
-                throw $ex;
-            }
-        }
-
-        LoggerService::warning('Lead not matched PCP criteria.', extra: [
-            'tag_version_criteria' => json_decode($configs),
-        ]);
-
-        return false;
+        $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
+        
+        return (new $modelClass)->where('uuid', $model->uuid)
+                            ->where($whereClause)
+                            ->exists();
     }
 
     /**
@@ -130,50 +92,119 @@ trait PrivateClient
     public function removePcpTag()
     {
         Customer::where('pcp_tag', true)
-            ->with(['personalQuote' => function ($query) {
+            ->whereDoesntHave('personalQuote', function ($query) {
                 $query->where('pc_qualified', true)
                     ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                     ->whereNotNull('policy_expiry_date')
                     ->where('policy_expiry_date', '>', now());
-            }])
+            })
             ->chunk(100, function ($customers) {
+
                 foreach ($customers as $customer) {
-                    LoggerService::info('Starting to check active qualified leads for customer', extra: [
+                    
+                    $customerLogObject = [
                         'customer_id' => $customer->id,
-                        'customer_name' => $customer->first_name.' '.$customer->last_name,
+                        'customer_name' => $customer->first_name . ' ' . $customer->last_name,
                         'email' => $customer->email,
-                    ]);
+                    ];
+                    
+                    LoggerService::info('Removing PCP tag as no active qualified leads were found.', extra: $customerLogObject);
 
-                    if (! $customer->personalQuote) {
-                        LoggerService::info('No active qualified leads found for customer', extra: [
-                            'customer_id' => $customer->id,
-                            'customer_name' => $customer->first_name.' '.$customer->last_name,
-                            'email' => $customer->email,
-                        ]);
-                        try {
-                            $customer->update([
-                                'pcp_tag' => false,
-                            ]);
+                    try {
+                        $customer->update(['pcp_tag' => false]);
 
-                            LoggerService::info('PCP tag removed successfully from customer', extra: [
-                                'customer_id' => $customer->id,
-                                'customer_name' => $customer->first_name.' '.$customer->last_name,
-                                'email' => $customer->email,
-                            ]);
-                        } catch (\Exception $ex) {
-                            LoggerService::error('Error removing PCP tag.', exception: $ex);
-                            throw $ex;
-                        }
-                    } else {
-                        LoggerService::info('Active qualified leads found for customer', extra: [
-                            'customer_id' => $customer->id,
-                        ]);
+                        LoggerService::info('PCP tag removed successfully.', extra: $customerLogObject);
+                    } catch (\Exception $ex) {
+                        LoggerService::error('Error removing PCP tag. Continuing with next customer.', extra: $customerLogObject, exception: $ex);
+                        // Do not throw — continue with next customer
                     }
                 }
             });
     }
 
-    protected function getActivePcpConfigs(int $quoteTypeId)
+    private function applyPcpTagsToLeadAndCustomer($model, $configs): bool
+    {
+        try {
+            return DB::transaction(function () use ($configs, $model) {
+                $pcpTagVersion = $configs->first()->version;
+                $updateResults = $this->updateLeadAndPersonalQuote($model, $pcpTagVersion);
+                $customerUpdateResult = $this->updateCustomer($model, $pcpTagVersion);
+                
+                $this->logUpdateResults($updateResults, $customerUpdateResult, $configs);
+                
+                return true;
+            });
+        } catch (Exception $ex) {
+            LoggerService::error('Error applying PCP tag.', exception: $ex);
+            return false;
+        }
+    }
+
+    private function updateLeadAndPersonalQuote($model, int $pcpTagVersion): array
+    {
+        $wasLeadUpdated = false;
+        
+        if (is_null($model->pc_qualified)) {
+            $updateData = ['pc_qualified' => 1, 'pcp_tag_version' => $pcpTagVersion];
+            
+            $model->update($updateData);
+            PersonalQuote::where('uuid', $model->uuid)->update($updateData);
+            
+            $wasLeadUpdated = true;
+            LoggerService::info('PC qualified tag applied successfully on lead.');
+        }
+        
+        return ['wasUpdated' => $wasLeadUpdated, 'version' => $model->pcp_tag_version];
+    }
+
+    private function updateCustomer($model, int $pcpTagVersion): array
+    {
+        $customer = Customer::where('id', $model->customer_id)->first();
+        $wasCustomerUpdated = false;
+        
+        if ($customer && !$customer->pcp_tag) {
+            $customer->update([
+                'ref_id' => $model->code,
+                'pcp_tag' => true,
+                'pcp_tag_version' => $pcpTagVersion
+            ]);
+            
+            $wasCustomerUpdated = true;
+            LoggerService::info('PCP tag applied successfully on customer.', extra: [
+                'customer_id' => $customer->id,
+                'customer_name' => trim($customer->first_name . ' ' . $customer->last_name),
+                'email' => $customer->email,
+            ]);
+        }
+        
+        return [
+            'customer' => $customer,
+            'wasUpdated' => $wasCustomerUpdated,
+            'version' => $customer?->pcp_tag_version
+        ];
+    }
+
+    private function logUpdateResults(array $leadResult, array $customerResult, $configs): void
+    {
+        if (!$leadResult['wasUpdated']) {
+            LoggerService::warning('PC qualified tag already applied on lead.', extra: [
+                'applied_tag_version' => $leadResult['version'],
+            ]);
+        }
+        
+        $customer = $customerResult['customer'];
+        if ($customer && !$customerResult['wasUpdated']) {
+            LoggerService::warning('PCP tag already applied on customer.', extra: [
+                'customer_id' => $customer->id,
+                'customer_name' => trim($customer->first_name . ' ' . $customer->last_name),
+                'email' => $customer->email,
+                'applied_tag_version' => $customerResult['version'],
+            ]);
+        }
+    }
+
+
+    private function getActivePcpConfigs(int $quoteTypeId)
     {
         return PrivateClientConfig::where([
             'status' => true,
@@ -182,7 +213,7 @@ trait PrivateClient
         ])->whereNotNull('value')->get();
     }
 
-    protected function getCachedTableColumns(string $modelClass, string $table): array
+    private function getCachedTableColumns(string $modelClass, string $table): array
     {
         if (! isset($this->columnsCache[$modelClass])) {
             try {
@@ -195,7 +226,7 @@ trait PrivateClient
         return $this->columnsCache[$modelClass];
     }
 
-    protected function buildConfigWhereClause($configs, $tableColumns, $model)
+    private function buildConfigWhereClause($configs, $tableColumns, $model)
     {
         return function ($outerQuery) use ($configs, $tableColumns, $model) {
             foreach ($configs as $config) {
