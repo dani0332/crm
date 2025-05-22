@@ -308,7 +308,7 @@ function fieldValidationsperson() {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Quote Request ID</dt>
             <Link
-              :href="`${aml.quote_type_id}/details/${aml.quote_request_id}`"
+              :href="`/kyc/aml/${aml.quote_type_id}/details/${aml.quote_request_id}`"
               class="text-primary-500 hover:underline"
             >
               {{ aml.quote_request_id }}
