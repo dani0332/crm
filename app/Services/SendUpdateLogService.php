@@ -1710,6 +1710,7 @@ class SendUpdateLogService
         }
 
         if (isTapEnabled()) {
+            $btnText = $this->getUpdateButtonStatus($sendUpdateLog);
             $isTransactionApproved = $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED ||
                 app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED]);
             $payment = $payment[0] ?? null;
@@ -1718,7 +1719,7 @@ class SendUpdateLogService
                     return $split->payment_method == PaymentMethodsEnum::CreditCard;
                 });
 
-                if (! $sendUpdateLog->is_booking_filled && $hasCCPayment) {
+                if ((! $sendUpdateLog->is_booking_filled && $hasCCPayment) && ($btnText != SendUpdateLogStatusEnum::SUC)) {
                     return 'Please Update the booking details.';
                 }
 
