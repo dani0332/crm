@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\ThirdPartyTagEnum;
 use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
@@ -12,7 +13,9 @@ use App\Services\BirdService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -60,6 +63,16 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 
                 return false;
             }
+
+            $isPCPTeamAdvisor = ! empty($carQuote->advisor_id) ? $carQuoteService->isPCPAdvisor($carQuote->advisor_id) : false;
+            LoggerService::info(self::class.' - PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$carQuote->source.' | Ref-ID: '.$carQuote->uuid);
+            if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
+                $this->sendPCPFollowups($carQuote);
+                LoggerService::info(self::class.' - PCP OCB Email Job dispatched against UUID:'.$carQuote->uuid);
+
+                return;
+            }
+
             $listQuotePlans = $carQuoteService->getPlans($this->quoteUuid, true, true);
 
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
@@ -178,5 +191,23 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
     public function uniqueId(): string
     {
         return $this->quoteUuid;
+    }
+
+    private function sendPCPFollowups($carQuote)
+    {
+        try {
+            LoggerService::info(self::class.' - Sending sendPCPFollowups followups email for lead: '.$carQuote->uuid);
+            SendPCPCarOCBEmailJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(1));
+            LoggerService::info(self::class.' - SendPCPCarOCBEmailJob dispatched for CAR-'.$carQuote->uuid);
+            if (empty($carQuote->pcp_flow_executed_at)) {
+                SendPCPFollowupsJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(3));
+                LoggerService::info(self::class.' -  SendPCPFollowupsJob dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
+            } else {
+                LoggerService::info(self::class.' -  SendPCPFollowupsJob already dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
+            }
+
+        } catch (\Throwable $th) {
+            LoggerService::error('Renewals PCP OCB Email failed for  CAR-'.$carQuote->uuid.' Customer EmailAddress:'.$carQuote->email);
+        }
     }
 }
