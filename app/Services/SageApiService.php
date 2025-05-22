@@ -135,9 +135,14 @@ class SageApiService
 
             return is_array($response->json()) ? json_encode($response->json()) : $response->body();
         } catch (Exception $e) {
-            LoggerService::error('Sage API : '.$endPoint.' : '.$e->getMessage());
+            $errorMessage = strtolower($e->getMessage());
+            if (str_contains($errorMessage, SageEnum::SAGE_EMPTY_RESPONSE_MESSAGE)) {
+                LoggerService::info('fun:'.__FUNCTION__.' Sage API : '.$endPoint.' : '.$errorMessage);
+            } else {
+                LoggerService::error('fun:'.__FUNCTION__.' Sage API : '.$endPoint.' : '.$errorMessage);
+            }
 
-            return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
+            return json_encode(['error' => ['message' => ['value' => $errorMessage]], 'code' => 500]);
         }
     }
 
