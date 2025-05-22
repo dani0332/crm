@@ -306,6 +306,13 @@ class CarAllocationService extends AllocationService
         // Query to get all active tiers.
         $tiersQuery = Tier::where('is_active', 1);
 
+        if ($carLead->registration_type == CarRegistrationType::COMPANY) {
+            $this->getTierBasedOnValue($carLead, $tiersQuery);
+            LoggerService::info(self::class.' - Registration type is company. Calculating tier based on value for lead with Ref-ID: '.$carLead->uuid.' | Time: '.now());
+
+            return $tiersQuery->first();
+        }
+
         // Check if the car's year of manufacture is newer than 15 years.
         if ($carLead->year_of_manufacture < $yearOfManufacture) {
             // Check if more than one plan is found against the car lead.
