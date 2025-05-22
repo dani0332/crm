@@ -48,6 +48,7 @@ use Illuminate\Support\Facades\DB;
 class SendUpdateLogController extends Controller
 {
     use PersonalQuoteSyncTrait;
+
     private object $sendUpdateLogService;
     private object $quoteDocumentService;
 
