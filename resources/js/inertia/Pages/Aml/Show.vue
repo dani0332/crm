@@ -117,8 +117,6 @@ function submitDecision(decision) {
       quoteTypeCode: quoteStatusCode
     });
 
-    console.log(quoteStatusCode);
-
     axios
       .get(url, {
         params: {
@@ -128,7 +126,7 @@ function submitDecision(decision) {
           is_controlling_pep: is_controlling_pep.value,
           aml_id: props.aml.id,
           aml_decision: decision,
-          decisonsForUpdatePortal: [JSON.stringify(decisionSelected.value)],
+          decisonsForUpdatePortal: `[${JSON.stringify(decisionSelected.value)}]`,
           result_id: JSON.parse(props.aml.results)[0].ResultID,
           complianceComponent: complianceComponent,
         },
