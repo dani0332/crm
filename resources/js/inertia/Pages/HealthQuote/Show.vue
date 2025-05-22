@@ -3618,6 +3618,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           multiple
           truncate
           class="w-full"
+          :loading="options.loading"
         >
           <template #content-footer>
             <ui-select-actions
