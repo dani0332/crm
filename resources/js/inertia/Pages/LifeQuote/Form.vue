@@ -69,6 +69,36 @@ const validateSumAssured = value => {
   return true;
 };
 
+const validateAlphaOnly = value => {
+  if (!value) return true; // Allow empty values (optional)
+  const isAlphabetOnly = /^[a-zA-Z\s]+$/.test(value); // Allows letters and spaces
+  if (!isAlphabetOnly) {
+    return 'Only alphabets are allowed';
+  }
+  return true;
+};
+
+const validatePhoneNumber = value => {
+  if (!value) return true; // Allow empty
+
+  // Remove common formatting characters
+  const cleaned = value.replace(/[\s\-()]/g, '');
+
+  // 10 digits starting with 0
+  const localPattern = /^0\d{9}$/;
+
+  // Starts with '+' then 1–3 digit country code, followed by exactly 9 digits
+  const intlPattern = /^\+\d{1,3}\d{9}$/;
+
+  if (localPattern.test(cleaned) || intlPattern.test(cleaned)) {
+    return true;
+  }
+
+  return 'Phone number must be 10 digits starting with 0 or include a country code (e.g., +94 followed by 9 digits)';
+};
+
+
+
 function onSubmit(isValid) {
   if (isValid) {
     let method = editMode.value ? 'put' : 'post';
@@ -148,7 +178,7 @@ watch(
           <x-input
             v-model="quoteForm.first_name"
             type="text"
-            :rules="[isRequired]"
+            :rules="[isRequired, validateAlphaOnly]"
             class="w-full"
             :error="quoteForm.errors.first_name"
             maxLength="20"
@@ -158,7 +188,7 @@ watch(
           <x-input
             v-model="quoteForm.last_name"
             type="text"
-            :rules="[isRequired]"
+            :rules="[isRequired, validateAlphaOnly]"
             class="w-full"
             :error="quoteForm.errors.last_name"
             maxLength="50"
@@ -178,7 +208,7 @@ watch(
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
-            :rules="[isRequired, isMobileNo]"
+            :rules="[isRequired, validatePhoneNumber]"
             class="w-full"
             :disabled="editMode"
             :error="quoteForm.errors.mobile_no"
