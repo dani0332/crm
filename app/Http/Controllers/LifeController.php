@@ -9,6 +9,9 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Inertia\ResponseFactory;
+use PDF;
+use App\Models\PersonalQuote;
+
 
 class LifeController extends Controller
 {
@@ -182,5 +185,20 @@ class LifeController extends Controller
         $providerPlan = $this->lifeQuoteService->getLifeProviderPlan($request->data);
 
         return response()->json(['providerPlan' => $providerPlan]);
+    }
+
+    public function comparisionPdf(){
+        
+        $quote = PersonalQuote::where('uuid', 'LJW7JKY9')->first();
+        $quotePlans = $this->lifeQuoteService->getQuotePlans($quote->uuid);
+        $lifePlans = $quotePlans->quotes->plans;
+        $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
+        
+        $pdf = PDF::setOption([
+            'isHtml5ParserEnabled' => true,
+            'dpi' => 150
+        ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
+
+        return $pdf->stream('Life Insurance Comparison Table.pdf');
     }
 }
