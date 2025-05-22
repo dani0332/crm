@@ -325,7 +325,9 @@ if (
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
 } else if (props.quoteType == quoteTypeCodeEnum.Home) {
-  initalPlanDetails = props.quoteRequest.insurance_provider_plan || props.quoteRequest.insurance_provider;
+  initalPlanDetails =
+    props.quoteRequest.insurance_provider_plan ||
+    props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
@@ -2528,7 +2530,7 @@ const addPayment = isValid => {
   let storeData = {
     ...data,
   };
-  
+
   paymentMethodsForm
     .transform(data => storeData)
     .post('/payments/' + props.quoteType + '/store-new', {
@@ -3094,7 +3096,9 @@ const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
-    initalPlanDetails = props.quoteRequest.insurance_provider_plan || props.quoteRequest.insurance_provider;
+    initalPlanDetails =
+      props.quoteRequest.insurance_provider_plan ||
+      props.quoteRequest.insurance_provider;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
