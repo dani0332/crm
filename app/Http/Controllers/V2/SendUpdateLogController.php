@@ -26,6 +26,7 @@ use App\Models\ApplicationStorage;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
@@ -326,17 +327,41 @@ class SendUpdateLogController extends Controller
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                     if ($subType && $subType['slug'] === 'MPC') {
-                        $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::CancellationPending,
+                        $quote = $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->first();
+                        $oldLeadStatus = $quote->quote_status_id;
+                        $newLeadStatus = QuoteStatusEnum::CancellationPending;
+
+                        $quote->update([
+                            'quote_status_id' => $newLeadStatus,
                             'quote_status_date' => now(),
+                        ]);
+
+                        QuoteStatusLog::create([
+                            'quote_type_id' => $quoteTypeId,
+                            'quote_request_id' => $quote->id,
+                            'current_quote_status_id' => $newLeadStatus,
+                            'previous_quote_status_id' => $oldLeadStatus,
+                            'created_by' => auth()->id(),
                         ]);
                     }
                     break;
                 case SendUpdateLogStatusEnum::CI:
                 case SendUpdateLogStatusEnum::CIR:
-                    $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                        'quote_status_id' => QuoteStatusEnum::CancellationPending,
+                    $quote = $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->first();
+                    $oldLeadStatus = $quote->quote_status_id;
+                    $newLeadStatus = QuoteStatusEnum::CancellationPending;
+
+                    $quote->update([
+                        'quote_status_id' => $newLeadStatus,
                         'quote_status_date' => now(),
+                    ]);
+
+                    QuoteStatusLog::create([
+                        'quote_type_id' => $quoteTypeId,
+                        'quote_request_id' => $quote->id,
+                        'current_quote_status_id' => $newLeadStatus,
+                        'previous_quote_status_id' => $oldLeadStatus,
+                        'created_by' => auth()->id(),
                     ]);
                     break;
             }
