@@ -30,7 +30,7 @@ class OcrNotifications implements ShouldBroadcastNow
 
     public function broadcastOn()
     {
-        return ['public.' . config('constants.APP_ENV') . '.ocr.user'];
+        return ['public.'.config('constants.APP_ENV').'.ocr.user'];
     }
 
     public function broadcastAs()
@@ -48,4 +48,4 @@ class OcrNotifications implements ShouldBroadcastNow
             'error' => $this->error,
         ];
     }
-} 
+}

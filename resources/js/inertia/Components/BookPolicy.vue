@@ -1030,8 +1030,7 @@ const FieldLoader = defineComponent({
                 <dd>
                   <template v-if="commissionVatNotApplicableTooltip">
                     <x-tooltip class="w-full">
-                      <FieldLoader :loading="showOcrNotification">
-                        <x-input
+                      <x-input
                           v-model="bpForm.commission_vat_not_applicable"
                           @change="calculateCommission"
                           placeholder="Commission VAT NOT APPLICABLE"
@@ -1052,7 +1051,6 @@ const FieldLoader = defineComponent({
                             {{ commissionErrorMessage }}
                           </p>
                         </div>
-                      </FieldLoader>
                       <template #tooltip>
                         <span class="custom-tooltip-content">{{
                           commissionVatNotApplicableTooltip
@@ -1061,8 +1059,7 @@ const FieldLoader = defineComponent({
                     </x-tooltip>
                   </template>
                   <template v-else>
-                    <FieldLoader :loading="showOcrNotification">
-                      <x-input
+                    <x-input
                         v-model="bpForm.commission_vat_not_applicable"
                         @change="calculateCommission"
                         placeholder="Commission VAT NOT APPLICABLE"
@@ -1080,7 +1077,6 @@ const FieldLoader = defineComponent({
                           {{ commissionErrorMessage }}
                         </p>
                       </div>
-                    </FieldLoader>
                   </template>
                 </dd>
               </div>

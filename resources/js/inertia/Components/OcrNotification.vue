@@ -17,6 +17,7 @@ const listen = () => {
     console.log('policy detail uuid', page.props.quote);
     if (e.data.uuid === page.props.quote.uuid) {
       notificationData.value = {
+        imageUrl: '/image/alfred-theme.png',
         title: 'OCR Notification',
         message: e.data.message,
         status: e.data.status,

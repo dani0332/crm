@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Events\OcrNotifications;
 use App\Models\DocumentType;
 use App\Services\Logger\LoggerService;
 use App\Services\OCR\OCRService;
@@ -14,7 +15,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\Skip;
-use App\Events\OcrNotifications;
 
 class PopulateDocumentData implements ShouldQueue
 {
@@ -53,6 +53,7 @@ class PopulateDocumentData implements ShouldQueue
         if (! $this->validateMimeType()) {
             info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
             event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed: Invalid file type'));
+
             return;
         }
 
@@ -68,6 +69,7 @@ class PopulateDocumentData implements ShouldQueue
             if ($isSuccess === null) {
                 info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
                 event(new OcrNotifications($this->quote, 'end', 'OCR processing skipped'));
+
                 return;
             }
 
