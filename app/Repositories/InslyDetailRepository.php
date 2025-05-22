@@ -7,6 +7,7 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
@@ -493,6 +494,14 @@ class InslyDetailRepository extends BaseRepository
                         $policy->imcrm_link = '/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     }
                     ! $isPersonalQuote && $this->syncQuote($obj, $payLoad);
+
+                    // Sync quote_id of lob table to personal quote table for allowed LOBs
+                    $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+                    $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
+                    if (! $isPersonalQuote && in_array($quoteTypeId, $allowedQuoteTypes)) {
+                        $this->updatePersonalQuote($obj->uuid, $quoteTypeId, ['quote_id' => $obj->id]);
+                    }
+
                     $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
                     $policy->moved_to_imcrm_by = auth()->user()->name;
                     $policy->code = $obj->code;

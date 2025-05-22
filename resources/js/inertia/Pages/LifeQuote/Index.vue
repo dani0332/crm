@@ -630,7 +630,7 @@ let planTypes = [
           label="Mobile Number"
         />
 
-        <x-input
+        <DatePicker
           v-model="filters.created_at_start"
           name="created_at_start"
           label="Created Date Start"

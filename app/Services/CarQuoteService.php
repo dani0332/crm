@@ -19,6 +19,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -29,7 +30,9 @@ use App\Models\CustomerAddress;
 use App\Models\Entity;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\Team;
 use App\Models\Tier;
+use App\Models\UserTeams;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -1905,14 +1908,11 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
-            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
-            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
             ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
             ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
             ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
-            ->where('t.parent_team_id', $carTeam->id)
             ->whereNotIn('q.uuid', function ($query) {
                 $query->select('q.uuid')
                     ->from('car_quote_plan_details as cqp')
@@ -1966,6 +1966,7 @@ class CarQuoteService extends BaseService
                 'q.payment_status_date as paymentauthdate',
                 DB::raw('qs.text as `leadstatus`'),
                 DB::raw("'AUTHORIZED' as `paymentstatus`"),
+                'qs.id as quote_status_id',
                 'q.source as source',
                 'cmk.text as make',
                 'cmd.text as model',
@@ -1977,8 +1978,6 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
-            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
-            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
             ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
@@ -1986,7 +1985,6 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
-            ->where('t.parent_team_id', '=', $carTeam->id)
             ->orderBy('q.paid_at', 'desc')
             ->get();
 
@@ -2112,6 +2110,30 @@ class CarQuoteService extends BaseService
         return response()->json(['success' => true]);
     }
 
+    /**
+     * Check if a user is a PCP advisor
+     *
+     * @param  int  $user_id  The ID of the user to check
+     * @return bool True if the user is a PCP advisor, false otherwise
+     */
+    public function isPCPAdvisor($user_id)
+    {
+        try {
+            // Cache the PCP team ID for 24 hours since it rarely changes
+            $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->first()->id ?? null;
+
+            // If $pcpTeamId is null or empty, the function will return false
+            return ! empty($pcpTeamId) && UserTeams::where('user_id', $user_id)->where('team_id', $pcpTeamId)->exists();
+
+        } catch (\Exception $e) {
+            LoggerService::info(self::class.' - Error checking PCP advisor status: '.$e->getMessage(), [
+                'user_id' => $user_id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return false;
+        }
+    }
     public function exportCompanyCarPdf($quoteType, $data, $quotePlans = null, $imageData = [])
     {
         $planIds = $data['plan_ids'];

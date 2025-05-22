@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,7 +12,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class WatermarkDocumentsJob implements ShouldQueue
@@ -42,11 +42,12 @@ class WatermarkDocumentsJob implements ShouldQueue
      */
     public function handle()
     {
-        info('watermark job started for '.$this->uuid.' attempt: '.$this->attempts());
+        LoggerService::startQuoteLogging($this->uuid);
+        LoggerService::info('watermark job started for '.$this->uuid.' attempt: '.$this->attempts());
 
         // Check if the file is already being processed
         if ($this->isFileBeingProcessed()) {
-            Log::info("File is already being processed. Retrying later. Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
+            LoggerService::info("File is already being processed. Retrying later. Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
             $this->release(30); // Release the job to be retried in 30 seconds
 
             return;
@@ -57,14 +58,14 @@ class WatermarkDocumentsJob implements ShouldQueue
 
         // Ensure the quoteDocument and documentType exist
         if (! $quoteDocument || ! $documentType) {
-            Log::error('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
+            LoggerService::error('Document or DocumentType not found. Document Id:'.$this->quoteDocumentId.' Document Type Id: '.$this->documentTypeId.' - Ref ID: '.$this->uuid);
 
             return;
         }
 
         // Check if the source file exists
         if (! $this->fileExists($quoteDocument->doc_url)) {
-            Log::error("Source file does not exist: {$quoteDocument->doc_url}");
+            LoggerService::error("Source file does not exist: {$quoteDocument->doc_url}");
 
             return;
         }
@@ -91,10 +92,10 @@ class WatermarkDocumentsJob implements ShouldQueue
                     'watermarked_doc_name' => $watermarkData['watermarked_doc_name'],
                     'watermarked_doc_url' => $watermarkData['watermarked_doc_url'],
                 ]);
-                info('watermark job completed for '.$this->uuid);
+                LoggerService::info('watermark job completed for '.$this->uuid);
             }
         } catch (\Exception $e) {
-            Log::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage());
+            LoggerService::error("Error processing watermark for document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}. Error: ".$e->getMessage());
             throw $e; // Re-throw to trigger job retry
         }
     }
@@ -136,7 +137,7 @@ class WatermarkDocumentsJob implements ShouldQueue
 
             return false;
         } catch (\Exception $e) {
-            Log::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
+            LoggerService::error("Error checking file existence: {$path}. Error: ".$e->getMessage());
 
             return false;
         }
