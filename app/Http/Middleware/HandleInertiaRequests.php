@@ -328,6 +328,12 @@ class HandleInertiaRequests extends Middleware
                         'Buy Leads Tracking',
                         route('buy-leads.request.tracking'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_EXPORT),
+                        'Export Buy Leads',
+                        route('buy-leads.request.export'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
@@ -680,6 +686,12 @@ class HandleInertiaRequests extends Middleware
                         'Query Benchmarker',
                         route('admin.benchmarker.query.show'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Permissions Docs',
+                        url('/permissions-docs/index.php'),
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true, 'target' => '_blank'])
                     )
                     ->addIf(
                         auth()->user()->hasAnyPermission([

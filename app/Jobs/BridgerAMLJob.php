@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\BridgerInsightService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -43,6 +44,9 @@ class BridgerAMLJob implements ShouldQueue
      */
     public function handle(BridgerInsightService $bridgerInsightService): void
     {
+        LoggerService::startQuoteLogging($this->quoteDetails);
+        LoggerService::info('BridgerAMLJob started');
+
         try {
             $bridgerInsightService->searchAMLResult(
                 $this->bridgerAPIToken,
@@ -55,7 +59,9 @@ class BridgerAMLJob implements ShouldQueue
             );
 
         } catch (\Exception $exception) {
-            logger()->error('AML Screening Bridger Job Exception: '.$exception->getMessage());
+            LoggerService::error('AML Screening Bridger Job failed', exception: $exception);
         }
+
+        LoggerService::info('BridgerAMLJob ended');
     }
 }

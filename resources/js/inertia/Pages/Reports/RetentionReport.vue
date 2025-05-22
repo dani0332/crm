@@ -633,7 +633,7 @@ function buildQuoteURL() {
     Cycle: 'cycle-quotes-show',
     Yacht: 'yacht-quotes-show',
     Life: 'life-quotes-show',
-    Home: 'home.show',
+    Home: 'home-quotes-show',
     GroupMedical: 'amt.show',
     CorpLine: 'business.show',
   };

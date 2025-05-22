@@ -226,7 +226,7 @@ function fieldValidationsperson() {
       <h2 class="text-xl font-semibold">AML</h2>
       <div class="flex gap-2">
         <Link href="/kyc/aml" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div">AMl</x-button>
+          <x-button size="sm" color="primary" tag="div">AML</x-button>
         </Link>
       </div>
     </div>
