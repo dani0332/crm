@@ -535,7 +535,7 @@ class QuoteDocumentService extends BaseService
 
             // Incase applyPdftkWatermark() fails/throw exception. Made sure that we delete the file that it created.
             $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
-        if (file_exists($watermarkPdf)) {
+            if (file_exists($watermarkPdf)) {
                 unlink($watermarkPdf);
             }
 
@@ -550,7 +550,7 @@ class QuoteDocumentService extends BaseService
 
             // If we can't even use the original file, re-throw the exception
             throw $e;
-        }finally{
+        } finally {
             // after everything remove the sourceFile from storage/temp
             if (file_exists($sourceFilePath)) {
                 unlink($sourceFilePath);
@@ -600,7 +600,7 @@ class QuoteDocumentService extends BaseService
 
         if ($pdftk_check_return !== 0) {
             LoggerService::error("PDFtk not found for UUID: $uuid");
-            throw new \Exception("PDFtk is not installed");
+            throw new \Exception('PDFtk is not installed');
         }
 
         // Use pdftk's background operation to apply watermark to all pages
@@ -611,8 +611,8 @@ class QuoteDocumentService extends BaseService
         // Execute the command and capture output
         $output = [];
         $returnVar = 0;
-         exec($pdftk_command, $output, $returnVar);
-//        logger()->debug("Forcing Ghostscript");
+        exec($pdftk_command, $output, $returnVar);
+        //        logger()->debug("Forcing Ghostscript");
 
         // Show detailed output from command execution for direct debugging
         // LoggerService::info("PDFtk command execution details for UUID: $uuid");
@@ -658,9 +658,9 @@ class QuoteDocumentService extends BaseService
 
         $output = shell_exec($gsCommand);
 
-        if (!file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
             LoggerService::error("Ghostscript preprocessing failed for UUID: $uuid. Output: $output");
-            throw new \Exception("Ghostscript preprocessing failed");
+            throw new \Exception('Ghostscript preprocessing failed');
         }
 
         // Apply watermark with FPDI
@@ -702,9 +702,9 @@ class QuoteDocumentService extends BaseService
         }
 
         // Check if the output file was created successfully
-        if (!file_exists($outputPath) || filesize($outputPath) < 100) {
+        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
             LoggerService::error("FPDI watermarking failed for UUID: $uuid");
-            throw new \Exception("FPDI watermarking failed");
+            throw new \Exception('FPDI watermarking failed');
         }
 
         LoggerService::info("Successfully applied watermark with Ghostscript and FPDI for UUID: $uuid");
@@ -713,7 +713,7 @@ class QuoteDocumentService extends BaseService
 
     private function isPdfProtected($sourceFile, $uuid)
     {
-        $pdftk_command = "pdftk " . escapeshellarg($sourceFile) . " dump_data 2>&1";
+        $pdftk_command = 'pdftk '.escapeshellarg($sourceFile).' dump_data 2>&1';
         $output = shell_exec($pdftk_command);
 
         // Check for encryption or password indicators
@@ -722,27 +722,30 @@ class QuoteDocumentService extends BaseService
             strpos($output, 'UserPassword') !== false ||
             strpos($output, 'OWNER OR USER PASSWORD REQUIRED') !== false) {
             LoggerService::info("PDF is protected for UUID: $uuid. Output: $output");
+
             return true;
         }
 
         // If pdftk fails to read the PDF, assume it’s protected to be safe
         if (strpos($output, 'Error:') !== false || empty($output)) {
             LoggerService::warning("pdftk dump_data failed or no output for UUID: $uuid, assuming protected");
+
             return true;
         }
 
         LoggerService::info("PDF is not protected for UUID: $uuid");
+
         return false;
     }
 
     private function removePdfProtection($sourceFile, $uuid)
     {
-        $unprotectedPath = storage_path('temp/unprotected_' . basename($sourceFile));
-        $gsCommand = "gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite " .
-            "-dPDFSETTINGS=/prepress -dCompatibilityLevel=1.7 " .
-            "-dEmbedAllFonts=true -dSubsetFonts=false -dCompressPages=false " .
-            "-sOutputFile=" . escapeshellarg($unprotectedPath) . " " .
-            escapeshellarg($sourceFile) . " 2>&1";
+        $unprotectedPath = storage_path('temp/unprotected_'.basename($sourceFile));
+        $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
+            '-dPDFSETTINGS=/prepress -dCompatibilityLevel=1.7 '.
+            '-dEmbedAllFonts=true -dSubsetFonts=false -dCompressPages=false '.
+            '-sOutputFile='.escapeshellarg($unprotectedPath).' '.
+            escapeshellarg($sourceFile).' 2>&1';
 
         LoggerService::info("Removing PDF protection for UUID: $uuid with command: $gsCommand");
         $output = shell_exec($gsCommand);
@@ -750,10 +753,12 @@ class QuoteDocumentService extends BaseService
 
         if (file_exists($unprotectedPath) && filesize($unprotectedPath) > 100) {
             LoggerService::info("Successfully removed protection for UUID: $uuid");
+
             return $unprotectedPath;
         }
 
-    LoggerService::error("Failed to remove PDF protection for UUID: $uuid. Output: $output");
+        LoggerService::error("Failed to remove PDF protection for UUID: $uuid. Output: $output");
+
         return $sourceFile;
     }
 
