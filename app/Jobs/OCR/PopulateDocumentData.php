@@ -45,15 +45,10 @@ class PopulateDocumentData implements ShouldQueue
      */
     public function handle()
     {
-        // Notify start
-        event(new OcrNotifications($this->quote, 'start', 'OCR processing started'));
-
         LoggerService::startQuoteLogging($this->quote, LoggerFeatureEnum::OCR);
 
         if (! $this->validateMimeType()) {
             info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
-            event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed: Invalid file type'));
-
             return;
         }
 
@@ -68,22 +63,16 @@ class PopulateDocumentData implements ShouldQueue
 
             if ($isSuccess === null) {
                 info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
-                event(new OcrNotifications($this->quote, 'end', 'OCR processing skipped'));
-
                 return;
             }
 
             if ($isSuccess) {
                 info(self::class." - Document data populated successfully for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
-                event(new OcrNotifications($this->quote, 'end', 'OCR processing completed'));
             } else {
                 info(self::class." - Document data population failed for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
-                event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed'));
-
                 if ($this->attempts() >= $this->tries) {
                     $errorMessage = "Maximum attempts reached for {$this->quoteType?->value} & Document Type {$this->documentType?->code}";
                     info(self::class." - {$errorMessage}");
-                    event(new OcrNotifications($this->quote, 'fail', $errorMessage));
                     $this->fail(new Exception($errorMessage));
                 } else {
                     // Retry the job
@@ -91,7 +80,6 @@ class PopulateDocumentData implements ShouldQueue
                 }
             }
         } catch (\Exception $e) {
-            event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed', $e->getMessage()));
             throw $e;
         }
 

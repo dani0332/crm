@@ -36,6 +36,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\OCRDocumentTypeEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -150,6 +151,7 @@ class HandleInertiaRequests extends Middleware
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
             'carRegistrationType' => CarRegistrationType::asArray(),
             'carVehicleUse' => CarVehicleUse::asArray(),
+            'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::cases(),
         ];
     }
 

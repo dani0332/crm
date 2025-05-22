@@ -83,22 +83,33 @@ class OCRService
 
         if (! $docType?->isEnabled($quoteType)) {
             info(self::class."::process - OCR is not enabled for this document type {$documentType->code}");
-
             return null;
         }
 
+        // Send start notification
+        event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value));
+
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
-        $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
-        event(new OcrNotifications($quote, 'end', 'OCR processing completed'));
-        if ($data) {
-            return $this->fill(
-                $quote,
-                $docType,
-                $data
-            );
+        try {
+            $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
+            if ($data) {
+                // Send end notification
+                event(new OcrNotifications($quote, 'end', 'OCR processing completed', null, $docType?->value));
+                return $this->fill(
+                    $quote,
+                    $docType,
+                    $data
+                );
+            } else {
+                // Send fail notification
+                event(new OcrNotifications($quote, 'fail', 'OCR processing failed', null, $docType?->value));
+                return false;
+            }
+        } catch (\Exception $e) {
+            // Send fail notification with error
+            event(new OcrNotifications($quote, 'fail', 'OCR processing failed', $e->getMessage(), $docType?->value));
+            throw $e;
         }
-
-        return false;
     }
 }

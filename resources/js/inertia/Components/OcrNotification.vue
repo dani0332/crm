@@ -23,6 +23,7 @@ const listen = () => {
         status: e.data.status,
         uuid: e.data.uuid,
         error: e.data.error,
+        docType: e.data.docType,
       };
       showNotification.value = true;
       // Emit event for PolicyDetail.vue
@@ -52,15 +53,20 @@ onUnmounted(() => {
     });
   }
 });
+const hideNotification = () => {
+  showNotification.value = false;
+};
 </script>
 
 <template>
   <div>
     <CustomNotification
       v-if="showNotification"
+      :imageUrl="notificationData.imageUrl"
       :title="notificationData.title"
       :message="notificationData.message"
       :timeout="10000"
+      :callHideFunction="hideNotification"
       @close="showNotification = false"
     />
   </div>

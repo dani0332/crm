@@ -18,14 +18,16 @@ class OcrNotifications implements ShouldBroadcastNow
     public string $status; // start, end, fail
     public string $message;
     public ?string $error;
+    public string $docType;
 
-    public function __construct($quote, string $status, string $message, ?string $error = null)
+    public function __construct($quote, string $status, string $message, ?string $error = null, ?string $docType = null)
     {
         $this->uuid = $quote->uuid;
         $this->userId = $quote->advisor_id ?? ($quote->created_by_id ?? 0);
         $this->status = $status;
         $this->message = $message;
         $this->error = $error;
+        $this->docType = $docType;
     }
 
     public function broadcastOn()
@@ -46,6 +48,7 @@ class OcrNotifications implements ShouldBroadcastNow
             'status' => $this->status,
             'message' => $this->message,
             'error' => $this->error,
+            'docType' => $this->docType,
         ];
     }
 }

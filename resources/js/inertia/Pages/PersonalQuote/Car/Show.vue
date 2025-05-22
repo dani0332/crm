@@ -1727,12 +1727,18 @@ const isCommercialVehicle = computed(() => {
 });
 
 const ocrLoading = ref(false);
+const policyDetailReloadKey = ref(0);
 
 function handleOcrNotification(e) {
   console.log('handleOcrNotification', e);
   const { status } = e.detail;
   if (status === 'start') ocrLoading.value = true;
-  else if (status === 'end' || status === 'fail') ocrLoading.value = false;
+  else if (status === 'end' || status === 'fail') {
+    ocrLoading.value = false;
+    if (status === 'end') {
+      policyDetailReloadKey.value++;
+    }
+  }
 }
 </script>
 
@@ -3947,6 +3953,7 @@ function handleOcrNotification(e) {
 
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
+      :key="policyDetailReloadKey"
       :quote="quote"
       :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
