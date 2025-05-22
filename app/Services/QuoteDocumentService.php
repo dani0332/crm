@@ -648,15 +648,13 @@ class QuoteDocumentService extends BaseService
      */
     private function ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid)
     {
-    try {
-
         // Preprocess the PDF with Ghostscript for FPDI compatibility
         $tempFilePath = storage_path('temp/preprocessed_' . $uuid . '.pdf');
         $gsCommand = "gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite " .
-                     "-dPDFSETTINGS=/prepress -dCompatibilityLevel=1.7 " .
-                     "-dEmbedAllFonts=true -dSubsetFonts=false -dCompressPages=false " .
-                     "-sOutputFile=" . escapeshellarg($tempFilePath) . " " .
-                     escapeshellarg($sourceFilePath) . " 2>&1";
+            "-dPDFSETTINGS=/prepress -dCompatibilityLevel=1.7 " .
+            "-dEmbedAllFonts=true -dSubsetFonts=false -dCompressPages=false " .
+            "-sOutputFile=" . escapeshellarg($tempFilePath) . " " .
+            escapeshellarg($sourceFilePath) . " 2>&1";
 
         $output = shell_exec($gsCommand);
 
@@ -710,10 +708,7 @@ class QuoteDocumentService extends BaseService
         }
 
         LoggerService::info("Successfully applied watermark with Ghostscript and FPDI for UUID: $uuid");
-    } catch (\Exception $e) {
-        LoggerService::error("Ghostscript watermarking failed for UUID: $uuid: " . $e->getMessage());
-        throw $e;
-        }
+
     }
 
     private function isPdfProtected($sourceFile, $uuid)
