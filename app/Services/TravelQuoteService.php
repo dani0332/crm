@@ -48,8 +48,8 @@ class TravelQuoteService extends BaseService
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
-    use RolePermissionConditions;
     use PersonalQuoteSyncTrait;
+    use RolePermissionConditions;
 
     public function __construct(LeadAllocationService $leadAllocationService, protected TravelQuoteQueryBuilder $travelQuoteQueryBuilder)
     {
