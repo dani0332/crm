@@ -8,7 +8,7 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  leadStatuses: Array, 
+  leadStatuses: Array,
   advisors: Array,
   teams: Object,
   areBothTeamsPresent: Boolean,
