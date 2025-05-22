@@ -109,135 +109,141 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form class="my-4" @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-3 gap-4">
-      <x-field label="Car Make">
-        <ComboBox
-          :single="true"
-          v-model="deprecationForm.car_make_id"
-          :options="
-            props.carmakes.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          placeholder="Search by Car Make"
-          :rules="[isRequired]"
-          :hasError="makeCodeError"
-          @update:modelValue="getCarModel($event)"
-        />
-      </x-field>
-      <x-field label="Car Model">
-        <ComboBox
-          :single="true"
-          v-model="deprecationForm.car_model_id"
-          :options="
-            carModels.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :rules="[isRequired]"
-          class="w-full"
-          :hasError="carIdError"
-          :loading="loader.carModel"
-        />
-      </x-field>
-      <x-field label="Insurance Provider">
-        <ComboBox
-          :single="true"
-          v-model="deprecationForm.insurance_provider_value"
-          :options="
-            props.insuranceProviders.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :rules="[isRequired]"
-          :hasError="providerNameError"
-          class="w-full"
-        />
-      </x-field>
+      <x-select
+        v-model="deprecationForm.car_make_id"
+        :options="
+          props.carmakes.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :rules="[isRequired]"
+        placeholder="Search by Car Make"
+        filterable
+        @update:modelValue="getCarModel($event)"
+        label="Car Make"
+      />
+
+      <x-select
+        v-model="deprecationForm.car_model_id"
+        :options="
+          carModels.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :rules="[isRequired]"
+        placeholder="Search by Car Model"
+        filterable
+        label="Car Model"
+        :loading="loader.carModel"
+      />
+
+      <x-select
+        v-model="deprecationForm.insurance_provider_value"
+        :options="
+          props.insuranceProviders.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :rules="[isRequired]"
+        placeholder="Search by Insurance Provider"
+        filterable
+        label="Insurance Provider"
+      >
+      </x-select>
     </div>
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="First Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.first_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Second Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.second_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Third Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.third_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Fourth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.fourth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Fifth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.fifth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Sixth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.sixth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Seventh Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.seventh_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Eighth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.eighth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Ninth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.ninth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Tenth Year" required>
-        <x-input
-          :rules="[isRequired]"
-          v-model="deprecationForm.tenth_year"
-          type="number"
-          class="w-full"
-        />
-      </x-field>
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.first_year"
+        type="number"
+        class="w-full"
+        label="First Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.second_year"
+        type="number"
+        class="w-full"
+        label="Second Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.third_year"
+        type="number"
+        class="w-full"
+        label="Third Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.fourth_year"
+        type="number"
+        class="w-full"
+        label="Fourth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.fifth_year"
+        type="number"
+        class="w-full"
+        label="Fifth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.sixth_year"
+        type="number"
+        class="w-full"
+        label="Sixth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.seventh_year"
+        type="number"
+        class="w-full"
+        label="Seventh Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.eighth_year"
+        type="number"
+        class="w-full"
+        label="Eighth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.ninth_year"
+        type="number"
+        class="w-full"
+        label="Ninth Year"
+        required
+      />
+
+      <x-input
+        :rules="[isRequired]"
+        v-model="deprecationForm.tenth_year"
+        type="number"
+        class="w-full"
+        label="Tenth Year"
+        required
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3">

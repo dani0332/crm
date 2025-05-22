@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use Illuminate\Console\Command;
 
@@ -33,9 +34,9 @@ class PolicyIssuanceCommand extends Command
      */
     public function handle()
     {
-        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Started');
+        LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Started');
         (new PolicyIssuanceService)->executePolicyIssuanceAutomationSteps();
-        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Ended');
+        LoggerService::info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Ended');
     }
 
 }

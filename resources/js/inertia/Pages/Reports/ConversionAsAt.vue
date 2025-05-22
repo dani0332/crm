@@ -36,6 +36,8 @@ const showTable = ref(true);
 let showUnassignedLeads = ref(false);
 let unassignedDate = ref([]);
 let initialAsAtDate = ref('');
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 
 const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
@@ -372,6 +374,26 @@ const minDate = computed(() => {
   return null;
 });
 
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
+
 onMounted(() => {
   unassignedDate = props.createdAtDate ?? [];
   checkAndAddExtraEmptyColumn();
@@ -392,7 +414,7 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.lob"
           label="Line of Business*"
           placeholder="Select LOB"
@@ -403,10 +425,11 @@ onMounted(() => {
             }))
           "
           class="w-full"
-          :single="true"
           :rules="[isRequired]"
           :hasError="isLobEmpty"
           @update:modelValue="onLobChange"
+          filterable
+          filterPlaceholder="Filter LOB...."
         />
 
         <DatePicker
@@ -433,15 +456,16 @@ onMounted(() => {
           :max-date="new Date()"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.displayBy"
           placeholder="Search by Group"
           label="Display by"
           :options="displayBy"
           class="w-full"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Display by...."
         />
-        <ComboBox
+        <x-select
           v-if="filters.lob == props.quoteTypeIdEnum.Car"
           v-model="filters.tag"
           placeholder="SIC/PUA"
@@ -452,16 +476,35 @@ onMounted(() => {
             { value: 'non-sic', label: 'PUA' },
           ]"
           class="w-full"
-          :single="true"
+          filterable
+          filterPlaceholder="Filter SIC/PUA...."
         />
-        <ComboBox
+        <x-select
+          v-model="filters.registration_type"
+          v-if="filters.lob == props.quoteTypeIdEnum.Car"
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
+        />
+
+        <x-select
+          v-if="
+            isVehicleUseDisabled && filters.lob == props.quoteTypeIdEnum.Car
+          "
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
+        <x-select
           v-model="filters.includeUnassignedLeads"
           placeholder="Select Option"
           label="Include Unassigned Leads?"
           :options="includeUnassignedLeads"
           class="w-full"
-          :single="true"
           @update:modelValue="onIncludeUnassignedLeadsChange"
+          filterable
+          filterPlaceholder="Filter Include Unassigned Leads...."
         />
         <DatePicker
           v-if="filters.includeUnassignedLeads == 'yes'"

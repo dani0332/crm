@@ -6,12 +6,23 @@ services:
     container_name: imcrm${DOCKERENV}
     environment:
       - DOPPLER_TOKEN
+      - AXIOM_API_TOKEN=${AXIOM_API_TOKEN}
+      - AXIOM_DATASET=${AXIOM_DATASET}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://shared-otel-collector:2317
     ports:
       - '${WEB_PORT}:443'
     volumes:
       - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs
       - .:/var/www/html
     restart: unless-stopped
+    networks:
+      - otel-network
+      - default
+
+networks:
+  otel-network:
+    external: true
+  default:
 
 volumes:
   logs:

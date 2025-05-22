@@ -180,66 +180,66 @@ const getModelBasedOnQuote = () => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid grid-cols-2 gap-4">
-      <x-field label="Quote Type" required>
-        <ComboBox
-          :single="true"
-          v-model="valuationForm.quoteType"
-          placeholder="Search by Quote Type"
-          :options="[
-            { value: 'CAR', label: 'Car' },
-            { value: 'BIKE', label: 'Bike' },
-          ]"
-          :rules="[isRequired]"
-          :hasError="makeCodeError"
-        />
-      </x-field>
-      <x-field label="Make" required>
-        <ComboBox
-          :single="true"
-          v-model="valuationForm.make_code"
-          placeholder="Search by Make"
-          :options="getMake"
-          :rules="[isRequired]"
-          @update:modelValue="getModelBasedOnQuote($event)"
-          :hasError="makeCodeError"
-        />
-      </x-field>
-      <x-field label="Model" required>
-        <ComboBox
-          :single="true"
-          v-model="valuationForm.modelId"
-          :rules="[isRequired]"
-          :options="computedModels"
-          class="w-full"
-          @update:modelValue="getCarTrim($event)"
-          :loading="loader.carModel"
-          :hasError="carIdError"
-        />
-      </x-field>
-      <x-field label="Trim" required>
-        <ComboBox
-          v-model="valuationForm.carTrim"
-          :rules="[isRequired]"
-          :options="
-            carTrims.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :single="true"
-          class="w-full"
-          :loading="loader.trimloading"
-          :hasError="carTrimError"
-        />
-      </x-field>
-      <x-field label="Year Of Manufacture" required>
-        <x-input
-          v-model="valuationForm.yearOfManufacture"
-          type="number"
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
+      <x-select
+        v-model="valuationForm.quoteType"
+        placeholder="Search by Quote Type"
+        :options="[
+          { value: 'CAR', label: 'Car' },
+          { value: 'BIKE', label: 'Bike' },
+        ]"
+        :rules="[isRequired]"
+        :hasError="makeCodeError"
+        required
+        label="Quote Type"
+      />
+      <x-select
+        v-model="valuationForm.make_code"
+        placeholder="Search by Make"
+        :options="getMake"
+        :rules="[isRequired]"
+        @update:modelValue="getModelBasedOnQuote($event)"
+        required
+        label="Make"
+        filterable
+      />
+      <x-select
+        v-model="valuationForm.modelId"
+        :rules="[isRequired]"
+        :options="computedModels"
+        class="w-full"
+        @update:modelValue="getCarTrim($event)"
+        :loading="loader.carModel"
+        required
+        filterable
+        label="Model"
+        placeholder="Search by Model"
+      />
+
+      <x-select
+        v-model="valuationForm.carTrim"
+        :rules="[isRequired]"
+        :options="
+          carTrims.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        class="w-full"
+        :loading="loader.trimloading"
+        label="Trim"
+        required
+        filterable
+        placeholder="Search by Trim"
+      />
+
+      <x-input
+        label="Year Of Manufacture"
+        required
+        v-model="valuationForm.yearOfManufacture"
+        type="number"
+        class="w-full"
+        :rules="[isRequired]"
+      />
     </div>
     <div class="flex justify-end gap-3 mb-4 mt-1">
       <div class="flex justify-end gap-3">

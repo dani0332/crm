@@ -325,70 +325,80 @@ watch(
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-      <x-field label="Date Range" required>
-        <DatePicker
-          v-model="filters.date"
-          range
-          :max-range="365"
-          size="sm"
-          placeholder="Select Date (default last 30 days)"
-          model-type="yyyy-MM-dd"
-          :preset-dates="presetDates"
-        />
-      </x-field>
-      <x-field label="Line Of Bussiness">
-        <ComboBox
-          v-model="filters.lob"
-          placeholder="Search by Bussiness"
-          :options="[
-            { value: 'Health', label: 'Health' },
-            { value: 'Pet', label: 'Pet' },
-            { value: 'Cycle', label: 'Cycle' },
-            { value: 'Home', label: 'Home' },
-            { value: 'CorpLine', label: 'Corpline' },
-          ]"
-          class="w-full"
-          :single="true"
-          @update:modelValue="onLobChange"
-        />
-      </x-field>
-      <x-field label="Teams">
-        <ComboBox
-          v-model="filters.team"
-          placeholder="Select Team"
-          :options="teamOptions"
-          class="w-full"
-          :single="true"
-          :loading="loaders.advisorOptions"
-          @update:modelValue="onTeamChange"
-        />
-      </x-field>
-      <x-field
+      <DatePicker
+        label="Date Range"
+        required
+        v-model="filters.date"
+        range
+        :max-range="365"
+        size="sm"
+        placeholder="Select Date (default last 30 days)"
+        model-type="yyyy-MM-dd"
+        :preset-dates="presetDates"
+      />
+      <x-select
+        v-model="filters.lob"
+        placeholder="Search by Bussiness"
+        :options="[
+          { value: 'Health', label: 'Health' },
+          { value: 'Pet', label: 'Pet' },
+          { value: 'Cycle', label: 'Cycle' },
+          { value: 'Home', label: 'Home' },
+          { value: 'CorpLine', label: 'Corpline' },
+        ]"
+        class="w-full"
+        @update:modelValue="onLobChange"
+        filterable
+        filterPlaceholder="Filter LOB...."
+        label="Line Of Bussiness"
+      />
+      <x-select
+        label="Teams"
+        v-model="filters.team"
+        placeholder="Select Team"
+        :options="teamOptions"
+        class="w-full"
+        :loading="loaders.advisorOptions"
+        @update:modelValue="onTeamChange"
+        filterable
+        filterPlaceholder="Filter Teams...."
+      />
+      <x-select
+        v-model="filters.advisors"
+        placeholder="Search by Advisor Name"
+        :options="advisorOptions"
+        class="w-full"
+        :loading="loaders.advisorOptions"
+        filterable
+        filterPlaceholder="Filter Advisors...."
+        multiple
+        truncate
         :label="
           !filters.team || filters.team.length == 0
             ? `Advisors (select teams first)`
             : `Advisors`
         "
       >
-        <ComboBox
-          v-model="filters.advisors"
-          placeholder="Search by Advisor Name"
-          :options="advisorOptions"
-          class="w-full"
-          :loading="loaders.advisorOptions"
-        />
-      </x-field>
-      <x-field label="Filter By">
-        <x-select
-          v-model="filters.filter_by"
-          placeholder="Filter By"
-          :options="[
-            { value: 'total_leads', label: 'Total Leads' },
-            { value: 'total_opportunity', label: 'Total Opportunity' },
-          ]"
-          class="w-full"
-        />
-      </x-field>
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="
+              filters.advisors = advisorOptions.map(advisor => advisor.value)
+            "
+            @clear="filters.advisors = []"
+          />
+        </template>
+      </x-select>
+
+      <x-select
+        label="Filter By"
+        v-model="filters.filter_by"
+        placeholder="Filter By"
+        :options="[
+          { value: 'total_leads', label: 'Total Leads' },
+          { value: 'total_opportunity', label: 'Total Opportunity' },
+        ]"
+        class="w-full"
+      />
       <x-field
         v-if="filters.lob == 'corpline'"
         label="Bussiness Insurance Type"

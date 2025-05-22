@@ -5,11 +5,14 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanType;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RuleEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
@@ -33,6 +36,8 @@ use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
 use App\Models\UserTeams;
+use App\Services\DTOs\FetchCarLeadResult;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -57,7 +62,7 @@ class CarAllocationService extends AllocationService
 
     private function verifyPreChecks(CarQuote $lead, bool $overrideAssignment): bool
     {
-        info(self::class.' - Processing Car ILA', [
+        LoggerService::info(self::class.' - Processing Car ILA', extra: [
             'uuid' => $lead->uuid,
             'payment_status_id' => $lead->payment_status_id,
             'source' => $lead->source,
@@ -70,33 +75,47 @@ class CarAllocationService extends AllocationService
 
         $continueAssignment = false;
 
+        $isSICFlowEnabled = $lead->isSICFlowEnabled();
+        $isAIG = $lead->isAIG(QuoteTypes::CAR);
+        $isSICFlowDisabled = $lead->isSICFlowDisabled();
+
         if (! $overrideAssignment && ! empty($lead->advisor_id)) {
-            info(self::class."::verifyPreChecks - Lead is already assigned to advisor with ID: {$lead->advisor_id}, skipping assignment");
+            LoggerService::info(self::class."::verifyPreChecks - Lead is already assigned to advisor with ID: {$lead->advisor_id}, skipping assignment");
         } elseif ($lead->isFakeOrDuplicate()) {
-            info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
+            LoggerService::info(self::class."::verifyPreChecks - Lead is fake or duplicate having quote_status_id {$lead->quote_status_id}, skipping assignment");
         } elseif ($lead->hasExemptedSource()) {
-            info(self::class."::verifyPreChecks - Lead has exempted source {$lead->source}, skipping assignment");
-        } elseif ($lead->isSICFlowEnabled() && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
-            info(self::class.'::verifyPreChecks - Lead has SIC flow enabled but either requested for an advisor or payment authorized, continuing assignment');
+            LoggerService::info(self::class."::verifyPreChecks - Lead has exempted source {$lead->source}, skipping assignment");
+        } elseif (($isSICFlowEnabled || $isAIG) && $lead->isRequestedAdvisorOrPaymentAuthorized()) {
+            if ($isSICFlowEnabled) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow enabled and either requested for an advisor or payment authorized, continuing assignment');
+            } else {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead is AIG and either requested for an advisor or payment authorized, continuing assignment');
+            }
+            $continueAssignment = true;
+        } elseif (($isSICFlowDisabled || ! $isAIG) && ! $lead->isRenewalUpload()) {
+            if ($isSICFlowDisabled) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, continuing assignment');
+            } elseif (! $isAIG) {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead is not AIG and not Renewal Upload, continuing assignment');
+            } else {
+                LoggerService::info(self::class.'::verifyPreChecks - Lead meets other criteria and not Renewal Upload, continuing assignment');
+            }
             $continueAssignment = true;
         } elseif ($lead->isRenewalTierEmailSent()) {
-            info(self::class.'::verifyPreChecks - Lead has renewal tier email sent, skipping assignment');
-        } elseif ($lead->isSICFlowDisabled() && ! $lead->isRenewalUpload()) {
-            info(self::class.'::verifyPreChecks - Lead has SIC flow disabled and not Renewal Upload, skipping assignment');
-            $continueAssignment = true;
+            LoggerService::info(self::class.'::verifyPreChecks - Lead has renewal tier email sent, skipping assignment');
         } elseif ($lead->isRevivalRepliedOrPaid()) {
-            info(self::class.'::verifyPreChecks - Lead is a Revival lead, continuing assignment');
+            LoggerService::info(self::class.'::verifyPreChecks - Lead is a Revival lead, continuing assignment');
             $continueAssignment = true;
         } elseif ($lead->isRenewalUpload()) {
-            info(self::class.'::verifyPreChecks - Lead is Renewal Upload, skipping assignment');
+            LoggerService::info(self::class.'::verifyPreChecks - Lead is Renewal Upload, skipping assignment');
         } else {
-            info(self::class.'::verifyPreChecks - Lead does not meet any criteria, skipping assignment');
+            LoggerService::info(self::class.'::verifyPreChecks - Lead does not meet any criteria, skipping assignment');
         }
 
         return $continueAssignment;
     }
 
-    public function fetchLead($quoteId, $overrideAdvisorId)
+    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false): FetchCarLeadResult
     {
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -111,11 +130,19 @@ class CarAllocationService extends AllocationService
 
         $lead = CarQuote::where('uuid', $quoteId)->first();
 
-        if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
-            return null;
+        if (! $lead) {
+            return new FetchCarLeadResult(null, true);
         }
 
-        return $lead;
+        if ($getLeadWithoutCriteria) {
+            return new FetchCarLeadResult($lead, false);
+        }
+
+        if (! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
+            return new FetchCarLeadResult(null, false);
+        }
+
+        return new FetchCarLeadResult($lead, false);
     }
 
     public function getTier($tierId)
@@ -125,10 +152,16 @@ class CarAllocationService extends AllocationService
 
     public function getTierBasedOnValue($carLead, $tiersQuery): void
     {
-        if ($carLead->car_model_detail_id == null) {
+
+        if ($carLead->car_model_detail_id == null && ! $this->isCommercialLead($carLead)) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
         } else {
-            $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
+            if (! $this->isCommercialLead($carLead)) {
+                $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
+            } else {
+                $valuations = [];
+                info(self::class.'- Commercial lead. No valuation found. Ref-ID: '.$carLead->uuid.' | Time: '.now());
+            }
 
             $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
 
@@ -137,13 +170,35 @@ class CarAllocationService extends AllocationService
             });
 
             $carValue = 0;
+            if ($carLead->registration_type == CarRegistrationType::COMPANY) {
+                if ($carLead->vehicle_use == CarVehicleUse::PRIVATE) {
+                    if (! empty($axaValuation)) {
+                        $firstAxaValuation = reset($axaValuation); // Get the first element of the array
+                        $carValue = $firstAxaValuation->carValue;
+                        info(self::class.'- Company registration with private use. AXA valuation found. Car value: '.$carValue.' Ref-ID: '.$carLead->uuid.' | Time: '.now());
+                    }
+                } else {
+                    $carValue = $carLead->car_value;
+                    info(self::class.'- Company registration with non-private use. Car value: '.$carValue.' Ref-ID: '.$carLead->uuid.' Time: '.now());
+                }
+            } else {
 
-            if (! empty($axaValuation)) {
-                $firstAxaValuation = reset($axaValuation); // Get the first element of the array
-                $carValue = $firstAxaValuation->carValue;
+                if (! empty($axaValuation)) {
+                    $firstAxaValuation = reset($axaValuation); // Get the first element of the array
+
+                    if (! empty($firstAxaValuation) && property_exists($firstAxaValuation, 'carValue')) {
+                        LoggerService::info('car value as per valuation engine for GIG', [
+                            'car_value' => $firstAxaValuation->carValue,
+                        ]);
+
+                        if ($firstAxaValuation->carValue > 0) {
+                            $carValue = $firstAxaValuation->carValue;
+                        }
+                    }
+                }
             }
 
-            info('car value as per valuation engine for GIG is '.$carValue);
+            LoggerService::info("car value as per valuation engine for GIG is {$carValue}");
             $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
         }
     }
@@ -162,9 +217,7 @@ class CarAllocationService extends AllocationService
         $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
 
         // Retrieve the user IDs associated with excluded teams.
-        $excludedUserIds = UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->get();
-
-        return $excludedUserIds;
+        return UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->get();
     }
 
     public function getTierUserIds($tierId, mixed $advisorId)
@@ -191,7 +244,7 @@ class CarAllocationService extends AllocationService
         // Calculate the year of manufacture that is 15 years ago from the current date.
         $yearOfManufacture = now()->subYear(15)->year;
 
-        info('yearOfManufacture is: '.$yearOfManufacture.' and number of plans found are: '.count($plans));
+        LoggerService::info('yearOfManufacture is: '.$yearOfManufacture.' and number of plans found are: '.count($plans));
 
         return [$plans, $yearOfManufacture];
     }
@@ -211,9 +264,8 @@ class CarAllocationService extends AllocationService
         $lead->sic_flow_enabled = 1;
         $lead->tier_id = $tier->id;
         $lead->save();
-        info('SIC flow is enabled , the updated field : '.$lead->sic_flow_enabled);
+        LoggerService::info('SIC flow is enabled , the updated field. Dispatching Car OCB Email');
         SendCarOCBIntroEmailJob::dispatch($lead->uuid, null, true);
-        info('SIC flow is email is dispatched');
     }
 
     /**
@@ -253,30 +305,57 @@ class CarAllocationService extends AllocationService
         // Query to get all active tiers.
         $tiersQuery = Tier::where('is_active', 1);
 
+        if ($carLead->registration_type == CarRegistrationType::COMPANY) {
+            $this->getTierBasedOnValue($carLead, $tiersQuery);
+            LoggerService::info(self::class.' - Registration type is company. Calculating tier based on value for lead with Ref-ID: '.$carLead->uuid.' | Time: '.now());
+
+            return $tiersQuery->first();
+        }
+
         // Check if the car's year of manufacture is newer than 15 years.
         if ($carLead->year_of_manufacture < $yearOfManufacture) {
             // Check if more than one plan is found against the car lead.
             if (count($plans) > 0) {
-                info('More than one plan found against');
+                LoggerService::info('More than one plan found');
                 // Determine the tier based on a value and return the first matching tier.
+                info(self::class."- More than one plan found against Tier based on value is being calculated for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
                 $this->getTierBasedOnValue($carLead, $tiersQuery);
 
                 return $tiersQuery->first();
             } else {
                 // Check car value and age to determine the tier.
                 if ($carLead->car_value >= 300000) {
+                    info(self::class." - Car value is {$carLead->car_valu}   Tier H is being assigned for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
+
                     return $tiersQuery->Where('name', TiersEnum::TIER_H)->first();
                 }
+                LoggerService::debug(self::class.'::findTier - Car Lead Info', extra: [
+                    'car_value' => $carLead->car_value,
+                    'car_value_tier' => $carLead->car_value_tier,
+                    'dob' => $carLead->dob,
+                ]);
 
-                $userDob = Carbon::createFromFormat('Y-m-d H:i:s', $carLead->dob);
-                $ageInYears = $userDob->age;
+                try {
+                    // Check car value and age to determine the tier.
+                    if ($carLead->car_value >= 300000) {
+                        return $tiersQuery->Where('name', TiersEnum::TIER_H)->first();
+                    }
 
-                if ($carLead->car_value < 300000 || $ageInYears >= 21) {
-                    return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->first();
+                    $userDob = Carbon::createFromFormat('Y-m-d H:i:s', $carLead->dob);
+                    $ageInYears = $userDob->age;
+
+                    if ($carLead->car_value < 300000 || $ageInYears >= 21) {
+                        return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->first();
+                    }
+                } catch (\Exception $e) {
+                    LoggerService::warning('Error calculating age from DOB', exception: $e);
+
+                    return null;
                 }
             }
         } else {
             // Determine the tier based on a value and return the first matching tier.
+            info(self::class."- Tier based on value is being calculated for the lead with Ref-ID: {$carLead->uuid} | Time: ".now());
             $this->getTierBasedOnValue($carLead, $tiersQuery);
 
             return $tiersQuery->first();
@@ -288,26 +367,28 @@ class CarAllocationService extends AllocationService
 
     public function findRenewalLeadTier($carLead): ?Tier
     {
+        LoggerService::debug(self::class.'::findRenewalLeadTier - Car Lead Info', extra: [
+            'car_value' => $carLead->car_value,
+            'car_value_tier' => $carLead->car_value_tier,
+            'sic_flow_enabled' => $carLead->sic_flow_enabled,
+        ]);
+
         $isSICFlowEnabled = $carLead->sic_flow_enabled;
-        $tiersQuery = Tier::where('is_active', 1)
-            ->where('min_price', '<=', $carLead->car_value_tier)
-            ->where('max_price', '>=', $carLead->car_value_tier)
-            ->where('can_handle_tpl', 0)
-            ->where('name', '!=', TiersEnum::TIER_R)
-            ->where(function ($query) use ($isSICFlowEnabled) {
-                if ($isSICFlowEnabled) {
-                    $query->where('name', '!=', TiersEnum::TIER_L);
-                }
-            });
+        $priceValue = $carLead->car_value_tier ?? $carLead->car_value;
 
-        $tier = $tiersQuery->first();
-
-        if ($tier) {
-            return $tier;
+        if (empty($priceValue)) {
+            return null;
         }
 
-        // Return null if no matching tier is found.
-        return null;
+        return Tier::where('is_active', 1)
+            ->where('min_price', '<=', $priceValue)
+            ->where('max_price', '>=', $priceValue)
+            ->where('can_handle_tpl', 0)
+            ->where('name', '!=', TiersEnum::TIER_R)
+            ->when($isSICFlowEnabled, function ($query) {
+                $query->where('name', '!=', TiersEnum::TIER_L);
+            })
+            ->first();
     }
 
     public function getEligibleUserForAllocation(Tier $tier, $advisorId, $isReassignmentJob, $leadSource, $teamId, CarQuote $lead)
@@ -321,7 +402,7 @@ class CarAllocationService extends AllocationService
 
         // Check if the lead qualifies for Organic team assignment (All Plan B Insurers, SIC, and no requested advisor)
         if ($lead->isEligibleForOrganicAssignmentForPlanB()) {
-            info(self::class.'::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor');
+            LoggerService::info(self::class.'::fetchEligibleUsersByStatus - Lead qualifies for Organic team assignment with SIC flow enabled and no requested advisor');
             $teamId = getTeamId(TeamNameEnum::ORGANIC);
         }
 
@@ -344,7 +425,7 @@ class CarAllocationService extends AllocationService
     private function fetchTierUserIds($tierId, $advisorId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
-        info("Users against Tier ID {$tierId}: ".json_encode($tierUserIds->toArray()));
+        LoggerService::info("Users against Tier ID {$tierId}: ".json_encode($tierUserIds->toArray()));
 
         return $tierUserIds;
     }
@@ -360,7 +441,7 @@ class CarAllocationService extends AllocationService
             ->pluck('user_id')
             ->toArray();
 
-        info("Team ID {$teamId} available users: ".json_encode($teamUserIds));
+        LoggerService::info("Team ID {$teamId} available users: ".json_encode($teamUserIds));
 
         return array_intersect(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $teamUserIds);
     }
@@ -370,8 +451,14 @@ class CarAllocationService extends AllocationService
         $rules = $this->getRules($lead);
 
         if ($rules->isEmpty()) {
-            $ruleUserIds = $this->getRuleUsers();
-            info('No rules found, excluding rule users: '.json_encode($ruleUserIds));
+
+            if ($lead->registration_type == CarRegistrationType::PERSONAL) {
+                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: true);
+            } else {
+                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: false);
+            }
+
+            LoggerService::info('No rules found, excluding rule users: ', json_encode($ruleUserIds));
 
             return array_diff(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $ruleUserIds);
         }
@@ -387,11 +474,11 @@ class CarAllocationService extends AllocationService
             $eligibleUsers = $this->{$findAdvisorFn}($lead, $status, $tier, $tierUserIds, $advisorId, $teamId);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info(self::class.'::fetchAdvisors - Eligble Users found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+                LoggerService::info(self::class.'::fetchAdvisors - Eligble Users found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
 
                 return $eligibleUsers->toArray();
             }
-            info(self::class.'::fetchAdvisors - No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+            LoggerService::info(self::class.'::fetchAdvisors - No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
         }
 
         return [];
@@ -400,7 +487,7 @@ class CarAllocationService extends AllocationService
     private function fetchEligibleUsersByStatus(CarQuote $lead, Tier $tier, $tierUserIds, $advisorId, $teamId, $isReassignmentJob)
     {
         $tierUserIds = is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray();
-        info(self::class."::fetchEligibleUsersByStatus - Users against tierID {$tier->id} and tier name: {$tier->name} are: ".json_encode($tierUserIds));
+        LoggerService::info(self::class."::fetchEligibleUsersByStatus - Users against tierID {$tier->id} and tier name: {$tier->name} are: ".json_encode($tierUserIds));
 
         $advisors = [];
 
@@ -431,12 +518,12 @@ class CarAllocationService extends AllocationService
 
     public function updateTierBeforeEligibleUserIdentification($lead)
     {
-        info('lead payment status is : '.$lead->payment_status_id.' and tier id is : '.$lead->tier_id.' and sic advisor requested is : '.$lead->sic_advisor_requested);
+        LoggerService::info('lead payment status is : '.$lead->payment_status_id.' and tier id is : '.$lead->tier_id.' and sic advisor requested is : '.$lead->sic_advisor_requested);
         if (($lead->payment_status_id == PaymentStatusEnum::AUTHORISED || $lead->sic_advisor_requested == 1) && $lead->tier_id == TiersIdEnum::TIER_R) {
-            info('SIC lead payment is made and tier is Tier R');
+            LoggerService::info('SIC lead payment is made and tier is Tier R');
             $tier = $this->findRenewalLeadTier($lead);
             if (! empty($tier) && $tier->id != $lead->tier_id) {
-                info('Tier is found and tier name is: '.$tier->name);
+                LoggerService::info('Tier is found and tier name is: '.$tier->name);
                 $this->updateLeadTier($lead, $tier);
 
                 return $tier->id;
@@ -474,9 +561,9 @@ class CarAllocationService extends AllocationService
 
     public function getBLAdvisorsByStatus(CarQuote $lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
     {
-        info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status}");
+        LoggerService::info(self::class."::getBLAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status}");
         $buyLeadRequestedUserIds = BuyLeadRequest::getRequestedUserIds(QuoteTypes::CAR, $lead->isSIC(QuoteTypes::CAR), $tier->isValue());
-        info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
+        LoggerService::info(self::class.'::getBLAdvisorsByStatus - buy lead requested user ids are: '.json_encode($buyLeadRequestedUserIds));
 
         $userIds = array_values(array_intersect(
             $buyLeadRequestedUserIds,
@@ -493,14 +580,14 @@ class CarAllocationService extends AllocationService
 
         $this->isBuyLeadAdvisor = $advisors->count() > 0;
 
-        $advisors->count() > 0 && info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray()).' found');
+        $advisors->count() > 0 && LoggerService::info(self::class.'::getBLAdvisorsByStatus - Buy Lead Advisors '.json_encode($advisors->pluck('user_id')->toArray()).' found');
 
         return $advisors;
     }
 
     public function getAdvisorsByStatus($lead, $status, Tier $tier, $tierUserIds, $advisorId = null, $teamId = null)
     {
-        info(self::class."::getAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status}");
+        LoggerService::info(self::class."::getAdvisorsByStatus - trying to get advisors for tier : {$tier->name} with current status as {$status}");
 
         return $this->getAdvisorBaseQuery($status, $tierUserIds, $advisorId, $teamId)
             ->where('normal_allocation_enabled', true)
@@ -540,27 +627,46 @@ class CarAllocationService extends AllocationService
                 ||
                 ($commercialCarMake && $commercialCarModel)
             ) {
-                return $this->getCommercialRule();
+                if ($lead->registration_type == CarRegistrationType::COMPANY) {
+                    info(self::class."- Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
+                    return $this->getRulesForVehicleUse($lead);
+                } else {
+                    info(self::class."-Lead is not registered as a company, applying commercial rules for lead with Ref-ID:  {$lead->uuid} | Time: ".now());
+
+                    return $this->getCommercialRule($lead);
+                }
             }
         }
 
-        info('keyword not found and vehicle is not commercial as well, so checking for normal rules');
+        LoggerService::info('keyword not found and vehicle is not commercial as well, so checking for normal rules');
 
-        $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
-            ->join('rules', 'rules.id', 'rule_details.rule_id')
-            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-            ->join('users', 'users.id', 'rule_users.user_id')
-            ->where('lead_sources.name', $lead->source)
-            ->where('rules.is_active', 1)
-            ->where('lead_sources.is_applicable_for_rules', 1)
-            ->groupBy('rule_details.lead_source_id')
-            ->select(
-                'lead_sources.name AS leadSourceName',
-                'lead_sources.id AS leadSourceId',
-                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-            );
+        return $this->getUsersByLeadSourceRules($lead);
+    }
+    public function getUsersByLeadSourceRules($lead)
+    {
+        if ($lead->registration_type == CarRegistrationType::COMPANY) {
+            info(self::class."- Lead is registered as a company, applying vehicle use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
 
-        return $records->get();
+            return $this->getRulesForVehicleUse($lead);
+        } else {
+            $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
+                ->join('rules', 'rules.id', 'rule_details.rule_id')
+                ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+                ->join('users', 'users.id', 'rule_users.user_id')
+                ->where('lead_sources.name', $lead->source)
+                ->where('rules.is_active', 1)
+                ->where('lead_sources.is_applicable_for_rules', 1)
+                ->groupBy('rule_details.lead_source_id')
+                ->select(
+                    'lead_sources.name AS leadSourceName',
+                    'lead_sources.id AS leadSourceId',
+                    DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+                );
+            info(self::class."- Lead is not registered as a company, applying  rules for lead with Ref-ID:  {$lead->uuid} | Time: ".now());
+
+            return $records->get();
+        }
     }
 
     public function getCommercialRule()
@@ -579,18 +685,53 @@ class CarAllocationService extends AllocationService
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers'),
             ])->get();
     }
+    public function getRulesForVehicleUse($lead)
+    {
+
+        if ($lead->vehicle_use == CarVehicleUse::PRIVATE) {
+            info(self::class." - Lead is not commercial, applying private use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
+            return $this->getCompanyUsageRules($lead, RuleEnum::PRIVATE_USE->value);
+        } else {
+            info(self::class." - Lead is commercial, applying commercial use rules for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
+            return $this->getCompanyUsageRules($lead, RuleEnum::COMMERCIAL_USE->value);
+        }
+    }
+
+    private function getCompanyUsageRules($lead, $ruleName = null)
+    {
+        // if ($lead->source == LeadSourceEnum::INSURANCE_MARKET_CAR_QUOTE) {
+        info(self::class." - Applying rule: {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} | Time: ".now());
+
+        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('rules.name', $ruleName)
+            ->where('rule_type', RuleTypeEnum::VEHICLE_USE)
+            ->where('rules.is_active', 1)
+            ->groupBy('rule_details.rule_id')
+            ->select(
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+            )->get();
+        // } else {
+        //     info(self::class." -No rule found for {$ruleName} for lead with Ref-ID: {$lead->uuid} and source: {$lead->source} Time: ".now());
+        // }
+
+        return [];
+    }
 
     public function determineFinalUserId(CarQuote $lead, $eligibleUsers, $rules, $teamId, Tier $tier): mixed
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
-        info('Available User IDs are: '.json_encode($availableUserIds));
+        LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
 
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
 
-            info('Rule user IDs are: '.json_encode($ruleUserIds));
+            LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
 
             // Find the intersection of available user IDs and rule user IDs.
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
@@ -599,7 +740,7 @@ class CarAllocationService extends AllocationService
             $isSAPLead = str_contains($lead->source, 'sap-') || str_contains($lead->source, 'partner.alfred.ae') || str_contains($lead->source, 'partner/car-insurance/gems');
             if ($isSAPLead) {
                 // If the lead source is SAP, get eligible users for SAP leads.
-                info('SAP lead found, so filtering eligible users for SAP lead');
+                LoggerService::info('SAP lead found, so filtering eligible users for SAP lead');
                 $finalEligibleUserIds = $this->getEligibleUserForSAPLead($ruleUserIds);
             }
 
@@ -607,31 +748,31 @@ class CarAllocationService extends AllocationService
             if (count($finalEligibleUserIds) == 0) {
                 //  check if the found rule is commercial rule
                 if ($rules->first()->ruleName == 'Commercial') {
-                    info('All rule users are unavailable, so checking for commercial rule users regardless of availability.');
+                    LoggerService::warning('All rule users are unavailable, so checking for commercial rule users regardless of availability.');
                     // if commercial then we need to assign lead to one of the $ruleUserIds based on max cap
                     // and other allocation criteria like round robin
                     $finalEligibleUserIds = $this->fetchUsersOnAllocationCriteria($ruleUserIds, $teamId);
                 }
             }
 
-            info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
+            LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
             $ruleUsers = (empty($teamId) || $teamId == 0) ? $this->getRuleUsers() : [];
 
-            info('No rule found, so filtering rule users: '.json_encode($ruleUsers).' and teamId is : '.$teamId);
+            LoggerService::info('No rule found, so filtering rule users: '.json_encode($ruleUsers).' and teamId is : '.$teamId);
 
             // Find the difference between available user IDs and rule users.
             $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
 
-            info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+            LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
 
         if ($this->isBuyLeadAdvisor) {
             foreach ($finalEligibleUserIds as $advisorId) {
                 $this->buyLeadRequest = BuyLeadRequest::getRequest(QuoteTypes::CAR, $lead->isSIC(QuoteTypes::CAR), $advisorId, $tier->isValue());
                 if ($this->buyLeadRequest) {
-                    info("Buy Lead Request {$this->buyLeadRequest->id} found for advisor ID: {$advisorId} and tier ID: {$tier->id}");
+                    LoggerService::info("Buy Lead Request {$this->buyLeadRequest->id} found for advisor ID: {$advisorId} and tier ID: {$tier->id}");
                     $this->buyLeadRequest->startProcessing();
 
                     return $advisorId;
@@ -666,13 +807,16 @@ class CarAllocationService extends AllocationService
         return $userIds;
     }
 
-    private function getRuleUsers(): mixed
+    private function getRuleUsers($excludeVehicleUseRule = true): mixed
     {
         // Join the RuleLeadSource table with the Rules table where the rule is active (is_active = 1).
         // Select distinct user IDs associated with these rules and convert the result to an array.
         return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->where('rules.is_active', 1)
+            ->when($excludeVehicleUseRule, function ($query) {
+                $query->where('rule_type', '!=', RuleTypeEnum::VEHICLE_USE);
+            })
             ->distinct()
             ->pluck('rule_users.user_id')
             ->toArray();
@@ -680,10 +824,10 @@ class CarAllocationService extends AllocationService
 
     public function processLeadAssignment(CarQuote $lead, $userId, $tier, $assignmentType): void
     {
-        info('About to assign to user with ID: '.$userId);
+        LoggerService::info("About to assign to user with ID: {$userId}");
 
         if ($lead->advisor_id === $userId) {
-            info('Advisor is same as current advisor so skipping assignment');
+            LoggerService::info('Advisor is same as current advisor so skipping assignment');
 
             $this->endBuyLeadProcessing();
 
@@ -711,24 +855,24 @@ class CarAllocationService extends AllocationService
         // Assign the lead to the user and get the associated quote.
         $carQuote = $this->assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType);
 
-        info('Advisor and tier assignment completed to user with ID: '.$userId.' and tier name: '.$tier->name);
+        LoggerService::info("Advisor and tier assignment completed to user with ID: {$userId} and tier name: {$tier->name}");
 
         // Update the car lead detail record and store the previous advisor assigned date.
         $previousAdvisorAssignedDate = $this->updateCarLeadDetailRecord($carQuote->id);
 
-        info('Updating user record in lead allocation table with count increment for User ID: '.$userId);
+        LoggerService::info("Updating user record in lead allocation table with count increment for User ID: {$userId}");
 
         match ($assignmentType) {
             AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::BOUGHT_LEAD => $this->addAllocationCounts($userId, QuoteTypes::CAR->id(), $this->isBuyLeadAdvisor),
             default => $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::CAR->id(), $this->isBuyLeadAdvisor),
         };
 
-        info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
+        LoggerService::info('Completed assignment of lead, and lead count update is done for quote');
 
         // Reset Buy Lead Advisor flag and Buy Lead Request object.
         $this->resetProps();
 
-        info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
+        LoggerService::info('Completed assignment of lead, and lead count update is done for quote');
     }
 
     private function assignLeadToUserAndGetQuote(CarQuote $lead, $userId, $tier, $assignmentType): mixed
@@ -736,7 +880,7 @@ class CarAllocationService extends AllocationService
         // Assign the lead to the advisor and send an email
         // Check if the lead was previously assigned to an advisor and log the change.
         if (! empty($lead->advisor_id)) {
-            info('Was previously assigned to User ID: '.$lead->advisor_id.' and is now being assigned to User ID: '.$userId);
+            LoggerService::info("Was previously assigned to User ID: {$lead->advisor_id} and is now being assigned to User ID: {$userId}");
         }
 
         // Update lead properties.
@@ -752,16 +896,16 @@ class CarAllocationService extends AllocationService
         $lead->quote_batch_id = $quoteBatch->id;
 
         // Log information about the quote batch assignment.
-        info('About to assign Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        LoggerService::info('About to assign Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
         // Save the updated lead.
         $lead->save();
 
         if ($this->isBuyLeadAdvisor) {
             $this->buyLeadRequest->buyLead($lead, QuoteTypes::CAR);
-            info('Assigned to advisor id : '.$userId.' as bought lead');
+            LoggerService::info("Assigned to advisor id : {$userId} as bought lead");
         } else {
-            info('Assigned to advisor id : '.$userId);
+            LoggerService::info("Assigned to advisor id : {$userId}");
         }
 
         $lead->endAllocation();
@@ -772,7 +916,7 @@ class CarAllocationService extends AllocationService
     public function updateCarLeadDetailRecord($leadId)
     {
         // Log information about the update operation.
-        info('About to update car quote detail record for lead ID: '.$leadId);
+        LoggerService::info('About to update car quote detail record');
 
         // Attempt to find an existing car quote detail record for the given lead.
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
@@ -787,7 +931,7 @@ class CarAllocationService extends AllocationService
     {
         // Calculate the start date for lead retrieval
         $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
+        LoggerService::info("Leads will be picked up in reassignment from : {$from}");
 
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -812,13 +956,13 @@ class CarAllocationService extends AllocationService
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
-            info('Inside reassignment single run and selected advisor is: '.$advisorId);
+            LoggerService::info('Inside reassignment single run and selected advisor is: '.$advisorId);
         } else {
             // If advisor ID is not provided, get unavailable advisors and filter leads by them
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
-                info('Inside reassignment general run');
+                LoggerService::info('Inside reassignment general run');
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }
@@ -849,7 +993,7 @@ class CarAllocationService extends AllocationService
             'tier_id' => $tier->id,
         ]);
 
-        info('Tier with name : '.$tier->name.' is assigned');
+        LoggerService::info('Tier with name : '.$tier->name.' is assigned');
     }
 
     public function getEligibleUserForSAPLead($ruleUserIds): array
@@ -881,4 +1025,35 @@ class CarAllocationService extends AllocationService
             ->pluck('user_id')
             ->toArray();
     }
+    public function isCommercialLead($lead)
+    {
+
+        $commercialCarMake = CarMake::where('id', $lead->car_make_id)
+            ->where('is_commercial', true)
+            ->select('id')
+            ->first();
+
+        $commercialCarModel = CarModel::where('id', $lead->car_model_id)
+            ->where('is_commercial', true)
+            ->select('id')
+            ->first();
+
+        if ($commercialCarMake && $commercialCarModel) {
+            info(self::class." - Commercial car make and model found for lead with Ref-ID: {$lead->uuid} | Time: ".now());
+
+            return true;
+        }
+        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+
+        foreach ($commercialKeywords as $keyword) {
+            if (str_contains(strtolower(trim($lead->full_name)), strtolower(trim($keyword->name)))) {
+                info(self::class." - Commercial keywords found for lead with Ref-ID: {$lead->uuid} | Time:".now());
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }

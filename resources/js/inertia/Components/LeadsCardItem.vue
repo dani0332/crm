@@ -37,6 +37,7 @@ const canDrag = computed(() => {
     props.id == quoteStatusEnum?.TransactionApproved ||
     props.id == quoteStatusEnum?.PolicyBooked ||
     props.id == quoteStatusEnum?.PolicyIssued ||
+    props.id == quoteStatusEnum?.PaymentLinkSentToCustomer ||
     props.id == quoteStatusEnum?.PolicySentToCustomer
     ? false
     : true;
@@ -117,6 +118,13 @@ useSortable(`#${props.title}`, leads.value, {
       } else {
         data.to['lost_reason'] = leadForm.lostreason;
       }
+    }
+
+    // todo add condition for PaymentLinkSentToCustomer
+    if (data.to.quote_status_id == quoteStatusEnum?.PaymentLinkSentToCustomer) {
+      moveElemToOriginalList(e);
+      showModal.value = false;
+      return;
     }
     let listResponse = await updateList(data);
 
@@ -340,15 +348,15 @@ const formatDate = date => {
     is-form
     @submit="onSubmit"
   >
-    <x-field label="Lost Reason" required>
-      <x-select
-        v-model="leadForm.lostreason"
-        :options="lostReasonsOptions"
-        placeholder="Lost Reason is required"
-        class="w-full"
-        :rules="[isRequired]"
-      />
-    </x-field>
+    <x-select
+      label="Lost Reason"
+      required
+      v-model="leadForm.lostreason"
+      :options="lostReasonsOptions"
+      placeholder="Lost Reason is required"
+      class="w-full"
+      :rules="[isRequired]"
+    />
     <template #secondary-action>
       <x-button
         tabindex="-1"

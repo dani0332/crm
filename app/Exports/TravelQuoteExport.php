@@ -3,16 +3,16 @@
 namespace App\Exports;
 
 use App\Enums\AMLStatusCode;
-use App\Repositories\TravelQuoteRepository;
+use App\Services\TravelQuoteService;
 use App\Traits\ExcelExportable;
 
 class TravelQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    public function collection($requestParams = [])
     {
-        return TravelQuoteRepository::getData(true);
+        return app(TravelQuoteService::class)->getGridData(requestParams: $requestParams)->get();
     }
 
     public function headings(): array
