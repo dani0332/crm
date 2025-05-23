@@ -112,7 +112,6 @@ class HealthEmailService extends BaseService
 
     private function buildEmailDataForApplyNowEmail(HealthQuote $lead, ?User $advisor = null)
     {
-        // $currentPlan = $lead->getCurrentPlan();
         $response = Ken::request('/fetch-health-selected-plan', 'post', [
             'quoteUID' => $lead->uuid,
         ]);
