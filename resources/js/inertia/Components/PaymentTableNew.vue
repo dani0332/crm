@@ -2501,6 +2501,14 @@ const addPayment = isValid => {
     mainPaymentMethod = 'CSH';
   }
 
+  // Send FTC email if the payment is edited and the insurer payment link is changed or if the payment is created from renewal upload
+  var sendFtcEmail = false;
+  if(page.props.quote.source == 'Renewal_upload' && paymentMethodsForm.status == 'edit') {
+    sendFtcEmail = true;
+  } else {
+    sendFtcEmail = insurerPaymentLinkChanged?.value ?? false;
+  }
+
   let data = {
     code: paymentMethodsForm.payment_method,
     modelType: props.quoteType,
@@ -2508,7 +2516,7 @@ const addPayment = isValid => {
     plan_id: planDetail?.value?.id ?? null, // handling null exception when plan is not found
     captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
-    sendFTCEmail: insurerPaymentLinkChanged?.value ?? false,
+    sendFTCEmail: sendFtcEmail,
     new_payment_structure: true,
     isInertia: true,
     send_update_id: props.sendUpdate?.id || null,

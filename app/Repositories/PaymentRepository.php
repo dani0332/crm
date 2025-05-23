@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -245,8 +246,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
             $quoteUUID = $quoteModel instanceof SendUpdateLog || $payment->send_update_log_id != null ? null : $quoteModel->uuid;
+            $isRenewalLead = $quoteModel instanceof SendUpdateLog || $payment->send_update_log_id != null ? false : $quoteModel->source == LeadSourceEnum::RENEWAL_UPLOAD;
 
-            $this->updatePaymentSplits($request, $payment, $quoteUUID);
+            $this->updatePaymentSplits($request, $payment, $quoteUUID, $isRenewalLead);
 
             return ['status' => 'success', 'message' => 'Payment Updated'];
         }, $maxRetries);
@@ -335,7 +337,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
     }
 
-    public function updatePaymentSplits($request, $payment, $quoteUUID)
+    public function updatePaymentSplits($request, $payment, $quoteUUID, $isRenewalLead = false)
     {
         $masterPayment = (object) $request->payment;
         $isInsurerPaymentLink = collect($masterPayment->payment_splits)->contains('payment_method', PaymentMethodsEnum::InsurerPaymentLink);
@@ -427,7 +429,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if (! $paymentSplitRecord) {
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
-                    $index == $insurerPaymentLinkIndex && $sendFTCEmail = $splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink && $request->sendFTCEmail && $splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link ? true : false;
+                    $index == $insurerPaymentLinkIndex && $sendFTCEmail = $splitPaymentInformation['payment_method'] == PaymentMethodsEnum::InsurerPaymentLink && $request->sendFTCEmail && ($splitPayment['insurer_payment_link'] != $paymentSplitRecord->insurer_payment_link ? true : false || $isRenewalLead);
                     $paymentSplitRecord->update($splitPaymentInformation);
                 }
                 // add document references
