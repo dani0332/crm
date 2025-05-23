@@ -2430,7 +2430,7 @@ class SageApiService
                 LoggerService::info(self::class.' fn: '.__FUNCTION__.' SAGE API :  Checking status of AR Prepayment Receipt batch '.$sageResponse['BatchNumber'].' - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no);
                 $arPrePaymentReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
                 $arPrePaymentReceiptBatch = json_decode($arPrePaymentReceiptBatch, true);
-                LoggerService::info(self::class.' fn: '.__FUNCTION__.' SAGE API :  Status of AR Prepayment Receipt batch '.$sageResponse['BatchNumber'].' - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no, extra: $arPrePaymentReceiptBatch);
+                LoggerService::info(self::class.' fn: '.__FUNCTION__.' SAGE API :  Status of AR Prepayment Receipt batch '.$sageResponse['BatchNumber'].' - split payment code: '.$paymentSplit->code.' with serial no: '.$paymentSplit->sr_no, extra: $arPrePaymentReceiptBatch ?? []);
 
                 if (! isset($arPrePaymentReceiptBatch['BatchStatus'])) {
                     $postedReceiptStatus['message'] = 'Prepayment batch status key not defined';
