@@ -1728,6 +1728,8 @@ const isCommercialVehicle = computed(() => {
 
 const ocrLoadingDocType = ref(null);
 const ocrLoading = ref(false);
+const policyDetailReloadKey = ref(0);
+const bookPolicyReloadKey = ref(0);
 
 function handleOcrNotification(event) {
   const { docType, status } = event.detail || {};
@@ -1738,9 +1740,15 @@ function handleOcrNotification(event) {
 
     // reload the page with only the necessary data
     router.reload({
+      onSuccess: () => {
+        console.log('handleOcrNotification onSuccess');
+        // Increment keys to force components to re-render
+        policyDetailReloadKey.value++;
+        bookPolicyReloadKey.value++;
+      },
       preserveState: true,
       preserveScroll: true,
-      only: ['payments', 'bookPolicyDetails', 'quote'],
+      only: ['payments', 'bookPolicyDetails', 'quote', 'quoteDocuments'],
     });
   }
 }
@@ -3988,6 +3996,7 @@ function handleOcrNotification(event) {
           permissionEnum.VIEW_ALL_LEADS,
         ])
       "
+      :key="bookPolicyReloadKey"
       :quote="quote"
       :quoteType="quoteType"
       :modelClass="modelClass"
