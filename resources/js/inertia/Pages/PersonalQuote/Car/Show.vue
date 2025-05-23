@@ -1736,15 +1736,14 @@ function handleOcrNotification(event) {
   if (status === 'start') {
     ocrLoadingDocType.value = docType;
   } else {
-    ocrLoadingDocType.value = null;
 
     // reload the page with only the necessary data
     router.reload({
       onSuccess: () => {
-        console.log('handleOcrNotification onSuccess');
         // Increment keys to force components to re-render
         policyDetailReloadKey.value++;
         bookPolicyReloadKey.value++;
+        ocrLoadingDocType.value = null;
       },
       preserveState: true,
       preserveScroll: true,
