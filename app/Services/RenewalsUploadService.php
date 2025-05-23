@@ -761,7 +761,6 @@ class RenewalsUploadService
                 return false;
             }
             $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEWLEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
-            LoggerService::info($logPrefix . ' previous transApprovedId: ' . $transApprovedId);
 
             // advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
@@ -777,7 +776,6 @@ class RenewalsUploadService
             $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
 
             $transApprovedId = $this->isFakeEmail($customerData['email']) ? $this->getquoteStatusIdbyCode(quoteStatusCode::FAKE) : $transApprovedId;
-            LoggerService::info($logPrefix.' transApprovedId: '.$transApprovedId);
             $quoteData = [
                 'customer_id' => $customer->id,
                 'first_name' => $customerData['first_name'],
@@ -878,8 +876,6 @@ class RenewalsUploadService
                     $quoteData['business_type_of_insurance_id'] = $businessSubline->id;
                 }
             }
-
-            LoggerService::info($logPrefix.' quote data: '.json_encode($quoteData));
 
             $quote = $quoteObject->create($quoteData);
             if (! $isQuotePersonal) {
