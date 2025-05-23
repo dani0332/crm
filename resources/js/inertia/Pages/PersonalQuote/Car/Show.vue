@@ -1735,6 +1735,13 @@ function handleOcrNotification(event) {
     ocrLoadingDocType.value = docType;
   } else {
     ocrLoadingDocType.value = null;
+
+    // reload the page with only the necessary data
+    router.reload({
+      preserveState: true,
+      preserveScroll: true,
+      only: ['payments', 'bookPolicyDetails', 'quote'],
+    });
   }
 }
 

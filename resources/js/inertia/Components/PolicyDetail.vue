@@ -42,6 +42,7 @@ const props = defineProps({
 });
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 const notification = useNotifications('toast');
 const dateToYMD = date => {
   if (date) {
@@ -576,7 +577,6 @@ const FieldLoader = defineComponent({
                     <span>{{ productionProcessTooltipEnum.PRICE_VAT_NOT_APPLICABLE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
                   <x-input
                     v-model="policyDetailsForm.price_vat_notapplicable"
                     @change="calculateVatAmount(true)"
@@ -586,7 +586,6 @@ const FieldLoader = defineComponent({
                     class="w-full"
                     :disabled="!policyDetailsState.isEditing || (page.props.quoteType != quoteTypeCodeEnum.Life && page.props.quoteType != quoteTypeCodeEnum.Business && page.props.quoteType != quoteTypeCodeEnum.Health)"
                   />
-                </FieldLoader>
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip>
@@ -597,7 +596,7 @@ const FieldLoader = defineComponent({
                     <span>{{ productionProcessTooltipEnum.START_DATE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
+                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value">
                   <DatePicker
                     v-model="policyDetailsForm.quote_policy_start_date"
                     :rules="[isRequired, rules.policy_start_date]"

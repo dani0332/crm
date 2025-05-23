@@ -773,20 +773,6 @@ const FieldLoader = defineComponent({
 
 // --- OCR Loading Logic ---
 const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
-const ocrLoadingDocType = ref(null);
-const enabledOcrDocTypes = [
-  ocrDocumentTypeEnum?.TAX_INVOICE?.value,
-  ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
-];
-
-function handleOcrNotification(event) {
-  const { docType, status } = event.detail || {};
-  if (enabledOcrDocTypes.includes(docType) && status === 'start') {
-    ocrLoadingDocType.value = docType;
-  } else {
-    ocrLoadingDocType.value = null;
-  }
-}
 </script>
 
 <template>
@@ -958,7 +944,7 @@ function handleOcrNotification(event) {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
+                  <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
                     <x-input
                       v-model="bpForm.insurer_tax_invoice_number"
                       placeholder="Insurer Tax Invoice Number"

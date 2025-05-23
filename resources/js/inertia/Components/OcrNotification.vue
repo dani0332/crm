@@ -12,16 +12,13 @@ const eventName = 'ocr.notification';
 let worker;
 
 const listen = () => {
-  console.log('listen ocr notification');
   worker = new SharedWorker('/build/workers/pusher.worker.js?v=' + new Date().getTime());
   worker.port.addEventListener('message', e => {
-    console.log('ocr notification message', e);
-    console.log('policy detail uuid', page.props.quote);
     // Only show notification if URL starts with /quote/car/
     const currentUrl = page.props.location || '';
     if (
       e.data.uuid === page.props?.quote?.uuid &&
-      currentUrl.startsWith('/quote/car/')
+      currentUrl.includes('/quotes/car/')
     ) {
       notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
@@ -77,4 +74,4 @@ const hideNotification = () => {
       @close="showNotification = false"
     />
   </div>
-</template> 
+</template>
