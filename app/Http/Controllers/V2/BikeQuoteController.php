@@ -83,7 +83,7 @@ class BikeQuoteController extends Controller
         $renewalBatches = app(RenewalBatchReportService::class)->getAllNonMotorBatches();
 
         return inertia('BikeQuote/Index', [
-            'quotes' => $personalQuotes,
+            'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'renewalBatches' => $renewalBatches,
             'advisors' => $advisors,
@@ -211,11 +211,9 @@ class BikeQuoteController extends Controller
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
-        $listQuotePlans = $this->bikeQuoteService->getPlans($uuid, true, true);
         $quote->load(['carPlan.insuranceProvider']);
 
         return inertia('BikeQuote/Show', [
-            'listQuotePlans' => $listQuotePlans,
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
             'record' => $quote,

@@ -15,6 +15,15 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ENABLE_UNIVERSAL_SEARCH],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
         // $this->seedBirdWorkflowUrls();
         // ApplicationStorage::firstOrCreate(
         //     ['key_name' => ApplicationStorageEnums::SAGE_TIMEOUT_RETRY_ENABLED],
@@ -81,8 +90,13 @@ class ApplicationStorageSeeder extends Seeder
         //         'updated_at' => now(),
         //     ],
         // );
-        $this->seedBenchmarking();
-        $this->seedStopDeduplicateScript();
+        // $this->seedBenchmarking();
+        // $this->seedStopDeduplicateScript();
+        // $this->seedAmlAutomation();
+
+        // $this->seedYachtAndPetAdvisors();
+        $this->seedCycleAdvisors();
+        $this->seedCorplineAdvisors();
     }
 
     private function seedBirdWorkflowUrls()
@@ -229,16 +243,6 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-        ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::DTT_FROM],
-            [
-                'value' => '2025-02-19',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
         // TODO:: Need to confirm email addresses with Shahrukh
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TAP_AUTHORIZED_EMAILS],
@@ -321,6 +325,78 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::STOP_DE_DUPLICATION_JOB],
             [
                 'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedAmlAutomation()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::AML_AUTOMATION_ENABLED],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedYachtAndPetAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::YACHT_ADVISORS],
+            [
+                'value' => 'vignesh.prasad@insurancemarket.ae,jayaraj.anthonyswamy@insurancemarket.ae,zaid.sheikh@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::PET_ADVISORS],
+            [
+                'value' => 'smitha.chandran@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_ADVISORS_FOR_PET],
+            [
+                'value' => 'ghana.naeem@insurancemarket.ae,marialuisa.deguzman@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedCycleAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CYCLE_ADVISORS],
+            [
+                'value' => 'marialuisa.deguzman@insurancemarket.ae,virgilio.ocon@insurancemarket.ae,ghana.naeem@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedCorplineAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CORPLINE_ADVISORS],
+            [
+                'value' => 'vignesh.prasad@insurancemarket.ae,jayaraj.anthonyswamy@insurancemarket.ae,zaid.sheikh@insurancemarket.ae,arun.shankar@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

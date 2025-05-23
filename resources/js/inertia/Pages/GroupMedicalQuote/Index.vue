@@ -224,7 +224,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const exportLoader = ref(false);
-const onDataExport = () => {
+const onDataExport = (exportType = 'download') => {
   if (filters.created_at_start && filters.created_at_end) {
     let diff = calculateDaysDifference(
       filters.created_at_start,
@@ -250,21 +250,41 @@ const onDataExport = () => {
       'YYYY-MM-DD',
     ).value;
   }
-
+  filters.exportType = exportType;
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'amt');
   const payload = {
     quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Business'),
+    exportType: exportType,
     url: url + '?' + new URLSearchParams(data).toString(),
   };
 
   exportLoader.value = true;
-  logAndExportQuotes(payload).then(result => {
-    if (result)
+  logAndExportQuotes(payload)
+    .then(result => {
+      if (result.data.message) {
+        notification.success({
+          title: result.data.message,
+          position: 'top',
+        });
+      }
+      if (result)
+        setTimeout(() => {
+          exportLoader.value = false;
+        }, 1000);
+    })
+    .catch(err => {
+      notification.error({
+        title: err.response.data.message
+          ? err.response.data.message
+          : 'Unable to start an export',
+        position: 'top',
+      });
       setTimeout(() => {
         exportLoader.value = false;
       }, 1000);
-  });
+      throw err;
+    });
 };
 
 watch(
@@ -470,60 +490,56 @@ const insurerAMLStatusOption = computed(() => {
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-field label="First Name">
-          <x-input
-            v-model="filters.first_name"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Search by First Name"
-          />
-        </x-field>
-        <x-field label="Last Name">
-          <x-input
-            v-model="filters.last_name"
-            type="search"
-            name="last_name"
-            class="w-full"
-            placeholder="Search by Last Name"
-          />
-        </x-field>
-        <x-field label="Email">
-          <x-input
-            v-model="filters.email"
-            type="search"
-            name="email"
-            class="w-full"
-            placeholder="Search by Email"
-          />
-        </x-field>
-        <x-field label="Mobile Number">
-          <x-input
-            v-model="filters.mobile_no"
-            type="search"
-            name="mobile_no"
-            class="w-full"
-            placeholder="Search by Mobile Number"
-          />
-        </x-field>
-        <x-field label="Company Name">
-          <x-input
-            v-model="filters.company_name"
-            type="search"
-            name="company_name"
-            class="w-full"
-            placeholder="Search by Company Name"
-          />
-        </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
-            v-model="filters.created_at_start"
-            name="created_at_start"
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker v-model="filters.created_at_end" name="created_at_end" />
-        </x-field>
+        <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          class="w-full"
+          placeholder="Search by First Name"
+          label="First Name"
+        />
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          class="w-full"
+          placeholder="Search by Last Name"
+          label="Last Name"
+        />
+        <x-input
+          v-model="filters.email"
+          type="search"
+          name="email"
+          class="w-full"
+          placeholder="Search by Email"
+          label="Email"
+        />
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+          label="Mobile Number"
+        />
+        <x-input
+          v-model="filters.company_name"
+          type="search"
+          name="company_name"
+          class="w-full"
+          placeholder="Search by Company Name"
+          label="Company Name"
+        />
+        <DatePicker
+          v-model="filters.created_at_start"
+          name="created_at_start"
+          label="Created Date Start"
+        />
+        <DatePicker
+          v-model="filters.created_at_end"
+          name="created_at_end"
+          label="Created Date End"
+        />
         <DatePicker
           v-model="filters.advisor_assigned_date"
           name="created_at_start"
@@ -531,39 +547,79 @@ const insurerAMLStatusOption = computed(() => {
           range
           format="dd-MM-yyyy"
         />
-        <x-field label="Lead Status">
-          <ComboBox
-            v-model="filters.leadStatus"
-            placeholder="Search by Lead Status"
-            :options="leadStatusOptions"
-          />
-        </x-field>
-        <ComboBox
+        <x-select
+          v-model="filters.leadStatus"
+          name="quote_status_id"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
+          class="w-full"
+          filterable
+          label="Lead Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.leadStatus = leadStatusOptions.map(item => item.value)
+              "
+              @clear="filters.leadStatus = []"
+            />
+          </template>
+        </x-select>
+        <x-select
           v-model="filters.insurer_aml_status"
-          label="Insurer AML Status"
           name="insurer_aml_status"
+          placeholder="Search by Insurer AML Status"
           :options="insurerAMLStatusOption"
+          class="w-full"
+          filterable
+          label="Insurer AML Status"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.insurer_aml_status = insurerAMLStatusOption.map(
+                  item => item.value,
+                )
+              "
+              @clear="filters.insurer_aml_status = []"
+            />
+          </template>
+        </x-select>
+
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
         />
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
-        <x-field label="Advisor">
-          <ComboBox
-            v-model="filters.advisor_id"
-            placeholder="Search by Advisor"
-            :options="advisorOptions"
-            class="w-full"
-          />
-        </x-field>
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
+        <x-select
+          v-model="filters.advisor_id"
+          name="advisor_id"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          class="w-full"
+          filterable
+          label="Advisor"
+          multiple
+          truncate
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisor_id = advisorOptions.map(item => item.value)
+              "
+              @clear="filters.advisor_id = []"
+            />
+          </template>
+        </x-select>
 
         <x-input
           v-model="filters.previous_quote_policy_number"
@@ -626,13 +682,28 @@ const insurerAMLStatusOption = computed(() => {
             size="sm"
             color="emerald"
             @click.prevent="onDataExport"
-            class="justify-self-start"
+            class="justify-self-start mr-3"
             :loading="exportLoader"
           >
             Export
           </x-button>
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            :loading="exportLoader"
+            @click.prevent="onDataExport('email')"
+            class="justify-self-start"
+          >
+            Export via email
+          </x-button>
           <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"
+              >Export via email</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Created dates or policy expiry dates or payment due date or
@@ -659,15 +730,15 @@ const insurerAMLStatusOption = computed(() => {
         >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
-              <ComboBox
+              <x-select
                 v-model="assignForm.assigned_to_id_new"
                 label="Assign Advisor"
                 :options="advisorOptions"
-                :single="true"
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :error="assignForm.errors.assigned_to_id_new"
                 v-if="readOnlyMode.isDisable === true"
+                filterable
               />
               <div class="mb-3 md:pt-6">
                 <x-button

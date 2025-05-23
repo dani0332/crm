@@ -11,7 +11,8 @@ export const useCleanObj = reactive => {
       reactive[key] === undefined ||
       reactive[key] === '' ||
       reactive[key] === false ||
-      reactive[key].length === 0
+      reactive[key].length === 0 ||
+      (typeof reactive[key] === 'string' && reactive[key].trim() === '')
     ) {
       delete reactive[key];
     }
@@ -376,14 +377,26 @@ export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
   return axios
     .post('/quotes/export-logs/create', payload)
-    .then(res => {
-      return res.data.success;
+    .then(async res => {
+      const exportResponse = await axios
+        .get(payload.url)
+        .then(resp => {
+          return resp.data;
+        })
+        .catch(err => {
+          throw err;
+        });
+      res.data.message = exportResponse.message;
+      return res;
     })
     .catch(err => {
       throw err;
     })
     .finally(() => {
-      window.open(payload.url);
+      // Cleanup operations if needed
+      if (payload.exportType !== 'email') {
+        window.open(payload.url);
+      }
     });
 };
 
@@ -436,6 +449,7 @@ export const validateField = (form, fieldValue, errorField, validationRule) => {
     return true;
   }
 };
+
 export const applyEmiratesNumberMasking = emiratesId => {
   let emiratesIDNumber = emiratesId.replace(/\D/g, '');
   if (emiratesIDNumber?.length > 15) {
@@ -461,4 +475,11 @@ export const applyEmiratesNumberMasking = emiratesId => {
   }
 
   return emiratesIDNumber;
+};
+
+export const useGenerateOptions = (items, valueKey, labelKey) => {
+  return items.map(item => ({
+    value: item[valueKey],
+    label: item[labelKey],
+  }));
 };

@@ -365,14 +365,15 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] =
           label="DOB"
           :hasError="UBOFieldReq.dob"
         />
-        <ComboBox
-          required
+        <x-select
           v-model="UBOForm.nationality_id"
           label="Nationality"
           :options="nationalitiesOptions"
           placeholder="Select Nationality"
-          :single="true"
-          :hasError="UBOFieldReq.nationality"
+          filterable
+          filterPlaceholder="Filter Nationality...."
+          :rules="[isRequired]"
+          required
         />
       </div>
 

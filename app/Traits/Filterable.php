@@ -233,4 +233,9 @@ trait Filterable
             $subQuery->where($column, $isStartOfDay ? '>=' : '<=', $this->parseDate(request($filterName), $isStartOfDay));
         });
     }
+
+    public function scopeToday($query, $column = 'created_at')
+    {
+        $query->whereDate($column, today());
+    }
 }

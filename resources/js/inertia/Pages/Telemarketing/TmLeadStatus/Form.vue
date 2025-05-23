@@ -56,55 +56,59 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Code" required>
-        <x-input
-          v-model="leadForm.code"
-          type="text"
-          :rules="[isRequired]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Text En" required>
-        <x-input
-          v-model="leadForm.text"
-          type="text"
-          :rules="[isRequired]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Text Ar" required>
-        <x-input
-          v-model="leadForm.text_ar"
-          type="text"
-          :rules="[isRequired]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Sort Order" required>
-        <x-input
-          v-model="leadForm.sort_order"
-          type="text"
-          :rules="[isRequired]"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Is Active" required>
-        <x-select
-          v-model="leadForm.is_active"
-          :options="[
-            {
-              value: 'on',
-              label: 'Yes',
-            },
-            {
-              value: 'off',
-              label: 'No',
-            },
-          ]"
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
+      <x-input
+        v-model="leadForm.code"
+        type="text"
+        :rules="[isRequired]"
+        class="w-full"
+        label="Code"
+        required
+      />
+
+      <x-input
+        v-model="leadForm.text"
+        type="text"
+        :rules="[isRequired]"
+        class="w-full"
+        label="Text En"
+        required
+      />
+
+      <x-input
+        v-model="leadForm.text_ar"
+        type="text"
+        :rules="[isRequired]"
+        class="w-full"
+        label="Text Ar"
+        required
+      />
+
+      <x-input
+        v-model="leadForm.sort_order"
+        type="text"
+        :rules="[isRequired]"
+        class="w-full"
+        label="Sort Order"
+        required
+      />
+
+      <x-select
+        v-model="leadForm.is_active"
+        :options="[
+          {
+            value: 'on',
+            label: 'Yes',
+          },
+          {
+            value: 'off',
+            label: 'No',
+          },
+        ]"
+        class="w-full"
+        :rules="[isRequired]"
+        label="Is Active"
+        required
+      />
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

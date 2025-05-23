@@ -77,7 +77,7 @@ class ExportValidationRequest extends FormRequest
         $validator->after(function ($validator) {
 
             if (! $validator->errors()->any()) {
-                $diffInDays = 120;
+                $diffInDays = 31;
                 $exportTye = $this->route('exportTye');
                 $quoteType = $this->route('quoteType');
 
@@ -86,6 +86,9 @@ class ExportValidationRequest extends FormRequest
                 }
 
                 if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
+                    $start = null;
+                    $end = null;
+
                     if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                         $start = Carbon::parse($this->input('paid_at_start'));
                         $end = Carbon::parse($this->input('paid_at_end'));
@@ -118,12 +121,16 @@ class ExportValidationRequest extends FormRequest
                         $end = Carbon::parse($this->input('transaction_approved_dates')[1])->endOfDay();
                         $error_fields = 'transaction approved dates';
                     }
-                    $diff = $start->diffInDays($end);
-                    if ($diff > $diffInDays) {
-                        $message = "Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.";
-                        // logger()->error('ExportValidationRequest: '.$message);
-                        $validator->errors()->add('flash', $message);
+
+                    if ($start && $end) {
+                        $diff = $start->diffInDays($end);
+                        if ($diff >= $diffInDays) {
+                            $message = "Maximum of {$diffInDays} days ({$error_fields}) are allowed to be exported.";
+                            // logger()->error('ExportValidationRequest: '.$message);
+                            $validator->errors()->add('flash', $message);
+                        }
                     }
+
                 } else {
                     $validator->errors()->add('flash', 'Valid dates are required to export.');
                 }

@@ -6,6 +6,8 @@ use App\Enums\ActivityTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\EmbeddedProductEnum;
@@ -15,6 +17,7 @@ use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentCaptureValidationEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -106,6 +109,7 @@ class HandleInertiaRequests extends Middleware
             'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'quoteBusinessTypeIdEnum' => BusinessTypeOfInsuranceIdEnum::asArray(),
+            'paymentCaptureValidationEnum' => PaymentCaptureValidationEnum::asArray(),
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
@@ -140,10 +144,14 @@ class HandleInertiaRequests extends Middleware
             'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
             'embeddedProductTypeEnum' => EmbeddedProductTypeEnum::asArray(),
             'activityTypeEnum' => ActivityTypeEnum::asArray(),
+            'carRegistrationType' => CarRegistrationType::asArray(),
+            'carVehicleUse' => CarVehicleUse::asArray(),
             'isTapEnabled' => isTapEnabled(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'impersonatingUser' => app('impersonate')?->getImpersonatorId() ? User::find(app('impersonate')?->getImpersonatorId()) : null,
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
+            'carRegistrationType' => CarRegistrationType::asArray(),
+            'carVehicleUse' => CarVehicleUse::asArray(),
         ];
     }
 
@@ -325,6 +333,12 @@ class HandleInertiaRequests extends Middleware
                         true,
                         'Buy Leads Tracking',
                         route('buy-leads.request.tracking'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_EXPORT),
+                        'Export Buy Leads',
+                        route('buy-leads.request.export'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
@@ -663,6 +677,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering]),
+                        'Allocation Audit',
+                        route('admin.allocation-audit.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement, RolesEnum::Engineering]),
                         'Buy Lead Config',
                         route('admin.buy-leads.config.show'),
@@ -673,6 +693,12 @@ class HandleInertiaRequests extends Middleware
                         'Query Benchmarker',
                         route('admin.benchmarker.query.show'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Permissions Docs',
+                        url('/permissions-docs/index.php'),
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true, 'target' => '_blank'])
                     )
                     ->addIf(
                         auth()->user()->hasAnyPermission([

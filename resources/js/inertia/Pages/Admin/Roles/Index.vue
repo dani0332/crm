@@ -62,9 +62,7 @@ watchDebounced(
   <x-divider class="my-4" />
   <x-form :auto-focus="false">
     <div class="grid sm:grid-cols-1 md:grid-cols-1 gap-4">
-      <x-field label="NAME" required>
-        <x-input class="w-full" v-model="filters.name" />
-      </x-field>
+      <x-input label="NAME" required class="w-full" v-model="filters.name" />
     </div>
   </x-form>
   <DataTable

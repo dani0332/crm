@@ -15,9 +15,9 @@ use PDF;
 
 class BuyLeadService
 {
-    private function currentRequestsCount(QuoteTypes $quoteType): int
+    private function todaysRequestsCount(QuoteTypes $quoteType): int
     {
-        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->sum('requested_count');
+        return (int) BuyLeadRequest::where('quote_type_id', $quoteType->id())->where('user_id', Auth::id())->notExpired()->today()->sum('requested_count');
     }
 
     public function getBlLeadRemainingLimit(QuoteTypes $quoteType)
@@ -30,7 +30,7 @@ class BuyLeadService
 
         $buyLeadMaxCap = $leadAllocation?->buy_lead_max_capacity ?? 0;
 
-        return $buyLeadMaxCap - $this->currentRequestsCount($quoteType);
+        return $buyLeadMaxCap - $this->todaysRequestsCount($quoteType);
     }
 
     public function isRequestAlreadySubmitted(QuoteTypes $quoteType): bool
@@ -133,7 +133,7 @@ class BuyLeadService
             ->with('quoteType:id,code')
             ->where('user_id', Auth::id())
             ->latest()
-            ->whereDate('created_at', today())
+            ->today()
             ->simplePaginate(20)
             ->withQueryString();
     }

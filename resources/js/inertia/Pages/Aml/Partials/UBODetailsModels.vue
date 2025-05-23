@@ -192,41 +192,45 @@ const onUBOSubmit = isValid => {
       </div>
 
       <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4">
-        <x-field label="Full Name" required>
-          <x-input
-            v-model="uboForm.first_name"
-            placeholder="Full Name"
-            class="w-full"
-            :rules="[isRequired, rules.nameCheck]"
-          />
-        </x-field>
-        <x-field label="Nationality" required>
-          <ComboBox
-            :single="true"
-            v-model="uboForm.nationality_id"
-            placeholder="Select Nationality"
-            :options="nationalitiesOptions"
-            class="w-full"
-            :hasError="isEmptyField"
-          />
-        </x-field>
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="uboForm.dob"
-            placeholder="Date of Birth"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="Position" required>
-          <x-select
-            v-model="uboForm.relation_code"
-            placeholder="Select Position"
-            :options="uboRelationOptions"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
+        <x-input
+          label="Full Name"
+          required
+          v-model="uboForm.first_name"
+          placeholder="Full Name"
+          class="w-full"
+          :rules="[isRequired, rules.nameCheck]"
+        />
+
+        <x-select
+          label="Nationality"
+          required
+          v-model="uboForm.nationality_id"
+          placeholder="Select Nationality"
+          :options="nationalitiesOptions"
+          class="w-full"
+          :rules="[isRequired]"
+          filterable
+          filterPlaceholder="Filter Nationality...."
+        />
+
+        <DatePicker
+          label="Date of Birth"
+          required
+          v-model="uboForm.dob"
+          placeholder="Date of Birth"
+          class="w-full"
+          :rules="[isRequired]"
+        />
+
+        <x-select
+          label="Position"
+          required
+          v-model="uboForm.relation_code"
+          placeholder="Select Position"
+          :options="uboRelationOptions"
+          class="w-full"
+          :rules="[isRequired]"
+        />
       </dl>
     </div>
     <x-divider v-if="addUBODetails" class="mb-3 mt-1" />

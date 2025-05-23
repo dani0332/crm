@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
 use App\Models\SageProcess;
+use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,7 +14,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
-use Log;
 use Throwable;
 
 class BookPolicyOnSageJob implements ShouldQueue
@@ -45,7 +45,8 @@ class BookPolicyOnSageJob implements ShouldQueue
      */
     public function handle()
     {
-        info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Started');
+        LoggerService::startQuoteLogging($this->quote);
+        LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Started');
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
 
@@ -57,28 +58,27 @@ class BookPolicyOnSageJob implements ShouldQueue
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                    info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - sage conflict - updating status to pending');
+                    LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - sage conflict - updating status to pending');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
                 } else {
-                    info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - booking failed - updating status to failed');
+                    LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - booking failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
 
                     (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
                 }
 
             } else {
-                info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - policy booked - updating status to completed');
+                LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - policy booked - updating status to completed');
                 (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'BookPolicyOnSageJob : '.$this->quote->code);
             }
 
-            info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));
-            info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished');
+            LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished', extra : ['Response' => json_encode($response)]);
         } else {
-            info('job:SendUpdateSageJob - Process Skipped - QuoteType: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
+            LoggerService::info('job:BookPolicyOnSageJob - Process Skipped - Sage Process ID : '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for  code -'.$this->quote->code.'Insurer - '.$this->sageRequest->insurerID);
+        LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for  code -'.$this->quote->code.'Insurer - '.$this->sageRequest->insurerID);
     }
 
     public function failed(Throwable $exception)
@@ -91,13 +91,17 @@ class BookPolicyOnSageJob implements ShouldQueue
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
         }
 
-        Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$message);
+        if ($this->isFailedDueToAttempts($message)) {
+            LoggerService::info('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$message);
+        } else {
+            LoggerService::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$message);
+        }
 
-        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
+        LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' Insurer - '.$this->sageRequest->insurerID);
+        LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' Insurer - '.$this->sageRequest->insurerID);
 
     }
 
@@ -105,6 +109,13 @@ class BookPolicyOnSageJob implements ShouldQueue
     {
         // release the WithoutOverlapping lock 5 minutes after the job has processed
         return [(new WithoutOverlapping($this->quote->code.'-'.$this->lockPostfix))->dontRelease()];
+    }
+
+    private function isFailedDueToAttempts($errorMessage): bool
+    {
+        $errorMessage = strtolower($errorMessage);
+
+        return str_contains($errorMessage, 'has been attempted too many times');
     }
 
 }

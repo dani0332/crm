@@ -11,7 +11,10 @@ export const useRules = () => {
     return true;
   };
 
-  const isRequired = v => !!v || 'This field is required';
+  // const isRequired = v => !!v || 'This field is required'; // will remove after testing
+  const isRequired = v =>
+    (!!v && (Array.isArray(v) ? v.length > 0 : true)) ||
+    'This field is required';
 
   const allowEmpty = v => true || 'This field is required';
 
@@ -141,6 +144,31 @@ export const useRules = () => {
     return !v || Number(v) >= min || `The minimum value is ${min}.`;
   };
 
+  // Add maxSelections rule for multiple select components
+  const maxSelections = max => v => {
+    return (
+      !v ||
+      !Array.isArray(v) ||
+      v.length <= max ||
+      `You can select up to ${max} items only.`
+    );
+  };
+
+  const maxDateRange = value => {
+    if (!value || typeof value !== 'string' || !value.includes(' - '))
+      return true;
+    const [start, end] = value.split(' - ').map(d => {
+      const [m, d_, y] = d.split('/');
+      return new Date(`${d_}-${m}-${y}`);
+    });
+    if ([start, end].some(dt => isNaN(dt))) return 'Invalid date format';
+    const diffDays = Math.ceil((end - start) / 864e5);
+    if (diffDays < 0) return 'End date must be after start date';
+    if (diffDays > 30)
+      return `Date range must be 30 days or less (selected: ${diffDays} days)`;
+    return true;
+  };
+
   return {
     name,
     isEmail,
@@ -165,5 +193,7 @@ export const useRules = () => {
     maxCharacters,
     emiratesNumber,
     minValue,
+    maxSelections,
+    maxDateRange,
   };
 };

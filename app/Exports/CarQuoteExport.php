@@ -10,11 +10,27 @@ class CarQuoteExport
 {
     use ExcelExportable;
 
-    public function collection()
+    /**
+     * Get the data collection - this is used by the original implementation
+     * and falls back when getQuery is not available
+     */
+    public function collection($requestParams = [])
     {
-        return app(CarQuoteService::class)->getGridData()->get();
+        return app(CarQuoteService::class)->getGridData(requestParams: $requestParams)->get();
     }
 
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery($requestParams = [])
+    {
+        return app(CarQuoteService::class)->getGridData(requestParams: $requestParams);
+    }
+
+    /**
+     * Define the CSV headings
+     */
     public function headings(): array
     {
         return [
@@ -67,6 +83,9 @@ class CarQuoteExport
         ];
     }
 
+    /**
+     * Map a database record to CSV row
+     */
     public function map($quote): array
     {
         return [
@@ -118,5 +137,4 @@ class CarQuoteExport
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
         ];
     }
-
 }
