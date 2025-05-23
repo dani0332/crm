@@ -1179,7 +1179,7 @@ class RenewalsUploadService
                 'status' => RenewalProcessStatuses::PROCESSED,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+            ])->where('id', '!=', $renewalQuoteProcess->id)->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
 
             // mark renewal quote process as processed and assign quote id
             $renewalQuoteProcess->update([
