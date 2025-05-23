@@ -531,9 +531,9 @@ class QuoteDocumentService extends BaseService
             // Use Ghostscript as our primary watermarking approach
             return $this->ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
         } catch (\Exception $e) {
-            LoggerService::error('Error in watermarkPdf: ' . $e->getMessage() . " for UUID: $uuid", context: [
+            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", context: [
                 'line' => $e->getLine(),
-                'file' => $e->getFile()
+                'file' => $e->getFile(),
             ]);
 
             // Incase ghostscriptWatermark() fails/throw exception. Made sure that we delete the file that it created.
@@ -565,7 +565,7 @@ class QuoteDocumentService extends BaseService
      * @param  string  $uuid  Document UUID
      * @return void
      */
-    private function ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid,$documentType)
+    private function ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
     {
         // Preprocess the PDF with Ghostscript for FPDI compatibility
         $tempFilePath = storage_path('temp/preprocessed_'.$docName);
@@ -627,6 +627,7 @@ class QuoteDocumentService extends BaseService
         }
 
         LoggerService::info("Successfully applied watermark with Ghostscript and FPDI for UUID: $uuid");
+
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
