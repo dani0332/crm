@@ -167,7 +167,7 @@ watch(() => sendUpdateForm.notes, (newValue) => {
 });
 
 const onUpdateLog = isValid => {
-  if (! sendUpdateForm.notes) {
+  if ((! sendUpdateForm.notes) && isCarOrBike.value) {
     notesFieldError.value = true;
     return;
   }
@@ -320,8 +320,12 @@ const isBookUpdate = computed(() => {
   );
 });
 
+const isCarOrBike = computed(() => {
+  return [page.props.quoteTypeCodeEnum.Car, page.props.quoteTypeCodeEnum.Bike].includes(props.quoteType);
+});
+
 const notesOptions = computed(() => {
-  if ([page.props.quoteTypeCodeEnum.Car, page.props.quoteTypeCodeEnum.Bike].includes(props.quoteType)) {
+  if (isCarOrBike.value) {
     return props.notesList.map(list => ({
       value: list.code,
       label: list.text,
@@ -491,7 +495,7 @@ const cancelOptionsList = computed(() => {
                 </div>
                 <div class="grid md:grid-cols-2">
                   <dt class="font-bold">NOTES</dt>
-                  <dd v-if="[page.props.quoteTypeCodeEnum.Car, page.props.quoteTypeCodeEnum.Bike].includes(props.quoteType)">
+                  <dd v-if="isCarOrBike">
                     <ComboBox
                         v-model="sendUpdateForm.notes"
                         :single="false"
