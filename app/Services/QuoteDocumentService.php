@@ -538,7 +538,7 @@ class QuoteDocumentService extends BaseService
 
             // Incase applyPdftkWatermark() fails/throw exception. Made sure that we delete the file that it created.
             $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
-            if (file_exists($watermarkPdf)) {
+            if (file_exists($watermarkPdf ?? '')) {
                 unlink($watermarkPdf);
             }
 
@@ -553,11 +553,6 @@ class QuoteDocumentService extends BaseService
 
             // If we can't even use the original file, re-throw the exception
             throw $e;
-        } finally {
-            // after everything remove the sourceFile from storage/temp
-            if (file_exists($sourceFilePath)) {
-                unlink($sourceFilePath);
-            }
         }
     }
 

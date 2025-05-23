@@ -549,6 +549,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = cqr.id)', [QuoteTypeId::Car]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->groupBy('cqr.id')

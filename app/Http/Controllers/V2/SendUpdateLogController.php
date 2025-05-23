@@ -9,6 +9,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
@@ -41,11 +42,14 @@ use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogController extends Controller
 {
+    use PersonalQuoteSyncTrait;
+
     private object $sendUpdateLogService;
     private object $quoteDocumentService;
 
@@ -95,6 +99,10 @@ class SendUpdateLogController extends Controller
                     return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
                 } else {
+                    $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
+                    if (in_array($requestData['quote_type_id'], $allowedQuoteTypes)) {
+                        $this->updatePersonalQuote($childLeadResponse['uuid'], $requestData['quote_type_id'], ['quote_id' => $childLeadResponse['id']]);
+                    }
                     if (isset($childLeadResponse['businessTypeOfInsurance']) && $childLeadResponse['businessTypeOfInsurance'] == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                         return redirect('/medical/amt/'.$childLeadResponse['uuid'])
                             ->with('success', $childLeadResponse['ref_id'].' has been created');
