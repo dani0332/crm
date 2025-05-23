@@ -290,7 +290,6 @@ const submitPolicy = () => {
   axios
     .post(url, data)
     .then(response => {
-      console.log(response);
       if (response.status == 200) {
         notification.success({
           title: response.data.message,
@@ -512,14 +511,6 @@ const disableSendAndBookPolicyButton = computed(() => {
   let isPolicyStatusCancellationPending =
     props.quote.quote_status_id ==
     page.props.quoteStatusEnum.CancellationPending;
-  console.log(
-    'disableSendAndBookPolicyButton',
-    props.bookPolicyDetails,
-    !props.bookPolicyDetails?.sendButton,
-    !isPolicyStatusCancellationPending,
-    disableIfPolicyFailedAndNoBookingFailedEditPermission.value,
-    !can(permission),
-  );
   return (
     !props.bookPolicyDetails?.sendButton &&
     !isPolicyStatusCancellationPending &&
@@ -565,11 +556,6 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
 });
 
 const showBookingFailedAlert = () => {
-  console.log(
-    'showBookingFailedAlert',
-    disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
-      isPolicyBookingFailed,
-  );
   if (
     disableIfPolicyFailedAndNoBookingFailedEditPermission.value &&
     isPolicyBookingFailed

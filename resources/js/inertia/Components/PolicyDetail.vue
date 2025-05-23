@@ -409,7 +409,6 @@ const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
   let disableEditPolicyDetails = false;
 
   let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
-  console.table('policyIssuanceSteps', policyIssuanceSteps);
   if (policyIssuanceSteps?.isPolicyAutomationEnabled) {
     disableEditPolicyDetails = policyIssuanceSteps?.isEditPolicyDetailsDisabled;
   }

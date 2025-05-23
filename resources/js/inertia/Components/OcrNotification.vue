@@ -14,7 +14,6 @@ let worker;
 const listen = () => {
   worker = new SharedWorker('/build/workers/pusher.worker.js?v=' + new Date().getTime());
   worker.port.addEventListener('message', e => {
-    // Only show notification if URL starts with /quote/car/
     const currentUrl = page.props.location || '';
     if (
       e.data.uuid === page.props?.quote?.uuid &&
