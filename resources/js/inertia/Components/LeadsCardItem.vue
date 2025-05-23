@@ -225,6 +225,7 @@ const formatDate = date => {
         nationality_text,
         insurance_tenure_text,
         age,
+        plan_id,
       } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
@@ -247,7 +248,7 @@ const formatDate = date => {
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />
-        <p class="text-xs">{{ insurance_tenure_text }}</p>
+        <p class="text-xs">{{ plan_id ? insurance_tenure_text : '' }}</p>
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="money" size="sm" class="text-primary-400" />
