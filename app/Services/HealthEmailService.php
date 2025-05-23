@@ -7,6 +7,7 @@ use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\QuoteFlowDetails;
@@ -15,7 +16,6 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Str;
-use App\Facades\Ken;
 
 class HealthEmailService extends BaseService
 {
