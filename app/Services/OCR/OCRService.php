@@ -78,6 +78,7 @@ class OCRService
         DocumentType $documentType,
         string $documentPath,
         string $fileMimeType,
+        int $userId,
     ): ?bool {
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
 
@@ -87,7 +88,7 @@ class OCRService
         }
 
         // Send start notification
-        event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value));
+        event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
 
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
@@ -95,7 +96,7 @@ class OCRService
             $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
             if ($data) {
                 // Send end notification
-                event(new OcrNotifications($quote, 'end', 'OCR processing completed', null, $docType?->value));
+                event(new OcrNotifications($quote, 'end', 'OCR processing completed', null, $docType?->value, $userId));
                 return $this->fill(
                     $quote,
                     $docType,
@@ -103,12 +104,12 @@ class OCRService
                 );
             } else {
                 // Send fail notification
-                event(new OcrNotifications($quote, 'fail', 'OCR processing failed', null, $docType?->value));
+                event(new OcrNotifications($quote, 'fail', 'OCR processing failed', null, $docType?->value, $userId));
                 return false;
             }
         } catch (\Exception $e) {
             // Send fail notification with error
-            event(new OcrNotifications($quote, 'fail', 'OCR processing failed', $e->getMessage(), $docType?->value));
+            event(new OcrNotifications($quote, 'fail', 'OCR processing failed', $e->getMessage(), $docType?->value, $userId));
             throw $e;
         }
     }

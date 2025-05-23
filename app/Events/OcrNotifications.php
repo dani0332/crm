@@ -20,10 +20,10 @@ class OcrNotifications implements ShouldBroadcastNow
     public ?string $error;
     public string $docType;
 
-    public function __construct($quote, string $status, string $message, ?string $error = null, ?string $docType = null)
+    public function __construct($quote, string $status, string $message, ?string $error = null, ?string $docType = null, int $userId = 0)
     {
         $this->uuid = $quote->uuid;
-        $this->userId = $quote->advisor_id ?? ($quote->created_by_id ?? 0);
+        $this->userId = $userId;
         $this->status = $status;
         $this->message = $message;
         $this->error = $error;

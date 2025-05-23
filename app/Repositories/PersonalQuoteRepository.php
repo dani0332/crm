@@ -207,6 +207,7 @@ class PersonalQuoteRepository extends BaseRepository
         }
 
         $quoteType = QuoteTypes::tryFrom(ucfirst(request('quote_type')));
+        $userId = Auth::user()->id;
         if ($quote && $quoteType && $filePathAzure) {
             PopulateDocumentData::dispatch(
                 $quoteType,
@@ -214,6 +215,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $documentType,
                 $filePathAzure,
                 $fileMimeType,
+                $userId,
             );
         }
     }

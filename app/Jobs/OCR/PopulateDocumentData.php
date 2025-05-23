@@ -33,6 +33,7 @@ class PopulateDocumentData implements ShouldQueue
         protected DocumentType $documentType,
         protected string $documentPath,
         protected string $fileMimeType,
+        protected int $userId,
     ) {}
 
     private function validateMimeType()
@@ -59,6 +60,7 @@ class PopulateDocumentData implements ShouldQueue
                 $this->documentType,
                 $this->documentPath,
                 $this->fileMimeType,
+                $this->userId,
             );
 
             if ($isSuccess === null) {

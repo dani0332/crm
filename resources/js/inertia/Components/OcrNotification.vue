@@ -18,7 +18,8 @@ const listen = () => {
     const currentUrl = page.props.location || '';
     if (
       e.data.uuid === page.props?.quote?.uuid &&
-      currentUrl.includes('/quotes/car/')
+      currentUrl.includes('/quotes/car/') &&
+      e.data.userId === page.props.auth.user.id
     ) {
       notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
