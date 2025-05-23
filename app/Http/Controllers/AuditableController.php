@@ -51,7 +51,7 @@ class AuditableController extends Controller
             $documentIds = $this->getSendUpdateDocumentIds($request->auditableId);
         } elseif ($request->auditableType === 'App\Models\InsuredKyc') {
             $insuredKyc = InsuredKyc::where('insured_id', $request->auditableId)->select('id')->first();
-            $request->auditableId = $insuredKyc->id;
+            $request->auditableId = $insuredKyc?->id ?? null;
         }
 
         $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
