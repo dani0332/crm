@@ -528,7 +528,7 @@ class QuoteDocumentService extends BaseService
         file_put_contents($sourceFilePath, $fileContent);
 
         try {
-            // Use PDFtk as our primary watermarking approach
+            // Use Ghostscript as our primary watermarking approach
             return $this->ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
         } catch (\Exception $e) {
             LoggerService::error('Error in watermarkPdf: ' . $e->getMessage() . " for UUID: $uuid", context: [
@@ -536,7 +536,7 @@ class QuoteDocumentService extends BaseService
                 'file' => $e->getFile()
             ]);
 
-            // Incase applyPdftkWatermark() fails/throw exception. Made sure that we delete the file that it created.
+            // Incase ghostscriptWatermark() fails/throw exception. Made sure that we delete the file that it created.
             $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
             if (file_exists($watermarkPdf ?? '')) {
                 unlink($watermarkPdf);
@@ -557,8 +557,8 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
-     * Apply watermark using Ghostscript when PDFtk methods fail
-     * This is the last attempt before falling back to the original file
+     * Apply watermark using Ghostscript
+     * After this attempt it fall back to the original file
      *
      * @param  string  $sourceFilePath  Source PDF file path
      * @param  string  $outputPath  Output PDF file path

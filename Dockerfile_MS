@@ -39,8 +39,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     ghostscript \
-    libwebp-dev \
-    pdftk
+    libwebp-dev
 
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
@@ -80,7 +79,6 @@ libicu-dev \
 libmemcached11 \
 ghostscript \
 libwebp-dev \
-pdftk
 
 # Set working directory
 WORKDIR /var/www
