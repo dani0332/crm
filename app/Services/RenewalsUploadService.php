@@ -1294,7 +1294,7 @@ class RenewalsUploadService
             LoggerService::info('Renewal: Health Plan Modify V2 Response ', ['selectResponse' => $selectResponse], ['ref_id' => $quote->uuid, 'premium' => $quote->premium]);
             if ($selectResponse->totalPremium && ($data['payment_link'] != '' || $data['payment_link'] != null)) {
                 $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
-                $premium = isset($ecomDetails['priceWithVAT']) ? $ecomDetails['priceWithVAT'] : $selectResponse->totalPremium;
+                $premium = isset($ecomDetails['priceWithVAT']) && $ecomDetails['priceWithVAT'] > 0 && $ecomDetails['priceWithVAT'] != '' && $ecomDetails['priceWithVAT'] != null ? $ecomDetails['priceWithVAT'] : $selectResponse->totalPremium;
                 $this->createHealthPayment($quote, $data, $premium);
             }
         }
