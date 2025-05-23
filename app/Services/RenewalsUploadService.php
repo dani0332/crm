@@ -760,7 +760,8 @@ class RenewalsUploadService
             if ($this->checkForExistingQuote($data, $renewalQuoteProcess, $renewalUploadLead, $quoteObject, $quoteType)) {
                 return false;
             }
-            $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
+            $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEWLEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
+            LoggerService::info($logPrefix . ' previous transApprovedId: ' . $transApprovedId);
 
             // advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
@@ -776,7 +777,7 @@ class RenewalsUploadService
             $renewalBatchId = $quoteType->id !== QuoteTypeId::Car && isset($data['renewal_batch_id']) && $data['renewal_batch_id'] != null ? $data['renewal_batch_id'] ?? null : null;
 
             $transApprovedId = $this->isFakeEmail($customerData['email']) ? $this->getquoteStatusIdbyCode(quoteStatusCode::FAKE) : $transApprovedId;
-
+            LoggerService::info($logPrefix.' transApprovedId: '.$transApprovedId);
             $quoteData = [
                 'customer_id' => $customer->id,
                 'first_name' => $customerData['first_name'],
@@ -877,6 +878,8 @@ class RenewalsUploadService
                     $quoteData['business_type_of_insurance_id'] = $businessSubline->id;
                 }
             }
+
+            LoggerService::info($logPrefix.' quote data: '.json_encode($quoteData));
 
             $quote = $quoteObject->create($quoteData);
             if (! $isQuotePersonal) {
@@ -1624,7 +1627,7 @@ class RenewalsUploadService
 
     public function getquoteStatusIdbyCode($quoteStatus)
     {
-        return QuoteStatus::where('code', '=', $quoteStatus)->value('id');
+        return QuoteStatus::where('code', '=', $quoteStatus)->where('is_active', 1)->value('id');
     }
 
     public function generateRandomString()
