@@ -21,10 +21,12 @@ class TravelRenewalLeadCreationJob implements ShouldQueue
     public $timeout = 60;
     public $backoff = 300;
     private $travelQuote;
+    private $advisorId;
 
-    public function __construct($travelQuote)
+    public function __construct($travelQuote, $advisorId)
     {
         $this->travelQuote = $travelQuote;
+        $this->advisorId = $advisorId;
     }
 
     /**
@@ -32,9 +34,10 @@ class TravelRenewalLeadCreationJob implements ShouldQueue
      */
     public function handle(): void
     {
-        info('TravelRenewalLeadCreationJob - Creating Travel Renewal Lead for quote: '.$this->travelQuote->previousQuoteId);
+        info("TravelRenewalLeadCreationJob - Creating Travel Renewal Lead for quote: {$this->travelQuote->previousQuoteId} with advisor ID: {$this->advisorId}");
 
-        app(TravelRenewalService::class)->createTravelRenewalLead($this->travelQuote);
-        info('TravelRenewalLeadCreationJob - Completed creating Travel Renewal Lead for quote: '.$this->travelQuote->previousQuoteId);
+        app(TravelRenewalService::class)->createTravelRenewalLead($this->travelQuote, $this->advisorId);
+
+        info("TravelRenewalLeadCreationJob - Completed creating Travel Renewal Lead for quote: {$this->travelQuote->previousQuoteId} with advisor ID: {$this->advisorId}");
     }
 }

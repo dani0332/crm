@@ -3,47 +3,194 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 const props = defineProps({
-  quote: Object,
-  genderOptions: Object,
-  assignedGMType: String,
-  allowedDuplicateLOB: Array,
-  quoteDetails: Object,
-  customerAdditionalContacts: Array,
-  activities: Array,
-  advisors: Array,
-  typeCode: String,
-  isBetaUser: Boolean,
-  payments: Array,
-  quoteRequest: Object,
-  permissions: Object,
-  paymentMethods: Object,
-  insuranceProviders: Array,
-  insuranceProvidersAll: Object,
-  lostReasons: Object,
-  customerTypeEnum: Object,
-  companyTypes: Array,
-  nationalities: Array,
-  UBORelations: Array,
-  UBOsDetails: Array,
-  canAddBatchNumber: Boolean,
-  documentTypes: Object,
-  noteDocumentType: Object,
-  storageUrl: String,
-  quoteNotes: Object,
-  cdnPath: String,
-  vatPercentage: Number,
-  paymentTooltipEnum: Object,
-  isNewPaymentStructure: Boolean,
-  sendUpdateOptions: Array,
-  sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean,
-  linkedQuoteDetails: Array,
-  bookPolicyDetails: Array,
-  lockLeadSectionsDetails: Object,
-  paymentDocument: Array,
-  amlStatusName: String,
-  paymentGatewayEnum: Array,
-  isFuncsEnabled: Array,
+  quote: {
+    type: Object,
+    required: true,
+  },
+  quoteDetails: {
+    type: Object,
+    required: true,
+  },
+  modelType: {
+    type: String,
+    required: true,
+  },
+  quoteTypeId: {
+    type: Number,
+    required: true,
+  },
+  leadStatuses: {
+    type: Array,
+    required: true,
+  },
+  advisors: {
+    type: Array,
+    required: true,
+  },
+  allowedDuplicateLOB: {
+    type: Array,
+    required: true,
+  },
+  genderOptions: {
+    type: Object,
+    required: true,
+  },
+  lostReasons: {
+    type: Object,
+    required: true,
+  },
+  quoteDocuments: {
+    type: Array,
+    required: true,
+  },
+  documentTypes: {
+    type: Object,
+    required: true,
+  },
+  cdnPath: {
+    type: String,
+    required: true,
+  },
+  memberCategories: {
+    type: Array,
+    required: true,
+  },
+  activities: {
+    type: Array,
+    required: true,
+  },
+  customerAdditionalContacts: {
+    type: Array,
+    required: true,
+  },
+  payments: {
+    type: Array,
+    required: true,
+  },
+  quoteRequest: {
+    type: Object,
+    required: true,
+  },
+  isBetaUser: {
+    type: Boolean,
+    required: true,
+  },
+  paymentMethods: {
+    type: Object,
+    required: true,
+  },
+  insuranceProviders: {
+    type: Array,
+    required: true,
+  },
+  insuranceProvidersAll: {
+    type: Object,
+    required: true,
+  },
+  permissions: {
+    type: Object,
+    required: true,
+  },
+  typeCode: {
+    type: String,
+    required: true,
+  },
+  customerTypeEnum: {
+    type: Object,
+    required: true,
+  },
+  companyTypes: {
+    type: Array,
+    required: true,
+  },
+  UBOsDetails: {
+    type: Array,
+    required: true,
+  },
+  UBORelations: {
+    type: Array,
+    required: true,
+  },
+  nationalities: {
+    type: Array,
+    required: true,
+  },
+  canAddBatchNumber: {
+    type: Boolean,
+    required: true,
+  },
+  noteDocumentType: {
+    type: Object,
+    required: true,
+  },
+  quoteNotes: {
+    type: Object,
+    required: true,
+  },
+  vatPercentage: {
+    type: Number,
+    required: true,
+  },
+  paymentTooltipEnum: {
+    type: Object,
+    required: true,
+  },
+  isNewPaymentStructure: {
+    type: Boolean,
+    required: true,
+  },
+  sendUpdateOptions: {
+    type: Array,
+    required: true,
+  },
+  sendUpdateLogs: {
+    type: Array,
+    required: true,
+  },
+  sendUpdateEnum: {
+    type: Object,
+    required: true,
+  },
+  hasPolicyIssuedStatus: {
+    type: Boolean,
+    required: true,
+  },
+  linkedQuoteDetails: {
+    type: Array,
+    required: true,
+  },
+  bookPolicyDetails: {
+    type: Array,
+    required: true,
+  },
+  quoteStatusEnum: {
+    type: Object,
+    required: true,
+  },
+  lockLeadSectionsDetails: {
+    type: Object,
+    required: true,
+  },
+  paymentDocument: {
+    type: Array,
+    required: true,
+  },
+  paymentGatewayEnum: {
+    type: Array,
+    required: true,
+  },
+  isFuncsEnabled: {
+    type: Object,
+    required: true,
+  },
+  storageUrl: {
+    type: String,
+    required: true,
+  },
+  amlStatusName: {
+    type: String,
+    required: true,
+  },
 });
 
 const page = usePage();
@@ -405,12 +552,13 @@ const companyConcernOptions = [
   { label: 'Sub Entity', value: 'SubEntity' },
 ];
 
-const companyTypeOptions = computed(() => {
+const industryTypeOptions = computed(() => {
   return page.props.companyTypes.map(comp_type => ({
     value: comp_type.code,
     label: comp_type.text,
   }));
 });
+
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
     value: em.id,
