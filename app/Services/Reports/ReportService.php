@@ -813,7 +813,6 @@ class ReportService extends BaseService
                     DB::raw('COUNT(CASE  WHEN email_sent = 1 THEN 1 ELSE NULL END) as email_sent_count'),
                     DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
                 )
-                ->join('car_quote_request_detail as cqr_d', 'cqr_d.car_quote_request_id', '=', $tableName.'.id')
                 ->leftjoin('dtt_revivals', 'dtt_revivals.uuid', $tableName.'.uuid')
                 ->whereNotNull(['dtt_revivals.revival_quote_batch_id'])
                 ->orderBy('dtt_revivals.revival_quote_batch_id', 'desc');
@@ -828,11 +827,6 @@ class ReportService extends BaseService
         } else {
             $query->whereIn('source', $source);
         }
-
-        $query->when($request->date_assigned, function ($query) use ($request) {
-            $query->where('cqr_d.advisor_assigned_date', $request->date_assigned);
-        });
-
         $record = $query->groupBy('dtt_revivals.revival_quote_batch_id')->get()->toArray();
 
         if ($request->lob == QuoteTypeId::Health) {
