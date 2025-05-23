@@ -1,7 +1,9 @@
 <script setup>
-const page = usePage();
+import { ref, onMounted, onUnmounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import CustomNotification from './CustomNotification.vue';
 
+const page = usePage();
 const showNotification = ref(false);
 const notificationData = ref({});
 const channelName = `public.${page.props.appEnv}.ocr.user`;
@@ -11,11 +13,16 @@ let worker;
 
 const listen = () => {
   console.log('listen ocr notification');
-  worker = new SharedWorker('/build/workers/pusher.worker.js');
+  worker = new SharedWorker('/build/workers/pusher.worker.js?v=' + new Date().getTime());
   worker.port.addEventListener('message', e => {
     console.log('ocr notification message', e);
     console.log('policy detail uuid', page.props.quote);
-    if (e.data.uuid === page.props.quote.uuid) {
+    // Only show notification if URL starts with /quote/car/
+    const currentUrl = page.props.location || '';
+    if (
+      e.data.uuid === page.props?.quote?.uuid &&
+      currentUrl.startsWith('/quote/car/')
+    ) {
       notificationData.value = {
         imageUrl: '/image/alfred-theme.png',
         title: 'OCR Notification',

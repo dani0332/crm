@@ -46,6 +46,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  ocrLoadingDocType: {
+    required: false,
+    type: [String, null],
+    default: null,
+  },
 });
 
 const isLoading = ref(false);
@@ -710,7 +715,6 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
-
 const filterCCPayments = payment => {
   return payment.payment_splits.filter(
     item => item.payment_method.code === 'CC',
@@ -766,6 +770,23 @@ const FieldLoader = defineComponent({
     ])
   }
 });
+
+// --- OCR Loading Logic ---
+const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
+const ocrLoadingDocType = ref(null);
+const enabledOcrDocTypes = [
+  ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+  ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+];
+
+function handleOcrNotification(event) {
+  const { docType, status } = event.detail || {};
+  if (enabledOcrDocTypes.includes(docType) && status === 'start') {
+    ocrLoadingDocType.value = docType;
+  } else {
+    ocrLoadingDocType.value = null;
+  }
+}
 </script>
 
 <template>
@@ -893,7 +914,7 @@ const FieldLoader = defineComponent({
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification">
+                  <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
                     <DatePicker
                       v-model="bpForm.invoice_date"
                       type="date"
@@ -901,7 +922,7 @@ const FieldLoader = defineComponent({
                       class="w-full"
                       :disabled="!bp.isEditing"
                       :rules="[isRequired]"
-                      />
+                    />
                   </FieldLoader>
                 </dd>
               </div>
@@ -937,7 +958,7 @@ const FieldLoader = defineComponent({
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification">
+                  <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
                     <x-input
                       v-model="bpForm.insurer_tax_invoice_number"
                       placeholder="Insurer Tax Invoice Number"
@@ -984,7 +1005,7 @@ const FieldLoader = defineComponent({
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification">
+                  <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
                     <x-input
                       v-model="bpForm.insurer_commmission_invoice_number"
                       placeholder="Insurer Commission Tax Invoice Number"
@@ -1115,7 +1136,7 @@ const FieldLoader = defineComponent({
                 <dd>
                   <template v-if="commissionVatApplicableTooltip">
                     <x-tooltip class="w-full">
-                      <FieldLoader :loading="showOcrNotification">
+                      <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
                         <x-input
                           v-model="bpForm.commission_vat_applicable"
                           @change="calculateCommission"
@@ -1143,7 +1164,7 @@ const FieldLoader = defineComponent({
                     </x-tooltip>
                   </template>
                   <template v-else>
-                    <FieldLoader :loading="showOcrNotification">
+                    <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
                       <x-input
                         v-model="bpForm.commission_vat_applicable"
                         @change="calculateCommission"

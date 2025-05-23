@@ -51,4 +51,17 @@ enum OCRDocumentTypeEnum: string
     {
         return in_array($this, self::getEnabledTypes($quoteType));
     }
+
+    public static function asArray(): array
+    {
+        $result = [];
+        foreach (self::cases() as $case) {
+            $result[$case->name] = [
+                'name' => $case->name,
+                'value' => $case->value,
+            ];
+        }
+        return $result;
+    }
+
 }

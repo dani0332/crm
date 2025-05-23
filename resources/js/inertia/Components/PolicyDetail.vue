@@ -34,6 +34,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  ocrLoadingDocType: {
+    required: false,
+    type: [String, null],
+    default: null,
+  },
 });
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -507,37 +512,6 @@ const FieldLoader = defineComponent({
     ])
   }
 });
-
-const showOcrNotification = ref(false);
-const ocrLoadingDocType = ref(null); // Track which docType is loading
-const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum?.reduce((enumMap, enumCase) => {
-  enumMap[enumCase.name] = enumCase;
-  return enumMap;
-}, {});
-
-const enabledOcrDocTypes = (() => {
-  const map = {
-    car: ['TI', 'TIB', 'PC', 'MPS'],
-  };
-  return map[quoteType] || [];
-})();
-
-function handleOcrNotification(event) {
-  const { docType, status } = event.detail || {};
-  if (enabledOcrDocTypes.includes(docType) && status === 'start') {
-    ocrLoadingDocType.value = docType;
-  } else {
-    ocrLoadingDocType.value = null;
-  }
-}
-
-onMounted(() => {
-  calculateVatAmount();
-  window.addEventListener('ocr-notification', handleOcrNotification);
-});
-onUnmounted(() => {
-  window.removeEventListener('ocr-notification', handleOcrNotification);
-});
 </script>
 
 <template>
@@ -561,7 +535,7 @@ onUnmounted(() => {
                     <span>{{ productionProcessTooltipEnum.POLICY_NUMBER }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value">
+                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value">
                   <x-input
                     v-model="policyDetailsForm.quote_policy_number"
                     type="text"
@@ -602,15 +576,17 @@ onUnmounted(() => {
                     <span>{{ productionProcessTooltipEnum.PRICE_VAT_NOT_APPLICABLE }}</span>
                   </template>
                 </x-tooltip>
-                <x-input
-                  v-model="policyDetailsForm.price_vat_notapplicable"
-                  @change="calculateVatAmount(true)"
-                  :rules="[rules.price_vat_not_applicable]"
-                  type="number"
-                  placeholder="Price (VAT NOT APPLICABLE)"
-                  class="w-full"
-                  :disabled="!policyDetailsState.isEditing || (page.props.quoteType != quoteTypeCodeEnum.Life && page.props.quoteType != quoteTypeCodeEnum.Business && page.props.quoteType != quoteTypeCodeEnum.Health)"
-                />
+                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
+                  <x-input
+                    v-model="policyDetailsForm.price_vat_notapplicable"
+                    @change="calculateVatAmount(true)"
+                    :rules="[rules.price_vat_not_applicable]"
+                    type="number"
+                    placeholder="Price (VAT NOT APPLICABLE)"
+                    class="w-full"
+                    :disabled="!policyDetailsState.isEditing || (page.props.quoteType != quoteTypeCodeEnum.Life && page.props.quoteType != quoteTypeCodeEnum.Business && page.props.quoteType != quoteTypeCodeEnum.Health)"
+                  />
+                </FieldLoader>
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip>
@@ -621,7 +597,7 @@ onUnmounted(() => {
                     <span>{{ productionProcessTooltipEnum.START_DATE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value">
+                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
                   <DatePicker
                     v-model="policyDetailsForm.quote_policy_start_date"
                     :rules="[isRequired, rules.policy_start_date]"
@@ -645,7 +621,7 @@ onUnmounted(() => {
                     <span>{{ productionProcessTooltipEnum.PRICE_VAT_APPLICABLE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
+                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
                   <x-input
                     v-model="policyDetailsForm.price_vat_applicable"
                     @change="calculateVatAmount(true)"
@@ -666,7 +642,7 @@ onUnmounted(() => {
                     <span>{{ productionProcessTooltipEnum.EXPIRY_DATE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value">
+                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value">
                   <DatePicker
                     v-model="policyDetailsForm.quote_policy_expiry_date"
                     :rules="[isRequired, rules.policy_expiry_date]"
@@ -690,7 +666,7 @@ onUnmounted(() => {
                     <span>Insurer Commission Tax Invoice No</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
+                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
                   <x-input
                     v-model="policyDetailsForm.insurer_commission_tax_invoice_no"
                     type="text"
@@ -709,7 +685,7 @@ onUnmounted(() => {
                     <span>Commission (VAT Applicable)</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
+                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
                   <x-input
                     v-model="policyDetailsForm.commission_vat_applicable"
                     type="number"

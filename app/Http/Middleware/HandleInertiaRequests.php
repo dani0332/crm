@@ -151,7 +151,7 @@ class HandleInertiaRequests extends Middleware
             'paymentGatewayEnum' => PaymentGatewayEnum::asArray(),
             'carRegistrationType' => CarRegistrationType::asArray(),
             'carVehicleUse' => CarVehicleUse::asArray(),
-            'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::cases(),
+            'ocrDocumentTypeEnum' => OCRDocumentTypeEnum::asArray(),
         ];
     }
 
