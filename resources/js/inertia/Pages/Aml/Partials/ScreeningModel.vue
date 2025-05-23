@@ -714,8 +714,9 @@ const handleModalClose = () => {
     title="Update and Verify"
     show-close
     backdrop
+    is-form
+    @submit="submitScreeningForm"
   >
-    <x-form @submit="submitScreeningForm" :auto-focus="false">
       <x-field label="Customer Type" required>
         <div class="grid md:grid-cols-3" id="customer-type-field">
           <x-select
@@ -1043,7 +1044,6 @@ const handleModalClose = () => {
           Submit For AML Screening
         </x-button>
       </div>
-    </x-form>
     <x-divider class="mb-4 mt-1" />
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>
