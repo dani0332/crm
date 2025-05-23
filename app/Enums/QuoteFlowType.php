@@ -12,6 +12,7 @@ enum QuoteFlowType: int
     case TRAVEL_AUTOMATED_FOLLOWUPS = 6;
     case NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS = 7;
     case HOME_AUTOMATED_FOLLOWUPS = 8;
+    case MOTOR_PCP_FOLLOWUPS = 9;
 
     public function label(): string
     {
@@ -24,6 +25,7 @@ enum QuoteFlowType: int
             QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS => 'travel_automated_followups',
             QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS => 'nb_motor_automated_followups',
             QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS => 'home_automated_followups',
+            QuoteFlowType::MOTOR_PCP_FOLLOWUPS => 'motor_pcp_followups',
         };
     }
 
@@ -38,6 +40,7 @@ enum QuoteFlowType: int
             6 => QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS,
             7 => QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS,
             8 => QuoteFlowType::HOME_AUTOMATED_FOLLOWUPS,
+            9 => QuoteFlowType::MOTOR_PCP_FOLLOWUPS,
             default => null,  // Return null if the value doesn't match any case
         };
     }
