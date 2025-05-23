@@ -1747,7 +1747,7 @@ const checkInsurerReceiptNumber = () => {
   if(showInsurerReceiptNumberInputField.value && paymentMethodsForm.insurer_receipt_number) {
     insurerReceiptNumberCheckInProcess.value = true;
     axios
-      .get(`/payments/${props.quoteType}/${paymentMethodsForm.insurer_receipt_number}/check-insurer-receipt-number`)
+      .post(`/payments/${props.quoteType}/check-insurer-receipt-number`,{insurer_receipt_number: paymentMethodsForm.insurer_receipt_number})
       .then(res => {
       if(res.data.status) {
         paymentForm.value?.$el?.requestSubmit();
@@ -1777,6 +1777,7 @@ const editPaymentModal = async (
 ) => {
   isTransactionCaptureButtonEnabled.value = true;
   showInsurerReceiptNumberInputField.value = false;
+  isInsurerReceiptNumberExistsModalOpen.value = false;
 
   if (
     sr_no === 0 &&
