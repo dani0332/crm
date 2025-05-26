@@ -35,6 +35,8 @@ class BridgerInsightService
 
     public function getJWTToken()
     {
+        LoggerService::info('fn:getJWTToken - BridgerInsightService - Token Generation started');
+
         $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
         $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
         $bridgerClient = new \GuzzleHttp\Client;

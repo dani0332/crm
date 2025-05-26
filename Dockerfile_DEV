@@ -35,8 +35,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     ghostscript \
-    libwebp-dev \
-    pdftk
+    libwebp-dev
 
 # Install node 16
 RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh

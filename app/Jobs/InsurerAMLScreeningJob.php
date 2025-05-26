@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\AMLService;
+use App\Services\Logger\LoggerService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -34,8 +35,9 @@ class InsurerAMLScreeningJob implements ShouldQueue
      */
     public function handle(AMLService $amlService): void
     {
-        info('Insurer AML Screening Job Started. Ref-ID: '.$this->quoteDetails['code']);
+        LoggerService::startQuoteLogging($this->quoteDetails['code']);
+        LoggerService::info('Insurer AML Screening Job Started');
         $amlService->amlScreeningGIG($this->request, $this->quoteTypeID, $this->quoteDetails, $this->customerType);
-        info('Insurer AML Screening Job Ended. Ref-ID: '.$this->quoteDetails['code']);
+        LoggerService::info('Insurer AML Screening Job Ended');
     }
 }
