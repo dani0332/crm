@@ -19,6 +19,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -29,7 +30,9 @@ use App\Models\CustomerAddress;
 use App\Models\Entity;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\Team;
 use App\Models\Tier;
+use App\Models\UserTeams;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -546,6 +549,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = cqr.id)', [QuoteTypeId::Car]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->groupBy('cqr.id')
@@ -2107,6 +2111,30 @@ class CarQuoteService extends BaseService
         return response()->json(['success' => true]);
     }
 
+    /**
+     * Check if a user is a PCP advisor
+     *
+     * @param  int  $user_id  The ID of the user to check
+     * @return bool True if the user is a PCP advisor, false otherwise
+     */
+    public function isPCPAdvisor($user_id)
+    {
+        try {
+            // Cache the PCP team ID for 24 hours since it rarely changes
+            $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->first()->id ?? null;
+
+            // If $pcpTeamId is null or empty, the function will return false
+            return ! empty($pcpTeamId) && UserTeams::where('user_id', $user_id)->where('team_id', $pcpTeamId)->exists();
+
+        } catch (\Exception $e) {
+            LoggerService::info(self::class.' - Error checking PCP advisor status: '.$e->getMessage(), [
+                'user_id' => $user_id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return false;
+        }
+    }
     public function exportCompanyCarPdf($quoteType, $data, $quotePlans = null, $imageData = [])
     {
         $planIds = $data['plan_ids'];
