@@ -7,6 +7,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -386,6 +387,7 @@ class CentralController extends Controller
     // Migrate payments from old system to new system
     public function migratePayment(MigratePaymentsRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::MIGRATE_PAYMENT);
         $successMessage = PaymentRepository::migratePayments($request);
 
         return $successMessage;

@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -585,6 +586,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     public function handlePaymentApprove($request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_PARENT_PAYMENT);
         $paymentCode = $request->payment_code;
         LoggerService::info("Payment approval process initiated: {$paymentCode}, Capture Mode: ".($request->is_capture ? 'Yes' : 'No'));
         if ($request->is_capture) { // update collected amount in childs
@@ -619,6 +621,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     // This method handles the approval or decline of split payments based on the request.
     public function fetchUpdateSplitPaymentsApprove($request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::DECLINE_PARENT_PAYMENT);
         LoggerService::info("Processing split payment request for {$request->payment_code} - Action: ".($request->is_declined ? 'Decline' : 'Approve'));
 
         return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);
@@ -657,6 +660,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdatePaymentStatus($request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_DECLINE_CHILD_PAYMENT);
         $maxRetries = 2;
 
         return $this->handleWithDeadlockRetries(function () use ($request) {
