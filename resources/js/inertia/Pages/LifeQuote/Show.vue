@@ -316,7 +316,7 @@ const addVariant = plan => {
   modals.createPlanVariant = true;
 };
 
-const onPlanError = (error) => {
+const onPlanError = error => {
   notification.error({
     title: error?.message || 'An error occurred while processing your request',
     position: 'top',

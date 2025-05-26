@@ -329,11 +329,9 @@ if (
     props.quoteRequest?.insurance_provider;
 } else if (props.quoteType == quoteTypeCodeEnum.Home) {
   initalPlanDetails = props.quoteRequest.insurance_provider;
-}
-else if (props.quoteType == quoteTypeCodeEnum.Life) {
+} else if (props.quoteType == quoteTypeCodeEnum.Life) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
-}
-else if (quoteTypesToCheck.includes(props.quoteType)) {
+} else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
   initalPlanDetails = props.quoteRequest?.car_plan;
@@ -1648,7 +1646,6 @@ const addPaymentModal = () => {
   ) {
     totalAmount.value = totalPrice.value;
   } else {
-
     let errorMsg = 'Please update the Total Price in the Plan Details section.';
     if (quoteTypesToCheck.includes(props.quoteType)) {
       errorMsg = 'Please select a plan.';
@@ -2425,7 +2422,7 @@ const addPayment = isValid => {
       send_update_id: props.sendUpdate?.id || null,
       collection_type: paymentMethodsForm.collection_type,
     };
-   
+
     paymentMethodsForm
       .transform(data => viewData)
       .post('/payments/' + props.quoteType + '/split-payments-approve', {
@@ -2486,11 +2483,11 @@ const addPayment = isValid => {
       });
     return;
   }
-  
+
   if (props.isPlanDetailSectionEnabled) {
     data.plan_id = null;
   }
-  
+
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
@@ -3117,11 +3114,9 @@ const setPlanDetail = () => {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
     initalPlanDetails = props.quoteRequest.insurance_provider;
-  } 
-  else if (props.quoteType == quoteTypeCodeEnum.Life) {
+  } else if (props.quoteType == quoteTypeCodeEnum.Life) {
     initalPlanDetails = props.quoteRequest.insurance_provider;
-  } 
-  else if (quoteTypesToCheck.includes(props.quoteType)) {
+  } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;

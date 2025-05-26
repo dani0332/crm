@@ -254,7 +254,7 @@ const generatePdf = () => {
       });
 
       emit('success');
-      
+
       setTimeout(() => {
         location.reload();
       }, 2000);
@@ -492,7 +492,6 @@ const validateCoverValue = value => {
 };
 
 const hidePlan = () => {
-  
   editForm.actualPremium = Number(
     parseFloat(editForm.actualPremium).toFixed(2),
   );
@@ -518,7 +517,6 @@ const hidePlan = () => {
       formData: editForm,
     })
     .then(res => {
-
       if (res?.data?.code) {
         notification.error({
           title: res.data.msg,
@@ -529,19 +527,17 @@ const hidePlan = () => {
       }
 
       notification.success({
-        title: "Plan visibility updated successfully",
+        title: 'Plan visibility updated successfully',
         position: 'top',
       });
 
       emit('success');
-
     })
     .catch(err => {
       emit('error');
       errorMessage.value = err.response.data.message;
     })
-    .finally(() => {
-    });
+    .finally(() => {});
 };
 </script>
 

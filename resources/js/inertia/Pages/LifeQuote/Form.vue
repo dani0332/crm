@@ -97,8 +97,6 @@ const validatePhoneNumber = value => {
   return 'Phone number must be 10 digits starting with 0 or include a country code (e.g., +971 followed by 9 digits)';
 };
 
-
-
 function onSubmit(isValid) {
   if (isValid) {
     let method = editMode.value ? 'put' : 'post';
