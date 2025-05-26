@@ -105,14 +105,14 @@ trait QuoteModelTrait
                         ->where('quote_tags.quote_type_id', $quoteTypeId);
                 })
                 // Also exclude leads with AIG tag
-                ->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
-                        ->where('quote_tags.quote_type_id', $quoteTypeId);
-                })
-                ->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
+                    ->whereNotIn("{$alias}.uuid", function ($query) use ($quoteTypeId) {
+                        $query->distinct()
+                            ->select('quote_uuid')
+                            ->from('quote_tags')
+                            ->where('quote_tags.name', QuoteSegmentEnum::AIG->tag())
+                            ->where('quote_tags.quote_type_id', $quoteTypeId);
+                    })
+                    ->where("{$alias}.source", 'like', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%');
             })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
                 $query->whereIn("{$alias}.source", [
                     LeadSourceEnum::REVIVAL,

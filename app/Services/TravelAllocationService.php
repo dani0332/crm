@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\QuoteStatusEnum;
@@ -23,7 +24,6 @@ use App\Services\Logger\LoggerService;
 use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Services\ProcessTracker\ProcessTrackerService;
 use Illuminate\Support\Facades\Log;
-use App\Enums\LeadAssignmentTriggerEnum;
 
 class TravelAllocationService extends AllocationService
 {
@@ -261,7 +261,7 @@ class TravelAllocationService extends AllocationService
         $lead->assignment_type = $assignmentType;
 
         LoggerService::info(self::class.' - assignLead: Checking lead_assignment_trigger', extra: [
-            'current_value' => $lead->lead_assignment_trigger ?? 'null'
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
         ]);
         if (empty($lead->lead_assignment_trigger)) {
             LoggerService::info(self::class.' - assignLead: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');

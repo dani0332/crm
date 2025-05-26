@@ -33,4 +33,4 @@ class TravelAIGWorkflowRequest extends FormRequest
             'quoteUuid.required' => 'Quote UUID is required',
         ];
     }
-} 
+}

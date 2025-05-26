@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BikePlanType;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -37,7 +38,6 @@ use App\Models\UserTeams;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Enums\LeadAssignmentTriggerEnum;
 
 class BikeAllocationService extends AllocationService
 {
@@ -482,7 +482,7 @@ class BikeAllocationService extends AllocationService
         $lead->assignment_type = $assignmentType;
 
         LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Checking lead_assignment_trigger', extra: [
-            'current_value' => $lead->lead_assignment_trigger ?? 'null'
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
         ]);
         if (empty($lead->lead_assignment_trigger)) {
             LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');

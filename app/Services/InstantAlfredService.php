@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\InstantChatReportsEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -14,7 +15,6 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\LeadAssignmentTriggerEnum;
 
 class InstantAlfredService extends BaseService
 {
@@ -34,7 +34,7 @@ class InstantAlfredService extends BaseService
         $REVIVAL_SOURCES = [
             LeadSourceEnum::REVIVAL,
             LeadSourceEnum::REVIVAL_REPLIED,
-            LeadSourceEnum::REVIVAL_PAID
+            LeadSourceEnum::REVIVAL_PAID,
         ];
 
         $subQuery = DB::table('quote_tags as qt')
@@ -58,9 +58,9 @@ class InstantAlfredService extends BaseService
                 'pqr.insurance_provider_id',
                 'pqr.premium as total_price',
                 DB::raw('CASE 
-                    WHEN ' . $quoteTypeId . ' = ' . QuoteTypeId::Car . ' THEN cqr.lead_assignment_trigger
-                    WHEN ' . $quoteTypeId . ' = ' . QuoteTypeId::Health . ' THEN hqr.lead_assignment_trigger
-                    WHEN ' . $quoteTypeId . ' = ' . QuoteTypeId::Travel . ' THEN tqr.lead_assignment_trigger
+                    WHEN '.$quoteTypeId.' = '.QuoteTypeId::Car.' THEN cqr.lead_assignment_trigger
+                    WHEN '.$quoteTypeId.' = '.QuoteTypeId::Health.' THEN hqr.lead_assignment_trigger
+                    WHEN '.$quoteTypeId.' = '.QuoteTypeId::Travel.' THEN tqr.lead_assignment_trigger
                     ELSE pqr.lead_assignment_trigger
                 END as lead_assignment_trigger'),
                 'pqrd.chat_initiated_at',
@@ -275,10 +275,10 @@ class InstantAlfredService extends BaseService
                 $relatedMongoRecord = $mongoResultsCollection->firstWhere('id', $sqlRecord->uuid);
 
                 $sqlRecord->quote_type = $request->quoteType;
-                $sqlRecord->lead_assignment_trigger_text = $sqlRecord->lead_assignment_trigger 
-                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlRecord->lead_assignment_trigger) 
+                $sqlRecord->lead_assignment_trigger_text = $sqlRecord->lead_assignment_trigger
+                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlRecord->lead_assignment_trigger)
                     : 'N/A';
-                    
+
                 if ($relatedMongoRecord) {
                     $sqlRecord->communication_channels = $relatedMongoRecord['communication_channels'];
                     $sqlRecord->customer_interactions = $relatedMongoRecord['customer_interactions'];
@@ -316,23 +316,24 @@ class InstantAlfredService extends BaseService
 
             $mongoResults = $mongoResults->merge(collect($chunkResults));
         }
-        
+
         // Create mappings for SQL data to merge with MongoDB results
         $sqlData = $data->keyBy('uuid');
-        
+
         // Add SQL data to mongo results
         $mongoResults = $mongoResults->map(function ($record) use ($sqlData) {
             $quoteId = $record['quote_id'] ?? null;
             if ($quoteId && isset($sqlData[$quoteId])) {
                 // Add segment
                 $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
-                
+
                 // Add lead_assignment_trigger and its text representation
                 $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
-                $record['lead_assignment_trigger_text'] = $sqlData[$quoteId]->lead_assignment_trigger 
-                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlData[$quoteId]->lead_assignment_trigger) 
+                $record['lead_assignment_trigger_text'] = $sqlData[$quoteId]->lead_assignment_trigger
+                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlData[$quoteId]->lead_assignment_trigger)
                     : 'N/A';
             }
+
             return $record;
         });
 

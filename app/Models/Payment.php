@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
-use App\Enums\QuoteStatusEnum;
 
 class Payment extends Model implements Auditable
 {
@@ -285,14 +284,14 @@ class Payment extends Model implements Auditable
     {
         return $this->belongsTo(PersonalPlan::class, 'plan_id');
     }
-    
+
     public function hasOneOfPaidStatus()
     {
         return in_array($this->payment_status_id, [
-                PaymentStatusEnum::AUTHORISED, 
-                PaymentStatusEnum::PAID, 
-                PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PAYMENT_LINK_REQUESTED
-            ]);
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PAYMENT_LINK_REQUESTED,
+        ]);
     }
 }

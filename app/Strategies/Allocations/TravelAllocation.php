@@ -5,6 +5,7 @@ namespace App\Strategies\Allocations;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
@@ -12,7 +13,6 @@ use App\Services\ProcessTracker\ProcessTrackerService;
 use App\Services\TravelAllocationService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use App\Enums\TeamNameEnum;
 
 class TravelAllocation implements Allocation
 {
@@ -21,7 +21,7 @@ class TravelAllocation implements Allocation
     public $teamId;
     public $tracker;
     private bool $overrideAdvisorId = false;
-    
+
     // Default team ID (no specific team assignment) for travel team
     private const DEFAULT_TEAM_ID = false;
 
@@ -63,7 +63,7 @@ class TravelAllocation implements Allocation
                     'sic_advisor_requested' => $lead->sic_advisor_requested,
                     'quote_status_id' => $lead->quote_status_id,
                 ]);
-                
+
                 if ($lead->isAllocationInProgress()) {
                     LoggerService::info("Allocation is already started at {$lead->allocation_started_at}");
 
@@ -71,7 +71,7 @@ class TravelAllocation implements Allocation
                 }
 
                 $lead->startAllocation();
-                
+
                 // Evaluate team ID before fetching advisor
                 $this->evaluateTeamId($lead);
 
@@ -135,52 +135,52 @@ class TravelAllocation implements Allocation
      * Evaluates and sets the appropriate team ID for the travel quote lead
      * based on business rules and lead properties.
      *
-     * @param TravelQuote $lead The lead to evaluate
-     * @return void
+     * @param  TravelQuote  $lead  The lead to evaluate
      */
     private function evaluateTeamId(TravelQuote $lead): void
     {
-        if (!$lead || !$lead->uuid) {
+        if (! $lead || ! $lead->uuid) {
             LoggerService::warning('Cannot evaluate team ID - invalid lead', extra: [
-                'allocationId' => $this->allocationId
+                'allocationId' => $this->allocationId,
             ]);
+
             return;
         }
-        
+
         // Extract lead properties with null safety
         $isSIC = $this->checkLeadMethod($lead, 'isSIC', [QuoteTypes::TRAVEL]);
         $isAIG = $this->checkLeadMethod($lead, 'isAIG', [QuoteTypes::TRAVEL]);
         $isRequestedAdvisorOrPaymentAuthorized = $this->checkLeadMethod($lead, 'isRequestedAdvisorOrPaymentAuthorized');
         $isPaymentAuthorizedOrLinkRequested = $this->checkLeadMethod($lead, 'isPaymentAuthorizedOrLinkRequested');
         $isLeadFromInstantAlfred = $this->checkLeadMethod($lead, 'isLeadFromInstantAlfred');
-        
+
         $sicUnassistedTeamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-        
+
         // Determine team assignment based on business rules
         $isAIGWithInstantAlfred = $isAIG && $isLeadFromInstantAlfred;
-        $isSICOrAIGWithRequestedAdvisor = (($isSIC && !$isAIG) || $isAIG) && $isRequestedAdvisorOrPaymentAuthorized;
-        $isNonSICNonAIGWithPayment = (!$isSIC && !$isAIG) && $isPaymentAuthorizedOrLinkRequested;
-        
+        $isSICOrAIGWithRequestedAdvisor = (($isSIC && ! $isAIG) || $isAIG) && $isRequestedAdvisorOrPaymentAuthorized;
+        $isNonSICNonAIGWithPayment = (! $isSIC && ! $isAIG) && $isPaymentAuthorizedOrLinkRequested;
+
         // Apply team assignment rules
         if ($isAIGWithInstantAlfred) {
             // Rule 1: AIG leads from Instant Alfred go to default team
             $this->teamId = self::DEFAULT_TEAM_ID;
-            $reason = "AIG and Lead from Instant Alfred";
+            $reason = 'AIG and Lead from Instant Alfred';
         } elseif ($isSICOrAIGWithRequestedAdvisor) {
             // Rule 2: SIC or AIG leads with advisor requested or payment authorized
             $this->teamId = $sicUnassistedTeamId;
-            $reason = $isAIG ? "AIG with advisor requested or payment authorized" : 
-                              "SIC with advisor requested or payment authorized";
+            $reason = $isAIG ? 'AIG with advisor requested or payment authorized' :
+                              'SIC with advisor requested or payment authorized';
         } elseif ($isNonSICNonAIGWithPayment) {
             // Rule 3: Non-SIC, Non-AIG leads with payment authorized or link requested
             $this->teamId = $sicUnassistedTeamId;
-            $reason = "Non-SIC, Non-AIG lead with payment authorized or link requested";
+            $reason = 'Non-SIC, Non-AIG lead with payment authorized or link requested';
         } else {
             // Rule 4: Default - all other leads have no specific team
             $this->teamId = self::DEFAULT_TEAM_ID;
-            $reason = "Default case - no specific team";
+            $reason = 'Default case - no specific team';
         }
-        
+
         // Log the final team assignment using debug with extra parameter
         LoggerService::debug('Team assigned for Travel Allocation', extra: [
             'reason' => $reason,
@@ -189,24 +189,24 @@ class TravelAllocation implements Allocation
             'isAIG' => $isAIG,
             'isRequestedAdvisorOrPaymentAuthorized' => $isRequestedAdvisorOrPaymentAuthorized,
             'isPaymentAuthorizedOrLinkRequested' => $isPaymentAuthorizedOrLinkRequested,
-            'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred
+            'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred,
         ]);
     }
-    
+
     /**
      * Helper method to safely check if a method exists and call it with parameters
      *
-     * @param TravelQuote $lead The lead object
-     * @param string $methodName The method name to check and call
-     * @param array $params Optional parameters to pass to the method
+     * @param  TravelQuote  $lead  The lead object
+     * @param  string  $methodName  The method name to check and call
+     * @param  array  $params  Optional parameters to pass to the method
      * @return bool The result of the method call or false if method doesn't exist
      */
     private function checkLeadMethod(TravelQuote $lead, string $methodName, array $params = []): bool
     {
-        if (!method_exists($lead, $methodName)) {
+        if (! method_exists($lead, $methodName)) {
             return false;
         }
-        
+
         return $lead->{$methodName}(...$params);
     }
 }

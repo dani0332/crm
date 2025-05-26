@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -22,7 +23,6 @@ use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
-use App\Enums\LeadAssignmentTriggerEnum;
 
 class HealthAllocationService extends AllocationService
 {
@@ -285,7 +285,7 @@ class HealthAllocationService extends AllocationService
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
         LoggerService::info(self::class.' - assignLead: Checking lead_assignment_trigger', extra: [
-            'current_value' => $lead->lead_assignment_trigger ?? 'null'
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
         ]);
         if (empty($lead->lead_assignment_trigger)) {
             LoggerService::info(self::class.' - assignLead: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');

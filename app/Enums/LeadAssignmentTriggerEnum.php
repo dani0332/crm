@@ -31,7 +31,7 @@ final class LeadAssignmentTriggerEnum extends Enum
             self::REQUEST_PAYMENT_LINK => 'Request Payment Link',
             self::MANUAL_ALLOCATION => 'Manual Allocation',
         ];
-        
+
         return $options[$assignmentType] ?? 'Unknown';
     }
 
@@ -44,4 +44,4 @@ final class LeadAssignmentTriggerEnum extends Enum
 
         return array_merge([$item], $items);
     }
-} 
+}

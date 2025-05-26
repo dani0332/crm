@@ -12,6 +12,7 @@ use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -43,7 +44,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use PDF;
-use App\Enums\LeadAssignmentTriggerEnum;
 
 class CarQuoteService extends BaseService
 {
@@ -1440,7 +1440,7 @@ class CarQuoteService extends BaseService
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
             LoggerService::info(self::class.' - processManualLeadAssignment: Checking lead_assignment_trigger', extra: [
-                'current_value' => $lead->lead_assignment_trigger ?? 'null'
+                'current_value' => $lead->lead_assignment_trigger ?? 'null',
             ]);
             if (empty($lead->lead_assignment_trigger)) {
                 LoggerService::info(self::class.' - processManualLeadAssignment: Setting lead_assignment_trigger to MANUAL_ALLOCATION');

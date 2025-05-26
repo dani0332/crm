@@ -8,6 +8,7 @@ use App\Enums\CarPlanType;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -40,7 +41,6 @@ use App\Services\DTOs\FetchCarLeadResult;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Enums\LeadAssignmentTriggerEnum;
 
 class CarAllocationService extends AllocationService
 {
@@ -893,7 +893,7 @@ class CarAllocationService extends AllocationService
         $lead->assignment_type = $assignmentType;
 
         LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Checking lead_assignment_trigger', extra: [
-            'current_value' => $lead->lead_assignment_trigger ?? 'null'
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
         ]);
         if (empty($lead->lead_assignment_trigger)) {
             LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');

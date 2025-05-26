@@ -4,17 +4,21 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Jobs\SICFollowupEmailJob;
 use App\Models\ApplicationStorage;
+use App\Models\QuoteFlowDetails;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
@@ -22,10 +26,6 @@ use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Services\Logger\LoggerService;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteFlowType;
-use App\Models\QuoteFlowDetails;
 
 class TravelEmailService extends BaseService
 {
@@ -398,15 +398,16 @@ class TravelEmailService extends BaseService
     {
         try {
             LoggerService::info('Sending AIGWorkflow for travel');
-            
+
             // Refresh the lead to get the latest state
             $lead->refresh();
-            
+
             if (empty($lead->travel_aig_flow_executed_at)) {
-                LoggerService::info("AIGWorkflow not executed yet, but should be already marked in the database. Skipping to avoid duplication.");
+                LoggerService::info('AIGWorkflow not executed yet, but should be already marked in the database. Skipping to avoid duplication.');
+
                 return null;
             }
-            
+
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->buildAIGWorkflowData($lead, $advisor, WorkflowTypeEnum::TRAVEL_AIG_WORKFLOW);
             // using the same event for AIG and BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL and have a Travel AIG branch in that event workflow
@@ -414,21 +415,21 @@ class TravelEmailService extends BaseService
 
             if ($birdAIGEvent) {
                 $response = app(BirdService::class)->triggerWebHookRequest($birdAIGEvent, $emailData);
-                LoggerService::info("AIGWorkflow event triggered for travel");
+                LoggerService::info('AIGWorkflow event triggered for travel');
 
-                if (!empty($response->headers['Run-Id'])) {
+                if (! empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($lead, $response);
-                    LoggerService::info("AIGWorkflow flow details created successfully");
+                    LoggerService::info('AIGWorkflow flow details created successfully');
                 }
-                
+
                 return $response;
             } else {
-                LoggerService::info("AIGWorkflow key not found for travel");
+                LoggerService::info('AIGWorkflow key not found for travel');
             }
-            
+
             return null;
         } catch (\Exception $e) {
-            LoggerService::error("AIGWorkflow-Error: while sending workflow for travel", exception: $e);
+            LoggerService::error('AIGWorkflow-Error: while sending workflow for travel', exception: $e);
             throw $e;
         }
     }

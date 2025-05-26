@@ -10,6 +10,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\PaymentGatewayEnum;
@@ -51,7 +52,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
-use App\Enums\LeadAssignmentTriggerEnum;
 
 class HealthQuoteService extends BaseService
 {
@@ -1315,7 +1315,7 @@ class HealthQuoteService extends BaseService
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
             LoggerService::info(self::class.' - processManualLeadAssignment: Checking lead_assignment_trigger', extra: [
-                'current_value' => $lead->lead_assignment_trigger ?? 'null'
+                'current_value' => $lead->lead_assignment_trigger ?? 'null',
             ]);
             if (empty($lead->lead_assignment_trigger)) {
                 LoggerService::info(self::class.' - processManualLeadAssignment: Setting lead_assignment_trigger to MANUAL_ALLOCATION');

@@ -2,6 +2,7 @@
 
 namespace App\Traits\QuoteTraits;
 
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentStatusEnum;
@@ -12,7 +13,6 @@ use App\Models\QuoteTag;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Enums\LeadAssignmentTriggerEnum;
 
 trait QuoteAllocatable
 {
