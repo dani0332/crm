@@ -132,7 +132,7 @@ trait ExcelExportable
         }
 
         $totalRecords = 0;
-        $chunkSize = 5000; // Adjust based on your data complexity
+        $chunkSize = 1000; // Adjust based on your data complexity
         $exportName = class_basename($this);
         $chunkCount = 0;
         $totalChunkTime = 0;
