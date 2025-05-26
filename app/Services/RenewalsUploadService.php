@@ -1356,7 +1356,7 @@ class RenewalsUploadService
                 if ($this->isCommercialRenewalQuote($carQuote)) {
                     SendCarCommercialOCBEmail::dispatch($carQuote->uuid);
                     LoggerService::info(self::class.' quote commercial OCB email sent UUID: '.$carQuote->uuid);
-
+                    $this->incrementBatchEmailSent(renewalsBatchEmailId:$renewalsBatchEmail->id, renewalQuoteProcessId: $renewalQuoteProcess->id)  ;
                     return;
                 }
 
@@ -2444,6 +2444,12 @@ class RenewalsUploadService
             && $carQuote->source === LeadSourceEnum::RENEWAL_UPLOAD;
     }
 
-
+    public function incrementBatchEmailSent($renewalsBatchEmailId, $renewalQuoteProcessId)
+    {
+        RenewalsBatchEmails::where('id', $renewalsBatchEmailId)
+            ->update(['total_sent' => DB::raw('total_sent+1')]);
+        RenewalQuoteProcess::where('id', $renewalQuoteProcessId)
+            ->update(['email_sent' => 1]);
+    }
 
 }
