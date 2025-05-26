@@ -208,13 +208,14 @@ const onSubmit = isValid => {
       });
 
       shown.value = false;
+      emit('success');
 
       setTimeout(() => {
         location.reload();
       }, 2000);
     })
     .catch(err => {
-      emit('error');
+      emit('error', err);
       extraAttr.loading = false;
       // notification.error({
       //     title: err.response.data.message,
@@ -252,11 +253,14 @@ const generatePdf = () => {
         position: 'top',
       });
 
+      emit('success');
+      
       setTimeout(() => {
         location.reload();
       }, 2000);
     })
     .catch(error => {
+      emit('error', error);
       notification.error({
         title: error?.response?.data?.message ?? 'something went wrong',
         position: 'top',
@@ -529,7 +533,7 @@ const hidePlan = () => {
         position: 'top',
       });
 
-      emit('onLoadAvailablePlansData');
+      emit('success');
 
     })
     .catch(err => {

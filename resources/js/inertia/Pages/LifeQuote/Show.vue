@@ -316,6 +316,13 @@ const addVariant = plan => {
   modals.createPlanVariant = true;
 };
 
+const onPlanError = (error) => {
+  notification.error({
+    title: error?.message || 'An error occurred while processing your request',
+    position: 'top',
+  });
+};
+
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
@@ -2044,6 +2051,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
         :currencies="currencies"
         :plans="computedListQuotePlans"
         :lifeRiders="lifeRiders"
+        @success="onLoadAvailablePlansData"
+        @error="onPlanError"
       />
     </template>
 
