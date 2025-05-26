@@ -483,7 +483,7 @@ class AMLController extends Controller
                 }
             }
 
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
                 $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
             }
 
@@ -676,8 +676,9 @@ class AMLController extends Controller
         if ($quoteTypeId == QuoteTypes::CAR->id()) {
             $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteRequestId)->first();
             $carQuoteRequestDetails->chassis_number = $AMLCheckRequest->chassis_number;
+            $carQuoteRequestDetails->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
             if ($carQuoteRequestDetails->isDirty()) {
-                LoggerService::info('AML Screening Bridger - Chassis number updated');
+                LoggerService::info('AML Screening Bridger - Chassis number and Insurer Quote Email updated for QuoteTypeId: '.$quoteTypeId);
                 $carQuoteRequestDetails->save();
             }
         }
@@ -690,7 +691,7 @@ class AMLController extends Controller
             $personalQuoteDetailBikeRequest->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
 
             if ($bikeQuoteRequest->isDirty()) {
-                LoggerService::info('AML Screening Bridger - Chassis number updated for QuoteTypeId: '.$quoteTypeId);
+                LoggerService::info('AML Screening Bridger - Chassis number and Insurer Quote Email updated for QuoteTypeId: '.$quoteTypeId);
                 $bikeQuoteRequest->save();
             }
 

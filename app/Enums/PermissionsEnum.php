@@ -413,6 +413,7 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_LEAD_ALLOCATION_DASHBOARD = 'savings-lead-allocation-dashboard';
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
+    public const PERMISSION_LIST = 'permission-list';
     public const INSURER_PAYMENT_LINK = 'insurer-payment-link';
     public const CANCEL_SEND_UPDATE = 'cancel-send-update';
     public const LIFE_LEADPOOL = 'life-leadpool';

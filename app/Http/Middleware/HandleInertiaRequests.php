@@ -653,6 +653,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->can(PermissionsEnum::PERMISSION_LIST),
+                        'Permissions',
+                        route('permissions.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::DEPARTMENT_LIST),
                         'Departments',
                         url('admin/departments'),
