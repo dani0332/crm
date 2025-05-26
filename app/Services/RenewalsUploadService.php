@@ -269,7 +269,7 @@ class RenewalsUploadService
             return true;
         } catch (\Exception $exception) {
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage(). ' Line: '.$exception->getLine());
+            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage().' Line: '.$exception->getLine());
 
             return false;
         }
@@ -584,7 +584,7 @@ class RenewalsUploadService
 
             return true;
         } catch (\Exception $exception) {
-            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage(). ' Line: '.$exception->getLine());
+            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage().' Line: '.$exception->getLine());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
 
             return false;
@@ -1147,7 +1147,7 @@ class RenewalsUploadService
 
             LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
 
-            if($isPersonalQuote){
+            if ($isPersonalQuote) {
                 unset($quoteData['additional_notes']);
             }
 
@@ -1401,6 +1401,7 @@ class RenewalsUploadService
 
                     continue;
                 }
+
                 continue;
             }
 
@@ -1428,10 +1429,10 @@ class RenewalsUploadService
         ]);
 
         if ($addResponse || $updateResponse) {
-            LoggerService::info('Renewal: Health Members added/updated successfully for UUID: ' . $quote->uuid, [], ['ref_id' => $quote->uuid]);
+            LoggerService::info('Renewal: Health Members added/updated successfully for UUID: '.$quote->uuid, [], ['ref_id' => $quote->uuid]);
             $this->updateBasePricePlan($quote, $data);
         } else {
-            LoggerService::info('Renewal: Health Members added/updated failed for UUID: ' . $quote->uuid, [], ['ref_id' => $quote->uuid]);
+            LoggerService::info('Renewal: Health Members added/updated failed for UUID: '.$quote->uuid, [], ['ref_id' => $quote->uuid]);
             $this->updateRenewalQuoteProcess($renewalQuoteProcess, true, ['Health Members added/updated failed']);
         }
     }
@@ -1441,7 +1442,7 @@ class RenewalsUploadService
      *
      * @param [type] $quote
      * @param [type] $data
-     * @return Object
+     * @return object
      */
     private function selectHealthPlan($quote, $healthPlanId, $healthCoPaymentId)
     {
@@ -1519,6 +1520,7 @@ class RenewalsUploadService
         ]);
 
         $response = $payment ? PaymentRepository::updateNewPayment($newRequest) : PaymentRepository::createNewPayment($newRequest);
+
         return $response;
     }
 
@@ -2350,7 +2352,7 @@ class RenewalsUploadService
         $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
         $renewalUploadLead->status = $failed ? ProcessStatusCode::FAILED : ProcessStatusCode::COMPLETED;
         $failed && $renewalUploadLead->cannot_upload += 1;
-        !$failed && $renewalUploadLead->good += 1;
+        ! $failed && $renewalUploadLead->good += 1;
         $renewalUploadLead->save();
     }
 
@@ -2556,7 +2558,7 @@ class RenewalsUploadService
             return true;
         } catch (\Exception $exception) {
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage(). ' Line: '.$exception->getLine());
+            LoggerService::error($logPrefix.' Process Failed. Error: '.$exception->getMessage().' Line: '.$exception->getLine());
 
             return false;
         }

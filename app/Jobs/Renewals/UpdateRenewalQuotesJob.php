@@ -43,20 +43,20 @@ class UpdateRenewalQuotesJob implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        try {   
+        try {
             $renewalsUploadService->updateQuote($this->renewalQuoteProcess);
         } catch (Throwable $e) {
             LoggerService::error('Failed to update quote', [
                 'quote_uuid' => $quote->uuid ?? null,
                 'renewal_quote_process_id' => $this->renewalQuoteProcess->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             // Update the renewal quote process status
             $renewalsUploadService->updateRenewalQuoteProcess(
                 $this->renewalQuoteProcess,
                 true,
-                ['Failed to update quote: ' . $e->getMessage()]
+                ['Failed to update quote: '.$e->getMessage()]
             );
 
             throw $e; // Re-throw to mark job as failed

@@ -85,7 +85,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         try {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             LoggerService::startQuoteLogging($quoteModel);
-            LoggerService::info('Starting payment creation process for Quote: ' . $quoteModel->code);
+            LoggerService::info('Starting payment creation process for Quote: '.$quoteModel->code);
             $masterPayment = (object) $request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
