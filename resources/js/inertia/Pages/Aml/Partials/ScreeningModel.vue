@@ -714,336 +714,332 @@ const handleModalClose = () => {
     title="Update and Verify"
     show-close
     backdrop
+    is-form
+    @submit="submitScreeningForm"
   >
-    <x-form @submit="submitScreeningForm" :auto-focus="false">
-      <x-field label="Customer Type" required>
-        <div class="grid md:grid-cols-3" id="customer-type-field">
+    <x-field label="Customer Type" required>
+      <div class="grid md:grid-cols-3" id="customer-type-field">
+        <x-select
+          v-model="screeningFormDetails.customer_type"
+          :options="customerTypeOptions"
+          placeholder="Select Customer Type"
+          :rules="[isRequired]"
+          :error="screeningFormDetails.errors.customer_type"
+          @update:model-value="customerTypeConfirmation"
+        />
+      </div>
+    </x-field>
+    <x-divider class="mb-4 mt-1" />
+    <p class="text-center mb-10">{{ headerMessage }}</p>
+    <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+      <!-- Form Details as per the Individual Customer -->
+      <template v-if="isScreeningIndividual">
+        <x-field label="ID Type" required>
           <x-select
-            v-model="screeningFormDetails.customer_type"
-            :options="customerTypeOptions"
-            placeholder="Select Customer Type"
+            v-model="screeningFormDetails.screening_id_type"
+            :options="documentIDTypeForScreening"
+            placeholder="ID Type"
             :rules="[isRequired]"
-            :error="screeningFormDetails.errors.customer_type"
-            @update:model-value="customerTypeConfirmation"
           />
-        </div>
-      </x-field>
-      <x-divider class="mb-4 mt-1" />
-      <p class="text-center mb-10">{{ headerMessage }}</p>
-      <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
-        <!-- Form Details as per the Individual Customer -->
-        <template v-if="isScreeningIndividual">
-          <x-field label="ID Type" required>
-            <x-select
-              v-model="screeningFormDetails.screening_id_type"
-              :options="documentIDTypeForScreening"
-              placeholder="ID Type"
-              :rules="[isRequired]"
-            />
-          </x-field>
-          <x-field label="ID number" required>
-            <!-- Emirates ID Should be get from Enums -->
-            <template
-              v-if="screeningFormDetails.screening_id_type === 'emiratesId'"
-            >
-              <x-input
-                v-model="screeningFormDetails.screening_id_number"
-                placeholder="xxx-xxxx-xxxxxxx-x"
-                :rules="[isRequired, rules.emirateNumberCheck]"
-                @input="applyScreeningIdNumMasking"
-                :error="screeningFormDetails.errors.screening_id_number"
-              />
-            </template>
-            <template v-else>
-              <x-input
-                v-model="screeningFormDetails.screening_id_number"
-                :placeholder="
-                  screeningFormDetails.screening_id_type === ''
-                    ? 'Enter ID Number'
-                    : 'Enter Passport Number'
-                "
-                :rules="[isRequired, rules.passportNumberCheck]"
-                @blur="validatePassportNumber('blur')"
-                @keypress="validatePassportNumber('keypress')"
-                :error="screeningFormDetails.errors.screening_id_number"
-              />
-            </template>
-          </x-field>
-          <template v-if="!IndividualDetailsFound">
-            <x-field>
-              <x-button
-                @click.prevent="
-                  searchInsuredDetails(customerTypeEnum.Individual)
-                "
-                class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
-                size="sm"
-                color="primary"
-                :loading="loader.insuredSearch"
-              >
-                Search
-              </x-button>
-            </x-field>
-          </template>
-          <template v-else>
-            <div class="text-left space-x-4">
-              <x-button
-                size="sm"
-                color="info"
-                @click.prevent="
-                  clearInsurerDetails(customerTypeEnum.Individual)
-                "
-              >
-                Cancel
-              </x-button>
-            </div>
-          </template>
-          <x-field label="Insured First Name" required>
-            <x-input
-              v-model="screeningFormDetails.insured_first_name"
-              :rules="[isRequired, rules.nameCheck]"
-              placeholder="Insured First Name"
-              type="text"
-              class="w-full"
-              :error="screeningFormDetails.errors.insured_first_name"
-            />
-          </x-field>
-          <x-field label="Insured Last Name" required>
-            <x-input
-              v-model="screeningFormDetails.insured_last_name"
-              :rules="[isRequired, rules.nameCheck]"
-              placeholder="Insured Last Name"
-              type="text"
-              class="w-full"
-              :error="screeningFormDetails.errors.insured_last_name"
-            />
-          </x-field>
-          <x-field label="Nationality" required>
-            <ComboBox
-              :single="true"
-              v-model="screeningFormDetails.nationality_id"
-              placeholder="Select Nationality"
-              :options="nationalitiesOptions"
-              class="w-full"
-              :hasError="validateNationality"
-            />
-          </x-field>
-          <x-field label="Date of Birth" required>
-            <DatePicker
-              v-model="screeningFormDetails.dob"
-              :rules="[isRequired]"
-              placeholder="Date of Birth"
-              class="w-full"
-              :error="screeningFormDetails.errors.dob"
-            />
-          </x-field>
-          <x-field label="Gender" required>
-            <x-select
-              v-model="screeningFormDetails.screening_gender"
-              :rules="[isRequired]"
-              :options="gender"
-              placeholder="Gender"
-              :error="screeningFormDetails.errors.screening_gender"
-            />
-          </x-field>
-          <div class="flex gap-5 align-center">
-            <p>Is the insured the payer?</p>
-            <x-form-group v-model="isInsuredPayer">
-              <x-radio :value="1" label="Yes" />
-              <x-radio :value="0" label="No" />
-            </x-form-group>
-          </div>
-          <x-field
-            v-if="
-              page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
-              page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike ||
-              page.props.quoteType.id === page.props.quoteTypeIdEnum.Home
-            "
-            label="Email in GIG Portal"
+        </x-field>
+        <x-field label="ID number" required>
+          <!-- Emirates ID Should be get from Enums -->
+          <template
+            v-if="screeningFormDetails.screening_id_type === 'emiratesId'"
           >
             <x-input
-              v-model="screeningFormDetails.get_quote_email_gig"
-              placeholder="Email in GIG Portal"
-              type="text"
-              class="w-full"
+              v-model="screeningFormDetails.screening_id_number"
+              placeholder="xxx-xxxx-xxxxxxx-x"
+              :rules="[isRequired, rules.emirateNumberCheck]"
+              @input="applyScreeningIdNumMasking"
+              :error="screeningFormDetails.errors.screening_id_number"
             />
-          </x-field>
-        </template>
-        <!-- Form Details as per the Entity -->
-        <template v-else>
-          <x-field label="Entity Type" required>
-            <x-select
-              v-model="screeningFormDetails.entity_type"
-              :options="entityTypes"
-              placeholder="Entity Type"
-              :rules="[isRequired]"
-              :error="screeningFormDetails.errors.entity_type"
-            />
-          </x-field>
-          <x-field label="Trade License No" required>
-            <x-input
-              v-model="screeningFormDetails.trade_license_no"
-              :rules="[isRequired]"
-              placeholder="Trade License No"
-              type="text"
-              class="w-full"
-              :error="screeningFormDetails.errors.trade_license_no"
-            />
-          </x-field>
-          <template v-if="!EntityDetailsFound">
-            <x-field>
-              <x-button
-                @click.prevent="searchInsuredDetails(customerTypeEnum.Entity)"
-                class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
-                size="sm"
-                color="primary"
-                :loading="loader.insuredSearch"
-              >
-                Search
-              </x-button>
-            </x-field>
           </template>
           <template v-else>
-            <div class="text-left space-x-4">
-              <x-button
-                size="sm"
-                color="info"
-                @click.prevent="clearInsurerDetails(customerTypeEnum.Entity)"
-              >
-                Cancel
-              </x-button>
-            </div>
+            <x-input
+              v-model="screeningFormDetails.screening_id_number"
+              :placeholder="
+                screeningFormDetails.screening_id_type === ''
+                  ? 'Enter ID Number'
+                  : 'Enter Passport Number'
+              "
+              :rules="[isRequired, rules.passportNumberCheck]"
+              @blur="validatePassportNumber('blur')"
+              @keypress="validatePassportNumber('keypress')"
+              :error="screeningFormDetails.errors.screening_id_number"
+            />
           </template>
-          <x-field label="Company Name" required>
-            <x-input
-              v-model="screeningFormDetails.company_name"
-              placeholder="Company Name"
-              type="text"
-              class="w-full"
-              :rules="[isRequired]"
-              :error="screeningFormDetails.errors.company_name"
-            />
-          </x-field>
-          <x-field label="Company Address" required>
-            <x-input
-              v-model="screeningFormDetails.company_address"
-              placeholder="Company Address"
-              type="text"
-              class="w-full"
-              :rules="[isRequired]"
-              :error="screeningFormDetails.errors.company_address"
-            />
-          </x-field>
-          <x-field label="Industry Type" required>
-            <x-select
-              v-model="screeningFormDetails.industry_type_code"
-              :options="industryTypeOptions"
-              placeholder="Industry Type"
-              class="w-full"
-              :rules="[isRequired]"
-              :error="screeningFormDetails.errors.industry_type_code"
-            />
-          </x-field>
-          <x-field label="Emirates of Registration" required>
-            <x-select
-              v-model="screeningFormDetails.emirate_of_registration_id"
-              :options="emiratesOfRegistrationOptions"
-              placeholder="Emirates of Registration"
-              type="text"
-              class="w-full"
-              :rules="[isRequired]"
-              :error="screeningFormDetails.errors.emirate_of_registration_id"
-            />
+        </x-field>
+        <template v-if="!IndividualDetailsFound">
+          <x-field>
+            <x-button
+              @click.prevent="searchInsuredDetails(customerTypeEnum.Individual)"
+              class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
+              size="sm"
+              color="primary"
+              :loading="loader.insuredSearch"
+            >
+              Search
+            </x-button>
           </x-field>
         </template>
-      </dl>
-      <x-divider
+        <template v-else>
+          <div class="text-left space-x-4">
+            <x-button
+              size="sm"
+              color="info"
+              @click.prevent="clearInsurerDetails(customerTypeEnum.Individual)"
+            >
+              Cancel
+            </x-button>
+          </div>
+        </template>
+        <x-field label="Insured First Name" required>
+          <x-input
+            v-model="screeningFormDetails.insured_first_name"
+            :rules="[isRequired, rules.nameCheck]"
+            placeholder="Insured First Name"
+            type="text"
+            class="w-full"
+            :error="screeningFormDetails.errors.insured_first_name"
+          />
+        </x-field>
+        <x-field label="Insured Last Name" required>
+          <x-input
+            v-model="screeningFormDetails.insured_last_name"
+            :rules="[isRequired, rules.nameCheck]"
+            placeholder="Insured Last Name"
+            type="text"
+            class="w-full"
+            :error="screeningFormDetails.errors.insured_last_name"
+          />
+        </x-field>
+        <x-field label="Nationality" required>
+          <ComboBox
+            :single="true"
+            v-model="screeningFormDetails.nationality_id"
+            placeholder="Select Nationality"
+            :options="nationalitiesOptions"
+            class="w-full"
+            :hasError="validateNationality"
+          />
+        </x-field>
+        <x-field label="Date of Birth" required>
+          <DatePicker
+            v-model="screeningFormDetails.dob"
+            :rules="[isRequired]"
+            placeholder="Date of Birth"
+            class="w-full"
+            :error="screeningFormDetails.errors.dob"
+          />
+        </x-field>
+        <x-field label="Gender" required>
+          <x-select
+            v-model="screeningFormDetails.screening_gender"
+            :rules="[isRequired]"
+            :options="gender"
+            placeholder="Gender"
+            :error="screeningFormDetails.errors.screening_gender"
+          />
+        </x-field>
+        <div class="flex gap-5 align-center">
+          <p>Is the insured the payer?</p>
+          <x-form-group v-model="isInsuredPayer">
+            <x-radio :value="1" label="Yes" />
+            <x-radio :value="0" label="No" />
+          </x-form-group>
+        </div>
+        <x-field
+          v-if="
+            page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
+            page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike ||
+            page.props.quoteType.id === page.props.quoteTypeIdEnum.Home
+          "
+          label="Email in GIG Portal"
+        >
+          <x-input
+            v-model="screeningFormDetails.get_quote_email_gig"
+            placeholder="Email in GIG Portal"
+            type="text"
+            class="w-full"
+          />
+        </x-field>
+      </template>
+      <!-- Form Details as per the Entity -->
+      <template v-else>
+        <x-field label="Entity Type" required>
+          <x-select
+            v-model="screeningFormDetails.entity_type"
+            :options="entityTypes"
+            placeholder="Entity Type"
+            :rules="[isRequired]"
+            :error="screeningFormDetails.errors.entity_type"
+          />
+        </x-field>
+        <x-field label="Trade License No" required>
+          <x-input
+            v-model="screeningFormDetails.trade_license_no"
+            :rules="[isRequired]"
+            placeholder="Trade License No"
+            type="text"
+            class="w-full"
+            :error="screeningFormDetails.errors.trade_license_no"
+          />
+        </x-field>
+        <template v-if="!EntityDetailsFound">
+          <x-field>
+            <x-button
+              @click.prevent="searchInsuredDetails(customerTypeEnum.Entity)"
+              class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
+              size="sm"
+              color="primary"
+              :loading="loader.insuredSearch"
+            >
+              Search
+            </x-button>
+          </x-field>
+        </template>
+        <template v-else>
+          <div class="text-left space-x-4">
+            <x-button
+              size="sm"
+              color="info"
+              @click.prevent="clearInsurerDetails(customerTypeEnum.Entity)"
+            >
+              Cancel
+            </x-button>
+          </div>
+        </template>
+        <x-field label="Company Name" required>
+          <x-input
+            v-model="screeningFormDetails.company_name"
+            placeholder="Company Name"
+            type="text"
+            class="w-full"
+            :rules="[isRequired]"
+            :error="screeningFormDetails.errors.company_name"
+          />
+        </x-field>
+        <x-field label="Company Address" required>
+          <x-input
+            v-model="screeningFormDetails.company_address"
+            placeholder="Company Address"
+            type="text"
+            class="w-full"
+            :rules="[isRequired]"
+            :error="screeningFormDetails.errors.company_address"
+          />
+        </x-field>
+        <x-field label="Industry Type" required>
+          <x-select
+            v-model="screeningFormDetails.industry_type_code"
+            :options="industryTypeOptions"
+            placeholder="Industry Type"
+            class="w-full"
+            :rules="[isRequired]"
+            :error="screeningFormDetails.errors.industry_type_code"
+          />
+        </x-field>
+        <x-field label="Emirates of Registration" required>
+          <x-select
+            v-model="screeningFormDetails.emirate_of_registration_id"
+            :options="emiratesOfRegistrationOptions"
+            placeholder="Emirates of Registration"
+            type="text"
+            class="w-full"
+            :rules="[isRequired]"
+            :error="screeningFormDetails.errors.emirate_of_registration_id"
+          />
+        </x-field>
+      </template>
+    </dl>
+    <x-divider
+      v-if="
+        page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
+        page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike
+      "
+      class="mb-4 mt-1"
+    />
+    <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+      <div
         v-if="
           page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
           page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike
         "
-        class="mb-4 mt-1"
-      />
-      <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
-        <div
-          v-if="
-            page.props.quoteType.id === page.props.quoteTypeIdEnum.Car ||
-            page.props.quoteType.id === page.props.quoteTypeIdEnum.Bike
-          "
-        >
-          <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Additional Vehicle Details
-            </h3>
-          </div>
-          <template v-if="chassisNumberDisabled">
-            <div>
-              <x-tooltip placement="bottom">
-                <label
-                  class="font-medium text-gray-700 text-sm underline decoration-dotted decoration-primary-600"
-                >
-                  Chassis Number <sup class="text-red-500">*</sup>
-                </label>
-                <template #tooltip>
-                  This lead is now locked as the policy has been booked. If
-                  changes are needed, go to 'Send Update', select 'Add Update',
-                  and choose 'Cancellation from Inception and Reissuance'
-                </template>
-                <x-input
-                  :disabled="chassisNumberDisabled"
-                  v-model="screeningFormDetails.chassis_number"
-                  placeholder="Chassis Number"
-                  type="text"
-                  class="w-full"
-                />
-              </x-tooltip>
-            </div>
-          </template>
-          <x-field label="Chassis Number" required v-else>
-            <x-input
-              v-model="screeningFormDetails.chassis_number"
-              placeholder="Enter Chassis Number"
-              type="text"
-              class="w-full"
-              :rules="[isRequired, rules.chassisNumberCheck]"
-              @blur="chassisNumberValidate('blur')"
-              @keypress="chassisNumberValidate('keypress')"
-              :error="screeningFormDetails.errors.chassis_number"
-            />
-          </x-field>
+      >
+        <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Additional Vehicle Details
+          </h3>
         </div>
-      </dl>
-      <x-divider class="mb-4 mt-1" />
-      <!-- This Component is used for Members and UBO Details -->
-      <MembersDetails
-        :customerType="
-          isScreeningIndividual
-            ? customerTypeEnum.Individual
-            : customerTypeEnum.Entity
-        "
-        :isPayerDetails="false"
-      />
-      <x-divider class="mb-4 mt-4" />
-      <!-- This Component is used for Payer Details -->
-      <MembersDetails
-        :customerType="
-          isScreeningIndividual
-            ? customerTypeEnum.Individual
-            : customerTypeEnum.Entity
-        "
-        :isPayerDetails="true"
-      />
-      <div class="flex justify-center my-5">
-        <x-button
-          class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
-          size="sm"
-          color="success"
-          type="submit"
-          :loading="screeningFormDetails.processing"
-        >
-          Submit For AML Screening
-        </x-button>
+        <template v-if="chassisNumberDisabled">
+          <div>
+            <x-tooltip placement="bottom">
+              <label
+                class="font-medium text-gray-700 text-sm underline decoration-dotted decoration-primary-600"
+              >
+                Chassis Number <sup class="text-red-500">*</sup>
+              </label>
+              <template #tooltip>
+                This lead is now locked as the policy has been booked. If
+                changes are needed, go to 'Send Update', select 'Add Update',
+                and choose 'Cancellation from Inception and Reissuance'
+              </template>
+              <x-input
+                :disabled="chassisNumberDisabled"
+                v-model="screeningFormDetails.chassis_number"
+                placeholder="Chassis Number"
+                type="text"
+                class="w-full"
+              />
+            </x-tooltip>
+          </div>
+        </template>
+        <x-field label="Chassis Number" required v-else>
+          <x-input
+            v-model="screeningFormDetails.chassis_number"
+            placeholder="Enter Chassis Number"
+            type="text"
+            class="w-full"
+            :rules="[isRequired, rules.chassisNumberCheck]"
+            @blur="chassisNumberValidate('blur')"
+            @keypress="chassisNumberValidate('keypress')"
+            :error="screeningFormDetails.errors.chassis_number"
+          />
+        </x-field>
       </div>
-    </x-form>
+    </dl>
+    <x-divider class="mb-4 mt-1" />
+    <!-- This Component is used for Members and UBO Details -->
+    <MembersDetails
+      :customerType="
+        isScreeningIndividual
+          ? customerTypeEnum.Individual
+          : customerTypeEnum.Entity
+      "
+      :isPayerDetails="false"
+    />
+    <x-divider class="mb-4 mt-4" />
+    <!-- This Component is used for Payer Details -->
+    <MembersDetails
+      :customerType="
+        isScreeningIndividual
+          ? customerTypeEnum.Individual
+          : customerTypeEnum.Entity
+      "
+      :isPayerDetails="true"
+    />
+    <div class="flex justify-center my-5">
+      <x-button
+        class="focus:ring-2 focus:ring-black focus:ring-opacity-60"
+        size="sm"
+        color="success"
+        type="submit"
+        :loading="screeningFormDetails.processing"
+      >
+        Submit For AML Screening
+      </x-button>
+    </div>
     <x-divider class="mb-4 mt-1" />
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>

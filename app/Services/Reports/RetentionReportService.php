@@ -104,7 +104,7 @@ class RetentionReportService extends BaseService
             $quoteRequestCondition = "
                 AND qsl.quote_request_id = (
                     SELECT id FROM {$tableName}
-                    WHERE personal_quote_id = personal_quotes.id
+                    WHERE {$tableName}.uuid = personal_quotes.uuid
                     LIMIT 1
                 )";
         }
@@ -291,7 +291,7 @@ class RetentionReportService extends BaseService
                         } else {
                             $quoteRequestCondition = "qsl.quote_request_id = (
                                 SELECT id FROM {$tableName}
-                                WHERE personal_quote_id = personal_quotes.id
+                                WHERE {$tableName}.uuid = personal_quotes.uuid
                                 LIMIT 1
                             )";
                         }
