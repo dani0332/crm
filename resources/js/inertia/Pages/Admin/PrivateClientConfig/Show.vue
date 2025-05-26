@@ -15,9 +15,17 @@ const props = defineProps({
 
 const page = usePage();
 
-const { isRequired, isRequiredNumber } = useRules();
+const { isRequired } = useRules();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
+
+// Custom validation for numbers with commas
+const isRequiredNumber = (value) => {
+  if (!value) return 'This field is required';
+  // Remove commas and check if it's a valid number
+  const num = Number(value.toString().replace(/,/g, ''));
+  return !isNaN(num) ? true : 'This field must be a number';
+};
 
 // Function to change version
 const changeVersion = version => {
@@ -63,8 +71,9 @@ const validateAtLeastOneSum = value => {
   // Check each field, if it has a value, validate it's numeric
   for (const [currency, fieldValue] of Object.entries(fields)) {
     if (fieldValue) {
-      // Check if value is numeric
-      if (isNaN(Number(fieldValue))) {
+      // Remove commas and check if value is numeric
+      const num = Number(fieldValue.toString().replace(/,/g, ''));
+      if (isNaN(num)) {
         return `Sum Insured (${currency}) must be a number`;
       }
     }
@@ -329,6 +338,22 @@ onMounted(() => {
   }
 });
 
+// Add number formatting functions
+const formatNumber = (value) => {
+  if (!value) return '';
+  // Remove any existing commas and convert to number
+  const num = Number(value.toString().replace(/,/g, ''));
+  if (isNaN(num)) return value;
+  // Format with commas
+  return num.toLocaleString();
+};
+
+const parseNumber = (value) => {
+  if (!value) return '';
+  // Remove commas and return the number as string
+  return value.toString().replace(/,/g, '');
+};
+
 const onSubmit = isValid => {
   if (isValid) {
     loader.value = true;
@@ -362,6 +387,7 @@ const onSubmit = isValid => {
       });
     });
 
+    console.log(configurations);
     // Send data to server
     configForm
       .transform(data => ({
@@ -453,7 +479,8 @@ const onSubmit = isValid => {
             <div class="grid grid-cols-4 gap-4">
               <div>
                 <x-input
-                  v-model="configForm['life_sum_insured_value_usd']"
+                  :modelValue="formatNumber(configForm['life_sum_insured_value_usd'])"
+                  @update:modelValue="val => configForm['life_sum_insured_value_usd'] = parseNumber(val)"
                   class="!mb-0"
                   :rules="[validateAtLeastOneSum]"
                   :disabled="!isCurrentVersion"
@@ -469,7 +496,8 @@ const onSubmit = isValid => {
               </div>
               <div>
                 <x-input
-                  v-model="configForm['life_sum_insured_value_aed']"
+                  :modelValue="formatNumber(configForm['life_sum_insured_value_aed'])"
+                  @update:modelValue="val => configForm['life_sum_insured_value_aed'] = parseNumber(val)"
                   class="!mb-0"
                   :rules="[validateAtLeastOneSum]"
                   :disabled="!isCurrentVersion"
@@ -485,7 +513,8 @@ const onSubmit = isValid => {
               </div>
               <div>
                 <x-input
-                  v-model="configForm['life_sum_insured_value_gbp']"
+                  :modelValue="formatNumber(configForm['life_sum_insured_value_gbp'])"
+                  @update:modelValue="val => configForm['life_sum_insured_value_gbp'] = parseNumber(val)"
                   class="!mb-0"
                   :rules="[validateAtLeastOneSum]"
                   :disabled="!isCurrentVersion"
@@ -501,7 +530,8 @@ const onSubmit = isValid => {
               </div>
               <div>
                 <x-input
-                  v-model="configForm['life_sum_insured_value_eur']"
+                  :modelValue="formatNumber(configForm['life_sum_insured_value_eur'])"
+                  @update:modelValue="val => configForm['life_sum_insured_value_eur'] = parseNumber(val)"
                   class="!mb-0"
                   :rules="[validateAtLeastOneSum]"
                   :disabled="!isCurrentVersion"
@@ -561,11 +591,8 @@ const onSubmit = isValid => {
                   </div>
                   <div v-else></div>
                   <x-input
-                    v-model="
-                      configForm[
-                        `${insuranceType.name}_${field.uiName || field.name}`
-                      ]
-                    "
+                    :modelValue="formatNumber(configForm[`${insuranceType.name}_${field.uiName || field.name}`])"
+                    @update:modelValue="val => configForm[`${insuranceType.name}_${field.uiName || field.name}`] = parseNumber(val)"
                     class="!mb-0"
                     :rules="
                       configForm[
