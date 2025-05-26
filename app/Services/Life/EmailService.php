@@ -1,52 +1,52 @@
 <?php
 
 namespace App\Services\Life;
-use App\Models\PersonalQuote;
-use App\Services\Logger\LoggerService;
-use App\Services\BirdService;
-use App\Models\ApplicationStorage;
+
 use App\Enums\ApplicationStorageEnums;
-use App\Models\User;
-use App\Models\LifeQuote;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
-use Illuminate\Support\Facades\Storage;
 use App\Jobs\DeleteTempOCBPDFFileJob;
-use App\Services\Life\LifeQuoteService;
-
-
+use App\Models\ApplicationStorage;
+use App\Models\PersonalQuote;
+use App\Services\BirdService;
+use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\Storage;
 
 class EmailService
 {
     /**
      * Create a new class instance.
      */
-    function sendOCAEmail(string $quoteUID){
-        
+    public function sendOCAEmail(string $quoteUID)
+    {
+
         $logPrefix = 'Life - Send OCA Email';
 
         $lead = $this->getQuote($quoteUID);
 
         if (! $lead) {
-            LoggerService::info($logPrefix . ' - Lead not found');
+            LoggerService::info($logPrefix.' - Lead not found');
+
             return false;
         }
 
         // check plans, skip the email if the plan is zero
         $plans = $this->getPlans($lead);
-        if(count($plans) == 0){
-            LoggerService::info($logPrefix . ' - Skipping OCA email on zero plans');
+        if (count($plans) == 0) {
+            LoggerService::info($logPrefix.' - Skipping OCA email on zero plans');
+
             return false;
         }
-        
+
         // map data for bird service
         $emailData = $this->mapOCAEmailData($lead, $plans);
-        
+
         // get bird flow url for Life from ApplicationStorage
         $flowUrl = $this->getApplicationStorage();
-        if(!$flowUrl){
-            LoggerService::info($logPrefix . ' - Flow URL not found');
+        if (! $flowUrl) {
+            LoggerService::info($logPrefix.' - Flow URL not found');
+
             return false;
         }
 
@@ -62,22 +62,24 @@ class EmailService
             return false;
         }
 
-        
-        LoggerService::info($logPrefix . ' - Initiating process');
+        LoggerService::info($logPrefix.' - Initiating process');
     }
 
-    private function getPlans(PersonalQuote $quote){
+    private function getPlans(PersonalQuote $quote)
+    {
         $quotePlans = app(LifeQuoteService::class)->getQuotePlans($quote->uuid);
         $lifePlans = $quotePlans->quotes->plans;
-        return $lifePlans;  
+
+        return $lifePlans;
     }
 
-    private function attachComparisionPdf(PersonalQuote $quote, $plans){
-        $lifePlans = $plans; 
+    private function attachComparisionPdf(PersonalQuote $quote, $plans)
+    {
+        $lifePlans = $plans;
         $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
         $pdf = app(LifeQuoteService::class)->exportComparisionPdf($quote, $planIds, $lifePlans);
         $pdfContent = $pdf['pdf']->output();
-        
+
         LoggerService::info(self::class.' - attachLifeComparisionPdf - Storing PDF temporarily');
 
         // Generate a unique temporary file path
@@ -94,7 +96,7 @@ class EmailService
 
         LoggerService::info(self::class.' - attachLifeComparisionPdf - Public URL generated');
 
-        return $publicUrl;// Use output() to get raw PDF content
+        return $publicUrl; // Use output() to get raw PDF content
 
     }
 
@@ -104,7 +106,8 @@ class EmailService
         DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(120));
     }
 
-    private function getApplicationStorage(){
+    private function getApplicationStorage()
+    {
         return ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_OCA_EMAIL_FLOW)->value('value');
     }
     private function mapOCAEmailData($lead, $plans)
@@ -114,7 +117,7 @@ class EmailService
         $customerFullName = trim("{$firstName} {$lastName}");
         $advisor = $lead->advisor;
         $workflowType = WorkflowTypeEnum::LIFE_OCA_EMAIL;
-        
+
         $data = [
             // Lead-related data
             'quoteUID' => $lead->uuid,
@@ -150,10 +153,11 @@ class EmailService
         return (object) $data;
     }
 
-    private function getQuote(string $quoteUID){
+    private function getQuote(string $quoteUID)
+    {
         return PersonalQuote::where([
             'uuid' => $quoteUID,
-            'quote_type_id' => QuoteTypeId::Life
+            'quote_type_id' => QuoteTypeId::Life,
         ])->first();
     }
 }

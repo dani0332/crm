@@ -682,12 +682,11 @@ class LifeQuoteService extends BaseService
         return $request;
     }
 
-    
-
-    public function exportComparisionPdf($quote, $planIds, $lifePlans){
+    public function exportComparisionPdf($quote, $planIds, $lifePlans)
+    {
         $pdf = PDF::setOption([
             'isHtml5ParserEnabled' => true,
-            'dpi' => 150
+            'dpi' => 150,
         ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
 
         return ['pdf' => $pdf, 'name' => $this->generatePdfFilename($quote)];

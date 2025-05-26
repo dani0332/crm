@@ -408,7 +408,7 @@ class ApplicationStorageSeeder extends Seeder
     private function seedLifeOCAEmail()
     {
         ApplicationStorage::firstOrCreate(
-        ['key_name' => ApplicationStorageEnums::LIFE_OCA_EMAIL_FLOW],
+            ['key_name' => ApplicationStorageEnums::LIFE_OCA_EMAIL_FLOW],
             [
                 'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/bb88d699-342a-47d5-b618-6997ab2fe7f1/invoke-sync',
                 'created_at' => now(),

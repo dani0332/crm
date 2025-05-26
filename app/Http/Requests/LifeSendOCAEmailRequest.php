@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteTypeId;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use App\Enums\QuoteTypeId;
 
 class LifeSendOCAEmailRequest extends FormRequest
 {
@@ -24,7 +24,7 @@ class LifeSendOCAEmailRequest extends FormRequest
     public function rules(): array
     {
         return [
-           'quoteUID' => [
+            'quoteUID' => [
                 'required',
                 'string',
                 Rule::exists('personal_quotes', 'uuid')->where(function ($query) {
@@ -34,11 +34,12 @@ class LifeSendOCAEmailRequest extends FormRequest
         ];
     }
 
-    function messages():array{
+    public function messages(): array
+    {
         return [
             'quoteUID.required' => 'Quote UUID is required',
             'quoteUID.string' => 'Quote UUID must be a string',
-            'quoteUID.exists' => 'The provided Quote UUID is invalid', 
+            'quoteUID.exists' => 'The provided Quote UUID is invalid',
         ];
     }
 }
