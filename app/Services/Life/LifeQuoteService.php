@@ -280,6 +280,7 @@ class LifeQuoteService extends BaseService
                 'customer.additionalContactInfo',
                 'transactionType',
                 'insuranceProvider',
+                'insuranceProviderPlan',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentMethod',

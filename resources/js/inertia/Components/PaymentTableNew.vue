@@ -218,6 +218,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
+  quoteTypeCodeEnum.Life,
 ]; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
@@ -328,7 +329,11 @@ if (
     props.quoteRequest?.insurance_provider;
 } else if (props.quoteType == quoteTypeCodeEnum.Home) {
   initalPlanDetails = props.quoteRequest.insurance_provider;
-} else if (quoteTypesToCheck.includes(props.quoteType)) {
+}
+else if (props.quoteType == quoteTypeCodeEnum.Life) {
+  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
+}
+else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
   initalPlanDetails = props.quoteRequest?.car_plan;
@@ -1643,7 +1648,6 @@ const addPaymentModal = () => {
   ) {
     totalAmount.value = totalPrice.value;
   } else {
-    console.log(totalPrice.value, planDetail.value);
 
     let errorMsg = 'Please update the Total Price in the Plan Details section.';
     if (quoteTypesToCheck.includes(props.quoteType)) {
@@ -2421,6 +2425,7 @@ const addPayment = isValid => {
       send_update_id: props.sendUpdate?.id || null,
       collection_type: paymentMethodsForm.collection_type,
     };
+   
     paymentMethodsForm
       .transform(data => viewData)
       .post('/payments/' + props.quoteType + '/split-payments-approve', {
@@ -2481,9 +2486,11 @@ const addPayment = isValid => {
       });
     return;
   }
+  
   if (props.isPlanDetailSectionEnabled) {
     data.plan_id = null;
   }
+  
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
@@ -2905,6 +2912,7 @@ const getCaptureOption = computed(() => {
 
 const planText = ref();
 const homePlanText = ref();
+const lifePlanText = ref();
 const fetchPlans = () => {
   let providerId = props.sendUpdate?.insurance_provider_id;
   let planId = props.sendUpdate?.plan_id;
@@ -3012,6 +3020,12 @@ const getPlanName = computed(() => {
     }
     return homePlanText.value || 'Not Available';
   }
+  if (props.quoteType === quoteTypeCodeEnum.Life) {
+    if (props.quoteRequest?.insurance_provider_plan?.text && plan) {
+      lifePlanText.value = props.quoteRequest.insurance_provider_plan.text;
+    }
+    return lifePlanText.value || 'Not Available';
+  }
 
   return quoteTypesToCheck.includes(props.quoteType) && plan
     ? plan.text
@@ -3103,7 +3117,11 @@ const setPlanDetail = () => {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
     initalPlanDetails = props.quoteRequest.insurance_provider;
-  } else if (quoteTypesToCheck.includes(props.quoteType)) {
+  } 
+  else if (props.quoteType == quoteTypeCodeEnum.Life) {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
+  } 
+  else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
