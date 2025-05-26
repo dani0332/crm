@@ -2380,18 +2380,20 @@ class RenewalsUploadService
         $quoteData['vehicle_use'] = strtolower($data['vehicle_use']);
         $quoteData['business_activity_id'] = $businessActivity->id ?? null;
         $quoteData['company_name'] = $data['customer_name'] ?? null;
+        $quoteData['first_name'] = $this->mapFirstAndLastName($data['customer_name'])['first_name'] ?? null;
+        $quoteData['last_name'] = $this->mapFirstAndLastName($data['customer_name'])['last_name'] ?? null;
         if ($data['vehicle_use'] == CarVehicleUse::PRIVATE) {
-            $quoteData['first_name'] = $this->mapFirstAndLastName($data['driver_name'])['first_name'] ?? null;
-            $quoteData['last_name'] = $this->mapFirstAndLastName($data['driver_name'])['last_name'] ?? null;
+         
+            $quoteData['driver_name'] = $data['driver_name'] ?? null;
             $quoteData['nationality_id'] = $nationality->id ?? null;
             $quoteData['dob'] = $data['driver_dob'] ?? null;
             $quoteData['uae_license_held_for_id'] = $uaeLicenseHeldFor->id ?? null;
         }
 
     }
-    public function mapFirstAndLastName($driverName)
+    public function mapFirstAndLastName($customerName)
     {
-        $name = explode(' ', $driverName);
+        $name = explode(' ', $customerName);
         $firstName = reset($name);
         unset($name[0]);
         $lastName = implode(' ', $name) ?? null;
