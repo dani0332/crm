@@ -212,10 +212,10 @@
   dependencies:
     "@tanstack/vue-virtual" "^3.0.0-beta.60"
 
-"@indielayer/ui@^1.13.1":
-  version "1.13.1"
-  resolved "https://registry.yarnpkg.com/@indielayer/ui/-/ui-1.13.1.tgz#c6e58dfb082493d1d75fe3e949faf82acb5eca86"
-  integrity sha512-DXB7eV1wUGCHRJK+kGsrpsQUu7yzvGp8YFgzLvHrg3nCxvrPn5qHfeLjcvMdqA24b8vl2GE6Q1cvd+CUMU6mCw==
+"@indielayer/ui@^1.13.2":
+  version "1.13.2"
+  resolved "https://registry.yarnpkg.com/@indielayer/ui/-/ui-1.13.2.tgz#e43977baaa82ad39bd77e16dbc2d9f76c7550c22"
+  integrity sha512-R3CE5Q7p+T/cQ4Np1gMRIXFnz0ZeomznCbMkc6ga7ak6p5u8hVBVC9W3b/AgsQND1CnIdoxl/BfbKr7cD6VmtQ==
 
 "@inertiajs/core@2.0.3":
   version "2.0.3"
