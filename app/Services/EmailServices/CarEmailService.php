@@ -698,7 +698,8 @@ class CarEmailService extends BaseService
         DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(5));
     }
 
-    public function sendCarCompanyCommercialOCB($lead){
+    public function sendCarCompanyCommercialOCB($lead)
+    {
         try {
             LoggerService::info(self::class.' - Sending Car Company Commercial OCB email for lead: '.$lead->uuid.' | Time: '.now());
             $advisor = User::where('id', $lead->advisor_id)->first();

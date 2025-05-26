@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarRegistrationType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -25,7 +26,6 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Enums\CarRegistrationType;
 
 class RenewalBatchReportService extends BaseService
 {
