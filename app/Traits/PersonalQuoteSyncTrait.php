@@ -409,7 +409,7 @@ trait PersonalQuoteSyncTrait
      */
     public function updatePersonalQuote($uuid, $quoteTypeId, $data)
     {
-        LoggerService::info('fn:updatePersonalQuote');
+        LoggerService::info('fn:updatePersonalQuote - Code : '.$uuid);
         $personalQuote = PersonalQuoteRepository::where([
             'quote_type_id' => $quoteTypeId,
             'uuid' => $uuid,
