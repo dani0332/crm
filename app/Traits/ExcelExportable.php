@@ -114,7 +114,7 @@ trait ExcelExportable
 
         // Generate CSV content in memory using chunking
         $csvFileName = $fileName.'.csv';
-        $csvFilePath = storage_path('temp/' . $csvFileName); // Temporary file path
+        $csvFilePath = storage_path('temp/'.$csvFileName); // Temporary file path
 
         $stream = fopen($csvFilePath, 'w'); // Open file on disk for writing
 
@@ -223,7 +223,7 @@ trait ExcelExportable
                 function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvFilePath, $csvFileName) {
                     $message->to($recipientEmail);
 
-                    if (!empty($ccRecipients)) {
+                    if (! empty($ccRecipients)) {
                         $message->cc($ccRecipients);
                     }
 
@@ -255,7 +255,7 @@ trait ExcelExportable
             if (file_exists($csvFilePath)) {
                 unlink($csvFilePath);
             }
-            logger()->error('Error in CSV export: ' . $e->getMessage(), [
+            logger()->error('Error in CSV export: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;

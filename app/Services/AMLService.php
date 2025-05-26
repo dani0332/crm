@@ -1116,8 +1116,9 @@ class AMLService
                 $quoteType = QuoteTypes::getName($quoteTypeId);
 
                 // Skip if quote type is not found
-                if (!$quoteType) {
+                if (! $quoteType) {
                     LoggerService::warning("Quote type not found for ID: {$quoteTypeId}");
+
                     continue;
                 }
 

@@ -183,7 +183,7 @@ class AMLController extends Controller
     {
         LoggerService::info('fn:export - AMLController');
 
-        $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString() . ' - ' . Carbon::parse($request->amlCreatedEndDate)->toDateString();
+        $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
         $request->merge([
             'exportTitle' => 'AML',
