@@ -45,31 +45,31 @@ class PaymentObserver
         $paymentCode = $payment->code;
         LoggerService::info('Payment:Observer - Starting VAT calculation for payment code: '.$paymentCode, extra: [
             'total_price' => $payment->total_price,
-            'source' => $source
+            'source' => $source,
         ]);
 
         $modelType = null;
         $quoteId = null;
-        
-        if (!$payment->send_update_log_id) {
+
+        if (! $payment->send_update_log_id) {
             $quote = $payment->paymentable;
             $quoteId = $quote->id;
-            
+
             if ($payment->paymentable_type == PersonalQuote::class) {
                 $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
                 LoggerService::info('Payment:Observer - Personal quote detected for payment code: '.$paymentCode, extra: [
-                    'source' => $source
+                    'source' => $source,
                 ]);
             } else {
                 $modelType = quoteTypeCode::getName($payment->paymentable_type);
                 LoggerService::info('Payment:Observer - Other quote type detected for payment code: '.$paymentCode, extra: [
-                    'source' => $source
+                    'source' => $source,
                 ]);
             }
         } else {
             LoggerService::info('Payment:Observer - Send update log payment detected for payment code: '.$paymentCode, extra: [
                 'send_update_log_id' => $payment->send_update_log_id,
-                'source' => $source
+                'source' => $source,
             ]);
         }
 
@@ -89,7 +89,7 @@ class PaymentObserver
             'model_type' => $modelType,
             'quote_id' => $quoteId,
             'send_update_log_id' => $payment->send_update_log_id,
-            'source' => $source
+            'source' => $source,
         ]);
 
         Payment::withoutEvents(function () use ($payment, $priceWithoutVat, $vat, $source) {
@@ -97,9 +97,9 @@ class PaymentObserver
                 'price_vat_applicable' => $priceWithoutVat,
                 'price_vat' => $vat,
             ]);
-            
+
             LoggerService::info('Payment:Observer complete - update VAT and Price  for payment code: '.$payment->code, extra: [
-                'source' => $source
+                'source' => $source,
             ]);
         });
     }
