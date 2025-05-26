@@ -1,7 +1,8 @@
 <script setup>
 const props = defineProps({
-  roles: Object,
-  permissions: Array,
+  permissions: Object,
+  roles: Array,
+  filters: Object,
 });
 
 const page = usePage();
@@ -14,26 +15,26 @@ const loader = reactive({
 });
 
 const tableHeader = ref([
-  { text: 'Ref-ID', value: 'id' },
+  { text: 'ID', value: 'id' },
   { text: 'NAME', value: 'name' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
 ]);
 
 const filters = reactive({
-  name: '',
-  permission: '',
+  name: props.filters?.name || '',
+  role_id: props.filters?.role_id || '',
   page: 1,
 });
 
-const getRoleByName = () => {
+const filterPermissions = () => {
   filters.page = 1;
 
   Object.keys(filters).forEach(
     key =>
       (filters[key] === '' || filters[key].length === 0) && delete filters[key],
   );
-  router.visit(route('roles.index'), {
+  router.visit(route('permissions.index'), {
     method: 'get',
     data: filters,
     preserveState: true,
@@ -45,45 +46,48 @@ const getRoleByName = () => {
 
 const resetFilters = () => {
   filters.name = '';
-  filters.permission = '';
-  getRoleByName();
+  filters.role_id = '';
+  filterPermissions();
 };
+
+const updateFilter = (field, val) =>
+  (filters[field] = !val || filters[field] === val ? null : val);
 </script>
 <template>
-  <Head title="Roles List" />
+  <Head title="Permissions List" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">Roles</h2>
-    <div class="space-x-3" v-if="can(permissionsEnum.RoleCreate)">
-      <Link :href="route('roles.create')">
-        <x-button size="sm" color="#ff5e00" tag="div"> Create Role </x-button>
+    <h2 class="text-xl font-semibold">Permissions</h2>
+    <!-- <div class="space-x-3" v-if="can(permissionsEnum.PermissionCreate)">
+      <Link :href="route('permissions.create')">
+        <x-button size="sm" color="#ff5e00" tag="div">
+          Create Permission
+        </x-button>
       </Link>
-    </div>
+    </div> -->
   </div>
   <x-divider class="my-4" />
-  <x-form :auto-focus="false" @submit="getRoleByName">
-    <div class="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
-      <x-input
-        class="w-full"
-        v-model="filters.name"
-        label="NAME"
-        placeholder="Search by name"
-      />
-
-      <x-select
-        label="PERMISSION"
-        class="w-full"
-        v-model="filters.permission"
-        :options="
-          permissions.map(permission => ({
-            label: permission.name,
-            value: permission.id,
-          }))
-        "
-        option-text="name"
-        option-value="id"
-        placeholder="Search by permission"
-        filterable
-      />
+  <x-form :auto-focus="false" @submit="filterPermissions">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <x-field label="NAME">
+        <x-input
+          class="w-full"
+          v-model="filters.name"
+          placeholder="Search by permission name"
+        />
+      </x-field>
+      <x-field label="ROLE">
+        <x-select
+          :modelValue="filters.role_id"
+          :options="[
+            { label: 'All Roles', value: '' },
+            ...roles.map(role => ({ label: role.name, value: role.id })),
+          ]"
+          filterable
+          placeholder="Search by role"
+          @update:modelValue="val => updateFilter('role_id', val)"
+        >
+        </x-select>
+      </x-field>
     </div>
     <div class="flex justify-end gap-3 mt-4">
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
@@ -96,14 +100,14 @@ const resetFilters = () => {
     table-class-name="mt-4"
     :loading="loader.table"
     :headers="tableHeader"
-    :items="props.roles.data || []"
+    :items="props.permissions.data || []"
     border-cell
     hide-rows-per-page
     hide-footer
   >
     <template #item-id="{ id }">
       <Link
-        :href="route('roles.show', id)"
+        :href="route('permissions.show', id)"
         class="text-primary-500 hover:underline"
       >
         {{ id }}
@@ -118,11 +122,11 @@ const resetFilters = () => {
   </DataTable>
   <Pagination
     :links="{
-      next: props.roles.next_page_url,
-      prev: props.roles.prev_page_url,
-      current: props.roles.current_page,
-      from: props.roles.from,
-      to: props.roles.to,
+      next: props.permissions.next_page_url,
+      prev: props.permissions.prev_page_url,
+      current: props.permissions.current_page,
+      from: props.permissions.from,
+      to: props.permissions.to,
     }"
   />
 </template>
