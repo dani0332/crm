@@ -321,7 +321,12 @@ const getS3TempUrl = async docURL => {
         >
           <template #item-document_type_text="item">
             <template v-if="item.document_type_code == 'ID' && page.props.quote.quote_type_id == getQuoteTypeId(page.props.quoteTypes, 'Life')">
-              {{ page.props.quote.insurance_provider.text }} - {{ item.document_type_text }}
+              <template v-if="page.props.quote.insurance_provider">
+                {{ page.props.quote.insurance_provider.text }} - {{ item.document_type_text }}
+              </template>
+              <template v-else>
+                {{ item.document_type_text }}
+              </template>
             </template>
             <template v-else>
               {{ item.document_type_text }}
@@ -334,7 +339,7 @@ const getS3TempUrl = async docURL => {
               class="text-primary-600 cursor-pointer"
             >
               <template v-if="item.document_type_code == 'ID' && page.props.quote.quote_type_id == getQuoteTypeId(page.props.quoteTypes, 'Life')">
-                {{page.props.quote.insurance_provider.text}}
+                {{page.props.quote.insurance_provider?.text}}
                 Illustration Document for
                 {{ page.props.quote.customer.first_name }}
                 {{ page.props.quote.customer.last_name }}
@@ -352,7 +357,7 @@ const getS3TempUrl = async docURL => {
               class="text-primary-600"
             >
               <template v-if="item.document_type_code == 'ID' && page.props.quote.quote_type_id == getQuoteTypeId(page.props.quoteTypes, 'Life')">
-                {{page.props.quote.insurance_provider.text}}
+                {{page.props.quote.insurance_provider?.text}}
                 Illustration Document for
                 {{ page.props.quote.customer.first_name }}
                 {{ page.props.quote.customer.last_name }}
