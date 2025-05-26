@@ -45,6 +45,7 @@ use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Arr;
+use PDF;
 
 class LifeQuoteService extends BaseService
 {
@@ -684,25 +685,17 @@ class LifeQuoteService extends BaseService
     
 
     public function exportComparisionPdf($quote, $planIds, $lifePlans){
-        
-        
-        $quotePlans = app(LifeQuoteService::class)->getQuotePlans($quote->uuid);
-        $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
-        $pdf = app(LifeQuoteService::class)->exportComparisionPdf($quote, $planIds, $lifePlans);
-
-        
-        $pdf = $this->comparisionPdf($quote, $planIds, $lifePlans);
-
-
-        return $pdf;
-    }
-    private function comparisionPdf($quote, $planIds, $lifePlans){
         $pdf = PDF::setOption([
             'isHtml5ParserEnabled' => true,
             'dpi' => 150
         ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
 
-        return $pdf;
+        return ['pdf' => $pdf, 'name' => $this->generatePdfFilename($quote)];
+    }
+
+    private function generatePdfFilename($quote): string
+    {
+        return 'InsuranceMarket.ae™ Life Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
     }
 
     private function prepareActivitiesData($activities)

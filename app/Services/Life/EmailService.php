@@ -11,6 +11,11 @@ use App\Models\LifeQuote;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use Illuminate\Support\Facades\Storage;
+use App\Jobs\DeleteTempOCBPDFFileJob;
+use App\Services\Life\LifeQuoteService;
+
+
 
 class EmailService
 {
@@ -45,7 +50,17 @@ class EmailService
             return false;
         }
 
-        dd($flowUrl);
+        try {
+            $response = app(BirdService::class)->triggerWebHookRequest($flowUrl, $emailData);
+
+            LoggerService::info('sendLifeOCAEmail - Bird flow triggered successfully');
+
+            return $response ?? null;
+        } catch (\Exception $e) {
+            LoggerService::info("sendHomeOCBIntroEmail - Error triggering event | Message: {$e->getMessage()} Line: {$e->getLine()}");
+
+            return false;
+        }
 
         
         LoggerService::info($logPrefix . ' - Initiating process');
@@ -61,7 +76,32 @@ class EmailService
         $lifePlans = $plans; 
         $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
         $pdf = app(LifeQuoteService::class)->exportComparisionPdf($quote, $planIds, $lifePlans);
-        return $pdf;
+        $pdfContent = $pdf['pdf']->output();
+        
+        LoggerService::info(self::class.' - attachLifeComparisionPdf - Storing PDF temporarily');
+
+        // Generate a unique temporary file path
+        $tempFilePath = 'temp/'.uniqid().'.pdf';
+        Storage::disk('azureIM')->put($tempFilePath, $pdfContent);
+
+        // Generate a public URL
+        $publicUrl = Storage::disk('azureIM')->temporaryUrl(
+            $tempFilePath,
+            now()->addMinutes(120)
+        );
+        // Schedule deletion after 5 minutes
+        $this->scheduleFileDeletion($tempFilePath);
+
+        LoggerService::info(self::class.' - attachLifeComparisionPdf - Public URL generated');
+
+        return $publicUrl;// Use output() to get raw PDF content
+
+    }
+
+    protected function scheduleFileDeletion($filePath)
+    {
+        // Use a job to handle file deletion
+        DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(120));
     }
 
     private function getApplicationStorage(){
@@ -104,7 +144,7 @@ class EmailService
         $tempUrlPDF = $this->attachComparisionPdf($lead, $plans);
 
         if (! empty($tempUrlPDF)) {
-            $data['tempUrlPDF'] = $tempUrlPDF;
+            $data['pdfLink'] = $tempUrlPDF;
         }
 
         return (object) $data;
