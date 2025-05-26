@@ -19,7 +19,7 @@ class RolePermissionSeeder extends Seeder
         // $this->searchModulePermissions();
         // $this->createBusinessIntelligenceUnitRole();
         // $this->addMissingAdvisorRoles(); // Add missing advisor roles on PROD
-        // $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
+        $this->addVoidPaymentEmbeddedPermission(); // add EP permissions
         // $this->paymentsVoid();
         $this->addBridgerSkipPermission();
         $this->addPostPrepaymentButtonPermission();
@@ -114,17 +114,19 @@ class RolePermissionSeeder extends Seeder
 
     private function addVoidPaymentEmbeddedPermission(): void
     {
-        $role = Role::where('name', RolesEnum::EpAdmin)->first();
+        $roles = Role::whereIn('name', [RolesEnum::EpAdmin, RolesEnum::Admin, RolesEnum::Engineering])->get();
         $permission = Permission::firstOrCreate([
-            'name' => PermissionsEnum::PAYMENTS_VOID,
+            'name' => PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_VOID,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        if (! $role->hasPermissionTo($permission)) {
-            $role->givePermissionTo($permission);
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo($permission)) {
+                $role->givePermissionTo($permission);
+            }
         }
     }
 

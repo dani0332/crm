@@ -1,15 +1,15 @@
-FROM ubuntu:22.04 as dependencies
+FROM ubuntu:22.04 AS dependencies
 RUN apt update && apt upgrade curl wget -y
 ARG IMCRM_TOKEN
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 RUN doppler configure set token ${IMCRM_TOKEN}
 
-FROM node:22.12.0 as frontend
+FROM node:22.12.0 AS frontend
 WORKDIR /var/www
 COPY package*.json yarn.lock /var/www/
 RUN yarn install --pure-lockfile
 
-FROM php:8.2-fpm as build
+FROM php:8.2-fpm AS build
 WORKDIR /app
 # Add docker php ext repo
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
@@ -39,8 +39,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
     ghostscript \
-    libwebp-dev \
-    pdftk
+    libwebp-dev
 
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
@@ -79,8 +78,7 @@ zlib1g \
 libicu-dev \
 libmemcached11 \
 ghostscript \
-libwebp-dev \
-pdftk
+libwebp-dev
 
 # Set working directory
 WORKDIR /var/www
@@ -125,10 +123,5 @@ RUN \
       -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
       -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
       /usr/local/etc/php/conf.d/newrelic.ini
-
-# RUN mkdir -p /var/www/storage/logs
-# RUN touch /var/www/storage/logs/laravel.log
-# RUN chown -R www-data:www-data /var/www/storage
-# RUN chmod -R 775 /var/www/storage
 
 ENTRYPOINT ["/var/www/docker/run.sh"]

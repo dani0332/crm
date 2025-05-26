@@ -32,7 +32,7 @@ class SearchService extends BaseService
     /**
      * Get search leads based on request parameters
      *
-     * @param  bool  $isEndorsementList  Whether to show endorsement list
+     * @param  bool  $isEndorsementList  Whether to show an endorsement list
      * @param  bool  $isExport  Whether this is for export
      * @return LengthAwarePaginator|Collection|array
      */
@@ -50,8 +50,7 @@ class SearchService extends BaseService
 
         // Build query with essential joins and apply filters
         $baseQuery = $this->buildBaseQuery($baseTable, $isEndorsementList);
-        $this->applyJoinsAndFilters($baseQuery, $baseTable, $isEndorsementList);
-        $selectColumns = $this->getFilteredCompanyCases(request(), $selectColumns);
+        $selectColumns = $this->applyJoinsAndFilters($baseQuery, $baseTable, $isEndorsementList);
         $this->applyAuthorizationFilters($baseQuery);
 
         // Apply sorting with proper index usage
@@ -74,7 +73,7 @@ class SearchService extends BaseService
     /**
      * Get base select columns for queries
      *
-     * @param  bool  $isEndorsementList  Whether this is for endorsement list
+     * @param  bool  $isEndorsementList  Whether this is for the endorsement list
      */
     private function getBaseSelectColumns(bool $isEndorsementList = false): array
     {
@@ -97,7 +96,7 @@ class SearchService extends BaseService
      * Build the base query with essential joins
      *
      * @param  string  $baseTable  Base table for the query
-     * @param  bool  $isEndorsementList  Whether this is for endorsement list
+     * @param  bool  $isEndorsementList  Whether this is for the endorsement list
      */
     private function buildBaseQuery(string $baseTable, bool $isEndorsementList): Builder
     {
@@ -129,9 +128,9 @@ class SearchService extends BaseService
      *
      * @param  Builder  $query  Query builder instance
      * @param  string  $baseTable  Base table for the query
-     * @param  bool  $isEndorsementList  Whether this is for endorsement list
+     * @param  bool  $isEndorsementList  Whether this is for the endorsement list
      */
-    private function applyJoinsAndFilters(Builder $query, string $baseTable, bool $isEndorsementList): void
+    private function applyJoinsAndFilters(Builder $query, string $baseTable, bool $isEndorsementList)
     {
         try {
             // Apply standard table joins from the model
@@ -140,7 +139,7 @@ class SearchService extends BaseService
             // Apply search filters
             $this->searchQuoteQueryFilters($query, request(), $isEndorsementList);
 
-            // Process columns for endorsement list
+            // Process columns for an endorsement list
             if ($isEndorsementList) {
                 $suSelectColumns = [
                     'send_update_logs.code',
@@ -159,15 +158,12 @@ class SearchService extends BaseService
                 $query->addSelect($this->getFilteredCompanyCases(request(), $selectColumns));
             } else {
                 // Add standard columns
-                $query->addSelect([
-                    'personal_quotes.uuid',
-                    'quote_status.text as quote_status',
-                ]);
-
-                // Get filtered company cases
                 $selectColumns = array_merge($this->getBaseSelectColumns(), ['personal_quotes.uuid', 'quote_status.text as quote_status']);
-                $query->addSelect($this->getFilteredCompanyCases(request(), $selectColumns));
+                $selectColumns = array_merge($selectColumns, $this->getFilteredCompanyCases(request(), $selectColumns));
+                $query->addSelect($selectColumns);
             }
+
+            return $selectColumns;
         } catch (\Exception $e) {
             LoggerService::error(self::CLASS_NAME.' fn:'.__FUNCTION__.' Error applying joins and filters: '.$e->getMessage(), extra: [
                 'trace' => $e->getTraceAsString(),
@@ -214,7 +210,7 @@ class SearchService extends BaseService
      *
      * @param  Builder  $query  Query builder instance
      * @param  string  $baseTable  Base table for the query
-     * @param  bool  $isEndorsementList  Whether this is for endorsement list
+     * @param  bool  $isEndorsementList  Whether this is for the endorsement list
      * @param  array  $selectColumns  Base select columns
      * @return Collection Collection of export data
      */
@@ -381,39 +377,15 @@ class SearchService extends BaseService
             // Search by company name
             if ($request->has('company_name')) {
                 $query->join('insured', 'personal_quotes.insured_id', 'insured.id');
-
-                // Check if FULLTEXT index exists and use it for better performance
-                $companyNameFullTextIndexExists = DB::select("SHOW INDEX FROM insured WHERE Key_name = 'index_insured_company_name_fulltext'");
-
-                if (! empty($companyNameFullTextIndexExists)) {
-                    // Use FULLTEXT search
-                    $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->company_name.'*']);
-                } else {
-                    // Fallback to LIKE search
-                    $query->where(DB::raw('insured.company_name'), 'like', '%'.$request->company_name.'%');
-
-                    // Log that we're using slower search
-                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for insured company_name. Consider adding FULLTEXT index for better performance.');
-                }
+                // Use FULLTEXT search
+                $query->whereRaw('MATCH(insured.company_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($request->company_name)]);
 
             }
 
             // Search by policy number
             if ($request->has('policy_number') && ! isset($request->code)) {
-                // Check if FULLTEXT index exists and use it for better performance
-                $companyNameFullTextIndexExists = DB::select("SHOW INDEX FROM personal_quotes WHERE Key_name = 'index_personal_quotes_policy_number_fulltext'");
-
-                if (! empty($companyNameFullTextIndexExists)) {
-                    // Use FULLTEXT search
-                    $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->policy_number.'*']);
-                } else {
-                    // Fallback to LIKE search
-                    $query->where('personal_quotes.policy_number', 'like', '%'.$request->policy_number.'%');
-
-                    // Log that we're using slower search
-                    LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for personal_quotes policy_number. Consider adding FULLTEXT index for better performance.');
-                }
-
+                // Use FULLTEXT search
+                $query->whereRaw('MATCH(personal_quotes.policy_number) AGAINST(? IN BOOLEAN MODE)', ['"'.$request->policy_number.'"']);
             }
 
             // Search by mobile number (exact match)
@@ -512,20 +484,8 @@ class SearchService extends BaseService
     private function applyInsuredNameSearch($query, $request): void
     {
         $query->join('customer', 'personal_quotes.customer_id', 'customer.id');
-
-        // Check if FULLTEXT index exists and use it for better performance
-        $insuredFullNameFullTextIndexExists = DB::select("SHOW INDEX FROM customer WHERE Key_name = 'index_customer_insured_name_fulltext'");
-
-        if (! empty($insuredFullNameFullTextIndexExists)) {
-            // Use FULLTEXT search
-            $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->insured_name.'*']);
-        } else {
-            // Fallback to LIKE search
-            $query->where(DB::raw("CONCAT(customer.insured_first_name, ' ', customer.insured_last_name)"), 'like', '%'.$request->insured_name.'%');
-
-            // Log that we're using slower search
-            LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower LIKE search for customer insured_name. Consider adding FULLTEXT index for better performance.');
-        }
+        // Use FULLTEXT search
+        $query->whereRaw('MATCH(customer.insured_first_name, customer.insured_last_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($request->insured_name)]);
     }
 
     /**
@@ -563,36 +523,20 @@ class SearchService extends BaseService
             }
         });
 
-        // Apply first/last name filters
-        if ($request->has('member_first_name')) {
-            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'index_customer_members_name_fulltext'");
+        // Apply member name filters - merged condition
+        if ($request->has('member_first_name') || $request->has('member_last_name')) {
+            $name = [];
 
-            if (! empty($fullNameIndexExists)) {
-                // Use FULLTEXT search
-                $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_first_name.'*']);
-            } else {
-                // Fallback to search
-                $query->where('customer_members.first_name', 'like', '%'.$request->member_first_name.'%');
-
-                // Log that we're using slower search
-                LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for customer_members first_name. Consider adding FULLTEXT index for better performance.');
-            }
-        }
-
-        if ($request->has('member_last_name')) {
-            $fullNameIndexExists = DB::select("SHOW INDEX FROM customer_members WHERE Key_name = 'index_customer_members_name_fulltext'");
-
-            if (! empty($fullNameIndexExists)) {
-                // Use FULLTEXT search
-                $query->whereRaw('MATCH(customer_members.last_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', ['*'.$request->member_last_name.'*']);
-            } else {
-                // Fallback to search
-                $query->where('customer_members.last_name', 'like', '%'.$request->member_last_name.'%');
-
-                // Log that we're using slower search
-                LoggerService::warning(self::CLASS_NAME.' fn:'.__FUNCTION__.' Using slower  search for customer_members last_name. Consider adding FULLTEXT index for better performance.');
+            if ($request->has('member_first_name')) {
+                $name[] = $request->member_first_name;
             }
 
+            if ($request->has('member_last_name')) {
+                $name[] = $request->member_last_name;
+            }
+            $fullName = implode(' ', $name);
+
+            $query->whereRaw('MATCH(customer_members.first_name, customer_members.last_name) AGAINST(? IN BOOLEAN MODE)', [$this->optimizeSearchTerm($fullName)]);
         }
     }
 
@@ -649,6 +593,17 @@ class SearchService extends BaseService
                 $query->join('payments', 'personal_quotes.code', 'payments.code');
             }
         }
+
+        $hasPaymentsJoin = collect($query->joins ?? [])->pluck('table')->contains('payments');
+
+        // Join payments table if needed and not already joined
+        if (! $hasPaymentsJoin && $request->payment_status) {
+            if ($isSendUpdateFilter) {
+                $query->join('payments', 'send_update_logs.id', 'payments.send_update_log_id');
+            } else {
+                $query->join('payments', 'personal_quotes.code', 'payments.code');
+            }
+        }
         $query->whereIn('payments.payment_status_id', $request->payment_status);
     }
 
@@ -683,4 +638,49 @@ class SearchService extends BaseService
             }
         }
     }
+
+    /**
+     * Optimize a search term for FULLTEXT Boolean mode
+     */
+    private function optimizeSearchTerm(string $term): string
+    {
+        // Remove common problematic characters
+        $term = preg_replace('/[\'"\\\]/', ' ', $term);
+
+        // Split into words
+        $words = preg_split('/[\s,.\-_\/]+/', $term, -1, PREG_SPLIT_NO_EMPTY);
+
+        // Handle different term types
+        $optimized = [];
+        foreach ($words as $word) {
+            // Skip stop words and very short terms
+            if (strlen($word) < 2) {
+                continue;
+            }
+
+            // Check word type
+            if (preg_match('/^[a-zA-Z]+$/', $word)) {
+                // Pure alphabetic - treat as a single word
+                $optimized[] = '+'.$word;
+            } elseif (preg_match('/^[a-zA-Z0-9]+$/', $word)) {
+                // Alphanumeric - use word prefix matching
+                $optimized[] = '+'.$word.'*';
+
+                // If word has both letters and numbers, also add an exact match
+                if (preg_match('/[a-zA-Z]/', $word) && preg_match('/[0-9]/', $word)) {
+                    $optimized[] = '+"'.$word.'"';
+                }
+            } else {
+                // For special character containing words, add exact and partial matches
+                $optimized[] = '"'.$word.'"';
+                $optimized[] = $word.'*';
+
+                return implode(' +', $optimized);
+            }
+        }
+
+        return implode(' ', $optimized);
+
+    }
+
 }

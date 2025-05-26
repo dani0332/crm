@@ -1,9 +1,9 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
 import { computed } from 'vue';
+import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import FtcEmailTrack from '../../Components/FtcEmailTrack.vue';
 
 const props = defineProps({
   quote: Object,
@@ -869,7 +869,8 @@ const options = reactive({
 watch(
   () => planFilters?.insurer,
   value => {
-    if (value) {
+    if (value && planFilters.insurer && planFilters.insurer.length > 0) {
+      planFilters.network = [];
       options.loading = true;
       const ids = planFilters.insurer.map(item => {
         return item;
@@ -879,9 +880,13 @@ watch(
         .get(url)
         .then(res => {
           if (res.data.length > 0) {
-            options.network = res.data;
+            options.network.length = 0;
+            options.network = useArrayUnique(
+              res.data,
+              (a, b) => a.value === b.value,
+            );
           } else {
-            options.network = [];
+            options.network.length = 0;
           }
         })
         .catch(err => {
@@ -893,8 +898,12 @@ watch(
         .finally(() => {
           options.loading = false;
         });
+    } else {
+      options.network.length = 0;
+      planFilters.network = [];
     }
   },
+  { deep: true },
 );
 
 const listQuotePlansFiltered = ref([]);
@@ -922,10 +931,6 @@ const sortPlans = incommingPlans => {
 };
 
 watchEffect(() => {
-  listQuotePlansFiltered.value = plansTable.data
-    .slice()
-    .sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
-
   if (
     planFilters?.insurer?.length === 0 ||
     planFilters?.insurer?.length === undefined
@@ -3115,14 +3120,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
                   :error="leadStatusForm.errors.lostReason"
                   :disabled="lockLeadSectionsDetails.lead_status"
                 />
-                <x-field class="" label="Transaction Type">
-                  <x-input
-                    type="text"
-                    v-model="quote.transaction_type_text"
-                    class="w-full"
-                    :disabled="true"
-                  />
-                </x-field>
+                <x-input
+                  label="Transaction Type"
+                  type="text"
+                  v-model="quote.transaction_type_text"
+                  class="w-full"
+                  :disabled="true"
+                />
 
                 <div class="flex flex-col gap-4"></div>
               </div>
@@ -3631,6 +3635,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           multiple
           truncate
           class="w-full"
+          :loading="options.loading"
         >
           <template #content-footer>
             <ui-select-actions
@@ -3713,7 +3718,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
             size="sm"
             color="#ff5e00"
             type="submit"
-            @click="onPlanFiltersSubmit"
+            @click.prevent="onPlanFiltersSubmit"
           >
             Apply
           </x-button>

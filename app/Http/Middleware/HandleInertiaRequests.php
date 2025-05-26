@@ -17,6 +17,7 @@ use App\Enums\Kyc;
 use App\Enums\LeadAllocationUserBLStatusFiltersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentCaptureValidationEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentGatewayEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -108,6 +109,7 @@ class HandleInertiaRequests extends Middleware
             'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'quoteBusinessTypeIdEnum' => BusinessTypeOfInsuranceIdEnum::asArray(),
+            'paymentCaptureValidationEnum' => PaymentCaptureValidationEnum::asArray(),
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
@@ -325,6 +327,12 @@ class HandleInertiaRequests extends Middleware
                         true,
                         'Buy Leads Tracking',
                         route('buy-leads.request.tracking'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_EXPORT),
+                        'Export Buy Leads',
+                        route('buy-leads.request.export'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
@@ -639,6 +647,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->can(PermissionsEnum::PERMISSION_LIST),
+                        'Permissions',
+                        route('permissions.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::DEPARTMENT_LIST),
                         'Departments',
                         url('admin/departments'),
@@ -679,6 +693,12 @@ class HandleInertiaRequests extends Middleware
                         'Query Benchmarker',
                         route('admin.benchmarker.query.show'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Permissions Docs',
+                        url('/permissions-docs/index.php'),
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true, 'target' => '_blank'])
                     )
                     ->addIf(
                         auth()->user()->hasAnyPermission([
