@@ -597,13 +597,12 @@ const isVehicleUseDisabled = computed(() => {
 
 watch(
   () => filters.registration_type,
-  (newValue) => {
+  newValue => {
     if (newValue != carRegistrationTypeEnum.COMPANY) {
       filters.vehicle_use = '';
     }
-  }
+  },
 );
-
 </script>
 <template>
   <div>
@@ -652,18 +651,18 @@ watch(
           </template>
         </x-select>
         <x-select
-        v-model="filters.registration_type"
-        label="Registration Type"
-        placeholder="Select any option"
-        :options="registrationTypeOptions"
-      />
-      <x-select
-        v-if="isVehicleUseDisabled"
-        v-model="filters.vehicle_use"
-        label="Vehicle Use"
-        placeholder="Select any option"
-        :options="vehicleUseOptions"
-      />
+          v-model="filters.registration_type"
+          label="Registration Type"
+          placeholder="Select any option"
+          :options="registrationTypeOptions"
+        />
+        <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
         <x-select
           v-if="
             hasAnyRole([

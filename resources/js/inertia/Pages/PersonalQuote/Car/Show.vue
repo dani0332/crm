@@ -2062,7 +2062,7 @@ const isCommercialVehicle = computed(() => {
               <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">Name</dt>
-                  <dd>{{ record.first_name }} {{ record.last_name }}</dd>
+                  <dd>{{ record.driver_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -2348,13 +2348,11 @@ const isCommercialVehicle = computed(() => {
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
-                  <dd v-if="isPrivateCar">{{ record.customer_first_name }}</dd>
-                  <dd v-else>{{ record.first_name }}</dd>
+                  <dd>{{ record.first_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">LAST NAME</dt>
-                  <dd v-if="isPrivateCar">{{ record.customer_last_name }}</dd>
-                  <dd v-else>{{ record.last_name }}</dd>
+                  <dd>{{ record.last_name }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">MOBILE NUMBER</dt>

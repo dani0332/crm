@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Enums\CarRegistrationType;
+use App\Enums\CarVehicleUse;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -21,8 +23,6 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
-use App\Enums\CarVehicleUse;
-use App\Enums\CarRegistrationType;
 
 class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
@@ -248,7 +248,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                     continue;
                 }
                 // Check if registration_type is provided
-                if (!isset($row[42]) || empty($row[42])) {
+                if (! isset($row[42]) || empty($row[42])) {
                     $validator->errors()->add(
                         $rowIndex.'.42',
                         'Registration Type is required.'

@@ -6,7 +6,10 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanType;
+use App\Enums\CarRegistrationType;
 use App\Enums\carTypeInsuranceCode;
+use App\Enums\CarVehicleUse;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
@@ -41,9 +44,11 @@ use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
+use App\Jobs\SendCarCommercialOCBEmail;
 use App\Jobs\SendPCPCarOCBEmailJob;
 use App\Jobs\SendPCPFollowupsJob;
 use App\Models\ApplicationStorage;
+use App\Models\BusinessActivity;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
@@ -54,11 +59,13 @@ use App\Models\ClaimHistory;
 use App\Models\CurrentlyLocatedIn;
 use App\Models\Customer;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\HealthPlan;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
 use App\Models\QuoteAdditionalDetail;
+use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteTag;
 use App\Models\QuoteType;
@@ -84,13 +91,6 @@ use DateTime;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
-use App\Enums\CarRegistrationType;
-use App\Models\BusinessActivity;
-use App\Enums\CarVehicleUse;
-use App\Models\QuoteRequestEntityMapping;
-use App\Enums\CustomerTypeEnum;
-use App\Models\Entity;
-use App\Jobs\SendCarCommercialOCBEmail;
 
 class RenewalsUploadService
 {
@@ -1896,10 +1896,10 @@ class RenewalsUploadService
                             }
                             if (! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY) {
                                 if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL) {
-                                    if ( isset($leadData->business_activity) && empty($leadData->business_activity)) {
+                                    if (isset($leadData->business_activity) && empty($leadData->business_activity)) {
                                         $leadValidationErrors->push('Business Activity is required');
                                     }
-                                    if (!empty($leadData->business_activity) && ! BusinessActivity::where('name', $leadData->business_activity)->first()) {
+                                    if (! empty($leadData->business_activity) && ! BusinessActivity::where('name', $leadData->business_activity)->first()) {
                                         $leadValidationErrors->push('Invalid Business Activity');
                                     }
 
@@ -2444,12 +2444,5 @@ class RenewalsUploadService
             && $carQuote->source === LeadSourceEnum::RENEWAL_UPLOAD;
     }
 
-    public function incrementBatchEmailSent($renewalsBatchEmailId, $renewalQuoteProcessId)
-    {
-        RenewalsBatchEmails::where('id', $renewalsBatchEmailId)
-            ->update(['total_sent' => DB::raw('total_sent+1')]);
-        RenewalQuoteProcess::where('id', $renewalQuoteProcessId)
-            ->update(['email_sent' => 1]);
-    }
 
 }

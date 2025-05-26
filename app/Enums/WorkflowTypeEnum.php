@@ -29,5 +29,4 @@ final class WorkflowTypeEnum extends Enum
     public const COMPANY_CAR_OCB = 'company_car_ocb';
     public const AIG_WORKFLOW = 'aig_workflow';
     public const CAR_COMMERCIAL_OCB = 'car_commercial_ocb';
-
 }
