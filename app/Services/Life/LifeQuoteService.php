@@ -681,6 +681,30 @@ class LifeQuoteService extends BaseService
         return $request;
     }
 
+    
+
+    public function exportComparisionPdf($quote, $planIds, $lifePlans){
+        
+        
+        $quotePlans = app(LifeQuoteService::class)->getQuotePlans($quote->uuid);
+        $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();
+        $pdf = app(LifeQuoteService::class)->exportComparisionPdf($quote, $planIds, $lifePlans);
+
+        
+        $pdf = $this->comparisionPdf($quote, $planIds, $lifePlans);
+
+
+        return $pdf;
+    }
+    private function comparisionPdf($quote, $planIds, $lifePlans){
+        $pdf = PDF::setOption([
+            'isHtml5ParserEnabled' => true,
+            'dpi' => 150
+        ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
+
+        return $pdf;
+    }
+
     private function prepareActivitiesData($activities)
     {
         $activitiesData = [];

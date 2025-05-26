@@ -486,6 +486,59 @@ const validateCoverValue = value => {
   }
   return true;
 };
+
+const hidePlan = () => {
+  
+  editForm.actualPremium = Number(
+    parseFloat(editForm.actualPremium).toFixed(2),
+  );
+  editForm.sumAssured = Number(parseFloat(editForm.sumAssured).toFixed(2));
+  editForm.overallLoading = Number(
+    parseFloat(editForm.overallLoading).toFixed(2),
+  );
+
+  // Ensure riders have numeric values by converting strings to floats and preventing negative values
+  const processedRiders = ridersData.value.map(rider => ({
+    ...rider,
+    price: Number(parseFloat(rider.price).toFixed(2)) || 0,
+    loading: Number(parseFloat(rider.loading).toFixed(2)) || 0,
+    final_price: Number(parseFloat(rider.final_price).toFixed(2)) || 0,
+    coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
+  }));
+
+  editForm.riders = processedRiders;
+
+  axios
+    .post('/personal-quotes/life-plan-manual-create', {
+      quoteUID: props.uuid,
+      formData: editForm,
+    })
+    .then(res => {
+
+      if (res?.data?.code) {
+        notification.error({
+          title: res.data.msg,
+          position: 'top',
+        });
+
+        return;
+      }
+
+      notification.success({
+        title: "Plan visibility updated successfully",
+        position: 'top',
+      });
+
+      emit('onLoadAvailablePlansData');
+
+    })
+    .catch(err => {
+      emit('error');
+      errorMessage.value = err.response.data.message;
+    })
+    .finally(() => {
+    });
+};
 </script>
 
 <template>
@@ -531,9 +584,11 @@ const validateCoverValue = value => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
               <div :class="{ 'col-span-2': editForm.isApi }">
                 <x-toggle
+                  v-if="!props.selectedPlan.systemHidden"
                   v-model="editForm.isDisabled"
                   color="success"
                   label="Hide"
+                  @update:modelValue="hidePlan"
                 />
               </div>
 
