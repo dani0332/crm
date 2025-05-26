@@ -171,6 +171,7 @@ trait OcrFillable
         ];
 
         $providersWithPolicyDates = [
+            InsurerProviderEnum::GIG_INSURANCE,
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
             InsurerProviderEnum::QATAR_INSURANCE,
             InsurerProviderEnum::LIVANA_INSURANCE,
