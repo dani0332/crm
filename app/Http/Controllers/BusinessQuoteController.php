@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\AMLScreeningTypeEnum;
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -26,6 +27,7 @@ use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\DocumentType;
+use App\Models\Emirate;
 use App\Models\KycLog;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
@@ -277,7 +279,10 @@ class BusinessQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         return inertia('CorpLineQuote/Show', [
+            'storageUrl' => storageUrl(),
+            'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
+            'amlStatusName' => AMLStatusCode::getName($record->aml_status),
             'quoteDetails' => $quoteDetails,
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Business,
@@ -319,6 +324,7 @@ class BusinessQuoteController extends Controller
             'UBOsDetails' => $UBODetails,
             'UBORelations' => $UBORelations,
             'nationalities' => $nationalities,
+            'emirates' => Emirate::where('is_active', 1)->select('id', 'text')->get(),
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
             'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,

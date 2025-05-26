@@ -41,6 +41,8 @@ use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
+use App\Jobs\SendPCPCarOCBEmailJob;
+use App\Jobs\SendPCPFollowupsJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -871,6 +873,12 @@ class RenewalsUploadService
                 $this->syncQuote($quote, $quoteData);
             }
 
+            // Sync quote_id of lob table to personal quote table for allowed LOBs
+            $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
+            if (! $isQuotePersonal && in_array($quoteType->id, $allowedQuoteTypes)) {
+                $this->updatePersonalQuote($quote->uuid, $quoteType->id, ['quote_id' => $quote->id]);
+            }
+
             if ($isQuotePersonal) {
                 $quote->quoteDetail()->create($detailData);
             } else {
@@ -1353,6 +1361,16 @@ class RenewalsUploadService
                 }
 
                 $emailTemplateId = $this->getEmailTemplateId($carQuote, $quotePlansCount);
+                // check if advisor belongs to PCP or not
+                $isPCPTeamAdvisor = ! empty($carQuote->advisor_id) ? $this->carQuoteService->isPCPAdvisor($carQuote->advisor_id) : false;
+                LoggerService::info('PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$carQuote->source.' | Ref-ID: '.$carQuote->uuid.' | time: '.now());
+                if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
+                    $this->sendPCPFollowups($carQuote, $renewalsBatchEmail, $renewalQuoteProcess);
+
+                    return;
+                }
+                $emailTemplateId = $this->getEmailTemplateId($carQuote, $quotePlansCount);
+                info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
 
                 $previousAdvisor = $this->getPreviousAdvisor($carQuote);
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
@@ -1379,10 +1397,38 @@ class RenewalsUploadService
      * @param  int  $quotePlansCount
      * @return int
      */
+    private function sendPCPFollowups($carQuote, $renewalsBatchEmail, $renewalQuoteProcess)
+    {
+        try {
+            LoggerService::info(self::class.' - Sending sendPCPFollowups followups email for lead: '.$carQuote->uuid.' | Time: '.now());
+            if ($carQuote->quote_status_id == QuoteStatusEnum::NewLead || empty($carQuote->quote_status_id)) {
+                SendPCPCarOCBEmailJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(1));
+                LoggerService::info(self::class.' - SendPCPCarOCBEmailJob dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
+            } else {
+                LoggerService::info(self::class.' -  SendPCPCarOCBEmailJob  already dispatched lead status  for CAR-'.$carQuote->uuid.' - Time: '.now());
+            }
+
+            if (empty($carQuote->pcp_flow_executed_at)) {
+                SendPCPFollowupsJob::dispatch($carQuote->uuid)->delay(Carbon::now()->addMinutes(3));
+                LoggerService::info(self::class.' -  SendPCPFollowupsJob dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
+            } else {
+                LoggerService::info(self::class.' -  SendPCPFollowupsJob already dispatched for CAR-'.$carQuote->uuid.' - Time: '.now());
+            }
+            $this->updateQuoteStatus($carQuote);
+            $this->recordOcbSentDate($carQuote);
+            RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
+            RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
+
+        } catch (\Throwable $th) {
+            LoggerService::error('Renewals OCB Email failed for  CAR-'.$carQuote->uuid.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
+        }
+    }
     private function getEmailTemplateId($carQuote, $quotePlansCount)
     {
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
         LoggerService::info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
+
+        info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
 
         if (isset($carQuote->advisor_id)) {
             $advisor = $this->userService->getUserById($carQuote->advisor_id);

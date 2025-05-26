@@ -869,7 +869,8 @@ const options = reactive({
 watch(
   () => planFilters?.insurer,
   value => {
-    if (value) {
+    if (value && planFilters.insurer && planFilters.insurer.length > 0) {
+      planFilters.network = [];
       options.loading = true;
       const ids = planFilters.insurer.map(item => {
         return item;
@@ -879,9 +880,13 @@ watch(
         .get(url)
         .then(res => {
           if (res.data.length > 0) {
-            options.network = res.data;
+            options.network.length = 0;
+            options.network = useArrayUnique(
+              res.data,
+              (a, b) => a.value === b.value,
+            );
           } else {
-            options.network = [];
+            options.network.length = 0;
           }
         })
         .catch(err => {
@@ -893,8 +898,12 @@ watch(
         .finally(() => {
           options.loading = false;
         });
+    } else {
+      options.network.length = 0;
+      planFilters.network = [];
     }
   },
+  { deep: true },
 );
 
 const listQuotePlansFiltered = ref([]);
@@ -3608,6 +3617,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           multiple
           truncate
           class="w-full"
+          :loading="options.loading"
         >
           <template #content-footer>
             <ui-select-actions
