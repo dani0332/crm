@@ -2827,7 +2827,7 @@ const uploadDocument = (doc, files, count) => {
         },
         onSuccess: data => {
           let quoteTypes = quoteTypesToCheck.filter(
-            quoteType => quoteType !== quoteTypeCodeEnum.Home,
+            quoteType => quoteType !== quoteTypeCodeEnum.Home && quoteType !== quoteTypeCodeEnum.Life,
           );
           let quoteDocuments =
             quoteTypes.includes(props.quoteType) ||
@@ -3051,6 +3051,7 @@ const providerId = computed(() => {
 const providerName = computed(() => {
   const plan = planDetail.value;
   const ecomQuoteType = [...quoteTypesToCheck, quoteTypeCodeEnum.Bike];
+
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
       provider => provider.id === providerId.value,
@@ -3061,8 +3062,12 @@ const providerName = computed(() => {
     ecomQuoteType.includes(props.quoteType) &&
     plan.insurance_provider
   ) {
+
+    console.log('Inside condition', plan.insurance_provider.text);
     return plan ? plan.insurance_provider.text : 'Not Available';
   } else {
+    
+    console.log('Outside condition', plan.text);
     return plan ? plan.text : 'Not Available';
   }
 });
@@ -3115,7 +3120,7 @@ const setPlanDetail = () => {
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
     initalPlanDetails = props.quoteRequest.insurance_provider;
   } else if (props.quoteType == quoteTypeCodeEnum.Life) {
-    initalPlanDetails = props.quoteRequest.insurance_provider;
+    initalPlanDetails = props.quoteRequest.insurance_provider_plan;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {

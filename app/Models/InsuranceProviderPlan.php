@@ -11,6 +11,11 @@ class InsuranceProviderPlan extends Model
 
     protected $table = 'insurance_provider_plans';
 
+    function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'provider_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', 1);

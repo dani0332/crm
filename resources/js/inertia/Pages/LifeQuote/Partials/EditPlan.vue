@@ -510,6 +510,7 @@ const hidePlan = () => {
   }));
 
   editForm.riders = processedRiders;
+  editForm.hide = true;
 
   axios
     .post('/personal-quotes/life-plan-manual-create', {
