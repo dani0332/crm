@@ -3035,6 +3035,9 @@ const providerId = computed(() => {
 
 const providerName = computed(() => {
   const plan = planDetail.value;
+  if(props.quoteType == quoteTypeCodeEnum.Home) {
+    return props.quoteRequest.insurance_provider?.text || 'Not Available';
+  }
   const ecomQuoteType = [...quoteTypesToCheck, quoteTypeCodeEnum.Bike];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
