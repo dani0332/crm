@@ -311,6 +311,7 @@ class QuoteDocumentService extends BaseService
 
         if ($quote && $documentTypeCodes) {
             // Return documents filtered by document type codes if provided
+            // If watermarked_doc_url is not null then we can send watermarked document in email
             $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
@@ -430,14 +431,21 @@ class QuoteDocumentService extends BaseService
     public function getHandBookDocuments($quote, $coPaymentIds = null)
     {
         if ($quote->policyWording) {
-            $policyWording = $quote->policyWording;
-
-            // Filter out documents with matching co-payment codes
-            if ($coPaymentIds != null) {
-                $policyWording = $policyWording->reject(function ($policyWording) use ($coPaymentIds) {
-                    return $coPaymentIds && in_array($policyWording->health_plan_co_payment_id, $coPaymentIds);
+            // Get policy wording documents for the quote and filter out co-payment documents if provided 
+            // Filter out policy wording documents that don't have a link 
+            $policyWording = $quote->policyWording
+                ->when($coPaymentIds != null, function ($collection) use ($coPaymentIds) {
+                    return $collection->reject(function ($item) use ($coPaymentIds) {
+                        return in_array($item->health_plan_co_payment_id, $coPaymentIds);
+                    });
+                })
+                ->filter(function ($item) use ($quote) {
+                    if (empty($item->link)) {
+                        LoggerService::warning("Policy wording document not found for policy wording ID: {$item->id} Quote Code: {$quote->code} Error Code: 404");
+                        return false;
+                    }
+                    return true;
                 });
-            }
 
             $policyWording = $policyWording->map(function ($policyWording) use ($quote) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
@@ -452,7 +460,6 @@ class QuoteDocumentService extends BaseService
                     'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.trim($extension),
                 ];
             });
-
             return $policyWording->toArray();
         }
 
