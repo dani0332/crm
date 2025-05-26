@@ -653,48 +653,6 @@ const FieldLoader = defineComponent({
               </div>
             </div>
 
-            <!-- TIB fields: Insurer Commission Tax Invoice No, Commission (VAT Applicable) -->
-            <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-              <div class="w-full md:w-1/2">
-                <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
-                    Insurer Commission Tax Invoice No
-                  </label>
-                  <template #tooltip>
-                    <span>Insurer Commission Tax Invoice No</span>
-                  </template>
-                </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
-                  <x-input
-                    v-model="policyDetailsForm.insurer_commission_tax_invoice_no"
-                    type="text"
-                    placeholder="Insurer Commission Tax Invoice No"
-                    class="w-full"
-                    :disabled="!policyDetailsState.isEditing"
-                  />
-                </FieldLoader>
-              </div>
-              <div class="w-full md:w-1/2">
-                <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
-                    Commission (VAT Applicable)
-                  </label>
-                  <template #tooltip>
-                    <span>Commission (VAT Applicable)</span>
-                  </template>
-                </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
-                  <x-input
-                    v-model="policyDetailsForm.commission_vat_applicable"
-                    type="number"
-                    placeholder="Commission (VAT Applicable)"
-                    class="w-full"
-                    :disabled="!policyDetailsState.isEditing"
-                  />
-                </FieldLoader>
-              </div>
-            </div>
-
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip>
