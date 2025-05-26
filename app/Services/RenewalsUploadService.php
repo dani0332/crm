@@ -1356,7 +1356,8 @@ class RenewalsUploadService
                 if ($this->isCommercialRenewalQuote($carQuote)) {
                     SendCarCommercialOCBEmail::dispatch($carQuote->uuid);
                     LoggerService::info(self::class.' quote commercial OCB email sent UUID: '.$carQuote->uuid);
-                    $this->incrementBatchEmailSent(renewalsBatchEmailId:$renewalsBatchEmail->id, renewalQuoteProcessId: $renewalQuoteProcess->id)  ;
+                    $this->incrementBatchEmailSent(renewalsBatchEmailId: $renewalsBatchEmail->id, renewalQuoteProcessId: $renewalQuoteProcess->id);
+
                     return;
                 }
 
@@ -2383,7 +2384,7 @@ class RenewalsUploadService
         $quoteData['first_name'] = $this->mapFirstAndLastName($data['customer_name'])['first_name'] ?? null;
         $quoteData['last_name'] = $this->mapFirstAndLastName($data['customer_name'])['last_name'] ?? null;
         if ($data['vehicle_use'] == CarVehicleUse::PRIVATE) {
-         
+
             $quoteData['driver_name'] = $data['driver_name'] ?? null;
             $quoteData['nationality_id'] = $nationality->id ?? null;
             $quoteData['dob'] = $data['driver_dob'] ?? null;
@@ -2443,6 +2444,5 @@ class RenewalsUploadService
             && $carQuote->registration_type === CarRegistrationType::COMPANY
             && $carQuote->source === LeadSourceEnum::RENEWAL_UPLOAD;
     }
-
 
 }
