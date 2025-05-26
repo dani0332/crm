@@ -125,8 +125,6 @@ function onEditUBO(data) {
 }
 
 const onUBOSubmit = isValid => {
-  UBOFieldReq.nationality = UBOForm.nationality_id == null;
-  UBOFieldReq.dob = UBOForm.dob == null;
   if (!isValid) return;
   isLoading.value = true;
 
