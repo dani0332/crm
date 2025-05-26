@@ -700,7 +700,6 @@ const insuredId = props.insuredDetails?.insured?.id ?? null;
     </div>
   </div>
   <ScreeningModel
-    v-if="screeningModel"
     v-model="screeningModel"
     :quoteTypeCodeEnum="quoteTypeCodeEnum"
   />
