@@ -11,7 +11,7 @@ enum LoggerFeatureEnum: string
     case FTC_EMAIL = 'ftc-email';
 
     case TRAVEL_RENEWALS = 'travel-renewals';
-    
+
     case CREATE_PAYMENT = 'create-payment';
 
     case UPDATE_PAYMENT = 'update-payment';
@@ -27,5 +27,5 @@ enum LoggerFeatureEnum: string
     case DECLINE_PARENT_PAYMENT = 'decline-parent-payment';
 
     case MIGRATE_PAYMENT = 'migrate-payment';
-    
+
 }
