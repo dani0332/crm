@@ -1,6 +1,7 @@
 <script setup>
 import NProgress from 'nprogress';
 import DownloadDocuments from './DownloadDocuments.vue';
+import { getQuoteTypeId } from '../Composables/utilities';
 
 defineProps({
   quote: Object,
@@ -221,6 +222,7 @@ const getS3TempUrl = async docURL => {
     console.error('An error occurred:', error);
   }
 };
+
 </script>
 
 <template>
@@ -317,13 +319,35 @@ const getS3TempUrl = async docURL => {
           :rows-per-page="15"
           :hide-footer="quoteDocuments.length < 15"
         >
+          <template #item-document_type_text="item">
+            <template v-if="item.document_type_code == 'ID' && page.props.quote.quote_type_id == getQuoteTypeId(page.props.quoteTypes, 'Life')">
+              <template v-if="page.props.quote.insurance_provider">
+                {{ page.props.quote.insurance_provider.text }} - {{ item.document_type_text }}
+              </template>
+              <template v-else>
+                {{ item.document_type_text }}
+              </template>
+            </template>
+            <template v-else>
+              {{ item.document_type_text }}
+            </template>
+          </template>
           <template #item-original_name="item">
             <a
               v-if="hasAnyRole([rolesEnum.BetaUser])"
               @click.prevent="getS3TempUrl(item.doc_url)"
               class="text-primary-600 cursor-pointer"
             >
-              {{ item.original_name }}
+              <template v-if="item.document_type_code == 'ID' && page.props.quote.quote_type_id == getQuoteTypeId(page.props.quoteTypes, 'Life')">
+                {{page.props.quote.insurance_provider?.text}}
+                Illustration Document for
+                {{ page.props.quote.customer.first_name }}
+                {{ page.props.quote.customer.last_name }}
+                {{ page.props.quote.code }}.pdf
+              </template>
+              <template v-else>
+                {{ item.original_name }}
+              </template>
             </a>
 
             <a
@@ -332,7 +356,16 @@ const getS3TempUrl = async docURL => {
               target="_blank"
               class="text-primary-600"
             >
-              {{ item.original_name }}
+              <template v-if="item.document_type_code == 'ID' && page.props.quote.quote_type_id == getQuoteTypeId(page.props.quoteTypes, 'Life')">
+                {{page.props.quote.insurance_provider?.text}}
+                Illustration Document for
+                {{ page.props.quote.customer.first_name }}
+                {{ page.props.quote.customer.last_name }}
+                {{ page.props.quote.code }}.pdf
+              </template>
+              <template v-else>
+                {{ item.original_name }}
+              </template>
             </a>
           </template>
           <template
