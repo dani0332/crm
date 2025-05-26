@@ -65,6 +65,7 @@ const quoteDocumentsTable = reactive({
   ],
 });
 
+
 const modals = reactive({
   doc: false,
   docConfirm: false,
@@ -221,6 +222,8 @@ const getS3TempUrl = async docURL => {
     console.error('An error occurred:', error);
   }
 };
+
+console.log(page.props.quote.documents.document_type_text);
 </script>
 
 <template>
@@ -323,7 +326,16 @@ const getS3TempUrl = async docURL => {
               @click.prevent="getS3TempUrl(item.doc_url)"
               class="text-primary-600 cursor-pointer"
             >
-              {{ item.original_name }}
+              <template v-if="item.document_type_code == 'ID'">
+                {{page.props.quote.insurance_provider.text}}
+                Illustration Document for
+                {{ page.props.quote.customer.first_name }}
+                {{ page.props.quote.customer.last_name }}
+                {{ page.props.quote.code }}.pdf
+              </template>
+              <template v-else>
+                {{ item.original_name }}
+              </template>
             </a>
 
             <a
@@ -332,7 +344,16 @@ const getS3TempUrl = async docURL => {
               target="_blank"
               class="text-primary-600"
             >
-              {{ item.original_name }}
+              <template v-if="item.document_type_code == 'ID'">
+                {{page.props.quote.insurance_provider.text}}
+                Illustration Document for
+                {{ page.props.quote.customer.first_name }}
+                {{ page.props.quote.customer.last_name }}
+                {{ page.props.quote.code }}.pdf
+              </template>
+              <template v-else>
+                {{ item.original_name }}
+              </template>
             </a>
           </template>
           <template
