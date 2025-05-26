@@ -42,6 +42,19 @@ class SendBookPolicyRequest extends FormRequest
 
     public function withValidator($validator)
     {
+        $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
+
+        if (request()->send_policy_type == 'customer') {
+            $validator->after(function ($validator) use ($quote) {
+                if (! $quote?->advisor_id) {
+                    $validator->errors()->add('error', 'Please select advisor');
+                }
+
+                if (! $quote?->email) {
+                    $validator->errors()->add('error', 'Customer email is required');
+                }
+            });
+        }
 
         if (request()->send_policy_type == 'sage') {
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
@@ -49,10 +62,7 @@ class SendBookPolicyRequest extends FormRequest
                     'message' => 'You are not authorized to perform this action',
                 ]], 403);
             }
-            $validator->after(function ($validator) {
-                // check for quote records if exists
-                $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
-
+            $validator->after(function ($validator) use ($quote) {
                 if ($quote) {
                     if ($quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                         $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
