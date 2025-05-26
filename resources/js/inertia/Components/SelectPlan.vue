@@ -155,7 +155,7 @@ const checkAndUpdateSelectedPlan = async () => {
   hasSameGateway.value = true;
   if(props.payments?.length) {
     await validatePayments(data);
-    if(hasAnyAuthorizedPayment.value && !hasSameGateway.value) {
+    if(hasAnyAuthorizedPayment.value) {
       notification.error({
         title: "This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.",
         position: 'top',
@@ -374,7 +374,7 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
           class="text-lg px-6 py-4 border-b flex justify-between items-start"
         >
           <div class="text-left">
-            <span> The current plan has a pending payment. Switching to a new plan with a <br>different payment gateway will override the existing payment. Do you want <br>to continue?</span>
+            <span> The current plan has a pending payment. Switching to a new plan with a different payment gateway will override the existing payment. Do you want to continue?</span>
           </div>
         </div>
       </div>
