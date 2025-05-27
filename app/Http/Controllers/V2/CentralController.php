@@ -450,7 +450,8 @@ class CentralController extends Controller
     public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::DELETE_SPLIT_PAYMENT);
-        return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
+        LoggerService::info("Delete split payment called Payment Split code : {$request->code}");
+        return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id, $request->code);
     }
 
     // Store new payment
