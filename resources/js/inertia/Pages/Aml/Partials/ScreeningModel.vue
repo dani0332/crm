@@ -715,6 +715,7 @@ const handleModalClose = () => {
     show-close
     backdrop
     is-form
+    persistent
     @submit="submitScreeningForm"
   >
     <x-field label="Customer Type" required>
@@ -1052,8 +1053,7 @@ const handleModalClose = () => {
     <x-modal
       v-model="customerTypeConfirmationModel"
       size="lg"
-      :backdrop="false"
-      :close-on-backdrop="false"
+      backdrop
       persistent
     >
       <div class="text-lg text-center">

@@ -184,42 +184,6 @@ class AMLController extends Controller
     {
         LoggerService::info('fn:export - AMLController');
 
-        $query = AML::select([
-            'id',
-            'quote_request_id',
-            'quote_type_id',
-            'input',
-            'search_type',
-            'match_found',
-            'results_found',
-            'created_at',
-            'decision',
-        ])
-            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
-            ->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
-
-        $data = collect();
-
-        $query->chunk(1000, function ($chunk) use (&$data) {
-            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
-            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
-                $quoteType = QuoteTypes::getName($quoteTypeId);
-                $nameSpace = '\\App\\Models\\';
-                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
-
-                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
-                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
-                foreach ($quoteRequestData as $quoteRequest) {
-                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
-                    foreach ($amlData as $index => $value) {
-                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
-                        $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
-                    }
-                }
-            }
-            $data = $data->merge($chunk);
-        });
-
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
         $request->merge([
