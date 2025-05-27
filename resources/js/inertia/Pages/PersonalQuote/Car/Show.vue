@@ -3477,9 +3477,14 @@ const isCommercialVehicle = computed(() => {
                       :has-child-lead="
                         page.props.linkedQuoteDetails.childLeadsCount > 0
                       "
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
                       :uuid="quote.uuid"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="availablePlansItems || []"
+                      :payments="payments"
                     />
 
                     <x-button

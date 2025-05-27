@@ -253,7 +253,7 @@ class BikeQuoteRepository extends BaseRepository
 
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
-        //logger()->debug('Bike toRawSql: '.$query->toRawSql());
+        // logger()->debug('Bike toRawSql: '.$query->toRawSql());
 
         return $query;
     }
