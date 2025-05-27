@@ -21,6 +21,7 @@ use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Models\HealthQuote;
@@ -330,5 +331,10 @@ class ApiController extends Controller
     public function triggerAIGWorkflow(AIGWorkflowRequest $request)
     {
         return $this->apiService->triggerAIGWorkflow($request);
+    }
+
+    public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerTravelAIGWorkflow($request);
     }
 }
