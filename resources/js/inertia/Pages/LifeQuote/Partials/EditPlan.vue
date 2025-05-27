@@ -158,7 +158,13 @@ const editForm = reactive({
   overallLoading: props?.selectedPlan?.overallLoading ?? 0,
 });
 
-let actualPremium = ref(parseFloat(props.selectedPlan.actualPremium));
+// Make actualPremium a computed value to ensure reactivity
+const actualPremium = computed(() => {
+  const basePremium = Math.max(0, parseFloat(editForm.actualPremium) || 0);
+  const overallLoadingValue = Math.max(0, parseFloat(editForm.overallLoading) || 0);
+  const riderPrice = Math.max(0, parseFloat(getRiderPrice()) || 0);
+  return basePremium + overallLoadingValue + riderPrice;
+});
 
 // Update the Plan (if it is manual)
 const onSubmit = isValid => {
@@ -323,7 +329,7 @@ const getQuote = () => {
 
       if (res.data) {
         editForm.actualPremium = res.data.providerPlan.plan.actualPremium;
-        actualPremium.value = res.data.providerPlan.plan.actualPremium;
+        // No need to set actualPremium.value as it's now a computed property
         errorMessage.value = null;
       }
       console.log('Error message', errorMessage);
@@ -353,9 +359,6 @@ onMounted(() => {
       loading: parseInt(rider?.loading) ?? 0,
       finalPrice: parseInt(rider?.finalPrice) ?? 0,
     }));
-
-    updatePriceWithOverloading();
-
   }
 });
 
@@ -407,32 +410,10 @@ const getRiderPrice = () => {
 watch(
   ridersData,
   newRidersData => {
-    let price = getRiderPrice();
-    actualPremium.value =
-      Math.max(0, parseFloat(editForm.actualPremium)) + price;
   },
   { deep: true },
 );
 
-// EditForm Overloading
-const updatePriceWithOverloading = () => {
-  let price = editForm.overallLoading;
-  const totalRider = getRiderPrice();
-
-  if (!price || isNaN(price)) {
-    price = 0;
-  }
-  actualPremium.value = Math.max(0, parseFloat(editForm.actualPremium)) + Math.max(0, parseFloat(price)) + Math.max(0, parseFloat(totalRider));
-  
-  console.log('price', actualPremium.value);
-};
-
-const handleActualPremium = () => {
-  const totalRider = getRiderPrice();
-  actualPremium.value =
-    Math.max(0, parseFloat(editForm.actualPremium)) +
-    Math.max(0, parseFloat(totalRider));
-};
 
 // tabs
 const tabs = ref([
