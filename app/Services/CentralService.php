@@ -30,11 +30,13 @@ use App\Facades\Marshall;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
+use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\InsuranceProvider;
 use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -1389,5 +1391,49 @@ class CentralService extends BaseService
         }
 
         return ['status' => true, 'message' => 'Delete payment processed'];
+    }
+
+    public function getPlansPaymentGateway($request, $quoteType)
+    {
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $paymentGatewayIds = [];
+        foreach ($request->plan_ids as $plan) {
+            $planId = $plan['planId'];
+            $providerId = $plan['providerId'];
+
+            if (! $planId || ! $providerId) {
+                continue;
+            }
+
+            $childPaymentGatewayIds = ['plan_id' => $planId, 'gateway_id' => 3];
+
+            // COMMENTED FOR NOW WILL BE USED LATER WHEN BROKER COMMISSION CHANGES GO LIVE
+            // // First check if Broker Commission exists for the plan+provider+quoteTypeId
+            // $planBrokerCommission = BrokerCommission::where(['plan_id' => $planId, 'insurance_provider_id' => $providerId, 'quote_type_id' => $quoteTypeId, 'is_active' => 1])->first();
+            // if($planBrokerCommission) {
+            //     $childPaymentGatewayIds['gateway_id'] = $planBrokerCommission->enable_payment_link ? 4:3;
+            //     $paymentGatewayIds[] = $childPaymentGatewayIds;
+            //     continue;
+            // }
+
+            // // Second check if Broker Commission exists for the provider+quoteTypeId
+            // $providerBrokerCommission = BrokerCommission::where(['insurance_provider_id' => $providerId, 'quote_type_id' => $quoteTypeId, 'is_active' => 1])->whereNull('plan_id')->first();
+            // if($providerBrokerCommission) {
+            //     $childPaymentGatewayIds['gateway_id'] = $providerBrokerCommission->enable_payment_link ? 4:3;
+            //     $paymentGatewayIds[] = $childPaymentGatewayIds;
+            //     continue;
+            // }
+
+            // Third check from insurance_provider table
+            $insuranceProvider = InsuranceProvider::where(['id' => $providerId, 'is_active' => 1])->first();
+
+            if ($insuranceProvider) {
+                $childPaymentGatewayIds['gateway_id'] = $insuranceProvider->payment_gateway_id;
+            }
+
+            $paymentGatewayIds[] = $childPaymentGatewayIds;
+        }
+
+        return $paymentGatewayIds;
     }
 }
