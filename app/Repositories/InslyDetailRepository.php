@@ -263,6 +263,12 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
 
+        /* Temp Code - assign email for particular Policy id/number */
+        if ($policyID == 40523841) {
+            $email = 'soniax711@gmail.com';
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
         if (empty($email)) {
             return [
                 'status' => 400,
@@ -537,6 +543,16 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+
+        /* Temp Code - assign email for particular Policy id/number */
+
+        $tempEmail = 'soniax711@gmail.com';
+        $tempPolicyId = 40523841;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }
+
+        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;

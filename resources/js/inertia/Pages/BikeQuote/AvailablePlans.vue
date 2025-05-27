@@ -14,6 +14,7 @@ defineProps({
   planURL: String,
   insuranceProviders: Array,
   websiteURL: String,
+  payments: Array,
 });
 const toggleLoader = ref(false);
 const selectedPlans = ref([]);
@@ -640,6 +641,11 @@ onMounted(() => {
               :uuid="quote.uuid"
               :insuranceProviderId="item.id"
               :code="quote.code"
+              :plans="availablePlansItems || []"
+              :payments="payments"
+              :extraDetails="{
+                selectedPlansIds: [selectedProviderPlan?.id],
+              }"
             />
 
             <x-button v-else size="xs" color="orange" outlined :disabled="true">
