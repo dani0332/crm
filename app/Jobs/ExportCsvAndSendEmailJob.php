@@ -115,18 +115,13 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     {
         $lockKey = md5(
             $this->exportClass.
-            $this->recipientEmail.
-            json_encode($this->requestParams)
+            $this->recipientEmail
         );
 
-        $middleware = [
+        return [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease() // Don't release back to queue if locked
                 ->expireAfter(300), // Lock expires after 5 mins (same as timeout)
         ];
-
-        LoggerService::info("ExportCsvAndSendEmailJob middleware",['middleware'=>$middleware]);
-
-        return $middleware;
     }
 }
