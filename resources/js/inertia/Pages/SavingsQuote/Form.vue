@@ -13,42 +13,42 @@ const props = defineProps({
 const nationalities = computed(() => {
   return props.lookUpData.nationality.map(item => ({
     value: item.id,
-    label: item.text
+    label: item.text,
   }));
 });
 
 const maritalStatuses = computed(() => {
   return props.lookUpData.maritalStatus.map(item => ({
     value: item.id,
-    label: item.text
+    label: item.text,
   }));
 });
 
 const purposes = computed(() => {
   return props.lookUpData.savingsPurpose.map(item => ({
     value: item.code,
-    label: item.text
+    label: item.text,
   }));
 });
 
 const currencies = computed(() => {
   return props.lookUpData.currencyType.map(item => ({
     value: item.id,
-    label: item.text
+    label: item.text,
   }));
 });
 
 const tenures = computed(() => {
   return props.lookUpData.savingsTenure.map(item => ({
     value: item.code,
-    label: item.text
+    label: item.text,
   }));
 });
 
 const investmentFrequencies = computed(() => {
   return props.lookUpData.savingsInvestmentType.map(item => ({
     value: item.code,
-    label: item.text
+    label: item.text,
   }));
 });
 
@@ -214,7 +214,8 @@ function onSubmit(isValid) {
 
         <div class="w-full">
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            HAVE YOU USED ANY NICOTINE-CONTAINING PRODUCTS WITHIN THE PAST 12 MONTHS? <span class="text-red-500">*</span>
+            HAVE YOU USED ANY NICOTINE-CONTAINING PRODUCTS WITHIN THE PAST 12
+            MONTHS? <span class="text-red-500">*</span>
           </label>
           <div class="flex gap-12 mt-2">
             <x-form-group
