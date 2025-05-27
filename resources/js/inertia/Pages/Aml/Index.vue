@@ -324,6 +324,15 @@ onMounted(() => {
         <x-button
           size="sm"
           color="#ff5e00"
+          @click.prevent="onDataExport('excel')"
+          :disabled="loader.export"
+          :loading="loader.export"
+        >
+          Export via API
+        </x-button>
+        <x-button
+          size="sm"
+          color="#ff5e00"
           type="submit"
           :disabled="loader.table"
           @click="resetBeforeSubmit()"

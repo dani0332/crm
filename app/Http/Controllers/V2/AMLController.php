@@ -1108,24 +1108,27 @@ class AMLController extends Controller
     {
         LoggerService::info('fn:amlCtfReportExport - AMLController');
 
-        $query = \App\Models\Insured::with(['insuredKyc' => function($q) {
-            $q->select(
-                'insured_id',
-                'residency_status',
-                'risk_profile',
-                'policy_number',
-                'policy_type',
-                'transaction_count',
-                'transaction_amount',
-                'insurance_company',
-                'policy_start_date',
-                'policy_end_date',
-                'lead_status',
-                'pep',
-                'last_aml_screening_date',
-                'remarks'
-            );
-        }])
+        $query = \App\Models\Insured::with([
+            'insuredKyc' => function($q) {
+                $q->select(
+                    'insured_id',
+                    'residency_status',
+                    'risk_profile',
+                    'policy_number',
+                    'policy_type',
+                    'transaction_count',
+                    'transaction_amount',
+                    'insurance_company',
+                    'policy_start_date',
+                    'policy_end_date',
+                    'lead_status',
+                    'pep',
+                    'last_aml_screening_date',
+                    'remarks'
+                );
+            },
+            'customerInsured'
+        ])
         ->select(
             'id',
             'uuid',
@@ -1135,10 +1138,29 @@ class AMLController extends Controller
             'customer_type',
             'created_at'
         );
-
         $query->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
 
-        $data = $query->get();
+        $query->chunk(1000, function ($chunk) use (&$data) {
+
+            foreach ($chunk as $aml) {
+                $quoteType = QuoteTypes::getName($aml->quote_type_id);
+                $nameSpace = '\\App\\Models\\';
+                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
+
+                // $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
+                // $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
+                // foreach ($quoteRequestData as $quoteRequest) {
+                //     $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
+                //     foreach ($amlData as $index => $value) {
+                //         $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
+                //         $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
+                //     }
+                // }
+            }
+            $data = $data->merge($chunk);
+        });
+
+        // $data = $query->get();
 
         $fileName = 'AML_CTF_Report_' . now()->format('Ymd_His') . '.xlsx';
         return (new AmlCftReportExport($data))->download($fileName);

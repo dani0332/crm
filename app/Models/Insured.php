@@ -18,4 +18,9 @@ class Insured extends Model
     {
         return $this->hasOne(InsuredKyc::class, 'insured_id', 'id');
     }
+
+    public function customerInsured()
+    {
+        return $this->hasMany(\App\Models\CustomerInsured::class, 'insured_id', 'id');
+    }
 }
