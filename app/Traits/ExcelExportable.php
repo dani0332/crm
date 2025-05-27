@@ -181,7 +181,7 @@ trait ExcelExportable
                     // Free up memory every 100 records
                     if ($totalRecords % 100 === 0) {
                         $currentMemory = round(memory_get_usage(true) / 1024 / 1024, 2);
-                        //logger()->debug("Processed {$totalRecords} records. Memory: {$currentMemory}MB");
+                        // logger()->debug("Processed {$totalRecords} records. Memory: {$currentMemory}MB");
                     }
                 }
             }
