@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { errorMessages } from 'vue/compiler-sfc';
 import moment from 'moment';
 import { reactify } from '@vueuse/core';
@@ -27,7 +27,7 @@ let riders = props.lifeRiders.map(rider => ({
   coverValue: 0,
   text: rider.text,
   loading: 0,
-  final_price: 0,
+  finalPrice: 0,
 }));
 
 const showInsurerError = ref(false);
@@ -155,7 +155,7 @@ const editForm = reactive({
   isApi: props.selectedPlan.isApi,
   isManualUpdate:
     props.selectedPlan.isManualPlan || props.selectedPlan.isApi ? true : false,
-  overallLoading: 0,
+  overallLoading: props?.selectedPlan?.overallLoading ?? 0,
 });
 
 let actualPremium = ref(parseFloat(props.selectedPlan.actualPremium));
@@ -172,20 +172,16 @@ const onSubmit = isValid => {
   editForm.overallLoading = Number(
     parseFloat(editForm.overallLoading).toFixed(2),
   );
-  // extraAttr.loading = true;
+  extraAttr.loading = true;
 
   // Ensure riders have numeric values by converting strings to floats and preventing negative values
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
     price: Number(parseFloat(rider.price).toFixed(2)) || 0,
     loading: Number(parseFloat(rider.loading).toFixed(2)) || 0,
-    final_price: Number(parseFloat(rider.final_price).toFixed(2)) || 0,
+    finalPrice: Number(parseFloat(rider.finalPrice).toFixed(2)) || 0,
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
-
-
-  console.log(processedRiders);
-  return;
 
   editForm.riders = processedRiders;
 
@@ -289,9 +285,9 @@ const getQuote = () => {
     loading: isNaN(rider.loading)
       ? parseFloat(0)
       : parseFloat(Number(rider.loading).toFixed(2)),
-    final_price: isNaN(rider.final_price)
+    finalPrice: isNaN(rider.finalPrice)
       ? parseFloat(0)
-      : parseFloat(Number(rider.final_price).toFixed(2)),
+      : parseFloat(Number(rider.finalPrice).toFixed(2)),
     coverValue: isNaN(rider.coverValue)
       ? parseFloat(0)
       : parseFloat(Number(rider.coverValue).toFixed(2)),
@@ -355,10 +351,11 @@ onMounted(() => {
       coverValue: rider.coverValue ?? 0,
       text: rider.text,
       loading: parseInt(rider?.loading) ?? 0,
-      final_price: parseInt(rider?.final_price) ?? 0,
+      finalPrice: parseInt(rider?.finalPrice) ?? 0,
     }));
 
-    console.log(ridersData.value);
+    updatePriceWithOverloading();
+
   }
 });
 
@@ -386,19 +383,23 @@ const getRiderPrice = () => {
     .filter(rider => rider.active == parseInt(1)) // Filter active riders
     .reduce(
       (sum, rider) =>
-        Math.max(0, parseFloat(sum)) +
-        Math.max(0, parseFloat(rider.final_price) || 0),
+        Math.max(0, parseFloat(sum)),
       0,
     );
+
 
   let totalRiderPrice = Math.max(0, parseFloat(totalActivePrice));
   // Disable Overall Loading if there is rider loading added on rider level
   if (totalRiderLoading > 0) {
-    overallLoadingState = true;
+    overallLoadingState.value = true;
     totalRiderPrice = Math.max(0, totalRiderPrice + totalRiderLoading);
   } else if (totalFinalPrice > 0) {
     totalRiderPrice = Math.max(0, totalRiderPrice + totalFinalPrice);
-    overallLoadingState = true;
+  } 
+
+  if (totalRiderLoading == 0) {
+    
+    overallLoadingState.value = false;
   }
   return totalRiderPrice;
 };
@@ -420,13 +421,10 @@ const updatePriceWithOverloading = () => {
 
   if (!price || isNaN(price)) {
     price = 0;
-    console.log('Is Nan');
   }
-  console.log('price', price);
-  actualPremium.value =
-    Math.max(0, parseFloat(editForm.actualPremium)) +
-    Math.max(0, parseFloat(price)) +
-    Math.max(0, parseFloat(totalRider));
+  actualPremium.value = Math.max(0, parseFloat(editForm.actualPremium)) + Math.max(0, parseFloat(price)) + Math.max(0, parseFloat(totalRider));
+  
+  console.log('price', actualPremium.value);
 };
 
 const handleActualPremium = () => {
@@ -467,7 +465,9 @@ const computedFinalPrice = rider =>
       !rider.loading || rider.loading === ''
         ? 0
         : Math.max(0, parseFloat(rider.loading));
-    return price + loading;
+    const finalPrice = price + loading;
+    rider.finalPrice = finalPrice;
+    return finalPrice;
   });
 
 const closeModal = () => {
@@ -508,7 +508,7 @@ const hidePlan = () => {
     ...rider,
     price: Number(parseFloat(rider.price).toFixed(2)) || 0,
     loading: Number(parseFloat(rider.loading).toFixed(2)) || 0,
-    final_price: Number(parseFloat(rider.final_price).toFixed(2)) || 0,
+    finalPrice: Number(parseFloat(rider.finalPrice).toFixed(2)) || 0,
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
 
@@ -543,6 +543,7 @@ const hidePlan = () => {
     })
     .finally(() => {});
 };
+
 </script>
 
 <template>
@@ -867,9 +868,7 @@ const hidePlan = () => {
                     :disabled="
                       !props.selectedPlan.isManualPlan ||
                       !rider.active ||
-                      editForm.overallLoading > 0 ||
-                      rider.final_price > 0
-                    "
+                      editForm.overallLoading > 0"
                     @keydown="e => preventInvalidInputs(e, true)"
                     min="0"
                     class="w-full h-10 p-2 rounded-md"
@@ -881,8 +880,6 @@ const hidePlan = () => {
                   class="col-span-1"
                   v-if="props.selectedPlan.isUnderwritten"
                 >
-                 
-
                   <div class="appearance-none block w-16 ml-2 placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]" >
                     {{ computedFinalPrice(rider) }}
                   </div>
@@ -1005,7 +1002,7 @@ const hidePlan = () => {
             <div class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
               <dd class="text-sm">
-                &nbsp; AED {{ parseFloat(editForm.actualPremium).toFixed(2) }}
+                &nbsp; AED {{ actualPremium.toFixed(2) }}
               </dd>
             </div>
           </div>
