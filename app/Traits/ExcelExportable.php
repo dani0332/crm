@@ -216,8 +216,13 @@ trait ExcelExportable
                 'systemName' => config('constants.MAIL_FROM_NAME', 'The System'),
             ];
 
-            // Send email with attachment
-            Mail::send(
+            // Send email with attachment with proper connection management
+            logger()->info("Starting email send for {$totalRecords} records, file size: {$fileSize}KB");
+
+            // Force a fresh mailer instance to avoid connection reuse issues
+            $mailer = Mail::mailer('smtp');
+
+            $mailer->send(
                 ['html' => 'ExportCSVMail'],
                 $emailParams,
                 function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvFilePath, $csvFileName) {
@@ -237,6 +242,16 @@ trait ExcelExportable
                     ]);
                 }
             );
+
+            // Force close the SMTP connection to prevent reuse
+            $transport = $mailer->getSymfonyTransport();
+            if (method_exists($transport, 'stop')) {
+                $transport->stop();
+            }else{
+                logger()->info("stop method doesn't exist");
+            }
+
+            logger()->info("Email sent successfully");
 
             // Clean up the temporary file
             if (file_exists($csvFilePath)) {

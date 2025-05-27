@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -118,10 +119,14 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             json_encode($this->requestParams)
         );
 
-        return [
+        $middleware = [
             (new WithoutOverlapping($lockKey))
                 ->dontRelease() // Don't release back to queue if locked
                 ->expireAfter(300), // Lock expires after 5 mins (same as timeout)
         ];
+
+        LoggerService::info("ExportCsvAndSendEmailJob middleware",['middleware'=>$middleware]);
+
+        return $middleware;
     }
 }
