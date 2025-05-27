@@ -1,0 +1,94 @@
+---
+description: Guideline for doing any kind of work on Travel AIG
+globs:
+alwaysApply: false
+---
+# Travel AIG Workflow Rules
+
+## Rule: AIG Workflow Triggers API Endpoint
+
+**Type:** Agent Requested
+
+**Trigger:** `routes/api.php` - `/imcrm/trigger-travel-aig-workflow` endpoint
+
+**Description:** This API endpoint serves as the main entry point for triggering Travel AIG workflows. It's designed to accept a quote UUID and optionally a quote type ID. The endpoint follows an atomic update pattern where it first marks the lead as processed with a timestamp before dispatching the actual job. This prevents duplicate processing of the same lead.
+
+## Rule: Travel AIG Workflow Request Validation
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Http/Requests/TravelAIGWorkflowRequest.php`
+
+**Description:** Defines the request validation rules for the Travel AIG workflow API endpoint. The request requires a `quoteUuid` and optionally a `quoteTypeId`. Any changes to these validation rules could affect how the workflow is triggered and potentially cause errors if required parameters are missing.
+
+## Rule: Travel AIG Workflow Job Processing
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Jobs/TravelAIGWorkflowJob.php`
+
+**Description:** This job handles the asynchronous processing of Travel AIG workflows. It takes a quote UUID and quote type, validates them, retrieves the lead, and then calls the TravelEmailService to send the Travel AIG workflow email. The job includes error handling and logging. It has retry settings (3 attempts) and a timeout of 15 seconds with a 60-second backoff between attempts.
+
+## Rule: Travel AIG Workflow Email Construction
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Services/EmailServices/TravelEmailService.php::sendTravelAIGWorkflow()`
+
+**Description:** This method builds and sends the Travel AIG workflow emails through Bird service webhooks. It uses the `travel_aig_flow_executed_at` timestamp to prevent duplicate processing. The workflow data is constructed using the `buildAIGWorkflowData` method, and it creates quote flow details for tracking purposes. This endpoint relies on the `BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL` config key from ApplicationStorageEnums.
+
+## Rule: AIG Lead Tagging and Identification
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Enums/QuoteSegmentEnum.php` - `AIG` enum case
+
+**Description:** The AIG segment enum is used to identify and tag leads that should be processed through the AIG workflow. This enum defines the label ("AIG Leads") and tag name ("AIG") used throughout the application. Any changes to this enum could affect how AIG leads are identified and filtered in various parts of the system.
+
+## Rule: Travel AIG Workflow Type Definition
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Enums/WorkflowTypeEnum.php` - `TRAVEL_AIG_WORKFLOW` constant
+
+**Description:** This constant defines the workflow type identifier "travel_aig_workflow" used by the Bird service to route the workflow to the correct template. This constant is referenced in the TravelEmailService to set the workflow type when building the email data. Any changes to this constant would break the connection to the Bird service workflows.
+
+## Rule: Quote Segment Filtering for AIG
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Traits/QuoteModelTrait.php` - AIG segment filtering logic
+
+**Description:** Contains logic for filtering quotes by AIG segment. This trait provides methods to check if a quote is tagged as AIG and to filter quotes by AIG status. It's used throughout the application to target AIG-specific leads for processing. Any changes to this logic could affect which leads get processed by the Travel AIG workflow.
+
+## Rule: Travel AIG Workflow API Service Implementation
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Services/ApiService.php::triggerTravelAIGWorkflow()`
+
+**Description:** This method processes the Travel AIG workflow request, validates the lead, performs an atomic update to prevent duplicate processing, and dispatches the workflow job. It uses a database field `travel_aig_flow_executed_at` to track which leads have already been processed, ensuring a lead is only processed once. Any changes to this method could affect the reliability of the workflow triggering process.
+
+## Rule: Bird Service Webhook Integration
+
+**Type:** Agent Requested
+
+**Trigger:** `app/Services/EmailServices/TravelEmailService.php::buildAIGWorkflowData()`
+
+**Description:** This method constructs the payload for the Bird service webhook that triggers the actual email workflow. It includes customer details, advisor information, and various links needed by the email templates. This method structures data specifically for the Travel AIG workflow in a format expected by the Bird service. Any changes to this method could break the integration with the Bird service.
+
+## Rule: Travel Quote Model AIG Flag
+
+**Type:** Agent Requested
+
+**Trigger:** `travel_aig_flow_executed_at` field in Travel Quote model
+
+**Description:** This timestamp field in the Travel Quote model is used to track whether a Travel AIG workflow has been executed for a particular lead. The API service performs an atomic update on this field to ensure workflows are only triggered once per lead. This field is critical for preventing duplicate processing of leads.
+
+## Rule: AIG Bird Webhook URL Configuration
+
+**Type:** Agent Requested
+
+**Trigger:** `ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL`
+
+**Description:** This configuration key stores the Bird service webhook URL that receives the Travel AIG workflow data. The same webhook is used for both AIG and regular travel followups, with the workflow type parameter determining how the data is processed. Any changes to this key would require corresponding changes in the Bird service configuration.
