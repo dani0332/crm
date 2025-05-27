@@ -25,6 +25,7 @@ use App\Models\LifeInsuranceTenure;
 use App\Models\LifeNumberOfYears;
 use App\Models\LifeQuote;
 use App\Models\LifeRider;
+use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
@@ -64,11 +65,12 @@ class LifeQuoteService extends BaseService
         $authorizedDays = $this->getPaymentAuthorisedDays();
         $renewalBatches = $this->getRenewalBaches();
         $typesOfInsurance = LifeInsuranceTenure::withActive()->get();
-        $planTypes = LifeInsuranceTenure::select('id', 'text')->oldest()->limit(2)->get();
+        // $planTypes = LifeInsuranceTenure::select('id', 'text')->oldest()->limit(2)->get();
         $numberOfYears = LifeNumberOfYears::withActive()->get();
         $currency = CurrencyType::withActive()->get();
+        $planSubTypes = Lookup::where('key', LookupsEnum::LIFE_PLAN_SUB_TYPE)->select('id', 'text')->get();
 
-        return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planTypes');
+        return compact('quotes', 'leadStatuses', 'advisors', 'renewalBatches', 'authorizedDays', 'typesOfInsurance', 'numberOfYears', 'currency', 'planSubTypes');
     }
 
     public function getLifeQuotes($isExportRequest = false, $isTotalLeadCountRequest = false)
@@ -80,6 +82,7 @@ class LifeQuoteService extends BaseService
 
     public function getLifeQuoteQuery($isExportRequest = false, $isTotalLeadCountRequest = false)
     {
+
         $query = PersonalQuote::byQuoteTypeCode(QuoteTypes::LIFE->value)->with([
             'advisor',
             'quoteStatus',
@@ -94,6 +97,11 @@ class LifeQuoteService extends BaseService
                     'numberOfYears',
                 ]);
             },
+            'insuranceProviderPlan' => function ($q) {
+                $q->with([
+                    'subType:id,code',
+                ]);
+            }
         ])
             ->when(auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->user()->id);
@@ -107,8 +115,13 @@ class LifeQuoteService extends BaseService
                 });
             })
             ->when(! empty(request()->tenure_of_insurance_id), function ($query) {
+                $query->whereHas('insuranceProviderPlan', function ($subQuery) {
+                    $subQuery->where('sub_type_id', request()->tenure_of_insurance_id);
+                });
+            })
+            ->when(! empty(request()->number_of_years_id), function ($query) {
                 $query->whereHas('lifeQuote', function ($subQuery) {
-                    $subQuery->where('tenure_of_insurance_id', request()->tenure_of_insurance_id);
+                    $subQuery->where('number_of_years_id', request()->number_of_years_id);
                 });
             })
             ->when(! empty(request()->number_of_years_id), function ($query) {
@@ -146,7 +159,6 @@ class LifeQuoteService extends BaseService
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
-
         return $query;
     }
 
@@ -177,6 +189,7 @@ class LifeQuoteService extends BaseService
         $typesOfInsurance = LifeInsuranceTenure::withActive()->get();
         $numberOfYears = LifeNumberOfYears::withActive()->get();
         $currency = CurrencyType::withActive()->get();
+        $planSubTypes = Lookup::where('key', LookupsEnum::LIFE_PLAN_SUB_TYPE)->select('id', 'text')->get();
 
         return [
             'quotes' => $lifeQuotes,
@@ -188,6 +201,7 @@ class LifeQuoteService extends BaseService
             'typesOfInsurance' => $typesOfInsurance,
             'numberOfYears' => $numberOfYears,
             'currency' => $currency,
+            'planSubTypes' => $planSubTypes,
         ];
     }
 

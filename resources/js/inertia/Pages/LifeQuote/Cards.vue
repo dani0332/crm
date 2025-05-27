@@ -10,6 +10,7 @@ const props = defineProps({
   typesOfInsurance: Array,
   numberOfYears: Array,
   currency: Array,
+  planSubTypes: Array,
 });
 const page = usePage();
 const dateFormat = date => {
@@ -331,16 +332,6 @@ watch(
   { deep: true },
 );
 
-let planTypes = [
-  {
-    id: 1,
-    text: 'Fixed Term Insurance',
-  },
-  {
-    id: 2,
-    text: 'Whole Life Insurance',
-  },
-];
 </script>
 
 <template>
@@ -554,9 +545,9 @@ let planTypes = [
           placeholder="Plan Type"
           label="Plan Type"
           :options="
-            planTypes.map(item => ({
+            planSubTypes.map(item => ({
               value: item.id,
-              label: item.text,
+              label: item.text == 'Term' ? 'Fixed Term Insurance' : 'Whole of Life Insurance',
             }))
           "
         />

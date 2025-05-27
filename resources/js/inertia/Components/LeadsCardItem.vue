@@ -197,6 +197,19 @@ const formatDate = date => {
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
   return useDateFormat(date, 'DD-MMM-YYYY').value;
 };
+const getInsuranceType = (planId, insurance_provider_plan) => {
+  if (!planId) return null;
+
+  if (insurance_provider_plan?.sub_type?.code === 'term') {
+    return `Fixed Term Insurance`;
+  }
+
+  if (insurance_provider_plan?.sub_type?.code === 'wol') {
+    return 'Whole of Life Insurance';
+  }
+
+  return null;
+}
 </script>
 <template>
   <div
@@ -224,6 +237,7 @@ const formatDate = date => {
         dob,
         nationality_text,
         insurance_tenure_text,
+        insurance_provider_plan,
         age,
         plan_id,
       } in leads"
@@ -249,14 +263,8 @@ const formatDate = date => {
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">
         <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />
         <p class="text-xs">
-          {{
-            plan_id
-              ? insurance_tenure_text == 'Whole of Life Insurance' ||
-                insurance_tenure_text == 'Fixed Term Insurance'
-                ? insurance_tenure_text
-                : ''
-              : ''
-          }}
+          {{ getInsuranceType(plan_id, insurance_provider_plan) }}
+
         </p>
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">

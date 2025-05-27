@@ -9,6 +9,7 @@ defineProps({
   numberOfYears: Array,
   currency: Array,
   insurerAMLStatus: Array,
+  planSubTypes: Array,
 });
 
 const page = usePage();
@@ -521,16 +522,6 @@ const insurerAMLStatusOption = computed(() =>
   })),
 );
 
-let planTypes = [
-  {
-    id: 1,
-    text: 'Fixed Term Insurance',
-  },
-  {
-    id: 2,
-    text: 'Whole Life Insurance',
-  },
-];
 </script>
 
 <template>
@@ -820,9 +811,9 @@ let planTypes = [
           placeholder="Plan Type"
           label="Plan Type"
           :options="
-            planTypes.map(item => ({
+            planSubTypes.map(item => ({
               value: item.id,
-              label: item.text,
+              label: item.text == 'Term' ? 'Fixed Term Insurance' : 'Whole of Life Insurance',
             }))
           "
         />

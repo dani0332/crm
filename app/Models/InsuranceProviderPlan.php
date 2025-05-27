@@ -21,5 +21,10 @@ class InsuranceProviderPlan extends Model
         return $query->where('is_active', 1);
     }
 
+    public function subType()
+    {
+        return $this->belongsTo(Lookup::class, 'sub_type_id');
+    }
+
     protected $guarded = [];
 }
