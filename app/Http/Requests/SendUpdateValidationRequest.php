@@ -55,14 +55,14 @@ class SendUpdateValidationRequest extends FormRequest
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
             } elseif ($sendUpdateLog->status == SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS) {
-                if (! $checkTransactionApprovedInSUStatusLogs && ! in_array($sendUpdateLog?->option->code, [
+                if (! $checkTransactionApprovedInSUStatusLogs && ! in_array($sendUpdateLog?->option?->code, [
                     SendUpdateLogStatusEnum::ATCRNB, SendUpdateLogStatusEnum::ATCRNB_RBB, SendUpdateLogStatusEnum::ATCRN_CRNRBB])) {
                     $validator->errors()->add('error', 'Transaction approval is required');
                 }
             }
 
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';
-            $categorySubType = $sendUpdateLog?->option->code ?? '';
+            $categorySubType = $sendUpdateLog?->option?->code ?? '';
             $uploadedDocuments = $sendUpdateLog?->documents()->pluck('document_type_code')->toArray();
 
             if ($sendUpdateLog->quote_type_id == QuoteTypeId::Car) {

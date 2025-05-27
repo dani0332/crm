@@ -347,11 +347,6 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
               <dt class="mt-2">Car value:</dt>
               <x-input
                 v-model="planForm.car_value"
-                :helper="
-                  planForm.is_manual_update
-                    ? `Min: AED ${props.plan.carValueLowerLimit} - Max: AED ${props.plan.carValueUpperLimit}`
-                    : ''
-                "
                 size="sm"
                 type="number"
                 :disabled="page.props.lockLeadSectionsDetails.plan_selection"

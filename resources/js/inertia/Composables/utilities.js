@@ -446,6 +446,7 @@ export const validateField = (form, fieldValue, errorField, validationRule) => {
     return true;
   }
 };
+
 export const applyEmiratesNumberMasking = emiratesId => {
   let emiratesIDNumber = emiratesId.replace(/\D/g, '');
   if (emiratesIDNumber?.length > 15) {
@@ -471,4 +472,11 @@ export const applyEmiratesNumberMasking = emiratesId => {
   }
 
   return emiratesIDNumber;
+};
+
+export const useGenerateOptions = (items, valueKey, labelKey) => {
+  return items.map(item => ({
+    value: item[valueKey],
+    label: item[labelKey],
+  }));
 };
