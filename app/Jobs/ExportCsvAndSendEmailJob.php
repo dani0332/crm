@@ -114,7 +114,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     {
         $lockKey = md5(
             $this->exportClass.
-            $this->recipientEmail
+            $this->recipientEmail.
+            json_encode($this->requestParams)
         );
 
         return [
