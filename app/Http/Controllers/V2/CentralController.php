@@ -377,6 +377,8 @@ class CentralController extends Controller
 
     public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
+        LoggerService::info("Updating selected plan for Quote Type: {$quoteType}, Code: {$request->code}, New Insurance Provider: {$request->provider_code}");
+
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $request->code, $request->provider_code);
@@ -430,6 +432,7 @@ class CentralController extends Controller
     // Retry CC split payment
     public function retrySplitPayment(RetrySplitPaymentRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RETRY_SPLIT_PAYMENT);
         $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
         LoggerService::info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
 
@@ -445,6 +448,7 @@ class CentralController extends Controller
     // Delete split payment
     public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::DELETE_SPLIT_PAYMENT);
         return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
     }
 
@@ -711,6 +715,7 @@ class CentralController extends Controller
 
     public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::VOID_PAYMENT);
         $response = app(CentralService::class)->voidPayment($request);
 
         return response()->json(['status' => $response['status'], 'message' => $response['message']]);
@@ -756,6 +761,7 @@ class CentralController extends Controller
 
     public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CAPTURE_PAYMENT_VALIDATION);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
         $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode);
 
@@ -814,6 +820,7 @@ class CentralController extends Controller
 
     public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::DELETE_PARENT_PAYMENT);
         $validatedRequest = (object) $request->validate([
             'payment_id' => 'required',
             'payment_code' => 'required',

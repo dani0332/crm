@@ -83,6 +83,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     // Creates a new payment record along with associated split payments for a quote
     public function fetchCreateNewPayment($request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CREATE_PAYMENT);
         try {
             // Initialize payment source and get quote model
             $paymentSource = 'Main Lead';
@@ -208,6 +209,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdateNewPayment($request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_PAYMENT);
         $masterPayment = (object) $request->payment;
         $payment = Payment::where('code', $request->paymentCode)->first();
         if (! $payment) {
@@ -621,7 +623,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     // This method handles the approval or decline of split payments based on the request.
     public function fetchUpdateSplitPaymentsApprove($request)
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::DECLINE_PARENT_PAYMENT);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_DECLINE_CHILD_PAYMENT);
         LoggerService::info("Processing split payment request for {$request->payment_code} - Action: ".($request->is_declined ? 'Decline' : 'Approve'));
 
         return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);

@@ -28,4 +28,12 @@ enum LoggerFeatureEnum: string
 
     case MIGRATE_PAYMENT = 'migrate-payment';
 
+    case RETRY_SPLIT_PAYMENT = 'retry-split-payment';
+
+    case VOID_PAYMENT = 'void-payment';
+
+    case CAPTURE_PAYMENT_VALIDATION = 'capture-payment-validation';
+
+    case CC_PAYMENT_PROCESS = 'cc-payment-process';
+
 }
