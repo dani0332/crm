@@ -216,12 +216,8 @@ trait ExcelExportable
                 'systemName' => config('constants.MAIL_FROM_NAME', 'The System'),
             ];
 
-
-
-            // Force a fresh mailer instance to avoid connection reuse issues
-            $mailer = Mail::mailer('smtp');
-
-            $mailer->send(
+            // Send email with attachment
+            Mail::send(
                 ['html' => 'ExportCSVMail'],
                 $emailParams,
                 function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvFilePath, $csvFileName) {
@@ -241,16 +237,6 @@ trait ExcelExportable
                     ]);
                 }
             );
-
-            // Force close the SMTP connection to prevent reuse
-            $transport = $mailer->getSymfonyTransport();
-            if (method_exists($transport, 'stop')) {
-                $transport->stop();
-            }else{
-                logger()->info("stop method doesn't exist");
-            }
-
-            logger()->info("Email sent successfully");
 
             // Clean up the temporary file
             if (file_exists($csvFilePath)) {
