@@ -400,7 +400,7 @@ const getS3TempUrl = async docURL => {
             </a>
             <a
               v-else
-              :href="storageUrl + (item.watermarked_doc_url|| item.doc_url)"
+              :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
               target="_blank"
               class="text-primary-600"
             >
