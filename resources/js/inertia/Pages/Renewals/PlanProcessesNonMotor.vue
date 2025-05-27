@@ -10,8 +10,6 @@ const page = usePage();
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-
-
 const role = [rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.LifeManager];
 const roleLeadPool = [rolesEnum.LeadPool];
 const hasAnyRole = role => useHasAnyRole(role);
@@ -43,14 +41,18 @@ const permissionsEnum = page.props.permissionsEnum;
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Plans Processes</h2>
       <div class="space-x-3">
-        <x-button color="#ff5e00" :href="route('renewals-batches-nonmotor')" class="btn-2"
+        <x-button
+          color="#ff5e00"
+          :href="route('renewals-batches-nonmotor')"
+          class="btn-2"
           >Batches List</x-button
         >
         <x-button
           color="primary"
           onclick="return confirm('Do you want to fetch Plans?');"
           :href="`/renewals/batches/${batch}/${page.props.quoteType}/fetch-plans`"
-          >Fetch Plans</x-button>
+          >Fetch Plans</x-button
+        >
       </div>
     </div>
     <x-divider class="my-4" />
