@@ -644,7 +644,7 @@ onMounted(() => {
               :plans="availablePlansItems || []"
               :payments="payments"
               :extraDetails="{
-                selectedPlansIds: [selectedProviderPlan?.id]
+                selectedPlansIds: [selectedProviderPlan?.id],
               }"
             />
 

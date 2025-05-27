@@ -2309,7 +2309,7 @@ const updateProfileDetails = isValid => {
                   :code="quote.code"
                   :plans="listQuotePlansFiltered || []"
                   :extraDetails="{
-                    selectedPlansIds: [selectedProviderPlan?.id]
+                    selectedPlansIds: [selectedProviderPlan?.id],
                   }"
                   :payments="payments"
                 />

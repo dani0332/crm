@@ -2157,7 +2157,7 @@ const shouldShowPlanDetailsSection = computed(() => {
                       :code="quote.code"
                       :plans="availablePlansTable.data || []"
                       :extraDetails="{
-                        selectedPlansIds: [selectedProviderPlan?.id]
+                        selectedPlansIds: [selectedProviderPlan?.id],
                       }"
                       :payments="payments"
                     />

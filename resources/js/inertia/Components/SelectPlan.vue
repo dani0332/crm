@@ -37,7 +37,7 @@ const closeSelectPlanConfirmModal = () => {
   showSelectPlanConfirm.value = false;
 };
 
-const validatePayments = (selectedPlanObj) => {
+const validatePayments = selectedPlanObj => {
   return new Promise((resolve, reject) => {
     const payments = props.payments;
     for (let i = 0; i < payments.length; i++) {
@@ -47,12 +47,18 @@ const validatePayments = (selectedPlanObj) => {
       if (payments[i].payment_status_id == paymentStatusEnum.PENDING) {
         hasAnyPendingPayment.value = true;
       }
-      
+
       for (let j = 0; j < payments[i].payment_splits.length; j++) {
-        if (payments[i].payment_splits[j].payment_status_id == paymentStatusEnum.AUTHORISED) {
+        if (
+          payments[i].payment_splits[j].payment_status_id ==
+          paymentStatusEnum.AUTHORISED
+        ) {
           hasAnyAuthorizedPayment.value = true;
         }
-        if (payments[i].payment_splits[j].payment_status_id == paymentStatusEnum.PENDING) {
+        if (
+          payments[i].payment_splits[j].payment_status_id ==
+          paymentStatusEnum.PENDING
+        ) {
           hasAnyPendingPayment.value = true;
         }
       }
@@ -61,46 +67,63 @@ const validatePayments = (selectedPlanObj) => {
     const planIds = [];
     for (let i = 0; i < props.plans.length; i++) {
       if (props.extraDetails.selectedPlansIds.includes(props.plans[i].id)) {
-        if(props.quoteType.toLocaleLowerCase() == 'health') {
-          planIds.push({ providerId: props.plans[i].providerId, planId: props.plans[i].id });
+        if (props.quoteType.toLocaleLowerCase() == 'health') {
+          planIds.push({
+            providerId: props.plans[i].providerId,
+            planId: props.plans[i].id,
+          });
         } else {
-          planIds.push({ providerId: props.plans[i].insuranceProviderId, planId: props.plans[i].id });
+          planIds.push({
+            providerId: props.plans[i].insuranceProviderId,
+            planId: props.plans[i].id,
+          });
         }
         break;
       }
     }
-    if (props.quoteType.toLocaleLowerCase() == 'travel' && props.extraDetails?.planType == 'seniorPlans') {
-      planIds.push({providerId: selectedPlanObj.selected_insurance_provider_id, planId: selectedPlanObj.selected_plan_id});
+    if (
+      props.quoteType.toLocaleLowerCase() == 'travel' &&
+      props.extraDetails?.planType == 'seniorPlans'
+    ) {
+      planIds.push({
+        providerId: selectedPlanObj.selected_insurance_provider_id,
+        planId: selectedPlanObj.selected_plan_id,
+      });
     } else {
-      planIds.push({providerId: selectedPlanObj.insurance_provider_id, planId: selectedPlanObj.plan_id});  
+      planIds.push({
+        providerId: selectedPlanObj.insurance_provider_id,
+        planId: selectedPlanObj.plan_id,
+      });
     }
 
     const data = {
-      plan_ids: planIds
-    }
+      plan_ids: planIds,
+    };
 
     axios
-    .post(
-      `/personal-quotes/${props.quoteType}/${props.code}/get-plans-payment-gateway`,
-      data,
-    )
-    .then(res => {
-      const responsePlans = res.data?.plans;
-      const firstGatewayId = responsePlans[0]?.gateway_id;
-      const allSameGateway = responsePlans.every(item => item.gateway_id === firstGatewayId);
-      hasSameGateway.value = allSameGateway;
-      resolve(allSameGateway);
-    })
-    .catch(err => {
-      isLoading.value = false;
-      notification.error({
-        title: err?.response?.data?.error,
-        position: 'top',
-        timeout: 3000,
+      .post(
+        `/personal-quotes/${props.quoteType}/${props.code}/get-plans-payment-gateway`,
+        data,
+      )
+      .then(res => {
+        const responsePlans = res.data?.plans;
+        const firstGatewayId = responsePlans[0]?.gateway_id;
+        const allSameGateway = responsePlans.every(
+          item => item.gateway_id === firstGatewayId,
+        );
+        hasSameGateway.value = allSameGateway;
+        resolve(allSameGateway);
+      })
+      .catch(err => {
+        isLoading.value = false;
+        notification.error({
+          title: err?.response?.data?.error,
+          position: 'top',
+          timeout: 3000,
+        });
+        hasSameGateway.value = false;
+        reject(err);
       });
-      hasSameGateway.value = false;
-      reject(err);
-    });
   });
 };
 
@@ -130,7 +153,9 @@ const checkAndUpdateSelectedPlan = async () => {
         ) {
           data.plan_id = props.plan.id;
           data.selected_plan_id = props.extraDetails?.selectedPlansIds[i];
-          data.selected_insurance_provider_id = props.extraDetails?.selectedPlansIds[i]?.insuranceProviderId ?? null;
+          data.selected_insurance_provider_id =
+            props.extraDetails?.selectedPlansIds[i]?.insuranceProviderId ??
+            null;
         }
 
         if (
@@ -140,7 +165,8 @@ const checkAndUpdateSelectedPlan = async () => {
           )
         ) {
           data.selected_plan_id = props.plan.id;
-          data.selected_insurance_provider_id = props.plan?.insuranceProviderId ?? null;
+          data.selected_insurance_provider_id =
+            props.plan?.insuranceProviderId ?? null;
           data.plan_id = props.extraDetails?.selectedPlansIds[i];
         }
       }
@@ -153,27 +179,28 @@ const checkAndUpdateSelectedPlan = async () => {
   hasAnyAuthorizedPayment.value = false;
   hasAnyPendingPayment.value = false;
   hasSameGateway.value = true;
-  if(props.payments?.length) {
+  if (props.payments?.length) {
     await validatePayments(data);
-    if(hasAnyAuthorizedPayment.value) {
+    if (hasAnyAuthorizedPayment.value) {
       notification.error({
-        title: "This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.",
+        title:
+          'This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.',
         position: 'top',
         timeout: 3000,
       });
       isLoading.value = false;
       return;
     }
-    if(hasAnyPendingPayment.value && !hasSameGateway.value) {
+    if (hasAnyPendingPayment.value && !hasSameGateway.value) {
       showSelectPlanConfirm.value = true;
       isLoading.value = false;
       return;
     }
   }
   updateSelectedPlan();
-}
+};
 
-const updateSelectedPlan = () =>{
+const updateSelectedPlan = () => {
   isLoading.value = true;
   showSelectPlanConfirm.value = false;
   let data = {
@@ -343,9 +370,7 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
         <div
           class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
         >
-          <div class="flex items-center space-x-2">
-            Override Payments
-          </div>
+          <div class="flex items-center space-x-2">Override Payments</div>
           <div class="flex items-center space-x-2">
             <span
               @click="closeSelectPlanConfirmModal"
@@ -374,7 +399,11 @@ const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
           class="text-lg px-6 py-4 border-b flex justify-between items-start"
         >
           <div class="text-left">
-            <span> The current plan has a pending payment. Switching to a new plan with a different payment gateway will override the existing payment. Do you want to continue?</span>
+            <span>
+              The current plan has a pending payment. Switching to a new plan
+              with a different payment gateway will override the existing
+              payment. Do you want to continue?</span
+            >
           </div>
         </div>
       </div>

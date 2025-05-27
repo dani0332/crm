@@ -3478,7 +3478,7 @@ const isCommercialVehicle = computed(() => {
                         page.props.linkedQuoteDetails.childLeadsCount > 0
                       "
                       :extraDetails="{
-                        selectedPlansIds: [selectedProviderPlan?.id]
+                        selectedPlansIds: [selectedProviderPlan?.id],
                       }"
                       :uuid="quote.uuid"
                       :insuranceProviderId="item.id"

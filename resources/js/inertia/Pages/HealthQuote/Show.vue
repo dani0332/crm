@@ -3533,7 +3533,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       :code="quote.code"
                       :plans="computedListQuotePlans || []"
                       :extraDetails="{
-                        selectedPlansIds: [selectedProviderPlan?.id]
+                        selectedPlansIds: [selectedProviderPlan?.id],
                       }"
                       :payments="payments"
                     />
