@@ -434,7 +434,8 @@ class CentralController extends Controller
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::RETRY_SPLIT_PAYMENT);
         $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
-        LoggerService::info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+        $splitPayment = $paymentProcessJob->splitPayment;
+        LoggerService::info("Retry split payment called & Manual CC Payments Job Started For Payment Split code : {$splitPayment->code} & sr no : {$splitPayment->sr_no}");
 
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 

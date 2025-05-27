@@ -1205,23 +1205,24 @@ class CentralService extends BaseService
 
     public function voidPayment($request): array
     {
-        LoggerService::info('fn:voidPayment - Void authorized payment process started');
-        $payment = Payment::where('code', $request->payment_code)->first();
+        $paymentCode = $request->payment_code;
+        LoggerService::info('fn:voidPayment - Void authorized payment process started for payment code: '.$paymentCode);
+        $payment = Payment::where('code', $paymentCode)->first();
         if (! $payment) {
-            LoggerService::info('fn:voidPayment - Payment not found. - Payment Code:'.$request->payment_code);
+            LoggerService::info('fn:voidPayment - Payment not found. - Payment Code:'.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment not found'];
         }
 
         $paymentAgainst = $request->send_update_log_id ? 'Send Update' : 'Main Lead';
-        LoggerService::info('fn:voidPayment - Payment found against '.$paymentAgainst.' - Payment Code:'.$request->payment_code);
+        LoggerService::info('fn:voidPayment - Payment found against '.$paymentAgainst.' - Payment Code:'. $paymentCode);
         $paymentGateways = [
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT => PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT_TEXT,
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP_TEXT,
         ];
 
         if ($payment->payment_gateway_id !== PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP) {
-            LoggerService::info('fn:voidPayment - Payment gateway not supported - Payment Gateway: '.$paymentGateways[$payment->payment_gateway_id].' Payment Code:'.$request->payment_code);
+            LoggerService::info('fn:voidPayment - Payment gateway not supported - Payment Gateway: '.$paymentGateways[$payment->payment_gateway_id].' Payment Code:'.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment gateway not supported'];
         }
@@ -1232,7 +1233,7 @@ class CentralService extends BaseService
             'quoteTypeId' => (int) $request->quote_type_id,
             'payments' => [
                 [
-                    'codeRef' => $request->payment_code,
+                    'codeRef' => $paymentCode,
                 ],
             ],
         ];
@@ -1244,15 +1245,15 @@ class CentralService extends BaseService
         }
 
         $response = Marshall::request($voidPaymentURL, 'post', $payload);
-        LoggerService::info('fn:voidPayment - Payment Code:'.$request->payment_code.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment - payload:'.json_encode($payload).' - response:'.json_encode($response));
+        LoggerService::info('fn:voidPayment - Payment Code:'.$paymentCode.' - Payment Gateway:'.$paymentGateways[$payment->payment_gateway_id].' - void payment - payload:'.json_encode($payload).' - response:'.json_encode($response));
 
         if (! empty($response)) {
-            LoggerService::info('fn:voidPayment - Void authorized payment process failed');
+            LoggerService::info('fn:voidPayment - Void authorized payment process failed for payment code: '.$paymentCode);
 
             return ['status' => false, 'message' => 'Something went wrong'];
         }
 
-        LoggerService::info('fn:voidPayment - Void authorized payment process completed');
+        LoggerService::info('fn:voidPayment - Void authorized payment process completed for payment code: '.$paymentCode);
 
         return ['status' => true, 'message' => 'Void payment processed'];
     }
