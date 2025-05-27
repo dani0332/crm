@@ -129,8 +129,8 @@ class PersonalQuoteRepository extends BaseRepository
             $documentTypeText = $documentType->text;
 
             if ($data['document_type_code'] == DocumentTypeCode::Illustration_Document && $quote->quote_type_id == QuoteTypeId::Life) {
-                $documentTypeText = $quote->insuranceProvider->text.' - '.$documentType->text;
-                $originalName = $quote->insuranceProvider->text.' Illustration Document for '.$quote->customer->first_name.' '.$quote->customer->last_name.' '.$quote->code.'.pdf';
+                $documentTypeText = $quote->insuranceProvider ? $quote->insuranceProvider->text.' - '.$documentType->text : $documentType->text;
+                $originalName = $quote->insuranceProvider ? $quote->insuranceProvider->text.' Illustration Document for '.$quote->customer->first_name.' '.$quote->customer->last_name.' '.$quote->code.'.pdf' : 'Illustration Document for '.$quote->customer->first_name.' '.$quote->customer->last_name.' '.$quote->code.'.pdf';
             }
             // This data will store in quote documents table
             $document = [
