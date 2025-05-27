@@ -431,8 +431,8 @@ class QuoteDocumentService extends BaseService
     public function getHandBookDocuments($quote, $coPaymentIds = null)
     {
         if ($quote->policyWording) {
-            // Get policy wording documents for the quote and filter out co-payment documents if provided 
-            // Filter out policy wording documents that don't have a link 
+            // Get policy wording documents for the quote and filter out co-payment documents if provided
+            // Filter out policy wording documents that don't have a link
             $policyWording = $quote->policyWording
                 ->when($coPaymentIds != null, function ($collection) use ($coPaymentIds) {
                     return $collection->reject(function ($item) use ($coPaymentIds) {
@@ -442,8 +442,10 @@ class QuoteDocumentService extends BaseService
                 ->filter(function ($item) use ($quote) {
                     if (empty($item->link)) {
                         LoggerService::warning("Policy wording document not found for policy wording ID: {$item->id} Quote Code: {$quote->code} Error Code: 404");
+
                         return false;
                     }
+
                     return true;
                 });
 
@@ -460,6 +462,7 @@ class QuoteDocumentService extends BaseService
                     'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.trim($extension),
                 ];
             });
+
             return $policyWording->toArray();
         }
 
