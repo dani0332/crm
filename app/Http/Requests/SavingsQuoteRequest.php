@@ -11,6 +11,7 @@ use App\Models\Nationality;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Models\Lookup;
 
 class SavingsQuoteRequest extends FormRequest
 {
@@ -39,12 +40,12 @@ class SavingsQuoteRequest extends FormRequest
             'nationality_id' => ['required', Rule::exists(Nationality::class, 'id')],
             'gender' => ['required', Rule::enum(GenderEnum::class)],
             'marital_status_id' => ['required', Rule::exists(MartialStatus::class, 'id')],
-            'tenure_of_savings' => 'required|string',
+            'tenure_of_savings' => ['required', Rule::exists(Lookup::class, 'id')],
             'has_nicotine' => 'required|in:0,1',
-            'purpose_of_savings' => ['required', Rule::enum(SavingsPurposeEnum::class)],
+            'purpose_of_savings' => ['required', Rule::exists(Lookup::class, 'id')],
             'currency_id' => ['required', Rule::exists(CurrencyType::class, 'id')],
             'amount' => 'required|numeric|min:1',
-            'investment_frequency' => 'required|in:regular,lumpsum',
+            'investment_frequency' => ['required', Rule::exists(Lookup::class, 'id')],
             'additional_notes' => 'required|string',
         ];
     }

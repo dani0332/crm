@@ -26,7 +26,7 @@ const maritalStatuses = computed(() => {
 
 const purposes = computed(() => {
   return props.lookUpData.savingsPurpose.map(item => ({
-    value: item.code,
+    value: item.id,
     label: item.text,
   }));
 });
@@ -40,14 +40,14 @@ const currencies = computed(() => {
 
 const tenures = computed(() => {
   return props.lookUpData.savingsTenure.map(item => ({
-    value: item.code,
+    value: item.id,
     label: item.text,
   }));
 });
 
 const investmentFrequencies = computed(() => {
   return props.lookUpData.savingsInvestmentType.map(item => ({
-    value: item.code,
+    value: item.id,
     label: item.text,
   }));
 });
