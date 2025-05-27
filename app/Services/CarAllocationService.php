@@ -8,6 +8,7 @@ use App\Enums\CarPlanType;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -304,6 +305,13 @@ class CarAllocationService extends AllocationService
 
         // Query to get all active tiers.
         $tiersQuery = Tier::where('is_active', 1);
+
+        if ($carLead->registration_type == CarRegistrationType::COMPANY) {
+            $this->getTierBasedOnValue($carLead, $tiersQuery);
+            LoggerService::info(self::class.' - Registration type is company. Calculating tier based on value for lead with Ref-ID: '.$carLead->uuid.' | Time: '.now());
+
+            return $tiersQuery->first();
+        }
 
         // Check if the car's year of manufacture is newer than 15 years.
         if ($carLead->year_of_manufacture < $yearOfManufacture) {
@@ -883,6 +891,14 @@ class CarAllocationService extends AllocationService
         $lead->auto_assigned = true;
         $lead->sic_flow_enabled = 0;
         $lead->assignment_type = $assignmentType;
+
+        LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
+        ]);
+        if (empty($lead->lead_assignment_trigger)) {
+            LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
 
         // Get the latest quote batch and assign it to the lead.
         $quoteBatch = QuoteBatches::latest()->first();

@@ -8,6 +8,7 @@ use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\InsurerProviderEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
@@ -209,6 +210,13 @@ class CentralService extends BaseService
 
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
                 $getQuoteLead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
+                LoggerService::info(self::class.' - assignLeadToAdvisor: Checking lead_assignment_trigger', extra: [
+                    'current_value' => $getQuoteLead->lead_assignment_trigger ?? 'null',
+                ]);
+                if (empty($getQuoteLead->lead_assignment_trigger)) {
+                    LoggerService::info(self::class.' - assignLeadToAdvisor: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
+                    $getQuoteLead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
+                }
                 $getQuoteLead->quote_batch_id = $quoteBatch->id;
                 $getQuoteLead->save();
 

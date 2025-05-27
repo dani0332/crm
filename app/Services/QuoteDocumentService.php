@@ -28,7 +28,6 @@ use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
-use setasign\Fpdi\PdfParser\StreamReader;
 
 class QuoteDocumentService extends BaseService
 {
@@ -128,6 +127,8 @@ class QuoteDocumentService extends BaseService
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false)
     {
+        LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
+
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
@@ -522,50 +523,110 @@ class QuoteDocumentService extends BaseService
             throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
         }
 
-        $tempFilePath = storage_path('temp/temp_'.$docName);
-        file_put_contents($tempFilePath, $fileContent);
+        // Save the source file
+        $sourceFilePath = storage_path('temp/source_'.$docName);
+        file_put_contents($sourceFilePath, $fileContent);
 
-        // Convert the PDF to a version compatible with FPDI
-        shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+        try {
+            // Use Ghostscript as our primary watermarking approach
+            return $this->ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
+        } catch (\Exception $e) {
+            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", context: [
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
 
-        sleep(3);
+            // Incase ghostscriptWatermark() fails/throw exception. Made sure that we delete the file that it created.
+            $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
+            if (file_exists($watermarkPdf ?? '')) {
+                unlink($watermarkPdf);
+            }
 
-        if (! file_exists($outputFile)) {
-            LoggerService::error("Unable to read file outputFile: $outputFile ");
-            throw new \Exception("Unable to read file outputFile: $outputFile");
+            // If watermarking fails completely, use the original file without watermark
+            if (file_exists($sourceFilePath)) {
+                // Copy the original file to the output path
+                copy($sourceFilePath, $outputPath);
+                LoggerService::info("Using unwatermarked original file due to error for UUID: $uuid");
+
+                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+            }
+
+            // If we can't even use the original file, re-throw the exception
+            throw $e;
+        }
+    }
+
+    /**
+     * Apply watermark using Ghostscript
+     * After this attempt it fall back to the original file
+     *
+     * @param  string  $sourceFilePath  Source PDF file path
+     * @param  string  $outputPath  Output PDF file path
+     * @param  string  $uuid  Document UUID
+     * @return void
+     */
+    private function ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
+    {
+        // Preprocess the PDF with Ghostscript for FPDI compatibility
+        $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+        $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
+            '-dPDFSETTINGS=/default -dCompatibilityLevel=1.4 '.
+            '-dEmbedAllFonts=false -dSubsetFonts=false -dCompressPages=false '.
+            '-sOutputFile='.escapeshellarg($tempFilePath).' '.
+            escapeshellarg($sourceFilePath).' 2>&1';
+
+        $output = shell_exec($gsCommand);
+
+        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+            LoggerService::error("Ghostscript preprocessing failed for UUID: $uuid. Output: $output");
+            throw new \Exception('Ghostscript preprocessing failed');
         }
 
+        // Apply watermark with FPDI
         $pdf = new Fpdi;
+        $pageCount = $pdf->setSourceFile($tempFilePath);
 
-        $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
-
-        LoggerService::info('watermark job started for Quote: '.$uuid.' source file read successfully. File path: '.$outputFile);
         $watermarkImagePath = public_path('images/watermark1.png');
         $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
 
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
             $templateId = $pdf->importPage($pageNo);
             $size = $pdf->getTemplateSize($templateId);
-
-            // Log::info('Page size: '.json_encode($size));
-
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            // Add watermark
+
+            // Add watermark based on orientation
             if ($size['orientation'] === 'P') {
-                $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+                $pdf->Image(
+                    $watermarkImagePath,
+                    0, 0, $size['width'], $size['height'],
+                    '', '', '', false, 300, '', false, false, 0
+                );
             } else {
-                $pdf->Image($watermarkImageAA4Path, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+                $pdf->Image(
+                    $watermarkImageAA4Path,
+                    0, 0, $size['width'], $size['height'],
+                    '', '', '', false, 300, '', false, false, 0
+                );
             }
 
+            // Layer the original page content over the watermark
             $pdf->useTemplate($templateId);
         }
 
         $pdf->Output($outputPath, 'F');
 
-        // Delete the temporary file
+        // Clean up temporary file
         if (file_exists($tempFilePath)) {
             unlink($tempFilePath);
         }
+
+        // Check if the output file was created successfully
+        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
+            LoggerService::error("FPDI watermarking failed for UUID: $uuid");
+            throw new \Exception('FPDI watermarking failed');
+        }
+
+        LoggerService::info("Successfully applied watermark with Ghostscript and FPDI for UUID: $uuid");
 
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
