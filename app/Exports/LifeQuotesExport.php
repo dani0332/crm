@@ -11,6 +11,15 @@ class LifeQuotesExport
 
     public function collection($requestParams)
     {
+        return LifeQuoteRepository::exportData($requestParams)->get();
+    }
+
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery($requestParams = [])
+    {
         return LifeQuoteRepository::exportData($requestParams);
     }
 
