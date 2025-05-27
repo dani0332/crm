@@ -51,7 +51,10 @@ class SavingsQuoteController extends Controller
     {
         $data = $this->savingsQuoteService->getFormOptions();
 
-        return inertia('SavingsQuote/Form', $data);
+        return inertia('SavingsQuote/Form', [
+            'lookUpData' => $data['lookUpData'],
+            'genders' => $data['genders'],
+        ]);
     }
 
     public function store(SavingsQuoteRequest $request)
@@ -69,12 +72,14 @@ class SavingsQuoteController extends Controller
 
     public function edit($uuid)
     {
-        $data = $this->savingsQuoteService->getFormOptions();
         $quote = $this->savingsQuoteService->getOne($uuid);
+        $data = $this->savingsQuoteService->getFormOptions();
 
-        return inertia('SavingsQuote/Form', array_merge($data, [
+        return inertia('SavingsQuote/Form', [
             'quote' => $quote,
-        ]));
+            'lookUpData' => $data['lookUpData'],
+            'genders' => $data['genders'],
+        ]);
     }
 
     public function update(SavingsQuoteRequest $request, $uuid)
