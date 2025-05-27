@@ -172,7 +172,7 @@ const onSubmit = isValid => {
   editForm.overallLoading = Number(
     parseFloat(editForm.overallLoading).toFixed(2),
   );
-  extraAttr.loading = true;
+  // extraAttr.loading = true;
 
   // Ensure riders have numeric values by converting strings to floats and preventing negative values
   const processedRiders = ridersData.value.map(rider => ({
@@ -182,6 +182,10 @@ const onSubmit = isValid => {
     final_price: Number(parseFloat(rider.final_price).toFixed(2)) || 0,
     coverValue: Number(parseFloat(rider.coverValue).toFixed(2)) || 0,
   }));
+
+
+  console.log(processedRiders);
+  return;
 
   editForm.riders = processedRiders;
 
@@ -456,8 +460,7 @@ const getInputRules = rider => {
 
 const computedFinalPrice = rider =>
   computed(() => {
-    const price =
-      !rider.price || rider.price === ''
+    const price = !rider.price || rider.price === ''
         ? 0
         : Math.max(0, parseFloat(rider.price));
     const loading =
@@ -510,7 +513,7 @@ const hidePlan = () => {
   }));
 
   editForm.riders = processedRiders;
-  editForm.hide = true;
+  editForm.hide = editForm.isDisabled;
 
   axios
     .post('/personal-quotes/life-plan-manual-create', {
@@ -878,27 +881,9 @@ const hidePlan = () => {
                   class="col-span-1"
                   v-if="props.selectedPlan.isUnderwritten"
                 >
-                  <x-input
-                    v-if="parseFloat(rider.loading) == 0"
-                    type="number"
-                    :disabled="
-                      !props.selectedPlan.isManualPlan ||
-                      !rider.active ||
-                      editForm.overallLoading > 0 ||
-                      rider.loading > 0
-                    "
-                    @keydown="e => preventInvalidInputs(e, true)"
-                    min="0"
-                    class="w-full h-10 p-2 rounded-md"
-                    v-model="rider.final_price"
-                  />
+                 
 
-                  <div
-                    v-else
-                    type="number"
-                    @keydown="e => preventInvalidInputs(e, false)"
-                    class="appearance-none block w-16 ml-2 placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]"
-                  >
+                  <div class="appearance-none block w-16 ml-2 placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]" >
                     {{ computedFinalPrice(rider) }}
                   </div>
                 </div>
