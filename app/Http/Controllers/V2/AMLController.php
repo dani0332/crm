@@ -22,6 +22,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
 use App\Exports\KycLogs;
+use App\Exports\Reports\AmlCftReportExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -1095,5 +1096,51 @@ class AMLController extends Controller
         $skipBrigerAMLResponse = app(AMLService::class)->tempSkipBridgerAML($skipBridgerScreeningRequest);
 
         return response()->json(['response' => $skipBrigerAMLResponse['status'], 'message' => $skipBrigerAMLResponse['response']]);
+    }
+
+    /**
+     * Export AML CTF Report
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
+    public function amlCtfReportExport(Request $request)
+    {
+        LoggerService::info('fn:amlCtfReportExport - AMLController');
+
+        $query = \App\Models\Insured::with(['insuredKyc' => function($q) {
+            $q->select(
+                'insured_id',
+                'residency_status',
+                'risk_profile',
+                'policy_number',
+                'policy_type',
+                'transaction_count',
+                'transaction_amount',
+                'insurance_company',
+                'policy_start_date',
+                'policy_end_date',
+                'lead_status',
+                'pep',
+                'last_aml_screening_date',
+                'remarks'
+            );
+        }])
+        ->select(
+            'id',
+            'uuid',
+            'first_name',
+            'last_name',
+            'id_number',
+            'customer_type',
+            'created_at'
+        );
+
+        $query->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
+
+        $data = $query->get();
+
+        $fileName = 'AML_CTF_Report_' . now()->format('Ymd_His') . '.xlsx';
+        return (new AmlCftReportExport($data))->download($fileName);
     }
 }
