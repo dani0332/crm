@@ -1746,14 +1746,14 @@ class RenewalsUploadService
                             if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
                                 $leadValidationErrors->push('Invalid Product Type, needs to be Third Party Only or Comprehensive');
                             }
-                            if ($leadData->nationality && ! Nationality::where('text', $leadData->nationality)->first()) {
+                            if (!$this->isCarCompany($leadData) &&  $leadData->nationality && ! Nationality::where('text', $leadData->nationality)->first()) {
                                 $leadValidationErrors->push('Invalid Nationality Text');
                             }
                             if ($leadData->claim_history && ! ClaimHistory::where('text', $leadData->claim_history)->first()) {
                                 $leadValidationErrors->push('Invalid Claim History');
                             }
 
-                            if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
+                            if (!$this->isCarCompany($leadData) && ! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
 
@@ -1912,16 +1912,16 @@ class RenewalsUploadService
                                     if (empty($leadData->driver_name)) {
                                         $leadValidationErrors->push('Driver Name is required');
                                     }
-                                    if (empty($leadData->driver_nationality)) {
+                                    if (empty($leadData->nationality)) {
                                         $leadValidationErrors->push('Driver Nationality is required');
                                     }
-                                    if (empty($leadData->driver_dob)) {
+                                    if (empty($leadData->dob)) {
                                         $leadValidationErrors->push('Driver Date of Birth is required');
                                     }
-                                    if (empty($leadData->driver_experience)) {
+                                    if (empty($leadData->driving_experience)) {
                                         $leadValidationErrors->push('Driver Experience is required');
                                     }
-                                    if (! empty($leadData->driver_experience) && ! UAELicenseHeldFor::where('text', $leadData->driver_experience)->first()) {
+                                    if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                         $leadValidationErrors->push('Invalid Driver Experience');
                                     }
                                 }
@@ -2443,6 +2443,11 @@ class RenewalsUploadService
         return isset($carQuote->registration_type)
             && $carQuote->registration_type === CarRegistrationType::COMPANY
             && $carQuote->source === LeadSourceEnum::RENEWAL_UPLOAD;
+    }
+
+    public function isCarCompany($leadData)
+    {
+        return !empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY;
     }
 
 }

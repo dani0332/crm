@@ -177,19 +177,21 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             'vehicle_use' => ['index' => 43, 'title' => 'Vehicle Use', 'rules' => 'nullable|max:100|in:'.implode(',', CarVehicleUse::getValues())],
             'business_activity' => ['index' => 44, 'title' => 'Business Activity', 'rules' => 'nullable|max:100'],
             'driver_name' => ['index' => 45, 'title' => 'Driver Name', 'rules' => 'nullable|max:100'],
-            'driver_nationality' => ['index' => 46, 'title' => 'Driver Nationality', 'rules' => 'nullable|max:100'],
-            'driver_dob' => ['index' => 47, 'title' => 'Driver Date of Birth', 'rules' => 'nullable|max:100'],
-            'driver_experience' => ['index' => 48, 'title' => 'Driving Experience', 'rules' => 'nullable|max:100'],
         ];
 
         if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
             $columns['make']['rules'][] = 'required';
             $columns['model']['rules'][] = 'required';
             $columns['year']['rules'][] = 'required';
-            $columns['dob']['rules'][] = 'required';
-            $columns['driving_experience']['rules'][] = 'required';
-            $columns['nationality']['rules'][] = 'required';
+            if (isset($row[43]) && $row[43] != CarVehicleUse::PRIVATE){
+            // if vehicle use is not private, then these fields are not required 
+                $columns['dob']['rules'][] = 'required';
+                $columns['driving_experience']['rules'][] = 'required';
+                $columns['nationality']['rules'][] = 'required';
+            }
+           
             $columns['registration_location']['rules'][] = 'required';
+        
 
         }
 
@@ -282,24 +284,27 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                             'Driver Name is required.'
                         );
                     }
-                    if (isset($row[46]) && empty($row[46])) {
+                    info("Checking vehicle use and driver fields relationship for row: $rowIndex, vehicle_use: {$row[13]}");
+                      if (isset($row[13]) && empty($row[13])) {
                         $validator->errors()->add(
-                            $rowIndex.'.46',
-                            'Driver Nationality is required.'
-                        );
-                    }
-                    if (isset($row[47]) && empty($row[47])) {
-                        $validator->errors()->add(
-                            $rowIndex.'.47',
+                            $rowIndex.'.13',
                             'Driver Date of Birth is required.'
                         );
                     }
-                    if (isset($row[48]) && empty($row[48])) {
+                    if (isset($row[14]) && empty($row[14])) {
                         $validator->errors()->add(
-                            $rowIndex.'.48',
+                            $rowIndex.'.14',
                             'Driver Experience is required.'
                         );
                     }
+                    if (isset($row[15]) && empty($row[15])) {
+                        $validator->errors()->add(
+                            $rowIndex.'.15',
+                            'Driver Nationality is required.'
+                        );
+                    }
+                  
+                    
 
                 }
             }
