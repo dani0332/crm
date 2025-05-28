@@ -23,6 +23,7 @@ abstract class BaseAllocation extends AllocationService implements Allocation
     protected $lead;
     protected bool $hasNationalityConfig = false;
     protected array $advisorIDs = [];
+    protected array $excludedAdvisorIds = [];
 
     public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false, public bool $isReAssignment = false) {}
 
@@ -110,7 +111,15 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             })
             ->whereIn('r.name', $roles)
             ->where('la.quote_type_id', $this->getQuoteTypeId())
-            ->when($this->hasNationalityConfig, fn ($q) => $q->whereIn('users.id', $this->advisorIDs))
+            ->when(
+                $this->hasNationalityConfig,
+                fn ($q) => $q->whereIn('users.id', $this->advisorIDs),
+                function ($q) {
+                    if (! empty($this->excludedAdvisorIds)) {
+                        $q->whereNotIn('users.id', $this->excludedAdvisorIds);
+                    }
+                },
+            )
             ->activeUser()
             ->orderBy('la.last_allocated', 'asc');
 
