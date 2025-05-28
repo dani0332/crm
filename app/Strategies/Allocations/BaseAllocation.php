@@ -225,8 +225,21 @@ abstract class BaseAllocation extends AllocationService implements Allocation
             $this->hasNationalityConfig = true;
             $this->advisorIDs = NationalityAllocationService::getUserIDs($config);
             LoggerService::info(self::class." - Nationality Config found for Nationality ID: {$this->lead->nationality_id} | Advisor IDs: ".implode(', ', $this->advisorIDs));
+        } else {
+            $this->resolveExcludedAdvisorIds();
         }
 
         return $config;
+    }
+
+    private function resolveExcludedAdvisorIds()
+    {
+        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->quoteType);
+
+        if (empty($excludedAdvisorIds)) {
+            return;
+        }
+
+        $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
 }
