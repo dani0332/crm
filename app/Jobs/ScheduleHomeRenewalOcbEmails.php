@@ -13,7 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
-
+use App\Services\HomeRenewalService;
 class ScheduleHomeRenewalOcbEmails implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -41,7 +41,7 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
      *
      * @return void
      */
-    public function handle(RenewalsUploadService $renewalsUploadService)
+    public function handle(HomeRenewalService $homeRenewalService)
     {
         LoggerService::info('CL: ScheduleHomeRenewalOcbEmails OCB email schedule is started', extra: [
             'batch' => $this->batch,
@@ -49,7 +49,7 @@ class ScheduleHomeRenewalOcbEmails implements ShouldQueue
 
         $this->renewalsBatchEmail->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
-        $renewalsUploadService->scheduleHomeOCB($this->batch, $this->renewalsBatchEmail);
+        $homeRenewalService->scheduleHomeOCB($this->batch, $this->renewalsBatchEmail);
 
         LoggerService::info('CL: ScheduleHomeRenewalOcbEmails OCB email schedule is completed', extra: [
             'batch' => $this->batch,

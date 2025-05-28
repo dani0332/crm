@@ -23,6 +23,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Enums\QuoteStatusEnum;
 
 class HomeEmailService extends BaseService
 {
@@ -91,7 +92,7 @@ class HomeEmailService extends BaseService
         }
     }
 
-    public function sendRenewalOCBEmail($batch, RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
+    public function sendRenewalOCBEmail(RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
     {
         try {
             // Find Home Quote
@@ -119,6 +120,11 @@ class HomeEmailService extends BaseService
 
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                 RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
+
+                // update lead status to quoted
+                $lead->quote_status_id = QuoteStatusEnum::Quoted;
+                $lead->save();
+                
 
             } else {
                 LoggerService::error('Home Renewals OCB Email failed', extra: [

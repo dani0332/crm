@@ -4,6 +4,7 @@ namespace App\Jobs\Renewals;
 
 use App\Enums\ProcessStatusCode;
 use App\Models\RenewalStatusProcess;
+use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
@@ -43,14 +44,13 @@ class FetchHomeRenewalsPlansJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle(RenewalsUploadService $renewalsUploadService)
+    public function handle(HomeRenewalService $homeRenewalService)
     {
         LoggerService::info('FetchHomeRenewalsPlansJob: job being started', extra: [
             'renewalStatusProcessId' => $this->renewalStatusProcess->id,
             'batch' => $this->batch,
-            'quoteType' => $this->quoteType,
         ]);
-        $renewalsUploadService->fetchRenewalPlansForNonMotor($this->renewalStatusProcess, $this->batch, $this->quoteType);
+        $homeRenewalService->fetchRenewalPlans($this->renewalStatusProcess, $this->batch);
     }
 
     /**

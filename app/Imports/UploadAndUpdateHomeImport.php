@@ -20,8 +20,11 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 
-class UploadAndUpdateHomeImport implements SkipsOnFailure, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithStartRow, WithValidation
+
+class UploadAndUpdateHomeImport implements SkipsOnFailure, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithStartRow, 
+WithValidation,SkipsEmptyRows
 {
     use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 

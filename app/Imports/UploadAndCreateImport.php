@@ -19,8 +19,8 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
-
-class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation, SkipsEmptyRows
 {
     use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 

@@ -4,6 +4,7 @@ namespace App\Jobs\Renewals;
 
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
+use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Batchable;
@@ -47,13 +48,13 @@ class FetchPlansForHomeRenewalsQuoteJob implements ShouldQueue, StackableJob
      *
      * @return void
      */
-    public function handle(RenewalsUploadService $renewalsUploadService)
+    public function handle(HomeRenewalService $homeRenewalService)
     {
         LoggerService::info('FetchPlansForHomeRenewalsQuoteJob: job being started', extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
             'policy_number' => $this->renewalQuoteProcess->policy_number,
         ]);
-        $renewalsUploadService->fetchHomeQuotePlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
+        $homeRenewalService->fetchPlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
     }
 
     /**
