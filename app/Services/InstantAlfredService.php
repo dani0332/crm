@@ -201,7 +201,7 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $partialQuery->where('mobile_no', $request->mobile_no);
+            $partialQuery->where("{$alias}.mobile_no", $request->mobile_no);
         }
 
         if (! empty($request->chat_initiated_at) && $request->email == null && $request->mobile_no == null && $quoteId == null) {
