@@ -459,8 +459,6 @@ class CentralController extends Controller
     // Store new payment
     public function storeNewPayment(StorePaymentRequest $request)
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::CREATE_PAYMENT);
-
         $response = PaymentRepository::createNewPayment($request);
         if ($response['status'] == 'success') {
             return redirect()->back()->with('success', $response['message']);
@@ -472,6 +470,7 @@ class CentralController extends Controller
     // Update payment
     public function updateNewPayment(UpdatePaymentRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_PAYMENT);
         $response = PaymentRepository::updateNewPayment($request);
         if ($response['status'] == 'success') {
             return redirect()->back()->with('success', $response['message']);
