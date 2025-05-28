@@ -42,11 +42,13 @@ class BikeAllocationService extends AllocationService
 {
     protected bool $hasNationalityConfig = false;
     protected array $advisorIDs = [];
+    protected array $excludedAdvisorIds = [];
 
     protected function resetProps(): void
     {
         $this->hasNationalityConfig = false;
         $this->advisorIDs = [];
+        $this->excludedAdvisorIds = [];
     }
 
     public function fetchLead($quoteId, $overrideAdvisorId)
@@ -306,7 +308,15 @@ class BikeAllocationService extends AllocationService
             })
             ->where('quote_type_id', QuoteTypes::BIKE->id())
             ->activeUser()
-            ->when($this->hasNationalityConfig, fn ($q) => $q->whereIn('user_id', $this->advisorIDs))
+            ->when(
+                $this->hasNationalityConfig,
+                fn ($q) => $q->whereIn('user_id', $this->advisorIDs),
+                function ($q) {
+                    if (! empty($this->excludedAdvisorIds)) {
+                        $q->whereNotIn('user_id', $this->excludedAdvisorIds);
+                    }
+                },
+            )
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -640,8 +650,21 @@ class BikeAllocationService extends AllocationService
             $this->hasNationalityConfig = true;
             $this->advisorIDs = NationalityAllocationService::getUserIDs($config);
             LoggerService::info(self::class." - Nationality Config found for Nationality ID: {$lead->nationality_id} | Advisor IDs: ".implode(', ', $this->advisorIDs));
+        } else {
+            $this->resolveExcludedAdvisorIds();
         }
 
         return $config;
+    }
+
+    private function resolveExcludedAdvisorIds()
+    {
+        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds(QuoteTypes::BIKE);
+
+        if (empty($excludedAdvisorIds)) {
+            return;
+        }
+
+        $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
 }
