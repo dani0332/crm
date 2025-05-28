@@ -97,6 +97,7 @@ class NationalityAllocationService
             ->leftJoin('users', 'audits.user_id', 'users.id')
             ->where('auditable_id', $configId)
             ->where('auditable_type', NationalityAllocationConfiguration::class)
+            ->where('event', '!=', 'created')
             ->when($perPage,
                 fn ($q) => $q->orderBy('created_at', 'desc')->paginate($perPage),
                 fn ($q) => $q->orderBy('created_at', 'desc')->get()
