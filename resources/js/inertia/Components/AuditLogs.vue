@@ -24,6 +24,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  title: {
+    required: false,
+    type: String,
+  },
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
@@ -83,7 +87,7 @@ const onLoadAuditLogData = async () => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Audit Logs</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">{{ props.title ?? 'Audit Logs' }}</h3>
         </div>
       </template>
       <template #body>
@@ -96,7 +100,7 @@ const onLoadAuditLogData = async () => {
             @click.prevent="onLoadAuditLogData"
             :loading="auditLogs.loading"
           >
-            Load Audit Logs
+            Load {{ props.title ?? 'Audit Logs' }}
           </x-button>
         </div>
         <DataTable
