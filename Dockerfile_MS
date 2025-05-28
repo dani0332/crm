@@ -79,7 +79,8 @@ zlib1g \
 libicu-dev \
 libmemcached11 \
 ghostscript \
-libwebp-dev
+libwebp-dev \
+qpdf
 
 # Set working directory
 WORKDIR /var/www
