@@ -36,4 +36,7 @@ enum LoggerFeatureEnum: string
 
     case CC_PAYMENT_PROCESS = 'cc-payment-process';
 
+    case SELECT_PLAN = 'select-plan';
+
+    case SELECT_INSURANCE_PROVIDER = 'select-insurance-provider';
 }

@@ -369,6 +369,9 @@ class CentralController extends Controller
      */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SELECT_INSURANCE_PROVIDER);
+        LoggerService::info("Select plan for Non ECOM lead Quote Type: {$quoteType}, Code: {$request->code}, with Insurance Provider: {$request->provider_code}");
+
         $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $code, $request->provider_code);
@@ -378,7 +381,8 @@ class CentralController extends Controller
 
     public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
-        LoggerService::info("Updating selected plan for Quote Type: {$quoteType}, Code: {$request->code}, New Insurance Provider: {$request->provider_code}");
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SELECT_PLAN);
+        LoggerService::info("Select plan for Ecom lead Quote Type: {$quoteType}, Code: {$request->code}, with Insurance Provider: {$request->provider_code}");
 
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
