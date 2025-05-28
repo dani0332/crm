@@ -127,7 +127,7 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
+        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()

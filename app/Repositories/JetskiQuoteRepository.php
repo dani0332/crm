@@ -161,7 +161,7 @@ class JetskiQuoteRepository extends BaseRepository
 
         $query->orderBy('personal_quotes.'.(request()->get('sortBy') ?? 'created_at'), request()->get('sortType') ?? 'desc');
 
-        return ($forExport) ? $query->get() : $query;
+        return $query;
     }
 
 }

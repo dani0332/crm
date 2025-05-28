@@ -114,7 +114,9 @@ trait ExcelExportable
 
         // Generate CSV content in memory using chunking
         $csvFileName = $fileName.'.csv';
-        $stream = fopen('php://temp', 'r+');
+        $csvFilePath = storage_path('temp/'.$csvFileName); // Temporary file path
+
+        $stream = fopen($csvFilePath, 'w'); // Open file on disk for writing
 
         $requestParams['user'] = User::where(['email' => $requestParams['recipientEmail']])->first();
 
@@ -130,7 +132,7 @@ trait ExcelExportable
         }
 
         $totalRecords = 0;
-        $chunkSize = 5000; // Adjust based on your data complexity
+        $chunkSize = 1000; // Adjust based on your data complexity
         $exportName = class_basename($this);
         $chunkCount = 0;
         $totalChunkTime = 0;
@@ -139,7 +141,7 @@ trait ExcelExportable
             // Use the query builder version of collection if available
             if (method_exists($this, 'getQuery')) {
                 // Process data in memory-efficient chunks
-                logger()->info('Starting CSV data export with chunking');
+                logger()->info('Starting CSV export with chunking');
                 $query = $this->getQuery($requestParams);
 
                 // Use database chunking for efficient memory usage
@@ -150,7 +152,6 @@ trait ExcelExportable
                     // Track memory before mapping records
                     $memoryBeforeMapping = round(memory_get_usage(true) / 1024 / 1024, 2);
 
-                    $i = 0;
                     foreach ($records as $record) {
                         $mappedRow = $this->map($record);
                         fputcsv($stream, $mappedRow);
@@ -180,14 +181,12 @@ trait ExcelExportable
                     // Free up memory every 100 records
                     if ($totalRecords % 100 === 0) {
                         $currentMemory = round(memory_get_usage(true) / 1024 / 1024, 2);
-                        logger()->debug("Processed {$totalRecords} records. Memory: {$currentMemory}MB");
+                        // logger()->debug("Processed {$totalRecords} records. Memory: {$currentMemory}MB");
                     }
                 }
             }
 
-            // Get CSV content
-            rewind($stream);
-            $csvContent = stream_get_contents($stream);
+            // Close the file stream
             fclose($stream);
 
             $currentDate = Carbon::now()->format('d-m-Y');
@@ -200,8 +199,8 @@ trait ExcelExportable
                 $recipientName = auth()->user()->name;
             }
 
-            // Get the data collection and size information
-            $fileSize = round(strlen($csvContent) / 1024, 2); // Size in KB
+            // Get the file size
+            $fileSize = round(filesize($csvFilePath) / 1024, 2); // Size in KB
 
             $emailParams = [
                 'recipientName' => $recipientName,
@@ -221,7 +220,7 @@ trait ExcelExportable
             Mail::send(
                 ['html' => 'ExportCSVMail'],
                 $emailParams,
-                function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvContent, $csvFileName) {
+                function ($message) use ($emailSubject, $recipientEmail, $ccRecipients, $fromName, $fromEmail, $csvFilePath, $csvFileName) {
                     $message->to($recipientEmail);
 
                     if (! empty($ccRecipients)) {
@@ -231,12 +230,18 @@ trait ExcelExportable
                     $message->subject($emailSubject);
                     $message->from($fromEmail, $fromName);
 
-                    // Attach the CSV file
-                    $message->attachData($csvContent, $csvFileName, [
+                    // Attach the CSV file from disk
+                    $message->attach($csvFilePath, [
+                        'as' => $csvFileName,
                         'mime' => 'text/csv',
                     ]);
                 }
             );
+
+            // Clean up the temporary file
+            if (file_exists($csvFilePath)) {
+                unlink($csvFilePath);
+            }
 
             // Clean up
             gc_collect_cycles();
@@ -246,6 +251,10 @@ trait ExcelExportable
             logger()->info("CSV export completed. Records: {$totalRecords}, Final memory: {$finalMemory}MB, Peak memory: {$peakMemory}MB");
 
         } catch (\Throwable $e) {
+            // Clean up the file in case of an error
+            if (file_exists($csvFilePath)) {
+                unlink($csvFilePath);
+            }
             logger()->error('Error in CSV export: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
