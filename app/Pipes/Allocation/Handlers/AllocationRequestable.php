@@ -73,4 +73,23 @@ trait AllocationRequestable
     {
         return $this->get('tier');
     }
+
+    public function excludedAdvisorIds(array $advisorIds)
+    {
+        $excludedAdvisorIds = $this->getExcludedAdvisorIds();
+
+        $excludedAdvisorIds = array_merge($excludedAdvisorIds, $advisorIds);
+
+        $this->set('excluded_advisor_ids', $advisorIds);
+    }
+
+    public function getExcludedAdvisorIds()
+    {
+        return $this->get('excluded_advisor_ids', []);
+    }
+
+    public function hasExcludedAdvisorIds()
+    {
+        return ! empty($this->getExcludedAdvisorIds());
+    }
 }

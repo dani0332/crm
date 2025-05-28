@@ -164,7 +164,15 @@ abstract class BaseAllocationPipe extends AllocationService
             })
             ->whereIn('r.name', $roles)
             ->where('la.quote_type_id', $this->allocationRequest->getQuoteType()->id())
-            ->when($this->allocationRequest->hasNationalityConfig(), fn ($q) => $q->whereIn('users.id', $this->allocationRequest->getAdvisorIDs()))
+            ->when(
+                $this->allocationRequest->hasNationalityConfig(),
+                fn ($q) => $q->whereIn('users.id', $this->allocationRequest->getAdvisorIDs()),
+                function ($q) {
+                    if ($this->allocationRequest->hasExcludedAdvisorIds()) {
+                        $q->whereNotIn('users.id', $this->allocationRequest->getExcludedAdvisorIds());
+                    }
+                },
+            )
             ->activeUser()
             ->when($isBuyLead, fn ($q) => $q->where('la.buy_lead_status', true))
             ->when(
