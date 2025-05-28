@@ -16,6 +16,8 @@ class ValidateNationalityConfigPipe extends BaseAllocationPipe
         $config = $this->getNationalityConfig();
 
         if (! $config) {
+            $this->resolveExcludedAdvisorIds();
+
             return $next($request);
         }
 
@@ -33,5 +35,16 @@ class ValidateNationalityConfigPipe extends BaseAllocationPipe
     private function getNationalityConfig()
     {
         return NationalityAllocationService::find($this->allocationRequest->getQuoteType(), $this->lead->nationality_id);
+    }
+
+    private function resolveExcludedAdvisorIds()
+    {
+        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds($this->allocationRequest->getQuoteType());
+
+        if (empty($excludedAdvisorIds)) {
+            return;
+        }
+
+        $this->allocationRequest->excludedAdvisorIds($excludedAdvisorIds);
     }
 }
