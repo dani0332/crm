@@ -187,7 +187,7 @@ class NationalityAllocationConfigurationController extends Controller
 
     private function getQuoteTypes()
     {
-        return QuoteType::where('is_active', 1)->get();
+        return QuoteType::where('is_active', 1)->whereNotIn('short_code', ['CORPLINE', 'GM', 'JBL', 'SAV-', 'BTC', 'COM', 'JOB'])->get();
     }
 
     private function getUsers()
