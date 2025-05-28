@@ -31,12 +31,15 @@ use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use Spatie\Permission\Traits\HasRoles;
 
 class RenewalsUploadController extends Controller
 {
-    private $renewalsUploadFileService;
-
     use TeamHierarchyTrait;
+
+    private $renewalsUploadFileService;
 
     public function __construct(RenewalsUploadService $renewalsUploadFileService)
     {
@@ -473,5 +476,28 @@ class RenewalsUploadController extends Controller
             'azureStorageUrl' => $azureStorageUrl,
             'azureStorageContainer' => $azureStorageContainer,
         ]);
+    }
+
+    /**
+     * Retry all failed renewal processes for an upload batch
+     *
+     * @param RenewalsUploadLeads $renewalsUploadLead
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function retryRenewalProcesses(RenewalsUploadLeads $renewalsUploadLead)
+    {
+        /** @var User|HasRoles $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $result = $this->renewalsUploadFileService->retryRenewalUploadLeadProcesses($renewalsUploadLead);
+
+        if ($result) {
+            return redirect()->route('renewals-uploaded-leads-list')->with('success', 'Renewal processes retry initiated successfully');
+        }
+
+        return redirect()->route('renewals-uploaded-leads-list')->with('error', 'Failed to retry renewal processes');
     }
 }

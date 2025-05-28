@@ -23,10 +23,12 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
+use App\Enums\RenewalQuoteProcessStepEnum;
 use App\Enums\RenewalsUploadType;
 use App\Enums\ThirdPartyTagEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Exceptions\RenewalProcessException;
 use App\Exports\RenewalQuotesExport;
 use App\Facades\Capi;
 use App\Facades\Ken;
@@ -44,6 +46,7 @@ use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
+use App\Jobs\Renewals\RetryHealthRenewalProcess;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Jobs\SendPCPCarOCBEmailJob;
 use App\Jobs\SendPCPFollowupsJob;
@@ -351,7 +354,6 @@ class RenewalsUploadService
                     })
                     ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' one of batch is failed. ');
-                        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function (Batch $batch) use ($logPrefix) {
                         LoggerService::info($logPrefix.' everything done');
@@ -1195,7 +1197,7 @@ class RenewalsUploadService
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ]);
 
-            RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
+            ! $isQuoteTypeHealth && RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
             LoggerService::info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
 
             return $quote;
@@ -1246,67 +1248,74 @@ class RenewalsUploadService
      *
      * @return void
      */
-    private function updateBasePricePlan($quote, $data)
+    private function updateBasePricePlan($quote, $data, $renewalQuoteProcess)
     {
-        $memberDobs = array_map('trim', explode('|', $data['member_dob']));
-        $memberNames = array_map('trim', explode('|', $data['member_names']));
-        $memberPremiums = array_map('trim', explode('|', $data['member_premium']));
+        try{
+            $memberDobs = array_map('trim', explode('|', $data['member_dob']));
+            $memberNames = array_map('trim', explode('|', $data['member_names']));
+            $memberPremiums = array_map('trim', explode('|', $data['member_premium']));
 
-        $healthPlan = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first();
-        $healthCoPlan = HealthPlanCoPayment::where('code', $quote->renewal_upload_copay_code)->first();
-        $existingCustomersMember = CustomerMembers::where('quote_id', $quote->id)
-            ->where('quote_type', HealthQuote::class)
-            ->whereNull('deleted_at')
-            ->get()
-            ->keyBy(fn ($member) => strtolower(trim($member->first_name.' '.$member->last_name)));
+            $healthPlan = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first();
+            $healthCoPlan = HealthPlanCoPayment::where('code', $quote->renewal_upload_copay_code)->first();
+            $existingCustomersMember = CustomerMembers::where('quote_id', $quote->id)
+                ->where('quote_type', HealthQuote::class)
+                ->whereNull('deleted_at')
+                ->get()
+                ->keyBy(fn ($member) => strtolower(trim($member->first_name.' '.$member->last_name)));
 
-        $memberPremiumBreakdown = [];
-        foreach ($memberDobs as $index => $dob) {
-            $memberNameArray = explode(' ', $memberNames[$index]);
-            $firstName = array_shift($memberNameArray);
-            $lastName = implode(' ', $memberNameArray);
-            $fullNameKey = strtolower(trim($firstName.' '.$lastName));
+            $memberPremiumBreakdown = [];
+            foreach ($memberDobs as $index => $dob) {
+                $memberNameArray = explode(' ', $memberNames[$index]);
+                $firstName = array_shift($memberNameArray);
+                $lastName = implode(' ', $memberNameArray);
+                $fullNameKey = strtolower(trim($firstName.' '.$lastName));
 
-            if (isset($existingCustomersMember[$fullNameKey]) && isset($memberPremiums[$index])) {
-                $premium = $memberPremiums[$index];
-                $memberPremiumBreakdown[] = [
-                    'memberId' => $existingCustomersMember[$fullNameKey]->id,
-                    'ratesPerCopay' => [
-                        [
-                            'healthPlanCoPaymentId' => $healthCoPlan->id,
-                            'basePrice' => (float) $premium,
+                if (isset($existingCustomersMember[$fullNameKey]) && isset($memberPremiums[$index])) {
+                    $premium = $memberPremiums[$index];
+                    $memberPremiumBreakdown[] = [
+                        'memberId' => $existingCustomersMember[$fullNameKey]->id,
+                        'ratesPerCopay' => [
+                            [
+                                'healthPlanCoPaymentId' => $healthCoPlan->id,
+                                'basePrice' => (float) $premium,
+                            ],
                         ],
-                    ],
-                ];
+                    ];
+                }
             }
-        }
-        $planPayload = [
-            'planId' => $healthPlan->id,
-            'selectedCopayId' => $healthCoPlan->id,
-            'isManualUpdate' => true,
-            'memberPremiumBreakdown' => $memberPremiumBreakdown,
-        ];
-        $dataArray = [
-            'quoteUID' => $quote->uuid,
-            'update' => true,
-            'plans' => [$planPayload],
-            'callSource' => strtolower(LeadSourceEnum::IMCRM),
-        ];
+            $planPayload = [
+                'planId' => $healthPlan->id,
+                'selectedCopayId' => $healthCoPlan->id,
+                'isManualUpdate' => true,
+                'memberPremiumBreakdown' => $memberPremiumBreakdown,
+            ];
+            $dataArray = [
+                'quoteUID' => $quote->uuid,
+                'update' => true,
+                'plans' => [$planPayload],
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
+            ];
 
-        LoggerService::info('Renewal: Health Plan Modify V2 Request Data present in extra ', $dataArray, ['ref_id' => $quote->uuid]);
-        $response = Ken::renewalRequest('/save-manual-health-quote-plans', 'POST', $dataArray);
+            LoggerService::info('Renewal: Health Plan Modify V2 Request Data present in extra ', $dataArray, ['ref_id' => $quote->uuid]);
+            $response = Ken::renewalRequest('/save-manual-health-quote-plans', 'POST', $dataArray);
 
-        if ($response) {
-            $selectResponse = $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id);
-            LoggerService::info('Renewal: Health Plan Modify V2 Response ', ['selectResponse' => $selectResponse], ['ref_id' => $quote->uuid, 'premium' => $quote->premium]);
-            if ($selectResponse->totalPremium && ($data['payment_link'] != '' || $data['payment_link'] != null)) {
-                $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
-                $premium = isset($ecomDetails['priceWithVAT']) && $ecomDetails['priceWithVAT'] > 0 && $ecomDetails['priceWithVAT'] != '' && $ecomDetails['priceWithVAT'] != null ? $ecomDetails['priceWithVAT'] : $selectResponse->totalPremium;
-                $this->createHealthPayment($quote, $data, $premium);
+            if ($response) {
+                $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id, $renewalQuoteProcess, $data);
             }
-        }
 
-        return $response;
+            return $response;
+        } catch (\Throwable $e) {
+            if ($e instanceof RenewalProcessException) {
+                throw $e;
+            }
+            throw new RenewalProcessException(
+                'Health plan update failed',
+                RenewalQuoteProcessStepEnum::PLAN_UPDATE,
+                ['error' => $e->getMessage()],
+                $e->getCode(),
+                $e
+            );
+        }
     }
 
     /**
@@ -1318,122 +1327,132 @@ class RenewalsUploadService
      */
     private function updateOrCreateHealthMembers($quote, $data, $renewalQuoteProcess)
     {
-        $memberCategorySalaryMapping = [
-            'Investor or Partner' => 2,
-            'Golden visa' => 2,
-            'Self-employed or Freelancer' => 2,
-            'Domestic worker' => 1,
-            'Dependent spouse' => 2,
-            'Dependent child' => 2,
-            'Dependent parent' => 2,
-            'Dependent sibling or Other relatives' => 2,
-            'Employee with salary AED 4000 and below' => 1,
-            'Employee with salary above AED 4000' => 2,
-        ];
-
-        // Exploding values and trimming
-        $memberDobs = array_map('trim', explode('|', $data['member_dob']));
-        $memberNames = array_map('trim', explode('|', $data['member_names']));
-        $memberNationalities = array_map('trim', explode('|', $data['member_nationality']));
-        $memberGenders = array_map('trim', explode('|', $data['member_gender']));
-        $memberCategoriesText = array_map('trim', explode('|', $data['member_category']));
-        $memberEmirateOfVisas = array_map('trim', explode('|', $data['member_emirate_of_visa']));
-
-        // Fetch required database records in one go
-        $nationalities = Nationality::whereIn('text', $memberNationalities)->withActive()->pluck('id', 'text');
-        $memberCategories = MemberCategory::whereIn('text', $memberCategoriesText)->active()->pluck('id', 'text');
-        $emirates = Emirate::whereIn('text', $memberEmirateOfVisas)->withActive()->pluck('id', 'text');
-
-        $existingMembers = CustomerMembers::where('quote_id', $quote->id)
-            ->where('quote_type', HealthQuote::class)
-            ->whereNull('deleted_at')
-            ->get()
-            ->keyBy(fn ($member) => strtolower(trim($member->first_name.' '.$member->last_name)));
-
-        $memberDetails = [];
-        $updateMemberDetails = [];
-        $isCase1 = count($memberDobs) == 1;
-        foreach ($memberDobs as $index => $dob) {
-            $dobFormatted = Carbon::parse($this->formatDate($dob))->toDateString();
-            $memberNameArray = explode(' ', $memberNames[$index]);
-            $firstName = array_shift($memberNameArray);
-            $lastName = implode(' ', $memberNameArray);
-            $fullNameKey = strtolower(trim($firstName.' '.$lastName));
-
-            $memberDetails[] = [
-                'dob' => $dobFormatted,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'gender' => $memberGenders[$index],
-                'nationality_id' => $nationalities[$memberNationalities[$index]] ?? null,
-                'member_category_id' => $memberCategories[$memberCategoriesText[$index]] ?? null,
-                'emirate_of_your_visa_id' => $emirates[$memberEmirateOfVisas[$index]] ?? null,
-                'salary_band_id' => $memberCategorySalaryMapping[$memberCategoriesText[$index]] ?? 1,
+        try{
+            $memberCategorySalaryMapping = [
+                'Investor or Partner' => 2,
+                'Golden visa' => 2,
+                'Self-employed or Freelancer' => 2,
+                'Domestic worker' => 1,
+                'Dependent spouse' => 2,
+                'Dependent child' => 2,
+                'Dependent parent' => 2,
+                'Dependent sibling or Other relatives' => 2,
+                'Employee with salary AED 4000 and below' => 1,
+                'Employee with salary above AED 4000' => 2,
             ];
 
-            if ($index == 0) { // Policyholder (First Member)
-                // Update Quote & Customer (Policyholder)
-                $quote->fill($memberDetails[$index])->save();
-                $customerPayload = Arr::only($memberDetails[$index], [
-                    'first_name',
-                    'last_name',
-                    'dob',
-                    'gender',
-                    'nationality_id',
-                ]);
-                Customer::where('id', $quote->customer_id)->update($customerPayload);
+            // Exploding values and trimming
+            $memberDobs = array_map('trim', explode('|', $data['member_dob']));
+            $memberNames = array_map('trim', explode('|', $data['member_names']));
+            $memberNationalities = array_map('trim', explode('|', $data['member_nationality']));
+            $memberGenders = array_map('trim', explode('|', $data['member_gender']));
+            $memberCategoriesText = array_map('trim', explode('|', $data['member_category']));
+            $memberEmirateOfVisas = array_map('trim', explode('|', $data['member_emirate_of_visa']));
 
-                // Case 1: Policyholder goes to member details if its individual
-                if ($isCase1) {
-                    if (isset($existingMembers[$fullNameKey])) {
-                        // Update existing member if found
-                        $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
-                        $updateMemberDetails[] = Arr::only($memberDetails[$index], [
-                            'id', 'first_name', 'last_name',
-                            'dob', 'emirate_of_your_visa_id', 'gender',
-                            'nationality_id', 'member_category_id', 'salary_band_id',
-                        ]);
+            // Fetch required database records in one go
+            $nationalities = Nationality::whereIn('text', $memberNationalities)->withActive()->pluck('id', 'text');
+            $memberCategories = MemberCategory::whereIn('text', $memberCategoriesText)->active()->pluck('id', 'text');
+            $emirates = Emirate::whereIn('text', $memberEmirateOfVisas)->withActive()->pluck('id', 'text');
+
+            $existingMembers = CustomerMembers::where('quote_id', $quote->id)
+                ->where('quote_type', HealthQuote::class)
+                ->whereNull('deleted_at')
+                ->get()
+                ->keyBy(fn ($member) => strtolower(trim($member->first_name.' '.$member->last_name)));
+
+            $memberDetails = [];
+            $updateMemberDetails = [];
+            $isCase1 = count($memberDobs) == 1;
+            foreach ($memberDobs as $index => $dob) {
+                $dobFormatted = Carbon::parse($this->formatDate($dob))->toDateString();
+                $memberNameArray = explode(' ', $memberNames[$index]);
+                $firstName = array_shift($memberNameArray);
+                $lastName = implode(' ', $memberNameArray);
+                $fullNameKey = strtolower(trim($firstName.' '.$lastName));
+
+                $memberDetails[] = [
+                    'dob' => $dobFormatted,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'gender' => $memberGenders[$index],
+                    'nationality_id' => $nationalities[$memberNationalities[$index]] ?? null,
+                    'member_category_id' => $memberCategories[$memberCategoriesText[$index]] ?? null,
+                    'emirate_of_your_visa_id' => $emirates[$memberEmirateOfVisas[$index]] ?? null,
+                    'salary_band_id' => $memberCategorySalaryMapping[$memberCategoriesText[$index]] ?? 1,
+                ];
+
+                if ($index == 0) { // Policyholder (First Member)
+                    // Update Quote & Customer (Policyholder)
+                    $quote->fill($memberDetails[$index])->save();
+                    $customerPayload = Arr::only($memberDetails[$index], [
+                        'first_name',
+                        'last_name',
+                        'dob',
+                        'gender',
+                        'nationality_id',
+                    ]);
+                    Customer::where('id', $quote->customer_id)->update($customerPayload);
+
+                    // Case 1: Policyholder goes to member details if its individual
+                    if ($isCase1) {
+                        if (isset($existingMembers[$fullNameKey])) {
+                            // Update existing member if found
+                            $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
+                            $updateMemberDetails[] = Arr::only($memberDetails[$index], [
+                                'id', 'first_name', 'last_name',
+                                'dob', 'emirate_of_your_visa_id', 'gender',
+                                'nationality_id', 'member_category_id', 'salary_band_id',
+                            ]);
+                            unset($memberDetails[$index]);
+                        }
+                    } else {
+                        // Case 2: Policyholder excluded from member details
                         unset($memberDetails[$index]);
+
+                        continue;
                     }
-                } else {
-                    // Case 2: Policyholder excluded from member details
-                    unset($memberDetails[$index]);
 
                     continue;
                 }
 
-                continue;
+                // Update existing member if found
+                if (isset($existingMembers[$fullNameKey])) {
+                    $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
+                    $updateMemberDetails[] = Arr::only($memberDetails[$index], ['id', 'first_name', 'last_name', 'dob', 'emirate_of_your_visa_id', 'gender', 'nationality_id', 'member_category_id', 'salary_band_id']);
+                    unset($memberDetails[$index]);
+                }
             }
 
-            // Update existing member if found
-            if (isset($existingMembers[$fullNameKey])) {
-                $memberDetails[$index]['id'] = $existingMembers[$fullNameKey]->id;
-                $updateMemberDetails[] = Arr::only($memberDetails[$index], ['id', 'first_name', 'last_name', 'dob', 'emirate_of_your_visa_id', 'gender', 'nationality_id', 'member_category_id', 'salary_band_id']);
-                unset($memberDetails[$index]);
+            $memberDetails = arrayKeysToCamelCase($memberDetails);
+            $updateMemberDetails = arrayKeysToCamelCase($updateMemberDetails);
+
+            LoggerService::info('Renewal: Health quote add member details in extra', [...$memberDetails], ['ref_id' => $quote->uuid]);
+            $addResponse = count($memberDetails) > 0 && Ken::renewalRequest('/add-health-quote-members', 'POST', [
+                'quoteUID' => $quote->uuid,
+                'memberDetails' => [...$memberDetails],
+            ]);
+
+            LoggerService::info('Renewal: Health quote update member details in extra', [...$updateMemberDetails], ['ref_id' => $quote->uuid]);
+            $updateResponse = count($updateMemberDetails) > 0 && Ken::renewalRequest('/update-health-quote-members', 'POST', [
+                'quoteUID' => $quote->uuid,
+                'memberDetails' => [...$updateMemberDetails],
+            ]);
+
+            if ($addResponse || $updateResponse) {
+                LoggerService::info('Renewal: Health Members added/updated successfully for UUID: '.$quote->uuid, [], ['ref_id' => $quote->uuid]);
+                $this->updateBasePricePlan($quote, $data, $renewalQuoteProcess);
+            } 
+        } catch (\Throwable $e) {
+            if ($e instanceof RenewalProcessException) {
+                throw $e;
             }
-        }
-
-        $memberDetails = arrayKeysToCamelCase($memberDetails);
-        $updateMemberDetails = arrayKeysToCamelCase($updateMemberDetails);
-
-        LoggerService::info('Renewal: Health quote add member details in extra', [...$memberDetails], ['ref_id' => $quote->uuid]);
-        $addResponse = count($memberDetails) > 0 && Ken::renewalRequest('/add-health-quote-members', 'POST', [
-            'quoteUID' => $quote->uuid,
-            'memberDetails' => [...$memberDetails],
-        ]);
-
-        LoggerService::info('Renewal: Health quote update member details in extra', [...$updateMemberDetails], ['ref_id' => $quote->uuid]);
-        $updateResponse = count($updateMemberDetails) > 0 && Ken::renewalRequest('/update-health-quote-members', 'POST', [
-            'quoteUID' => $quote->uuid,
-            'memberDetails' => [...$updateMemberDetails],
-        ]);
-
-        if ($addResponse || $updateResponse) {
-            LoggerService::info('Renewal: Health Members added/updated successfully for UUID: '.$quote->uuid, [], ['ref_id' => $quote->uuid]);
-            $this->updateBasePricePlan($quote, $data);
-        } else {
-            LoggerService::info('Renewal: Health Members added/updated failed for UUID: '.$quote->uuid, [], ['ref_id' => $quote->uuid]);
-            $this->updateRenewalQuoteProcess($renewalQuoteProcess, true, ['Health Members added/updated failed']);
+            throw new RenewalProcessException(
+                'Health member update failed',
+                RenewalQuoteProcessStepEnum::MEMBERS_UPDATE,
+                ['error' => $e->getMessage()],
+                $e->getCode(),
+                $e
+            );
         }
     }
 
@@ -1444,23 +1463,51 @@ class RenewalsUploadService
      * @param [type] $data
      * @return object
      */
-    private function selectHealthPlan($quote, $healthPlanId, $healthCoPaymentId)
+    private function selectHealthPlan($quote, $healthPlanId, $healthCoPaymentId, $renewalQuoteProcess, $leadData)
     {
-        $endpoint = '/api/v1-process-booking';
-        $data = [
-            'planId' => intval($healthPlanId),
-            'quoteTypeId' => QuoteTypeId::Health,
-            'addonOptionIds' => [],
-            'healthPlanCoPaymentId' => intval($healthCoPaymentId),
-            'quoteUID' => $quote->uuid,
-            'callSource' => strtolower(LeadSourceEnum::IMCRM),
-            'url' => request()->url(),
-        ];
+        try {
+            $endpoint = '/api/v1-process-booking';
+            $data = [
+                'planId' => intval($healthPlanId),
+                'quoteTypeId' => QuoteTypeId::Health,
+                'addonOptionIds' => [],
+                'healthPlanCoPaymentId' => intval($healthCoPaymentId),
+                'quoteUID' => $quote->uuid,
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                'url' => request()->url(),
+            ];
 
-        LoggerService::info('Renewal: select health plan request data in extra ', $data, ['ref_id' => $quote->uuid]);
-        $response = Capi::request($endpoint, 'post', $data, true);
+            LoggerService::info('Renewal: select health plan request data in extra ', $data, ['ref_id' => $quote->uuid]);
+            $response = Capi::request($endpoint, 'post', $data, true);
 
-        return $response;
+            if (!$response || !isset($response->totalPremium)) {
+                throw new RenewalProcessException(
+                    'Health Plan Selection Failed - Invalid Response',
+                    RenewalQuoteProcessStepEnum::SELECT_PLAN,
+                    ['response' => $response]
+                );
+            }
+            LoggerService::info('Renewal: Health Plan Modify V2 Response ', ['selectResponse' => $response], ['ref_id' => $quote->uuid, 'premium' => $quote->premium]);
+
+            if ($response->totalPremium && ($leadData['payment_link'] != '' || $leadData['payment_link'] != null)) {
+                $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
+                $premium = isset($ecomDetails['priceWithVAT']) && $ecomDetails['priceWithVAT'] > 0 && $ecomDetails['priceWithVAT'] != '' && $ecomDetails['priceWithVAT'] != null ? $ecomDetails['priceWithVAT'] : $response->totalPremium;
+                $this->createHealthPayment($quote, $leadData, $premium, $renewalQuoteProcess);
+            }
+
+            return $response;
+        } catch (\Throwable $e) {
+            if ($e instanceof RenewalProcessException) {
+                throw $e;
+            }
+            throw new RenewalProcessException(
+                'Health Plan Selection Failed',
+                RenewalQuoteProcessStepEnum::SELECT_PLAN,
+                ['error' => $e->getMessage()],
+                $e->getCode(),
+                $e
+            );
+        }
     }
 
     /**
@@ -1470,58 +1517,76 @@ class RenewalsUploadService
      * @param [type] $data
      * @return void
      */
-    private function createHealthPayment($quote, $data, $totalPremium)
+    private function createHealthPayment($quote, $data, $totalPremium, $renewalQuoteProcess)
     {
-        $payment = $quote->payments()->latest()
-            ->first();
-        LoggerService::info('Renewal: Health Payment total premium: '.$totalPremium);
-        $newRequest = new StorePaymentRequest;
-        $newRequest->user = auth()->user();
-        $quoteType = QuoteTypes::HEALTH->value;
-        $newRequest->merge([
-            'quote_id' => $quote->id,
-            'code' => 'IP',
-            'paymentCode' => $payment ? $payment->code : null,
-            'plan_id' => $quote->plan_id,
-            'quote_type' => $quoteType,
-            'insurance_provider_id' => $quote->insurance_provider_id,
-            'modelType' => $quoteType,
-            'captured_amount' => null,
-            'new_payment_structure' => true,
-            'sendFTCEmail' => false,
-            'send_update_id' => null,
-            'payment_gateway_id' => PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL,
-            'cc_payment_gateway' => strtoupper(PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL_TEXT),
-            'payment' => [
-                'collection_type' => 'insurer',
-                'payment_methods' => 'IPL',
-                'discount_reason' => $payment ? $payment->discount_reason : null,
-                'discount_custom_reason' => $payment ? $payment->discount_custom_reason : null,
-                'reference' => null,
-                'payment_no' => '1',
-                'frequency' => 'upfront',
-                'credit_approval' => null,
-                'discount' => null,
-                'collection_date' => '2025-05-07T08:44:14.013Z',
-                'total_amount' => $totalPremium,
-                'total_price' => $totalPremium,
-                'discount_value' => 0,
-                'payment_splits' => [
-                    [
-                        'sr_no' => 1,
-                        'payment_amount' => $totalPremium,
-                        'payment_method' => 'IPL',
-                        'due_date' => '2025-05-07T08:44:14.013Z',
-                        'discount_documents' => [],
-                        'insurer_payment_link' => $data['payment_link'],
+        try {
+            $payment = $quote->payments()->latest()
+                ->first();
+            LoggerService::info('Renewal: Health Payment total premium: '.$totalPremium);
+            $newRequest = new StorePaymentRequest;
+            $newRequest->user = auth()->user();
+            $quoteType = QuoteTypes::HEALTH->value;
+            $newRequest->merge([
+                'quote_id' => $quote->id,
+                'code' => 'IP',
+                'paymentCode' => $payment ? $payment->code : null,
+                'plan_id' => $quote->plan_id,
+                'quote_type' => $quoteType,
+                'insurance_provider_id' => $quote->insurance_provider_id,
+                'modelType' => $quoteType,
+                'captured_amount' => null,
+                'new_payment_structure' => true,
+                'sendFTCEmail' => false,
+                'send_update_id' => null,
+                'payment_gateway_id' => PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL,
+                'cc_payment_gateway' => strtoupper(PaymentGatewayIdEnum::PAYMENT_GATEWAY_PL_TEXT),
+                'payment' => [
+                    'collection_type' => 'insurer',
+                    'payment_methods' => 'IPL',
+                    'discount_reason' => $payment ? $payment->discount_reason : null,
+                    'discount_custom_reason' => $payment ? $payment->discount_custom_reason : null,
+                    'reference' => null,
+                    'payment_no' => '1',
+                    'frequency' => 'upfront',
+                    'credit_approval' => null,
+                    'discount' => null,
+                    'collection_date' => null,
+                    'total_amount' => $totalPremium,
+                    'total_price' => $totalPremium,
+                    'discount_value' => 0,
+                    'payment_splits' => [
+                        [
+                            'sr_no' => 1,
+                            'payment_amount' => $totalPremium,
+                            'payment_method' => 'IPL',
+                            'due_date' => now(),
+                            'discount_documents' => [],
+                            'insurer_payment_link' => $data['payment_link'],
+                        ],
                     ],
                 ],
-            ],
-        ]);
+            ]);
 
-        $response = $payment ? PaymentRepository::updateNewPayment($newRequest) : PaymentRepository::createNewPayment($newRequest);
+            $response = $payment ? PaymentRepository::updateNewPayment($newRequest) : PaymentRepository::createNewPayment($newRequest);
 
-        return $response;
+            if (!$response) {
+                $this->updateRenewalQuoteProcess($renewalQuoteProcess, true, ['Health Payment failed'], RenewalQuoteProcessStepEnum::CREATE_PAYMENT);
+            }
+            $this->updateRenewalQuoteProcess($renewalQuoteProcess, false, []);
+            return $response;
+        } catch (\Throwable $e) {
+            if ($e instanceof RenewalProcessException) {
+                throw $e;
+            }
+            
+            throw new RenewalProcessException(
+                'Health Payment failed',
+                RenewalQuoteProcessStepEnum::CREATE_PAYMENT,
+                ['error' => $e->getMessage()],
+                $e->getCode(),
+                $e
+            );
+        }
     }
 
     /**
@@ -2343,14 +2408,18 @@ class RenewalsUploadService
         return false;
     }
 
-    public function updateRenewalQuoteProcess($renewalQuoteProcess, $failed = false, $validationErrors = [])
+    public function updateRenewalQuoteProcess($renewalQuoteProcess, $failed = false, $validationErrors = [], $step = null)
     {
-        $renewalQuoteProcess->status = $failed ? RenewalProcessStatuses::BAD_DATA : RenewalProcessStatuses::PROCESSED;
-        $renewalQuoteProcess->validation_errors = $validationErrors;
+        $renewalQuoteProcess->status = $failed ? RenewalProcessStatuses::FAILED : RenewalProcessStatuses::PROCESSED;
+        if($step != null){
+            $renewalQuoteProcess->step_errors = $validationErrors;
+        } else {
+            $renewalQuoteProcess->validation_errors = $validationErrors;
+        }
         $renewalQuoteProcess->fetch_plans_status = $failed ? FetchPlansStatuses::OUTDATED : FetchPlansStatuses::PENDING;
+        $renewalQuoteProcess->step = $step;
         $renewalQuoteProcess->save();
         $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
-        $renewalUploadLead->status = $failed ? ProcessStatusCode::FAILED : ProcessStatusCode::COMPLETED;
         $failed && $renewalUploadLead->cannot_upload += 1;
         ! $failed && $renewalUploadLead->good += 1;
         $renewalUploadLead->save();
@@ -2725,4 +2794,140 @@ class RenewalsUploadService
         return $fakeEmail;
     }
 
+    /**
+     * Retry all failed renewal processes for a RenewalUploadLead
+     * 
+     * @param RenewalsUploadLeads $renewalUploadLead
+     * @return bool
+     */
+    public function retryRenewalUploadLeadProcesses(RenewalsUploadLeads $renewalUploadLead)
+    {
+        $logPrefix = 'UAC FN: retryRenewalUploadLeadProcesses RenewalUploadLeadId: ' . $renewalUploadLead->id;
+        LoggerService::info($logPrefix . ' Batch retry started');
+
+        try {
+            // Get all failed processes
+            $failedProcesses = RenewalQuoteProcess::where('renewals_upload_lead_id', $renewalUploadLead->id)
+                ->where('status', RenewalProcessStatuses::FAILED)
+                ->whereIn('step', [RenewalQuoteProcessStepEnum::MEMBERS_UPDATE, RenewalQuoteProcessStepEnum::PLAN_UPDATE, RenewalQuoteProcessStepEnum::SELECT_PLAN, RenewalQuoteProcessStepEnum::CREATE_PAYMENT])
+                ->get();
+
+            if ($failedProcesses->isEmpty()) {
+                LoggerService::info($logPrefix . ' No failed processes found to retry');
+                return false;
+            }
+
+            // Reset the upload lead status
+            $renewalUploadLead->update([
+                'status' => ProcessStatusCode::IN_PROGRESS,
+                'cannot_upload' => 0,
+            ]);
+
+            // Reset all failed processes
+            $jobs = [];
+            foreach ($failedProcesses as $process) {
+                $process->update([
+                    'status' => RenewalProcessStatuses::VALIDATED,
+                    'step_errors' => null,
+                    'fetch_plans_status' => FetchPlansStatuses::PENDING,
+                    'last_step_attempt' => now(),
+                    'retry_count' => $process->retry_count + 1,
+                ]);
+
+                $jobs[] = new RetryHealthRenewalProcess($process);
+            }
+
+            if (!empty($jobs)) {
+                Bus::batch($jobs)
+                    ->onQueue('renewals')
+                    ->then(function () use ($logPrefix, $renewalUploadLead) {
+                        LoggerService::info($logPrefix . ' All retry jobs completed successfully');
+                        $renewalUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use ($logPrefix, $renewalUploadLead) {
+                        LoggerService::error($logPrefix . ' One or more retry jobs failed');
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        LoggerService::info($logPrefix . ' Batch retry process completed');
+                    })
+                    ->allowFailures()
+                    ->dispatch();
+
+                LoggerService::info($logPrefix . ' Dispatched ' . count($jobs) . ' retry jobs');
+                return true;
+            }
+
+            return false;
+        } catch (\Exception $exception) {
+            LoggerService::error($logPrefix . ' Batch retry failed. Error: ' . $exception->getMessage());
+            $renewalUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+            return false;
+        }
+    }
+
+    /**
+     * Handle the health quote update process with retry capability
+     * 
+     * @param HealthQuote $quote
+     * @param array $data
+     * @param RenewalQuoteProcess $renewalQuoteProcess
+     * @return bool
+     */
+    public function retryRenewalQuoteProcess(RenewalQuoteProcess $renewalQuoteProcess)
+    {
+        $logPrefix = "Health Quote Update UUID: {$renewalQuoteProcess->healthQuote->uuid}";
+        $quote = $renewalQuoteProcess->healthQuote;
+        $data = $renewalQuoteProcess->data;
+        try {
+            // Start from the last failed/pending step
+            switch ($renewalQuoteProcess->step) {
+                case RenewalQuoteProcessStepEnum::MEMBERS_UPDATE:
+                    if (!$this->updateOrCreateHealthMembers($quote, $data, $renewalQuoteProcess)) {
+                        return false;
+                    }
+                    break;
+
+                case RenewalQuoteProcessStepEnum::PLAN_UPDATE:
+                    if (!$this->updateBasePricePlan($quote, $data, $renewalQuoteProcess)) {
+                        return false;
+                    }
+                    break;
+
+                case RenewalQuoteProcessStepEnum::SELECT_PLAN:
+                    // TODO: Get health plan id and copayId from the quote
+                    $healthPlan = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first();
+                    $healthCoPlan = HealthPlanCoPayment::where('code', $quote->renewal_upload_copay_code)->first();
+                    if (!$this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id, $renewalQuoteProcess, $data)) {
+                        return false;
+                    }
+                    break;
+
+                case RenewalQuoteProcessStepEnum::CREATE_PAYMENT:
+                    $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
+                    $premium = $ecomDetails['priceWithVAT'];
+                    if (!$this->createHealthPayment($quote, $data, $premium, $renewalQuoteProcess)) {
+                        return false;
+                    }
+                    break;
+            }
+
+            $renewalQuoteProcess->update([
+                'step_errors' => null,
+                'step' => null,
+            ]);
+
+            return true;
+        } catch (\Throwable $e) {
+            if ($e instanceof RenewalProcessException) {
+                throw $e;
+            }
+            throw new RenewalProcessException(
+                'Health plan update failed',
+                $renewalQuoteProcess->step,
+                ['error' => $e->getMessage()],
+                $e->getCode(),
+                $e
+            );
+        }
+    }
 }

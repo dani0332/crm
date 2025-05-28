@@ -259,6 +259,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
             // Non Motor
             Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update');
+            Route::get('renewals/retry/{renewalsUploadLead}', [RenewalsUploadController::class, 'retryRenewalProcesses'])->name('renewals.retry');
         });
     });
 
