@@ -83,7 +83,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     // Creates a new payment record along with associated split payments for a quote
     public function fetchCreateNewPayment($request)
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::CREATE_PAYMENT);
         try {
             // Initialize payment source and get quote model
             $paymentSource = 'Main Lead';
