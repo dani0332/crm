@@ -228,8 +228,7 @@ class SplitPaymentService
             LoggerService::info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments: Successfully created receipt');
             $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];
 
-        }
-        else {
+        } else {
             LoggerService::info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments Error: Document number not generated from Sage');
             $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
             $returnMessage['response'] = 'Document number not generated from sage - Ref:'.$quote->code;
