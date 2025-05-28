@@ -55,8 +55,8 @@ class TravelQuoteObserver
             LoggerService::info(self::class . " - Stopping SIC follow-up emails for quote uuid: {$travelQuote->uuid} with status: {$travelQuote->quote_status_id} and payment status: {$travelQuote->payment_status}");
              $sicEventName = getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_DISABLE);
             if ($sicEventName) {
-                SIBService::createWorkflowEvent($sicEventName, $lead);
-                 LoggerService::info(self::class." - SIC workflow stopped for lead uuid : {$lead->uuid}");
+                SIBService::createWorkflowEvent($sicEventName, $travelQuote);
+                 LoggerService::info(self::class." - SIC workflow stopped for lead uuid : {$travelQuote->uuid}");
             } else {
                   LoggerService::info(self::class.' - SIC workflow key not found');
             }
