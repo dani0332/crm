@@ -452,6 +452,7 @@ class CentralController extends Controller
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::DELETE_SPLIT_PAYMENT);
         LoggerService::info("Delete split payment called Payment Split code : {$request->code}");
+
         return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id, $request->code);
     }
 

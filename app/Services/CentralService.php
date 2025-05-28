@@ -1225,7 +1225,7 @@ class CentralService extends BaseService
         }
 
         $paymentAgainst = $request->send_update_log_id ? 'Send Update' : 'Main Lead';
-        LoggerService::info('fn:voidPayment - Payment found against '.$paymentAgainst.' - Payment Code:'. $paymentCode);
+        LoggerService::info('fn:voidPayment - Payment found against '.$paymentAgainst.' - Payment Code:'.$paymentCode);
         $paymentGateways = [
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT => PaymentGatewayIdEnum::PAYMENT_GATEWAY_CHECKOUT_TEXT,
             PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP => PaymentGatewayIdEnum::PAYMENT_GATEWAY_TAP_TEXT,
@@ -1343,7 +1343,7 @@ class CentralService extends BaseService
 
     public function deletePayment($request): array
     {
-        $paymentCode = $request->payment_code;  
+        $paymentCode = $request->payment_code;
         LoggerService::info('fn:deletePayment - process started: '.$paymentCode);
 
         $payment = Payment::where(
