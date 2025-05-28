@@ -106,7 +106,15 @@ class FetchEligibleAdvisorsPipe extends BaseAllocationPipe
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
             ->where('quote_type_id', QuoteTypes::CAR->id())
-            ->when($this->allocationRequest->hasNationalityConfig(), fn ($q) => $q->whereIn('user_id', $this->allocationRequest->getAdvisorIDs()))
+            ->when(
+                $this->allocationRequest->hasNationalityConfig(),
+                fn ($q) => $q->whereIn('user_id', $this->allocationRequest->getAdvisorIDs()),
+                function ($q) {
+                    if ($this->allocationRequest->hasExcludedAdvisorIds()) {
+                        $q->whereNotIn('user_id', $this->allocationRequest->getExcludedAdvisorIds());
+                    }
+                },
+            )
             ->activeUser()
             ->when($this->allocationRequest->getReAssigFromAdvisorId(), fn ($q) => $q->where('user_id', '!=', $this->allocationRequest->getReAssigFromAdvisorId()));
     }

@@ -167,6 +167,14 @@ class FinalizeEligibleAdvisorPipe extends BaseAllocationPipe
             ->whereIn('user_id', $ruleUserIds)
             ->whereNotIn('user_id', $excludedUserIds)
             ->where('quote_type_id', $this->allocationRequest->getQuoteType()->id())
+            ->when(
+                ! $this->allocationRequest->hasNationalityConfig(),
+                function ($q) {
+                    if ($this->allocationRequest->hasExcludedAdvisorIds()) {
+                        $q->whereNotIn('user_id', $this->allocationRequest->getExcludedAdvisorIds());
+                    }
+                },
+            )
             ->activeUser()
             ->orderBy('last_allocated')
             ->pluck('user_id')
