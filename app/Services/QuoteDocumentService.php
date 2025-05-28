@@ -553,6 +553,11 @@ class QuoteDocumentService extends BaseService
 
             // If we can't even use the original file, re-throw the exception
             throw $e;
+        } finally {
+            // after everything remove the sourceFile from storage/temp
+            if (file_exists($sourceFilePath)) {
+                unlink($sourceFilePath);
+            }
         }
     }
 
@@ -571,7 +576,7 @@ class QuoteDocumentService extends BaseService
         $tempFilePath = storage_path('temp/preprocessed_'.$docName);
         $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
             '-dPDFSETTINGS=/default -dCompatibilityLevel=1.4 '.
-            '-dEmbedAllFonts=false -dSubsetFonts=false -dCompressPages=false '.
+            '-dNoOutputFonts -dEmbedAllFonts=false -dSubsetFonts=false -dCompressPages=false '.
             '-sOutputFile='.escapeshellarg($tempFilePath).' '.
             escapeshellarg($sourceFilePath).' 2>&1';
 
