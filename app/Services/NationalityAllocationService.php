@@ -12,11 +12,22 @@ use Illuminate\Support\Facades\DB;
 
 class NationalityAllocationService
 {
+    private static function resolveQuoteType(QuoteTypes $quoteType): QuoteTypes
+    {
+        if ($quoteType === QuoteTypes::CORPLINE || $quoteType === QuoteTypes::GROUP_MEDICAL) {
+            return QuoteTypes::BUSINESS;
+        }
+
+        return $quoteType;
+    }
+
     public static function find(QuoteTypes $quoteType, $nationalityId): ?NationalityAllocationConfiguration
     {
         if (! $nationalityId) {
             return null;
         }
+
+        $quoteType = self::resolveQuoteType($quoteType);
 
         return NationalityAllocationConfiguration::query()
             ->where('quote_type_id', $quoteType->id())
@@ -30,7 +41,7 @@ class NationalityAllocationService
         return $config->users->pluck('id')->toArray();
     }
 
-    public static function getConfigIds(QuoteTypes $quoteType): array
+    private static function getConfigIds(QuoteTypes $quoteType): array
     {
         return NationalityAllocationConfiguration::query()
             ->where('quote_type_id', $quoteType->id())
@@ -41,6 +52,8 @@ class NationalityAllocationService
 
     public static function getExcludedUserIds(QuoteTypes $quoteType): array
     {
+        $quoteType = self::resolveQuoteType($quoteType);
+
         $configIds = self::getConfigIds($quoteType);
 
         return NationalityAllocationConfigurationUser::whereIn('nationality_allocation_configuration_id', $configIds)->pluck('user_id')->toArray();
