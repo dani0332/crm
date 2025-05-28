@@ -827,6 +827,7 @@ class CentralController extends Controller
             'payment_id' => 'required',
             'payment_code' => 'required',
         ]);
+        LoggerService::info("Delete parent payment called for payment code : {$request->payment_code}");
 
         $response = app(CentralService::class)->deletePayment($validatedRequest);
 

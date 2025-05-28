@@ -1333,7 +1333,8 @@ class CentralService extends BaseService
 
     public function deletePayment($request): array
     {
-        LoggerService::info('fn:deletePayment - process started: '.$request->payment_id);
+        $paymentCode = $request->payment_code;  
+        LoggerService::info('fn:deletePayment - process started: '.$paymentCode);
 
         $payment = Payment::where(
             [
@@ -1349,7 +1350,7 @@ class CentralService extends BaseService
             ])
             ->first();
         if (! $payment) {
-            LoggerService::info('fn:deletePayment - Payment not found: '.$request->payment_id);
+            LoggerService::info('fn:deletePayment - Payment not found: '.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment not found'];
         }
@@ -1357,7 +1358,7 @@ class CentralService extends BaseService
         $quote = $payment->paymentable;
         $aboveAgeMembers = app(TravelQuoteService::class)->getAboveAgeMembers($quote->id);
         if ($quote->payments()->count() < 2 || ! $aboveAgeMembers) {
-            LoggerService::info('fn:deletePayment - Payment cannot be deleted: '.$request->payment_id);
+            LoggerService::info('fn:deletePayment - Payment cannot be deleted: '.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment cannot be deleted'];
         }
@@ -1374,9 +1375,9 @@ class CentralService extends BaseService
                 PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
-            info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);
+            info('fn:deletePayment - Payment deleted successfully: '.$paymentCode);
         } catch (\Throwable $th) {
-            info('fn:deletePayment - Payment deletion failed: '.$request->payment_id);
+            info('fn:deletePayment - Payment deletion failed: '.$paymentCode);
 
             return ['status' => false, 'message' => 'Payment deletion failed'];
         }
