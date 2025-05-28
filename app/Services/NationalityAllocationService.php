@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\QuoteTypes;
 use App\Models\Nationality;
 use App\Models\NationalityAllocationConfiguration;
+use App\Models\NationalityAllocationConfigurationUser;
 use App\Models\QuoteType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,22 @@ class NationalityAllocationService
     public static function getUserIDs(NationalityAllocationConfiguration $config): array
     {
         return $config->users->pluck('id')->toArray();
+    }
+
+    public static function getConfigIds(QuoteTypes $quoteType): array
+    {
+        return NationalityAllocationConfiguration::query()
+            ->where('quote_type_id', $quoteType->id())
+            ->active()
+            ->pluck('id')
+            ->toArray();
+    }
+
+    public static function getExcludedUserIds(QuoteTypes $quoteType): array
+    {
+        $configIds = self::getConfigIds($quoteType);
+
+        return NationalityAllocationConfigurationUser::whereIn('nationality_allocation_configuration_id', $configIds)->pluck('user_id')->toArray();
     }
 
     public function createConfiguration(array $data, int $userId): NationalityAllocationConfiguration
