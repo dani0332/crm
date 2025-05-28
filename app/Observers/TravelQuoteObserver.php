@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use App\Services\SIBService;
 use App\Services\Logger\LoggerService;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\PaymentStatusEnum;
 
 class TravelQuoteObserver
 {
