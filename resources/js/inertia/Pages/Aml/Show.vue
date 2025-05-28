@@ -149,6 +149,11 @@ function submitDecision(decision) {
       })
       .catch(err => {
         console.log(err);
+      })
+      .finally(() => {
+        router.reload({
+          only: ['insured'],
+        });
       });
   }
 }
@@ -465,8 +470,9 @@ function fieldValidationsperson() {
       </div>
   
       <AuditLogs
+        :title="'KYC Audit Logs'"
         :type="`App\\Models\\InsuredKyc`"
-        :id="props.insured?.id"
+        :id="props.insured?.insured_kyc?.id"
       />
       <x-modal
         v-model="decisionNotesModal"
