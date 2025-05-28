@@ -142,7 +142,7 @@ class TravelQuoteObserver
             PaymentStatusEnum::CANCELLED,
         ];
 
-        return ((isset($dirty['quote_status_id']) && in_array($travelQuote->quote_status_id, $stopSICStatuses, true)) || (isset($dirty['payment_status']) && in_array($travelQuote->payment_status, $stopSICPaymentStatuses, true))
+        return ((isset($dirty['quote_status_id']) && in_array($travelQuote->quote_status_id, $stopSICStatuses, true)) || (isset($dirty['payment_status_id']) && in_array($travelQuote->payment_status_id, $stopSICPaymentStatuses, true))
         );
     }
 }
