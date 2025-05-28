@@ -666,8 +666,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $successMessage = 'Payment Verified';
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
+            $splitPaymentCode = $splitPayment->code;
+            $srNo = $splitPayment->sr_no;
             $masterPayment = $splitPayment->payment;
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
+                LoggerService::info("Split payment approval started for code: {$splitPaymentCode}, SR No: {$srNo}");
                 $paymentInformation = [
                     'collection_amount' => $request->collection_amount,
                     'bank_reference_number' => $request->bank_reference_number,
@@ -683,14 +686,18 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     isset($request->approved_document_model[$splitPayment->sr_no])
                     && count($request->approved_document_model[$splitPayment->sr_no]) > 0
                 ) {
+                    LoggerService::info("Processing approved documents for split payment - code: {$splitPaymentCode}, SR No: {$srNo}, document count: " . count($request->approved_document_model[$splitPayment->sr_no]));
                     foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                         $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                         if ($quoteDocumentRec) {
+                            LoggerService::info("Processing document ID: {$document['id']} for split payment - code: {$splitPaymentCode}, SR No: {$srNo}");
                             if (empty($document['payment_split_id'])) {
                                 $quoteDocumentRec->payment_split_id = $splitPayment->id;
+                                LoggerService::info("Assigned document to payment split - code: {$splitPaymentCode}, SR No: {$srNo}, document ID: {$document['id']}");
                             } else {
                                 $quoteDocumentRec->document_type_code = $this->mapToReciept($quoteDocumentRec->document_type_code);
                                 $quoteDocumentRec->document_type_text = DocumentTypeEnum::RECEIPT;
+                                LoggerService::info("Updated document to receipt type - code: {$splitPaymentCode}, SR No: {$srNo}, document ID: {$document['id']}");
                             }
                             $quoteDocumentRec->save();
                         }
@@ -699,11 +706,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
                 // create sage receipt
                 if ((new SageApiService)->isSageEnabled()) {
+                    LoggerService::info("Sage is enabled, creating sage receipt for - code: {$splitPaymentCode}, SR No: {$srNo}");
                     $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
                     if ($sageResponse['status'] == 'success') {
+                        LoggerService::info("Sage receipt created successfully - code: {$splitPaymentCode}, SR No: {$srNo}, receipt ID: {$sageResponse['response']}");
                         $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
                         $splitPayment->update($paymentInformation);
                         if ($masterPayment) {
+                            $newCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
+                            LoggerService::info("Updating master payment captured amount - code: {$splitPaymentCode}, SR No: {$srNo}, new amount: {$newCapturedAmount}");
                             $masterPayment->update(
                                 [
                                     'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
@@ -713,13 +724,16 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                     } else {
                         $failMessage = $sageResponse['response'];
+                        LoggerService::error("Sage receipt creation failed - code: {$splitPaymentCode}, SR No: {$srNo}, message: {$failMessage}");
                         vAbort($failMessage);
                     }
                 } else {
+                    LoggerService::info("Sage is not enabled, updating split payment directly - code: {$splitPaymentCode}, SR No: {$srNo}");
                     $splitPayment->update($paymentInformation);
 
                     if ($masterPayment) {
                         $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
+                        LoggerService::info("Updating master payment captured amount - code: {$splitPaymentCode}, SR No: {$srNo}, new amount: {$masterCapturedAmount}");
                         $masterPayment->update(
                             [
                                 'captured_amount' => $masterCapturedAmount,
@@ -730,9 +744,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
                 /* Create payment receipt for broker */
                 if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
+                    LoggerService::info("Creating broker receipt for - code: {$splitPaymentCode}, SR No: {$srNo}, collection type: {$masterPayment->collection_type}");
                     app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);
                 }
+                LoggerService::info("Split payment approval completed successfully - code: {$splitPaymentCode}, SR No: {$srNo}");
             } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
+                LoggerService::info("Split payment decline started for code: {$splitPaymentCode}, SR No: {$srNo}");
                 $paymentInformation = [
                     'decline_reason_id' => $request->declined_reason,
                     'decline_custom_reason' => $request->declined_custom_reason,
@@ -741,6 +758,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 ];
                 $splitPayment->update($paymentInformation);
                 $successMessage = 'Payment Declined';
+                LoggerService::info("Split payment decline completed successfully - code: {$splitPaymentCode}, SR No: {$srNo}");
             }
             // Update parent payment status
             $this->setMasterPaymentStatus($masterPayment, 'update payment status');
