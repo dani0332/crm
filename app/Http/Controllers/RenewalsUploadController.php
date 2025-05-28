@@ -26,13 +26,13 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Models\User;
 use App\Repositories\CarQuoteRepository;
 use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use Maatwebsite\Excel\Facades\Excel;
 use Spatie\Permission\Traits\HasRoles;
 
 class RenewalsUploadController extends Controller
@@ -481,14 +481,13 @@ class RenewalsUploadController extends Controller
     /**
      * Retry all failed renewal processes for an upload batch
      *
-     * @param RenewalsUploadLeads $renewalsUploadLead
      * @return \Illuminate\Http\JsonResponse
      */
     public function retryRenewalProcesses(RenewalsUploadLeads $renewalsUploadLead)
     {
         /** @var User|HasRoles $user */
         $user = Auth::user();
-        if (!$user || !$user->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (! $user || ! $user->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

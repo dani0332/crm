@@ -2,7 +2,6 @@
 
 namespace App\Exceptions;
 
-use App\Enums\RenewalQuoteProcessStepEnum;
 use Exception;
 
 class RenewalProcessException extends Exception
@@ -26,4 +25,4 @@ class RenewalProcessException extends Exception
     {
         return $this->errors;
     }
-} 
+}

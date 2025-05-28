@@ -352,7 +352,7 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
-                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsUploadLead) {
+                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix) {
                         LoggerService::info($logPrefix.' one of batch is failed. ');
                     })
                     ->finally(function (Batch $batch) use ($logPrefix) {
@@ -1250,7 +1250,7 @@ class RenewalsUploadService
      */
     private function updateBasePricePlan($quote, $data, $renewalQuoteProcess)
     {
-        try{
+        try {
             $memberDobs = array_map('trim', explode('|', $data['member_dob']));
             $memberNames = array_map('trim', explode('|', $data['member_names']));
             $memberPremiums = array_map('trim', explode('|', $data['member_premium']));
@@ -1327,7 +1327,7 @@ class RenewalsUploadService
      */
     private function updateOrCreateHealthMembers($quote, $data, $renewalQuoteProcess)
     {
-        try{
+        try {
             $memberCategorySalaryMapping = [
                 'Investor or Partner' => 2,
                 'Golden visa' => 2,
@@ -1441,7 +1441,7 @@ class RenewalsUploadService
             if ($addResponse || $updateResponse) {
                 LoggerService::info('Renewal: Health Members added/updated successfully for UUID: '.$quote->uuid, [], ['ref_id' => $quote->uuid]);
                 $this->updateBasePricePlan($quote, $data, $renewalQuoteProcess);
-            } 
+            }
         } catch (\Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
@@ -1480,7 +1480,7 @@ class RenewalsUploadService
             LoggerService::info('Renewal: select health plan request data in extra ', $data, ['ref_id' => $quote->uuid]);
             $response = Capi::request($endpoint, 'post', $data, true);
 
-            if (!$response || !isset($response->totalPremium)) {
+            if (! $response || ! isset($response->totalPremium)) {
                 throw new RenewalProcessException(
                     'Health Plan Selection Failed - Invalid Response',
                     RenewalQuoteProcessStepEnum::SELECT_PLAN,
@@ -1569,16 +1569,17 @@ class RenewalsUploadService
 
             $response = $payment ? PaymentRepository::updateNewPayment($newRequest) : PaymentRepository::createNewPayment($newRequest);
 
-            if (!$response) {
+            if (! $response) {
                 $this->updateRenewalQuoteProcess($renewalQuoteProcess, true, ['Health Payment failed'], RenewalQuoteProcessStepEnum::CREATE_PAYMENT);
             }
             $this->updateRenewalQuoteProcess($renewalQuoteProcess, false, []);
+
             return $response;
         } catch (\Throwable $e) {
             if ($e instanceof RenewalProcessException) {
                 throw $e;
             }
-            
+
             throw new RenewalProcessException(
                 'Health Payment failed',
                 RenewalQuoteProcessStepEnum::CREATE_PAYMENT,
@@ -2411,7 +2412,7 @@ class RenewalsUploadService
     public function updateRenewalQuoteProcess($renewalQuoteProcess, $failed = false, $validationErrors = [], $step = null)
     {
         $renewalQuoteProcess->status = $failed ? RenewalProcessStatuses::FAILED : RenewalProcessStatuses::PROCESSED;
-        if($step != null){
+        if ($step != null) {
             $renewalQuoteProcess->step_errors = $validationErrors;
         } else {
             $renewalQuoteProcess->validation_errors = $validationErrors;
@@ -2796,14 +2797,13 @@ class RenewalsUploadService
 
     /**
      * Retry all failed renewal processes for a RenewalUploadLead
-     * 
-     * @param RenewalsUploadLeads $renewalUploadLead
+     *
      * @return bool
      */
     public function retryRenewalUploadLeadProcesses(RenewalsUploadLeads $renewalUploadLead)
     {
-        $logPrefix = 'UAC FN: retryRenewalUploadLeadProcesses RenewalUploadLeadId: ' . $renewalUploadLead->id;
-        LoggerService::info($logPrefix . ' Batch retry started');
+        $logPrefix = 'UAC FN: retryRenewalUploadLeadProcesses RenewalUploadLeadId: '.$renewalUploadLead->id;
+        LoggerService::info($logPrefix.' Batch retry started');
 
         try {
             // Get all failed processes
@@ -2813,7 +2813,8 @@ class RenewalsUploadService
                 ->get();
 
             if ($failedProcesses->isEmpty()) {
-                LoggerService::info($logPrefix . ' No failed processes found to retry');
+                LoggerService::info($logPrefix.' No failed processes found to retry');
+
                 return false;
             }
 
@@ -2837,40 +2838,41 @@ class RenewalsUploadService
                 $jobs[] = new RetryHealthRenewalProcess($process);
             }
 
-            if (!empty($jobs)) {
+            if (! empty($jobs)) {
                 Bus::batch($jobs)
                     ->onQueue('renewals')
                     ->then(function () use ($logPrefix, $renewalUploadLead) {
-                        LoggerService::info($logPrefix . ' All retry jobs completed successfully');
+                        LoggerService::info($logPrefix.' All retry jobs completed successfully');
                         $renewalUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
-                    ->catch(function () use ($logPrefix, $renewalUploadLead) {
-                        LoggerService::error($logPrefix . ' One or more retry jobs failed');
+                    ->catch(function () use ($logPrefix) {
+                        LoggerService::error($logPrefix.' One or more retry jobs failed');
                     })
                     ->finally(function () use ($logPrefix) {
-                        LoggerService::info($logPrefix . ' Batch retry process completed');
+                        LoggerService::info($logPrefix.' Batch retry process completed');
                     })
                     ->allowFailures()
                     ->dispatch();
 
-                LoggerService::info($logPrefix . ' Dispatched ' . count($jobs) . ' retry jobs');
+                LoggerService::info($logPrefix.' Dispatched '.count($jobs).' retry jobs');
+
                 return true;
             }
 
             return false;
         } catch (\Exception $exception) {
-            LoggerService::error($logPrefix . ' Batch retry failed. Error: ' . $exception->getMessage());
+            LoggerService::error($logPrefix.' Batch retry failed. Error: '.$exception->getMessage());
             $renewalUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+
             return false;
         }
     }
 
     /**
      * Handle the health quote update process with retry capability
-     * 
-     * @param HealthQuote $quote
-     * @param array $data
-     * @param RenewalQuoteProcess $renewalQuoteProcess
+     *
+     * @param  HealthQuote  $quote
+     * @param  array  $data
      * @return bool
      */
     public function retryRenewalQuoteProcess(RenewalQuoteProcess $renewalQuoteProcess)
@@ -2882,13 +2884,13 @@ class RenewalsUploadService
             // Start from the last failed/pending step
             switch ($renewalQuoteProcess->step) {
                 case RenewalQuoteProcessStepEnum::MEMBERS_UPDATE:
-                    if (!$this->updateOrCreateHealthMembers($quote, $data, $renewalQuoteProcess)) {
+                    if (! $this->updateOrCreateHealthMembers($quote, $data, $renewalQuoteProcess)) {
                         return false;
                     }
                     break;
 
                 case RenewalQuoteProcessStepEnum::PLAN_UPDATE:
-                    if (!$this->updateBasePricePlan($quote, $data, $renewalQuoteProcess)) {
+                    if (! $this->updateBasePricePlan($quote, $data, $renewalQuoteProcess)) {
                         return false;
                     }
                     break;
@@ -2897,7 +2899,7 @@ class RenewalsUploadService
                     // TODO: Get health plan id and copayId from the quote
                     $healthPlan = HealthPlan::where('code', $quote->renewal_upload_plan_code)->first();
                     $healthCoPlan = HealthPlanCoPayment::where('code', $quote->renewal_upload_copay_code)->first();
-                    if (!$this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id, $renewalQuoteProcess, $data)) {
+                    if (! $this->selectHealthPlan($quote, $healthPlan->id, $healthCoPlan->id, $renewalQuoteProcess, $data)) {
                         return false;
                     }
                     break;
@@ -2905,7 +2907,7 @@ class RenewalsUploadService
                 case RenewalQuoteProcessStepEnum::CREATE_PAYMENT:
                     $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
                     $premium = $ecomDetails['priceWithVAT'];
-                    if (!$this->createHealthPayment($quote, $data, $premium, $renewalQuoteProcess)) {
+                    if (! $this->createHealthPayment($quote, $data, $premium, $renewalQuoteProcess)) {
                         return false;
                     }
                     break;

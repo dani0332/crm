@@ -2,8 +2,7 @@
 
 namespace App\Jobs\Renewals;
 
-use App\Enums\RenewalProcessStatuses;
-use App\Models\RenewalsUploadLeads;
+use App\Exceptions\RenewalProcessException;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Batchable;
@@ -13,9 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Throwable;
-use App\Exceptions\RenewalProcessException;
 
 class UpdateRenewalQuotesJob implements ShouldQueue
 {
@@ -62,7 +59,6 @@ class UpdateRenewalQuotesJob implements ShouldQueue
     /**
      * Handle a job failure.
      *
-     * @param  \Throwable  $exception
      * @return void
      */
     public function failed(Throwable $exception)
@@ -75,16 +71,16 @@ class UpdateRenewalQuotesJob implements ShouldQueue
             $errors = $exception->getErrors();
             $step = $exception->getStep();
         } else {
-            $errors = ['Unexpected error: ' . $exception->getMessage()];
+            $errors = ['Unexpected error: '.$exception->getMessage()];
         }
 
         LoggerService::error('Renewal Quote Process Failed', [
             'quote_process_id' => $this->renewalQuoteProcess->id,
-            'step' => $step ,
+            'step' => $step,
             'errors' => $errors,
             'exception' => get_class($exception),
             'message' => $exception->getMessage(),
-            'trace' => $exception->getTraceAsString()
+            'trace' => $exception->getTraceAsString(),
         ]);
 
         $renewalsUploadService->updateRenewalQuoteProcess(

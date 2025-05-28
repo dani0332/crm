@@ -56,7 +56,6 @@ class RetryHealthRenewalProcess implements ShouldQueue
     /**
      * Handle a job failure.
      *
-     * @param  \Throwable  $exception
      * @return void
      */
     public function failed(Throwable $exception)
@@ -70,7 +69,7 @@ class RetryHealthRenewalProcess implements ShouldQueue
             $errors = $exception->getErrors();
             $step = $exception->getStep();
         } else {
-            $errors = ['Unexpected error: ' . $exception->getMessage()];
+            $errors = ['Unexpected error: '.$exception->getMessage()];
         }
 
         LoggerService::error('Retry Health Renewal Process Failed', [
@@ -79,7 +78,7 @@ class RetryHealthRenewalProcess implements ShouldQueue
             'errors' => $errors,
             'exception' => get_class($exception),
             'message' => $exception->getMessage(),
-            'trace' => $exception->getTraceAsString()
+            'trace' => $exception->getTraceAsString(),
         ]);
 
         $renewalsUploadService->updateRenewalQuoteProcess(
