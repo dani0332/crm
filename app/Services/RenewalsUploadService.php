@@ -2374,7 +2374,7 @@ class RenewalsUploadService
     public function setCarCommericalQuoteData(&$quoteData, $data)
     {
 
-        $nationality = Nationality::where('text', $data['driver_nationality'])->first();
+        $nationality = Nationality::where('text', $data['nationality'])->first();
         $businessActivity = BusinessActivity::where('name', $data['business_activity'])->first();
         $uaeLicenseHeldFor = UAELicenseHeldFor::where('text', $data['driving_experience'])->first();
         $quoteData['registration_type'] = strtolower($data['registration_type']);
@@ -2387,7 +2387,7 @@ class RenewalsUploadService
 
             $quoteData['driver_name'] = $data['driver_name'] ?? null;
             $quoteData['nationality_id'] = $nationality->id ?? null;
-            $quoteData['dob'] = $data['driver_dob'] ?? null;
+            $quoteData['dob'] = (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null;
             $quoteData['uae_license_held_for_id'] = $uaeLicenseHeldFor->id ?? null;
         }
 
