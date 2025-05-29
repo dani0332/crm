@@ -1,5 +1,6 @@
 <script setup>
 import { applyEmiratesNumberMasking } from '@/inertia/Composables/utilities.js';
+import { usePage } from '@inertiajs/vue3';
 import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -1730,12 +1731,25 @@ const ocrLoadingDocType = ref(null);
 const ocrLoading = ref(false);
 const policyDetailReloadKey = ref(0);
 const bookPolicyReloadKey = ref(0);
+const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 
 function handleOcrNotification(event) {
-  const { docType, status } = event.detail || {};
+  const { docType, status, userId } = event.detail || {};
+  const currentUserId = usePage().props.auth.user.id;
+
+  // Only process notifications for the current user
+  if (userId !== currentUserId) {
+    return;
+  }
+
+  // For 'start' status, only set loading state for CERTIFICATE_OF_ISSUANCE
   if (status === 'start') {
-    ocrLoadingDocType.value = docType;
+    // Using the enum value instead of hardcoded string
+    if (docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) {
+      ocrLoadingDocType.value = docType;
+    }
   } else {
+    // For 'end' or 'fail' status, reload data but don't show completion notification
     router.reload({
       onSuccess: () => {
         ocrLoadingDocType.value = null;

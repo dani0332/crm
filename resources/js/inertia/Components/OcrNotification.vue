@@ -14,15 +14,21 @@ const listen = () => {
   worker = new SharedWorker('/build/workers/pusher.worker.js?v=' + new Date().getTime());
   worker.port.addEventListener('message', e => {
     const currentUrl = page.props.location || '';
+    const isCurrentUser = e.data.userId === page.props.auth.user.id;
+
+    // Only show notifications to the user who uploaded the document
     if (
       e.data.uuid === page.props?.quote?.uuid &&
       currentUrl.includes('/quotes/car/') &&
-      e.data.userId === page.props.auth.user.id
+      isCurrentUser
     ) {
-      notification.info({
-        title: e.data.message,
-        position: 'top',
-      });
+      // Only show notification for 'start' and 'fail' status, skipping 'end' status
+      if (e.data.status !== 'end') {
+        notification.info({
+          title: e.data.message,
+          position: 'top',
+        });
+      }
 
       // Emit event for PolicyDetail.vue
       window.dispatchEvent(new CustomEvent('ocr-notification', {
@@ -34,17 +40,17 @@ const listen = () => {
           uuid: e.data.uuid,
           error: e.data.error,
           docType: e.data.docType,
+          userId: e.data.userId
         }
       }));
 
-      // If OCR completed successfully and all required fields are filled
-      if (e.data.status === 'end' && e.data.message.includes('completed')
-          && !e.data.error
-          && e.data.userId === page.props.auth.user.id) {
+      // The completion notification for 'end' status is removed as per requirements
+      // Field checking is still kept for updating UI if needed
+      if (e.data.status === 'end' && !e.data.error) {
         // Check if we need to update lead status to "Policy Issued"
         const allFieldsFilled = checkRequiredPolicyFields();
 
-        // Only show notification if fields are missing, otherwise silently update status
+        // Only show notification if fields are missing
         if (!allFieldsFilled) {
           notification.info({
             title: 'Some required fields are still missing in Policy details',

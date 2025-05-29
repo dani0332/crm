@@ -88,16 +88,16 @@ class OCRService
             return null;
         }
 
-        // Send start notification
-        event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
+        // Send start notification only for CERTIFICATE_OF_ISSUANCE document type
+        if ($docType === OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE) {
+            event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
+        }
 
         $url = $this->quoteDocumentService->getDocumentUrl($documentPath);
 
         try {
             $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
             if ($data) {
-                // Send end notification
-                event(new OcrNotifications($quote, 'end', 'OCR processing completed', null, $docType?->value, $userId));
                 $dataFilledResponse = $this->fill(
                     $quote,
                     $docType,
