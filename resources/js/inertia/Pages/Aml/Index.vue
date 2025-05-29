@@ -235,6 +235,25 @@ const quoteTypeOptions = computed(() =>
   ),
 );
 
+function downloadAmlCtfReport() {
+  const exportData = {};
+  Object.keys(availableFilters).forEach(key => {
+    exportData[key] = filtersForm[key];
+  });
+
+  //remove empty fields
+  removeEmptyFields(exportData);
+
+  const url = `/kyc/aml-ctf-report-export`;
+  const data = useObjToUrl(exportData);
+
+  const payload = {
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+
+  window.open(url + '?' + useObjToUrl(exportData));
+}
+
 onMounted(() => {
   setQueryStringFilters();
 });
@@ -324,11 +343,11 @@ onMounted(() => {
         <x-button
           size="sm"
           color="#ff5e00"
-          @click.prevent="onDataExport('excel')"
+          @click.prevent="downloadAmlCtfReport()"
           :disabled="loader.export"
           :loading="loader.export"
         >
-          Export via API
+          Export aml ctf report
         </x-button>
         <x-button
           size="sm"

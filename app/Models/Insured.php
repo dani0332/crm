@@ -21,6 +21,6 @@ class Insured extends Model
 
     public function customerInsured()
     {
-        return $this->hasMany(\App\Models\CustomerInsured::class, 'insured_id', 'id');
+        return $this->hasOne(\App\Models\CustomerInsured::class, 'insured_id', 'id');
     }
 }

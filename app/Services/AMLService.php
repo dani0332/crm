@@ -1132,4 +1132,81 @@ class AMLService
 
         return $data;
     }
+
+    function generateAmlCftReport()
+    {
+        LoggerService::info('fn:amlCtfReportExport - AMLController');
+
+        $request = request();
+
+        $startDate = $request->amlCreatedStartDate;
+        $endDate = $request->amlCreatedEndDate;
+
+        $quoteTypes = [
+            QuoteTypes::BIKE->value,
+            QuoteTypes::CYCLE->value,
+            QuoteTypes::JETSKI->value,
+            QuoteTypes::PET->value,
+            QuoteTypes::YACHT->value,
+            QuoteTypes::HOME->value,
+        ];
+
+        $joinQuoteTypes = $request->quoteType ? [$request->quoteType] : $quoteTypes;
+
+        $personalQuotes = DB::table('personal_quotes as pqr')->select(
+            'pqr.id',
+            'pqr.uuid',
+            'pqr.code',
+            'pqr.quote_type_id',
+            'pqr.aml_status',
+            'pqr.policy_start_date',
+            'pqr.policy_expiry_date',
+            'pqr.premium',
+            'pqr.policy_number',
+            'pqr.quote_status_id',
+            'pqr.insurance_provider_id',
+            'qs.text as lead_status',
+            'ip.text as insurance_provider',
+            'ik.first_name as first_name',
+            'ik.last_name as last_name',
+            'ik.id_number as emirates_id',
+            'i.customer_type as customer_type',
+            DB::raw('COALESCE(ci1.insured_id, ci2.insured_id) as insured_id'),
+            'ik.residential_status',
+            'ik.risk_score',
+            'ik.premium_tenure',
+            'ik.transaction_volume',
+            'ik.is_owner_pep',
+            'pqr.created_at as last_aml_screening_date',
+            'cm.uae_resident as customer_is_uae_resident'
+        )
+        ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
+        ->whereBetween('pqr.created_at', dateQueryFilter($startDate, $endDate))
+        ->when(isset($request->searchType) && $request->searchType === 'cdbId', function ($query) use ($request) {
+            $query->where('pqr.code', $request->code);
+        })
+        ->when(isset($request->searchType) && $request->searchType === 'customerEmail', function ($query) use ($request) {
+            $query->where('pqr.email', $request->email);
+        })
+        ->when(isset($request->quoteType), function ($query) use ($request) {
+            $query->where('pqr.quote_type_id', $request->quoteType);
+        })
+        ->leftJoin('customer_insured as ci1', function($join) use ($joinQuoteTypes) {
+            $join->on('pqr.id', '=', 'ci1.quote_request_id')
+                ->whereIn('pqr.quote_type_id', $joinQuoteTypes);
+        })
+        ->leftJoin('customer_insured as ci2', function($join) use ($joinQuoteTypes) {
+            $join->on('pqr.quote_id', '=', 'ci2.quote_request_id')
+                ->whereNotIn('pqr.quote_type_id', $joinQuoteTypes);
+        })
+        ->leftJoin('quote_status as qs', 'pqr.quote_status_id', '=', 'qs.id')
+        ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id')
+        ->leftJoin('customer_members as cm', 'pqr.id', '=', 'cm.quote_id')
+        ->leftJoin('insured as i', DB::raw('COALESCE(ci1.insured_id, ci2.insured_id)'), '=', 'i.id')
+        ->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id')
+        ->orderBy('first_name')
+        ->get();
+
+        return $personalQuotes;
+    }
 }
