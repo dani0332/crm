@@ -48,6 +48,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
 use App\Models\LifeQuote;
+use App\Models\PersonalQuote;
+
 class SplitPaymentService
 {
     use CentralTrait;
@@ -954,17 +956,19 @@ class SplitPaymentService
     // Update lead status for ecomm quotes
     public function updateLeadStatus($payment)
     {
+        $quoteTypeId = null;
         $quoteModel = $payment->paymentable;
         $ecommQuotes = [
             CarQuote::class,
             HealthQuote::class,
             TravelQuote::class,
-            LifeQuote::class,
-        ];
-        
+        ];        
         if ($quoteModel) {
             $quoteModel->payment_status_id = $payment->payment_status_id;
-            if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            if ($payment->paymentable_type == PersonalQuote::class) {
+                $quoteTypeId = $quoteModel->quote_type_id ;
+            }
+            if ((in_array($payment->paymentable_type, $ecommQuotes) || $quoteTypeId  === QuoteTypeId::Life) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 $quoteModel->payment_paid_at = now();
                 LoggerService::info("Master payment code: {$payment->code} updating payment paid at for lead at ".now()->format('Y-m-d H:i:s'));
 

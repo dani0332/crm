@@ -1959,7 +1959,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">PAID AT</dt>
-                <dd>{{ quote?.paid_at ?? 'N/A' }}</dd>
+                <dd>{{ quote?.payment_paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
