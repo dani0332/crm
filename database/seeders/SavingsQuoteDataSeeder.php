@@ -2,16 +2,18 @@
 
 namespace Database\Seeders;
 
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteTypes;
+use App\Models\Team;
 use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteType;
 use App\Enums\TeamTypeEnum;
 use App\Models\QuoteStatus;
+use App\Models\DocumentType;
+use App\Enums\PermissionsEnum;
 use App\Models\QuoteStatusMap;
-use App\Models\QuoteType;
-use App\Models\Team;
-use Database\Seeders\Traits\PermissionableSeeder;
+use App\Enums\DocumentTypeCode;
 use Illuminate\Database\Seeder;
+use Database\Seeders\Traits\PermissionableSeeder;
 
 class SavingsQuoteDataSeeder extends Seeder
 {
@@ -37,6 +39,8 @@ class SavingsQuoteDataSeeder extends Seeder
             PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
         ], [RolesEnum::Engineering, RolesEnum::Admin]);
         $this->product();
+
+        $this->seedDocumentTypes();
     }
 
     private function upsertQuoteType()
@@ -87,6 +91,39 @@ class SavingsQuoteDataSeeder extends Seeder
                 'type' => TeamTypeEnum::PRODUCT,
                 'is_active' => 1,
             ]);
+        }
+    }
+
+    private function seedDocumentTypes()
+    {
+        $quoteDocuments = [
+
+            [
+                'code' => 'TI',
+                'text' => 'Tax Invoice',
+                'description' => null,
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypes::SAVINGS->id(),
+                'folder_path' => 'savings',
+                'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+                'max_files' => 5,
+                'max_size' => 25,
+                'is_required' => 1,
+                'send_to_customer' => 1,
+                'sort_order' => 13,
+                'receive_from_customer' => 0,
+                'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
+        ];
+
+        foreach ($quoteDocuments as $document) {
+            DocumentType::firstOrCreate(
+                ['code' => $document['code'], 'quote_type_id' => $document['quote_type_id']],
+                $document
+            );
         }
     }
 }
