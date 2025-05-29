@@ -492,22 +492,20 @@ const validateDateRange = () => {
             placeholder="Search by Mobile Number"
           />
         </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
+        <DatePicker
             v-model="filters.created_at_start"
             type="date"
             name="created_at_start"
             class="w-full"
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker
+            label="Created Date Start"
+        />
+        <DatePicker
             v-model="filters.created_at_end"
             type="date"
             name="created_at_end"
             class="w-full"
-          />
-        </x-field>
+            label="Created Date End"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
@@ -521,18 +519,18 @@ const validateDateRange = () => {
             "
           />
         </x-field>
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
+        <DatePicker
             v-model="filters.policy_expiry_date"
             name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
+            class="w-full"
+            label="Policy Expiry Start Date"
+        />
+        <DatePicker
             v-model="filters.policy_expiry_date_end"
             name="policy_expiry_date_end"
-          />
-        </x-field>
+            class="w-full"
+            label="Policy Expiry End Date"
+        />
         <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.SavingsAdvisor])">
           <ComboBox
             v-model="filters.advisor_id"
