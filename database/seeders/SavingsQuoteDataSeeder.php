@@ -42,7 +42,7 @@ class SavingsQuoteDataSeeder extends Seeder
     private function upsertQuoteType()
     {
         $quoteType = [
-            'short_code' => QuoteTypes::SAVINGS->shortCode(),
+            'short_code' => 'SAV',
             'code' => QuoteTypes::SAVINGS->value,
             'text' => 'Savings Insurance',
             'is_active' => 1,
