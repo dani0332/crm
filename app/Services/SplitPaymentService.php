@@ -649,7 +649,7 @@ class SplitPaymentService
         $payment = $paymentSplit->payment;
         $sendUpdateId = $payment->send_update_log_id;
         $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
-        if(!$mainLeadObject) {
+        if (! $mainLeadObject) {
             $extra = [
                 'modelType' => $modelType,
                 'quoteId' => $quoteId,
