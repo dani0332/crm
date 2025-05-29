@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
 use Illuminate\Bus\Queueable;
@@ -44,7 +45,7 @@ class BridgerAMLJob implements ShouldQueue
      */
     public function handle(BridgerInsightService $bridgerInsightService): void
     {
-        LoggerService::startQuoteLogging($this->quoteDetails);
+        LoggerService::startQuoteLogging($this->quoteDetails, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info('BridgerAMLJob started');
 
         try {

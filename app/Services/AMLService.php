@@ -12,6 +12,7 @@ use App\Enums\EnvEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -841,19 +842,32 @@ class AMLService
 
     public function getInsuredDetails($customerId, $quoteTypeId, $quoteRequestId)
     {
-        LoggerService::info('fn:getInsuredDetails - AMLService');
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
 
-        return CustomerInsured::where([
+        $customerInsured = CustomerInsured::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
             'customer_id' => $customerId,
-        ])->with(['customer', 'insured', 'insured.insuredKyc'])->first();
+        ])
+        ->with(['customer', 'insured', 'insured.insuredKyc'])
+        ->orderBy('id', 'desc')
+        ->first();
+
+        if (!$customerInsured) {
+            LoggerService::info('No CustomerInsured record found', [
+                'customer_id' => $customerId,
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId
+            ]);
+        }
+
+        return $customerInsured;
     }
 
     // TODO:: This will remove when customer members mapping updated with insured id, this is also impacting on entity kyc form members data
     public function getEntityDetails($quoteTypeId, $quoteRequestId)
     {
-        LoggerService::info('fn:getEntityDetails - AMLService');
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
 
         return QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
@@ -862,7 +876,9 @@ class AMLService
 
     public function prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType): bool
     {
-        LoggerService::info('fn:prepareInsuredKycFormData - AMLService');
+        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::AML_SCREENING);
+        LoggerService::info(self::class.' fn: '.__FUNCTION__);
+
         try {
             if ($insuredKycRequest->customer_type == CustomerTypeEnum::Entity) {
                 $data['corporation_country'] = Nationality::where('id', $insuredKycRequest['country_of_corporation'])->value('country_name');

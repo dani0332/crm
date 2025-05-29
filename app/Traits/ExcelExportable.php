@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Enums\EnvEnum;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -76,7 +77,7 @@ trait ExcelExportable
             $requestParams['recipientEmail'],
             $requestParams
         );
-        info('Dispatched ExportCsvAndSendEmailJob');
+        LoggerService::info('Dispatched ExportCsvAndSendEmailJob');
 
         // Return response to the user that export is being processed
         return response()->json([

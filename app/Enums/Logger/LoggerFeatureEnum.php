@@ -11,4 +11,5 @@ enum LoggerFeatureEnum: string
     case FTC_EMAIL = 'ftc-email';
 
     case TRAVEL_RENEWALS = 'travel-renewals';
+    case AML_SCREENING = 'aml-screening';
 }
