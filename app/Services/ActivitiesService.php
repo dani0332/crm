@@ -236,7 +236,9 @@ class ActivitiesService extends BaseService
         );
 
         $url = $this->buildActivityUrl($modelType, $record);
-        $this->triggerNotification($activityType, $record, $url);
+        if ($record->advisor_id) {
+            $this->triggerNotification($activityType, $record, $url);
+        }
 
         return response()->json(['message' => 'Activity has been Created'], 200);
     }
