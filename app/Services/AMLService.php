@@ -1143,9 +1143,25 @@ class AMLService
 
         $personalQuotes = $personalQuotesone->union($personalQuotestwo);
         $personalQuotes = $personalQuotes->orderBy('first_name');
-        $personalQuotes = $personalQuotes->get();
+        $collection = $personalQuotes->get();
 
-        return $personalQuotes;
+        // Calculate summary
+        $totalCustomers = $collection->count();
+        $lowRisk = $collection->where('risk_score', '>=', 1)->where('risk_score', '<=', 25)->count();
+        $mediumRisk = $collection->where('risk_score', '>=', 26)->where('risk_score', '<=', 34)->count();
+        $highRisk = $collection->where('risk_score', '>=', 35)->count();
+
+        $summary = [
+            'total_customers' => $totalCustomers,
+            'high_risk' => $highRisk,
+            'medium_risk' => $mediumRisk,
+            'low_risk' => $lowRisk,
+        ];
+
+        return [
+            'collection' => $collection,
+            'summary' => $summary,
+        ];
     }
 
     function buildAMlCftReportQuery(Request $request, $startDate, $endDate, $is_sync_quote)

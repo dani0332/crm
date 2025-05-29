@@ -21,15 +21,18 @@ class AmlCftReportExport implements FromCollection, WithHeadings, WithMapping, W
     use Exportable;
 
     protected array $summary;
+    protected $collection;
 
-    public function __construct(array $summary = [])
+    public function __construct()
     {
-        $this->summary = $summary;
+        $report = app(AMLService::class)->generateAmlCftReport();
+        $this->collection = $report['collection'];
+        $this->summary = $report['summary'];
     }
 
     public function collection()
     {
-        return app(AMLService::class)->generateAmlCftReport();
+        return $this->collection;
     }
 
     public function headings(): array
