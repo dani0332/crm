@@ -2,18 +2,18 @@
 
 namespace Database\Seeders;
 
-use App\Models\Team;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypes;
-use App\Models\QuoteType;
-use App\Enums\TeamTypeEnum;
-use App\Models\QuoteStatus;
-use App\Models\DocumentType;
-use App\Enums\PermissionsEnum;
-use App\Models\QuoteStatusMap;
 use App\Enums\DocumentTypeCode;
-use Illuminate\Database\Seeder;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
+use App\Models\DocumentType;
+use App\Models\QuoteStatus;
+use App\Models\QuoteStatusMap;
+use App\Models\QuoteType;
+use App\Models\Team;
 use Database\Seeders\Traits\PermissionableSeeder;
+use Illuminate\Database\Seeder;
 
 class SavingsQuoteDataSeeder extends Seeder
 {
