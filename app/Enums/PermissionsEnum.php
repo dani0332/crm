@@ -247,6 +247,7 @@ final class PermissionsEnum extends Enum
     public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
     public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
     public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
+    public const EMBEDDED_PRODUCT_PAYMENT_VOID = 'embedded-product-payment-void';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
@@ -404,6 +405,7 @@ final class PermissionsEnum extends Enum
     public const ENABLE_IMPERSONATION = 'enable-impersonation';
     public const PAYMENTS_VOID = 'payments-void';
     public const SKIP_BRIDGER_AML = 'skip-bridger-aml';
+    public const PERMISSION_LIST = 'permission-list';
     public const INSURER_PAYMENT_LINK = 'insurer-payment-link';
     public const CANCEL_SEND_UPDATE = 'cancel-send-update';
     public const LIFE_LEADPOOL = 'life-leadpool';
@@ -416,6 +418,7 @@ final class PermissionsEnum extends Enum
     public const SAVINGS_LEADPOOL = 'savings-leadpool';
     public const POLICY_DETAILS_ADD_VAT = 'policy-details-add-vat';
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
+    public const BUY_LEADS_EXPORT = 'buy-leads-export';
 
     public static function getAdvisorConversionReportPermissions()
     {

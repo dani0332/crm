@@ -1,0 +1,79 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# PCP OCB and PCP Followups Feature Documentation
+
+## Rule: PCP OCB Email Dispatch
+**Agent Requested**
+- **Rule Title**: PCP OCB Email Dispatch
+- **Trigger**: `SendPCPCarOCBEmailJob.php` job execution
+- **Description**: This job is responsible for sending PCP (Personal Contract Purchase) OCB (One Click Buy) introduction emails to car leads. It checks the `MOTOR_PCP_OCB_SWITCH` application setting to determine if the feature is enabled. When enabled, it invokes the `sendPCPOCBIntroEmail` method from `CarEmailService` and updates the quote status to "Quoted". This is a critical first step in the PCP customer engagement workflow.
+
+## Rule: PCP Followups Job Execution
+**Agent Requested**
+- **Rule Title**: PCP Followups Job Execution
+- **Trigger**: `SendPCPFollowupsJob.php` job execution
+- **Description**: This job sends follow-up emails to PCP car leads after the initial OCB email. It verifies the lead hasn't already received followups (by checking `pcp_flow_executed_at`), ensures the lead has an eligible status (Quoted or NewLead), and is not from certain sources (REVIVAL, REVIVAL_PAID, REVIVAL_REPLIED). Upon successful execution, it updates the lead status to "FollowedUp" and sets `pcp_flow_executed_at` to prevent duplicate followups.
+
+## Rule: PCP OCB IntroEmail Service Implementation
+**Agent Requested**
+- **Rule Title**: PCP OCB IntroEmail Service
+- **Trigger**: `CarEmailService->sendPCPOCBIntroEmail()` method
+- **Description**: This service method builds email data for PCP OCB introduction emails using the `buildNBMotorFollowupEmailData` method with `WorkflowTypeEnum::MOTOR_PCP_OCB` type. It triggers the Bird service webhook to send the email and logs the process. This is a core component of the PCP engagement strategy, used to initiate customer contact for PCP car quotes.
+
+## Rule: PCP Followups Email Service
+**Agent Requested**
+- **Rule Title**: PCP Followups Email Service
+- **Trigger**: `CarEmailService->sendPCPFollowups()` method
+- **Description**: This service method builds email data for PCP followup emails using `WorkflowTypeEnum::MOTOR_PCP_FOLLOWUPS` type and triggers the Bird service webhook. It creates quote flow details with `QuoteFlowType::MOTOR_PCP_FOLLOWUPS` type to track the email flow. This method is critical for maintaining ongoing communication with customers during the PCP sales process.
+
+## Rule: Renewals PCP OCB Processing
+**Agent Requested**
+- **Rule Title**: Renewals PCP OCB Processing
+- **Trigger**: `SendOCBEmailJob->sendPCPFollowups()` method
+- **Description**: This method dispatches both `SendPCPCarOCBEmailJob` and `SendPCPFollowupsJob` with a 1-minute and 3-minute delay respectively for renewal car quotes. It's triggered when a car lead from a renewal upload is assigned to a PCP team advisor. This method initiates the PCP email sequence for renewal customers.
+
+## Rule: Renewals Upload PCP Followups
+**Agent Requested**
+- **Rule Title**: Renewals Upload PCP Followups
+- **Trigger**: `RenewalsUploadService->sendPCPFollowups()` method
+- **Description**: This method handles PCP followups for renewals upload process, dispatching both `SendPCPCarOCBEmailJob` and `SendPCPFollowupsJob` with appropriate delays. It also updates quote status, records OCB sent date, and updates renewal batch email metrics. This method is essential for tracking and managing PCP communications during the renewals process.
+
+## Rule: Manual PCP OCB Email Trigger
+**Agent Requested**
+- **Rule Title**: Manual PCP OCB Email Trigger
+- **Trigger**: `CRUDController->sendEmailOneClickBuy()` method
+- **Description**: This controller method provides an interface for manually triggering PCP OCB emails through the admin UI. When a car quote is from a renewal upload and has a PCP team advisor, it calls `sendPCPOCBIntroEmail` to initiate the PCP email workflow. This gives administrators direct control over the PCP communication process.
+
+## Rule: PCP Team Advisor Identification
+**Agent Requested**
+- **Rule Title**: PCP Team Advisor Identification
+- **Trigger**: `CarQuoteService->isPCPAdvisor()` method
+- **Description**: This utility method determines if an advisor belongs to the PCP team, which is crucial for routing leads appropriately. When a lead is assigned to a PCP advisor, it follows the PCP workflow rather than the standard workflow. The PCP workflow focuses on Personal Contract Purchase options and specialized followup sequences.
+
+## Rule: PCP Configuration Keys
+**Agent Requested**
+- **Rule Title**: PCP Configuration Keys
+- **Trigger**: `ApplicationStorageEnums` constants for PCP
+- **Description**: The system uses several application storage keys to control PCP behavior:
+  - `MOTOR_PCP_OCB_SWITCH`: Controls whether PCP OCB emails are sent
+  - `MOTOR_PCP_FOLLOWUPS`: Stores the Bird workflow event ID for PCP followups
+  These configuration keys allow for dynamic control of the PCP workflow without code changes.
+
+## Rule: PCP Workflow Types
+**Agent Requested**
+- **Rule Title**: PCP Workflow Types
+- **Trigger**: `WorkflowTypeEnum` constants for PCP
+- **Description**: The system defines specific workflow types for PCP communications:
+  - `MOTOR_PCP_FOLLOWUPS = 'motor_pcp_followups'`: Used for followup emails
+  - `MOTOR_PCP_OCB = 'motor_pcp_ocb'`: Used for OCB introduction emails
+  These enum values ensure consistent identification of PCP workflows throughout the application.
+
+## Rule: PCP Quote Flow Tracking
+**Agent Requested**
+- **Rule Title**: PCP Quote Flow Tracking
+- **Trigger**: `QuoteFlowType` enum for PCP
+- **Description**: The system tracks PCP email flows using the `MOTOR_PCP_FOLLOWUPS = 9` quote flow type. This allows for reporting on PCP communication effectiveness and helps maintain a history of customer interactions specific to the PCP process.
+

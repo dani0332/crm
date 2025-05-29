@@ -70,6 +70,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'start_date',
             'end_date',
             'days_cover_for',
+            'lead_assignment_trigger',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',

@@ -353,6 +353,7 @@ class TravelController extends Controller
             'lockStatusOfPolicyIssuanceSteps' => $lockStatusOfPolicyIssuanceSteps,
             'paymentGatewayEnum' => PaymentGatewayIdEnum::asArray(),
             'isFuncsEnabled' => ['tapIntegration' => isTapEnabled()],
+            'isAllianceProvider' => $insuranceProvider?->code === InsuranceProvidersEnum::ALNC,
         ]);
     }
 

@@ -66,6 +66,7 @@ defineProps({
   access: Object,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  isAllianceProvider: Boolean,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -3224,6 +3225,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       }"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :payments="payments"
                     />
                     <x-button
                       v-else
@@ -3326,6 +3329,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         }"
                         :insuranceProviderId="item.id"
                         :code="quote.code"
+                        :plans="availableSeniorPlansTable.data || []"
+                        :payments="payments"
                       />
                       <x-button
                         v-else
@@ -3401,6 +3406,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :paymentGatewayEnum="paymentGatewayEnum"
       :isFuncsEnabled="isFuncsEnabled"
       :isPlanDetailSectionEnabled="false"
+      :isAllianceProvider="isAllianceProvider"
     />
 
     <PaymentTable
