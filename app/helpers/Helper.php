@@ -1627,3 +1627,10 @@ if (! function_exists('userHasProduct')) {
         return Team::whereIn('id', $productIds)->where([['type', TeamTypeEnum::PRODUCT], ['is_active', 1], ['name', $product]])->exists();
     }
 }
+
+if (! function_exists('isLeadFic')) {
+    function isLeadFic(string $uuid): bool
+    {
+        return QuoteTag::where('quote_uuid', $uuid)->where('name', 'FIC')->exists() ?? false;
+    }
+}

@@ -24,6 +24,12 @@ class LifeAllocation extends BaseAllocation
         $category = $this->evaluateCategory();
         $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
 
+        if (isLeadFic($this->lead->uuid)) {
+            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users');   
+            $users = $this->getFicRulesUsers();
+            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users  Ids: '.json_encode($users->pluck('id')->toArray()));
+            return $users->pluck('email')->toArray();
+        }
         $santosh = 'santhosh.ganesan@insurancemarket.ae';
         $karuna = 'karuna.ramesh@insurancemarket.ae';
         $christy = 'christy.thomas@insurancemarket.ae';
@@ -33,6 +39,7 @@ class LifeAllocation extends BaseAllocation
         $gaurav = 'gaurav.sharma@insurancemarket.ae';
         $vivian = 'vivian.sandel@insurancemarket.ae';
         $sourabh = 'sourabh.yadav@insurancemarket.ae';
+    
 
         $emails = [];
 
@@ -80,5 +87,11 @@ class LifeAllocation extends BaseAllocation
         return in_array($this->lead->nationality?->code, $countriesMapping[self::CAT_A])
             ? self::CAT_A
             : self::CAT_B;
+    }
+
+    private function getFicRulesUsers()
+    {
+       $usersIds = app(RuleService::class)->getFicRulesUsers();
+       return User::select('id', 'email')->whereIn('id', $usersIds)->get();
     }
 }
