@@ -1217,19 +1217,19 @@ if (! function_exists('getAssignmentTypeText')) {
                 $assignmentText = 'System Assigned';
                 break;
             case 2:
-                $assignmentText = 'System ReAssigned';
+                $assignmentText = 'System Reassigned';
                 break;
             case 3:
                 $assignmentText = 'Manual Assigned';
                 break;
             case 4:
-                $assignmentText = 'Manual ReAssigned';
+                $assignmentText = 'Manual Reassigned';
                 break;
             case 5:
                 $assignmentText = 'Bought Lead';
                 break;
             case 6:
-                $assignmentText = 'ReAssigned as Bought Lead';
+                $assignmentText = 'Reassigned as Bought Lead';
                 break;
             case 7:
                 $assignmentText = 'Self Assigned';
