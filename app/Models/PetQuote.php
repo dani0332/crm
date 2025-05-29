@@ -28,7 +28,7 @@ class PetQuote extends Model implements AuditableContract
         'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'mobile_no' => FilterTypes::EXACT,
     ];
-    public $allowedColumns = ['premium', 'policy_number', 'breed_of_pet1', 'pet_type_id', 'pet_age_id', 'is_neutered', 'is_microchipped', 'microchip_no', 'is_mixed_breed', 'has_injury', 'gender', 'ilivein_accommodation_type_id', 'iam_possesion_type_id'];
+    public $allowedColumns = ['premium', 'policy_number', 'breed_of_pet1', 'pet_type_id', 'pet_age_id', 'is_neutered', 'is_microchipped', 'microchip_no', 'is_mixed_breed', 'has_injury', 'gender', 'ilivein_accommodation_type_id', 'iam_possesion_type_id', 'uuid'];
 
     public function quoteStatus()
     {

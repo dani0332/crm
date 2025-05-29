@@ -48,11 +48,12 @@ class SendUpdateCustomerValidationRequest extends FormRequest
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
             $personalQuote = PersonalQuote::where('id', $this->sendUpdate->personal_quote_id)->select('advisor_id', 'email')->first();
-            if (! $personalQuote->advisor_id) {
+            if (! $personalQuote?->advisor_id) {
                 $validator->errors()->add('error', 'Please select advisor');
             }
 
-            if (! $personalQuote->email) {
+            // The str_contains condition is added only for the production environment and will be removed once the issue with comma-separated emails is resolved.
+            if (! $personalQuote?->email || str_contains($personalQuote?->email, ',')) {
                 $validator->errors()->add('error', 'Customer email is required');
             }
 
