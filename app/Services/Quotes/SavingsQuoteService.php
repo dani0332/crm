@@ -4,10 +4,15 @@ namespace App\Services\Quotes;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
+use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SavingsPurposeEnum;
+use App\Models\CurrencyType;
 use App\Models\Customer;
+use App\Models\MartialStatus;
+use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\SavingsQuote;
@@ -15,8 +20,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Facades\Capi;
-use App\Services\LookupService;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -55,11 +58,13 @@ class SavingsQuoteService extends BaseQuoteService
 
     public function getFormOptions()
     {
-        $lookUpData = $this->getSavingsQuoteLookUpData();
-
         return [
-            'lookUpData' => $lookUpData,
+            'nationalities' => Nationality::withActive()->options(),
             'genders' => GenderEnum::withLabels(),
+            'maritalStatuses' => MartialStatus::withActive()->options(),
+            'purposes' => SavingsPurposeEnum::withLabels(),
+            'currencies' => CurrencyType::withActive()->options(),
+            'investmentFrequencies' => InvestmentFrequencyEnum::withLabels(),
         ];
     }
 
@@ -161,8 +166,6 @@ class SavingsQuoteService extends BaseQuoteService
             'advisorId' => (! Auth::user()->hasRole(RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
-        // $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);
-
         return $this->tempMockApi($data);
     }
 
@@ -235,10 +238,5 @@ class SavingsQuoteService extends BaseQuoteService
             'canAddBatchNumber' => Auth::user()->hasRole(RolesEnum::SavingsManager),
             ...$data,
         ];
-    }
-
-    public function getSavingsQuoteLookUpData()
-    {
-        return app(LookupService::class)->getSavingsQuoteLookUpData();
     }
 }
