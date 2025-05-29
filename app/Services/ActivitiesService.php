@@ -191,18 +191,19 @@ class ActivitiesService extends BaseService
     {
         $subOrdinateIds = $this->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
+
         return Activities::leftJoin('users', 'users.id', 'activities.assignee_id')->whereIn('assignee_id', $subOrdinateIds);
     }
-    
+
     /**
      * Create an activity via API for a given entity and quote type.
      *
-     * @param string $entityUId
-     * @param int|null $quoteTypeId
-     * @param string $activityType
-     * @param string $title
-     * @param string $description
-     * @param string $dueDate
+     * @param  string  $entityUId
+     * @param  int|null  $quoteTypeId
+     * @param  string  $activityType
+     * @param  string  $title
+     * @param  string  $description
+     * @param  string  $dueDate
      * @return \Illuminate\Http\JsonResponse
      */
     public function createActivityApi($entityUId, $quoteTypeId, $activityType, $title, $description, $dueDate)
@@ -217,8 +218,9 @@ class ActivitiesService extends BaseService
             if ($reassignResult) {
                 return $reassignResult;
             }
+
             return response()->json([
-                'message' => 'An existing activity was found. Please Mark Done the current activity before creating a new one.'
+                'message' => 'An existing activity was found. Please Mark Done the current activity before creating a new one.',
             ], 409);
         }
 
@@ -254,9 +256,10 @@ class ActivitiesService extends BaseService
      */
     private function getRecord($entityUId, $modelType)
     {
-        if ($entityUId && $modelType && !checkPersonalQuotes($modelType->code)) {
+        if ($entityUId && $modelType && ! checkPersonalQuotes($modelType->code)) {
             return app(CRUDService::class)->getEntity($modelType->code, $entityUId);
         }
+
         return PersonalQuote::where('uuid', $entityUId)->first();
     }
 
@@ -286,17 +289,20 @@ class ActivitiesService extends BaseService
     private function handleExistingActivity($existingActivity, $systemUser, $record)
     {
         if ($existingActivity->assignee_id == $systemUser?->id) {
-            if (!empty($record->advisor_id)) {
+            if (! empty($record->advisor_id)) {
                 $existingActivity->assignee_id = $record->advisor_id;
                 $existingActivity->save();
+
                 return response()->json([
-                    'message' => 'Activity has been Reassigned to Advisor ' . $record->advisor_id
+                    'message' => 'Activity has been Reassigned to Advisor '.$record->advisor_id,
                 ], 200);
             }
+
             return response()->json([
-                'message' => 'No advisor has been assigned to this lead.'
+                'message' => 'No advisor has been assigned to this lead.',
             ], 200);
         }
+
         return null;
     }
 
@@ -313,7 +319,8 @@ class ActivitiesService extends BaseService
         } else {
             $path = "quotes/{$quoteTypeCode}/{$record->uuid}";
         }
-        return url('/') . "/$path";
+
+        return url('/')."/$path";
     }
 
     /**
@@ -329,8 +336,8 @@ class ActivitiesService extends BaseService
             ? 'Urgent callback request for '
             : 'Urgent Whatsapp request for ';
         LoggerService::info(
-            'InstantAlfred ' . ($isCallback ? 'CallBack' : 'Whatsapp') .
-            ' Notification Trigger to Advisor ' . $record->advisor_id . ' And Lead Code is ' . $record->code
+            'InstantAlfred '.($isCallback ? 'CallBack' : 'Whatsapp').
+            ' Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code
         );
         event(new CallBackNotifications(
             $record->uuid,
