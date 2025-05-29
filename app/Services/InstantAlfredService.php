@@ -220,7 +220,7 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($request->transaction_type_id) && $request->transaction_type_id != '') {
-            $partialQuery->whereIn('transaction_type_id', $request->transaction_type_id);
+            $partialQuery->whereIn("{$alias}.transaction_type_id", $request->transaction_type_id);
         }
 
         if (isset($request->quote_batch_id) && ! empty($request->quote_batch_id)) {
