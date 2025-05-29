@@ -38,15 +38,14 @@ const listen = () => {
       }));
 
       // If OCR completed successfully and all required fields are filled
-      if (e.data.status === 'end' && e.data.message.includes('completed') && !e.data.error) {
+      if (e.data.status === 'end' && e.data.message.includes('completed')
+          && !e.data.error
+          && e.data.userId === page.props.auth.user.id) {
         // Check if we need to update lead status to "Policy Issued"
         const allFieldsFilled = checkRequiredPolicyFields();
 
         // Only show notification if fields are missing, otherwise silently update status
-        if (allFieldsFilled) {
-          // Update lead status to "Policy Issued"
-          updateLeadStatus(e.data.uuid);
-        } else {
+        if (!allFieldsFilled) {
           notification.info({
             title: 'Some required fields are still missing in Policy details',
             position: 'top',
@@ -91,55 +90,6 @@ const checkRequiredPolicyFields = () => {
   });
 
   return result;
-};
-
-const updateLeadStatus = (uuid) => {
-  // Make sure we have a valid quote object
-  if (!page.props.quote || !page.props.quote.id) {
-    notification.error({
-      title: 'Cannot update lead status: Quote data is missing',
-      position: 'top',
-    });
-    return;
-  }
-
-  // Determine the correct model type from the URL
-  const currentUrl = page.props.location || '';
-  const modelType = currentUrl.includes('/quotes/car/') ? 'Car' : 'Home';
-
-  // Create form data with all required fields
-  const leadStatusForm = {
-    modelType: modelType,
-    leadId: page.props.quote.id,
-    quote_uuid: page.props.quote.uuid,
-    leadStatus: 33, // PolicyIssued status ID from QuoteStatusEnum
-    notes: page.props.quote.notes || null,
-    assigned_to_user_id: page.props.quote.advisor_id || page.props.auth.user.id,
-  };
-
-  // Update lead status to "Policy Issued"
-  router.post(
-    route('updateLeadStatus', {
-      modelType: modelType,
-      QuoteUId: page.props.quote.id,
-    }),
-    leadStatusForm,
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead status has been updated to Policy Issued',
-          position: 'top',
-        });
-      },
-      onError: (errors) => {
-        notification.error({
-          title: errors.value || 'Error updating lead status',
-          position: 'top',
-        });
-      }
-    }
-  );
 };
 
 onMounted(() => {
