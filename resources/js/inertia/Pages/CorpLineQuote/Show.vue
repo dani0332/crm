@@ -1750,6 +1750,13 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :expanded="sectionExpanded"
     />
 
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured_kyc_id"
+      :expanded="sectionExpanded"
+    />
+
     <lead-raw-data
       :modelType="'Business'"
       :uuid="$page.props.quote.uuid"
