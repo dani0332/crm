@@ -645,10 +645,8 @@ const onLoadAvailablePlansData = async () => {
       availablePlansTable.data = homePlans.quotes.plans;
       availableAllPlans.value = homePlans.quotes.plans;
       homePlansIds.ids = homePlans.quotes.plans.map(plan => plan.id);
-    } else {
     }
   } catch (error) {
-    console.error(error);
   } finally {
     availablePlansTable.isLoading = false;
   }
@@ -2157,6 +2155,11 @@ const shouldShowPlanDetailsSection = computed(() => {
                       :quoteType="'Home'"
                       :uuid="quote.uuid"
                       :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
+                      :payments="payments"
                     />
 
                     <x-button
@@ -2180,7 +2183,14 @@ const shouldShowPlanDetailsSection = computed(() => {
             show-close
             backdrop
           >
-            <LazyAvailablePlan :plan="planDetails" />
+            <LazyAvailablePlan
+              :plan="planDetails"
+              @onLoadAvailablePlansData="
+                () => {
+                  onLoadAvailablePlansData();
+                }
+              "
+            />
           </x-modal>
         </template>
       </Collapsible>

@@ -381,9 +381,9 @@ let isBusinessLead = page.props.quoteType == quoteTypeCodeEnum.Business;
 
 const commissionVatNotApplicableTooltip = computed(() => {
   let toolTip = null;
-  if (bpForm.isCommissionDisabled) {
+  /*if (bpForm.isCommissionDisabled) {
     return bpForm.disabledCommissionTooltip;
-  }
+  }*/
   if (bpForm.commission_vat_applicable > 0) {
     if (isLifeLead) {
       toolTip = productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE_FILLED;
@@ -406,9 +406,9 @@ const commissionVatNotApplicableTooltip = computed(() => {
 });
 const commissionVatApplicableTooltip = computed(() => {
   let toolTip = null;
-  if (bpForm.isCommissionDisabled) {
+  /*if (bpForm.isCommissionDisabled) {
     return bpForm.disabledCommissionTooltip;
-  }
+  }*/
   if (bpForm.commission_vat_not_applicable > 0) {
     if (isLifeLead) {
       toolTip =
@@ -735,7 +735,9 @@ const isDisabledSendPCB = computed(() => {
     if (
       payment.collection_type == 'insurer' &&
       ccPayments.length > 0 &&
-      props.bookPolicyDetails?.text == sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT
+      props.bookPolicyDetails?.text ==
+        sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT &&
+      props.bookPolicyDetails?.isCommissionDisabled
     ) {
       return true;
     }
@@ -1004,10 +1006,7 @@ const isDisabledSendPCB = computed(() => {
                         @change="calculateCommission"
                         placeholder="Commission VAT NOT APPLICABLE"
                         class="w-full"
-                        :disabled="
-                          disableCommissionVatNotApplicable ||
-                          bpForm.isCommissionDisabled
-                        "
+                        :disabled="disableCommissionVatNotApplicable"
                       />
                       <div
                         v-if="

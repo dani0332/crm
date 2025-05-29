@@ -48,6 +48,7 @@ const planDetailsForm = useForm({
   insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || null,
   insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || null,
   id: props.sendUpdateLog?.id,
+  code: props.sendUpdateLog?.code,
 });
 
 const isPlanDetails = computed(() => {

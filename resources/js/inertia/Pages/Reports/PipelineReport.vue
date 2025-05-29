@@ -325,17 +325,17 @@ watch(
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-      <x-field label="Date Range" required>
-        <DatePicker
-          v-model="filters.date"
-          range
-          :max-range="365"
-          size="sm"
-          placeholder="Select Date (default last 30 days)"
-          model-type="yyyy-MM-dd"
-          :preset-dates="presetDates"
-        />
-      </x-field>
+      <DatePicker
+        label="Date Range"
+        required
+        v-model="filters.date"
+        range
+        :max-range="365"
+        size="sm"
+        placeholder="Select Date (default last 30 days)"
+        model-type="yyyy-MM-dd"
+        :preset-dates="presetDates"
+      />
       <x-select
         v-model="filters.lob"
         placeholder="Search by Bussiness"
@@ -388,17 +388,17 @@ watch(
           />
         </template>
       </x-select>
-      <x-field label="Filter By">
-        <x-select
-          v-model="filters.filter_by"
-          placeholder="Filter By"
-          :options="[
-            { value: 'total_leads', label: 'Total Leads' },
-            { value: 'total_opportunity', label: 'Total Opportunity' },
-          ]"
-          class="w-full"
-        />
-      </x-field>
+
+      <x-select
+        label="Filter By"
+        v-model="filters.filter_by"
+        placeholder="Filter By"
+        :options="[
+          { value: 'total_leads', label: 'Total Leads' },
+          { value: 'total_opportunity', label: 'Total Opportunity' },
+        ]"
+        class="w-full"
+      />
       <x-field
         v-if="filters.lob == 'corpline'"
         label="Bussiness Insurance Type"

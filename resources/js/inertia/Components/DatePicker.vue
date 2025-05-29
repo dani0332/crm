@@ -54,6 +54,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  required: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const selectedData = computed({
@@ -86,7 +90,7 @@ const iconPosition = computed(() => {
     :range="range"
     text-input
   >
-    <template #dp-input="{ value, onEnter, onTab, onBlur, onInput }">
+    <template #dp-input="{ value, onEnter, onTab, onBlur, onInput, onPaste }">
       <x-input
         :model-value="value"
         :label="props.label"
@@ -100,10 +104,12 @@ const iconPosition = computed(() => {
         :placeholder="props.placeholder"
         :hide-footer="props.hideFooter"
         @keydown.tab="onTab"
-        @update:modelValue="onInput"
+        @change="onInput"
         @blur="onBlur"
+        @paste="onPaste"
         @keydown.enter.prevent="onEnter"
         :error="props.error"
+        :required="props.required"
       />
     </template>
   </x-datepicker>
@@ -116,7 +122,7 @@ const iconPosition = computed(() => {
 
 .dp__icon.dp__clear_icon {
   @apply !text-orange-500;
-  top: v-bind(iconPosition) !important;
+  /* top: v-bind(iconPosition) !important; */
 }
 
 .dp__cell_disabled {

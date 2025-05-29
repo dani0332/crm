@@ -7,10 +7,12 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
+use App\Models\HomeQuote;
 use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
 use App\Models\PetQuote;
@@ -261,6 +263,12 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
 
+        /* Temp Code - assign email for particular Policy id/number */
+        if ($policyID == 40523841) {
+            $email = 'soniax711@gmail.com';
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
         if (empty($email)) {
             return [
                 'status' => 400,
@@ -416,8 +424,12 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::HOME->value:
-                            $obj->homeQuoteRequestDetail()->updateOrCreate(
-                                ['home_quote_request_id' => $obj->id],
+                            $obj->homeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new HomeQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;
@@ -483,6 +495,14 @@ class InslyDetailRepository extends BaseRepository
                         $policy->imcrm_link = '/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     }
                     ! $isPersonalQuote && $this->syncQuote($obj, $payLoad);
+
+                    // Sync quote_id of lob table to personal quote table for allowed LOBs
+                    $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+                    $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
+                    if (! $isPersonalQuote && in_array($quoteTypeId, $allowedQuoteTypes)) {
+                        $this->updatePersonalQuote($obj->uuid, $quoteTypeId, ['quote_id' => $obj->id]);
+                    }
+
                     $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
                     $policy->moved_to_imcrm_by = auth()->user()->name;
                     $policy->code = $obj->code;
@@ -523,6 +543,16 @@ class InslyDetailRepository extends BaseRepository
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
+
+        /* Temp Code - assign email for particular Policy id/number */
+
+        $tempEmail = 'soniax711@gmail.com';
+        $tempPolicyId = 40523841;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }
+
+        /* Temp Code - assign email for particular Policy id/number */
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;

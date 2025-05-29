@@ -28,7 +28,6 @@ use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
-use setasign\Fpdi\PdfParser\StreamReader;
 
 class QuoteDocumentService extends BaseService
 {
@@ -59,6 +58,8 @@ class QuoteDocumentService extends BaseService
 
     public function getQuoteDocumentsForUpload($quoteTypeId, $options = null)
     {
+        LoggerService::info('fn:getQuoteDocumentsForUpload - Start - QuoteDocumentService');
+
         $query = DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true]);
         if ($options) {
             $query = $query->whereIn('code', $options);
@@ -126,6 +127,8 @@ class QuoteDocumentService extends BaseService
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $isHomeSAL = false)
     {
+        LoggerService::info('fn:uploadQuoteDocument - QuoteDocumentService');
+
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
@@ -298,6 +301,8 @@ class QuoteDocumentService extends BaseService
      */
     public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null, $isSendUpdate = false)
     {
+        LoggerService::info('fn:getQuoteDocuments - Start - QuoteDocumentService');
+
         if ($isSendUpdate) {
             $quote = SendUpdateLog::find($recordId);
         } else {
@@ -306,6 +311,7 @@ class QuoteDocumentService extends BaseService
 
         if ($quote && $documentTypeCodes) {
             // Return documents filtered by document type codes if provided
+            // If watermarked_doc_url is not null then we can send watermarked document in email
             $quoteDocument = $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
             if (ucfirst($quoteType) == quoteTypeCode::Travel) {
                 return $quoteDocument->filter(function ($document) {
@@ -397,6 +403,8 @@ class QuoteDocumentService extends BaseService
      */
     public function paymentDocumentTypesOptions($quoteTypeId): array
     {
+        LoggerService::info('fn:paymentDocumentTypesOptions - Start - QuoteDocumentService');
+
         $mapping = [
             QuoteTypeId::Car => ['CPD', 'CPDR', 'CDPDR'],
             QuoteTypeId::Health => ['HPD', 'HPDR', 'HDPDR'],
@@ -423,14 +431,23 @@ class QuoteDocumentService extends BaseService
     public function getHandBookDocuments($quote, $coPaymentIds = null)
     {
         if ($quote->policyWording) {
-            $policyWording = $quote->policyWording;
+            // Get policy wording documents for the quote and filter out co-payment documents if provided
+            // Filter out policy wording documents that don't have a link
+            $policyWording = $quote->policyWording
+                ->when($coPaymentIds != null, function ($collection) use ($coPaymentIds) {
+                    return $collection->reject(function ($item) use ($coPaymentIds) {
+                        return in_array($item->health_plan_co_payment_id, $coPaymentIds);
+                    });
+                })
+                ->filter(function ($item) use ($quote) {
+                    if (empty($item->link)) {
+                        LoggerService::warning("Policy wording document not found for policy wording ID: {$item->id} Quote Code: {$quote->code} Error Code: 404");
 
-            // Filter out documents with matching co-payment codes
-            if ($coPaymentIds != null) {
-                $policyWording = $policyWording->reject(function ($policyWording) use ($coPaymentIds) {
-                    return $coPaymentIds && in_array($policyWording->health_plan_co_payment_id, $coPaymentIds);
+                        return false;
+                    }
+
+                    return true;
                 });
-            }
 
             $policyWording = $policyWording->map(function ($policyWording) use ($quote) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
@@ -516,50 +533,204 @@ class QuoteDocumentService extends BaseService
             throw new \Exception("Unable to read file azureFilePath: $azureFilePath");
         }
 
-        $tempFilePath = storage_path('temp/temp_'.$docName);
-        file_put_contents($tempFilePath, $fileContent);
+        // Save the source file
+        $sourceFilePath = storage_path('temp/source_'.$docName);
+        file_put_contents($sourceFilePath, $fileContent);
 
-        // Convert the PDF to a version compatible with FPDI
-        shell_exec("gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dNOPAUSE -dQUIET -dBATCH -sOutputFile=$outputFile $tempFilePath");
+        try {
+            // Use QPDF as our primary watermarking approach
+            return $this->qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
+        } catch (\Exception $e) {
+            LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", context: [
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
 
-        sleep(3);
+            // Incase ghostscriptWatermark() fails/throw exception. Made sure that we delete the file that it created.
+            $watermarkPdf = storage_path('temp/watermark_'.$uuid.'.pdf');
+            if (file_exists($watermarkPdf ?? '')) {
+                unlink($watermarkPdf);
+            }
 
-        if (! file_exists($outputFile)) {
-            LoggerService::error("Unable to read file outputFile: $outputFile ");
-            throw new \Exception("Unable to read file outputFile: $outputFile");
+            // If watermarking fails completely, use the original file without watermark
+            if (file_exists($sourceFilePath)) {
+                // Copy the original file to the output path
+                copy($sourceFilePath, $outputPath);
+                LoggerService::info("Using unwatermarked original file due to error for UUID: $uuid");
+
+                return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+            }
+
+            // If we can't even use the original file, re-throw the exception
+            throw $e;
+        } finally {
+            // after everything remove the sourceFile from storage/temp
+            if (file_exists($sourceFilePath)) {
+                unlink($sourceFilePath);
+            }
+        }
+    }
+
+    /**
+     * Apply watermark using Ghostscript
+     * After this attempt it fall back to the original file
+     *
+     * @param  string  $sourceFilePath  Source PDF file path
+     * @param  string  $outputPath  Output PDF file path
+     * @param  string  $uuid  Document UUID
+     * @return void
+     */
+    private function ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
+    {
+        // Preprocess the PDF with Ghostscript for FPDI compatibility
+        $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+        $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
+            '-dPDFSETTINGS=/default -dCompatibilityLevel=1.4 '.
+            '-dNoOutputFonts -dEmbedAllFonts=false -dSubsetFonts=false -dCompressPages=false '.
+            '-sOutputFile='.escapeshellarg($tempFilePath).' '.
+            escapeshellarg($sourceFilePath).' 2>&1';
+
+        /** NOTES:
+         *  -dNoOutputFonts is the key param for font change issue
+         *      -- adding it handles Arabic but corrupt english in some cases where fonts in-compatible)
+         * */
+        $output = shell_exec($gsCommand);
+
+        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+            LoggerService::error("Ghostscript preprocessing failed for UUID: $uuid. Output: $output");
+            throw new \Exception('Ghostscript preprocessing failed');
         }
 
+        // region Apply watermark with FPDI
         $pdf = new Fpdi;
+        $pageCount = $pdf->setSourceFile($tempFilePath);
 
-        $pageCount = $pdf->setSourceFile(StreamReader::createByString(file_get_contents($outputFile)));
-
-        LoggerService::info('watermark job started for Quote: '.$uuid.' source file read successfully. File path: '.$outputFile);
         $watermarkImagePath = public_path('images/watermark1.png');
         $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
 
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
             $templateId = $pdf->importPage($pageNo);
             $size = $pdf->getTemplateSize($templateId);
-
-            // Log::info('Page size: '.json_encode($size));
-
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-            // Add watermark
+
+            // Add watermark based on orientation
             if ($size['orientation'] === 'P') {
-                $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+                $pdf->Image(
+                    $watermarkImagePath,
+                    0, 0, $size['width'], $size['height'],
+                    '', '', '', false, 300, '', false, false, 0
+                );
             } else {
-                $pdf->Image($watermarkImageAA4Path, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+                $pdf->Image(
+                    $watermarkImageAA4Path,
+                    0, 0, $size['width'], $size['height'],
+                    '', '', '', false, 300, '', false, false, 0
+                );
             }
 
+            // Layer the original page content over the watermark
             $pdf->useTemplate($templateId);
         }
 
         $pdf->Output($outputPath, 'F');
+        // endregion
 
-        // Delete the temporary file
+        // Clean up temporary file
         if (file_exists($tempFilePath)) {
             unlink($tempFilePath);
         }
+
+        // Check if the output file was created successfully
+        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
+            LoggerService::error("FPDI watermarking failed for UUID: $uuid");
+            throw new \Exception('FPDI watermarking failed');
+        }
+
+        LoggerService::info("Successfully applied watermark with Ghostscript and FPDI for UUID: $uuid");
+
+        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
+    }
+
+    private function qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
+    {
+        // Preprocess the PDF with qpdf for FPDI compatibility
+        $tempFilePath = storage_path('temp/preprocessed_'.$docName);
+        $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
+
+        $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+        $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
+            escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
+
+        shell_exec($decryptCommand);
+
+        if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
+            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+            LoggerService::error("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
+            throw new \Exception('qpdf decryption failed');
+        }
+
+        // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
+        $qpdfCommand = 'qpdf '.
+            '--no-warn '. // Suppress warnings
+            '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
+            escapeshellarg($decryptedTempPath).' '.
+            escapeshellarg($tempFilePath).' > '.
+            escapeshellarg($qpdfLogPath).' 2>&1';
+
+        $output = shell_exec($qpdfCommand);
+
+        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+            LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
+            throw new \Exception('qpdf preprocessing failed');
+        }
+
+        // region Apply watermark with FPDI
+        $pdf = new Fpdi;
+        $pageCount = $pdf->setSourceFile($tempFilePath);
+
+        $watermarkImagePath = public_path('images/watermark1.png');
+        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
+
+        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+            $templateId = $pdf->importPage($pageNo);
+            $size = $pdf->getTemplateSize($templateId);
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+
+            // Add watermark based on orientation
+            if ($size['orientation'] === 'P') {
+                $pdf->Image(
+                    $watermarkImagePath,
+                    0, 0, $size['width'], $size['height'],
+                    '', '', '', false, 300, '', false, false, 0
+                );
+            } else {
+                $pdf->Image(
+                    $watermarkImageAA4Path,
+                    0, 0, $size['width'], $size['height'],
+                    '', '', '', false, 300, '', false, false, 0
+                );
+            }
+
+            // Layer the original page content over the watermark
+            $pdf->useTemplate($templateId);
+        }
+
+        $pdf->Output($outputPath, 'F');
+        // endregion
+
+        // Clean up temporary file
+        if (file_exists($tempFilePath)) {
+            unlink($tempFilePath);
+        }
+
+        // Check if the output file was created successfully
+        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
+            LoggerService::error("FPDI watermarking failed for UUID: $uuid");
+            throw new \Exception('FPDI watermarking failed');
+        }
+
+        LoggerService::info("Successfully applied watermark with QPDF and FPDI for UUID: $uuid");
 
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }

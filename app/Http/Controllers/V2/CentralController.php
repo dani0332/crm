@@ -38,6 +38,7 @@ use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\ExportValidationRequest;
 use App\Http\Requests\GeneratePaymentLinkRequest;
+use App\Http\Requests\GetPlansPaymentGatewayRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PaymentCaptureValidtionRequest;
@@ -755,18 +756,21 @@ class CentralController extends Controller
     public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
-        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount);
+        $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode);
 
-        $logPayload = [
+        $logContext = [
+            'ref_id' => $request->quoteCode,
+        ];
+
+        $logExtra = [
             'paymentCode' => $request->paymentCode,
-            'uuid' => $request->uuid,
             'quoteTypeId' => $quoteTypeId,
             'responseStatus' => isset($response['status']) ? $response['status'] : null,
             'responseMessage' => isset($response['message']) ? $response['message'] : null,
             'responsePremiumAmount' => isset($response['premiumAmount']) ? $response['premiumAmount'] : null,
         ];
 
-        LoggerService::info('paymentsCaptureValidation', extra: ['payload' => $logPayload]);
+        LoggerService::info('paymentsCaptureValidation', context: $logContext, extra: $logExtra);
 
         return response()->json(['response' => $response]);
     }
@@ -817,5 +821,21 @@ class CentralController extends Controller
         $response = app(CentralService::class)->deletePayment($validatedRequest);
 
         return response()->json($response);
+    }
+
+    public function getPlansPaymentGateway(GetPlansPaymentGatewayRequest $request, $quoteType, $quoteCcode)
+    {
+        LoggerService::info('getPlansPaymentGateway called: ', extra: $request->plan_ids, context: ['ref_id' => $quoteCcode]);
+        try {
+            $result = app(CentralService::class)->getPlansPaymentGateway($request, $quoteType);
+
+            LoggerService::info('getPlansPaymentGateway response: ', extra: $result, context: ['ref_id' => $quoteCcode]);
+
+            return response()->json(['plans' => $result]);
+        } catch (\Throwable $th) {
+            LoggerService::error('getPlansPaymentGateway error: ', exception: $th, context: ['ref_id' => $quoteCcode]);
+
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
     }
 }

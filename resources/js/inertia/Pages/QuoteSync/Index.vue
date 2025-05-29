@@ -192,67 +192,60 @@ const distinctOptions = computed(() => {
     <x-divider class="my-4" />
     <x-form @submit="filterLogs" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-field label="Quote type">
-          <x-select
-            v-model="filters.quote_type"
-            placeholder="Select Quote Type"
-            :options="quoteTypesOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="UUID">
-          <x-input
-            v-model="filters.uuid"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Type here"
-          />
-        </x-field>
-        <x-field label="Is Synced?">
-          <x-select
-            v-model="filters.is_synced"
-            placeholder="Select Is Synced?"
-            :options="isSyncedOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Status">
-          <x-select
-            v-model="filters.status"
-            placeholder="Select Status"
-            :options="quoteSyncStatusOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Synced At">
-          <DatePicker
-            v-model="filters.synced_at"
-            name="date_of_purchase"
-            class="w-full"
-            model-type="yyyy-MM-dd"
-            range
-            max-range="7"
-          />
-        </x-field>
-        <x-field label="Created At">
-          <DatePicker
-            v-model="filters.created_at"
-            name="date_of_purchase"
-            class="w-full"
-            model-type="yyyy-MM-dd"
-            range
-            max-range="7"
-          />
-        </x-field>
-        <x-field label="Distinct">
-          <x-select
-            v-model="filters.distinct"
-            placeholder="Select Distinct"
-            :options="distinctOptions"
-            class="w-full"
-          />
-        </x-field>
+        <x-select
+          v-model="filters.quote_type"
+          placeholder="Select Quote Type"
+          :options="quoteTypesOptions"
+          class="w-full"
+          label="Quote type"
+        />
+        <x-input
+          v-model="filters.uuid"
+          type="search"
+          name="first_name"
+          class="w-full"
+          placeholder="Type here"
+          label="UUID"
+        />
+        <x-select
+          v-model="filters.is_synced"
+          placeholder="Select Is Synced?"
+          :options="isSyncedOptions"
+          class="w-full"
+          label="Is Synced?"
+        />
+        <x-select
+          v-model="filters.status"
+          placeholder="Select Status"
+          :options="quoteSyncStatusOptions"
+          class="w-full"
+          label="Status"
+        />
+        <DatePicker
+          v-model="filters.synced_at"
+          name="date_of_purchase"
+          class="w-full"
+          model-type="yyyy-MM-dd"
+          range
+          max-range="7"
+          label="Synced At"
+        />
+        <DatePicker
+          v-model="filters.created_at"
+          name="date_of_purchase"
+          class="w-full"
+          model-type="yyyy-MM-dd"
+          range
+          max-range="7"
+          label="Created At"
+        />
+        <x-select
+          v-model="filters.distinct"
+          placeholder="Select Distinct"
+          :options="distinctOptions"
+          class="w-full"
+          label="Distinct"
+        />
       </div>
       <div class="flex justify-between">
         <div class="font-bold pt-4">Total: {{ count }}</div>

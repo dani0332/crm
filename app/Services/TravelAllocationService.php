@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\QuoteStatusEnum;
@@ -41,6 +42,10 @@ class TravelAllocationService extends AllocationService
 
     private function verifyFetchLeadPreChecks(TravelQuote $travelQuote, ProcessTrackerService $tracker)
     {
+        if ($travelQuote->isRenewalUpload()) {
+            return false;
+        }
+
         // Run Alliance Check only when the travel quote is a parent lead and the members are adult
         if (getAppStorageValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE) == '1' && $travelQuote->isParent() && $travelQuote->isAdult()) {
             info(self::class.':verifyFetchLeadPreChecks - it is parent lead so checking for Alliance Travel Automation');
@@ -120,12 +125,7 @@ class TravelAllocationService extends AllocationService
                 QuoteStatusEnum::Lost,
             ])
             ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
-            ->where(function ($query) {
-                $query->sicFlowDisabled()
-                    ->orWhere(function ($subQuery) {
-                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                    });
-            })
+            ->eligibleForAllocation(QuoteTypes::TRAVEL)
             ->first();
     }
 
@@ -160,11 +160,10 @@ class TravelAllocationService extends AllocationService
         }
 
         $teamName = null;
-        if ($teamId) {
-            $team = Team::find($teamId);
-            if ($team) {
-                $teamName = $team->name;
-            }
+
+        if ($lead->isPaymentAuthorizedOrPaymentLinkRequested()) {
+            $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+            $teamName = TeamNameEnum::SIC_UNASSISTED;
         }
 
         foreach ($statusOrder as $status) {
@@ -260,6 +259,14 @@ class TravelAllocationService extends AllocationService
         $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
+
+        LoggerService::info(self::class.' - assignLead: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
+        ]);
+        if (empty($lead->lead_assignment_trigger)) {
+            LoggerService::info(self::class.' - assignLead: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();

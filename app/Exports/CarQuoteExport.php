@@ -3,6 +3,9 @@
 namespace App\Exports;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\QuoteTypeId;
 use App\Services\CarQuoteService;
 use App\Traits\ExcelExportable;
 
@@ -10,11 +13,27 @@ class CarQuoteExport
 {
     use ExcelExportable;
 
+    /**
+     * Get the data collection - this is used by the original implementation
+     * and falls back when getQuery is not available
+     */
     public function collection($requestParams = [])
     {
         return app(CarQuoteService::class)->getGridData(requestParams: $requestParams)->get();
     }
 
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery($requestParams = [])
+    {
+        return app(CarQuoteService::class)->getGridData(requestParams: $requestParams);
+    }
+
+    /**
+     * Define the CSV headings
+     */
     public function headings(): array
     {
         return [
@@ -64,9 +83,16 @@ class CarQuoteExport
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'ASSIGNMENT TYPE',
+            'ADVISOR REQUESTED',
+            'SEGMENT',
+            'LEAD ASSIGNMENT TRIGGER',
         ];
     }
 
+    /**
+     * Map a database record to CSV row
+     */
     public function map($quote): array
     {
         return [
@@ -116,7 +142,10 @@ class CarQuoteExport
             $quote->previous_quote_policy_number ?? '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '',
+            (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
+            $quote->getSegments($quote, QuoteTypeId::Car) ?? '',
+            $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
         ];
     }
-
 }

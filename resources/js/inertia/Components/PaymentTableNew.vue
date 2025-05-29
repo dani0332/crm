@@ -38,6 +38,7 @@ const paymentAllocationStatus = page.props.paymentAllocationStatus;
 const paymentMethodsEnums = page.props.paymentMethodsEnum;
 const paymentTooltipEnum = page.props.paymentTooltipEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const paymentCaptureValidationEnum = page.props.paymentCaptureValidationEnum;
 
 const { filterCCPayments } = usePayment();
 const { isAmlVerified, isKycVerified } = useAMLKYC();
@@ -257,6 +258,26 @@ if (props.sendUpdate) {
 const isisUpfrontFrequency = computed(
   () => paymentMethodsForm.frequency === paymentFrequencyEnum.UPFRONT,
 );
+
+const isPaymentAuthorized = computed(() => {
+  const payments = props.payments;
+  if (payments.length > 0) {
+    const notPaidStatusIds = [
+      paymentStatusEnum.AUTHORISED,
+      paymentStatusEnum.PARTIALLY_PAID,
+      paymentStatusEnum.PARTIAL_CAPTURED,
+    ];
+    const hasNotPaidPayments = payments.some(payment =>
+      notPaidStatusIds.includes(payment.payment_status_id),
+    );
+    if (hasNotPaidPayments) {
+      return payments.some(payment =>
+        payment.payment_splits.some(item => item.payment_method.code === 'CC'),
+      );
+    }
+  }
+  return false;
+});
 const isCustomFrequency = computed(
   () => paymentMethodsForm.frequency === paymentFrequencyEnum.CUSTOM,
 );
@@ -292,7 +313,9 @@ if (
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
 } else if (props.quoteType == quoteTypeCodeEnum.Home) {
-  initalPlanDetails = props.quoteRequest.insurance_provider;
+  initalPlanDetails =
+    props.quoteRequest.insurance_provider_plan ||
+    props.quoteRequest.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
@@ -1695,6 +1718,8 @@ const editPaymentModal = async (
       props.quoteType === quoteTypeCodeEnum.Car ||
       props.quoteType === quoteTypeCodeEnum.Home)
   ) {
+    capturePaymentValidationInProcess.value = true;
+    isTransactionCaptureButtonEnabled.value = false;
     await doCapturePaymentValidation(payment.total_amount, payment?.code);
   }
 
@@ -1718,14 +1743,15 @@ const doCapturePaymentValidation = (totalAmount, paymentCode) => {
     uuid: props.quoteRequest.uuid,
     captureAmount: totalAmount,
     paymentCode: paymentCode,
+    quoteCode: props.quoteRequest?.code,
   };
 
-  capturePaymentValidationInProcess.value = true;
   return axios
     .post(`/payments/${props.quoteType}/payments-capture-validation`, data)
     .then(res => {
-      if (res?.data?.response?.status == 'CAPTURE_VALIDATION_CLEARED') {
+      if (res?.data?.response?.status == paymentCaptureValidationEnum.SUCCESS) {
         premiumToCapture.value = res?.data?.response?.premiumAmount;
+        isTransactionCaptureButtonEnabled.value = true;
       } else {
         isTransactionCaptureButtonEnabled.value = false;
         capturePaymentValidationErrorMessage.value =
@@ -2926,6 +2952,9 @@ const providerId = computed(() => {
 
 const providerName = computed(() => {
   const plan = planDetail.value;
+  if (props.quoteType == quoteTypeCodeEnum.Home) {
+    return props.quoteRequest.insurance_provider?.text || 'Not Available';
+  }
   const ecomQuoteType = [...quoteTypesToCheck, quoteTypeCodeEnum.Bike];
   if (props.sendUpdate) {
     let provider = props?.insuranceProviders?.find(
@@ -2987,7 +3016,9 @@ const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
-    initalPlanDetails = props.quoteRequest.insurance_provider;
+    initalPlanDetails =
+      props.quoteRequest.insurance_provider_plan ||
+      props.quoteRequest.insurance_provider;
   } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
@@ -3345,6 +3376,9 @@ onBeforeMount(() => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
+    <Toasty v-if="isPaymentAuthorized"
+      >Payment is authorised. Please capture the payment</Toasty
+    >
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex justify-between items-center">
