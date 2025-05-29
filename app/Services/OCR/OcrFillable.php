@@ -197,6 +197,10 @@ trait OcrFillable
             $dataToUpdate['policy_expiry_date'] = $this->parseDate($this->resolveProp($data, 'policyExpiryDate'), $quote->policy_expiry_date);
         }
 
+        if(!$quote->policy_issuance_date) {
+            $dataToUpdate['policy_issuance_date'] = now();
+        }
+
         if (! empty($dataToUpdate)) {
             $quote->update($dataToUpdate);
         }
