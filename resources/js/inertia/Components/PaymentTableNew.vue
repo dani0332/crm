@@ -2425,7 +2425,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => viewData)
-      .post('/payments/' + props.quoteType + '/split-payments-approve', {
+      .post('/payments/' + props.quoteType + '/master-payment-approve-capture', {
         preserveScroll: true,
         onSuccess: res => {
           createPaymentModal.value = false;
@@ -2464,7 +2464,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => viewData)
-      .post('/payments/' + props.quoteType + '/split-update', {
+      .post('/payments/' + props.quoteType + '/split-payment-approve-decline', {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;

@@ -400,20 +400,20 @@ class CentralController extends Controller
         return $successMessage;
     }
 
-    // Update split payment status
-    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
+    // This method is called when capture/approve split payment
+    public function splitPaymentApproveDecline(SplitPaymentUpdateRequest $request)
     {
-        $successMessage = PaymentRepository::updatePaymentStatus($request);
+        $successMessage = PaymentRepository::splitPaymentApproveDecline($request);
 
         return back()->with('success', $successMessage);
     }
 
-    // Approve split payments
-    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
+    // This method is called when capture/approve master payment
+    public function masterPaymentApproveCapture(SplitPaymentApproveRequest $request)
     {
-        LoggerService::info("Processing split payment approve {$request->payment_code}");
+        LoggerService::info("Master payment approve/capture called for payment code : {$request->payment_code}");
 
-        $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+        $successMessage = PaymentRepository::masterPaymentApproveCapture($request);
         if (! $successMessage) {
             return back()->with('error', 'Error in approving payment');
         }

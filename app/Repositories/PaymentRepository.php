@@ -555,24 +555,28 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     private function handlePaymentDecline($request)
     {
-        LoggerService::info("Processing payment decline for {$request->payment_code}");
+        $paymentCode = $request->payment_code;  
+        LoggerService::info("Processing payment decline for {$paymentCode}");
 
         $quoteModel = $this->getQuoteModel($request->modelType, $request->quote_id, $request->send_update_id);
-        LoggerService::startQuoteLogging($quoteModel);
+        LoggerService::startQuoteLogging($quoteModel, LoggerFeatureEnum::DECLINE_PARENT_PAYMENT);
         $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
+        LoggerService::info("Updating payment decline details for payment code: {$paymentCode}");
         $firstPayment->update([
             'decline_reason_id' => $request->declined_reason,
             'decline_custom_reason' => $request->declined_custom_reason,
             'updated_by' => Auth::user()->id,
         ]);
         if ($request->send_update_id > 0) {
+            LoggerService::info("Updating send update status logs for quote ID: {$quoteModel->id}");
             app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_DECLINE);
             $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
         } else {
+            LoggerService::info("Updating quote status to TransactionDeclined for main lead quote ID: {$quoteModel->id}");
             $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
         }
         $quoteModel->save();
-        LoggerService::info("Transaction declined process complete: {$request->payment_code}");
+        LoggerService::info("Transaction declined process complete: {$paymentCode}");
 
         return 'Transaction declined';
     }
@@ -619,9 +623,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     // This method handles the approval or decline of split payments based on the request.
-    public function fetchUpdateSplitPaymentsApprove($request)
+    public function fetchMasterPaymentApproveCapture($request)
     {
-        LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_PARENT_PAYMENT);
         LoggerService::info("Processing split payment request for {$request->payment_code} - Action: ".($request->is_declined ? 'Decline' : 'Approve'));
 
         return $request->is_declined ? $this->handlePaymentDecline($request) : $this->handlePaymentApprove($request);
@@ -658,7 +661,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return response()->json(['error' => 'Total Price Update Failed']);
     }
 
-    public function fetchUpdatePaymentStatus($request)
+    public function fetchSplitPaymentApproveDecline($request)
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_DECLINE_CHILD_PAYMENT);
         $maxRetries = 2;
