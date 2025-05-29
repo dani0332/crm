@@ -696,12 +696,12 @@ const isPolicySendUpdateBooked = option => {
           <div class="w-1/5 px-2 mb-2">
             <x-tooltip v-if="!readOnlyPayments[count]">
               <Dropzone
-                :id="paymentProofDocument.id"
+                :id="paymentProofDocument?.id"
                 :multiple="true"
                 :customDisplay="true"
-                :accept="paymentProofDocument.accepted_files"
-                :max-files="paymentProofDocument.max_files"
-                :max-size="paymentProofDocument.max_size"
+                :accept="paymentProofDocument?.accepted_files"
+                :max-files="paymentProofDocument?.max_files"
+                :max-size="paymentProofDocument?.max_size"
                 :loading="documentForm.processing"
                 @change="uploadDocument(paymentProofDocument, $event, count)"
               />
