@@ -20,6 +20,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Facades\Capi;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -117,15 +118,27 @@ class SavingsQuoteService extends BaseQuoteService
             'personal_quote_id' => $personalQuote->id,
         ]);
 
+        // Get lookup data to map IDs back to codes for database storage
+        $lookupData = $this->getSavingsQuoteLookUpData();
+
+        // Convert lookupData items to collections
+        $savingsTenure = collect($lookupData['savingsTenure']);
+        $savingsPurpose = collect($lookupData['savingsPurpose']);
+        $savingsInvestmentType = collect($lookupData['savingsInvestmentType']);
+
+        $tenureOfSavings = $savingsTenure->where('id', $data['tenureId'])->first()->code ?? null;
+        $purposeOfSavings = $savingsPurpose->where('id', $data['purposeId'])->first()->code ?? null;
+        $investmentFrequency = $savingsInvestmentType->where('id', $data['investmentCriteriaId'])->first()->code ?? null;
+
         SavingsQuote::create([
             'personal_quote_id' => $personalQuote->id,
             'marital_status_id' => $data['maritalStatusId'],
-            'tenure_of_savings' => $data['tenureOfSavings'],
-            'has_nicotine' => $data['hasNicotine'],
-            'purpose_of_savings' => $data['purposeOfSavings'],
+            'tenure_of_savings' => $tenureOfSavings,
+            'has_nicotine' => $data['nicotineStatus'],
+            'purpose_of_savings' => $purposeOfSavings,
             'currency_id' => $data['currencyId'],
-            'amount' => $data['amount'],
-            'investment_frequency' => $data['investmentFrequency'],
+            'amount' => $data['investmentAmount'],
+            'investment_frequency' => $investmentFrequency,
             'additional_notes' => $data['additionalNotes'],
         ]);
 
@@ -145,16 +158,16 @@ class SavingsQuoteService extends BaseQuoteService
             'email' => $data['email'],
             'mobileNo' => $data['mobile_no'],
             'dob' => $data['dob'],
-            'nationalityId' => $data['nationality_id'],
+            'nationalityId' => (int) $data['nationality_id'],
             'gender' => $data['gender'],
-            'quoteTypeId' => $this->quoteType->id(),
-            'maritalStatusId' => $data['marital_status_id'],
-            'tenureOfSavings' => $data['tenure_of_savings'],
-            'hasNicotine' => $data['has_nicotine'],
-            'purposeOfSavings' => $data['purpose_of_savings'],
-            'currencyId' => $data['currency_id'],
-            'amount' => $data['amount'],
-            'investmentFrequency' => $data['investment_frequency'],
+            'quoteTypeId' => (int) $this->quoteType->id(),
+            'maritalStatusId' => (int) $data['marital_status_id'],
+            'tenureId' => (int) $data['tenure_of_savings'],
+            'nicotineStatus' => (int) $data['has_nicotine'],
+            'purposeId' => (int) $data['purpose_of_savings'],
+            'currencyId' => (int) $data['currency_id'],
+            'investmentAmount' => (float) $data['amount'],
+            'investmentCriteriaId' => (int) $data['investment_frequency'],
             'additionalNotes' => $data['additional_notes'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
@@ -166,7 +179,10 @@ class SavingsQuoteService extends BaseQuoteService
             'advisorId' => (! Auth::user()->hasRole(RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
-        return $this->tempMockApi($data);
+        // Make API request to save the savings quote
+        $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);
+
+        return $response;
     }
 
     public function getOne(string $uuid, $allDetails = false)

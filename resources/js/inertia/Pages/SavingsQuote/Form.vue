@@ -5,12 +5,51 @@ const dateFormat = date =>
 
 const props = defineProps({
   quote: { type: Object, default: null },
-  nationalities: Object,
-  genders: Object,
-  maritalStatuses: Object,
-  purposes: Object,
-  currencies: Object,
-  investmentFrequencies: Object,
+  genders: { type: Object, required: true },
+  lookUpData: { type: Object, required: true },
+});
+
+// Format API data for dropdowns and selects
+const nationalities = computed(() => {
+  return props.lookUpData.nationality.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
+});
+
+const maritalStatuses = computed(() => {
+  return props.lookUpData.maritalStatus.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
+});
+
+const purposes = computed(() => {
+  return props.lookUpData.savingsPurpose.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
+});
+
+const currencies = computed(() => {
+  return props.lookUpData.currencyType.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
+});
+
+const tenures = computed(() => {
+  return props.lookUpData.savingsTenure.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
+});
+
+const investmentFrequencies = computed(() => {
+  return props.lookUpData.savingsInvestmentType.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
 });
 
 const quoteForm = useForm({
@@ -162,22 +201,19 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <div class="px-2 w-full">
-          <div class="mb-2">
-            <x-field
-              label="Have you used any nicotine-containing products within the past 12 months?"
-              required
+        <div class="w-full">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            HAVE YOU USED ANY NICOTINE-CONTAINING PRODUCTS WITHIN THE PAST 12
+            MONTHS? <span class="text-red-500">*</span>
+          </label>
+          <div class="flex gap-12 mt-2">
+            <x-form-group
+              v-model="quoteForm.has_nicotine"
+              :rules="[isRequired]"
             >
-              <div class="flex gap-12 mt-2">
-                <x-form-group
-                  v-model="quoteForm.has_nicotine"
-                  :rules="[isRequired]"
-                >
-                  <x-radio value="1" label="Yes" />
-                  <x-radio value="0" label="No" />
-                </x-form-group>
-              </div>
-            </x-field>
+              <x-radio value="1" label="Yes" />
+              <x-radio value="0" label="No" />
+            </x-form-group>
           </div>
         </div>
 
