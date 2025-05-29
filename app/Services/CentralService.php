@@ -116,8 +116,22 @@ class CentralService extends BaseService
             $parentType = quoteTypeCode::Business;
         }
 
-        $repository = $this->getRepositoryObject($parentType);
-        $parentRecord = $repository::where('id', $entityId)->first();
+        $parentRecord = null;
+
+        if ($quoteType = QuoteTypes::tryFrom($parentType)) {
+            $parentRecord = $quoteType->model()::find($entityId);
+        }
+
+        if (! $parentRecord) {
+            $repository = $this->getRepositoryObject($parentType);
+            if ($repository) {
+                $parentRecord = $repository::where('id', $entityId)->first();
+            }
+        }
+
+        if (! $parentRecord) {
+            return false;
+        }
 
         if (! empty($data['lob_team_sub_selection'])) {
             $parentRecord['enquiryType'] = $data['lob_team_sub_selection'];
