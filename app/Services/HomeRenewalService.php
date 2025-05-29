@@ -29,6 +29,7 @@ use App\Services\RenewalsAddonService;
 use App\Services\HomeQuoteService;
 use App\Enums\QuoteTypes;
 use App\Jobs\HomeUpdateRenewalQuotesJob;
+
 class HomeRenewalService extends RenewalsUploadService
 {
 
@@ -163,7 +164,7 @@ class HomeRenewalService extends RenewalsUploadService
             LoggerService::info($logPrefix.' quote updated');
 
             if (! empty($advisorId) && $quote->advisor_id != $advisorId) {
-                $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
+                $this->updateAdvisorAssignedDateTime(QuoteTypes::HOME, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
                 LoggerService::info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
             } 
 
