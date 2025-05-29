@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SavingsPurposeEnum;
+use App\Facades\Capi;
 use App\Models\CurrencyType;
 use App\Models\Customer;
 use App\Models\MartialStatus;
@@ -20,7 +21,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use App\Facades\Capi;
 
 class SavingsQuoteService extends BaseQuoteService
 {

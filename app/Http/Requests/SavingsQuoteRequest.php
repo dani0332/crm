@@ -4,14 +4,13 @@ namespace App\Http\Requests;
 
 use App\Enums\GenderEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\SavingsPurposeEnum;
 use App\Models\CurrencyType;
+use App\Models\Lookup;
 use App\Models\MartialStatus;
 use App\Models\Nationality;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use App\Models\Lookup;
 
 class SavingsQuoteRequest extends FormRequest
 {
