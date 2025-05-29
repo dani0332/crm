@@ -39,6 +39,4 @@ enum LoggerFeatureEnum: string
     case SELECT_PLAN = 'select-plan';
 
     case SELECT_INSURANCE_PROVIDER = 'select-insurance-provider';
-
-    case DECLINE_PARENT_PAYMENT = 'decline-parent-payment';
 }

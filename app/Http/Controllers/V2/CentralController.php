@@ -408,10 +408,10 @@ class CentralController extends Controller
         return back()->with('success', $successMessage);
     }
 
-    // This method is called when capture/approve master payment
+    // This method is called when capture/approve/decline master payment
     public function masterPaymentApproveCapture(SplitPaymentApproveRequest $request)
     {
-        LoggerService::info("Master payment approve/capture called for payment code : {$request->payment_code}");
+        LoggerService::info("Master payment approve/capture/decline called for payment code : {$request->payment_code}");
 
         $successMessage = PaymentRepository::masterPaymentApproveCapture($request);
         if (! $successMessage) {
