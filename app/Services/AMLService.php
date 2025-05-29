@@ -255,7 +255,7 @@ class AMLService
         $emailSystem = config('constants.APP_ENV');
         $errorEmailRecipients = explode(',', config('constants.ERROR_EMAIL_RECIPIENTS'));
 
-        $subject = $emailSystem.' BRIDGER SEARCH API ERROR | '.\Request::url().' | '.date(config('constants.DB_DATE_FORMAT_MATCH'));
+        $subject = $emailSystem . ' BRIDGER SEARCH API ERROR | ' . \Request::url() . ' | ' . date(config('constants.DB_DATE_FORMAT_MATCH'));
         MailService::sendEmail('AmlErrorMail', [
             'amlUrl' => $amlQuoteUrl,
             'emailAmlData' => $amlDataForEmail,
@@ -282,11 +282,11 @@ class AMLService
         if (strtolower($emailSystem) == EnvEnum::PRODUCTION) {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
             $fromName = config('constants.MAIL_FROM_NAME_AML');
-            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : ' . $quoteRefId;
         } else {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS');
             $fromName = config('constants.MAIL_FROM_NAME');
-            $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
+            $emailSubject = $emailSystem . ' | IMCRM | New AML Matches Found for Ref-ID : ' . $quoteRefId;
         }
 
         Mail::send(
@@ -495,7 +495,6 @@ class AMLService
             } else {
                 $status = CustomerTypeEnum::IndividualShort;
             }
-
         } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
             $status = CustomerTypeEnum::IndividualShort;
         }
@@ -566,13 +565,13 @@ class AMLService
 
         $emailL_sys = config('constants.APP_ENV');
         if ($emailL_sys == EnvEnum::PRODUCTION) {
-            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : ' . $quoteCdbId;
         } else {
-            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+            $emailSubject = $emailL_sys . ' | IMCRM | New AML Matches Found for Ref-ID : ' . $quoteCdbId;
         }
 
         $appUrl = config('constants.APP_URL');
-        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
+        $amlUrl = $appUrl . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
 
         $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
             'amlUrl' => $amlUrl,
@@ -687,27 +686,27 @@ class AMLService
         ])->first();
 
         if ($paymentDetails?->insuranceProvider?->code !== InsuranceProvidersEnum::AXA) {
-            LoggerService::info('fn:amlScreeningGIG - Insurance provider is not ('.InsuranceProvidersEnum::AXA.'). Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+            LoggerService::info('fn:amlScreeningGIG - Insurance provider is not (' . InsuranceProvidersEnum::AXA . '). Ref-ID: ' . $quoteDetails->code . ' - Customer Type: ' . $customerType);
 
             return false;
         }
 
-        LoggerService::info('fn:amlScreeningGIG - Ref-ID: '.$quoteDetails->code.' - Insurance Provider ID: '.$paymentDetails->insurance_provider_id);
+        LoggerService::info('fn:amlScreeningGIG - Ref-ID: ' . $quoteDetails->code . ' - Insurance Provider ID: ' . $paymentDetails->insurance_provider_id);
 
         if ($paymentDetails->payment_methods_code !== PaymentMethodsEnum::CreditCard || $paymentDetails->payment_status_id !== PaymentStatusEnum::AUTHORISED) {
-            LoggerService::info('fn:amlScreeningGIG - Payment Method is not CREDIT CARD or Payment Status is not AUTHORIZED. Ref-ID: '.$quoteDetails->code);
+            LoggerService::info('fn:amlScreeningGIG - Payment Method is not CREDIT CARD or Payment Status is not AUTHORIZED. Ref-ID: ' . $quoteDetails->code);
 
             return false;
         }
 
-        LoggerService::info('fn:amlScreeningGIG - Payment Method is CREDIT CARD and Payment Status is AUTHORIZED- Ref-ID: '.$quoteDetails->code);
+        LoggerService::info('fn:amlScreeningGIG - Payment Method is CREDIT CARD and Payment Status is AUTHORIZED- Ref-ID: ' . $quoteDetails->code);
         $insuredPersonDetails = CustomerInsured::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteDetails->id,
             'customer_id' => $quoteDetails->customer_id,
         ])->with(['customer', 'insured'])->first();
 
-        $screeningType = constant(AMLScreeningTypeEnum::class.'::'.'INSURER_'.$paymentDetails?->insuranceProvider?->code);
+        $screeningType = constant(AMLScreeningTypeEnum::class . '::' . 'INSURER_' . $paymentDetails?->insuranceProvider?->code);
         try {
             $insuredDetails = $insuredPersonDetails?->insured;
             $insurerScreeningPayload = [
@@ -730,15 +729,14 @@ class AMLService
                 $insurerScreeningPayload['nationalityId'] = $request['nationality_id'] ?? null;
             }
 
-            LoggerService::info('fn:amlScreeningGIG - Insurer AML Screening payload: '.json_encode($insurerScreeningPayload).' - Ref-ID: '.$quoteDetails->code);
+            LoggerService::info('fn:amlScreeningGIG - Insurer AML Screening payload: ' . json_encode($insurerScreeningPayload) . ' - Ref-ID: ' . $quoteDetails->code);
             $screeningResponse = Ken::request('/process-insurer-aml-screening', 'put', $insurerScreeningPayload);
 
-            LoggerService::info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: '.$quoteDetails->code.' - response: '.json_encode($screeningResponse));
+            LoggerService::info('fn:amlScreeningGIG - GIG Screening Response - Ref-ID: ' . $quoteDetails->code . ' - response: ' . json_encode($screeningResponse));
             $screeningResponse['screening_type'] = $screeningType;
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
-
         } catch (Exception $exception) {
-            LoggerService::error('fn:amlScreeningGIG - GIG Screening failed - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Error: '.$exception->getMessage());
+            LoggerService::error('fn:amlScreeningGIG - GIG Screening failed - Ref-ID: ' . $quoteDetails->code . ' - Customer Type: ' . $customerType . ' - Error: ' . $exception->getMessage());
             $screeningResponse = ['status' => AMLStatusCode::AMLPending, 'message' => $exception->getMessage(), 'screening_type' => $screeningType];
             $this->updateInsurerKYCLogs($quoteTypeId, $quoteDetails, $modelObjectAgainstQuoteType, $customerType, $insuredPersonDetails, $screeningResponse);
 
@@ -750,7 +748,7 @@ class AMLService
     {
         session()->push('insurerAMLScreeningResponse', $screeningResponse);
         $isScreeningCleared = $screeningResponse['status'] == AMLStatusCode::AMLScreeningCleared;
-        $insurePersonName = $insuredPersonDetails?->insured?->first_name.($insuredPersonDetails?->insured?->last_name == 'NULL' || $insuredPersonDetails?->insured?->last_name == null ? '' : ' '.$insuredPersonDetails?->insured?->last_name);
+        $insurePersonName = $insuredPersonDetails?->insured?->first_name . ($insuredPersonDetails?->insured?->last_name == 'NULL' || $insuredPersonDetails?->insured?->last_name == null ? '' : ' ' . $insuredPersonDetails?->insured?->last_name);
         $kycLogDetails = [
             'quote_request_id' => $quoteDetails->id,
             'results' => json_encode($screeningResponse),
@@ -764,18 +762,18 @@ class AMLService
         ];
 
         if ($isScreeningCleared) {
-            LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Cleared - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
+            LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Cleared - Ref-ID: ' . $quoteDetails->code . ' - response: ' . $screeningResponse['message'] ?? '');
             $kycLogDetails['match_found'] = 0;
             $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
             $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningCleared];
         } else {
             if ($screeningResponse['status'] == AMLStatusCode::AMLPending) {
-                LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Pending - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
+                LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Pending - Ref-ID: ' . $quoteDetails->code . ' - response: ' . $screeningResponse['message'] ?? '');
                 $kycLogDetails['match_found'] = 0;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::UNKNOWN;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningPending];
             } else {
-                LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: '.$quoteDetails->code.' - response: '.$screeningResponse['message'] ?? '');
+                LoggerService::info('fn:amlScreeningGIG - GIG AML Screening Failed - Ref-ID: ' . $quoteDetails->code . ' - response: ' . $screeningResponse['message'] ?? '');
                 $kycLogDetails['match_found'] = 1;
                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::ESCALATED;
                 $insurerAMLStatus = ['insurer_aml_status' => AMLStatusCode::InsurerAMLScreeningFailed];
@@ -783,11 +781,10 @@ class AMLService
         }
 
         KycLog::insert($kycLogDetails);
-        LoggerService::info('fn:amlScreeningGIG - AML Screening GIG Potential Matches inserted into kyc_logs table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
+        LoggerService::info('fn:amlScreeningGIG - AML Screening GIG Potential Matches inserted into kyc_logs table - Ref-ID: ' . $quoteDetails->code . ' - Customer Type: ' . $customerType);
 
         $quoteObject::where('id', $quoteDetails->id)->update($insurerAMLStatus);
-        LoggerService::info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType);
-
+        LoggerService::info('fn:amlScreeningGIG - Insurer AML Status updated in quote table - Ref-ID: ' . $quoteDetails->code . ' - Customer Type: ' . $customerType);
     }
 
     private function formatGender($gender)
@@ -836,7 +833,7 @@ class AMLService
         ];
 
         return Lookup::whereIn('key', $lookupsForAML)->get()->groupBy('key')
-            ->mapWithKeys(fn ($item, $key) => [str_replace('-', '_', $key) => $item]);
+            ->mapWithKeys(fn($item, $key) => [str_replace('-', '_', $key) => $item]);
     }
 
     public function getInsuredDetails($customerId, $quoteTypeId, $quoteRequestId)
@@ -873,7 +870,7 @@ class AMLService
                 $data['document_type_text'] = LookupRepository::where('code', $insuredKycRequest['id_type'])->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
                 $data['issuing_authority_text'] = LookupRepository::where('code', $insuredKycRequest['issuing_authority'])->where('key', LookupsEnum::ISSUING_AUTHORITY)->value('text');
                 $data['manager_position_text'] = LookupRepository::where('code', $insuredKycRequest['manager_position'])->where('key', LookupsEnum::UBO_RELATION)->value('text');
-                $data['product_type'] = $quoteType.' Insurance';
+                $data['product_type'] = $quoteType . ' Insurance';
                 $data['document_type_code'] = DocumentTypeCode::KYCDOC;
                 $data = array_merge($data, $insuredKycRequest->toArray());
                 $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
@@ -952,7 +949,7 @@ class AMLService
                 $data['professional_title_text'] = LookupRepository::where('code', $insuredKycRequest['professional_title'])->where('key', LookupsEnum::PROFESSIONAL_TITLE)->value('text');
                 $data['premium'] = $quote->premium;
                 $data['payment_method'] = isset($quote->payments[0]) ? $quote->payments[0]->paymentMethod->name : '';
-                $data['product_type'] = ucfirst($quoteType).' Insurance';
+                $data['product_type'] = ucfirst($quoteType) . ' Insurance';
                 $data['document_type_code'] = DocumentTypeCode::KYCDOC;
                 $data = array_merge($data, $insuredKycRequest->toArray());
 
@@ -1021,7 +1018,7 @@ class AMLService
         try {
             DB::transaction(function () use ($skipBridgerScreeningRequest) {
                 $quoteDetails = $this->getQuoteObject($skipBridgerScreeningRequest->quote_type_code, $skipBridgerScreeningRequest->quote_request_id);
-                LoggerService::info('fn:tempSkipBridgerAML - AML Screening skip process start - Ref-ID:'.$quoteDetails->code);
+                LoggerService::info('fn:tempSkipBridgerAML - AML Screening skip process start - Ref-ID:' . $quoteDetails->code);
 
                 QuoteStatusLog::create([
                     'quote_type_id' => $skipBridgerScreeningRequest->quote_type_id,
@@ -1042,13 +1039,12 @@ class AMLService
                     'created_by' => auth()->id(),
                 ]);
 
-                LoggerService::info('fn:tempSkipBridgerAML - AML Screening skip process completed - Ref-ID:'.$quoteDetails->code);
+                LoggerService::info('fn:tempSkipBridgerAML - AML Screening skip process completed - Ref-ID:' . $quoteDetails->code);
             });
 
             $return = ['status' => true, 'response' => 'AML Screening skipped for this quote'];
-
         } catch (\Exception $exception) {
-            LoggerService::error('fn:tempSkipBridgerAML - AML Screening skip process failed - error - '.$exception->getMessage());
+            LoggerService::error('fn:tempSkipBridgerAML - AML Screening skip process failed - error - ' . $exception->getMessage());
 
             $return = ['status' => true, 'response' => 'AML Screening skip process failed'];
         }
@@ -1115,14 +1111,14 @@ class AMLService
             foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
                 $quoteType = QuoteTypes::getName($quoteTypeId);
                 $nameSpace = '\\App\\Models\\';
-                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
+                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType->value) . 'Quote';
 
                 $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
                 $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
                 foreach ($quoteRequestData as $quoteRequest) {
                     $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
                     foreach ($amlData as $index => $value) {
-                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
+                        $chunk[$index]['uuid'] = $quoteType->shortCode() . $quoteRequest->uuid;
                         $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
                     }
                 }
@@ -1142,6 +1138,19 @@ class AMLService
         $startDate = $request->amlCreatedStartDate;
         $endDate = $request->amlCreatedEndDate;
 
+        $personalQuotesone = $this->buildAMlCftReportQuery($request, $startDate, $endDate, true);
+        $personalQuotestwo = $this->buildAMlCftReportQuery($request, $startDate, $endDate, false);
+
+        $personalQuotes = $personalQuotesone->union($personalQuotestwo);
+        $personalQuotes = $personalQuotes->orderBy('first_name');
+        $personalQuotes = $personalQuotes->get();
+
+        return $personalQuotes;
+    }
+
+    function buildAMlCftReportQuery(Request $request, $startDate, $endDate, $is_sync_quote)
+    {
+
         $quoteTypes = [
             QuoteTypes::BIKE->value,
             QuoteTypes::CYCLE->value,
@@ -1150,8 +1159,6 @@ class AMLService
             QuoteTypes::YACHT->value,
             QuoteTypes::HOME->value,
         ];
-
-        $joinQuoteTypes = $request->quoteType ? [$request->quoteType] : $quoteTypes;
 
         $personalQuotes = DB::table('personal_quotes as pqr')->select(
             'pqr.id',
@@ -1171,7 +1178,7 @@ class AMLService
             'ik.last_name as last_name',
             'ik.id_number as emirates_id',
             'i.customer_type as customer_type',
-            DB::raw('COALESCE(ci1.insured_id, ci2.insured_id) as insured_id'),
+            'ci.insured_id as insured_id',
             'ik.residential_status',
             'ik.risk_score',
             'ik.premium_tenure',
@@ -1180,32 +1187,49 @@ class AMLService
             'pqr.created_at as last_aml_screening_date',
             'cm.uae_resident as customer_is_uae_resident'
         )
-        ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
-        ->whereBetween('pqr.created_at', dateQueryFilter($startDate, $endDate))
-        ->when(isset($request->searchType) && $request->searchType === 'cdbId', function ($query) use ($request) {
-            $query->where('pqr.code', $request->code);
-        })
-        ->when(isset($request->searchType) && $request->searchType === 'customerEmail', function ($query) use ($request) {
-            $query->where('pqr.email', $request->email);
-        })
-        ->when(isset($request->quoteType), function ($query) use ($request) {
-            $query->where('pqr.quote_type_id', $request->quoteType);
-        })
-        ->leftJoin('customer_insured as ci1', function($join) use ($joinQuoteTypes) {
-            $join->on('pqr.id', '=', 'ci1.quote_request_id')
-                ->whereIn('pqr.quote_type_id', $joinQuoteTypes);
-        })
-        ->leftJoin('customer_insured as ci2', function($join) use ($joinQuoteTypes) {
-            $join->on('pqr.quote_id', '=', 'ci2.quote_request_id')
-                ->whereNotIn('pqr.quote_type_id', $joinQuoteTypes);
-        })
-        ->leftJoin('quote_status as qs', 'pqr.quote_status_id', '=', 'qs.id')
-        ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id')
-        ->leftJoin('customer_members as cm', 'pqr.id', '=', 'cm.quote_id')
-        ->leftJoin('insured as i', DB::raw('COALESCE(ci1.insured_id, ci2.insured_id)'), '=', 'i.id')
-        ->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id')
-        ->orderBy('first_name')
-        ->get();
+            ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
+            ->whereBetween('pqr.created_at', dateQueryFilter($startDate, $endDate))
+            ->when(isset($request->searchType) && $request->searchType === 'cdbId', function ($query) use ($request) {
+                $query->where('pqr.code', $request->code);
+            })
+            ->when(isset($request->searchType) && $request->searchType === 'customerEmail', function ($query) use ($request) {
+                $query->where('pqr.email', $request->email);
+            });
+
+        if ($request->quoteType) {
+            $personalQuotes = $personalQuotes->where('pqr.quote_type_id', $request->quoteType);
+            $isQuoteTypePresent = in_array($request->quoteType, $quoteTypes);
+            if ($isQuoteTypePresent) {
+                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($request) {
+                    $join->on('pqr.id', '=', 'ci.quote_request_id')
+                        ->where('pqr.quote_type_id', $request->quoteType);
+                });
+            } else {
+                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($request) {
+                    $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
+                        ->where('pqr.quote_type_id', $request->quoteType);
+                });
+            }
+        } else {
+
+            if ($is_sync_quote) {
+                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypes) {
+                    $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
+                        ->whereNotIn('pqr.quote_type_id', $quoteTypes);
+                });
+            } else {
+                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypes) {
+                    $join->on('pqr.id', '=', 'ci.quote_request_id')
+                        ->whereIn('pqr.quote_type_id', $quoteTypes);
+                });
+            }
+        }
+
+        $personalQuotes = $personalQuotes->leftJoin('quote_status as qs', 'pqr.quote_status_id', '=', 'qs.id')
+            ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id')
+            ->leftJoin('customer_members as cm', 'pqr.id', '=', 'cm.quote_id')
+            ->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id')
+            ->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id');
 
         return $personalQuotes;
     }
