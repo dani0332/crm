@@ -144,7 +144,9 @@ trait OcrFillable
         if ($this->isEnabled($quote, $providersWithCommission)) {
             $commissionVat = $this->resolveProp($commission, 'VAT') ?? ($quote->payment?->comission_vat ?: 0);
             $commissionPercentageDivisor = 1 + ($commissionVat > 0 ? .05: 0);
-            $commissionPercentage = roundNumber((($dataToUpdate['commission'] / ($quote->payment->total_price / $commissionPercentageDivisor)) * 100)) ?? $quote->payment?->comission_percentage;
+            $commissionWithoutVat = $dataToUpdate['commission'] - $commissionVat;
+            $premiumWithoutVat = $quote->payment->total_price / $commissionPercentageDivisor;
+            $commissionPercentage = roundNumber((($commissionWithoutVat / $premiumWithoutVat) * 100)) ?? $quote->payment?->comission_percentage;
             $dataToUpdate['commission_vat'] = $commissionVat;
             $dataToUpdate['commission'] = $this->resolveProp($commission, 'totalAmount') ?? $quote->payment?->comission;
             $dataToUpdate['commmission_percentage'] = $commissionPercentage;
