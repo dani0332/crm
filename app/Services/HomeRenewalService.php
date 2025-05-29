@@ -2,110 +2,34 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
-use App\Enums\CarPlanAddonsCode;
-use App\Enums\CarPlanType;
-use App\Enums\carTypeInsuranceCode;
 use App\Enums\FetchPlansStatuses;
-use App\Enums\GenericRequestEnum;
-use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteSegmentEnum;
-use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
-use App\Enums\RangeLookupIdEnums;
 use App\Enums\RangeLookupKeyEnums;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
-use App\Enums\ThirdPartyTagEnum;
-use App\Enums\TiersEnum;
-use App\Enums\TravelQuoteEnum;
-use App\Exports\RenewalQuotesExport;
-use App\Facades\Ken;
-use App\Imports\TravelUploadAndCreateImport;
-use App\Imports\UploadAndCreateImport;
-use App\Imports\UploadAndUpdateHomeImport;
-use App\Imports\UploadAndUpdateImport;
-use App\Jobs\OCB\SendCarOCBIntroEmailJob;
-use App\Jobs\Renewals\CreateRenewalQuotesJob;
-use App\Jobs\Renewals\CreateRenewalsWorkflowJob;
-use App\Jobs\Renewals\CreateTravelRenewalQuotesJob;
 use App\Jobs\Renewals\FetchPlansForHomeRenewalsQuoteJob;
-use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
 use App\Jobs\Renewals\HomeRenewalBatchEmailJob;
-use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
-use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
-use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
-use App\Jobs\Renewals\RenewalBatchEmailJob;
-use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Jobs\ScheduleHomeRenewalOcbEmails;
-use App\Jobs\SendPCPCarOCBEmailJob;
-use App\Jobs\SendPCPFollowupsJob;
-use App\Models\ApplicationStorage;
-use App\Models\CarMake;
-use App\Models\CarModel;
-use App\Models\CarModelDetail;
-use App\Models\CarPlan;
-use App\Models\CarQuote;
-use App\Models\CarQuoteValuation;
-use App\Models\ClaimHistory;
-use App\Models\CurrentlyLocatedIn;
-use App\Models\Customer;
-use App\Models\Emirate;
-use App\Models\HealthPlan;
-use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
-use App\Models\Nationality;
-use App\Models\PaymentStatus;
-use App\Models\QuoteAdditionalDetail;
-use App\Models\QuoteStatus;
-use App\Models\QuoteTag;
-use App\Models\QuoteType;
 use App\Models\RangeLookup;
-use App\Models\RenewalBatch;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Models\SubArea;
-use App\Models\Tier;
-use App\Models\TravelQuote;
-use App\Models\UAELicenseHeldFor;
-use App\Models\User;
-use App\Models\VehicleType;
-use App\Repositories\BusinessQuoteRepository;
-use App\Repositories\EmbeddedProductRepository;
-use App\Repositories\LookupRepository;
-use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\PersonalQuoteSyncTrait;
-use Carbon\Carbon;
-use DateTime;
-use Illuminate\Bus\Batch;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use App\Models\PersonalQuote;
-
-class HomeRenewalService
+use App\Services\RenewalsUploadService;
+use App\Services\RenewalsAddonService;
+use App\Services\HomeQuoteService;
+use App\Enums\QuoteTypes;
+class HomeRenewalService extends RenewalsUploadService
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
-    {
-        //
-    }
-
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
 
@@ -114,46 +38,42 @@ class HomeRenewalService
 
         $quoteTypeCode = QuoteTypeShortCode::HOM;
 
-
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, $quoteTypeCode) {
             throw_if(! in_array($quoteTypeCode, [QuoteTypeShortCode::HOM]), 'Only Insurance Type Home allowed to update lead');
 
+            $quote = PersonalQuote::where('previous_quote_policy_number', $data['policy_number'])
+            ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))->first();
+
+            LoggerService::startQuoteLogging($quote->uuid);
+
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
-            LoggerService::info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'].' ID: '.$renewalQuoteProcess->id.' UploadLeadId: '.$renewalUploadLead->id);
+            LoggerService::info($logPrefix.' update quote started', extra:[
+                'policyNumber' => $data['policy_number'],
+                'id' => $renewalQuoteProcess->id,
+                'uploadLeadId' => $renewalUploadLead->id,
+            ]);
 
-            $quoteType = QuoteTypeEnum::HOM;
+            $quoteType = QuoteTypes::HOME;
+
+            if (!$quote) {
+                LoggerService::info($logPrefix.' Quote not found', [
+                    'policyNumber' => $data['policy_number'],
+                    'endDate' => $data['end_date'],
+                    'batch' => $renewalQuoteProcess->batch,
+                ]);
+
+                return; 
+            }
+
+            LoggerService::info($logPrefix.' quote found to update');
             
-            $quote = PersonalQuote::where('previous_quote_policy_number', $data['policy_number'])
-                ->where('source', '=', LeadSourceEnum::RENEWAL_UPLOAD)
-                ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))->first();
-
-            throw_unless($quote, ('Quote not found for PolicyNumber: '.$data['policy_number'].' EndDate: '.$data['end_date'].' Batch: '.$renewalQuoteProcess->batch));
-
-            $newAdvisorId = app(RenewalsAddonService::class)->getUserInfo($data['advisor']);
+            $newAdvisorId = app(RenewalsAddonServices::class)->getUserInfo($data['advisor']);
+            
             $advisorId = $quote->advisor_id == null ? $newAdvisorId : $quote->advisor_id;
             
-            $homeCurrentInsuranceProvider = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::where('code', $data['current_insurance_provider'])->first()->id : null;
-            $homePossessionTypeId = (! empty($data['you_are_a'])) ? RangeLookup::where('text', $data['you_are_a'])->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)->first()->id : null;
-            $homeIliveinAccommodationTypeId = (! empty($data['i_live_in_a'])) ? RangeLookup::where('text', $data['i_live_in_a'])->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)->first()->id : null;
-            $homeOwnerOccupancyTypeId = (! empty($data['occupancy_status_for_owners'])) ? RangeLookup::where('text', $data['occupancy_status_for_owners'])->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)->first()->id : null;
-            $homeSubAreaId = (! empty($data['location_area'])) ? SubArea::where('text', $data['location_area'])->first()->id : null;
-            $homeCoverageTypeId = (! empty($data['cover_required'])) ? RangeLookup::where('text', $data['cover_required'])->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)->first()->id : null;
-            $homeContents = (! empty($data['contents'])) ? RangeLookup::where('text', $data['contents'])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null;
-            $homePersonalBelongings = (! empty($data['personal_belongings'])) ? RangeLookup::where('text', $data['personal_belongings'])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
-            $homeBuildingAed = (! empty($data['building'])) ? $data['building'] : null;
-            $homeInsuranceProvider = (! empty($data['insurance_provider'])) ? InsuranceProvider::where('code', $data['insurance_provider'])->first()->id : null;
-            $homePlanName = (! empty($data['plan_name'])) ? $data['plan_name'] : null;
-            $homeClaimsHistory = (! empty($data['claims_history']) && $data['claims_history'] == 'Yes') ? 1 : 0;
-            $homePremium = (! empty($data['premium'])) ? $data['premium'] : null;
-            $homeInsurerQuoteNumber = (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null;
-            $homePreviousAdvisorId = (! empty($data['previous_advisor_email'])) ? $this->renewalsAddonService->getUserInfo($data['previous_advisor_email']) : null;
-            
-
-
-            LoggerService::info($logPrefix.' quote found to update with UUID: '.$quote->uuid);
-
-            $customerData = $this->buildCustomerData($data);
+            $customerData =   $this->buildCustomerData($data);
 
             $isReAssignment = $quote->advisor_id != $advisorId;
 
@@ -172,46 +92,26 @@ class HomeRenewalService
                 'notes' => $data['notes']
             ];
 
-            LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
+            LoggerService::info($logPrefix.' quote data setup to update');
+            
 
             $quote->update($quoteData);
 
-            // create anetry in home quote request table 
-            $quoteData['personal_quote_id'] = $quote->id;
-            $quoteData['insurance_provider_id'] = $homeCurrentInsuranceProvider;
-            $quoteData['possession_type_id'] = $homePossessionTypeId;
-            $quoteData['accommodation_type_id'] = $homeIliveinAccommodationTypeId;
-            $quoteData['owner_occupancy_type_id'] = $homeOwnerOccupancyTypeId;
-            $quoteData['sub_area_id'] = $homeSubAreaId;
-            $quoteData['coverage_type_id'] = $homeCoverageTypeId;
-            $quoteData['contents_value_id'] = $homeContents;
-            $quoteData['personal_belongings_value_id'] = $homePersonalBelongings;
-            $quoteData['building_value'] = $homeBuildingAed;
-            $quoteData['building_aed'] = $homeBuildingAed;
-            $quoteData['renewal_upload_insurance_provider_id'] = $homeInsuranceProvider;
-            $quoteData['renewal_upload_plan_code'] = $homePlanName;
-            $quoteData['has_claimed_losses'] = $homeClaimsHistory;
-            $quoteData['renewal_upload_renewal_premium'] = $homePremium;
-            $quoteData['insurer_quote_number'] = $homeInsurerQuoteNumber;
-            $quoteData['previous_advisor_id'] = $homePreviousAdvisorId;
-            $quoteData['additional_notes'] = $data['notes'];
+            $quoteData = $this->createHomeQuoteData($data);
 
-            $homeQuote = HomeQuote::updateOrCreate(
+            $homeQuote = $quote->homeQuote()->updateOrCreate(
                 [
                     'uuid' => $quote->uuid,
                 ],
                 $quoteData
             );
 
+
             if ($homeQuote) {
-                LoggerService:info('fn: updateQuote - Home Quote Created/Update', [
-                    'ref-id' => $quote->uuid,
-                ]);
+                LoggerService:info('fn: updateQuote - Home Quote Created/Update');
             }
-            
 
-
-            LoggerService::info($logPrefix.' quote updated UUID: '.$quote->uuid);
+            LoggerService::info($logPrefix.' quote updated');
 
             if (! empty($advisorId) && $quote->advisor_id != $advisorId) {
                 $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
@@ -528,25 +428,28 @@ class HomeRenewalService
         return $this->getPendingOcbLeads($batch)->count();
     }
 
-    private function createHomeQuoteData(RenewalQuoteProcess $renewalQuoteProcess)
+    private function createHomeQuoteData(array &$data):array
     {
-        $homeCurrentInsuranceProvider = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::where('code', $data['current_insurance_provider'])->first()->id : null;
-        $homePossessionTypeId = (! empty($data['you_are_a'])) ? RangeLookup::where('text', $data['you_are_a'])->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)->first()->id : null;
-        $homeIliveinAccommodationTypeId = (! empty($data['i_live_in_a'])) ? RangeLookup::where('text', $data['i_live_in_a'])->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)->first()->id : null;
-        $homeOwnerOccupancyTypeId = (! empty($data['occupancy_status_for_owners'])) ? RangeLookup::where('text', $data['occupancy_status_for_owners'])->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)->first()->id : null;
-        $homeSubAreaId = (! empty($data['location_area'])) ? SubArea::where('text', $data['location_area'])->first()->id : null;
-        $homeCoverageTypeId = (! empty($data['cover_required'])) ? RangeLookup::where('text', $data['cover_required'])->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)->first()->id : null;
-        $homeContents = (! empty($data['contents'])) ? RangeLookup::where('text', $data['contents'])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null;
-        $homePersonalBelongings = (! empty($data['personal_belongings'])) ? RangeLookup::where('text', $data['personal_belongings'])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
-        $homeBuildingAed = (! empty($data['building'])) ? $data['building'] : null;
-        $homeInsuranceProvider = (! empty($data['insurance_provider'])) ? InsuranceProvider::where('code', $data['insurance_provider'])->first()->id : null;
-        $homePlanName = (! empty($data['plan_name'])) ? $data['plan_name'] : null;
-        $homeClaimsHistory = (! empty($data['claims_history']) && $data['claims_history'] == 'Yes') ? 1 : 0;
-        $homePremium = (! empty($data['premium'])) ? $data['premium'] : null;
-        $homeInsurerQuoteNumber = (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null;
-        $homePreviousAdvisorId = (! empty($data['previous_advisor_email'])) ? $this->renewalsAddonService->getUserInfo($data['previous_advisor_email']) : null;
-        
-        
+        $quoteData = [
+            'insurance_provider_id' => (! empty($data['current_insurance_provider'])) ? InsuranceProvider::where('code', $data['current_insurance_provider'])->first()->id : null,
+            'possession_type_id' => (! empty($data['you_are_a'])) ? RangeLookup::where('text', $data['you_are_a'])->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)->first()->id : null,
+            'accommodation_type_id' => (! empty($data['i_live_in_a'])) ? RangeLookup::where('text', $data['i_live_in_a'])->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)->first()->id : null,
+            'owner_occupancy_type_id' => (! empty($data['occupancy_status_for_owners'])) ? RangeLookup::where('text', $data['occupancy_status_for_owners'])->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)->first()->id : null,
+            'sub_area_id' => (! empty($data['location_area'])) ? SubArea::where('text', $data['location_area'])->first()->id : null,
+            'coverage_type_id' => (! empty($data['cover_required'])) ? RangeLookup::where('text', $data['cover_required'])->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)->first()->id : null,
+            'contents_value_id' => (! empty($data['contents'])) ? RangeLookup::where('text', $data['contents'])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null,
+            'personal_belongings_value_id' => (! empty($data['personal_belongings'])) ? RangeLookup::where('text', $data['personal_belongings'])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null,
+            'building_value' => (! empty($data['building'])) ? $data['building'] : null,
+            'building_aed' => (! empty($data['building'])) ? $data['building'] : null,
+            'renewal_upload_insurance_provider_id' => (! empty($data['insurance_provider'])) ? InsuranceProvider::where('code', $data['insurance_provider'])->first()->id : null,
+            'renewal_upload_plan_code' => (! empty($data['plan_name'])) ? $data['plan_name'] : null,
+            'has_claimed_losses' => (! empty($data['claims_history']) && $data['claims_history'] == 'Yes') ? 1 : 0,
+            'renewal_upload_renewal_premium' => (! empty($data['premium'])) ? $data['premium'] : null,
+            'insurer_quote_number' => (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null,
+            'previous_advisor_id' => (! empty($data['previous_advisor_email'])) ? $this->renewalsAddonService->getUserInfo($data['previous_advisor_email']) : null,
+            'additional_notes' => $data['notes']
+        ];
+        return $quoteData;        
     }
 
 

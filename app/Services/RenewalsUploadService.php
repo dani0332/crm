@@ -726,7 +726,7 @@ class RenewalsUploadService
         return $customer;
     }
 
-    private function updateCustomer($quote, $customerData)
+    protected function updateCustomer($quote, $customerData)
     {
         $customer = CustomerService::getCustomerById($quote->customer_id);
 
@@ -1060,7 +1060,9 @@ class RenewalsUploadService
             throw_unless($quote, ('Quote not found for PolicyNumber: '.$data['policy_number'].' EndDate: '.$data['end_date'].' Batch: '.$renewalQuoteProcess->batch));
 
             $newAdvisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
+            
             $advisorId = $quote->advisor_id == null ? $newAdvisorId : $quote->advisor_id;
+
             $carModel = null;
 
             if ($isQuoteTypeCar) {
