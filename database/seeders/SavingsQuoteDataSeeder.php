@@ -117,6 +117,25 @@ class SavingsQuoteDataSeeder extends Seeder
                 'business_type_of_insurance_id' => null,
                 'business_type_of_customer' => null,
             ],
+            [
+                'code' => 'CDPDR',
+                'text' => 'Discount Proof',
+                'description' => null,
+                'is_active' => 1,
+                'quote_type_id' => QuoteTypes::SAVINGS->id(),
+                'folder_path' => 'car',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'max_files' => 5,
+                'max_size' => 30,
+                'is_required' => 0,
+                'send_to_customer' => 1,
+                'sort_order' => 3,
+                'receive_from_customer' => 0,
+                'category' => DocumentTypeCode::QUOTE,
+                'is_required_for_send_policy' => 0,
+                'business_type_of_insurance_id' => null,
+                'business_type_of_customer' => null,
+            ],
         ];
 
         foreach ($quoteDocuments as $document) {
