@@ -7,6 +7,7 @@ use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
 use App\Models\DocumentType;
 use App\Services\QuoteDocumentService;
+use App\Services\CentralService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
@@ -97,11 +98,14 @@ class OCRService
             if ($data) {
                 // Send end notification
                 event(new OcrNotifications($quote, 'end', 'OCR processing completed', null, $docType?->value, $userId));
-                return $this->fill(
+                $dataFilledResponse = $this->fill(
                     $quote,
                     $docType,
                     $data
                 );
+                (new CentralService)->updateQuoteInformation($quoteType, $quote->id);
+
+                return $dataFilledResponse;
             } else {
                 // Send fail notification
                 event(new OcrNotifications($quote, 'fail', 'OCR processing failed', null, $docType?->value, $userId));

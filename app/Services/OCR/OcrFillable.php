@@ -5,6 +5,7 @@ namespace App\Services\OCR;
 use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
 use App\Services\Logger\LoggerService;
+use App\Services\SplitPaymentService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -141,8 +142,12 @@ trait OcrFillable
         $commission = $this->resolveProp($data, 'commission');
 
         if ($this->isEnabled($quote, $providersWithCommission)) {
-            $dataToUpdate['commission_vat'] = $this->resolveProp($commission, 'VAT') ?? $quote->payment?->comission_vat;
+            $commissionVat = $this->resolveProp($commission, 'VAT') ?? ($quote->payment?->comission_vat ?: 0);
+            $commissionPercentageDivisor = 1 + ($commissionVat > 0 ? .05: 0);
+            $commissionPercentage = roundNumber((($dataToUpdate['commission'] / ($quote->payment->total_price / $commissionPercentageDivisor)) * 100)) ?? $quote->payment?->comission_percentage;
+            $dataToUpdate['commission_vat'] = $commissionVat;
             $dataToUpdate['commission'] = $this->resolveProp($commission, 'totalAmount') ?? $quote->payment?->comission;
+            $dataToUpdate['commmission_percentage'] = $commissionPercentage;
         }
 
         if ($this->isEnabled($quote, $providersWithTaxInvoiceNumber)) {
@@ -155,6 +160,7 @@ trait OcrFillable
 
         if (! empty($dataToUpdate)) {
             $quote->payment?->update($dataToUpdate);
+            (new SplitPaymentService)->updateCommissionSchedule($quote->payment);
         }
 
         return true;
