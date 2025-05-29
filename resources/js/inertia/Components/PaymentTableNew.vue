@@ -6283,3 +6283,9 @@ onBeforeMount(() => {
   background-color: #c1c1c1;
 }
 </style>
+
+<style>
+.dp--clear-btn {
+  top: 1.25rem !important;
+}
+</style>
