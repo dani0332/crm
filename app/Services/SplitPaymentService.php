@@ -47,7 +47,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
-
+use App\Models\LifeQuote;
 class SplitPaymentService
 {
     use CentralTrait;
@@ -959,7 +959,9 @@ class SplitPaymentService
             CarQuote::class,
             HealthQuote::class,
             TravelQuote::class,
+            LifeQuote::class,
         ];
+        
         if ($quoteModel) {
             $quoteModel->payment_status_id = $payment->payment_status_id;
             if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
