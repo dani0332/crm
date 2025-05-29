@@ -919,15 +919,6 @@ const onAddUpdate = () => {
       :expanded="sectionExpanded"
     />
 
-    <QuoteActivities
-      :can="can"
-      :quote="quote"
-      :activities="activities"
-      :advisors="advisors"
-      :quote-type="quoteType"
-      :expanded="sectionExpanded"
-    />
-
     <QuoteStatus
       :quote="quote"
       :quote-type="quoteType"
@@ -1032,7 +1023,18 @@ const onAddUpdate = () => {
       @onAddUpdate="onAddUpdate"
     />
 
+    <QuoteActivities
+      :can="can"
+      :quote="quote"
+      :activities="activities"
+      :advisors="advisors"
+      :quote-type="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
+
+    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
 
     <AuditLogs
       :quote-type="quoteType"
