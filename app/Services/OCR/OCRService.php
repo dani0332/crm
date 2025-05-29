@@ -103,7 +103,7 @@ class OCRService
                     $docType,
                     $data
                 );
-                (new CentralService)->updateQuoteInformation($quoteType, $quote->id);
+                (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
 
                 return $dataFilledResponse;
             } else {
