@@ -193,7 +193,7 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($quoteId) && $quoteId != '') {
-            $partialQuery->where("pqr.uuid", $quoteId);
+            $partialQuery->where('pqr.uuid', $quoteId);
         }
 
         if (isset($request->email) && $request->email != '') {
@@ -201,7 +201,7 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $partialQuery->where("pqr.mobile_no", $request->mobile_no);
+            $partialQuery->where('pqr.mobile_no', $request->mobile_no);
         }
 
         if (! empty($request->chat_initiated_at) && $request->email == null && $request->mobile_no == null && $quoteId == null) {
@@ -220,7 +220,7 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($request->transaction_type_id) && $request->transaction_type_id != '') {
-            $partialQuery->whereIn("pqr.transaction_type_id", $request->transaction_type_id);
+            $partialQuery->whereIn('pqr.transaction_type_id', $request->transaction_type_id);
         }
 
         if (isset($request->quote_batch_id) && ! empty($request->quote_batch_id)) {
@@ -232,7 +232,7 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($request->payment_status_id) && $request->payment_status_id != '') {
-            $partialQuery->whereIn("pqr.payment_status_id", $request->payment_status_id);
+            $partialQuery->whereIn('pqr.payment_status_id', $request->payment_status_id);
         }
 
         if (in_array($modelType, [HealthQuote::class, CarQuote::class]) && isset($request->assigment_type) && $request->assigment_type != '') {
