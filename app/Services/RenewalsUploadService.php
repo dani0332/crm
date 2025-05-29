@@ -1325,7 +1325,7 @@ class RenewalsUploadService
             $carQuote = CarQuote::find($renewalQuoteProcess->quote_id);
             LoggerService::info('Renewals OCB Email started for uuid: '.$carQuote->uuid);
 
-            if($carQuote->quote_status_id == QuoteStatusEnum::Quoted) {
+            if ($carQuote->quote_status_id == QuoteStatusEnum::Quoted) {
             }
 
             if ($carQuote->previous_quote_policy_number != null) {
