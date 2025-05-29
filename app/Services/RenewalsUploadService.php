@@ -589,7 +589,17 @@ class RenewalsUploadService
             $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead);
 
             if ($validationResult) {
-                $this->updateQuotes($renewalsUploadLead);
+                
+                LoggerService::info($logPrefix.' validation and quote update is completed',extra:[
+                    'quoteType' => $renewalsUploadLead->quote_type,
+                ]);
+                
+                
+                if($renewalsUploadLead->quote_type == QuoteTypeShortCode::HOM) {
+                    app(HomeRenewalService::class)->updateQuotes($renewalsUploadLead);
+                } else {
+                    $this->updateQuotes($renewalsUploadLead);
+                }
             }
 
             LoggerService::info($logPrefix.' validation and quote update is completed');
