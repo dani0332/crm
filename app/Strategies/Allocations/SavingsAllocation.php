@@ -13,14 +13,14 @@ class SavingsAllocation extends BaseAllocation
 
     protected function fetchAdvisor(int $onlineStatus)
     {
-        $emails = $this->getAdvisorEmails();
+        $emails = $this->getEmails();
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::SavingsAdvisor])
             ->whereIn('users.email', $emails)
             ->first();
     }
 
-    private function getAdvisorEmails()
+    private function getEmails()
     {
         $category = $this->evaluateCategory();
         $amount = $this->lead?->savingsQuote?->currency?->convertToUSD((float) $this->lead?->savingsQuote?->amount ?? 0);
