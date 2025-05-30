@@ -150,6 +150,7 @@ class BikeQuoteRepository extends BaseRepository
                 'insuranceProvider',
                 'insured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                    $q->whereRaw('customer_insured.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = '.$this->getTable().'.id)', [$quoteTypeId]);
                 },
                 'payments' => function ($q) {
                     $q->with([
@@ -186,12 +187,12 @@ class BikeQuoteRepository extends BaseRepository
                 'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
-                \DB::raw('IF(EXISTS (
-                    SELECT *
-                    FROM quote_request_entity_mapping
-                    WHERE quote_type_id = '.QuoteTypeId::Bike.' AND quote_request_id = '.$this->getTable().'.id),
-                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type'),
+                // \DB::raw('IF(EXISTS (
+                //     SELECT *
+                //     FROM quote_request_entity_mapping
+                //     WHERE quote_type_id = '.QuoteTypeId::Bike.' AND quote_request_id = '.$this->getTable().'.id),
+                //     "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                // as customer_type'),
                 DB::raw('YEAR(CURDATE()) - YEAR('.$this->getTable().'.dob) AS customer_age'),
             ])
             ->firstOrFail();

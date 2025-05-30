@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
@@ -102,6 +103,10 @@ class BusinessQuoteRepository extends BaseRepository
                         'paymentSplits.paymentCharges',
                     ]);
                 },
+                'insured' => function ($q) {
+                    $q->where('customer_insured.quote_type_id', QuoteTypeId::Business);
+                    $q->whereRaw('customer_insured.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = '.$this->getTable().'.id)', [QuoteTypeId::Business]);
+                },
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
@@ -111,7 +116,7 @@ class BusinessQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+                // DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
             ])
             ->firstOrFail();
 

@@ -455,10 +455,6 @@ class CarQuoteService extends BaseService
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
                 'cqr.risk_score',
-                'insured.customer_type',
-                // DB::raw('IF(qrem.entity_id,
-                //     "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                // as customer_type'),
                 'cpip.code as plan_provider_code',
                 DB::raw('(CASE
                 WHEN cqr.assignment_type = 1 THEN "System Assigned"
@@ -468,6 +464,7 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 5 THEN "Bought Lead"
                 WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
+                'insured.customer_type',
                 'insured.first_name as insured_first_name',
                 'insured.last_name as insured_last_name',
                 DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),

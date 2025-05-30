@@ -696,7 +696,8 @@ class HomeQuoteRepository extends BaseRepository
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
                 'insured' => function ($q) {
-                    $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
+                    $q->where('customer_insured.quote_type_id', QuoteTypeId::Home)
+                      ->latest('customer_insured.id');
                 },
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
@@ -723,12 +724,15 @@ class HomeQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                DB::raw('IF(EXISTS (
-                SELECT *
-                FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-            as customer_type'),
+                DB::raw('COALESCE((
+                    SELECT insured.customer_type 
+                    FROM customer_insured 
+                    JOIN insured ON customer_insured.insured_id = insured.id 
+                    WHERE customer_insured.quote_type_id = '.QuoteTypeId::Home.' 
+                    AND customer_insured.quote_request_id = '.$this->getTable().'.id 
+                    ORDER BY customer_insured.id DESC 
+                    LIMIT 1
+                ), "'.CustomerTypeEnum::Individual.'") as customer_type'),
             ])
             ->first();
 
