@@ -102,6 +102,7 @@ class OCRService
         try {
             $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
             if ($data) {
+                LoggerService::info(self::class."::process - Data received from getData", extra:['data' => $data]);
                 $dataFilledResponse = $this->fill(
                     $quote,
                     $docType,
