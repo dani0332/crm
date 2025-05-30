@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use App\Services\Logger\LoggerService;
 
 class OCRService
 {
