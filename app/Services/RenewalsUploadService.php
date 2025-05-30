@@ -352,8 +352,9 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
-                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix) {
+                    ->catch(function (Batch $batch, Throwable $e) use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' one of batch is failed. ');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function (Batch $batch) use ($logPrefix) {
                         LoggerService::info($logPrefix.' everything done');
