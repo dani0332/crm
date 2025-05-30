@@ -446,7 +446,7 @@ const getPlanDetails = id => {
     } else {
       // Fallback to API call if plan not found in current data
       axios
-        .get(`/quotes/savings/${page.props.quote.uuid}/plan_details/${id}`)
+        .get(`/savings/${page.props.quote.uuid}/plan_details/${id}`)
         .then(res => {
           // Process the plan data similar to how we process it in onLoadAvailablePlansData
           const processedPlan = {

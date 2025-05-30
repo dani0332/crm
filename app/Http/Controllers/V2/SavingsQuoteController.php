@@ -92,4 +92,77 @@ class SavingsQuoteController extends Controller
 
         return inertia('SavingsQuote/Show', $data);
     }
+
+    public function planDetails($quoteId, $planId)
+    {
+        $quotePlans = $this->savingsQuoteService->getQuotePlans($quoteId);
+
+        if (gettype($quotePlans) == 'string') {
+            return response()->json([
+                'message' => $quotePlans,
+            ], 404);
+        }
+
+        if (!isset($quotePlans->quotes->plans)) {
+            return response()->json([
+                'message' => 'No plans available',
+            ], 404);
+        }
+
+        $plans = [];
+
+        // Handle both regular and lumpsum plans
+        if (isset($quotePlans->quotes->plans->regular)) {
+            $plans = array_merge($plans, $quotePlans->quotes->plans->regular);
+        }
+
+        if (isset($quotePlans->quotes->plans->lumpsum)) {
+            $plans = array_merge($plans, $quotePlans->quotes->plans->lumpsum);
+        }
+
+        // If plans are in a different structure
+        if (empty($plans) && is_array($quotePlans->quotes->plans)) {
+            $plans = $quotePlans->quotes->plans;
+        }
+
+        $foundPlan = null;
+        foreach ($plans as $plan) {
+            if ($plan->id == $planId) {
+                $foundPlan = $plan;
+                break;
+            }
+        }
+
+        if (!$foundPlan) {
+            return response()->json([
+                'message' => 'Plan not found',
+            ], 404);
+        }
+
+        // Helper function to extract value from eligibility array
+        $getEligibilityValue = function($eligibility, $code) {
+            if (!is_array($eligibility)) return 'N/A';
+
+            $found = collect($eligibility)->firstWhere('code', $code);
+            return $found ? $found->value : 'N/A';
+        };
+
+        $data = [
+            'id' => $foundPlan->id,
+            'name' => $foundPlan->name ?? '',
+            'providerCode' => $foundPlan->providerCode ?? '',
+            'providerName' => $foundPlan->providerName ?? '',
+            'planTypeId' => $foundPlan->planTypeId ?? null,
+            'investmentFrequency' => $foundPlan->planTypeId === 9961 ? 'Regular' : 'Lumpsum',
+            'currency' => 'USD',
+            'minimumInvestment' => $getEligibilityValue($foundPlan->eligibility ?? [], 'minimum_investment_amount'),
+            'policyTerm' => $getEligibilityValue($foundPlan->eligibility ?? [], 'policy_term'),
+            'eligibility' => $foundPlan->eligibility ?? [],
+            'includedBenefits' => $foundPlan->includedBenefits ?? [],
+            'keyFeatureDocument' => $foundPlan->keyFeatureDocument ?? [],
+            'description' => $foundPlan->description ?? '',
+        ];
+
+        return response()->json($data, 200);
+    }
 }
