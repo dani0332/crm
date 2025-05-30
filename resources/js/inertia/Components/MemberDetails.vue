@@ -100,6 +100,11 @@ const addMemberModal = () => {
   memberForm.reset();
   memberActionEdit.value = false;
   modals.member = true;
+
+  memberForm.first_name = '';
+  memberForm.dob = null;
+  memberForm.relation_code = null;
+  memberForm.nationality_id = null;
 };
 function onEditMember(data) {
   memberActionEdit.value = true;
