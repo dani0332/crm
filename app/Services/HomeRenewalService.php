@@ -29,6 +29,7 @@ use App\Services\RenewalsAddonService;
 use App\Services\HomeQuoteService;
 use App\Enums\QuoteTypes;
 use App\Jobs\HomeUpdateRenewalQuotesJob;
+use App\Enums\CoverageTypeEnum;
 
 class HomeRenewalService extends RenewalsUploadService
 {
@@ -484,10 +485,10 @@ class HomeRenewalService extends RenewalsUploadService
         $quoteData['owner_occupancy_type_id'] = (! empty($data['occupancy_status_for_owners'])) ? RangeLookup::where('text', $data['occupancy_status_for_owners'])->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)->first()->id : null;
         $quoteData['sub_area_id'] = (! empty($data['location_area'])) ? SubArea::where('text', $data['location_area'])->first()->id : null;
         $quoteData['coverage_type_id'] = (! empty($data['cover_required'])) ? RangeLookup::where('text', $data['cover_required'])->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)->first()->id : null;
-        $quoteData['contents_value_id'] = (! empty($data['contents'])) ? RangeLookup::where('text', $data['contents'])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null;
-        $quoteData['personal_belongings_value_id'] = (! empty($data['personal_belongings'])) ? RangeLookup::where('text', $data['personal_belongings'])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
-        $quoteData['building_value'] = (! empty($data['building'])) ? $data['building'] : null;
-        $quoteData['building_aed'] = (! empty($data['building'])) ? $data['building'] : null;
+        $quoteData['contents_value_id'] = $this->getContentsAed($data); 
+        $quoteData['personal_belongings_value_id'] = $this->getPersonalBelongingsAed($data);
+        $quoteData['building_value'] = $this->getBuildingAed($data);
+        $quoteData['building_aed'] = $this->getBuildingAed($data);
         $quoteData['renewal_upload_insurance_provider_id'] = (! empty($data['insurance_provider'])) ? InsuranceProvider::where('code', $data['insurance_provider'])->first()->id : null;
         $quoteData['renewal_upload_plan_code'] = (! empty($data['plan_name'])) ? $data['plan_name'] : null;
         $quoteData['has_claimed_losses'] = (! empty($data['claims_history']) && $data['claims_history'] == 'Yes') ? 1 : 0;
@@ -498,6 +499,55 @@ class HomeRenewalService extends RenewalsUploadService
 
         return $quoteData;        
     }
+
+    private function getContentsAed($data){
+
+        LoggerService::info('fn: getContentsAed', [
+            'cover_required' => $data['cover_required']
+        ]);
+
+        if(trim($data['cover_required']) == CoverageTypeEnum::BUILDING_ONLY->value) {
+            return null;
+        }
+        
+        $homeContents =   (! empty($data['contents'])) ? RangeLookup::where('text', $data['contents'])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null;
+        LoggerService::info('fn: getContentsAed - contents: ' . $homeContents);
+        return $homeContents;
+    }
+
+    private function getPersonalBelongingsAed($data){
+        
+        LoggerService::info("fn: getPersonalBelongingsAed", [
+            'cover_required' => $data['cover_required']
+        ]);
+
+        $coverRequired = trim($data['cover_required']);
+
+
+        if($coverRequired == CoverageTypeEnum::CONTENTS_ONLY->value || $coverRequired == CoverageTypeEnum::BUILDING_ONLY->value || $coverRequired == CoverageTypeEnum::BUILDING_AND_CONTENTS->value) {
+            return null;
+        }
+
+        $homePersonalBelongings = (! empty($data['personal_belongings'])) ? RangeLookup::where('text', $data['personal_belongings'])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
+        LoggerService::info('fn: getPersonalBelongingsAed - personal belongings: ' . $homePersonalBelongings);
+        return $homePersonalBelongings;
+    }
+
+    private function getBuildingAed($data){
+        LoggerService::info('fn: getBuildingAed', [
+            'cover_required' => $data['cover_required']
+        ]);
+        
+        $coverRequired = trim($data['cover_required']);
+        
+        if($coverRequired == CoverageTypeEnum::CONTENTS_ONLY->value || $coverRequired == CoverageTypeEnum::CONTENTS_PERSONAL_BELONGINGS->value) {
+            return null;
+        }
+        $homeBuildingAed = (! empty($data['building'])) ? $data['building'] : null;
+        LoggerService::info('fn: getBuildingAed - building: ' . $homeBuildingAed);
+        return $homeBuildingAed;
+    }
+
 
 
 }

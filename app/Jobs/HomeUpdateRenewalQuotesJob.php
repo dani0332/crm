@@ -59,9 +59,9 @@ class HomeUpdateRenewalQuotesJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage(), extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
-        ], exception: $exception);
+        ]);
         $this->renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
         RenewalsUploadLeads::where('id', $this->renewalQuoteProcess->renewals_upload_lead_id)->update(['cannot_upload' => DB::raw('cannot_upload+1')]);
     }
