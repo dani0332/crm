@@ -1328,7 +1328,7 @@ class RenewalsUploadService
             if ($carQuote->quote_status_id == [
                 QuoteStatusEnum::PolicyIssued,
                 QuoteStatusEnum::PolicyBooked,
-                QuoteStatusEnum::POLICY_BOOKING_QUEUED
+                QuoteStatusEnum::POLICY_BOOKING_QUEUED,
             ]) {
                 throw new \Exception('Quote status is not eligible for OCB email');
             }
