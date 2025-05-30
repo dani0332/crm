@@ -315,11 +315,11 @@ class ConversionAsAtReportService extends BaseService
     {
         return $query
             ->addSelect(
-                'teams.id as sub_team_id',
-                'teams.name as sub_team'
+                'sub_teams.id as sub_team_id',
+                'sub_teams.name as sub_team'
             )
-            ->join('teams', 'users.sub_team_id', '=', 'teams.id')
-            ->where('teams.type', TeamTypeEnum::SUB_TEAM)
+            ->join('teams as sub_teams', 'users.sub_team_id', '=', 'sub_teams.id')
+            ->where('sub_teams.type', TeamTypeEnum::SUB_TEAM)
             ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('sub_team', 'asc')
             ->groupBy('sub_team_id');
