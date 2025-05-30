@@ -96,4 +96,15 @@ class PopulateDocumentData implements ShouldQueue
             Skip::unless(fn () => $isOCREnabled && OCRDocumentTypeEnum::isOCREnabled($this->documentType, $this->quoteType)),
         ];
     }
+
+    public function failed(\Throwable $exception)
+    {
+        LoggerService::error("Job has failed permanently.", extra:['job' => static::class, 'error' => $exception->getMessage()]);
+
+        // Send OCR fail notification for supported document types
+        $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
+        if (app(OCRService::class)->requiresOcrNotifications($docType)) {
+            event(new OcrNotifications($this->quote, 'fail', 'OCR processing failed', null, $docType?->value, $this->userId));
+        }
+    }
 }
