@@ -211,6 +211,7 @@ const familyEmployeDiscount = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Home,
   quoteTypeCodeEnum.Travel,
+  quoteTypeCodeEnum.Savings,
 ];
 // Array of quote types to check against
 const quoteTypesToCheck = [
@@ -218,6 +219,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
+  quoteTypeCodeEnum.Savings,
 ]; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
