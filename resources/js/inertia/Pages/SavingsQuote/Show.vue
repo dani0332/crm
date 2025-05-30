@@ -34,6 +34,7 @@ const props = defineProps({
   canAddBatchNumber: Boolean,
   quoteRequest: Object,
   quoteDocuments: Object,
+  quoteNotes: Object,
   cdnPath: String,
   paymentTooltipEnum: Object,
   permissions: Object,
@@ -299,7 +300,7 @@ const onAddUpdate = () => {
       <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
-          :notes="quoteDocuments"
+          :notes="quoteNotes"
           :modelType="quoteType"
           :quote="quote"
           :cdn="cdnPath"
