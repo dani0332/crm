@@ -697,7 +697,7 @@ class HomeQuoteRepository extends BaseRepository
                 },
                 'insured' => function ($q) {
                     $q->where('customer_insured.quote_type_id', QuoteTypeId::Home)
-                      ->latest('customer_insured.id');
+                        ->latest('customer_insured.id');
                 },
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');

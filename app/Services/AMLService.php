@@ -849,15 +849,15 @@ class AMLService
             'quote_request_id' => $quoteRequestId,
             'customer_id' => $customerId,
         ])
-        ->with(['customer', 'insured', 'insured.insuredKyc'])
-        ->orderBy('id', 'desc')
-        ->first();
+            ->with(['customer', 'insured', 'insured.insuredKyc'])
+            ->orderBy('id', 'desc')
+            ->first();
 
-        if (!$customerInsured) {
+        if (! $customerInsured) {
             LoggerService::info('No CustomerInsured record found', [
                 'customer_id' => $customerId,
                 'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId
+                'quote_request_id' => $quoteRequestId,
             ]);
         }
 

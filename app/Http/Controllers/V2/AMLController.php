@@ -11,8 +11,8 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\Kyc;
-use App\Enums\LookupsEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -369,7 +369,7 @@ class AMLController extends Controller
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
-        
+
         LoggerService::startQuoteLogging($updateQuote, LoggerFeatureEnum::AML_SCREENING);
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
         LoggerService::info('AML Screening Bridger - Process Started');
@@ -564,17 +564,17 @@ class AMLController extends Controller
             LoggerService::info('AML Screening Bridger - Insured association changed for quote', [
                 'old_insured_id' => $existingQuoteMapping->insured_id,
                 'new_insured_id' => $insured->id,
-                'quote_id' => $quote->id
+                'quote_id' => $quote->id,
             ]);
-        } elseif (!$existingQuoteMapping) {
+        } elseif (! $existingQuoteMapping) {
             // This is a completely new quote-insured association
             $isNewAssociation = true;
             LoggerService::info('AML Screening Bridger - New insured association created for quote', [
                 'insured_id' => $insured->id,
-                'quote_id' => $quote->id
+                'quote_id' => $quote->id,
             ]);
         }
-        
+
         // Create or update the customer-insured mapping with proper quote association
         CustomerInsured::updateOrCreate([
             'customer_id' => $request->customer_id,
