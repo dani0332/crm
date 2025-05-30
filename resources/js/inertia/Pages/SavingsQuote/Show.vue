@@ -1216,7 +1216,7 @@ const selectedPlanIds = computed(() => {
             <DataTable
               v-else
               v-model:items-selected="selectedPlans"
-              table-class-name="tablefixed"
+              table-class-name="tablefixed compact-rows"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
               border-cell
@@ -1225,15 +1225,15 @@ const selectedPlanIds = computed(() => {
               :hide-footer="availablePlansTable.data.length < 15"
             >
               <template #item-providerName="item">
-                <p class="text-primary-600 uppercase">
+                <p class="text-gray-800 uppercase">
                   {{ item.providerName }}
                 </p>
               </template>
               <template #item-name="item">
-                <span class="text-primary-600 uppercase">{{ item.name }}</span>
+                <span class="text-gray-800 uppercase">{{ item.name }}</span>
               </template>
               <template #item-investmentFrequency="item">
-                <span class="text-primary-600">{{ item.investmentFrequency }}</span>
+                <span class="text-gray-800">{{ item.investmentFrequency }}</span>
               </template>
               <template #item-minimumInvestment="item">
                 <span>{{ item.minimumInvestment }}</span>
