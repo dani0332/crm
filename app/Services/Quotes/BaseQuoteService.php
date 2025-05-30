@@ -57,6 +57,7 @@ abstract class BaseQuoteService
     protected function isAdvisor()
     {
         $user = Auth::user();
+
         return $this->hasAnyRole($user, $this->quoteType->advisorRoles());
     }
 
@@ -98,7 +99,7 @@ abstract class BaseQuoteService
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, $quoteType->id(), $quoteStatuses);
 
         $user = Auth::user();
-        if (!$this->can($user, PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+        if (! $this->can($user, PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();

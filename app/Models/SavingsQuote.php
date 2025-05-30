@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\InvestmentFrequencyEnum;
-use App\Enums\SavingsPurposeEnum;
+use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,8 +11,6 @@ class SavingsQuote extends Model
 {
     protected $table = 'savings_quote_request';
     protected $appends = [
-        'purpose',
-        'frequency',
         'takes_nicotine',
     ];
     protected $fillable = [
@@ -20,15 +18,11 @@ class SavingsQuote extends Model
         'marital_status_id',
         'tenure_of_savings',
         'has_nicotine',
-        'purpose_of_savings',
+        'purpose_id',
         'currency_id',
         'amount',
-        'investment_frequency',
+        'investment_criteria_id',
         'additional_notes',
-    ];
-    protected $casts = [
-        'purpose_of_savings' => SavingsPurposeEnum::class,
-        'investment_frequency' => InvestmentFrequencyEnum::class,
     ];
 
     public function getAuditables()
@@ -42,18 +36,14 @@ class SavingsQuote extends Model
         ];
     }
 
-    public function purpose(): Attribute
+    public function purpose()
     {
-        return Attribute::make(
-            get: fn () => $this->purpose_of_savings?->label(),
-        );
+        return $this->belongsTo(Lookup::class, 'purpose_id', 'id')->where('key', LookupsEnum::SAVINGS_PURPOSE->value)->where('quote_type_id', QuoteTypeId::Savings);
     }
 
-    public function frequency(): Attribute
+    public function investmentFrequency()
     {
-        return Attribute::make(
-            get: fn () => $this->investment_frequency?->label(),
-        );
+        return $this->belongsTo(Lookup::class, 'investment_criteria_id', 'id')->where('key', LookupsEnum::INVESTMENT_TYPE->value)->where('quote_type_id', QuoteTypeId::Savings);
     }
 
     public function takesNicotine(): Attribute

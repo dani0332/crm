@@ -36,6 +36,8 @@ class SavingsQuoteService extends BaseQuoteService
             'quoteDetail',
             'renewalBatchModel',
             'savingsQuote',
+            'savingsQuote.purpose',
+            'savingsQuote.investmentFrequency',
             'nationality',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
@@ -43,7 +45,9 @@ class SavingsQuoteService extends BaseQuoteService
             ->filterByCreatedAt(request('created_at_start'), request('created_at_end'))
             ->when(request('investment_frequency'), function ($q) {
                 $q->whereHas('savingsQuote', function ($sq) {
-                    $sq->where('investment_frequency', request('investment_frequency'));
+                    $sq->whereHas('investmentFrequency', function ($iq) {
+                        $iq->where('code', request('investment_frequency'));
+                    });
                 });
             });
 
@@ -183,6 +187,8 @@ class SavingsQuoteService extends BaseQuoteService
     {
         return $this->baseQuery()->with([
             'savingsQuote',
+            'savingsQuote.purpose',
+            'savingsQuote.investmentFrequency',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;
@@ -221,6 +227,7 @@ class SavingsQuoteService extends BaseQuoteService
     public function update(string $uuid, array $data)
     {
         dd($data);
+
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
 

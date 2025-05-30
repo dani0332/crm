@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsQuoteRequest;
 use App\Services\Quotes\SavingsQuoteService;

@@ -547,7 +547,7 @@ const onLoadAvailablePlansData = async () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PURPOSE OF INVESTMENT</dt>
-                <dd>{{ quote?.savings_quote?.purpose }}</dd>
+                <dd>{{ quote?.savings_quote?.purpose?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TENURE OF SAVINGS</dt>
@@ -567,7 +567,7 @@ const onLoadAvailablePlansData = async () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INVESTMENT FREQUENCY</dt>
-                <dd>{{ quote?.savings_quote?.frequency }}</dd>
+                <dd>{{ quote?.savings_quote?.investment_frequency?.text }}</dd>
               </div>
             </dl>
           </div>

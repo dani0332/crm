@@ -95,7 +95,7 @@ const tableHeader = ref([
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
     text: 'Investment Frequency',
-    value: 'savings_quote.frequency',
+    value: 'savings_quote.investment_frequency.text',
     is_active: true,
   },
   {
@@ -493,18 +493,18 @@ const validateDateRange = () => {
           />
         </x-field>
         <DatePicker
-            v-model="filters.created_at_start"
-            type="date"
-            name="created_at_start"
-            class="w-full"
-            label="Created Date Start"
+          v-model="filters.created_at_start"
+          type="date"
+          name="created_at_start"
+          class="w-full"
+          label="Created Date Start"
         />
         <DatePicker
-            v-model="filters.created_at_end"
-            type="date"
-            name="created_at_end"
-            class="w-full"
-            label="Created Date End"
+          v-model="filters.created_at_end"
+          type="date"
+          name="created_at_end"
+          class="w-full"
+          label="Created Date End"
         />
         <x-field label="Lead Status">
           <ComboBox
@@ -520,16 +520,16 @@ const validateDateRange = () => {
           />
         </x-field>
         <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-            class="w-full"
-            label="Policy Expiry Start Date"
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          class="w-full"
+          label="Policy Expiry Start Date"
         />
         <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-            class="w-full"
-            label="Policy Expiry End Date"
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          class="w-full"
+          label="Policy Expiry End Date"
         />
         <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.SavingsAdvisor])">
           <ComboBox
