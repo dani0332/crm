@@ -1331,6 +1331,7 @@ class RenewalsUploadService
                 QuoteStatusEnum::POLICY_BOOKING_QUEUED,
             ])) {
                 LoggerService::info('Quote status is not eligible for OCB email as quote status id: '.$carQuote->quote_status_id);
+
                 return;
             }
 
