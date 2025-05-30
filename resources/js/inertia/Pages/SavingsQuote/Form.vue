@@ -70,6 +70,9 @@ const quoteForm = useForm({
   additional_notes: props.quote?.savings_quote?.additional_notes || '',
 });
 
+console.log('quoteForm', quoteForm.data());
+console.log('props.quote', props.quote);
+
 const { isRequired, isEmail, isMobileNo } = useRules();
 
 const editMode = computed(() => {

@@ -55,6 +55,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\Logger\LoggerService;
+use App\Services\Quotes\SavingsQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\TeamHierarchyTrait;
@@ -281,6 +282,8 @@ class CentralService extends BaseService
                 return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
             case quoteTypeCode::Home:
                 return app(HomeQuoteService::class)->getQuotePlans($id, ['getLatestRating' => $getLatestRating]);
+            case quoteTypeCode::SAVINGS:
+                return app(SavingsQuoteService::class)->getAvailablePlans($id);
             default:
                 return [];
         }

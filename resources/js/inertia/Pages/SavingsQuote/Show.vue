@@ -267,6 +267,7 @@ const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
+  onLoadAvailablePlansData();
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
@@ -280,6 +281,25 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
 const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
+};
+
+const onLoadAvailablePlansData = async () => {
+  // availablePlansTable.isLoading = true;
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/savings/available-plans/${page.props.quote.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      console.log(res.data);
+    })
+    .catch(err => {
+      console.log(err);
+    })
+    .finally(() => {
+      // availablePlansTable.isLoading = false;
+    });
 };
 </script>
 
@@ -344,9 +364,9 @@ const onAddUpdate = () => {
           >
         </x-tooltip>
         <template v-else>
-          <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SavingsQuotesEdit)"
-          />
+          <!-- TODO: Uncomment v-if when tested on local and add v-if="can(permissionsEnum.SavingsQuotesEdit)" -->
+          <!-- <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.SavingsQuotesEdit)" /> -->
+          <LeadEditBtnReuseTemplate />
         </template>
 
         <Link

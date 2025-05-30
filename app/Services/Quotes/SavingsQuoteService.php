@@ -254,4 +254,99 @@ class SavingsQuoteService extends BaseQuoteService
     {
         return app(LookupService::class)->getSavingsQuoteLookUpData();
     }
+
+    public function getAvailablePlans($uuid)
+    {
+        $result = [];
+        $plans = $this->listQuotePlans($uuid);
+
+        // dd($plans);
+        // $collection = collect($plans);
+
+        // $seniorPlans = $collection->where('isSeniorPlan', true);
+        // $normalPlans = $collection->where('isSeniorPlan', false);
+
+        // $result['normalPlans'] = array_values($normalPlans->toArray());
+        // $result['seniorPlans'] = array_values($seniorPlans->toArray());
+
+        return $result;
+    }
+
+    public function listQuotePlans($id)
+    {
+        $listQuotePlans = '';
+        $quotePlans = $this->getQuotePlans($id);
+        if (isset($quotePlans->message) && $quotePlans->message != '') {
+            $listQuotePlans = $quotePlans->message;
+        } else {
+            if (gettype($quotePlans) != 'string') {
+                $listQuotePlans = $quotePlans->quotes->plans;
+            } else {
+                $listQuotePlans = $quotePlans;
+            }
+        }
+
+        return $listQuotePlans;
+    }
+
+    public function getQuotePlans($id, $extraData = [])
+    {
+        $quoteUuId = SavingsQuote::where('uuid', '=', $id)->value('uuid');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-savings-quote-plans';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+
+        $plansDataArr = [
+            'quoteUID' => $quoteUuId,
+            'lang' => 'en',
+            ...$extraData,
+        ];
+
+        $client = new \GuzzleHttp\Client;
+
+        try {
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'body' => json_encode($plansDataArr),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } elseif (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } elseif (isset($response->msg)) {
+                $responseBodyAsString = $response->msg;
+            } else {
+                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+            }
+
+            return $responseBodyAsString;
+        }
+    }
 }
