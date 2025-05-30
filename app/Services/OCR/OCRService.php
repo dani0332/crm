@@ -88,8 +88,12 @@ class OCRService
             return null;
         }
 
-        // Send start notification only for CERTIFICATE_OF_ISSUANCE document type
-        if ($docType === OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE) {
+        // Send start notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types
+        if (in_array($docType, [
+            OCRDocumentTypeEnum::TAX_INVOICE,
+            OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER,
+            OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE
+        ])) {
             event(new OcrNotifications($quote, 'start', 'OCR processing started', null, $docType?->value, $userId));
         }
 
@@ -105,15 +109,36 @@ class OCRService
                 );
                 (new CentralService)->updateQuoteInformation($quoteType->value, $quote->id);
 
+                // Send end notification for TAX_INVOICE, TAX_INVOICE_RAISED_BY_BUYER, and CERTIFICATE_OF_ISSUANCE document types when processing completes successfully
+                if (in_array($docType, [
+                    OCRDocumentTypeEnum::TAX_INVOICE,
+                    OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER,
+                    OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE
+                ]) && $dataFilledResponse) {
+                    event(new OcrNotifications($quote, 'end', 'OCR processing completed successfully', null, $docType?->value, $userId));
+                }
+
                 return $dataFilledResponse;
             } else {
-                // Send fail notification
-                event(new OcrNotifications($quote, 'fail', 'OCR processing failed', null, $docType?->value, $userId));
+                // Send fail notification for supported document types
+                if (in_array($docType, [
+                    OCRDocumentTypeEnum::TAX_INVOICE,
+                    OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER,
+                    OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE
+                ])) {
+                    event(new OcrNotifications($quote, 'fail', 'OCR processing failed', null, $docType?->value, $userId));
+                }
                 return false;
             }
         } catch (\Exception $e) {
-            // Send fail notification with error
-            event(new OcrNotifications($quote, 'fail', 'OCR processing failed', $e->getMessage(), $docType?->value, $userId));
+            // Send fail notification with error for supported document types
+            if (in_array($docType, [
+                OCRDocumentTypeEnum::TAX_INVOICE,
+                OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER,
+                OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE
+            ])) {
+                event(new OcrNotifications($quote, 'fail', 'OCR processing failed', $e->getMessage(), $docType?->value, $userId));
+            }
             throw $e;
         }
     }

@@ -1742,10 +1742,15 @@ function handleOcrNotification(event) {
     return;
   }
 
-  // For 'start' status, only set loading state for CERTIFICATE_OF_ISSUANCE
+  // For 'start' status, set loading state for supported document types
   if (status === 'start') {
-    // Using the enum value instead of hardcoded string
-    if (docType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) {
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+    ];
+
+    if (supportedDocTypes.includes(docType)) {
       ocrLoadingDocType.value = docType;
     }
   } else {

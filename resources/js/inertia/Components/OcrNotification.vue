@@ -22,15 +22,18 @@ const listen = () => {
       currentUrl.includes('/quotes/car/') &&
       isCurrentUser
     ) {
-      // Only show notification for 'start' and 'fail' status, skipping 'end' status
-      if (e.data.status !== 'end') {
+      // Only show toast notification for 'start' status and CERTIFICATE_OF_ISSUANCE document type
+      // Still show 'fail' status notifications for all supported document types
+      if (
+        (e.data.status === 'start' && e.data.docType === page.props.ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) ||
+        (e.data.status === 'fail')
+      ) {
         notification.info({
           title: e.data.message,
           position: 'top',
         });
       }
 
-      // Emit event for PolicyDetail.vue
       window.dispatchEvent(new CustomEvent('ocr-notification', {
         detail: {
           imageUrl: '/image/alfred-theme.png',
