@@ -70,6 +70,7 @@ const notification = useNotifications('toast');
 const modals = reactive({
   duplicate: false,
   planDetails: false,
+  sendConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -325,6 +326,7 @@ const selectedPlanType = ref(null);
 const toggleLoader = ref(false);
 const viewButtonLoading = ref(false);
 const planDetails = ref(null);
+const exportLoader = ref(false);
 
 const normalPlansIds = reactive({
   ids: [],
@@ -500,6 +502,74 @@ const onCopyText = text => {
 const selectedPlanIds = computed(() => {
   return [];
 });
+
+const onExportPlans = () => {
+  if (selectedPlans.value.length === 0) {
+    notification.error({
+      title: 'Please select at least one plan to export',
+      position: 'top',
+    });
+    return;
+  }
+
+  exportLoader.value = true;
+
+  const planIds = selectedPlans.value.map(plan => plan.id);
+
+  axios
+    .post(route('exportPlans', { quoteType: 'savings' }), {
+      modelType: 'Savings',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+    })
+    .then(response => {
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `savings-plans-${page.props.quote.code}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      notification.success({
+        title: 'Plans exported successfully',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error exporting plans',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
+};
+
+const sendOCBEmail = () => {
+  axios
+    .post(route('sendOCBEmail', { quoteType: 'savings' }), {
+      modelType: 'Savings',
+      quote_uuid: page.props.quote.uuid,
+    })
+    .then(response => {
+      notification.success({
+        title: 'OCB Email sent successfully to customer',
+        position: 'top',
+      });
+      modals.sendConfirm = false;
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error sending OCB Email',
+        position: 'top',
+      });
+      modals.sendConfirm = false;
+    });
+};
 </script>
 
 <template>
@@ -1157,8 +1227,8 @@ const selectedPlanIds = computed(() => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex justify-between items-center flex-wrap gap-2">
-            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
+          <div class="flex justify-end items-center flex-wrap gap-2">
+            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true && !availablePlansTable.isLoading">
               <x-button-group
                 v-if="selectedPlans.length > 0"
                 size="sm"
@@ -1179,6 +1249,33 @@ const selectedPlanIds = computed(() => {
                   Hide
                 </x-button>
               </x-button-group>
+              <x-button
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                color="emerald"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
+              >
+                Download PDF
+              </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="quote.advisor_id != $page.props.auth.user.id"
+                >
+                  Send Savings Plans email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated savings plans and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
               <x-button
                 v-if="availablePlansTable.data.length > 0"
                 size="sm"
@@ -1461,6 +1558,51 @@ const selectedPlanIds = computed(() => {
       :modelType="'Savings'"
       :code="$page.props.quote.code"
     ></lead-raw-data>
+
+    <x-modal
+      v-model="modals.sendConfirm"
+      size="md"
+      title="Send OCB Email"
+      show-close
+      backdrop
+    >
+      <div class="space-y-4">
+        <p class="text-gray-600">
+          Are you sure you want to send the One Click Buy (OCB) email to the customer?
+          This will send them the selected savings plans with updated rates and coverage options.
+        </p>
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+          <div class="flex">
+            <div class="ml-3">
+              <p class="text-sm text-blue-700">
+                <strong>Customer:</strong> {{ quote.first_name }} {{ quote.last_name }}
+              </p>
+              <p class="text-sm text-blue-700">
+                <strong>Email:</strong> {{ quote.email }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          @click.prevent="modals.sendConfirm = false"
+          size="sm"
+        >
+          Cancel
+        </x-button>
+      </template>
+      <template #primary-action>
+        <x-button
+          color="orange"
+          @click.prevent="sendOCBEmail"
+        >
+          Send Email
+        </x-button>
+      </template>
+    </x-modal>
   </div>
 </template>
 
