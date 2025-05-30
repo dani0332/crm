@@ -186,19 +186,7 @@ class SavingsQuoteService extends BaseQuoteService
 
     public function getAvailablePlans($uuid)
     {
-        $result = [];
-        $plans = $this->listQuotePlans($uuid);
-
-        // dd($plans);
-        // $collection = collect($plans);
-
-        // $seniorPlans = $collection->where('isSeniorPlan', true);
-        // $normalPlans = $collection->where('isSeniorPlan', false);
-
-        // $result['normalPlans'] = array_values($normalPlans->toArray());
-        // $result['seniorPlans'] = array_values($seniorPlans->toArray());
-
-        return $result;
+        return $this->listQuotePlans($uuid);
     }
 
     public function listQuotePlans($id)

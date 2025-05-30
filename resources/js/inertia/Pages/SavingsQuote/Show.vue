@@ -69,6 +69,7 @@ const notification = useNotifications('toast');
 
 const modals = reactive({
   duplicate: false,
+  planDetails: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -263,6 +264,7 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -271,7 +273,7 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
-const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const sectionExpanded = computed(() => true);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
@@ -283,8 +285,56 @@ const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
 
+const availablePlansTable = reactive({
+  data: [],
+  isLoading: false,
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+    },
+    {
+      text: 'Plan Name',
+      value: 'name',
+    },
+    {
+      text: 'Investment Frequency',
+      value: 'investmentFrequency',
+    },
+    {
+      text: 'Minimum Investment',
+      value: 'minimumInvestment',
+    },
+    {
+      text: 'Currency',
+      value: 'currency',
+    },
+    {
+      text: 'Policy Term (Years)',
+      value: 'policyTerm',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const selectedPlans = ref([]);
+const selectedPlanType = ref(null);
+const toggleLoader = ref(false);
+const viewButtonLoading = ref(false);
+const planDetails = ref(null);
+
+const normalPlansIds = reactive({
+  ids: [],
+});
+const seniorPlansIds = reactive({
+  ids: [],
+});
+
 const onLoadAvailablePlansData = async () => {
-  // availablePlansTable.isLoading = true;
+  availablePlansTable.isLoading = true;
   let data = {
     jsonData: true,
   };
@@ -292,15 +342,164 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-      console.log(res.data);
+      console.log('onLoadAvailablePlansData', res.data);
+
+      // Process the response data to flatten regular and lumpsum plans
+      const processedPlans = [];
+
+      // Process regular plans
+      if (res.data.regular && Array.isArray(res.data.regular)) {
+        res.data.regular.forEach(plan => {
+          const processedPlan = {
+            ...plan,
+            investmentFrequency: 'Regular',
+            currency: 'USD',
+            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
+            policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+          };
+          processedPlans.push(processedPlan);
+        });
+      }
+
+      // Process lumpsum plans
+      if (res.data.lumpsum && Array.isArray(res.data.lumpsum)) {
+        res.data.lumpsum.forEach(plan => {
+          const processedPlan = {
+            ...plan,
+            investmentFrequency: 'Lumpsum',
+            currency: 'USD',
+            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
+            policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+          };
+          processedPlans.push(processedPlan);
+        });
+      }
+
+      availablePlansTable.data = processedPlans;
     })
     .catch(err => {
       console.log(err);
+      availablePlansTable.data = [];
     })
     .finally(() => {
-      // availablePlansTable.isLoading = false;
+      availablePlansTable.isLoading = false;
     });
 };
+
+// Helper function to extract value from eligibility array
+const getEligibilityValue = (eligibility, code) => {
+  if (!Array.isArray(eligibility)) return 'N/A';
+
+  const found = eligibility.find(item => item.code === code);
+  return found ? found.value : 'N/A';
+};
+
+const onTogglePlans = toggle => {
+  toggleLoader.value = true;
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'savings' }), {
+      modelType: 'Savings',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      onLoadAvailablePlansData();
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
+};
+
+const getPlanDetails = id => {
+  viewButtonLoading.value = true;
+  try {
+    // Find the plan in the current data instead of making an API call
+    const foundPlan = availablePlansTable.data.find(plan => plan.id === id);
+    if (foundPlan) {
+      planDetails.value = foundPlan;
+      modals.planDetails = true;
+      viewButtonLoading.value = false;
+    } else {
+      // Fallback to API call if plan not found in current data
+      axios
+        .get(`/quotes/savings/${page.props.quote.uuid}/plan_details/${id}`)
+        .then(res => {
+          // Process the plan data similar to how we process it in onLoadAvailablePlansData
+          const processedPlan = {
+            ...res.data,
+            investmentFrequency: res.data.planTypeId === 9961 ? 'Regular' : 'Lumpsum',
+            currency: 'USD',
+            minimumInvestment: getEligibilityValue(res.data.eligibility, 'minimum_investment_amount'),
+            policyTerm: getEligibilityValue(res.data.eligibility, 'policy_term'),
+          };
+          planDetails.value = processedPlan;
+          modals.planDetails = true;
+          viewButtonLoading.value = false;
+        })
+        .catch(err => {
+          notification.error({
+            title: 'Error',
+            message: 'Plan Details Not Found',
+            position: 'top',
+          });
+          console.log(err);
+          viewButtonLoading.value = false;
+        });
+    }
+  } catch (err) {
+    console.log(err);
+    notification.error({
+      title: 'Error',
+      message: 'Something went wrong',
+      position: 'top',
+    });
+    viewButtonLoading.value = false;
+  }
+};
+
+const onLoadAvailablePlansDataAndPlanDetails = async () => {
+  await onLoadAvailablePlansData();
+  // Refresh plan details if modal is open
+  if (modals.planDetails && planDetails.value) {
+    getPlanDetails(planDetails.value.id);
+  }
+};
+
+const { copy, copied } = useClipboard();
+const onCopyText = text => {
+  copy(text);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
+
+const selectedPlanIds = computed(() => {
+  return [];
+});
 </script>
 
 <template>
@@ -946,6 +1145,195 @@ const onLoadAvailablePlansData = async () => {
       :lost-reasons="lostReasons"
       :expanded="sectionExpanded"
     />
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Available Plans
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
+              <x-button-group
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                class="mr-2"
+              >
+                <x-button
+                  @click.prevent="onTogglePlans(false)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Show
+                </x-button>
+                <x-button
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Hide
+                </x-button>
+              </x-button-group>
+              <x-button
+                v-if="availablePlansTable.data.length > 0"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                @click.prevent="
+                  onCopyText('/quotes/savings/' + quote.uuid)
+                "
+              >
+                Copy Link
+              </x-button>
+            </div>
+          </div>
+
+          <div
+            v-if="
+              availablePlansTable.data &&
+              typeof availablePlansTable.data == 'string'
+            "
+          >
+            <p
+              class="text-center text-primary-600 uppercase"
+              v-if="typeof availablePlansTable.data == 'string'"
+            >
+              {{ availablePlansTable.data }}
+            </p>
+          </div>
+          <div v-else>
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
+              <x-spinner size="lg" />
+            </div>
+            <DataTable
+              v-else
+              v-model:items-selected="selectedPlans"
+              table-class-name="tablefixed"
+              :headers="availablePlansTable.columns"
+              :items="availablePlansTable.data || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              :hide-footer="availablePlansTable.data.length < 15"
+            >
+              <template #item-providerName="item">
+                <p class="text-primary-600 uppercase">
+                  {{ item.providerName }}
+                </p>
+              </template>
+              <template #item-name="item">
+                <span class="text-primary-600 uppercase">{{ item.name }}</span>
+              </template>
+              <template #item-investmentFrequency="item">
+                <span class="text-primary-600">{{ item.investmentFrequency }}</span>
+              </template>
+              <template #item-minimumInvestment="item">
+                <span>{{ item.minimumInvestment }}</span>
+              </template>
+              <template #item-currency="item">
+                <span>{{ item.currency }}</span>
+              </template>
+              <template #item-policyTerm="item">
+                <span>{{ item.policyTerm }}</span>
+              </template>
+              <template #item-action="item">
+                <div class="flex gap-2">
+                  <x-button
+                    size="xs"
+                    color="error"
+                    outlined
+                    @click.prevent="
+                      selectedPlanType = 'normalPlans';
+                      getPlanDetails(item.id);
+                    "
+                    :loading="viewButtonLoading"
+                  >
+                    View
+                  </x-button>
+                </div>
+              </template>
+            </DataTable>
+          </div>
+
+          <x-modal
+            v-model="modals.planDetails"
+            size="xl"
+            :title="`${planDetails?.providerName} - ${planDetails?.name}`"
+            show-close
+            backdrop
+          >
+            <div v-if="planDetails" class="space-y-6">
+              <!-- Plan Basic Info -->
+              <div>
+                <h4 class="text-lg font-semibold text-primary-800 mb-3">Plan Information</h4>
+                <dl class="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div>
+                    <dt class="font-medium text-gray-600">Provider</dt>
+                    <dd class="text-gray-900">{{ planDetails.providerName }}</dd>
+                  </div>
+                  <div>
+                    <dt class="font-medium text-gray-600">Plan Name</dt>
+                    <dd class="text-gray-900">{{ planDetails.name }}</dd>
+                  </div>
+                  <div>
+                    <dt class="font-medium text-gray-600">Investment Frequency</dt>
+                    <dd class="text-gray-900">{{ planDetails.investmentFrequency }}</dd>
+                  </div>
+                  <div>
+                    <dt class="font-medium text-gray-600">Currency</dt>
+                    <dd class="text-gray-900">{{ planDetails.currency }}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <!-- Eligibility -->
+              <div v-if="planDetails.eligibility && planDetails.eligibility.length > 0">
+                <h4 class="text-lg font-semibold text-primary-800 mb-3">Eligibility</h4>
+                <div class="space-y-3">
+                  <div v-for="item in planDetails.eligibility" :key="item.id" class="border-l-4 border-primary-500 pl-4">
+                    <dt class="font-medium text-gray-700">{{ item.text }}</dt>
+                    <dd class="text-gray-600 text-sm">{{ item.description }}</dd>
+                    <dd class="text-gray-900 font-medium">{{ item.value }}</dd>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Benefits -->
+              <div v-if="planDetails.includedBenefits && planDetails.includedBenefits.length > 0">
+                <h4 class="text-lg font-semibold text-primary-800 mb-3">Included Benefits</h4>
+                <div class="space-y-3">
+                  <div v-for="item in planDetails.includedBenefits" :key="item.id" class="border-l-4 border-green-500 pl-4">
+                    <dt class="font-medium text-gray-700">{{ item.text }}</dt>
+                    <dd class="text-gray-600 text-sm">{{ item.description }}</dd>
+                    <dd class="text-gray-900 font-medium">{{ item.value }}</dd>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Key Feature Document -->
+              <div v-if="planDetails.keyFeatureDocument && planDetails.keyFeatureDocument.length > 0">
+                <h4 class="text-lg font-semibold text-primary-800 mb-3">Documents</h4>
+                <div class="space-y-2">
+                  <div v-for="doc in planDetails.keyFeatureDocument" :key="doc.id">
+                    <a :href="doc.value" target="_blank" class="text-primary-600 hover:text-primary-800 underline">
+                      {{ doc.text }}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </x-modal>
+        </template>
+      </Collapsible>
+    </div>
 
     <MigratePayment
       v-if="!isNewPaymentStructure"
