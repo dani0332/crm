@@ -1457,3 +1457,18 @@ const selectedPlanIds = computed(() => {
     ></lead-raw-data>
   </div>
 </template>
+
+<style scoped>
+.compact-rows :deep(tbody tr) {
+  height: 40px !important;
+}
+
+.compact-rows :deep(tbody td) {
+  padding: 8px 12px !important;
+  vertical-align: middle;
+}
+
+.compact-rows :deep(thead th) {
+  padding: 10px 12px !important;
+}
+</style>
