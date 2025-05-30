@@ -100,7 +100,7 @@ const tableHeader = ref([
   },
   {
     text: 'Investment Amount',
-    value: 'savings_quote.amount',
+    value: 'savings_quote.investment_amount',
     is_active: true,
   },
   {

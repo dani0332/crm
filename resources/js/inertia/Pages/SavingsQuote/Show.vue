@@ -559,7 +559,7 @@ const onLoadAvailablePlansData = async () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INVESTMENT AMOUNT</dt>
-                <dd>{{ quote?.savings_quote?.amount }}</dd>
+                <dd>{{ quote?.savings_quote?.investment_amount }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL INFORMATION</dt>
