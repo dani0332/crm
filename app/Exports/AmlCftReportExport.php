@@ -72,7 +72,7 @@ class AmlCftReportExport implements FromCollection, WithHeadings, WithMapping, W
         $quoteTypeName = $quoteType ? ($quoteType->value ?? (string)$quoteType) : '';
 
         return [
-            trim(($item->first_name ?? '') . ' ' . ($item->last_name ?? '')),
+            isset($item->first_name) ? trim(($item->first_name ?? '') . ' ' . ($item->last_name ?? '')) : trim(($item->customer_first_name ?? '') . ' ' . ($item->customer_last_name ?? '')),
             $item->code ?? '',
             $item->emirates_id ?? '',
             $item->customer_type ?? '',

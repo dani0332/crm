@@ -1145,6 +1145,8 @@ class AMLService
         $personalQuotes = $personalQuotes->orderBy('first_name');
         $collection = $personalQuotes->get();
 
+        info($collection->count());
+
         // Calculate summary
         $totalCustomers = $collection->count();
         $lowRisk = $collection->where('risk_score', '>=', 1)->where('risk_score', '<=', 25)->count();
@@ -1201,7 +1203,9 @@ class AMLService
             'ik.transaction_volume',
             'ik.is_owner_pep',
             'pqr.created_at as last_aml_screening_date',
-            'cm.uae_resident as customer_is_uae_resident'
+            'cm.uae_resident as customer_is_uae_resident',
+            'cm.first_name as customer_first_name',
+            'cm.last_name as customer_last_name',
         )
             ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->whereBetween('pqr.created_at', dateQueryFilter($startDate, $endDate))
@@ -1218,12 +1222,12 @@ class AMLService
             if ($isQuoteTypePresent) {
                 $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($request) {
                     $join->on('pqr.id', '=', 'ci.quote_request_id')
-                        ->where('pqr.quote_type_id', $request->quoteType);
+                        ->where('ci.quote_type_id', $request->quoteType);
                 });
             } else {
                 $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($request) {
                     $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
-                        ->where('pqr.quote_type_id', $request->quoteType);
+                        ->where('ci.quote_type_id', $request->quoteType);
                 });
             }
         } else {
@@ -1231,12 +1235,12 @@ class AMLService
             if ($is_sync_quote) {
                 $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypes) {
                     $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
-                        ->whereNotIn('pqr.quote_type_id', $quoteTypes);
+                        ->whereNotIn('ci.quote_type_id', $quoteTypes);
                 });
             } else {
                 $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypes) {
                     $join->on('pqr.id', '=', 'ci.quote_request_id')
-                        ->whereIn('pqr.quote_type_id', $quoteTypes);
+                        ->whereIn('ci.quote_type_id', $quoteTypes);
                 });
             }
         }
