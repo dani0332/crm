@@ -11,6 +11,7 @@ use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
+use App\Services\DTOs\FetchCarLeadResult;
 use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use Exception;
@@ -45,13 +46,21 @@ class CarAllocation implements Allocation
         ];
 
         try {
-            $lead = $this->fetchLead();
+            $carFetchLeadResult = $this->fetchLead();
 
-            if (! $lead) {
-                LoggerService::info('Lead not found or not under fetch criteria');
+            if ($carFetchLeadResult->notFound) {
+                LoggerService::info('Lead not found');
 
-                return $this->carAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+                return $this->carAllocationService->createResponse(0, 'Lead not found', Response::HTTP_NOT_FOUND);
             }
+
+            if (! $carFetchLeadResult->lead) {
+                LoggerService::info('Lead found but not under fetch criteria');
+
+                return $this->carAllocationService->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_OK);
+            }
+
+            $lead = $carFetchLeadResult->lead;
 
             LoggerService::debug('Processing record for Quote Allocation', extra: [
                 'payment_status_id' => $lead->payment_status_id,
@@ -80,15 +89,15 @@ class CarAllocation implements Allocation
 
             $tier = $this->determineTier($lead);
 
-            if ($tier->name == TiersEnum::TIER_R) {
-                info(self::class." - Lead is Tier R and from Company Webform. Skipping allocation for Ref-ID: {$lead->uuid} | Time: ".now());
-
-                $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
-
-                return $this->carAllocationService->createResponse(0, 'Lead is Tier R Skipping allocation.', Response::HTTP_OK);
-            }
-
             if ($tier) {
+                if ($tier->name == TiersEnum::TIER_R) {
+                    LoggerService::info(self::class.' - Lead is Tier R and from Company Webform. Skipping allocation');
+
+                    $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
+                    return $this->carAllocationService->createResponse(0, 'Lead is Tier R Skipping allocation.', Response::HTTP_OK);
+                }
+
                 $response = $this->processTier($lead, $tier);
             } else {
                 LoggerService::info('Tier not found. Skipping for now.');
@@ -195,7 +204,7 @@ class CarAllocation implements Allocation
         }
     }
 
-    protected function fetchLead(): mixed
+    protected function fetchLead(): FetchCarLeadResult
     {
         return $this->carAllocationService->fetchLead($this->allocationId, $this->overrideAdvisorId, $this->evaluateTierOnly);
     }

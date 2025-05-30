@@ -8,6 +8,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Models\TravelQuote;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
 {
@@ -62,12 +63,13 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'assignment_type',
             'gender',
             'premium',
-            'payment_status_id',
+            'travel_quote_request.payment_status_id',
             'currently_located_in_id',
             'api_issuance_status_id',
             'insurer_api_status_id',
             'start_date',
             'end_date',
+            'lead_assignment_trigger',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',
@@ -87,8 +89,16 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
         ]);
     }
 
-    public function applyFilters(Builder $query)
+    public function applyFilters(Builder $query, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
+
         $query
             ->filterBy('code')
             ->matchBy('first_name')
@@ -203,11 +213,11 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             );
     }
 
-    public function processGridData(): Builder
+    public function processGridData($requestParams): Builder
     {
         $query = $this->buildGrid();
 
-        $this->applyFilters($query);
+        $this->applyFilters($query, $requestParams);
 
         return $query;
     }

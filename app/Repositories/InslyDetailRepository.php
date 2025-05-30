@@ -7,10 +7,12 @@ use App\Enums\FilterTypes;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
+use App\Models\HomeQuote;
 use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
 use App\Models\PetQuote;
@@ -261,6 +263,12 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
 
+        /* Temp Code - assign email for particular Policy id/number */
+        if ($policyID == 40523841) {
+            $email = 'soniax711@gmail.com';
+        }
+        /* Temp Code - assign email for particular Policy id/number */
+
         if (empty($email)) {
             return [
                 'status' => 400,
@@ -386,9 +394,9 @@ class InslyDetailRepository extends BaseRepository
                 // create lead in case no record found
                 $payLoad = $this->prePareData($policy, $quoteType, $isPersonalQuote);
                 $payLoad['advisor_id'] = $advisorId;
-                info('InslyLead - Payload: '.json_encode($payLoad));
+                LoggerService::info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
-                info('InslyLead - created Lead Id : '.json_encode($id));
+                LoggerService::info('InslyLead - created Lead Id : '.json_encode($id));
                 if (! empty($id)) {
                     $obj = $model::where('id', $id)->first();
                     switch (ucfirst($quoteType)) {
@@ -405,7 +413,7 @@ class InslyDetailRepository extends BaseRepository
                                 ['car_quote_request_id' => $obj->id],
                                 ['insly_id' => $policy->_id]
                             );
-                            info('fetchSaveToImcrm - leadId : '.$obj->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
+                            LoggerService::info('fetchSaveToImcrm - leadId : '.$obj->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                             break;
 
                         case QuoteTypes::LIFE->value:
@@ -416,8 +424,12 @@ class InslyDetailRepository extends BaseRepository
                             break;
 
                         case QuoteTypes::HOME->value:
-                            $obj->homeQuoteRequestDetail()->updateOrCreate(
-                                ['home_quote_request_id' => $obj->id],
+                            $obj->homeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new HomeQuote)->allowedColumns())
+                            );
+                            $obj->quoteDetail()->updateOrCreate(
+                                ['personal_quote_id' => $id],
                                 ['insly_id' => $policy->_id]
                             );
                             break;
@@ -483,6 +495,14 @@ class InslyDetailRepository extends BaseRepository
                         $policy->imcrm_link = '/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     }
                     ! $isPersonalQuote && $this->syncQuote($obj, $payLoad);
+
+                    // Sync quote_id of lob table to personal quote table for allowed LOBs
+                    $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+                    $allowedQuoteTypes = [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Life, QuoteTypeId::Business, QuoteTypeId::Travel];
+                    if (! $isPersonalQuote && in_array($quoteTypeId, $allowedQuoteTypes)) {
+                        $this->updatePersonalQuote($obj->uuid, $quoteTypeId, ['quote_id' => $obj->id]);
+                    }
+
                     $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
                     $policy->moved_to_imcrm_by = auth()->user()->name;
                     $policy->code = $obj->code;
@@ -524,15 +544,25 @@ class InslyDetailRepository extends BaseRepository
 
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
 
+        /* Temp Code - assign email for particular Policy id/number */
+
+        $tempEmail = 'soniax711@gmail.com';
+        $tempPolicyId = 40523841;
+        if ($tempPolicyId == $policy['policy_oid']) {
+            [$dataArr['email'], $additionalEmails] = [$tempEmail, []];
+        }
+
+        /* Temp Code - assign email for particular Policy id/number */
+
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
         $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
 
         if ($insurer = $policy['policy']['insurer'] ?? null) {
-            info('Fetching Insurance Provider Id from Legacy Lead policy no: '.$policy['policy_no'].' and Insurer: '.trim($insurer));
+            LoggerService::info('Fetching Insurance Provider Id from Legacy Lead policy no: '.$policy['policy_no'].' and Insurer: '.trim($insurer));
             $insuranceProviderId = InsuranceProviderRepository::getInslyProviderId(trim($insurer));
             $dataArr['insurance_provider_id'] = $insuranceProviderId;
-            info('Assign Insurance Provider Id: '.$insuranceProviderId.' against Insurer: '.trim($insurer).' Legacy Lead policy no: '.$policy['policy_no']);
+            LoggerService::info('Assign Insurance Provider Id: '.$insuranceProviderId.' against Insurer: '.trim($insurer).' Legacy Lead policy no: '.$policy['policy_no']);
         }
 
         $dataArr['policy_issuance_date'] = now()->format('Y-m-d');

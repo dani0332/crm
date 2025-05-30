@@ -71,28 +71,39 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="NAME" required>
-        <x-input
-          v-model="roleForm.name"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="$page.props.errors.name"
-        />
-      </x-field>
-      <x-field label="PERMISSIONS" required>
-        <ComboBox
-          v-model="roleForm.permission"
-          :options="
-            props.permissions.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-          :rules="[isRequired]"
-          :hasError="validPermission"
-          autocomplete
-        />
-      </x-field>
+      <x-input
+        v-model="roleForm.name"
+        :rules="[isRequired]"
+        class="w-full"
+        :error="$page.props.errors.name"
+        label="NAME"
+        required
+      />
+
+      <x-select
+        label="PERMISSIONS"
+        v-model="roleForm.permission"
+        :options="
+          permissions.map(x => ({
+            value: x.id,
+            label: x.name,
+          }))
+        "
+        :rules="[isRequired]"
+        multiple
+        truncate
+        filterable
+        required
+        placeholder="Select Permissions"
+        filterPlaceholder="Filter permissions...."
+      >
+        <template #content-footer>
+          <ui-select-actions
+            @select-all="roleForm.permission = permissions.map(item => item.id)"
+            @clear="roleForm.permission = []"
+          />
+        </template>
+      </x-select>
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

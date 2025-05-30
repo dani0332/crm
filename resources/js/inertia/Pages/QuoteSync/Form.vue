@@ -60,23 +60,23 @@ function onSubmit(isValid) {
           <x-toggle v-model="form.is_synced" color="success" />
         </x-field>
 
-        <x-field label="Status" required>
-          <x-select
-            v-model="form.status"
-            placeholder="Select Status"
-            :options="quoteSyncStatusOptions"
-            class="w-full"
-          />
-        </x-field>
+        <x-select
+          label="Status"
+          required
+          v-model="form.status"
+          placeholder="Select Status"
+          :options="quoteSyncStatusOptions"
+          class="w-full"
+        />
 
-        <x-field label="Fields" required>
-          <x-input
-            v-model="form.updated_fields"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="form.errors.updated_fields"
-          />
-        </x-field>
+        <x-input
+          label="Fields"
+          required
+          v-model="form.updated_fields"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="form.errors.updated_fields"
+        />
       </div>
 
       <div v-if="quote_sync?.error" class="p-4 rounded shadow mb-6 bg-white">

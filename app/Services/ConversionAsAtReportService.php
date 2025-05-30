@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CarRegistrationType;
 use App\Enums\DisplayByEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -90,6 +91,8 @@ class ConversionAsAtReportService extends BaseService
                 'lob' => $request->lob,
                 'displayBy' => $request->displayBy,
                 'tag' => $request->tag,
+                'registration_type' => $request->registration_type,
+                'vehicle_use' => $request->vehicle_use,
                 'page' => $request->page,
             ];
 
@@ -224,6 +227,16 @@ class ConversionAsAtReportService extends BaseService
             }
         }
 
+        if (isset($filters->lob) && $filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+            if (isset($filters->registration_type) && $filters->registration_type != 'All') {
+                $query->where("{$alias}.registration_type", $filters->registration_type);
+            }
+
+            if (isset($filters->vehicle_use) && $filters->vehicle_use != 'All' && isset($filters->registration_type) && $filters->registration_type == CarRegistrationType::COMPANY) {
+                $query->where("{$alias}.vehicle_use", $filters->vehicle_use);
+            }
+        }
+
         $this->applyBaseQueryToGroupBy($query, $filters, $alias);
 
         if (isset($filters->displayBy)) {
@@ -302,11 +315,11 @@ class ConversionAsAtReportService extends BaseService
     {
         return $query
             ->addSelect(
-                'teams.id as sub_team_id',
-                'teams.name as sub_team'
+                'sub_teams.id as sub_team_id',
+                'sub_teams.name as sub_team'
             )
-            ->join('teams', 'users.sub_team_id', '=', 'teams.id')
-            ->where('teams.type', TeamTypeEnum::SUB_TEAM)
+            ->join('teams as sub_teams', 'users.sub_team_id', '=', 'sub_teams.id')
+            ->where('sub_teams.type', TeamTypeEnum::SUB_TEAM)
             ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('sub_team', 'asc')
             ->groupBy('sub_team_id');

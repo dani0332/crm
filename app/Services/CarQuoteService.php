@@ -12,6 +12,7 @@ use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -19,6 +20,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -29,7 +31,9 @@ use App\Models\CustomerAddress;
 use App\Models\Entity;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\Team;
 use App\Models\Tier;
+use App\Models\UserTeams;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -209,8 +213,13 @@ class CarQuoteService extends BaseService
 
         } else {
             if ($entityMapping) {
-                $entityMapping->entity->delete();
+
+                $entityMappingCount = $entityMapping->entity->quoteRequestEntityMapping->count();
+                $entityRecord = $entityMapping->entity;
                 $entityMapping->delete();
+                if ($entityMappingCount == 1) {
+                    $entityRecord->delete();
+                }
             }
         }
 
@@ -541,6 +550,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = cqr.id)', [QuoteTypeId::Car]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->groupBy('cqr.id')
@@ -926,11 +936,13 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
-    public function walkTree($userId)
+    public function walkTree($userId, $requestParams = [])
     {
+        $user = $requestParams['user'] ?? auth()->user();
+
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
         array_push($this->childUserIds, $userId);
-        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::LeadPool])) {
+        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::LeadPool])) {
             $userAllTeams = DB::table('teams')
                 ->join('user_team', 'user_team.team_id', 'teams.id')
                 ->where('user_id', $userId)
@@ -952,18 +964,27 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function getGridData()
+    public function getGridData($model = null, $requestParams = [])
     {
-        return $this->carQuoteQueryBuilder->processGridData()
-            ->where(function ($query) {
-                if (Auth::user()->hasRole(RolesEnum::CarManager)) {
-                    $this->walkTree(Auth::id());
+        $user = null;
+
+        if (auth()->check() && empty($requestParams['user'])) {
+            $user = auth()->user();
+        } elseif (! empty($requestParams['user'])) {
+            /* For queue when session data isn't present */
+            $user = $requestParams['user'];
+        }
+
+        return $this->carQuoteQueryBuilder->processGridData($requestParams)
+            ->where(function ($query) use ($user, $requestParams) {
+                if ($user->hasRole(RolesEnum::CarManager)) {
+                    $this->walkTree($user->id, $requestParams);
                     $query->whereIn('advisor_id', $this->childUserIds);
-                } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
-                    $this->walkTree(Auth::id());
+                } elseif ($user->hasRole(RolesEnum::LeadPool)) {
+                    $this->walkTree($user->id, $requestParams);
                     $query->whereIn('advisor_id', $this->childUserIds)->orWhereNull('advisor_id');
-                } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
-                    $query->where('advisor_id', Auth::id());
+                } elseif ($user->hasRole(RolesEnum::CarAdvisor)) {
+                    $query->where('advisor_id', $user->id);
                 }
             });
     }
@@ -1418,6 +1439,14 @@ class CarQuoteService extends BaseService
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
+            LoggerService::info(self::class.' - processManualLeadAssignment: Checking lead_assignment_trigger', extra: [
+                'current_value' => $lead->lead_assignment_trigger ?? 'null',
+            ]);
+            if (empty($lead->lead_assignment_trigger)) {
+                LoggerService::info(self::class.' - processManualLeadAssignment: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
+                $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
+            }
+
             $quoteBatch = QuoteBatches::latest()->first();
 
             LoggerService::info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
@@ -1567,9 +1596,11 @@ class CarQuoteService extends BaseService
 
         $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
-        }, 'customer']);
+        }, 'customer', 'vehicleType']);
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons'));
+        $view = $quote->registration_type == CarRegistrationType::COMPANY ? 'pdf.car_comparision.company_car_pdf' : 'pdf.quote_plans';
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView($view, compact('quotePlans', 'planIds', 'quote', 'addons'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
@@ -1887,14 +1918,11 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
-            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
-            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
             ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
             ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
             ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
-            ->where('t.parent_team_id', $carTeam->id)
             ->whereNotIn('q.uuid', function ($query) {
                 $query->select('q.uuid')
                     ->from('car_quote_plan_details as cqp')
@@ -1948,6 +1976,7 @@ class CarQuoteService extends BaseService
                 'q.payment_status_date as paymentauthdate',
                 DB::raw('qs.text as `leadstatus`'),
                 DB::raw("'AUTHORIZED' as `paymentstatus`"),
+                'qs.id as quote_status_id',
                 'q.source as source',
                 'cmk.text as make',
                 'cmd.text as model',
@@ -1959,8 +1988,6 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
             ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
-            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
-            ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
             ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
@@ -1968,7 +1995,6 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
-            ->where('t.parent_team_id', '=', $carTeam->id)
             ->orderBy('q.paid_at', 'desc')
             ->get();
 
@@ -2092,5 +2118,57 @@ class CarQuoteService extends BaseService
         );
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Check if a user is a PCP advisor
+     *
+     * @param  int  $user_id  The ID of the user to check
+     * @return bool True if the user is a PCP advisor, false otherwise
+     */
+    public function isPCPAdvisor($user_id)
+    {
+        try {
+            // Cache the PCP team ID for 24 hours since it rarely changes
+            $pcpTeamId = Team::where('name', TeamNameEnum::PCP)->first()->id ?? null;
+
+            // If $pcpTeamId is null or empty, the function will return false
+            return ! empty($pcpTeamId) && UserTeams::where('user_id', $user_id)->where('team_id', $pcpTeamId)->exists();
+
+        } catch (\Exception $e) {
+            LoggerService::info(self::class.' - Error checking PCP advisor status: '.$e->getMessage(), [
+                'user_id' => $user_id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return false;
+        }
+    }
+    public function exportCompanyCarPdf($quoteType, $data, $quotePlans = null, $imageData = [])
+    {
+        $planIds = $data['plan_ids'];
+        $addons = (isset($data['addons'])) ? $data['addons'] : null;
+
+        if ($quotePlans == null) {
+            $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        }
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
+
+        $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }, 'customer', 'vehicleType']);
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150, 'isRemoteEnabled' => true])
+            ->loadView('pdf.car_comparision.company_car_pdf', compact('quotePlans', 'planIds', 'quote', 'addons', 'imageData'));
+
+        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
     }
 }

@@ -8,6 +8,7 @@ use App\Enums\ExportLogsTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\InsurerProviderEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
@@ -29,14 +30,17 @@ use App\Facades\Marshall;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
 use App\Models\ApplicationStorage;
+use App\Models\BrokerCommission;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\InsuranceProvider;
 use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PaymentStatusHistory;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
@@ -206,6 +210,13 @@ class CentralService extends BaseService
 
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
                 $getQuoteLead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
+                LoggerService::info(self::class.' - assignLeadToAdvisor: Checking lead_assignment_trigger', extra: [
+                    'current_value' => $getQuoteLead->lead_assignment_trigger ?? 'null',
+                ]);
+                if (empty($getQuoteLead->lead_assignment_trigger)) {
+                    LoggerService::info(self::class.' - assignLeadToAdvisor: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
+                    $getQuoteLead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
+                }
                 $getQuoteLead->quote_batch_id = $quoteBatch->id;
                 $getQuoteLead->save();
 
@@ -315,17 +326,20 @@ class CentralService extends BaseService
     {
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $repository = getRepositoryObject($quoteType);
+        $quote = $repository::where('code', $code)->firstOrFail();
 
         $priceVatApp = $data->price_vat_applicable ?? 0;
         $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+        $vatAmount = ($priceVatApp / 100) * $vatPercentage;
+        LoggerService::info("Quote {$code} - VAT values: priceVatApp: {$priceVatApp}, priceVatNotApp: {$priceVatNotApp}, vatAmount: {$vatAmount}");
 
         if ($quoteType == QuoteTypes::BUSINESS->value) {
-            $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
+            $data->price_with_vat = $priceVatApp + $priceVatNotApp + $vatAmount;
         } else {
-            $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
+            $data->price_with_vat = $priceVatApp ? ($priceVatApp + $vatAmount) : $priceVatNotApp;
         }
 
-        $quote = $repository::where('code', $code)->firstOrFail();
+        $data->vat = $vatAmount;
 
         $oldInsuranceProviderId = $quote->insurance_provider_id;
         $newInsuranceProviderId = $data->insurance_provider_id;
@@ -994,6 +1008,8 @@ class CentralService extends BaseService
 
     public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
     {
+        LoggerService::info('fn:updateSendUpdateStatusLogs - Start - CentralService');
+
         SendUpdateStatusLog::updateOrCreate([
             'send_update_log_id' => $sendUpdateLogId,
             'previous_status' => $previousStatus,
@@ -1002,10 +1018,16 @@ class CentralService extends BaseService
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);
+
+        LoggerService::info('SendUpdateLog status changed', extra: [
+            'previousStatus' => $previousStatus,
+            'current_status' => $currentStatus,
+        ]);
     }
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
+        LoggerService::info('fn:checkStatusSUStatusLogs - Start - CentralService');
         $sendUpdateStatusArray = is_string($sendUpdateStatus) ? [$sendUpdateStatus] : $sendUpdateStatus;
 
         $sendUpdateStatusCount = SendUpdateStatusLog::where(function ($query) use ($sendUpdateId, $sendUpdateStatusArray) {
@@ -1156,11 +1178,6 @@ class CentralService extends BaseService
         // Get broker commission details
         [$isCreditCardEnabled, $brokerCommission, $commissionInPayments] = app(BrokerCommissionService::class)->fetchBrokerCommission($quoteTypeId, $insuranceProviderId, $businessTypeId, $planId, $quote);
 
-        $isCaptureButtonEnabled = false;
-        if ($insuranceProvider) {
-            $isCaptureButtonEnabled = $this->isCaptureButtonEnabledForProvider($insuranceProvider->code, $quoteTypeId);
-        }
-
         $isGIGProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::GIG_INSURANCE;
         $isADNICProvider = $insuranceProvider && $insuranceProvider->code === InsurerProviderEnum::ABU_DHABI_NATIONAL_INSURANCE && $quoteTypeId == QuoteTypeId::Health;
 
@@ -1184,7 +1201,7 @@ class CentralService extends BaseService
             'isMultiplePaymentsEnabled' => $isMultiplePaymentsEnabled,
             'commissionInPayments' => $commissionInPayments,
             'isADNICProvider' => $isADNICProvider,
-            'isCaptureButtonEnabled' => $isCaptureButtonEnabled,
+            'isCaptureButtonEnabled' => true,
         ];
 
         // If payment object is provided, check commission status and merge with TAP configuration
@@ -1250,6 +1267,25 @@ class CentralService extends BaseService
         return ['status' => true, 'message' => 'Void payment processed'];
     }
 
+    public function removeInsurerPaymentLink($request)
+    {
+        $quote = $this->getQuoteObject($request->quoteType, $request->quoteId);
+        if (! $quote) {
+            return ['status' => false, 'message' => 'Quote not found'];
+        }
+
+        $quote->quote_status_id = QuoteStatusEnum::InNegotiation;
+        $quote->save();
+
+        $paymentSplits = method_exists($quote, 'getAllInsurerPaymentLinkSplits') ? $quote->getAllInsurerPaymentLinkSplits() : [];
+        foreach ($paymentSplits as $ps) {
+            $ps->insurer_payment_link = null;
+            $ps->save();
+        }
+
+        return ['status' => true, 'message' => 'Insurer payment link removed'];
+    }
+
     // Todo: This method will remove in future if Business confirm we will enable capture of all providers
     private function isCaptureButtonEnabledForProvider($insuranceProviderCode, $quoteTypeId)
     {
@@ -1278,7 +1314,7 @@ class CentralService extends BaseService
         return in_array($insuranceProviderCode, $enabledProviders);
     }
 
-    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount)
+    public function capturePaymentValidation($uuid, $quoteTypeId, $captureAmount, $quoteCode)
     {
         try {
             $data = [
@@ -1290,11 +1326,15 @@ class CentralService extends BaseService
             return Ken::request('/capture-payment-validation', 'put', $data);
 
         } catch (\Throwable $th) {
-            LoggerService::error('capturePaymentValidation failed: '.$th->getMessage(), [
-                'uuid' => $uuid,
-                'quoteTypeId' => $quoteTypeId,
-                'captureAmount' => $captureAmount,
-            ]);
+            LoggerService::error('capturePaymentValidation failed',
+                context: [
+                    'ref_id' => $quoteCode,
+                ],
+                extra: [
+                    'quoteTypeId' => $quoteTypeId,
+                    'captureAmount' => $captureAmount,
+                ],
+                exception: $th);
 
             return ['status' => 'CAPTURE_VALIDATION_FAILED', 'message' => $th->getMessage()];
         }
@@ -1340,6 +1380,7 @@ class CentralService extends BaseService
                     $paymentSplit->documents()->forceDelete();
                 }
                 PaymentSplits::where('code', $request->payment_code)->delete();
+                PaymentStatusHistory::where('payment_code', $request->payment_code)->delete();
                 Payment::where('id', $request->payment_id)->delete();
             }, $maxAttempts);
             info('fn:deletePayment - Payment deleted successfully: '.$request->payment_id);
@@ -1350,5 +1391,49 @@ class CentralService extends BaseService
         }
 
         return ['status' => true, 'message' => 'Delete payment processed'];
+    }
+
+    public function getPlansPaymentGateway($request, $quoteType)
+    {
+        $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
+        $paymentGatewayIds = [];
+        foreach ($request->plan_ids as $plan) {
+            $planId = $plan['planId'];
+            $providerId = $plan['providerId'];
+
+            if (! $planId || ! $providerId) {
+                continue;
+            }
+
+            $childPaymentGatewayIds = ['plan_id' => $planId, 'gateway_id' => 3];
+
+            // COMMENTED FOR NOW WILL BE USED LATER WHEN BROKER COMMISSION CHANGES GO LIVE
+            // // First check if Broker Commission exists for the plan+provider+quoteTypeId
+            // $planBrokerCommission = BrokerCommission::where(['plan_id' => $planId, 'insurance_provider_id' => $providerId, 'quote_type_id' => $quoteTypeId, 'is_active' => 1])->first();
+            // if($planBrokerCommission) {
+            //     $childPaymentGatewayIds['gateway_id'] = $planBrokerCommission->enable_payment_link ? 4:3;
+            //     $paymentGatewayIds[] = $childPaymentGatewayIds;
+            //     continue;
+            // }
+
+            // // Second check if Broker Commission exists for the provider+quoteTypeId
+            // $providerBrokerCommission = BrokerCommission::where(['insurance_provider_id' => $providerId, 'quote_type_id' => $quoteTypeId, 'is_active' => 1])->whereNull('plan_id')->first();
+            // if($providerBrokerCommission) {
+            //     $childPaymentGatewayIds['gateway_id'] = $providerBrokerCommission->enable_payment_link ? 4:3;
+            //     $paymentGatewayIds[] = $childPaymentGatewayIds;
+            //     continue;
+            // }
+
+            // Third check from insurance_provider table
+            $insuranceProvider = InsuranceProvider::where(['id' => $providerId, 'is_active' => 1])->first();
+
+            if ($insuranceProvider) {
+                $childPaymentGatewayIds['gateway_id'] = $insuranceProvider->payment_gateway_id;
+            }
+
+            $paymentGatewayIds[] = $childPaymentGatewayIds;
+        }
+
+        return $paymentGatewayIds;
     }
 }

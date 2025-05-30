@@ -225,262 +225,252 @@ onMounted(() => {
       </x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="RENEWAL BATCH #">
-          <x-input
-            v-model="quoteForm.renewal_batch"
-            type="text"
-            :disabled="true"
-            class="w-full"
-            :error="quoteForm.errors.renewal_batch"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.renewal_batch"
+          type="text"
+          :disabled="true"
+          class="w-full"
+          :error="quoteForm.errors.renewal_batch"
+          label="RENEWAL BATCH #"
+        />
 
-        <x-field label="First Name" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.first_name"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.first_name"
+          label="First Name"
+          required
+        />
 
-        <x-field label="Last Name" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.last_name"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+          label="Last Name"
+          required
+        />
 
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="quoteForm.dob"
-            name="created_at_start"
-            :rules="[isRequired]"
-            :hasError="quoteForm.errors.dob"
-          />
-        </x-field>
+        <DatePicker
+          v-model="quoteForm.dob"
+          name="created_at_start"
+          :rules="[isRequired]"
+          :hasError="quoteForm.errors.dob"
+          label="Date of Birth"
+          required
+        />
 
-        <x-field label="Email" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :disabled="true"
-            :rules="[isRequired, isEmail]"
-            class="w-full"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          :disabled="true"
+          :rules="[isRequired, isEmail]"
+          class="w-full"
+          :error="quoteForm.errors.email"
+          label="Email"
+          required
+        />
 
-        <x-field label="Phone Number" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :disabled="true"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          :disabled="true"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.mobile_no"
+          label="Phone Number"
+          required
+        />
 
-        <x-field label="Nationality" required>
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :rules="[isRequired]"
-            :options="nationalities"
-            :error="quoteForm.errors.nationality_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :rules="[isRequired]"
+          :options="nationalities"
+          :error="quoteForm.errors.nationality_id"
+          filterable
+          filterPlaceholder="Filter Nationality...."
+          label="Nationality"
+          required
+        />
 
-        <x-field label="UAE licence held for" required>
-          <x-select
-            v-model="quoteForm.uae_license_held_for_id"
-            :rules="[isRequired]"
-            :options="uaeLicenseHeldFor"
-            class="w-full"
-            :error="quoteForm.errors.uae_license_held_for_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.uae_license_held_for_id"
+          :rules="[isRequired]"
+          :options="uaeLicenseHeldFor"
+          class="w-full"
+          :error="quoteForm.errors.uae_license_held_for_id"
+          label="UAE licence held for"
+          required
+        />
 
-        <x-field label="HOME COUNTRY DRIVING LICENSE HELD FOR">
-          <x-select
-            v-model="quoteForm.back_home_license_held_for_id"
-            :options="uaeLicenseHeldFor"
-            class="w-full"
-            :error="quoteForm.errors.back_home_license_held_for_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.back_home_license_held_for_id"
+          :options="uaeLicenseHeldFor"
+          class="w-full"
+          :error="quoteForm.errors.back_home_license_held_for_id"
+          label="HOME COUNTRY DRIVING LICENSE HELD FOR"
+        />
 
-        <x-field label="CAR MAKE" required>
-          <x-select
-            v-model="quoteForm.car_make_id"
-            :rules="[isRequired]"
-            :options="carMakes"
-            class="w-full"
-            :error="quoteForm.errors.car_make_id"
-            @update:modelValue="fetchCarModel"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.car_make_id"
+          :rules="[isRequired]"
+          :options="carMakes"
+          class="w-full"
+          :error="quoteForm.errors.car_make_id"
+          @update:modelValue="fetchCarModel"
+          label="CAR MAKE"
+          required
+        />
 
-        <x-field label="CAR MODEL" required>
-          <x-select
-            v-model="quoteForm.car_model_id"
-            :rules="[isRequired]"
-            :options="carModel.options"
-            :loading="carModel.loading"
-            class="w-full"
-            :error="quoteForm.errors.car_model_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.car_model_id"
+          :rules="[isRequired]"
+          :options="carModel.options"
+          :loading="carModel.loading"
+          class="w-full"
+          :error="quoteForm.errors.car_model_id"
+          label="CAR MODEL"
+          required
+        />
 
-        <x-field label="CYLINDER" required>
-          <x-input
-            v-model="quoteForm.cylinder"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.cylinder"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.cylinder"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.cylinder"
+          label="CYLINDER"
+          required
+        />
 
-        <x-field label="TRIM">
-          <x-select
-            v-model="quoteForm.car_model_detail_id"
-            :options="carTrim.options"
-            :loading="carModel.loading"
-            class="w-full"
-            :error="quoteForm.errors.car_model_detail_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.car_model_detail_id"
+          :options="carTrim.options"
+          :loading="carModel.loading"
+          class="w-full"
+          :error="quoteForm.errors.car_model_detail_id"
+          label="TRIM"
+        />
 
-        <x-field label="CAR MODEL YEAR" required>
-          <x-select
-            v-model="quoteForm.year_of_manufacture"
-            :rules="[isRequired]"
-            :options="yearOfManufacture"
-            class="w-full"
-            :error="quoteForm.errors.year_of_manufacture"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.year_of_manufacture"
+          :rules="[isRequired]"
+          :options="yearOfManufacture"
+          class="w-full"
+          :error="quoteForm.errors.year_of_manufacture"
+          label="CAR MODEL YEAR"
+          required
+        />
 
-        <x-field label="CAR VALUE">
-          <x-input
-            v-model="quoteForm.car_value"
-            class="w-full"
-            :error="quoteForm.errors.car_value"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.car_value"
+          class="w-full"
+          :error="quoteForm.errors.car_value"
+          label="CAR VALUE"
+        />
 
-        <x-field label="CAR VALUE (AT ENQUIRY)" required>
-          <x-input
-            v-model="quoteForm.car_value"
-            :disabled="true"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.car_value"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.car_value"
+          :disabled="true"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.car_value"
+          label="CAR VALUE (AT ENQUIRY)"
+          required
+        />
 
-        <x-field label="VEHICLE TYPE" required>
-          <x-select
-            v-model="quoteForm.vehicle_type_id"
-            :rules="[isRequired]"
-            :options="vehicleTypeOptions"
-            class="w-full"
-            :error="quoteForm.errors.vehicle_type_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.vehicle_type_id"
+          :rules="[isRequired]"
+          :options="vehicleTypeOptions"
+          class="w-full"
+          :error="quoteForm.errors.vehicle_type_id"
+          label="VEHICLE TYPE"
+          required
+        />
 
-        <x-field label="SEAT CAPACITY" required>
-          <x-input
-            v-model="quoteForm.seat_capacity"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.seat_capacity"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.seat_capacity"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.seat_capacity"
+          label="SEAT CAPACITY"
+          required
+        />
 
-        <x-field label="EMIRATE OF REGISTRATION" required>
-          <x-select
-            v-model="quoteForm.emirate_of_registration_id"
-            :rules="[isRequired]"
-            :options="emiratesOfRegistration"
-            class="w-full"
-            :error="quoteForm.errors.emirate_of_registration_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.emirate_of_registration_id"
+          :rules="[isRequired]"
+          :options="emiratesOfRegistration"
+          class="w-full"
+          :error="quoteForm.errors.emirate_of_registration_id"
+          label="EMIRATE OF REGISTRATION"
+          required
+        />
 
-        <x-field label="TYPE OF CAR INSURANCE" required>
-          <x-select
-            v-model="quoteForm.car_type_insurance_id"
-            :rules="[isRequired]"
-            :options="typeOfInsuranceOptions"
-            class="w-full"
-            :error="quoteForm.errors.car_type_insurance_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.car_type_insurance_id"
+          :rules="[isRequired]"
+          :options="typeOfInsuranceOptions"
+          class="w-full"
+          :error="quoteForm.errors.car_type_insurance_id"
+          label="TYPE OF CAR INSURANCE"
+          required
+        />
 
-        <x-field label="CURRENTLY INSURED WITH" required>
-          <x-select
-            v-model="quoteForm.currently_insured_with"
-            :rules="[isRequired]"
-            :options="currentlyInsuredWith"
-            class="w-full"
-            :error="quoteForm.errors.currently_insured_with"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.currently_insured_with"
+          :rules="[isRequired]"
+          :options="currentlyInsuredWith"
+          class="w-full"
+          :error="quoteForm.errors.currently_insured_with"
+          label="CURRENTLY INSURED WITH"
+          required
+        />
 
-        <x-field label="CLAIM HISTORY" required>
-          <x-select
-            v-model="quoteForm.claim_history_id"
-            :rules="[isRequired]"
-            :options="claimHistory"
-            class="w-full"
-            :error="quoteForm.errors.claim_history_id"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.claim_history_id"
+          :rules="[isRequired]"
+          :options="claimHistory"
+          class="w-full"
+          :error="quoteForm.errors.claim_history_id"
+          label="CLAIM HISTORY"
+          required
+        />
 
-        <x-field
+        <x-select
+          v-model="quoteForm.uae_license_held_for_id"
+          :options="[
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :error="quoteForm.errors.uae_license_held_for_id"
           label="CAN YOU PROVIDE NO-CLAIMS LETTER FROM YOUR PREVIOUS INSURERS?"
-        >
-          <x-select
-            v-model="quoteForm.uae_license_held_for_id"
-            :options="[
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-            :error="quoteForm.errors.uae_license_held_for_id"
-          />
-        </x-field>
+        />
 
-        <x-field label="PREVIOUS POLICY NUMBER">
-          <x-input
-            v-model="quoteForm.previous_quote_policy_number"
-            :disabled="true"
-            class="w-full"
-            :error="quoteForm.errors.previous_quote_policy_number"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.previous_quote_policy_number"
+          :disabled="true"
+          class="w-full"
+          :error="quoteForm.errors.previous_quote_policy_number"
+          label="PREVIOUS POLICY NUMBER"
+        />
 
-        <x-field label="PREVIOUS POLICY EXPIRY DATE">
-          <x-input
-            v-model="quoteForm.previous_policy_expiry_date"
-            :disabled="true"
-            class="w-full"
-            :error="quoteForm.errors.previous_policy_expiry_date"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.previous_policy_expiry_date"
+          :disabled="true"
+          class="w-full"
+          :error="quoteForm.errors.previous_policy_expiry_date"
+          label="PREVIOUS POLICY EXPIRY DATE"
+        />
 
-        <x-field label="ADDITIONAL NOTES">
-          <x-textarea
-            v-model="quoteForm.additional_notes"
-            type="textarea"
-            class="w-full"
-            :error="quoteForm.errors.additional_notes"
-          />
-        </x-field>
+        <x-textarea
+          v-model="quoteForm.additional_notes"
+          class="w-full"
+          :error="quoteForm.errors.additional_notes"
+          label="ADDITIONAL NOTES"
+        />
 
         <x-divider class="my-4" />
         <div class="flex justify-end gap-3 mb-4">

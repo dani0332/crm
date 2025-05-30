@@ -12,6 +12,7 @@ use App\Models\LifeQuote;
 use App\Traits\CentralTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LifeQuoteRepository extends BaseRepository
@@ -187,15 +188,22 @@ class LifeQuoteRepository extends BaseRepository
         return $this->where('parent_duplicate_quote_id', $code)->first();
     }
 
-    public function fetchExportData()
+    public function fetchExportData($requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
+
         $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
-            ->filter(false)
+            ->filter(paginate: false)
             ->withFakeLeadCriteria();
         $this->adjustQueryByDateFilters($query, 'life_quote_request');
 
-        return $query->orderBy('life_quote_request.created_at', 'desc')
-            ->get();
+        return $query->orderBy('life_quote_request.created_at', 'desc');
     }
 
     public function fetchCreateDuplicate(array $dataArr): object

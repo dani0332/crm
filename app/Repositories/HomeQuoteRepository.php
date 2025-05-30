@@ -42,6 +42,7 @@ use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -62,7 +63,7 @@ class HomeQuoteRepository extends BaseRepository
         )->orderBy('created_at', 'desc');
     }
 
-    public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false)
+    public function fetchGetData(bool $forExport = false, bool $forTotalLeadsCount = false, $requestParams = [])
     {
         $excludeCreatedAtFilters = [
             'email',
@@ -73,6 +74,14 @@ class HomeQuoteRepository extends BaseRepository
             'payment_due_date',
             'booking_date',
         ];
+
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         // Check if any of the exclude filters are active
         $shouldExcludeCreatedAtFilters = $this->hasActiveFilters($excludeCreatedAtFilters);
@@ -118,7 +127,7 @@ class HomeQuoteRepository extends BaseRepository
             ->when(
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
-                fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate()->withQueryString())
+                fn ($query) => $query->when($forExport, fn ($query) => $query, fn ($query) => $query->simplePaginate()->withQueryString())
             );
     }
 
@@ -377,7 +386,12 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
-        return DB::transaction(function () use ($uuid, $data) {
+        // Initialize variables to be used outside the transaction
+        $fieldsChanged = false;
+        $quoteResult = null;
+
+        // Begin transaction
+        $result = DB::transaction(function () use ($uuid, $data, &$fieldsChanged, &$quoteResult) {
             try {
                 // Find the quote by UUID or fail if not found
                 $quote = $this->byQuoteTypeId(QuoteTypes::HOME->id())
@@ -421,7 +435,6 @@ class HomeQuoteRepository extends BaseRepository
                 $mappedData['personal_quote_id'] = $quote->id;
 
                 // Track which fields were changed
-                $fieldsChanged = false;
                 $existingHomeQuote = HomeQuote::where('uuid', $uuid)->first();
 
                 LoggerService::startQuoteLogging(QuoteTypes::HOME->refId($uuid));
@@ -462,13 +475,8 @@ class HomeQuoteRepository extends BaseRepository
                     SaveCustomerAddressJob::dispatch($uuid, $data['addressObj']);
                 }
 
-                // If specific fields changed, call the getQuotePlans method with getLatestRating=true
-                if ($fieldsChanged) {
-                    LoggerService::info('Fields changed, Fetching quote plans', extra: [
-                        'getLatestRating' => true,
-                    ]);
-                    app(\App\Services\HomeQuoteService::class)->getQuotePlans($uuid, ['getLatestRating' => true]);
-                }
+                // Save quote to use outside transaction
+                $quoteResult = $quote;
 
                 // Return the updated quote
                 return $quote;
@@ -478,6 +486,17 @@ class HomeQuoteRepository extends BaseRepository
                 throw $e; // Re-throw exception to trigger transaction rollback
             }
         });
+
+        // If fields changed, fetch quote plans AFTER transaction has committed
+        if ($fieldsChanged) {
+            LoggerService::info('Fields changed, Fetching quote plans', extra: [
+                'getLatestRating' => true,
+            ]);
+            app(\App\Services\HomeQuoteService::class)->getQuotePlans($uuid, ['getLatestRating' => true]);
+        }
+
+        // Return the updated quote
+        return $result;
     }
 
     public function fetchCardsView(Request $request)

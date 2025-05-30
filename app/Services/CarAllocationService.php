@@ -8,6 +8,7 @@ use App\Enums\CarPlanType;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -36,6 +37,7 @@ use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
 use App\Models\UserTeams;
+use App\Services\DTOs\FetchCarLeadResult;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -114,7 +116,7 @@ class CarAllocationService extends AllocationService
         return $continueAssignment;
     }
 
-    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false)
+    public function fetchLead($quoteId, $overrideAdvisorId, $getLeadWithoutCriteria = false): FetchCarLeadResult
     {
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -129,15 +131,19 @@ class CarAllocationService extends AllocationService
 
         $lead = CarQuote::where('uuid', $quoteId)->first();
 
-        if ($lead && $getLeadWithoutCriteria) {
-            return $lead;
+        if (! $lead) {
+            return new FetchCarLeadResult(null, true);
         }
 
-        if (! $lead || ! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
-            return null;
+        if ($getLeadWithoutCriteria) {
+            return new FetchCarLeadResult($lead, false);
         }
 
-        return $lead;
+        if (! $this->verifyPreChecks($lead, $overrideAdvisorId)) {
+            return new FetchCarLeadResult(null, false);
+        }
+
+        return new FetchCarLeadResult($lead, false);
     }
 
     public function getTier($tierId)
@@ -300,6 +306,13 @@ class CarAllocationService extends AllocationService
         // Query to get all active tiers.
         $tiersQuery = Tier::where('is_active', 1);
 
+        if ($carLead->registration_type == CarRegistrationType::COMPANY) {
+            $this->getTierBasedOnValue($carLead, $tiersQuery);
+            LoggerService::info(self::class.' - Registration type is company. Calculating tier based on value for lead with Ref-ID: '.$carLead->uuid.' | Time: '.now());
+
+            return $tiersQuery->first();
+        }
+
         // Check if the car's year of manufacture is newer than 15 years.
         if ($carLead->year_of_manufacture < $yearOfManufacture) {
             // Check if more than one plan is found against the car lead.
@@ -439,8 +452,14 @@ class CarAllocationService extends AllocationService
         $rules = $this->getRules($lead);
 
         if ($rules->isEmpty()) {
-            $ruleUserIds = $this->getRuleUsers();
-            LoggerService::info('No rules found, excluding rule users: '.json_encode($ruleUserIds));
+
+            if ($lead->registration_type == CarRegistrationType::PERSONAL) {
+                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: true);
+            } else {
+                $ruleUserIds = $this->getRuleUsers(excludeVehicleUseRule: false);
+            }
+
+            LoggerService::info('No rules found, excluding rule users: ', json_encode($ruleUserIds));
 
             return array_diff(is_array($tierUserIds) ? $tierUserIds : $tierUserIds->toArray(), $ruleUserIds);
         }
@@ -789,13 +808,16 @@ class CarAllocationService extends AllocationService
         return $userIds;
     }
 
-    private function getRuleUsers(): mixed
+    private function getRuleUsers($excludeVehicleUseRule = true): mixed
     {
         // Join the RuleLeadSource table with the Rules table where the rule is active (is_active = 1).
         // Select distinct user IDs associated with these rules and convert the result to an array.
         return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->where('rules.is_active', 1)
+            ->when($excludeVehicleUseRule, function ($query) {
+                $query->where('rule_type', '!=', RuleTypeEnum::VEHICLE_USE);
+            })
             ->distinct()
             ->pluck('rule_users.user_id')
             ->toArray();
@@ -869,6 +891,14 @@ class CarAllocationService extends AllocationService
         $lead->auto_assigned = true;
         $lead->sic_flow_enabled = 0;
         $lead->assignment_type = $assignmentType;
+
+        LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
+        ]);
+        if (empty($lead->lead_assignment_trigger)) {
+            LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
 
         // Get the latest quote batch and assign it to the lead.
         $quoteBatch = QuoteBatches::latest()->first();

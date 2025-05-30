@@ -2,6 +2,7 @@
 
 namespace App\Factories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -10,13 +11,14 @@ use App\Enums\quoteStatusCode;
 use App\Enums\SageEnum;
 use App\Enums\SagePaymentMethodsEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
+use App\Models\SendUpdateLog;
 use App\Models\User;
-use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
 use stdClass;
 
@@ -1169,8 +1171,8 @@ class SagePayloadFactory
         $latestEndorsementCode = '';
         $endorsementSubType = '';
 
-        if (isset($quote->personal_quote_id) && $quote?->personal_quote_id) {
-            $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
+        if ($quote?->personal_quote_id && $quote?->send_update_log_id) {
+            $latestEndorsement = SendUpdateLog::where('id', $quote->send_update_log_id)->first();
             $latestEndorsementCode = $latestEndorsement?->code;
 
             if (! empty($latestEndorsement->option_id)) {
@@ -1201,7 +1203,7 @@ class SagePayloadFactory
         //        TODO:: Need to check with Ali Array to Std
         $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_expiry_date));
+        $sageRequest->policyExpiryDate = $quote?->policy_expiry_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote->policy_expiry_date)) : '';
         $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
 
         if (! empty($paymentSplits)) {
@@ -1236,7 +1238,12 @@ class SagePayloadFactory
         $sageRequest->advisorName = $advisorName;
         $sageRequest->manager = $managerName;
         $sageRequest->advisorDepartment = $advisorDepartment;
-        $sageRequest->vatOnPremium = $quote->vat;
+        if ($quote->vat > 0) {
+            $sageRequest->vatOnPremium = $quote->vat;
+        } else {
+            $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
+            $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
+        }
         $sageRequest->premiumWithoutTax = floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
         $sageRequest->vatOnCommission = floatval($payment->commission_vat);

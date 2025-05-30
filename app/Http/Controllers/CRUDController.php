@@ -807,11 +807,9 @@ class CRUDController extends Controller
 
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
-            $listQuotePlans = app(CarQuoteService::class)->getPlans($id);
             $businessActivities = $this->dropdownSourceService->getDropdownSource('business_activity');
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'listQuotePlans',
                 'record',
                 'sendUpdateOptions',
                 'sendUpdateLogs',
@@ -1826,7 +1824,6 @@ class CRUDController extends Controller
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $lead = $this->carQuoteService->getEntityPlain($request->leadId);
             if ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued) {
-                // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
             }
 
@@ -1847,6 +1844,12 @@ class CRUDController extends Controller
 
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
+
+        // Check for error in result
+        if (isset($result['error'])) {
+            return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('error', $result['error']);
+        }
+
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
             $this->crudService->calculateScore($plainEntity, $request->modelType);
@@ -2226,6 +2229,14 @@ class CRUDController extends Controller
             $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
         }
 
+        // check if advisor belongs to PCP or not
+        $isPCPTeamAdvisor = ! empty($carQuote->advisor_id) ? $this->carQuoteService->isPCPAdvisor($carQuote->advisor_id) : false;
+        LoggerService::info(self::class.' - PCP Team Advisor: '.$isPCPTeamAdvisor.' | Lead source: '.$carQuote->source.' | Ref-ID: '.$carQuote->uuid.' | time: '.now());
+        if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD && $isPCPTeamAdvisor) {
+            app(CarEmailService::class)->sendPCPOCBIntroEmail($carQuote);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
+        }
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);
 

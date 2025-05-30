@@ -19,8 +19,8 @@ class BusinessQuote extends Model implements AuditableContract
     protected $table = 'business_quote_request';
     protected $guarded = [];
     public $filterables = [
-        'first_name' => FilterTypes::EXACT,
-        'last_name' => FilterTypes::EXACT,
+        'first_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::FREE,
         'uuid' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
