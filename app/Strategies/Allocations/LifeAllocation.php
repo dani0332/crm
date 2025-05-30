@@ -4,6 +4,9 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\RolesEnum;
 use App\Models\Nationality;
+use App\Services\Logger\LoggerService;
+use App\Services\RuleService;
+use App\Models\User;
 
 class LifeAllocation extends BaseAllocation
 {

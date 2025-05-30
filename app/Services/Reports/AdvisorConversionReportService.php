@@ -82,6 +82,7 @@ class AdvisorConversionReportService extends BaseService
             $query = $this->applyFilters($query, $filters);
         }
         $query = $query->get();
+        
 
         // map operation to calculate gross and net conversions of records
         return $query->map(function ($row) {
@@ -391,6 +392,7 @@ class AdvisorConversionReportService extends BaseService
                     quoteTypeCode::Car,
                     quoteTypeCode::Health,
                     quoteTypeCode::Travel,
+                    quoteTypeCode::Life,
                 ],
             ],
         ];
@@ -649,6 +651,10 @@ class AdvisorConversionReportService extends BaseService
             })
             ->when($lob === quoteTypeCode::Car, function ($q) {
                 $q->filterBySegment(request()->segment_filter, QuoteTypeId::Car);
+            })
+            ->when($lob === quoteTypeCode::Life, function ($q) {
+                
+                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Life);
             })
             ->when($freshLoad || isset($filters->advisorAssignedDates), function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('personal_quote_details.advisor_assigned_date', [$startDate, $endDate]);

@@ -198,4 +198,12 @@ class LifeQuote extends Model implements AuditableContract
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Life);
     }
+
+  
+
+    public function scopeFilterBySegment($query, $alias = 'lqr')
+    {
+        $segmentFilter = request()->input('segment_filter');
+        self::applySegmentFilter($query, $segmentFilter, $alias, QuoteTypeId::Life);
+    }
 }
