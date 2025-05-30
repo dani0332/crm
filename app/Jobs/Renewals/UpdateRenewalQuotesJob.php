@@ -74,7 +74,7 @@ class UpdateRenewalQuotesJob implements ShouldQueue
             $errors = ['Unexpected error: '.$exception->getMessage()];
         }
 
-        LoggerService::error('CL: ' . get_class() . ' FN: failed. Job Failed.', extra: [
+        LoggerService::error('CL: '.get_class().' FN: failed. Job Failed.', extra: [
             'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
             'step' => $step,
             'errors' => $errors,
