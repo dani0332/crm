@@ -335,6 +335,14 @@ const seniorPlansIds = reactive({
   ids: [],
 });
 
+// Define tabs for plan details modal
+const planDetailsTabs = ref([
+  { index: 0, label: 'Plan Details' },
+  { index: 1, label: 'Eligibility' },
+  { index: 2, label: 'Included Benefits' },
+  { index: 3, label: 'Key Features Document' },
+]);
+
 const onLoadAvailablePlansData = async () => {
   availablePlansTable.isLoading = true;
   let data = {
@@ -1366,65 +1374,158 @@ const sendOCBEmail = () => {
             show-close
             backdrop
           >
-            <div v-if="planDetails" class="space-y-6">
-              <!-- Plan Basic Info -->
-              <div>
-                <h4 class="text-lg font-semibold text-primary-800 mb-3">Plan Information</h4>
-                <dl class="grid grid-cols-2 gap-x-6 gap-y-4">
-                  <div>
-                    <dt class="font-medium text-gray-600">Provider</dt>
-                    <dd class="text-gray-900">{{ planDetails.providerName }}</dd>
-                  </div>
-                  <div>
-                    <dt class="font-medium text-gray-600">Plan Name</dt>
-                    <dd class="text-gray-900">{{ planDetails.name }}</dd>
-                  </div>
-                  <div>
-                    <dt class="font-medium text-gray-600">Investment Frequency</dt>
-                    <dd class="text-gray-900">{{ planDetails.investmentFrequency }}</dd>
-                  </div>
-                  <div>
-                    <dt class="font-medium text-gray-600">Currency</dt>
-                    <dd class="text-gray-900">{{ planDetails.currency }}</dd>
-                  </div>
-                </dl>
-              </div>
+            <div v-if="planDetails" class="w-full">
+              <TabGroup>
+                <TabList
+                  class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
+                >
+                  <Tab
+                    v-for="{ index, label } in planDetailsTabs"
+                    as="template"
+                    :key="index"
+                    v-slot="{ selected }"
+                  >
+                    <button
+                      :class="[
+                        'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
+                        'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
+                        selected
+                          ? 'bg-white shadow text-primary-600'
+                          : 'hover:bg-white/50',
+                      ]"
+                    >
+                      {{ label }}
+                    </button>
+                  </Tab>
+                </TabList>
 
-              <!-- Eligibility -->
-              <div v-if="planDetails.eligibility && planDetails.eligibility.length > 0">
-                <h4 class="text-lg font-semibold text-primary-800 mb-3">Eligibility</h4>
-                <div class="space-y-3">
-                  <div v-for="item in planDetails.eligibility" :key="item.id" class="border-l-4 border-primary-500 pl-4">
-                    <dt class="font-medium text-gray-700">{{ item.text }}</dt>
-                    <dd class="text-gray-600 text-sm">{{ item.description }}</dd>
-                    <dd class="text-gray-900 font-medium">{{ item.value }}</dd>
-                  </div>
-                </div>
-              </div>
+                <TabPanels class="mt-2 text-sm min-h-[50vh]">
+                  <!-- Plan Details Tab -->
+                  <TabPanel>
+                    <div class="p-4">
+                      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium text-gray-600">Provider</dt>
+                          <dd class="text-gray-900">{{ planDetails.providerName }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium text-gray-600">Plan Name</dt>
+                          <dd class="text-gray-900">{{ planDetails.name }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium text-gray-600">Investment Frequency</dt>
+                          <dd class="text-gray-900">{{ planDetails.investmentFrequency }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium text-gray-600">Currency</dt>
+                          <dd class="text-gray-900">{{ planDetails.currency }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium text-gray-600">Minimum Investment</dt>
+                          <dd class="text-gray-900">{{ planDetails.minimumInvestment }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium text-gray-600">Policy Term (Years)</dt>
+                          <dd class="text-gray-900">{{ planDetails.policyTerm }}</dd>
+                        </div>
+                        <div v-if="planDetails.description" class="grid sm:grid-cols-2">
+                          <dt class="font-medium text-gray-600">Description</dt>
+                          <dd class="text-gray-900">{{ planDetails.description }}</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </TabPanel>
 
-              <!-- Benefits -->
-              <div v-if="planDetails.includedBenefits && planDetails.includedBenefits.length > 0">
-                <h4 class="text-lg font-semibold text-primary-800 mb-3">Included Benefits</h4>
-                <div class="space-y-3">
-                  <div v-for="item in planDetails.includedBenefits" :key="item.id" class="border-l-4 border-green-500 pl-4">
-                    <dt class="font-medium text-gray-700">{{ item.text }}</dt>
-                    <dd class="text-gray-600 text-sm">{{ item.description }}</dd>
-                    <dd class="text-gray-900 font-medium">{{ item.value }}</dd>
-                  </div>
-                </div>
-              </div>
+                  <!-- Eligibility Tab -->
+                  <TabPanel>
+                    <div class="p-4">
+                      <div v-if="planDetails.eligibility && planDetails.eligibility.length > 0" class="space-y-4">
+                        <table cellpadding="3" cellspacing="3" class="table-auto w-full">
+                          <thead>
+                            <tr class="border-b">
+                              <th class="px-4 py-2 text-left font-medium text-gray-700">Criteria</th>
+                              <th class="px-4 py-2 text-left font-medium text-gray-700">Value</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="item in planDetails.eligibility" :key="item.id" class="border-b hover:bg-gray-50">
+                              <td class="px-4 py-3">
+                                <div class="font-medium text-gray-900">{{ item.text }}</div>
+                                <div v-if="item.description" class="text-gray-600 text-sm mt-1">{{ item.description }}</div>
+                              </td>
+                              <td class="px-4 py-3 text-gray-900 font-medium">{{ item.value }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div v-else class="text-center py-8 text-gray-500">
+                        No eligibility criteria available
+                      </div>
+                    </div>
+                  </TabPanel>
 
-              <!-- Key Feature Document -->
-              <div v-if="planDetails.keyFeatureDocument && planDetails.keyFeatureDocument.length > 0">
-                <h4 class="text-lg font-semibold text-primary-800 mb-3">Documents</h4>
-                <div class="space-y-2">
-                  <div v-for="doc in planDetails.keyFeatureDocument" :key="doc.id">
-                    <a :href="doc.value" target="_blank" class="text-primary-600 hover:text-primary-800 underline">
-                      {{ doc.text }}
-                    </a>
-                  </div>
-                </div>
-              </div>
+                  <!-- Included Benefits Tab -->
+                  <TabPanel>
+                    <div class="p-4">
+                      <div v-if="planDetails.includedBenefits && planDetails.includedBenefits.length > 0" class="space-y-4">
+                        <table cellpadding="3" cellspacing="3" class="table-auto w-full">
+                          <thead>
+                            <tr class="border-b">
+                              <th class="px-4 py-2 text-left font-medium text-gray-700">Benefit</th>
+                              <th class="px-4 py-2 text-left font-medium text-gray-700">Coverage</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="item in planDetails.includedBenefits" :key="item.id" class="border-b hover:bg-gray-50">
+                              <td class="px-4 py-3">
+                                <div class="font-medium text-gray-900">{{ item.text }}</div>
+                                <div v-if="item.description" class="text-gray-600 text-sm mt-1">{{ item.description }}</div>
+                              </td>
+                              <td class="px-4 py-3 text-gray-900 font-medium">{{ item.value }}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div v-else class="text-center py-8 text-gray-500">
+                        No included benefits available
+                      </div>
+                    </div>
+                  </TabPanel>
+
+                  <!-- Key Features Document Tab -->
+                  <TabPanel>
+                    <div class="p-4">
+                      <div v-if="planDetails.keyFeatureDocument && planDetails.keyFeatureDocument.length > 0" class="space-y-4">
+                        <div class="grid gap-4">
+                          <div v-for="doc in planDetails.keyFeatureDocument" :key="doc.id" class="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors">
+                            <div class="flex items-center gap-3">
+                              <div class="text-2xl">📃</div>
+                              <div class="flex-1">
+                                <a
+                                  :href="doc.value"
+                                  target="_blank"
+                                  class="text-primary-600 hover:text-primary-800 font-medium underline text-lg"
+                                >
+                                  {{ doc.text }}
+                                </a>
+                                <div v-if="doc.description" class="text-gray-600 text-sm mt-1">{{ doc.description }}</div>
+                              </div>
+                              <div class="text-gray-400">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="text-center py-8 text-gray-500">
+                        No key feature documents available
+                      </div>
+                    </div>
+                  </TabPanel>
+                </TabPanels>
+              </TabGroup>
             </div>
           </x-modal>
         </template>
