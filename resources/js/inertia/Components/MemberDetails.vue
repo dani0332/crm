@@ -33,6 +33,8 @@ const modals = reactive({
   member: false,
 });
 
+console.log(props.quote_type);
+
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
@@ -380,6 +382,7 @@ watch(
           label="DOB*"
           :hasError="memberFieldReq.dob"
           :rules="[isRequired]"
+          :max-date="quote_type == 'Life' ? new Date() : null"
         />
         <x-select
           v-model="memberForm.relation_code"
