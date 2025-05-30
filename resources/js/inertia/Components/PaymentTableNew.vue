@@ -278,7 +278,7 @@ const isPaymentAuthorized = computed(() => {
     );
     if (hasNotPaidPayments) {
       return payments.some(payment =>
-        payment.payment_splits.some(item => item.payment_method.code === 'CC'),
+        payment.payment_splits.some(item => item.payment_method.code === 'CC' && item.payment_status_id == paymentStatusEnum.AUTHORISED),
       );
     }
   }
