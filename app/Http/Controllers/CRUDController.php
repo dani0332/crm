@@ -98,6 +98,7 @@ use App\Services\MACRMService;
 use App\Services\NotesForCustomerService;
 use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
+use App\Services\Quotes\SavingsQuoteService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
@@ -139,6 +140,7 @@ class CRUDController extends Controller
     protected $quoteDocumentService;
     protected $emailDataService;
     protected $allocationService;
+    private $savingsQuoteService;
 
     use GenericQueriesAllLobs, TeamHierarchyTrait;
 
@@ -164,7 +166,8 @@ class CRUDController extends Controller
         SendEmailCustomerService $sendEmailCustomerService,
         QuoteDocumentService $quoteDocumentService,
         EmailDataService $emailDataService,
-        AllocationService $allocationService
+        AllocationService $allocationService,
+        SavingsQuoteService $savingsQuoteService
     ) {
         $this->genericModel = new GenericModel;
         $this->healthQuoteService = $healthService;
@@ -188,6 +191,7 @@ class CRUDController extends Controller
         $this->quoteDocumentService = $quoteDocumentService;
         $this->emailDataService = $emailDataService;
         $this->allocationService = $allocationService;
+        $this->savingsQuoteService = $savingsQuoteService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -1567,6 +1571,9 @@ class CRUDController extends Controller
         if (strpos($url, 'pet')) {
             $this->genericModel->modelType = 'Pet';
         }
+        if (strpos($url, 'savings')) {
+            $this->genericModel->modelType = 'Savings';
+        }
     }
 
     private function fillModelByModelType($type, Request $request)
@@ -1578,7 +1585,7 @@ class CRUDController extends Controller
         }
         $ignoreModelTypes = [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::SAVINGS];
         if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
-            $quoteTypes = 'Health,Car,Travel,Life,Home,Business';
+            $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Savings';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
             $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
