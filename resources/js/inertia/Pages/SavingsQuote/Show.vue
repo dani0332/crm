@@ -294,7 +294,7 @@ const availablePlansTable = reactive({
       value: 'providerName',
     },
     {
-      text: 'Plan Name',
+      text: 'Plans',
       value: 'name',
     },
     {
@@ -1224,6 +1224,12 @@ const selectedPlanIds = computed(() => {
               :rows-per-page="15"
               :hide-footer="availablePlansTable.data.length < 15"
             >
+              <template #header-providerName>
+                <div class="flex items-center gap-2">
+                  Provider Name
+                  <span class="diamond-icon"></span>
+                </div>
+              </template>
               <template #item-providerName="item">
                 <p class="text-gray-800 uppercase">
                   {{ item.providerName }}
@@ -1470,6 +1476,24 @@ const selectedPlanIds = computed(() => {
 
 .compact-rows :deep(thead th) {
   padding: 10px 12px !important;
+}
+
+/* Style the diamond icon in the header */
+.compact-rows :deep(thead th:first-child .header-text) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Diamond shape icon */
+.compact-rows :deep(.diamond-icon) {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: transparent;
+  transform: rotate(45deg);
+  margin-left: 8px;
+  border: 1px solid white;
 }
 
 /* Target vue3-easy-data-table checkboxes specifically - only for this component */
