@@ -1498,11 +1498,11 @@ const sendOCBEmail = () => {
                           <div class="text-right">
                             <div class="text-sm text-gray-600 mb-2">
                               <span class="font-medium">Created Date:</span>
-                              <span class="ml-2">{{ planDetails.created_at || '04-0102025 11:30:00' }}</span>
+                              <span class="ml-2">{{ quote.created_at }}</span>
                             </div>
                             <div class="text-sm text-gray-600 mb-6">
                               <span class="font-medium">Updated At:</span>
-                              <span class="ml-2">{{ planDetails.updated_at || '04-0102025 11:30:00' }}</span>
+                              <span class="ml-2">{{ quote.updated_at }}</span>
                             </div>
                             <x-button
                               color="primary"
