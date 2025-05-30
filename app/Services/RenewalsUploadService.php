@@ -1325,12 +1325,13 @@ class RenewalsUploadService
             $carQuote = CarQuote::find($renewalQuoteProcess->quote_id);
             LoggerService::info('Renewals OCB Email started for uuid: '.$carQuote->uuid);
 
-            if ($carQuote->quote_status_id == [
+            if (! in_array($carQuote->quote_status_id, [
                 QuoteStatusEnum::PolicyIssued,
                 QuoteStatusEnum::PolicyBooked,
                 QuoteStatusEnum::POLICY_BOOKING_QUEUED,
-            ]) {
-                throw new \Exception('Quote status is not eligible for OCB email');
+            ])) {
+                LoggerService::info('Quote status is not eligible for OCB email as quote status id: '.$carQuote->quote_status_id);
+                return;
             }
 
             if ($carQuote->previous_quote_policy_number != null) {
