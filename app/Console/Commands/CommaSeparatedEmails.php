@@ -3,11 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Monolog\Logger;
 
 class CommaSeparatedEmails extends Command
 {
@@ -38,27 +37,14 @@ class CommaSeparatedEmails extends Command
     {
         LoggerService::info('Processing comma-separated emails across all LOB tables');
 
-        // for request_quotes
-        /*$quoteTypes = [
-            QuoteTypeId::Car,
-            QuoteTypeId::Home,
-            QuoteTypeId::Health,
-            QuoteTypeId::Life,
-            QuoteTypeId::Business,
-            QuoteTypeId::Bike,
-            QuoteTypeId::Yacht,
-            QuoteTypeId::Travel,
-            QuoteTypeId::Pet,
-            QuoteTypeId::Cycle,
-            QuoteTypeId::Jetski,
-        ];*/
-
         $personalQuotes = DB::table('personal_quotes')
             ->select('id', 'uuid', 'quote_type_id', 'email', 'customer_id')
             ->where('email', 'like', '%,%')
             ->whereIn('source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY])
             ->orderBy('quote_type_id')
             ->get();
+
+        $quoteTypeIds = $personalQuotes->pluck('quote_type_id')->unique()->toArray();
 
         LoggerService::info('Found '.count($personalQuotes).' personal quotes with comma-separated emails');
 
@@ -80,39 +66,66 @@ class CommaSeparatedEmails extends Command
                 ];
 
                 if (! empty($quote->customer_id) && ! empty($secondaryEmail)) {
-                    $additionalContactInfo[] = [
+                    $additionalContactInfo[$quote->quote_type_id][] = [
                         'customer_id' => $quote->customer_id,
                         'key' => 'email',
                         'value' => trim($secondaryEmail),
+                        'uuid' => $quote->uuid,
+                        'quote_type_id' => $quote->quote_type_id,
                     ];
                 }
             }
             LoggerService::info('Data prepared for comma-separated emails');
 
             if (! empty($preparedData)) {
-                $allData = [];
-                foreach ($preparedData as $quoteTypeId => $data) {
-                    $allData = array_merge($allData, $data);
+                foreach ($quoteTypeIds as $quoteTypeId) {
+                    $quoteType = QuoteTypes::getName($quoteTypeId)->value;
+                    $tableName = strtolower($quoteType).'_quote_request';
+
+                    LoggerService::info('Fixing comma-separated emails on '.$tableName.' table', extra: [
+                        'tableName' => $tableName,
+                        'records' => count($preparedData[$quoteTypeId]),
+                    ]);
+
+                    foreach ($preparedData[$quoteTypeId] as $record) {
+                        DB::table($tableName)->where('uuid', $record['uuid'])
+                            ->update([
+                                'email' => $record['email'],
+                                'updated_at' => $record['updated_at'],
+                            ]);
+
+                        DB::table('personal_quotes')->where('uuid', $record['uuid'])->where('quote_type_id', $quoteTypeId)
+                            ->update([
+                                'email' => $record['email'],
+                                'updated_at' => $record['updated_at'],
+                            ]);
+
+                        LoggerService::info('Email updated on '.$tableName.' and personal_quotes table.', extra: [
+                            'uuid' => $record['uuid'],
+                            'email' => $record['email'],
+                        ]);
+                    }
+
+                    if (! empty($additionalContactInfo[$quoteTypeId])) {
+                        LoggerService::info('Inserting additional contact information for '.$quoteTypeId, extra: [
+                            'records' => count($additionalContactInfo[$quoteTypeId]),
+                        ]);
+                        foreach ($additionalContactInfo[$quoteTypeId] as $contact) {
+                            DB::table('customer_additional_contact')->insertOrIgnore([
+                                'customer_id' => $contact['customer_id'],
+                                'key' => $contact['key'],
+                                'value' => $contact['value'],
+                            ]);
+
+                            LoggerService::info('Inserted '.$contact['value'].' email as an additional contact information', extra: [
+                                'quote_uuid' => $contact['uuid'],
+                                'quote_type_id' => $contact['quote_type_id'],
+                            ]);
+                        }
+                    }
                 }
-
-                LoggerService::info('Running bulk upsert for personal quotes with comma-separated emails');
-                DB::table('personal_quotes')->upsert(
-                    $allData,
-                    ['id'],
-                    ['email']
-                );
-                LoggerService::info('Bulk upsert completed for personal quotes with comma-separated emails');
             }
 
-            if (! empty($additionalContactInfo)) {
-                LoggerService::info('Running bulk upsert for additional contact information');
-                DB::table('customer_additional_contact')->upsert(
-                    $additionalContactInfo,
-                    ['customer_id', 'key', 'value'],
-                    ['created_at', 'updated_at']
-                );
-                LoggerService::info('Bulk upsert completed for additional contact information');
-            }
         }
     }
 }
