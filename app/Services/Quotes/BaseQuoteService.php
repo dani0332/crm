@@ -29,6 +29,7 @@ use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
@@ -39,7 +40,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
-abstract class BaseQuoteService
+abstract class BaseQuoteService extends BaseService
 {
     use GenericQueriesAllLobs;
 

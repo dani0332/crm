@@ -98,6 +98,10 @@ class SavingsQuoteService extends BaseQuoteService
         // Make API request to save the savings quote
         $response = Capi::request('/api/v1-save-savings-quote', 'post', $data);
 
+        if (isset($response->quoteUID)) {
+            $this->selfAssign(QuoteTypes::SAVINGS, $response->quoteUID);
+        }
+
         return $response;
     }
 
