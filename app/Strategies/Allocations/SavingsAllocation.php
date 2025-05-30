@@ -24,7 +24,7 @@ class SavingsAllocation extends BaseAllocation
     {
         $category = $this->evaluateCategory();
         $amount = $this->lead?->savingsQuote?->currency?->convertToUSD((float) $this->lead?->savingsQuote?->amount ?? 0);
-        $frequency = $this->lead?->savingsQuote?->investment_frequency?->code;
+        $frequency = $this->lead?->savingsQuote?->investmentFrequency?->code;
 
         $santosh = 'santhosh.ganesan@insurancemarket.ae';
         $gaurav = 'gaurav.sharma@insurancemarket.ae';
