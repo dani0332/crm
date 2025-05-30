@@ -74,14 +74,11 @@ class UpdateRenewalQuotesJob implements ShouldQueue
             $errors = ['Unexpected error: '.$exception->getMessage()];
         }
 
-        LoggerService::error('Renewal Quote Process Failed', [
-            'quote_process_id' => $this->renewalQuoteProcess->id,
+        LoggerService::error('CL: ' . get_class() . ' FN: failed. Job Failed.', extra: [
+            'renewalQuoteProcessId' => $this->renewalQuoteProcess->id,
             'step' => $step,
             'errors' => $errors,
-            'exception' => get_class($exception),
-            'message' => $exception->getMessage(),
-            'trace' => $exception->getTraceAsString(),
-        ]);
+        ], exception: $exception);
 
         $renewalsUploadService->updateRenewalQuoteProcess(
             $this->renewalQuoteProcess,
