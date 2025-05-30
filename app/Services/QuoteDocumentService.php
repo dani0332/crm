@@ -592,7 +592,6 @@ class QuoteDocumentService extends BaseService
          *  -dNoOutputFonts is the key param for font change issue
          *      -- adding it handles Arabic but corrupt english in some cases where fonts in-compatible)
          * */
-
         $output = shell_exec($gsCommand);
 
         if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
@@ -600,7 +599,7 @@ class QuoteDocumentService extends BaseService
             throw new \Exception('Ghostscript preprocessing failed');
         }
 
-        //region Apply watermark with FPDI
+        // region Apply watermark with FPDI
         $pdf = new Fpdi;
         $pageCount = $pdf->setSourceFile($tempFilePath);
 
@@ -632,7 +631,7 @@ class QuoteDocumentService extends BaseService
         }
 
         $pdf->Output($outputPath, 'F');
-        //endregion
+        // endregion
 
         // Clean up temporary file
         if (file_exists($tempFilePath)) {
@@ -654,37 +653,37 @@ class QuoteDocumentService extends BaseService
     {
         // Preprocess the PDF with qpdf for FPDI compatibility
         $tempFilePath = storage_path('temp/preprocessed_'.$docName);
-        $qpdfLogPath = storage_path('temp/qpdf_log_' . $uuid . '.txt'); // Add log path for qpdf
+        $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
 
-        $decryptedTempPath = storage_path('temp/decrypted_' . $docName);
-        $decryptCommand = 'qpdf --password="" --decrypt ' . escapeshellarg($sourceFilePath) . ' ' .
-            escapeshellarg($decryptedTempPath) . ' > ' . escapeshellarg($qpdfLogPath) . ' 2>&1';
+        $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+        $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
+            escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
 
         shell_exec($decryptCommand);
 
-        if (!file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
+        if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
             $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
             LoggerService::error("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
             throw new \Exception('qpdf decryption failed');
         }
 
         // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
-        $qpdfCommand = 'qpdf ' .
-            '--no-warn ' . // Suppress warnings
-            '--force-version=1.4 ' . // Set PDF version to 1.4 for FPDI
-            escapeshellarg($decryptedTempPath) . ' ' .
-            escapeshellarg($tempFilePath) . ' > ' .
-            escapeshellarg($qpdfLogPath) . ' 2>&1';
+        $qpdfCommand = 'qpdf '.
+            '--no-warn '. // Suppress warnings
+            '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
+            escapeshellarg($decryptedTempPath).' '.
+            escapeshellarg($tempFilePath).' > '.
+            escapeshellarg($qpdfLogPath).' 2>&1';
 
         $output = shell_exec($qpdfCommand);
 
-        if (!file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
             $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
             LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
             throw new \Exception('qpdf preprocessing failed');
         }
 
-        //region Apply watermark with FPDI
+        // region Apply watermark with FPDI
         $pdf = new Fpdi;
         $pageCount = $pdf->setSourceFile($tempFilePath);
 
@@ -716,11 +715,11 @@ class QuoteDocumentService extends BaseService
         }
 
         $pdf->Output($outputPath, 'F');
-        //endregion
+        // endregion
 
         // Clean up temporary file
         if (file_exists($tempFilePath)) {
-             unlink($tempFilePath);
+            unlink($tempFilePath);
         }
 
         // Check if the output file was created successfully
