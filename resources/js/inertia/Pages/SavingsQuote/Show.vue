@@ -448,15 +448,8 @@ const getPlanDetails = id => {
       axios
         .get(`/savings/${page.props.quote.uuid}/plan_details/${id}`)
         .then(res => {
-          // Process the plan data similar to how we process it in onLoadAvailablePlansData
-          const processedPlan = {
-            ...res.data,
-            investmentFrequency: res.data.planTypeId === 9961 ? 'Regular' : 'Lumpsum',
-            currency: 'USD',
-            minimumInvestment: getEligibilityValue(res.data.eligibility, 'minimum_investment_amount'),
-            policyTerm: getEligibilityValue(res.data.eligibility, 'policy_term'),
-          };
-          planDetails.value = processedPlan;
+          // The API now returns the correct investmentFrequency, so we don't need to process it
+          planDetails.value = res.data;
           modals.planDetails = true;
           viewButtonLoading.value = false;
         })

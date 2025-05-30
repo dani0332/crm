@@ -110,34 +110,48 @@ class SavingsQuoteController extends Controller
         }
 
         $plans = [];
+        $planSource = null; // Track whether plan came from regular or lumpsum
 
         // Handle both regular and lumpsum plans
         if (isset($quotePlans->quotes->plans->regular)) {
-            $plans = array_merge($plans, $quotePlans->quotes->plans->regular);
+            foreach ($quotePlans->quotes->plans->regular as $plan) {
+                if ($plan->id == $planId) {
+                    $plans[] = $plan;
+                    $planSource = 'regular';
+                    break;
+                }
+            }
         }
 
-        if (isset($quotePlans->quotes->plans->lumpsum)) {
-            $plans = array_merge($plans, $quotePlans->quotes->plans->lumpsum);
+        if (empty($plans) && isset($quotePlans->quotes->plans->lumpsum)) {
+            foreach ($quotePlans->quotes->plans->lumpsum as $plan) {
+                if ($plan->id == $planId) {
+                    $plans[] = $plan;
+                    $planSource = 'lumpsum';
+                    break;
+                }
+            }
         }
 
         // If plans are in a different structure
         if (empty($plans) && is_array($quotePlans->quotes->plans)) {
-            $plans = $quotePlans->quotes->plans;
-        }
-
-        $foundPlan = null;
-        foreach ($plans as $plan) {
-            if ($plan->id == $planId) {
-                $foundPlan = $plan;
-                break;
+            foreach ($quotePlans->quotes->plans as $plan) {
+                if ($plan->id == $planId) {
+                    $plans[] = $plan;
+                    // Default to regular if we can't determine from structure
+                    $planSource = 'regular';
+                    break;
+                }
             }
         }
 
-        if (!$foundPlan) {
+        if (empty($plans)) {
             return response()->json([
                 'message' => 'Plan not found',
             ], 404);
         }
+
+        $foundPlan = $plans[0];
 
         // Helper function to extract value from eligibility array
         $getEligibilityValue = function($eligibility, $code) {
@@ -147,13 +161,20 @@ class SavingsQuoteController extends Controller
             return $found ? $found->value : 'N/A';
         };
 
+        // Determine investment frequency based on the plan source
+        $investmentFrequency = match($planSource) {
+            'regular' => InvestmentFrequencyEnum::REGULAR->value,
+            'lumpsum' => InvestmentFrequencyEnum::LUMPSUM->value,
+            default => InvestmentFrequencyEnum::REGULAR->value
+        };
+
         $data = [
             'id' => $foundPlan->id,
             'name' => $foundPlan->name ?? '',
             'providerCode' => $foundPlan->providerCode ?? '',
             'providerName' => $foundPlan->providerName ?? '',
             'planTypeId' => $foundPlan->planTypeId ?? null,
-            'investmentFrequency' => $foundPlan->planTypeId === 9961 ? 'Regular' : 'Lumpsum',
+            'investmentFrequency' => ucfirst($investmentFrequency),
             'currency' => 'USD',
             'minimumInvestment' => $getEligibilityValue($foundPlan->eligibility ?? [], 'minimum_investment_amount'),
             'policyTerm' => $getEligibilityValue($foundPlan->eligibility ?? [], 'policy_term'),
