@@ -105,7 +105,7 @@ const tableHeader = ref([
   },
   {
     text: 'Tenure of Cover',
-    value: 'savings_quote.tenure_of_savings',
+    value: 'savings_quote.tenure.text',
     is_active: true,
   },
   { text: 'POLICY NO', value: 'policy_number', is_active: true },

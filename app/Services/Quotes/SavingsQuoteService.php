@@ -38,6 +38,7 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote',
             'savingsQuote.purpose',
             'savingsQuote.investmentFrequency',
+            'savingsQuote.tenure',
             'nationality',
         ])
             ->filter(forTotalLeadsCount: $getTotalCount)
@@ -189,6 +190,7 @@ class SavingsQuoteService extends BaseQuoteService
             'savingsQuote',
             'savingsQuote.purpose',
             'savingsQuote.investmentFrequency',
+            'savingsQuote.tenure',
         ])
             ->when($allDetails, function ($q) {
                 $entityCustomerType = CustomerTypeEnum::Entity;

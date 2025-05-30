@@ -16,7 +16,7 @@ class SavingsQuote extends Model
     protected $fillable = [
         'personal_quote_id',
         'marital_status_id',
-        'tenure_of_savings',
+        'tenure_id',
         'has_nicotine',
         'purpose_id',
         'currency_id',
@@ -44,6 +44,11 @@ class SavingsQuote extends Model
     public function investmentFrequency()
     {
         return $this->belongsTo(Lookup::class, 'investment_criteria_id', 'id')->where('key', LookupsEnum::INVESTMENT_TYPE->value)->where('quote_type_id', QuoteTypeId::Savings);
+    }
+
+    public function tenure()
+    {
+        return $this->belongsTo(Lookup::class, 'tenure_id', 'id')->where('key', LookupsEnum::SAVINGS_TENURE->value)->where('quote_type_id', QuoteTypeId::Savings);
     }
 
     public function takesNicotine(): Attribute

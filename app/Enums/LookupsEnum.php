@@ -46,4 +46,5 @@ enum LookupsEnum: string
 
     case SAVINGS_PURPOSE = 'savings_purpose';
     case INVESTMENT_TYPE = 'investment_type';
+    case SAVINGS_TENURE = 'tenure';
 }
