@@ -1248,7 +1248,7 @@ const selectedPlanIds = computed(() => {
                 <div class="flex gap-2">
                   <x-button
                     size="xs"
-                    color="error"
+                    color="primary"
                     outlined
                     @click.prevent="
                       selectedPlanType = 'normalPlans';
