@@ -17,10 +17,10 @@ class SavingsQuote extends Model
         'personal_quote_id',
         'marital_status_id',
         'tenure_id',
-        'has_nicotine',
+        'nicotine_status',
         'purpose_id',
         'currency_id',
-        'amount',
+        'investment_amount',
         'investment_criteria_id',
         'additional_notes',
     ];
@@ -54,7 +54,7 @@ class SavingsQuote extends Model
     public function takesNicotine(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->has_nicotine ? 'Yes' : 'No',
+            get: fn () => $this->nicotine_status ? 'Yes' : 'No',
         );
     }
 

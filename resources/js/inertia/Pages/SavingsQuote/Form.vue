@@ -62,11 +62,14 @@ const quoteForm = useForm({
   gender: props.quote?.gender || '',
   marital_status_id: props.quote?.savings_quote?.marital_status_id || '',
   tenure_of_savings: props.quote?.savings_quote?.tenure_id || '',
-  has_nicotine: props.quote?.savings_quote?.nicotine_status ? props.quote.savings_quote.nicotine_status.toString() : '',
+  nicotine_status: props.quote?.savings_quote?.nicotine_status
+    ? props.quote.savings_quote.nicotine_status.toString()
+    : '',
   purpose_of_savings: props.quote?.savings_quote?.purpose_id || '',
   currency_id: props.quote?.savings_quote?.currency_id || '',
-  amount: props.quote?.savings_quote?.investment_amount || '',
-  investment_frequency: props.quote?.savings_quote?.investment_criteria_id || '',
+  investment_amount: props.quote?.savings_quote?.investment_amount || '',
+  investment_frequency:
+    props.quote?.savings_quote?.investment_criteria_id || '',
   additional_notes: props.quote?.savings_quote?.additional_notes || '',
 });
 
@@ -223,7 +226,7 @@ function onSubmit(isValid) {
           </label>
           <div class="flex gap-12 mt-2">
             <x-form-group
-              v-model="quoteForm.has_nicotine"
+              v-model="quoteForm.nicotine_status"
               :rules="[isRequired]"
             >
               <x-radio value="1" label="Yes" />
@@ -255,11 +258,11 @@ function onSubmit(isValid) {
             required
           />
           <x-input
-            v-model="quoteForm.amount"
+            v-model="quoteForm.investment_amount"
             type="number"
             :rules="[isRequired]"
             class="w-full"
-            :error="quoteForm.errors.amount"
+            :error="quoteForm.errors.investment_amount"
             label="AMOUNT"
             required
           />

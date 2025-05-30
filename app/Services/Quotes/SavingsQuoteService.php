@@ -4,19 +4,14 @@ namespace App\Services\Quotes;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
-use App\Models\Customer;
-use App\Models\PersonalQuote;
-use App\Models\PersonalQuoteDetail;
 use App\Models\SavingsQuote;
 use App\Services\LookupService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -68,84 +63,6 @@ class SavingsQuoteService extends BaseQuoteService
         ];
     }
 
-    // TODO: Remove this function after the API is ready
-    private function tempMockApi($data)
-    {
-        $getUUID = function (): string {
-            $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            $length = 8;
-
-            do {
-                $uid = '';
-                for ($i = 0; $i < $length; $i++) {
-                    $uid .= $characters[random_int(0, strlen($characters) - 1)];
-                }
-            } while (PersonalQuote::where('uuid', $uid)->exists());
-
-            return $uid;
-        };
-
-        $uuid = $getUUID();
-
-        $customer = Customer::firstOrCreate([
-            'email' => $data['email'],
-        ], [
-            'uuid' => Str::uuid(),
-            'first_name' => $data['firstName'],
-            'last_name' => $data['lastName'],
-            'mobile_no' => $data['mobileNo'],
-            'dob' => $data['dob'],
-            'nationality_id' => $data['nationalityId'],
-        ]);
-
-        $personalQuote = PersonalQuote::create([
-            'first_name' => $data['firstName'],
-            'last_name' => $data['lastName'],
-            'email' => $data['email'],
-            'mobile_no' => $data['mobileNo'],
-            'dob' => $data['dob'],
-            'nationality_id' => $data['nationalityId'],
-            'gender' => $data['gender'],
-            'quote_type_id' => $data['quoteTypeId'],
-            'uuid' => $uuid,
-            'code' => "{$this->quoteType->shortCode()}{$uuid}",
-            'quote_status_id' => QuoteStatusEnum::NewLead,
-            'customer_id' => $customer->id,
-        ]);
-
-        PersonalQuoteDetail::create([
-            'personal_quote_id' => $personalQuote->id,
-        ]);
-
-        // Get lookup data to map IDs back to codes for database storage
-        $lookupData = $this->getSavingsQuoteLookUpData();
-
-        // Convert lookupData items to collections
-        $savingsTenure = collect($lookupData['savingsTenure']);
-        $savingsPurpose = collect($lookupData['savingsPurpose']);
-        $savingsInvestmentType = collect($lookupData['savingsInvestmentType']);
-
-        $tenureOfSavings = $savingsTenure->where('id', $data['tenureId'])->first()->code ?? null;
-        $purposeOfSavings = $savingsPurpose->where('id', $data['purposeId'])->first()->code ?? null;
-        $investmentFrequency = $savingsInvestmentType->where('id', $data['investmentCriteriaId'])->first()->code ?? null;
-
-        SavingsQuote::create([
-            'personal_quote_id' => $personalQuote->id,
-            'marital_status_id' => $data['maritalStatusId'],
-            'tenure_of_savings' => $tenureOfSavings,
-            'has_nicotine' => $data['nicotineStatus'],
-            'purpose_of_savings' => $purposeOfSavings,
-            'currency_id' => $data['currencyId'],
-            'amount' => $data['investmentAmount'],
-            'investment_frequency' => $investmentFrequency,
-            'additional_notes' => $data['additionalNotes'],
-        ]);
-
-        return (object) [
-            'quoteUID' => $uuid,
-        ];
-    }
-
     public function create(array $data)
     {
         $sourceName = config('constants.SOURCE_NAME');
@@ -162,10 +79,10 @@ class SavingsQuoteService extends BaseQuoteService
             'quoteTypeId' => (int) $this->quoteType->id(),
             'maritalStatusId' => (int) $data['marital_status_id'],
             'tenureId' => (int) $data['tenure_of_savings'],
-            'nicotineStatus' => (int) $data['has_nicotine'],
+            'nicotineStatus' => (int) $data['nicotine_status'],
             'purposeId' => (int) $data['purpose_of_savings'],
             'currencyId' => (int) $data['currency_id'],
-            'investmentAmount' => (float) $data['amount'],
+            'investmentAmount' => (float) $data['investment_amount'],
             'investmentCriteriaId' => (int) $data['investment_frequency'],
             'additionalNotes' => $data['additional_notes'],
             'lang' => 'EN',
@@ -228,8 +145,6 @@ class SavingsQuoteService extends BaseQuoteService
 
     public function update(string $uuid, array $data)
     {
-        dd($data);
-
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->baseQuery()->where('uuid', $uuid)->firstOrFail();
 
