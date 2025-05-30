@@ -61,12 +61,12 @@ const quoteForm = useForm({
   nationality_id: props.quote?.nationality_id || '',
   gender: props.quote?.gender || '',
   marital_status_id: props.quote?.savings_quote?.marital_status_id || '',
-  tenure_of_savings: props.quote?.savings_quote?.tenure_of_savings || '',
-  has_nicotine: (props.quote?.savings_quote?.has_nicotine | 0).toString(),
-  purpose_of_savings: props.quote?.savings_quote?.purpose_of_savings || '',
+  tenure_of_savings: props.quote?.savings_quote?.tenure_id || '',
+  has_nicotine: props.quote?.savings_quote?.nicotine_status ? props.quote.savings_quote.nicotine_status.toString() : '',
+  purpose_of_savings: props.quote?.savings_quote?.purpose_id || '',
   currency_id: props.quote?.savings_quote?.currency_id || '',
-  amount: props.quote?.savings_quote?.amount || '',
-  investment_frequency: props.quote?.savings_quote?.investment_frequency || '',
+  amount: props.quote?.savings_quote?.investment_amount || '',
+  investment_frequency: props.quote?.savings_quote?.investment_criteria_id || '',
   additional_notes: props.quote?.savings_quote?.additional_notes || '',
 });
 
@@ -166,6 +166,7 @@ function onSubmit(isValid) {
           :rules="[isRequired]"
           :max-date="new Date()"
           label="DATE OF BIRTH"
+          format="dd-MM-yyyy"
           required
         />
 
