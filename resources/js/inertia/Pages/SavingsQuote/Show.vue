@@ -1,5 +1,6 @@
 <script setup>
 import { reactive } from 'vue';
+import { createReusableTemplate } from '@vueuse/core';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -503,6 +504,21 @@ const onCopyText = text => {
 const selectedPlanIds = computed(() => {
   return [];
 });
+
+// Create reusable template for manual toggle like Car
+const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
+  createReusableTemplate();
+
+// Manual toggle state
+const isManualUpdate = ref(false);
+const toggleManualLoader = ref(false);
+
+const onToggleManual = () => {
+  toggleManualLoader.value = true;
+  setTimeout(() => {
+    toggleManualLoader.value = false;
+  }, 300);
+};
 
 const onExportPlans = () => {
   if (selectedPlans.value.length === 0) {
@@ -1374,7 +1390,7 @@ const sendOCBEmail = () => {
             show-close
             backdrop
           >
-            <div v-if="planDetails" class="w-full">
+            <div v-if="planDetails" class="w-full no-border">
               <TabGroup>
                 <TabList
                   class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
@@ -1401,38 +1417,103 @@ const sendOCBEmail = () => {
 
                 <TabPanels class="mt-2 text-sm min-h-[50vh]">
                   <!-- Plan Details Tab -->
-                  <TabPanel>
-                    <div class="p-4">
-                      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                  <TabPanel class="bg-white">
+                    <div class="p-6">
+                      <!-- Manual Toggle using Car pattern -->
+                      <div class="mb-6">
+                        <ToggleManualButtonTemplate v-slot="{ isDisabled }">
+                          <x-toggle
+                            v-model="isManualUpdate"
+                            color="success"
+                            label="Manual"
+                            :disabled="isDisabled"
+                            @change="onToggleManual"
+                            :loading="toggleManualLoader"
+                          />
+                        </ToggleManualButtonTemplate>
+
+                        <div class="grid sm:grid-cols-2 mb-3">
+                          <x-tooltip
+                            v-if="page.props.lockLeadSectionsDetails?.plan_selection"
+                            placement="bottom"
+                          >
+                            <ToggleManualButtonReuseTemplate :isDisabled="true" />
+                            <template #tooltip>
+                              No further action allowed on issued policy, If changes are
+                              required, such as increase in price, please proceed through
+                              the 'Send Update' feature using the 'Correction of Policy'
+                              option.
+                            </template>
+                          </x-tooltip>
+                          <ToggleManualButtonReuseTemplate v-else />
+                        </div>
+                      </div>
+
+                      <!-- Form Fields using dt/dd grid pattern like Car -->
+                      <dl class="grid md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
                         <div class="grid sm:grid-cols-2">
-                          <dt class="font-medium text-gray-600">Provider</dt>
+                          <dt class="text-sm font-medium text-gray-700">Provider Name</dt>
                           <dd class="text-gray-900">{{ planDetails.providerName }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
-                          <dt class="font-medium text-gray-600">Plan Name</dt>
+                          <dt class="text-sm font-medium text-gray-700">Plan Name</dt>
                           <dd class="text-gray-900">{{ planDetails.name }}</dd>
                         </div>
+
                         <div class="grid sm:grid-cols-2">
-                          <dt class="font-medium text-gray-600">Investment Frequency</dt>
-                          <dd class="text-gray-900">{{ planDetails.investmentFrequency }}</dd>
+                          <dt class="text-sm font-medium text-gray-700 mt-2">Insurance Quote No.:</dt>
+                          <x-input
+                            model-value=""
+                            placeholder=""
+                            size="sm"
+                            :disabled="
+                              !isManualUpdate ||
+                              page.props.lockLeadSectionsDetails?.plan_selection
+                            "
+                          />
                         </div>
                         <div class="grid sm:grid-cols-2">
-                          <dt class="font-medium text-gray-600">Currency</dt>
-                          <dd class="text-gray-900">{{ planDetails.currency }}</dd>
+                          <dt class="text-sm font-medium text-gray-700 mt-2">Price:</dt>
+                          <x-input
+                            model-value=""
+                            placeholder=""
+                            size="sm"
+                            :disabled="
+                              !isManualUpdate ||
+                              page.props.lockLeadSectionsDetails?.plan_selection
+                            "
+                          />
                         </div>
+
                         <div class="grid sm:grid-cols-2">
-                          <dt class="font-medium text-gray-600">Minimum Investment</dt>
-                          <dd class="text-gray-900">{{ planDetails.minimumInvestment }}</dd>
+                          <dt class="text-sm font-medium text-gray-700">Investment Frequency</dt>
+                          <dd class="text-gray-900">{{ planDetails.investmentFrequency }} / Additional Single Premiums</dd>
                         </div>
-                        <div class="grid sm:grid-cols-2">
-                          <dt class="font-medium text-gray-600">Policy Term (Years)</dt>
-                          <dd class="text-gray-900">{{ planDetails.policyTerm }}</dd>
-                        </div>
-                        <div v-if="planDetails.description" class="grid sm:grid-cols-2">
-                          <dt class="font-medium text-gray-600">Description</dt>
-                          <dd class="text-gray-900">{{ planDetails.description }}</dd>
-                        </div>
+                        <div class="grid sm:grid-cols-2"></div>
                       </dl>
+
+                      <!-- Bottom section with dates and update button -->
+                      <div class="border-t border-gray-300 pt-6 mt-6">
+                        <div class="flex justify-end">
+                          <div class="text-right">
+                            <div class="text-sm text-gray-600 mb-2">
+                              <span class="font-medium">Created Date:</span>
+                              <span class="ml-2">{{ planDetails.created_at || '04-0102025 11:30:00' }}</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-6">
+                              <span class="font-medium">Updated At:</span>
+                              <span class="ml-2">{{ planDetails.updated_at || '04-0102025 11:30:00' }}</span>
+                            </div>
+                            <x-button
+                              color="primary"
+                              size="sm"
+                              :disabled="page.props.lockLeadSectionsDetails?.plan_selection"
+                            >
+                              Update
+                            </x-button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </TabPanel>
 
@@ -1746,5 +1827,34 @@ const sendOCBEmail = () => {
 .compact-rows :deep(.easy-checkbox input[type='checkbox'].partSelected + label:before) {
   background-color: #10B981 !important;
   border-color: #10B981 !important;
+}
+
+/* Remove borders from modal and tab components */
+.no-border {
+  border: none !important;
+}
+
+.no-border :deep(.tab-group),
+.no-border :deep(.tab-list),
+.no-border :deep(.tab-panel),
+.no-border :deep(.tab-panels) {
+  border: none !important;
+}
+
+/* Remove any default borders from headless ui components */
+:deep(.tab-group) {
+  border: none !important;
+}
+
+:deep(.tab-list) {
+  border: none !important;
+}
+
+:deep(.tab-panel) {
+  border: none !important;
+}
+
+:deep(.tab-panels) {
+  border: none !important;
 }
 </style>
