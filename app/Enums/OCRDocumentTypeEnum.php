@@ -61,6 +61,7 @@ enum OCRDocumentTypeEnum: string
                 'value' => $case->value,
             ];
         }
+
         return $result;
     }
 

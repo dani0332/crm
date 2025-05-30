@@ -143,7 +143,7 @@ trait OcrFillable
 
         if ($this->isEnabled($quote, $providersWithCommission)) {
             $commissionVat = $this->resolveProp($commission, 'VAT') ?? ($quote->payment?->comission_vat ?: 0);
-            $commissionPercentageDivisor = 1 + ($commissionVat > 0 ? .05: 0);
+            $commissionPercentageDivisor = 1 + ($commissionVat > 0 ? .05 : 0);
             $commissionWithoutVat = $dataToUpdate['commission'] - $commissionVat;
             $premiumWithoutVat = $quote->payment->total_price / $commissionPercentageDivisor;
             $commissionPercentage = roundNumber((($commissionWithoutVat / $premiumWithoutVat) * 100)) ?? $quote->payment?->comission_percentage;
@@ -197,7 +197,7 @@ trait OcrFillable
             $dataToUpdate['policy_expiry_date'] = $this->parseDate($this->resolveProp($data, 'policyExpiryDate'), $quote->policy_expiry_date);
         }
 
-        if(!$quote->policy_issuance_date) {
+        if (! $quote->policy_issuance_date) {
             $dataToUpdate['policy_issuance_date'] = now();
         }
 

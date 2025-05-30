@@ -6,13 +6,13 @@ use App\Enums\OCRDocumentTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Events\OcrNotifications;
 use App\Models\DocumentType;
-use App\Services\QuoteDocumentService;
 use App\Services\CentralService;
+use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
-use App\Services\Logger\LoggerService;
 
 class OCRService
 {
@@ -86,6 +86,7 @@ class OCRService
 
         if (! $docType?->isEnabled($quoteType)) {
             info(self::class."::process - OCR is not enabled for this document type {$documentType->code}");
+
             return null;
         }
 
@@ -99,7 +100,7 @@ class OCRService
         try {
             $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
             if ($data) {
-                LoggerService::info(self::class."::process - Data received from getData", extra:['data' => $data]);
+                LoggerService::info(self::class.'::process - Data received from getData', extra: ['data' => $data]);
                 $dataFilledResponse = $this->fill(
                     $quote,
                     $docType,
@@ -129,7 +130,7 @@ class OCRService
         return in_array($docType, [
             OCRDocumentTypeEnum::TAX_INVOICE,
             OCRDocumentTypeEnum::TAX_INVOICE_RAISED_BY_BUYER,
-            OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE
+            OCRDocumentTypeEnum::CERTIFICATE_OF_ISSUANCE,
         ]);
     }
 }

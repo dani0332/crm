@@ -50,6 +50,7 @@ class PopulateDocumentData implements ShouldQueue
 
         if (! $this->validateMimeType()) {
             info(self::class." - Invalid file mime type {$this->fileMimeType} for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+
             return;
         }
 
@@ -65,6 +66,7 @@ class PopulateDocumentData implements ShouldQueue
 
             if ($isSuccess === null) {
                 info(self::class." - Document data population skipped for {$this->quoteType?->value} & Document Type {$this->documentType?->code}");
+
                 return;
             }
 
@@ -99,7 +101,7 @@ class PopulateDocumentData implements ShouldQueue
 
     public function failed(\Throwable $exception)
     {
-        LoggerService::error("Job has failed permanently.", extra:['job' => static::class, 'error' => $exception->getMessage()]);
+        LoggerService::error('Job has failed permanently.', extra: ['job' => static::class, 'error' => $exception->getMessage()]);
 
         // Send OCR fail notification for supported document types
         $docType = OCRDocumentTypeEnum::getDocumentType($this->documentType);
