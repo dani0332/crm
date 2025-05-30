@@ -1442,13 +1442,13 @@ const sendOCBEmail = () => {
                       <div v-if="planDetails.eligibility && planDetails.eligibility.length > 0" class="space-y-4">
                         <table cellpadding="3" cellspacing="3" class="table-auto w-full">
                           <thead>
-                            <tr class="border-b">
+                            <tr>
                               <th class="px-4 py-2 text-left font-medium text-gray-700">Criteria</th>
                               <th class="px-4 py-2 text-left font-medium text-gray-700">Value</th>
                             </tr>
                           </thead>
                           <tbody>
-                            <tr v-for="item in planDetails.eligibility" :key="item.id" class="border-b hover:bg-gray-50">
+                            <tr v-for="item in planDetails.eligibility" :key="item.id" class="hover:bg-gray-50">
                               <td class="px-4 py-3">
                                 <div class="font-medium text-gray-900">{{ item.text }}</div>
                                 <div v-if="item.description" class="text-gray-600 text-sm mt-1">{{ item.description }}</div>
@@ -1470,13 +1470,13 @@ const sendOCBEmail = () => {
                       <div v-if="planDetails.includedBenefits && planDetails.includedBenefits.length > 0" class="space-y-4">
                         <table cellpadding="3" cellspacing="3" class="table-auto w-full">
                           <thead>
-                            <tr class="border-b">
+                            <tr>
                               <th class="px-4 py-2 text-left font-medium text-gray-700">Benefit</th>
                               <th class="px-4 py-2 text-left font-medium text-gray-700">Coverage</th>
                             </tr>
                           </thead>
                           <tbody>
-                            <tr v-for="item in planDetails.includedBenefits" :key="item.id" class="border-b hover:bg-gray-50">
+                            <tr v-for="item in planDetails.includedBenefits" :key="item.id" class="hover:bg-gray-50">
                               <td class="px-4 py-3">
                                 <div class="font-medium text-gray-900">{{ item.text }}</div>
                                 <div v-if="item.description" class="text-gray-600 text-sm mt-1">{{ item.description }}</div>
@@ -1495,27 +1495,27 @@ const sendOCBEmail = () => {
                   <!-- Key Features Document Tab -->
                   <TabPanel>
                     <div class="p-4">
-                      <div v-if="planDetails.keyFeatureDocument && planDetails.keyFeatureDocument.length > 0" class="space-y-4">
-                        <div class="grid gap-4">
-                          <div v-for="doc in planDetails.keyFeatureDocument" :key="doc.id" class="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors">
-                            <div class="flex items-center gap-3">
-                              <div class="text-2xl">📃</div>
-                              <div class="flex-1">
-                                <a
-                                  :href="doc.value"
-                                  target="_blank"
-                                  class="text-primary-600 hover:text-primary-800 font-medium underline text-lg"
-                                >
-                                  {{ doc.text }}
-                                </a>
-                                <div v-if="doc.description" class="text-gray-600 text-sm mt-1">{{ doc.description }}</div>
-                              </div>
-                              <div class="text-gray-400">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                </svg>
-                              </div>
-                            </div>
+                      <div v-if="planDetails.keyFeatureDocument && planDetails.keyFeatureDocument.length > 0" class="space-y-3">
+                        <div v-for="doc in planDetails.keyFeatureDocument" :key="doc.id" class="inline-flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <!-- PDF Icon -->
+                          <div class="flex-shrink-0">
+                            <svg class="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                            </svg>
+                          </div>
+
+                          <!-- Document Name -->
+                          <div class="flex-shrink-0">
+                            <span class="text-blue-600 font-medium">{{ doc.text }}</span>
+                          </div>
+
+                          <!-- Download Icon -->
+                          <div class="flex-shrink-0">
+                            <a :href="doc.value" target="_blank" class="text-blue-600 hover:text-blue-800">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                              </svg>
+                            </a>
                           </div>
                         </div>
                       </div>
