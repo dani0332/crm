@@ -724,6 +724,14 @@ class QuoteDocumentService extends BaseService
             unlink($tempFilePath);
         }
 
+        if (file_exists($qpdfLogPath)) {
+            unlink($qpdfLogPath);
+        }
+
+        if (file_exists($decryptedTempPath)) {
+            unlink($decryptedTempPath);
+        }
+
         // Check if the output file was created successfully
         if (! file_exists($outputPath) || filesize($outputPath) < 100) {
             LoggerService::error("FPDI watermarking failed for UUID: $uuid");
