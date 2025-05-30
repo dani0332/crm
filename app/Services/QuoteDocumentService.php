@@ -418,7 +418,7 @@ class QuoteDocumentService extends BaseService
             QuoteTypeId::Business => ['GMQPD', 'GMQPDR', 'GMQDPDR'],
             QuoteTypeId::Corpline => ['CLPD', 'CLPDR', 'CLDPDR'],
             QuoteTypeId::CompanyCar => ['CPD', 'CPDR', 'CDPDR'],
-            QuoteTypeId::Savings => ['CDPDR'],
+            QuoteTypeId::Savings => ['CPD', 'CPDR', 'CDPDR'],
         ];
 
         return $mapping[$quoteTypeId] ?? [];
