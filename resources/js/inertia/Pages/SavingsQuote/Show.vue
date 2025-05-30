@@ -1471,4 +1471,20 @@ const selectedPlanIds = computed(() => {
 .compact-rows :deep(thead th) {
   padding: 10px 12px !important;
 }
+
+/* Target vue3-easy-data-table checkboxes specifically - only for this component */
+.compact-rows :deep(.easy-checkbox label:before) {
+  border-color: #10B981 !important;
+}
+
+.compact-rows :deep(.easy-checkbox input[type='checkbox']:checked + label:before) {
+  background-color: #10B981 !important;
+  border-color: #10B981 !important;
+}
+
+.compact-rows :deep(.easy-checkbox input[type='checkbox'].allSelected + label:before),
+.compact-rows :deep(.easy-checkbox input[type='checkbox'].partSelected + label:before) {
+  background-color: #10B981 !important;
+  border-color: #10B981 !important;
+}
 </style>
