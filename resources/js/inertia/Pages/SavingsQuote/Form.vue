@@ -61,11 +61,11 @@ const quoteForm = useForm({
   nationality_id: props.quote?.nationality_id || '',
   gender: props.quote?.gender || '',
   marital_status_id: props.quote?.savings_quote?.marital_status_id || '',
-  tenure_of_savings: props.quote?.savings_quote?.tenure_id || '',
+  tenure_id: props.quote?.savings_quote?.tenure_id || '',
   nicotine_status: props.quote?.savings_quote?.nicotine_status
     ? props.quote.savings_quote.nicotine_status.toString()
-    : '',
-  purpose_of_savings: props.quote?.savings_quote?.purpose_id || '',
+    : '0',
+  purpose_id: props.quote?.savings_quote?.purpose_id || '',
   currency_id: props.quote?.savings_quote?.currency_id || '',
   investment_amount: props.quote?.savings_quote?.investment_amount || '',
   investment_frequency:
@@ -209,11 +209,11 @@ function onSubmit(isValid) {
 
         <!-- Savings Details -->
         <x-select
-          v-model="quoteForm.tenure_of_savings"
+          v-model="quoteForm.tenure_id"
           :options="tenures"
           class="w-full"
           :rules="[isRequired]"
-          :error="quoteForm.errors.tenure_of_savings"
+          :error="quoteForm.errors.tenure_id"
           label="TENURE OF SAVINGS"
           placeholder="Select Tenure of Savings"
           required
@@ -236,11 +236,11 @@ function onSubmit(isValid) {
         </div>
 
         <x-select
-          v-model="quoteForm.purpose_of_savings"
+          v-model="quoteForm.purpose_id"
           :options="purposes"
           class="w-full"
           :rules="[isRequired]"
-          :error="quoteForm.errors.purpose_of_savings"
+          :error="quoteForm.errors.purpose_id"
           label="PURPOSE OF SAVINGS"
           placeholder="Select Purpose of Savings"
           required
