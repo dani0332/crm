@@ -224,6 +224,9 @@ class SavingsQuoteService extends BaseQuoteService
                     'customer.additionalContactInfo',
                     'insuranceProvider:id,text,code',
                     'insuranceProviderPlan',
+                    'documents' => function ($q) {
+                        $q->with('createdBy')->orderBy('created_at', 'desc');
+                    },
                 ])->select([
                     'personal_quotes.*',
                 ])->selectRaw("
