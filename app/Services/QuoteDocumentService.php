@@ -738,8 +738,6 @@ class QuoteDocumentService extends BaseService
             throw new \Exception('FPDI watermarking failed');
         }
 
-        LoggerService::info("Successfully applied watermark with QPDF and FPDI for UUID: $uuid");
-
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
