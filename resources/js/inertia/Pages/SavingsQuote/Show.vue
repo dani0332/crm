@@ -1538,25 +1538,16 @@ const sendOCBEmail = () => {
 
                   <!-- Included Benefits Tab -->
                   <TabPanel>
-                    <div class="p-4">
-                      <div v-if="planDetails.includedBenefits && planDetails.includedBenefits.length > 0" class="space-y-4">
-                        <table cellpadding="3" cellspacing="3" class="table-auto w-full">
-                          <thead>
-                            <tr>
-                              <th class="px-4 py-2 text-left font-medium text-gray-700">Benefit</th>
-                              <th class="px-4 py-2 text-left font-medium text-gray-700">Coverage</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr v-for="item in planDetails.includedBenefits" :key="item.id" class="hover:bg-gray-50">
-                              <td class="px-4 py-3">
-                                <div class="font-medium text-gray-900">{{ item.text }}</div>
-                                <div v-if="item.description" class="text-gray-600 text-sm mt-1">{{ item.description }}</div>
-                              </td>
-                              <td class="px-4 py-3 text-gray-900 font-medium">{{ item.value }}</td>
-                            </tr>
-                          </tbody>
-                        </table>
+                    <div class="p-6">
+                      <div v-if="planDetails.includedBenefits && planDetails.includedBenefits.length > 0" class="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <div v-for="item in planDetails.includedBenefits" :key="item.id" class="grid grid-cols-2 gap-x-4">
+                          <div class="text-gray-700 font-medium text-sm">
+                            {{ item.text }}
+                          </div>
+                          <div class="text-gray-900 text-sm">
+                            {{ item.value }}
+                          </div>
+                        </div>
                       </div>
                       <div v-else class="text-center py-8 text-gray-500">
                         No included benefits available
