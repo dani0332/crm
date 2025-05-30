@@ -201,13 +201,29 @@ class SavingsQuoteService extends BaseQuoteService
                     'currentlyInsuredWith',
                     'advisor',
                     'paymentStatus',
-                    'payments',
+                    'payments' => function ($query) {
+                        $query->with([
+                            'paymentStatus',
+                            'personalPlan',
+                            'paymentMethod',
+                            'paymentStatusLogs',
+                            'insuranceProvider',
+                            'paymentable',
+                            'paymentSplits.paymentStatus',
+                            'paymentSplits.paymentMethod',
+                            'paymentSplits.verifiedByUser',
+                            'paymentSplits.documents',
+                            'paymentSplits.processJob',
+                        ]);
+                    },
                     'quoteDetail',
                     'quoteDetail.lostReason',
                     'renewalBatchModel',
                     'nationality',
                     'customer',
                     'customer.additionalContactInfo',
+                    'insuranceProvider:id,text,code',
+                    'insuranceProviderPlan',
                 ])->select([
                     'personal_quotes.*',
                 ])->selectRaw("
