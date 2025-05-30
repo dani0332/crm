@@ -238,8 +238,6 @@ class QuoteDocumentService extends BaseService
                     $data['quote_uuid'],
                     $documentType->id
                 )->afterCommit();
-            } else {
-                LoggerService::info('Watermark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
@@ -730,8 +728,6 @@ class QuoteDocumentService extends BaseService
             LoggerService::error("FPDI watermarking failed for UUID: $uuid");
             throw new \Exception('FPDI watermarking failed');
         }
-
-        LoggerService::info("Successfully applied watermark with QPDF and FPDI for UUID: $uuid");
 
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
