@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteStatusEnum;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
@@ -76,7 +77,7 @@ class PolicyBulkSendDocuments extends Command
                 continue;
             }
 
-            $personalQuote = PersonalQuote::where('email', $email)->latest()->first();
+            $personalQuote = PersonalQuote::where('email', $email)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
             $quoteType = QuoteType::select('code')->find($personalQuote->quote_type_id);
             $quoteObject = $this->getQuoteObjectBy(strtolower($quoteType->code), $personalQuote->quote_id, 'id');
 
