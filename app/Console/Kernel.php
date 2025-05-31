@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\PolicyBulkSendDocuments;
 use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
@@ -41,6 +42,7 @@ class Kernel extends ConsoleKernel
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
         PolicyIssuanceMarkFailedCommand::class,
+        PolicyBulkSendDocuments::class,
     ];
 
     /**
@@ -50,6 +52,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command('policy:bulk-send-documents')->timezone('Asia/Dubai')->dailyAt('15:10')->onOneServer()->withoutOverlapping();
+
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
