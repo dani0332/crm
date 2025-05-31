@@ -84,20 +84,22 @@ class PolicyBulkSendDocuments extends Command
                     WatermarkDocumentsJob::dispatchSync(
                         $document->id, $quoteObject->uuid, $documentType->id
                     );
-                    // dd('watermark done, preparing for send policy documents');
-                    $payload = (object) [
-                        'model_type' => strtolower($quoteType->code),
-                        'quote_id' => $quoteObject->id,
-                    ];
-                    SendBookPolicyDocumentsJob::dispatchSync($payload, $quoteObject->code, true);
-                    $this->info("PolicyBulkSendDocuments - Dispatched for: $email (Quote ID: {$quoteObject->code})");
-                    dd('email sent');
-                    $count++;
+
                 } else {
                     $notFound[] = $email;
                     $this->warn("PolicyBulkSendDocuments - No PersonalQuote found for: $email");
                 }
             }
+
+            // dd('watermark done, preparing for send policy documents');
+            $payload = (object) [
+                'model_type' => strtolower($quoteType->code),
+                'quote_id' => $quoteObject->id,
+            ];
+            SendBookPolicyDocumentsJob::dispatchSync($payload, $quoteObject->code, true);
+            $this->info("PolicyBulkSendDocuments - Dispatched for: $email (Quote ID: {$quoteObject->code})");
+            $count++;
+
         }
         fclose($handle);
         $this->info("PolicyBulkSendDocuments - Total dispatched: $count");
