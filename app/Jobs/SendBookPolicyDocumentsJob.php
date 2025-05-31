@@ -37,12 +37,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
     private $data = null;
 
     private $code = null;
+    private $forceEmailSend = false;
 
-    public function __construct($payload, $code)
+    public function __construct($payload, $code, $forceEmailSend = false)
     {
         info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
         $this->data = $payload;
         $this->code = $code;
+        $this->forceEmailSend = $forceEmailSend;
         $this->onQueue('insly');
     }
 
@@ -70,7 +72,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             'value' => 1,
         ])->first();
 
-        if ($isDocumentEmailSentToCustomer) {
+        if ($isDocumentEmailSentToCustomer && $this->forceEmailSend == false) {
             info('job: SendBookPolicyDocumentsJob skipped for: '.$quote->code.' as email already sent');
 
             return;
@@ -161,14 +163,16 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
         }
 
-        $quoteTag = QuoteTag::create([
-            'quote_type_id' => $quoteTypeId,
-            'quote_uuid' => $quote->uuid,
-            'name' => QuoteTagEnums::POLICY_SENT_TO_CUSTOMER,
-            'value' => 1,
-        ]);
+        if ($this->forceEmailSend == false) {
+            $quoteTag = QuoteTag::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_uuid' => $quote->uuid,
+                'name' => QuoteTagEnums::POLICY_SENT_TO_CUSTOMER,
+                'value' => 1,
+            ]);
 
-        info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Tag id: '.$quoteTag->id);
+            info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Tag id: '.$quoteTag->id);
+        }
     }
 
     public function failed(Throwable $exception)

@@ -84,13 +84,14 @@ class PolicyBulkSendDocuments extends Command
                     WatermarkDocumentsJob::dispatchSync(
                         $document->id, $quoteObject->uuid, $documentType->id
                     );
-                    dd('watermark done, preparing for send policy documents');
+                    // dd('watermark done, preparing for send policy documents');
                     $payload = (object) [
                         'model_type' => strtolower($quoteType->code),
                         'quote_id' => $quoteObject->id,
                     ];
-                    SendBookPolicyDocumentsJob::dispatchSync($payload, $quoteObject->code);
+                    SendBookPolicyDocumentsJob::dispatchSync($payload, $quoteObject->code, true);
                     $this->info("Dispatched for: $email (Quote ID: {$quoteObject->code})");
+                    dd('email sent');
                     $count++;
                 } else {
                     $notFound[] = $email;
