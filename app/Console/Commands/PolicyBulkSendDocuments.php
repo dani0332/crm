@@ -78,10 +78,20 @@ class PolicyBulkSendDocuments extends Command
             }
 
             $personalQuote = PersonalQuote::where('email', $email)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
+            if (! $personalQuote) {
+                $notFound[] = $email;
+
+                continue;
+            }
             $quoteType = QuoteType::select('code')->find($personalQuote->quote_type_id);
+            if (! $quoteType) {
+                $notFound[] = $email;
+
+                continue;
+            }
             $quoteObject = $this->getQuoteObjectBy(strtolower($quoteType->code), $personalQuote->quote_id, 'id');
 
-            if (! $personalQuote || ! $quoteType || ! $quoteObject) {
+            if (! $quoteObject) {
                 $notFound[] = $email;
 
                 continue;

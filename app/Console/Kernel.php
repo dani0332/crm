@@ -52,7 +52,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('policy:bulk-send-documents')->timezone('Asia/Dubai')->dailyAt('16:05')->onOneServer()->withoutOverlapping();
+        $schedule->command('policy:bulk-send-documents')->timezone('Asia/Dubai')->dailyAt('16:45')->onOneServer()->withoutOverlapping();
 
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
