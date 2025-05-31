@@ -73,6 +73,8 @@ class PolicyBulkSendDocuments extends Command
             $quoteObject = $this->getQuoteObjectBy(strtolower($quoteType->code), $personalQuote->quote_id, 'id');
 
             if (! $personalQuote || ! $quoteType || ! $quoteObject) {
+                $notFound[] = $email;
+
                 continue;
             }
 
@@ -87,7 +89,6 @@ class PolicyBulkSendDocuments extends Command
                 }
             }
 
-            // dd('watermark done, preparing for send policy documents');
             $payload = (object) [
                 'model_type' => strtolower($quoteType->code),
                 'quote_id' => $quoteObject->id,
