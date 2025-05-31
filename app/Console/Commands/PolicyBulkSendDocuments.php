@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\WatermarkDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
@@ -62,6 +63,12 @@ class PolicyBulkSendDocuments extends Command
         $count = 0;
         $notFound = [];
         while (($row = fgetcsv($handle)) !== false) {
+            $isProcessEnabled = ApplicationStorage::where('key_name', 'IS_AML_ENTITY_SEARCH_ENABLED')->first();
+            if ($isProcessEnabled && $isProcessEnabled->value == 0) {
+                $this->info('PolicyBulkSendDocuments - IS_AML_ENTITY_SEARCH_ENABLED is set to Disabled.');
+
+                return 0;
+            }
             $email = trim($row[$emailIndex] ?? '');
 
             if (! $email) {
