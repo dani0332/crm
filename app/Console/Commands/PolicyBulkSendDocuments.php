@@ -84,10 +84,6 @@ class PolicyBulkSendDocuments extends Command
                     WatermarkDocumentsJob::dispatchSync(
                         $document->id, $quoteObject->uuid, $documentType->id
                     );
-
-                } else {
-                    $notFound[] = $email;
-                    $this->warn("PolicyBulkSendDocuments - No PersonalQuote found for: $email");
                 }
             }
 
