@@ -43,7 +43,6 @@ class WatermarkDocumentsJob implements ShouldQueue
     public function handle()
     {
         LoggerService::startQuoteLogging($this->uuid);
-        LoggerService::info('watermark job started for '.$this->uuid.' attempt: '.$this->attempts());
 
         // Check if the file is already being processed
         // if ($this->isFileBeingProcessed()) {
