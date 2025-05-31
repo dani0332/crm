@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteStatusEnum;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -65,7 +67,7 @@ class PolicyBulkSendDocuments extends Command
         while (($row = fgetcsv($handle)) !== false) {
             $isProcessEnabled = ApplicationStorage::where('key_name', 'IS_AML_ENTITY_SEARCH_ENABLED')->first();
             if ($isProcessEnabled && $isProcessEnabled->value == 0) {
-                $this->info('PolicyBulkSendDocuments - IS_AML_ENTITY_SEARCH_ENABLED is set to Disabled.');
+                LoggerService::info('PolicyBulkSendDocuments - IS_AML_ENTITY_SEARCH_ENABLED is set to Disabled.');
 
                 return 0;
             }
@@ -75,7 +77,7 @@ class PolicyBulkSendDocuments extends Command
                 continue;
             }
 
-            $personalQuote = PersonalQuote::where('email', $email)->latest()->first();
+            $personalQuote = PersonalQuote::where('email', $email)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
             $quoteType = QuoteType::select('code')->find($personalQuote->quote_type_id);
             $quoteObject = $this->getQuoteObjectBy(strtolower($quoteType->code), $personalQuote->quote_id, 'id');
 
@@ -100,15 +102,15 @@ class PolicyBulkSendDocuments extends Command
                 'model_type' => strtolower($quoteType->code),
                 'quote_id' => $quoteObject->id,
             ];
-            SendBookPolicyDocumentsJob::dispatchSync($payload, $quoteObject->code, true);
-            $this->info("PolicyBulkSendDocuments - Dispatched for: $email (Quote ID: {$quoteObject->code})");
+            SendBookPolicyDocumentsJob::dispatch($payload, $quoteObject->code, true);
+            LoggerService::info("PolicyBulkSendDocuments - Dispatched for: $email (Quote ID: {$quoteObject->code})");
             $count++;
 
         }
         fclose($handle);
-        $this->info("PolicyBulkSendDocuments - Total dispatched: $count");
+        LoggerService::info("PolicyBulkSendDocuments - Total dispatched: $count");
         if ($notFound) {
-            $this->warn('PolicyBulkSendDocuments - Emails not found: '.implode(', ', $notFound));
+            LoggerService::info('PolicyBulkSendDocuments - Emails not found: '.implode(', ', $notFound));
         }
 
         return 0;
