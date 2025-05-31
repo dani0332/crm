@@ -81,17 +81,16 @@ class PolicyBulkSendDocuments extends Command
                 $isWaterMarkQualifyDoc = app(QuoteDocumentService::class)->getWatermarkProperty($quoteObject, $documentType);
 
                 if ($personalQuote && $isWaterMarkQualifyDoc && $documentType) {
-
                     WatermarkDocumentsJob::dispatchSync(
                         $document->id, $quoteObject->uuid, $documentType->id
                     );
-                    dd('reached');
+                    dd('watermark done, preparing for send policy documents');
                     $payload = (object) [
                         'model_type' => strtolower($quoteType->code),
                         'quote_id' => $quoteObject->id,
                     ];
                     SendBookPolicyDocumentsJob::dispatchSync($payload, $quoteObject->code);
-                    $this->info("Dispatched for: $email (Quote ID: {$quoteObject->id})");
+                    $this->info("Dispatched for: $email (Quote ID: {$quoteObject->code})");
                     $count++;
                 } else {
                     $notFound[] = $email;
