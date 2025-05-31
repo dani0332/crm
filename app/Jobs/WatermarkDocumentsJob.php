@@ -45,13 +45,12 @@ class WatermarkDocumentsJob implements ShouldQueue
         LoggerService::startQuoteLogging($this->uuid);
 
         // Check if the file is already being processed
-        // if ($this->isFileBeingProcessed()) {
-        //     LoggerService::info("File is already being processed. Retrying later. Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
-        //     $this->release(30); // Release the job to be retried in 30 seconds
+        if ($this->isFileBeingProcessed()) {
+            LoggerService::info("File is already being processed. Retrying later. Document ID: {$this->quoteDocumentId}, UUID: {$this->uuid}");
+            $this->release(30); // Release the job to be retried in 30 seconds
 
-        //     return;
-        // }
-        // Uncomment before push
+            return;
+        }
 
         $quoteDocument = QuoteDocument::find($this->quoteDocumentId);
         $documentType = DocumentType::find($this->documentTypeId);
@@ -143,10 +142,9 @@ class WatermarkDocumentsJob implements ShouldQueue
         }
     }
 
-    // public function middleware()
-    // {
-    //     // Use a more specific lock key and increase the lock duration
-    //     return [(new WithoutOverlapping($this->lockKey))->dontRelease()->expireAfter(300)];
-    // }
-    // Uncomment before push
+    public function middleware()
+    {
+        // Use a more specific lock key and increase the lock duration
+        return [(new WithoutOverlapping($this->lockKey))->dontRelease()->expireAfter(300)];
+    }
 }
