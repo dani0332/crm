@@ -90,19 +90,19 @@ class PolicyBulkSendDocuments extends Command
                         'quote_id' => $quoteObject->id,
                     ];
                     SendBookPolicyDocumentsJob::dispatchSync($payload, $quoteObject->code, true);
-                    $this->info("Dispatched for: $email (Quote ID: {$quoteObject->code})");
+                    $this->info("PolicyBulkSendDocuments - Dispatched for: $email (Quote ID: {$quoteObject->code})");
                     dd('email sent');
                     $count++;
                 } else {
                     $notFound[] = $email;
-                    $this->warn("No PersonalQuote found for: $email");
+                    $this->warn("PolicyBulkSendDocuments - No PersonalQuote found for: $email");
                 }
             }
         }
         fclose($handle);
-        $this->info("Total dispatched: $count");
+        $this->info("PolicyBulkSendDocuments - Total dispatched: $count");
         if ($notFound) {
-            $this->warn('Emails not found: '.implode(', ', $notFound));
+            $this->warn('PolicyBulkSendDocuments - Emails not found: '.implode(', ', $notFound));
         }
 
         return 0;
