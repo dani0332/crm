@@ -6,12 +6,13 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\SavingsPurposeEnum;
 use App\Facades\Capi;
 use App\Models\SavingsQuote;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\LookupService;
+use App\Models\Nationality;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -55,7 +56,10 @@ class SavingsQuoteService extends BaseQuoteService
 
     public function getFormOptions()
     {
+        $lookUpData = $this->getSavingsQuoteLookUpData();
+
         return [
+            'lookUpData' => $lookUpData,
             'nationalities' => Nationality::withActive()->options(),
             'genders' => GenderEnum::withLabels(),
         ];
