@@ -34,7 +34,6 @@ RUN apt-get update && apt-get install -y \
     nginx \
     wget \
     gnupg \
-    ghostscript \
     libwebp-dev \
     qpdf
 
