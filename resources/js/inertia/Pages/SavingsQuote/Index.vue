@@ -95,17 +95,17 @@ const tableHeader = ref([
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
     text: 'Investment Frequency',
-    value: 'savings_quote.frequency',
+    value: 'savings_quote.investment_frequency.text',
     is_active: true,
   },
   {
     text: 'Investment Amount',
-    value: 'savings_quote.amount',
+    value: 'savings_quote.investment_amount',
     is_active: true,
   },
   {
     text: 'Tenure of Cover',
-    value: 'savings_quote.tenure_of_savings',
+    value: 'savings_quote.tenure.text',
     is_active: true,
   },
   { text: 'POLICY NO', value: 'policy_number', is_active: true },
@@ -492,22 +492,20 @@ const validateDateRange = () => {
             placeholder="Search by Mobile Number"
           />
         </x-field>
-        <x-field label="Created Date Start">
-          <DatePicker
-            v-model="filters.created_at_start"
-            type="date"
-            name="created_at_start"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Created Date End">
-          <DatePicker
-            v-model="filters.created_at_end"
-            type="date"
-            name="created_at_end"
-            class="w-full"
-          />
-        </x-field>
+        <DatePicker
+          v-model="filters.created_at_start"
+          type="date"
+          name="created_at_start"
+          class="w-full"
+          label="Created Date Start"
+        />
+        <DatePicker
+          v-model="filters.created_at_end"
+          type="date"
+          name="created_at_end"
+          class="w-full"
+          label="Created Date End"
+        />
         <x-field label="Lead Status">
           <ComboBox
             v-model="filters.quote_status_id"
@@ -521,18 +519,18 @@ const validateDateRange = () => {
             "
           />
         </x-field>
-        <x-field label="Policy Expiry Start Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date"
-            name="policy_expiry_date"
-          />
-        </x-field>
-        <x-field label="Policy Expiry End Date">
-          <DatePicker
-            v-model="filters.policy_expiry_date_end"
-            name="policy_expiry_date_end"
-          />
-        </x-field>
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          class="w-full"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          class="w-full"
+          label="Policy Expiry End Date"
+        />
         <x-field label="Advisor" v-if="!hasAnyRole([rolesEnum.SavingsAdvisor])">
           <ComboBox
             v-model="filters.advisor_id"

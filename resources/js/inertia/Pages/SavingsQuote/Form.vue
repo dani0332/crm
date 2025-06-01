@@ -61,14 +61,20 @@ const quoteForm = useForm({
   nationality_id: props.quote?.nationality_id || '',
   gender: props.quote?.gender || '',
   marital_status_id: props.quote?.savings_quote?.marital_status_id || '',
-  tenure_of_savings: props.quote?.savings_quote?.tenure_of_savings || '',
-  has_nicotine: (props.quote?.savings_quote?.has_nicotine | 0).toString(),
-  purpose_of_savings: props.quote?.savings_quote?.purpose_of_savings || '',
+  tenure_id: props.quote?.savings_quote?.tenure_id || '',
+  nicotine_status: props.quote?.savings_quote?.nicotine_status
+    ? props.quote.savings_quote.nicotine_status.toString()
+    : '0',
+  purpose_id: props.quote?.savings_quote?.purpose_id || '',
   currency_id: props.quote?.savings_quote?.currency_id || '',
-  amount: props.quote?.savings_quote?.amount || '',
-  investment_frequency: props.quote?.savings_quote?.investment_frequency || '',
+  investment_amount: props.quote?.savings_quote?.investment_amount || '',
+  investment_frequency:
+    props.quote?.savings_quote?.investment_criteria_id || '',
   additional_notes: props.quote?.savings_quote?.additional_notes || '',
 });
+
+console.log('quoteForm', quoteForm.data());
+console.log('props.quote', props.quote);
 
 const { isRequired, isEmail, isMobileNo } = useRules();
 
@@ -116,90 +122,102 @@ function onSubmit(isValid) {
 
       <div class="grid sm:grid-cols-2 gap-4">
         <!-- Personal Details -->
-        <x-field label="First Name" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.first_name"
-            maxLength="20"
-          />
-        </x-field>
-        <x-field label="Last Name" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-            maxLength="50"
-          />
-        </x-field>
-        <x-field label="Email" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :disabled="editMode"
-            :rules="[isRequired, isEmail]"
-            class="w-full"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
-        <x-field label="Mobile Number" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :rules="[isRequired, isMobileNo]"
-            :disabled="editMode"
-            class="w-full"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="quoteForm.dob"
-            input-classes="w-full"
-            :rules="[isRequired]"
-            :max-date="new Date()"
-          />
-        </x-field>
-        <x-field label="Nationality" required>
-          <x-select
-            v-model="quoteForm.nationality_id"
-            :options="nationalities"
-            class="w-full"
-            :error="quoteForm.errors.nationality_id"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="Gender" required>
-          <x-select
-            v-model="quoteForm.gender"
-            :rules="[isRequired]"
-            :options="genders"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Marital Status" required>
-          <x-select
-            v-model="quoteForm.marital_status_id"
-            :options="maritalStatuses"
-            class="w-full"
-            :error="quoteForm.errors.marital_status_id"
-            :rules="[isRequired]"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          type="text"
+          label="FIRST NAME"
+          required
+          :rules="[isRequired]"
+          class="w-full"
+          maxLength="20"
+          :error="quoteForm.errors.first_name"
+        />
+        <x-input
+          v-model="quoteForm.last_name"
+          type="text"
+          label="LAST NAME"
+          required
+          maxLength="50"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+        />
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          label="EMAIL"
+          required
+          :disabled="editMode"
+          :rules="[isRequired, isEmail]"
+          class="w-full"
+          :error="quoteForm.errors.email"
+        />
+        <x-input
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          label="MOBILE NUMBER"
+          required
+          :disabled="editMode"
+          :rules="[isRequired, isMobileNo]"
+          class="w-full"
+          :error="quoteForm.errors.mobile_no"
+        />
+
+        <DatePicker
+          v-model="quoteForm.dob"
+          class="w-full"
+          :rules="[isRequired]"
+          :max-date="new Date()"
+          label="DATE OF BIRTH"
+          format="dd-MM-yyyy"
+          required
+        />
+
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :options="nationalities"
+          class="w-full"
+          :error="quoteForm.errors.nationality_id"
+          :rules="[isRequired]"
+          label="NATIONALITY"
+          filterable
+          placeholder="Search by Nationality"
+          required
+        />
+
+        <x-select
+          v-model="quoteForm.gender"
+          :options="props.genders"
+          class="w-full"
+          label="GENDER"
+          placeholder="Select Gender"
+          required
+          :rules="[isRequired]"
+          :error="quoteForm.errors.gender"
+        />
+
+        <x-select
+          v-model="quoteForm.marital_status_id"
+          :options="maritalStatuses"
+          class="w-full"
+          label="MARITAL STATUS"
+          placeholder="Select Marital Status"
+          required
+          :error="quoteForm.errors.marital_status_id"
+          :rules="[isRequired]"
+        />
+
         <!-- Savings Details -->
-        <x-field label="Tenure of Savings" required>
-          <x-input
-            v-model="quoteForm.tenure_of_savings"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.tenure_of_savings"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.tenure_id"
+          :options="tenures"
+          class="w-full"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.tenure_id"
+          label="TENURE OF SAVINGS"
+          placeholder="Select Tenure of Savings"
+          required
+        />
 
         <div class="w-full">
           <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -208,7 +226,7 @@ function onSubmit(isValid) {
           </label>
           <div class="flex gap-12 mt-2">
             <x-form-group
-              v-model="quoteForm.has_nicotine"
+              v-model="quoteForm.nicotine_status"
               :rules="[isRequired]"
             >
               <x-radio value="1" label="Yes" />
@@ -217,34 +235,37 @@ function onSubmit(isValid) {
           </div>
         </div>
 
-        <x-field label="Purpose of Savings" required>
-          <x-select
-            v-model="quoteForm.purpose_of_savings"
-            :options="purposes"
-            class="w-full"
-            :rules="[isRequired]"
-            :error="quoteForm.errors.purpose_of_savings"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.purpose_id"
+          :options="purposes"
+          class="w-full"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.purpose_id"
+          label="PURPOSE OF SAVINGS"
+          placeholder="Select Purpose of Savings"
+          required
+        />
+
         <div class="grid sm:grid-cols-2 gap-4">
-          <x-field label="Investment Amount (Currency)" required>
-            <x-select
-              v-model="quoteForm.currency_id"
-              :options="currencies"
-              :rules="[isRequired]"
-              class="w-full"
-              :error="quoteForm.errors.currency_id"
-            />
-          </x-field>
-          <x-field label="Amount" required>
-            <x-input
-              v-model="quoteForm.amount"
-              type="number"
-              :rules="[isRequired]"
-              class="w-full"
-              :error="quoteForm.errors.amount"
-            />
-          </x-field>
+          <x-select
+            v-model="quoteForm.currency_id"
+            :options="currencies"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.currency_id"
+            label="INVESTMENT CURRENCY"
+            placeholder="Select Investment Currency"
+            required
+          />
+          <x-input
+            v-model="quoteForm.investment_amount"
+            type="number"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.investment_amount"
+            label="AMOUNT"
+            required
+          />
         </div>
 
         <div class="px-2 w-full">
