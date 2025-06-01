@@ -98,7 +98,7 @@ class SavingsQuoteController extends Controller
             ], 404);
         }
 
-        if (!isset($quotePlans->quotes->plans)) {
+        if (! isset($quotePlans->quotes->plans)) {
             return response()->json([
                 'message' => 'No plans available',
             ], 404);
@@ -149,15 +149,18 @@ class SavingsQuoteController extends Controller
         $foundPlan = $plans[0];
 
         // Helper function to extract value from eligibility array
-        $getEligibilityValue = function($eligibility, $code) {
-            if (!is_array($eligibility)) return 'N/A';
+        $getEligibilityValue = function ($eligibility, $code) {
+            if (! is_array($eligibility)) {
+                return 'N/A';
+            }
 
             $found = collect($eligibility)->firstWhere('code', $code);
+
             return $found ? $found->value : 'N/A';
         };
 
         // Determine investment frequency based on the plan source
-        $investmentFrequency = match($planSource) {
+        $investmentFrequency = match ($planSource) {
             'regular' => InvestmentFrequencyEnum::REGULAR->value,
             'lumpsum' => InvestmentFrequencyEnum::LUMPSUM->value,
             default => InvestmentFrequencyEnum::REGULAR->value

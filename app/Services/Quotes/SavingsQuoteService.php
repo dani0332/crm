@@ -7,12 +7,12 @@ use App\Enums\GenderEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Models\Nationality;
 use App\Models\SavingsQuote;
+use App\Services\LookupService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\LookupService;
-use App\Models\Nationality;
 
 class SavingsQuoteService extends BaseQuoteService
 {
