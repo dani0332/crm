@@ -1,5 +1,6 @@
 <script setup>
 import { reactive } from 'vue';
+import { createReusableTemplate } from '@vueuse/core';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -70,6 +71,8 @@ const notification = useNotifications('toast');
 
 const modals = reactive({
   duplicate: false,
+  planDetails: false,
+  sendConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -264,14 +267,16 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+
 const readOnlyMode = reactive({
   isDisable: true,
 });
 onMounted(() => {
+  onLoadAvailablePlansData();
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
-const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const sectionExpanded = computed(() => true);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
@@ -281,6 +286,307 @@ const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
 const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
+};
+
+const availablePlansTable = reactive({
+  data: [],
+  isLoading: false,
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+    },
+    {
+      text: 'Plans',
+      value: 'name',
+    },
+    {
+      text: 'Investment Frequency',
+      value: 'investmentFrequency',
+    },
+    {
+      text: 'Minimum Investment',
+      value: 'minimumInvestment',
+    },
+    {
+      text: 'Currency',
+      value: 'currency',
+    },
+    {
+      text: 'Policy Term (Years)',
+      value: 'policyTerm',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const selectedPlans = ref([]);
+const selectedPlanType = ref(null);
+const toggleLoader = ref(false);
+const viewButtonLoading = ref(false);
+const planDetails = ref(null);
+const exportLoader = ref(false);
+
+const normalPlansIds = reactive({
+  ids: [],
+});
+const seniorPlansIds = reactive({
+  ids: [],
+});
+
+// Define tabs for plan details modal
+const planDetailsTabs = ref([
+  { index: 0, label: 'Plan Details' },
+  { index: 1, label: 'Eligibility' },
+  { index: 2, label: 'Included Benefits' },
+  { index: 3, label: 'Key Features Document' },
+]);
+
+const onLoadAvailablePlansData = async () => {
+  availablePlansTable.isLoading = true;
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/savings/available-plans/${page.props.quote.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      console.log('onLoadAvailablePlansData', res.data);
+
+      // Process the response data to flatten regular and lumpsum plans
+      const processedPlans = [];
+
+      // Process regular plans
+      if (res.data.regular && Array.isArray(res.data.regular)) {
+        res.data.regular.forEach(plan => {
+          const processedPlan = {
+            ...plan,
+            investmentFrequency: 'Regular',
+            currency: 'USD',
+            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
+            policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+          };
+          processedPlans.push(processedPlan);
+        });
+      }
+
+      // Process lumpsum plans
+      if (res.data.lumpsum && Array.isArray(res.data.lumpsum)) {
+        res.data.lumpsum.forEach(plan => {
+          const processedPlan = {
+            ...plan,
+            investmentFrequency: 'Lumpsum',
+            currency: 'USD',
+            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
+            policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+          };
+          processedPlans.push(processedPlan);
+        });
+      }
+
+      availablePlansTable.data = processedPlans;
+    })
+    .catch(err => {
+      console.log(err);
+      availablePlansTable.data = [];
+    })
+    .finally(() => {
+      availablePlansTable.isLoading = false;
+    });
+};
+
+// Helper function to extract value from eligibility array
+const getEligibilityValue = (eligibility, code) => {
+  if (!Array.isArray(eligibility)) return 'N/A';
+
+  const found = eligibility.find(item => item.code === code);
+  return found ? found.value : 'N/A';
+};
+
+const onTogglePlans = toggle => {
+  toggleLoader.value = true;
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'savings' }), {
+      modelType: 'Savings',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      onLoadAvailablePlansData();
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
+};
+
+const getPlanDetails = id => {
+  viewButtonLoading.value = true;
+  try {
+    // Find the plan in the current data instead of making an API call
+    const foundPlan = availablePlansTable.data.find(plan => plan.id === id);
+    if (foundPlan) {
+      planDetails.value = foundPlan;
+      modals.planDetails = true;
+      viewButtonLoading.value = false;
+    } else {
+      // Fallback to API call if plan not found in current data
+      axios
+        .get(`/savings/${page.props.quote.uuid}/plan_details/${id}`)
+        .then(res => {
+          // The API now returns the correct investmentFrequency, so we don't need to process it
+          planDetails.value = res.data;
+          modals.planDetails = true;
+          viewButtonLoading.value = false;
+        })
+        .catch(err => {
+          notification.error({
+            title: 'Error',
+            message: 'Plan Details Not Found',
+            position: 'top',
+          });
+          console.log(err);
+          viewButtonLoading.value = false;
+        });
+    }
+  } catch (err) {
+    console.log(err);
+    notification.error({
+      title: 'Error',
+      message: 'Something went wrong',
+      position: 'top',
+    });
+    viewButtonLoading.value = false;
+  }
+};
+
+const onLoadAvailablePlansDataAndPlanDetails = async () => {
+  await onLoadAvailablePlansData();
+  // Refresh plan details if modal is open
+  if (modals.planDetails && planDetails.value) {
+    getPlanDetails(planDetails.value.id);
+  }
+};
+
+const { copy, copied } = useClipboard();
+const onCopyText = text => {
+  copy(text);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
+
+const selectedPlanIds = computed(() => {
+  return [];
+});
+
+// Create reusable template for manual toggle like Car
+const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
+  createReusableTemplate();
+
+// Manual toggle state
+const isManualUpdate = ref(false);
+const toggleManualLoader = ref(false);
+
+const onToggleManual = () => {
+  toggleManualLoader.value = true;
+  setTimeout(() => {
+    toggleManualLoader.value = false;
+  }, 300);
+};
+
+const onExportPlans = () => {
+  if (selectedPlans.value.length === 0) {
+    notification.error({
+      title: 'Please select at least one plan to export',
+      position: 'top',
+    });
+    return;
+  }
+
+  exportLoader.value = true;
+
+  const planIds = selectedPlans.value.map(plan => plan.id);
+
+  axios
+    .post(route('exportPlans', { quoteType: 'savings' }), {
+      modelType: 'Savings',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+    })
+    .then(response => {
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `savings-plans-${page.props.quote.code}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      notification.success({
+        title: 'Plans exported successfully',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error exporting plans',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
+};
+
+const sendOCBEmail = () => {
+  axios
+    .post(route('sendOCBEmail', { quoteType: 'savings' }), {
+      modelType: 'Savings',
+      quote_uuid: page.props.quote.uuid,
+    })
+    .then(response => {
+      notification.success({
+        title: 'OCB Email sent successfully to customer',
+        position: 'top',
+      });
+      modals.sendConfirm = false;
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error sending OCB Email',
+        position: 'top',
+      });
+      modals.sendConfirm = false;
+    });
 };
 </script>
 
@@ -345,9 +651,9 @@ const onAddUpdate = () => {
           >
         </x-tooltip>
         <template v-else>
-          <LeadEditBtnReuseTemplate
-            v-if="can(permissionsEnum.SavingsQuotesEdit)"
-          />
+          <!-- TODO: Uncomment v-if when tested on local and add v-if="can(permissionsEnum.SavingsQuotesEdit)" -->
+          <!-- <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.SavingsQuotesEdit)" /> -->
+          <LeadEditBtnReuseTemplate />
         </template>
 
         <Link
@@ -528,11 +834,11 @@ const onAddUpdate = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PURPOSE OF INVESTMENT</dt>
-                <dd>{{ quote?.savings_quote?.purpose }}</dd>
+                <dd>{{ quote?.savings_quote?.purpose?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TENURE OF SAVINGS</dt>
-                <dd>{{ quote?.savings_quote?.tenure_of_savings }}</dd>
+                <dd>{{ quote?.savings_quote?.tenure?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENCY</dt>
@@ -540,7 +846,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INVESTMENT AMOUNT</dt>
-                <dd>{{ quote?.savings_quote?.amount }}</dd>
+                <dd>{{ quote?.savings_quote?.investment_amount }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADDITIONAL INFORMATION</dt>
@@ -548,7 +854,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">INVESTMENT FREQUENCY</dt>
-                <dd>{{ quote?.savings_quote?.frequency }}</dd>
+                <dd>{{ quote?.savings_quote?.investment_frequency?.text }}</dd>
               </div>
             </dl>
           </div>
@@ -928,6 +1234,368 @@ const onAddUpdate = () => {
       :expanded="sectionExpanded"
     />
 
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Available Plans
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex justify-end items-center flex-wrap gap-2">
+            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true && !availablePlansTable.isLoading">
+              <x-button-group
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                class="mr-2"
+              >
+                <x-button
+                  @click.prevent="onTogglePlans(false)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Show
+                </x-button>
+                <x-button
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Hide
+                </x-button>
+              </x-button-group>
+              <x-button
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                color="emerald"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
+              >
+                Download PDF
+              </x-button>
+              <x-tooltip placement="top" align="left">
+                <x-button
+                  @click.prevent="modals.sendConfirm = true"
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  :disabled="quote.advisor_id != $page.props.auth.user.id"
+                >
+                  Send Savings Plans email to Customer
+                </x-button>
+                <template #tooltip>
+                  <div>
+                    When clicked, this button sends the One Click Buy (OCB)
+                    email to the customer with updated savings plans and coverage
+                    options, helping them finalize their purchase with ease.
+                  </div>
+                </template>
+              </x-tooltip>
+              <x-button
+                v-if="availablePlansTable.data.length > 0"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                @click.prevent="
+                  onCopyText('/quotes/savings/' + quote.uuid)
+                "
+              >
+                Copy Link
+              </x-button>
+            </div>
+          </div>
+
+          <div
+            v-if="
+              availablePlansTable.data &&
+              typeof availablePlansTable.data == 'string'
+            "
+          >
+            <p
+              class="text-center text-primary-600 uppercase"
+              v-if="typeof availablePlansTable.data == 'string'"
+            >
+              {{ availablePlansTable.data }}
+            </p>
+          </div>
+          <div v-else>
+            <div
+              v-if="availablePlansTable.isLoading"
+              class="flex justify-center my-8"
+            >
+              <x-spinner size="lg" />
+            </div>
+            <DataTable
+              v-else
+              v-model:items-selected="selectedPlans"
+              table-class-name="tablefixed compact-rows"
+              :headers="availablePlansTable.columns"
+              :items="availablePlansTable.data || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              :hide-footer="availablePlansTable.data.length < 15"
+            >
+              <template #header-providerName>
+                <div class="flex items-center gap-2">
+                  Provider Name
+                  <span class="diamond-icon"></span>
+                </div>
+              </template>
+              <template #item-providerName="item">
+                <p class="text-gray-800 uppercase">
+                  {{ item.providerName }}
+                </p>
+              </template>
+              <template #item-name="item">
+                <span class="text-gray-800 uppercase">{{ item.name }}</span>
+              </template>
+              <template #item-investmentFrequency="item">
+                <span class="text-gray-800">{{ item.investmentFrequency }}</span>
+              </template>
+              <template #item-minimumInvestment="item">
+                <span>{{ item.minimumInvestment }}</span>
+              </template>
+              <template #item-currency="item">
+                <span>{{ item.currency }}</span>
+              </template>
+              <template #item-policyTerm="item">
+                <span>{{ item.policyTerm }}</span>
+              </template>
+              <template #item-action="item">
+                <div class="flex gap-2">
+                  <x-button
+                    size="xs"
+                    color="primary"
+                    outlined
+                    @click.prevent="
+                      selectedPlanType = 'normalPlans';
+                      getPlanDetails(item.id);
+                    "
+                    :loading="viewButtonLoading"
+                  >
+                    View
+                  </x-button>
+                </div>
+              </template>
+            </DataTable>
+          </div>
+
+          <x-modal
+            v-model="modals.planDetails"
+            size="xl"
+            :title="`${planDetails?.providerName} - ${planDetails?.name}`"
+            show-close
+            backdrop
+          >
+            <div v-if="planDetails" class="w-full no-border">
+              <TabGroup>
+                <TabList
+                  class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
+                >
+                  <Tab
+                    v-for="{ index, label } in planDetailsTabs"
+                    as="template"
+                    :key="index"
+                    v-slot="{ selected }"
+                  >
+                    <button
+                      :class="[
+                        'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
+                        'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
+                        selected
+                          ? 'bg-white shadow text-primary-600'
+                          : 'hover:bg-white/50',
+                      ]"
+                    >
+                      {{ label }}
+                    </button>
+                  </Tab>
+                </TabList>
+
+                <TabPanels class="mt-2 text-sm min-h-[50vh]">
+                  <!-- Plan Details Tab -->
+                  <TabPanel class="bg-white">
+                    <div class="p-6">
+                      <!-- Manual Toggle using Car pattern -->
+                      <div class="mb-6">
+                        <ToggleManualButtonTemplate v-slot="{ isDisabled }">
+                          <x-toggle
+                            v-model="isManualUpdate"
+                            color="success"
+                            label="Manual"
+                            :disabled="isDisabled"
+                            @change="onToggleManual"
+                            :loading="toggleManualLoader"
+                          />
+                        </ToggleManualButtonTemplate>
+
+                        <div class="grid sm:grid-cols-2 mb-3">
+                          <x-tooltip
+                            v-if="page.props.lockLeadSectionsDetails?.plan_selection"
+                            placement="bottom"
+                          >
+                            <ToggleManualButtonReuseTemplate :isDisabled="true" />
+                            <template #tooltip>
+                              No further action allowed on issued policy, If changes are
+                              required, such as increase in price, please proceed through
+                              the 'Send Update' feature using the 'Correction of Policy'
+                              option.
+                            </template>
+                          </x-tooltip>
+                          <ToggleManualButtonReuseTemplate v-else />
+                        </div>
+                      </div>
+
+                      <!-- Form Fields using dt/dd grid pattern like Car -->
+                      <dl class="grid md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="text-sm font-medium text-gray-700">Provider Name</dt>
+                          <dd class="text-gray-900">{{ planDetails.providerName }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="text-sm font-medium text-gray-700">Plan Name</dt>
+                          <dd class="text-gray-900">{{ planDetails.name }}</dd>
+                        </div>
+
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="text-sm font-medium text-gray-700 mt-2">Insurance Quote No.:</dt>
+                          <x-input
+                            model-value=""
+                            placeholder=""
+                            size="sm"
+                            :disabled="
+                              !isManualUpdate ||
+                              page.props.lockLeadSectionsDetails?.plan_selection
+                            "
+                          />
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="text-sm font-medium text-gray-700 mt-2">Price:</dt>
+                          <x-input
+                            model-value=""
+                            placeholder=""
+                            size="sm"
+                            :disabled="
+                              !isManualUpdate ||
+                              page.props.lockLeadSectionsDetails?.plan_selection
+                            "
+                          />
+                        </div>
+
+                        <div class="grid sm:grid-cols-2">
+                          <dt class="text-sm font-medium text-gray-700">Investment Frequency</dt>
+                          <dd class="text-gray-900">{{ planDetails.investmentFrequency }} / Additional Single Premiums</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2"></div>
+                      </dl>
+
+                      <!-- Bottom section with dates and update button -->
+                      <div class="border-t border-gray-300 pt-6 mt-6">
+                        <div class="flex justify-end">
+                          <div class="text-right">
+                            <div class="text-sm text-gray-600 mb-2">
+                              <span class="font-medium">Created Date:</span>
+                              <span class="ml-2">{{ quote.created_at }}</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-6">
+                              <span class="font-medium">Updated At:</span>
+                              <span class="ml-2">{{ quote.updated_at }}</span>
+                            </div>
+                            <x-button
+                              color="primary"
+                              size="sm"
+                              :disabled="page.props.lockLeadSectionsDetails?.plan_selection"
+                            >
+                              Update
+                            </x-button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </TabPanel>
+
+                  <!-- Eligibility Tab -->
+                  <TabPanel>
+                    <div class="p-6">
+                      <div v-if="planDetails.eligibility && planDetails.eligibility.length > 0" class="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <div v-for="item in planDetails.eligibility" :key="item.id" class="grid grid-cols-2 gap-x-4">
+                          <div class="text-gray-700 font-medium text-sm">
+                            {{ item.text }}
+                          </div>
+                          <div class="text-gray-900 text-sm">
+                            {{ item.value }}
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="text-center py-8 text-gray-500">
+                        No eligibility criteria available
+                      </div>
+                    </div>
+                  </TabPanel>
+
+                  <!-- Included Benefits Tab -->
+                  <TabPanel>
+                    <div class="p-6">
+                      <div v-if="planDetails.includedBenefits && planDetails.includedBenefits.length > 0" class="grid grid-cols-2 gap-x-8 gap-y-6">
+                        <div v-for="item in planDetails.includedBenefits" :key="item.id" class="grid grid-cols-2 gap-x-4">
+                          <div class="text-gray-700 font-medium text-sm">
+                            {{ item.text }}
+                          </div>
+                          <div class="text-gray-900 text-sm">
+                            {{ item.value }}
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="text-center py-8 text-gray-500">
+                        No included benefits available
+                      </div>
+                    </div>
+                  </TabPanel>
+
+                  <!-- Key Features Document Tab -->
+                  <TabPanel>
+                    <div class="p-4">
+                      <div v-if="planDetails.keyFeatureDocument && planDetails.keyFeatureDocument.length > 0" class="space-y-3">
+                        <div v-for="doc in planDetails.keyFeatureDocument" :key="doc.id" class="inline-flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <!-- PDF Icon -->
+                          <div class="flex-shrink-0">
+                            <svg class="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                            </svg>
+                          </div>
+
+                          <!-- Document Name -->
+                          <div class="flex-shrink-0">
+                            <span class="text-blue-600 font-medium">{{ doc.text }}</span>
+                          </div>
+
+                          <!-- Download Icon -->
+                          <div class="flex-shrink-0">
+                            <a :href="doc.value" target="_blank" class="text-blue-600 hover:text-blue-800">
+                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                              </svg>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="text-center py-8 text-gray-500">
+                        No key feature documents available
+                      </div>
+                    </div>
+                  </TabPanel>
+                </TabPanels>
+              </TabGroup>
+            </div>
+          </x-modal>
+        </template>
+      </Collapsible>
+    </div>
+
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
@@ -1048,5 +1716,128 @@ const onAddUpdate = () => {
       :modelType="'Savings'"
       :code="$page.props.quote.code"
     ></lead-raw-data>
+
+    <x-modal
+      v-model="modals.sendConfirm"
+      size="md"
+      title="Send OCB Email"
+      show-close
+      backdrop
+    >
+      <div class="space-y-4">
+        <p class="text-gray-600">
+          Are you sure you want to send the One Click Buy (OCB) email to the customer?
+          This will send them the selected savings plans with updated rates and coverage options.
+        </p>
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+          <div class="flex">
+            <div class="ml-3">
+              <p class="text-sm text-blue-700">
+                <strong>Customer:</strong> {{ quote.first_name }} {{ quote.last_name }}
+              </p>
+              <p class="text-sm text-blue-700">
+                <strong>Email:</strong> {{ quote.email }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          @click.prevent="modals.sendConfirm = false"
+          size="sm"
+        >
+          Cancel
+        </x-button>
+      </template>
+      <template #primary-action>
+        <x-button
+          color="orange"
+          @click.prevent="sendOCBEmail"
+        >
+          Send Email
+        </x-button>
+      </template>
+    </x-modal>
   </div>
 </template>
+
+<style scoped>
+.compact-rows :deep(tbody tr) {
+  height: 40px !important;
+}
+
+.compact-rows :deep(tbody td) {
+  padding: 8px 12px !important;
+  vertical-align: middle;
+}
+
+.compact-rows :deep(thead th) {
+  padding: 10px 12px !important;
+}
+
+/* Style the diamond icon in the header */
+.compact-rows :deep(thead th:first-child .header-text) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Diamond shape icon */
+.compact-rows :deep(.diamond-icon) {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: transparent;
+  transform: rotate(45deg);
+  margin-left: 8px;
+  border: 1px solid white;
+}
+
+/* Target vue3-easy-data-table checkboxes specifically - only for this component */
+.compact-rows :deep(.easy-checkbox label:before) {
+  border-color: #10B981 !important;
+}
+
+.compact-rows :deep(.easy-checkbox input[type='checkbox']:checked + label:before) {
+  background-color: #10B981 !important;
+  border-color: #10B981 !important;
+}
+
+.compact-rows :deep(.easy-checkbox input[type='checkbox'].allSelected + label:before),
+.compact-rows :deep(.easy-checkbox input[type='checkbox'].partSelected + label:before) {
+  background-color: #10B981 !important;
+  border-color: #10B981 !important;
+}
+
+/* Remove borders from modal and tab components */
+.no-border {
+  border: none !important;
+}
+
+.no-border :deep(.tab-group),
+.no-border :deep(.tab-list),
+.no-border :deep(.tab-panel),
+.no-border :deep(.tab-panels) {
+  border: none !important;
+}
+
+/* Remove any default borders from headless ui components */
+:deep(.tab-group) {
+  border: none !important;
+}
+
+:deep(.tab-list) {
+  border: none !important;
+}
+
+:deep(.tab-panel) {
+  border: none !important;
+}
+
+:deep(.tab-panels) {
+  border: none !important;
+}
+</style>

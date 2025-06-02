@@ -29,6 +29,7 @@ use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\BaseService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
@@ -39,7 +40,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
-abstract class BaseQuoteService
+abstract class BaseQuoteService extends BaseService
 {
     use GenericQueriesAllLobs;
 
@@ -56,7 +57,9 @@ abstract class BaseQuoteService
 
     protected function isAdvisor()
     {
-        return Auth::user()->hasAnyRole($this->quoteType->advisorRoles());
+        $user = Auth::user();
+
+        return $this->hasAnyRole($user, $this->quoteType->advisorRoles());
     }
 
     public function getAdvisors()
@@ -95,7 +98,9 @@ abstract class BaseQuoteService
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled($quoteType->value);
         $quoteStatuses = $this->getQuoteStatuses([QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, $quoteType->id(), $quoteStatuses);
-        if (! Auth::user()->can(PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
+
+        $user = Auth::user();
+        if (! $this->can($user, PermissionsEnum::UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return ! in_array($value['id'], [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             })->values();
@@ -178,7 +183,7 @@ abstract class BaseQuoteService
             'quoteDocuments' => $quoteDocuments,
             'quoteNotes' => $quoteNotes,
             'storageUrl' => storageUrl(),
-            'isBetaUser' => Auth::user()->hasRole(RolesEnum::BetaUser),
+            'isBetaUser' => $this->hasRole(Auth::user(), RolesEnum::BetaUser),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'vatPercentage' => getAppStorageValueByKey(ApplicationStorageEnums::VAT_VALUE, 0),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -186,5 +191,20 @@ abstract class BaseQuoteService
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
         ];
+    }
+
+    protected function hasRole($user, $role)
+    {
+        return $user && method_exists($user, 'hasRole') && $user->hasRole($role);
+    }
+
+    protected function hasAnyRole($user, $roles)
+    {
+        return $user && method_exists($user, 'hasAnyRole') && $user->hasAnyRole($roles);
+    }
+
+    protected function can($user, $permission)
+    {
+        return $user && method_exists($user, 'can') && $user->can($permission);
     }
 }
