@@ -345,17 +345,43 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(RenewalBatch::class, 'renewal_batch_id');
     }
 
-    public function insured(): HasOneThrough
+    // Get all insured records for this quote (multiple AML screenings)
+    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // personal_quotes.id
+            'insured_id' // customer_insured.insured_id
+        );
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(
             Insured::class,
             CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id, relation between personal_quote and customer_insured.
+            'quote_request_id', // customer_insured.quote_request_id
             'id', // insured.id
-            'id', // personal_quote_request.id
+            'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-        );
+        )->latest('customer_insured.id');
     }
+
+    // Alternative: Direct relationship to customer_insured records
+    // public function customerInsuredRecords(): \Illuminate\Database\Eloquent\Relations\HasMany
+    // {
+    //     return $this->hasMany(CustomerInsured::class, 'quote_request_id');
+    // }
+
+    // Legacy method for backward compatibility (keeping the original name)
+    // public function insured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    // {
+    //     return $this->latestInsured(); // Or use activeInsured() if you prefer
+    // }
 
     public function homeQuote()
     {
