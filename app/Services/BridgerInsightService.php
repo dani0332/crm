@@ -184,7 +184,7 @@ class BridgerInsightService
                                 LoggerService::info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
                             }
 
-                            if(is_null($memberUboDetails['updated_at'])) {
+                            if (is_null($memberUboDetails['updated_at'])) {
                                 $customerMember = CustomerMembers::where('id', $memberUboDetails['id'])->first();
                                 $customerMember->updated_at = Carbon::now();
                                 $customerMember->save();
