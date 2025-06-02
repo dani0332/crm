@@ -368,7 +368,7 @@ class HomeRenewalService extends RenewalsUploadService
         ]);
 
         // get pending leads
-        $totalLeads = $this->getPendingOcbLeadsCount($batch);
+        $totalLeads = $this->getPendingOcbLeadsTotalNonMotor($batch, QuoteTypeShortCode::HOM);
 
         // If there are not leads, return false
         if ($totalLeads == 0) {
@@ -410,7 +410,7 @@ class HomeRenewalService extends RenewalsUploadService
 
             $jobs = [];
 
-            $this->getPendingOcbLeads($batch)
+            $this->getPendingOcbLeadsTotalNonMotor($batch, QuoteTypeShortCode::HOM)
                 ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
                     foreach ($leads as $lead) {
                         $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead);
@@ -445,36 +445,6 @@ class HomeRenewalService extends RenewalsUploadService
             LoggerService::error($logPrefix.' one of batch is failed. Exception : '.$exception->getMessage());
             $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
         }
-    }
-
-
-    private function getPendingOcbLeads(int $batch): object
-    {
-        $logPrefix = get_class($this).' FN: getPendingOcbLeads';
-
-        LoggerService::info($logPrefix.' Getting pending OCB leads', extra: [
-            'batch' => $batch,
-        ]);
-
-        $query = RenewalQuoteProcess::select('id', 'quote_id')->where([
-            'quote_type' => QuoteTypeShortCode::HOM,
-            'renewal_batch_id' => $batch,
-            'type' => RenewalsUploadType::UPDATE_LEADS,
-            'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'email_sent' => 0,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ]);
-
-        $query->whereHas('personalQuote', function ($q) {
-            $q->whereNull('paid_at');
-        });
-
-        return $query->groupBy('quote_id'); 
-    }
-
-    private function getPendingOcbLeadsCount(int $batch): int
-    {
-        return $this->getPendingOcbLeads($batch)->count();
     }
 
     private function createHomeQuoteData(array &$quoteData, array $data):array

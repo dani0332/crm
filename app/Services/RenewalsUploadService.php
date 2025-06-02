@@ -393,15 +393,6 @@ class RenewalsUploadService
         return $quotePlans;
     }
 
-    public function getPlansNonMotor($id, $quoteType)
-    {
-        LoggerService::info('fn: getPlansNonMotor: quoteType: '.$quoteType);
-
-        return $this->homeQuoteService->getQuotePlans($id, [
-            'getLatestRating' => true,
-        ]);
-    }
-
     /**
      * @return void
      */
@@ -2503,6 +2494,41 @@ class RenewalsUploadService
             quoteTypeCode::Health => QuoteTypeShortCode::HEA,
         ];
     }
+
+    public function getOcbLeadsQueryNonMotor($batch, $quoteType)
+    {
+        $query = RenewalQuoteProcess::select('id', 'quote_id')->where([
+            'quote_type' => $quoteType,
+            'renewal_batch_id' => $batch,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'email_sent' => 0,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ]);
+
+        switch ($quoteType) {
+            case QuoteTypeShortCode::HOM:
+                $query->whereHas('personalQuote', function ($q) {
+                    $q->whereNull('paid_at');
+                });
+                break;
+            default:
+                break;
+        }
+
+        return $query->groupBy('quote_id');
+    }
+
+    public function getPendingOcbLeadsTotalNonMotor($batch, $quoteType)
+    {
+
+        $count = $this->getOcbLeadsQueryNonMotor($batch, $quoteType)->get()->count();
+        LoggerService::info("fn: getPendingOcbLeadsTotalNonMotor - $batch - $quoteType - $count");
+
+        return $count;
+    }
+
+
     private function isFakeEmail($email)
     {
         $fakeEmail = false;
