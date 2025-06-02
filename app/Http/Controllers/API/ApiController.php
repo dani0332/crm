@@ -367,7 +367,7 @@ class ApiController extends Controller
                 $customers->where('id', '>', $cursor);
             }
 
-            $customers = $customers->limit($batchSize)->get();
+            $customers = $customers->limit($batchSize)->orderBy('created_at', 'asc')->get();
 
             if ($customers->isEmpty()) {
                 LoggerService::info('No customers found without PCP tag.');
