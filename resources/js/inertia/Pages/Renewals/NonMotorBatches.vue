@@ -99,6 +99,22 @@ const monthsOptions = computed(() => {
 });
 
 filters.month = new Date().getMonth() + 1;
+
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+    } else {
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 
 <template>
