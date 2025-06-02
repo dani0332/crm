@@ -408,7 +408,7 @@ class HomeRenewalService extends RenewalsUploadService
 
             $jobs = [];
 
-            $this->getPendingOcbLeadsTotalNonMotor($batch, QuoteTypeShortCode::HOM)
+            $this->getOcbLeadsQueryNonMotor($batch, QuoteTypeShortCode::HOM)
                 ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
                     foreach ($leads as $lead) {
                         $jobs[] = new HomeRenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead);

@@ -46,7 +46,7 @@ const tableHeader = [
   
   <template #item-batch="{ batch, renewal_batch }">
       {{ batch ? batch : renewal_batch?.name }}
-    </template>
+  </template>
     
   
   <template #item-renewal_upload_lead="{ renewal_upload_lead }">

@@ -336,7 +336,7 @@ function onSubmit(isValid) {
     formData.append('lob', uploadForm.lob);
     formData.append('renewals_upload_type', 'update');
     axios
-      .post('/renewals/upload-update', formData, {
+      .post('/renewals/non-motor/upload-update', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

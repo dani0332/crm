@@ -71,6 +71,13 @@ class RenewalsUploadController extends Controller
         return $result;
     }
 
+    public function renewalsUploadUpdateNonMotor(RenewalsUploadNonMotorRequest $request)
+    {
+        $result = $this->renewalsUploadFileService->renewalsUploadUpdate($request->validated());
+
+        return $result;
+    }
+
     /**
      * fetch plans batch wise.
      *

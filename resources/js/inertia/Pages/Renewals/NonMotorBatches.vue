@@ -207,7 +207,7 @@ onMounted(() => {
       hide-footer
     >
       <template #item-renewal_batch="{ renewal_batch }">
-        {{ renewal_batch }}
+        {{ renewal_batch.name }}
       </template>
       <template #item-action="{ renewal_batch, quote_type, renewal_batch_id }">
         <x-button
