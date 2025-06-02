@@ -42,7 +42,7 @@ class PolicyBulkSendDocuments extends Command
     {
         // Define the array of codes to process
         $codes = [
-            'BUS-UFU96QAC', 'HEA-DFEDH47G', 'HEA-M683GHGU', 'HEA-X9HJM5HD', 'HEA-Y5JX37HB',
+            'HEA-DFEDH47G', 'HEA-M683GHGU', 'HEA-X9HJM5HD', 'HEA-Y5JX37HB', 'HEA-8TZBHZTF',
             'HEA-MXXDCEFX', 'HEA-7F8GXP7S', 'HEA-9SK6W8Q7', 'HEA-SPFSYNCY', 'HEA-MHKSVKJ6',
             'HEA-Y5VPYLSZ', 'HEA-ZEF3H47V', 'HEA-LWPAWGWL', 'HEA-258XRNMT', 'HEA-TT4VF2UF',
             'HEA-DMKHLFPG', 'HEA-V9UPJLXE', 'HEA-HUABPPXK', 'HEA-QT4GWCGR', 'HEA-VL8NZWGF',
@@ -51,7 +51,7 @@ class PolicyBulkSendDocuments extends Command
             'HEA-E6XW6Z5H', 'HEA-DPTHTL5Z', 'HEA-HREZ4S35', 'HEA-D4K4H9QZ', 'HEA-95PL8EZF',
             'HEA-9A7599ZU', 'HEA-6YTA8VBP', 'HEA-PEMRLX8F', 'HEA-MWQYXWRW', 'HEA-P5LJTVEM',
             'HEA-QJV8L34W', 'HEA-47QFDZS4', 'HEA-C4GRJ9SG', 'HEA-TPSRFUWD', 'HEA-EABJJTCP',
-            'HEA-8TZBHZTF',
+            'BUS-UFU96QAC'
         ];
 
         if (empty($codes)) {
@@ -62,7 +62,7 @@ class PolicyBulkSendDocuments extends Command
         $count = 0;
         $notFound = [];
 
-        foreach ($codes as $index => $code) {
+        foreach ($codes as $code) {
             $isProcessEnabled = ApplicationStorage::where('key_name', 'IS_AML_ENTITY_SEARCH_ENABLED')->first();
             if ($isProcessEnabled && $isProcessEnabled->value == 0) {
                 LoggerService::info('PolicyBulkSendDocuments - IS_AML_ENTITY_SEARCH_ENABLED is set to Disabled.');
@@ -75,7 +75,7 @@ class PolicyBulkSendDocuments extends Command
 
             $modelType = null;
 
-            if ($index == 0){
+            if ($code == "BUS-UFU96QAC"){
                 $quoteObject = BusinessQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
                 $modelType = quoteTypeCode::Business;
             } else {
