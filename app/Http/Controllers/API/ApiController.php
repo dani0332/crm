@@ -401,15 +401,17 @@ class ApiController extends Controller
 
                 LoggerService::info('private client tag marking activity has been started on customer', extra: $customerData);
 
-                foreach ($customer->personalQuote as $value) {
-                    if (QuoteTypes::getName($value->quote_type_id)) {
-                        LoggerService::startQuoteLogging(QuoteTypes::getName($value->quote_type_id)->refId($value->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                        $this->applyPcpTag($value->uuid, $value->quote_type_id);
-                        LoggerService::endLogging();
-                    } else {
-                        LoggerService::info('quote_type_id is not valid', extra: $value->quote_type_id);
+                $customer->personalQuote->chunk(100, function ($quotes) {
+                    foreach ($quotes as $value) {
+                        if (QuoteTypes::getName($value->quote_type_id)) {
+                            LoggerService::startQuoteLogging(QuoteTypes::getName($value->quote_type_id)->refId($value->uuid), LoggerFeatureEnum::PCP_CLIENT);
+                            $this->applyPcpTag($value->uuid, $value->quote_type_id);
+                            LoggerService::endLogging();
+                        } else {
+                            LoggerService::info('quote_type_id is not valid', extra: $value->quote_type_id);
+                        }
                     }
-                }
+                });
 
                 LoggerService::info('private client tag marking activity has been ended on customer', extra: $customerData);
             }
