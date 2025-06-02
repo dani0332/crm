@@ -44,8 +44,8 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     nodejs \
     yarn \
-    ghostscript \
-    libwebp-dev
+    libwebp-dev \
+    qpdf
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
 RUN php -r 'var_dump(function_exists("imagecreatefromwebp"));'
