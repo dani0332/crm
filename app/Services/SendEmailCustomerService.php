@@ -815,7 +815,12 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
-                    $path = $document->watermarked_doc_url ?? $document->doc_url;
+                    $path = ! empty($document->watermarked_doc_url) ? $document->watermarked_doc_url : $document->doc_url;
+                    if (empty($path)) {
+                        LoggerService::warning("Main lead document not found for document ID: {$document->id} Quote Code: {$emailData->code} Error Code: 404");
+
+                        continue;
+                    }
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $this->encodeUrl($documentURL),
@@ -1000,7 +1005,12 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
-                    $path = $document['watermarked_doc_url'] ?? $document['doc_url'];
+                    $path = ! empty($document['watermarked_doc_url']) ? $document['watermarked_doc_url'] : $document['doc_url'];
+                    if (empty($path)) {
+                        LoggerService::warning("Send lead document not found for document ID: {$document['id']} Error Code: 404");
+
+                        continue;
+                    }
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
