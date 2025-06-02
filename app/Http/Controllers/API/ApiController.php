@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Http\Controllers\Controller;
@@ -362,7 +363,8 @@ class ApiController extends Controller
                 $query->whereNull('pc_qualified')
                     ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                     ->whereNotNull('policy_expiry_date')
-                    ->where('policy_expiry_date', '>', now());
+                    ->where('policy_expiry_date', '>', now())
+                    ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht]);
             })->whereNull('pcp_tag');
 
             if ($cursor) {
@@ -408,6 +410,7 @@ class ApiController extends Controller
                     ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                     ->whereNotNull('policy_expiry_date')
                     ->where('policy_expiry_date', '>', now())
+                    ->whereIn('quote_type_id', [QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Life, QuoteTypeId::Yacht])
                     ->orderBy('id')
                     ->chunk(50, function ($quotes) {
                         foreach ($quotes as $value) {
