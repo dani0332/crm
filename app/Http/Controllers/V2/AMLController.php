@@ -602,6 +602,7 @@ class AMLController extends Controller
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quote->id,
             ]);
+        } else {
             // Create new record or update existing quote mapping
             CustomerInsured::updateOrCreate([
                 'customer_id' => $request->customer_id,
