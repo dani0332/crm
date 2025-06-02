@@ -116,11 +116,6 @@ class RenewalsUploadController extends Controller
 
     public function fetchPlansNonMotor($batch, $quoteType)
     {
-
-        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
-            return abort(403);
-        }
-
         LoggerService::info(message: 'FetchPlansNonMotor FN: fetchPlansNonMotor Fetch plans started', extra: [
             'batch' => $batch,
             'quoteType' => $quoteType,
@@ -502,7 +497,7 @@ class RenewalsUploadController extends Controller
         $totalLeads = $this->renewalsUploadFileService->getPendingOcbLeadsTotalNonMotor($batch, $quoteType);
 
         $renewalsBatchEmail = RenewalsBatchEmails::create([
-            'batch' => $batch,
+            'renewal_batch_id' => $batch,
             'status' => ProcessStatusCode::PENDING,
             'total_leads' => $totalLeads,
             'total_sent' => 0,
@@ -544,7 +539,7 @@ class RenewalsUploadController extends Controller
     public function validationPassed($id)
     {
         $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)
-            ->with('renewalUploadLead')
+            ->with('renewalUploadLead', 'renewalBatch')
             ->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])
             ->simplePaginate()->withQueryString();
 

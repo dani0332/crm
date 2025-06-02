@@ -1049,9 +1049,8 @@ class RenewalsUploadService
 
         $isNameChanged = false;
         $quoteTypeCode = array_key_exists('quote_type', $data) ? $data['quote_type'] : $renewalQuoteProcess->quote_type;
-        $isQuoteTypeHome = $quoteTypeCode == QuoteTypeShortCode::HOM;
 
-        $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged, $quoteTypeCode, $isQuoteTypeHome) {
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged, $quoteTypeCode) {
             throw_if(! in_array($quoteTypeCode, [QuoteTypeShortCode::CAR, QuoteTypeShortCode::HOM]), 'Only Insurance Type Car and Home allowed to update lead');
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
@@ -1083,22 +1082,6 @@ class RenewalsUploadService
                 $nationality = Nationality::where('text', $data['nationality'])->first();
                 $emirate = Emirate::where('text', $data['registration_location'])->first();
                 $uaeLicenseHeldFor = UAELicenseHeldFor::where('text', $data['driving_experience'])->first();
-            } elseif ($isQuoteTypeHome) {
-                $homeCurrentInsuranceProvider = (! empty($data['current_insurance_provider'])) ? InsuranceProvider::where('code', $data['current_insurance_provider'])->first()->id : null;
-                $homePossessionTypeId = (! empty($data['you_are_a'])) ? RangeLookup::where('text', $data['you_are_a'])->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)->first()->id : null;
-                $homeIliveinAccommodationTypeId = (! empty($data['i_live_in_a'])) ? RangeLookup::where('text', $data['i_live_in_a'])->where('key', RangeLookupKeyEnums::ACCOMMODATION_TYPE)->first()->id : null;
-                $homeOwnerOccupancyTypeId = (! empty($data['occupancy_status_for_owners'])) ? RangeLookup::where('text', $data['occupancy_status_for_owners'])->where('key', RangeLookupKeyEnums::OWNER_OCCUPANCY_TYPE)->first()->id : null;
-                $homeSubAreaId = (! empty($data['location_area'])) ? SubArea::where('text', $data['location_area'])->first()->id : null;
-                $homeCoverageTypeId = (! empty($data['cover_required'])) ? RangeLookup::where('text', $data['cover_required'])->where('key', RangeLookupKeyEnums::COVERAGE_TYPE)->first()->id : null;
-                $homeContents = (! empty($data['contents'])) ? RangeLookup::where('text', $data['contents'])->where('key', RangeLookupKeyEnums::CONTENT_VALUES)->first()->id : null;
-                $homePersonalBelongings = (! empty($data['personal_belongings'])) ? RangeLookup::where('text', $data['personal_belongings'])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
-                $homeBuildingAed = (! empty($data['building'])) ? $data['building'] : null;
-                $homeInsuranceProvider = (! empty($data['insurance_provider'])) ? InsuranceProvider::where('code', $data['insurance_provider'])->first()->id : null;
-                $homePlanName = (! empty($data['plan_name'])) ? $data['plan_name'] : null;
-                $homeClaimsHistory = (! empty($data['claims_history']) && $data['claims_history'] == 'Yes') ? 1 : 0;
-                $homePremium = (! empty($data['premium'])) ? $data['premium'] : null;
-                $homeInsurerQuoteNumber = (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null;
-                $homePreviousAdvisorId = (! empty($data['previous_advisor_email'])) ? $this->renewalsAddonService->getUserInfo($data['previous_advisor_email']) : null;
             }
 
             LoggerService::info($logPrefix.' fetched options from DB');
@@ -1134,7 +1117,6 @@ class RenewalsUploadService
                 'advisor_id' => $advisorId,
                 'assignment_type' => $advisorId ? ($isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED) : null,
                 'renewal_batch' => $data['batch'] ?? null,
-                'renewal_batch_id' => null,
                 // 'additional_notes' => $data['notes'],
             ];
 
@@ -1200,41 +1182,6 @@ class RenewalsUploadService
             LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
 
             $quote->update($quoteData);
-
-            // create or update in lob specific table i.e home_quote_request, health_quote_request etc.
-            if ($isQuoteTypeHome) {
-                $quoteData['personal_quote_id'] = $quote->id;
-                $quoteData['insurance_provider_id'] = $homeCurrentInsuranceProvider;
-                $quoteData['possession_type_id'] = $homePossessionTypeId;
-                $quoteData['accommodation_type_id'] = $homeIliveinAccommodationTypeId;
-                $quoteData['owner_occupancy_type_id'] = $homeOwnerOccupancyTypeId;
-                $quoteData['sub_area_id'] = $homeSubAreaId;
-                $quoteData['coverage_type_id'] = $homeCoverageTypeId;
-                $quoteData['contents_value_id'] = $homeContents;
-                $quoteData['personal_belongings_value_id'] = $homePersonalBelongings;
-                $quoteData['building_value'] = $homeBuildingAed;
-                $quoteData['building_aed'] = $homeBuildingAed;
-                $quoteData['renewal_upload_insurance_provider_id'] = $homeInsuranceProvider;
-                $quoteData['renewal_upload_plan_code'] = $homePlanName;
-                $quoteData['has_claimed_losses'] = $homeClaimsHistory;
-                $quoteData['renewal_upload_renewal_premium'] = $homePremium;
-                $quoteData['insurer_quote_number'] = $homeInsurerQuoteNumber;
-                $quoteData['previous_advisor_id'] = $homePreviousAdvisorId;
-                $quoteData['additional_notes'] = $data['notes'];
-
-                $homeQuote = HomeQuote::updateOrCreate(
-                    [
-                        'uuid' => $quote->uuid,
-                    ],
-                    $quoteData
-                );
-
-                if ($homeQuote) {
-                    LoggerService:info('fn: updateQuote - Home Quote Created/Update', [
-                        'ref-id' => $quote->uuid,
-                    ]);
-                }
-            }
 
             if (! checkPersonalQuotes($quoteType->code)) {
                 $this->syncQuote($quote, $quoteData);
@@ -1429,107 +1376,6 @@ class RenewalsUploadService
         return $this->carQuoteService->renewalCreatePlan($planData);
     }
 
-    public function createPlanHome($data, $quote, $createdById)
-    {
-        $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
-        LoggerService::info($logPrefix.' Create Plan Started');
-
-        $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
-
-        $carPlan = CarPlan::where([
-            'text' => $data['plan_name'],
-            'repair_type' => $data['plan_type'],
-            'provider_id' => $provider->id,
-        ])->with(['carAddons' => function ($q) {
-            $q->whereIn('code', [
-                CarPlanAddonsCode::DRIVER_COVER,
-                CarPlanAddonsCode::PASSENGER_COVER,
-                CarPlanAddonsCode::CAR_HIRE,
-                CarPlanAddonsCode::OMAN_COVER,
-                CarPlanAddonsCode::BREAKDOWN_COVER,
-            ])->with('carAddonOptions');
-        }])->first();
-
-        $planData = [
-            'quoteUID' => $quote->uuid,
-            'update' => false,
-            'url' => strval(request()->current_url),
-            'ipAddress' => request()->ip(),
-            'userAgent' => request()->header('User-Agent'),
-            'userId' => strval($createdById),
-        ];
-
-        $plan = [
-            'planId' => $carPlan->id,
-            'isDisabled' => false,
-            'isManualUpdate' => false,
-            'actualPremium' => $data['premium'] ?? 0,
-            'discountPremium' => $data['premium'] ?? 0,
-            'ancillaryExcess' => $data['ancillary_excess'] ?? 0,
-            'carValue' => $data['car_value'] ?? 0,
-        ];
-
-        if (! empty($data['insurer_quote_no'])) {
-            $plan['insurerQuoteNo'] = strval($data['insurer_quote_no']);
-        }
-
-        // excess will be used for comp or agency repair type
-        if ($data['plan_type'] == CarPlanType::COMP || $data['plan_type'] == CarPlanType::AGENCY) {
-            $plan['excess'] = $data['excess'];
-        }
-
-        // trim is optional
-        if (! empty($data['trim'])) {
-            if ($valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first()) {
-                if (! empty($valuation->insurer_available_trims)) {
-                    $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
-                    if (! empty($trims[$data['trim']]['admeId'])) {
-                        $plan['insurerTrimId'] = $trims[$data['trim']]['admeId'];
-                    }
-                }
-            }
-        }
-
-        $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
-
-        $addons = [
-            'driver_cover' => CarPlanAddonsCode::DRIVER_COVER,
-            'passenger_cover' => CarPlanAddonsCode::PASSENGER_COVER,
-            'car_hire' => CarPlanAddonsCode::CAR_HIRE,
-            'oman_cover' => CarPlanAddonsCode::OMAN_COVER,
-            'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
-        ];
-
-        foreach ($addons as $key => $addonCode) {
-            if (isset($planAddons[$addonCode]) && ! empty($data[$key])) {
-                $addon = $planAddons[$addonCode];
-
-                foreach ($addon['car_addon_options'] as $option) {
-                    if (strtolower(trim($option['value'])) == strtolower(trim($data[$key]))) {
-                        $price = $data[$key.'_amount'];
-
-                        $planDataAddon = [
-                            'addonId' => $option['addon_id'],
-                            'addonOptionId' => $option['id'],
-                            'price' => $price,
-                            'isSelected' => ($price == 0),
-                        ];
-
-                        $plan['addons'][] = $planDataAddon;
-                        break;
-                    }
-                }
-            } else {
-                LoggerService::info($logPrefix.'('.$addonCode.') not found');
-            }
-        }
-
-        $planData['plans'][] = $plan;
-
-        LoggerService::info($logPrefix.' PlanData: '.json_encode($planData));
-
-        return $this->carQuoteService->renewalCreatePlan($planData);
-    }
 
     public function getquoteStatusIdbyCode($quoteStatus)
     {
@@ -2284,27 +2130,6 @@ class RenewalsUploadService
         LoggerService::info('Batch not found with year: '.$year.' and batch name: '.$batchName);
 
         return false;
-    }
-
-    private function getBatch($endDate)
-    {
-
-        // Extract year from endDate
-        $endDate = Carbon::createFromFormat('d/m/Y', $endDate);
-        $year = $endDate->format('Y');
-
-        // Extract week number from endDate and remove leading zero if present
-        $weekNumber = 'W'.$endDate->weekOfYear;
-
-        // Check if the batch exists in the table with the extracted year and week number
-        $batch = RenewalBatch::where([
-            ['name', $weekNumber.'-'.$year],
-            ['quote_type_id', null],
-        ])->first();
-
-        LoggerService::info('Get Batch: '.json_encode($batch->toArray()));
-
-        return $batch;
     }
 
     private function validateDate($date, $format = 'd/m/Y')

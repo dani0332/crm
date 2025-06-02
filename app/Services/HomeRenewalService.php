@@ -530,6 +530,7 @@ class HomeRenewalService extends RenewalsUploadService
 
         $homePersonalBelongings = (! empty($data['personal_belongings'])) ? RangeLookup::where('text', $data['personal_belongings'])->where('key', RangeLookupKeyEnums::PERSONAL_BELONGING_VALUES)->first()->id : null;
         LoggerService::info('fn: getPersonalBelongingsAed - personal belongings: ' . $homePersonalBelongings);
+        
         return $homePersonalBelongings;
     }
 
