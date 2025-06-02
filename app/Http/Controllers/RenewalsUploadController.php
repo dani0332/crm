@@ -34,6 +34,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\RenewalHomeFailedValidationExport;
 
 class RenewalsUploadController extends Controller
 {
@@ -533,8 +534,13 @@ class RenewalsUploadController extends Controller
     public function downloadValidationFailed($id)
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
-
-        return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        
+        switch ($renewaUploadLead->quote_type) {
+            case QuoteTypeShortCode::HOM:
+                return Excel::download(new RenewalHomeFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+            default:
+                return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        }
     }
 
     public function validationPassed($id)
@@ -607,6 +613,8 @@ class RenewalsUploadController extends Controller
 
     public function export(Request $request)
     {
+
+        dd($request->all());
         $quotes = $this->renewalsUploadFileService->getExport($request);
 
         return $quotes;

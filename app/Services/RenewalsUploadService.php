@@ -1949,7 +1949,7 @@ class RenewalsUploadService
                             }
                             if ($leadData->you_are_a) {
                                 $leadPossessionType = RangeLookup::where('text', $leadData->you_are_a)
-                                    ->where('key', RangeLookupKeyEnums::POSSESSION_TYPE)
+                                    ->where('key', RangeLookupKeyEnums::POSSESSION_TYPE->value)
                                     ->first();
                                 if (! $leadPossessionType) {
                                     $leadValidationErrors->push('Invalid Ownership Status Text');
