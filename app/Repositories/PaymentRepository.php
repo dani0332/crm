@@ -368,7 +368,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         // Update parent payment status based on child payments
-        $this->setMasterPaymentStatus($payment, 'add split payments');
+        $this->setMasterPaymentStatus($payment);
         LoggerService::info("Updated master payment status completed for {$quoteID}");
 
         // Dispatch FTC email job if applicable
@@ -384,7 +384,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
         if ($discountDocuments && count($discountDocuments)) {
             $firstPaymentSplit = $firstPaymentSplit ?? PaymentSplits::where(['code' => $quoteID])->first();
-            app(SplitPaymentService::class)->uploadDiscountDocuments($discountDocuments, $firstPaymentSplit, 'add split payments');
+            app(SplitPaymentService::class)->uploadDiscountDocuments($discountDocuments, $firstPaymentSplit);
             LoggerService::info("Uploaded discount documents for payment {$quoteID}");
         }
 
@@ -527,12 +527,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         ($sendFTCEmail && $quoteUUID != null) && SendFTCEmailJob::dispatch($quoteUUID, QuoteTypes::from($request->modelType), true)->delay(now()->addSeconds(5));
         $payment = Payment::where('code', $request->paymentCode)->first();
         LoggerService::info("Setting master payment status for payment code: {$request->paymentCode}");
-        $this->setMasterPaymentStatus($payment, 'update split payments');
+        $this->setMasterPaymentStatus($payment);
         $discountDocuments = $masterPayment->payment_splits[0]['discount_documents'];
         if ($discountDocuments && count($discountDocuments)) {
             LoggerService::info("Uploading discount documents for payment code: {$request->paymentCode}");
             $firstPaymentSplit = $firstPaymentSplit ?? PaymentSplits::where(['code' => $request->paymentCode])->first();
-            app(SplitPaymentService::class)->uploadDiscountDocuments($discountDocuments, $firstPaymentSplit, 'update split payments');
+            app(SplitPaymentService::class)->uploadDiscountDocuments($discountDocuments, $firstPaymentSplit);
         }
     }
 
@@ -764,7 +764,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 LoggerService::info("Split payment decline completed successfully - code: {$splitPaymentCode}, SR No: {$srNo}");
             }
             // Update parent payment status
-            $this->setMasterPaymentStatus($masterPayment, 'update payment status');
+            $this->setMasterPaymentStatus($masterPayment);
 
             return $successMessage;
         }, $maxRetries);
@@ -962,11 +962,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             ->count();
     }
 
-    public function setMasterPaymentStatus($payment, $source = null)
+    public function setMasterPaymentStatus($payment)
     {
         if ($payment) {
             $oldPaymentStatus = $payment->payment_status_id;
-            info("Master payment code: {$payment->code} - setMasterPaymentStatus called source: {$source}");
+            info("Master payment code: {$payment->code} - setMasterPaymentStatus called");
             if ($payment->frequency == 'upfront') {
                 $this->updateUpfrontStatus($payment);
             } else {

@@ -16,7 +16,7 @@ class PaymentSplitsObserver
      */
     public function created(PaymentSplits $paymentSplits): void
     {
-        $this->updateSplitPriceVat($paymentSplits, 'created payment split observer');
+        $this->updateSplitPriceVat($paymentSplits);
     }
 
     /**
@@ -25,17 +25,16 @@ class PaymentSplitsObserver
     public function updated(PaymentSplits $paymentSplits): void
     {
         // As the vat calculation changes according to frequency so cannot apply isDirty('payment_amount')
-        $this->updateSplitPriceVat($paymentSplits, 'updated payment split observer');
+        $this->updateSplitPriceVat($paymentSplits);
     }
 
     /**
      * Update the price VAT fields of the payment split.
      */
-    private function updateSplitPriceVat(PaymentSplits $paymentSplits, $source): void
+    private function updateSplitPriceVat(PaymentSplits $paymentSplits): void
     {
         LoggerService::info('PaymentSplits:Observer - Starting VAT calculation for payment code: '.$paymentSplits->code, extra: [
             'sr_no' => $paymentSplits->sr_no,
-            'source' => $source,
         ]);
 
         $masterPayment = $paymentSplits->payment;
@@ -51,20 +50,17 @@ class PaymentSplitsObserver
                 $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
                 LoggerService::info('PaymentSplits:Observer - Found personal quote for payment code: '.$paymentSplits->code, extra: [
                     'sr_no' => $paymentSplits->sr_no,
-                    'source' => $source,
                 ]);
             } else {
                 $modelType = quoteTypeCode::getName($masterPayment->paymentable_type);
                 LoggerService::info('PaymentSplits:Observer - Found non perosnal for payment code: '.$paymentSplits->code, extra: [
                     'sr_no' => $paymentSplits->sr_no,
-                    'source' => $source,
                 ]);
             }
         } else {
             LoggerService::info('PaymentSplits:Observer - Processing send update log for payment code: '.$paymentSplits->code, extra: [
                 'sr_no' => $paymentSplits->sr_no,
                 'send_update_log_id' => $masterPayment->send_update_log_id,
-                'source' => $source,
             ]);
         }
 
@@ -76,7 +72,6 @@ class PaymentSplitsObserver
                 'original_amount' => $paymentSplits->payment_amount,
                 'discount_value' => $masterPayment->discount_value,
                 'final_split_amount' => $splitAmount,
-                'source' => $source,
             ]);
         }
 
@@ -86,7 +81,6 @@ class PaymentSplitsObserver
             'frequency' => $masterPayment->frequency,
             'total_price' => $masterPayment->total_price,
             'split_amount' => $splitAmount,
-            'source' => $source,
         ]);
 
         [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat(
@@ -105,10 +99,9 @@ class PaymentSplitsObserver
             'sr_no' => $paymentSplits->sr_no,
             'price_without_vat' => $priceWithoutVat,
             'vat' => $vat,
-            'source' => $source,
         ]);
 
-        PaymentSplits::withoutEvents(function () use ($paymentSplits, $priceWithoutVat, $vat, $source) {
+        PaymentSplits::withoutEvents(function () use ($paymentSplits, $priceWithoutVat, $vat) {
             $paymentSplits->update([
                 'price_vat_applicable' => $priceWithoutVat,
                 'price_vat' => $vat,
@@ -116,7 +109,6 @@ class PaymentSplitsObserver
 
             LoggerService::info('PaymentSplits:Observer - Payment split updated for payment code: '.$paymentSplits->code, extra: [
                 'sr_no' => $paymentSplits->sr_no,
-                'source' => $source,
             ]);
         });
     }

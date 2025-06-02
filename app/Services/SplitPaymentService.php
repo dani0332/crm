@@ -67,9 +67,9 @@ class SplitPaymentService
         return $discount;
     }
 
-    public function uploadDiscountDocuments($discountDocuments, $paymentSplitRecord, $source = null)
+    public function uploadDiscountDocuments($discountDocuments, $paymentSplitRecord)
     {
-        LoggerService::info("Uploading discount documents for payment code: {$paymentSplitRecord->code} called from {$source}");
+        LoggerService::info("Uploading discount documents for payment code: {$paymentSplitRecord->code} called");
         foreach ($discountDocuments[0] as $document) {
             $quoteDocumentRec = QuoteDocument::find($document['id']);
             if ($quoteDocumentRec) {
