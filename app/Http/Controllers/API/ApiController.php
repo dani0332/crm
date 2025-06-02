@@ -348,15 +348,20 @@ class ApiController extends Controller
 
         $request->validate([
             'batch_size' => 'required|integer|min:1',
-            'offset' => 'required|integer',
+            'offset' => 'nullable|integer',
         ]);
 
         try {
 
             $batchSize = $request->input('batch_size');
-            $offset = $request->input('offset');
+            $offset = $request->input('offset', 0);
 
-            $customers = Customer::whereNull('pcp_tag')->limit($batchSize)->offset($offset)->orderBy('created_at', 'desc')->get();
+            $customers = Customer::whereHas('personalQuote', function ($query) {
+                $query->whereNull('pc_qualified')
+                    ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
+                    ->whereNotNull('policy_expiry_date')
+                    ->where('policy_expiry_date', '>', now());
+            })->whereNull('pcp_tag')->limit($batchSize)->offset($offset)->get();
 
             if ($customers->isEmpty()) {
                 LoggerService::info('No customers found without PCP tag.');
@@ -369,50 +374,26 @@ class ApiController extends Controller
             }
 
             foreach ($customers as $customer) {
-                LoggerService::info('private client tag marking activity has been started on customer', extra: [
+
+                $customerData = [
                     'customer_id' => $customer->id,
                     'customer_name' => $customer->first_name.' '.$customer->last_name,
                     'email' => $customer->email,
-                ]);
+                ];
 
-                $activeLeads = $customer->personalQuote()
-                    ->whereNull('pc_qualified')
-                    ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
-                    ->whereNotNull('policy_expiry_date')
-                    ->where('policy_expiry_date', '>', now())
-                    ->orderBy('created_at')
-                    ->get();
+                LoggerService::info('private client tag marking activity has been started on customer', extra: $customerData);
 
-                if ($activeLeads->isNotEmpty()) {
-
-                    LoggerService::info('Active leads found for customer', extra: [
-                        'customer_id' => $customer->id,
-                        'customer_name' => $customer->first_name.' '.$customer->last_name,
-                        'email' => $customer->email,
-                    ]);
-
-                    foreach ($activeLeads as $value) {
+                foreach ($customer->personalQuote as $value) {
+                    if (QuoteTypes::getName($value->quote_type_id)) {
                         LoggerService::startQuoteLogging(QuoteTypes::getName($value->quote_type_id)->refId($value->uuid), LoggerFeatureEnum::PCP_CLIENT);
-
                         $this->applyPcpTag($value->uuid, $value->quote_type_id);
-
                         LoggerService::endLogging();
-
+                    } else {
+                        LoggerService::info('quote_type_id is not valid', extra: $value->quote_type_id);
                     }
-                } else {
-                    LoggerService::warning('No active leads found for customer', extra: [
-                        'customer_id' => $customer->id,
-                        'customer_name' => $customer->first_name.' '.$customer->last_name,
-                        'email' => $customer->email,
-                    ]);
                 }
 
-                LoggerService::info('private client tag marking activity has been ended on customer', extra: [
-                    'customer_id' => $customer->id,
-                    'customer_name' => $customer->first_name.' '.$customer->last_name,
-                    'email' => $customer->email,
-                ]);
-
+                LoggerService::info('private client tag marking activity has been ended on customer', extra: $customerData);
             }
 
             return apiResponse(
