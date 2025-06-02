@@ -116,6 +116,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -133,6 +134,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -150,6 +152,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -167,6 +170,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -184,6 +188,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -201,6 +206,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                         'travelDestinations' => [],
@@ -282,6 +288,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
