@@ -39,4 +39,6 @@ enum LoggerFeatureEnum: string
     case SELECT_PLAN = 'select-plan';
 
     case SELECT_INSURANCE_PROVIDER = 'select-insurance-provider';
+
+    case SEND_AND_BOOK_POLICY_EMAIL_JOB = 'send-and-book-policy-email-job';
 }
