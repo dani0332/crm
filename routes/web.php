@@ -767,12 +767,21 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
     Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
+
+   
 });
 
 Route::get('/add-batch-number', function () {
     $addBtchNuimber = new AddBatchForNonMotors;
     $addBtchNuimber->handle();
     echo 'Done';
+});
+
+ // Command to bulk send policy documents
+ Route::get('/run-policy-bulk-send', function() {
+    $command = new \App\Console\Commands\PolicyBulkSendDocuments();
+    $command->handle();
+    return 'Command executed successfully!';
 });
 
 // Migration Not Required For Now 21 Nov 24
