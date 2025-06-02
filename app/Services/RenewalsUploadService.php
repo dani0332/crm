@@ -1926,6 +1926,15 @@ class RenewalsUploadService
                         break;
                     case QuoteTypeShortCode::HOM:
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HOM) {
+                            
+                            if ($leadData->location_area) {
+                                $locationArea = SubArea::where('text', $leadData->location_area)->exists();
+                                if (! $locationArea) {
+                                    $leadValidationErrors->push('Invalid Location Area Text');
+                                    break;
+                                }
+                            }
+
                             if ($leadData->insurance_type) {
                                 if ($leadData->insurance_type !== QuoteTypeShortCode::HOM) {
                                     $leadValidationErrors->push('Invalid Insurance Type Text');
@@ -2021,8 +2030,8 @@ class RenewalsUploadService
                                     break;
                                 }
                             }
-                            if ($leadData->previous_advisor_email) {
-                                if (! $this->renewalsAddonService->getUserInfo($data['previous_advisor_email'])) {
+                            if (isset($leadData->previous_advisor_email) && !empty($leadData->previous_advisor_email)) {
+                                if (! $this->renewalsAddonService->getUserInfo($leadData->previous_advisor_email)) {
                                     $leadValidationErrors->push('Invalid Previous Advisor Email');
                                     break;
                                 }
