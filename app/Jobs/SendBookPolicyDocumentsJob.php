@@ -41,7 +41,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function __construct($payload, $code, $forceEmailSend = false)
     {
-        info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
+        // info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
         $this->data = $payload;
         $this->code = $code;
         $this->forceEmailSend = $forceEmailSend;
