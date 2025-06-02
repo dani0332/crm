@@ -348,20 +348,26 @@ class ApiController extends Controller
 
         $request->validate([
             'batch_size' => 'required|integer|min:1',
-            'offset' => 'nullable|integer',
+            'cursor' => 'nullable|string',
         ]);
 
         try {
 
             $batchSize = $request->input('batch_size');
-            $offset = $request->input('offset', 0);
+            $cursor = $request->input('cursor');
 
             $customers = Customer::whereHas('personalQuote', function ($query) {
                 $query->whereNull('pc_qualified')
                     ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                     ->whereNotNull('policy_expiry_date')
                     ->where('policy_expiry_date', '>', now());
-            })->whereNull('pcp_tag')->limit($batchSize)->offset($offset)->get();
+            })->whereNull('pcp_tag');
+
+            if ($cursor) {
+                $customers->where('id', '>', $cursor);
+            }
+
+            $customers = $customers->limit($batchSize)->get();
 
             if ($customers->isEmpty()) {
                 LoggerService::info('No customers found without PCP tag.');
@@ -372,6 +378,18 @@ class ApiController extends Controller
                     'No customers found without PCP tag.'
                 );
             }
+
+            $nextCursor = $customers->last()->id;
+            $hasMore = $customers->count() === $batchSize;
+
+            $data = [
+                'data' => [
+                    'next_cursor' => $nextCursor,
+                    'has_more' => $hasMore,
+                ],
+                'message' => 'Private client tagging exercise has been completed.',
+                'status' => 'success',
+            ];
 
             foreach ($customers as $customer) {
 
@@ -396,11 +414,7 @@ class ApiController extends Controller
                 LoggerService::info('private client tag marking activity has been ended on customer', extra: $customerData);
             }
 
-            return apiResponse(
-                null,
-                Response::HTTP_OK,
-                'Private client tagging exercise has been completed.'
-            );
+            return apiResponse($data, Response::HTTP_OK);
         } catch (\Exception $e) {
             LoggerService::error('Error', exception: $e);
 
