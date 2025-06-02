@@ -366,7 +366,10 @@ const onLoadAvailablePlansData = async () => {
             ...plan,
             investmentFrequency: 'Regular',
             currency: 'USD',
-            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
+            minimumInvestment: getEligibilityValue(
+              plan.eligibility,
+              'minimum_investment_amount',
+            ),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
           };
           processedPlans.push(processedPlan);
@@ -380,7 +383,10 @@ const onLoadAvailablePlansData = async () => {
             ...plan,
             investmentFrequency: 'Lumpsum',
             currency: 'USD',
-            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
+            minimumInvestment: getEligibilityValue(
+              plan.eligibility,
+              'minimum_investment_amount',
+            ),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
           };
           processedPlans.push(processedPlan);
@@ -545,7 +551,10 @@ const onExportPlans = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `savings-plans-${page.props.quote.code}.pdf`);
+      link.setAttribute(
+        'download',
+        `savings-plans-${page.props.quote.code}.pdf`,
+      );
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1246,7 +1255,13 @@ const sendOCBEmail = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-end items-center flex-wrap gap-2">
-            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true && !availablePlansTable.isLoading">
+            <div
+              class="flex gap-2 mb-4"
+              v-if="
+                readOnlyMode.isDisable === true &&
+                !availablePlansTable.isLoading
+              "
+            >
               <x-button-group
                 v-if="selectedPlans.length > 0"
                 size="sm"
@@ -1289,8 +1304,9 @@ const sendOCBEmail = () => {
                 <template #tooltip>
                   <div>
                     When clicked, this button sends the One Click Buy (OCB)
-                    email to the customer with updated savings plans and coverage
-                    options, helping them finalize their purchase with ease.
+                    email to the customer with updated savings plans and
+                    coverage options, helping them finalize their purchase with
+                    ease.
                   </div>
                 </template>
               </x-tooltip>
@@ -1299,9 +1315,7 @@ const sendOCBEmail = () => {
                 size="sm"
                 color="orange"
                 class="mr-2"
-                @click.prevent="
-                  onCopyText('/quotes/savings/' + quote.uuid)
-                "
+                @click.prevent="onCopyText('/quotes/savings/' + quote.uuid)"
               >
                 Copy Link
               </x-button>
@@ -1354,7 +1368,9 @@ const sendOCBEmail = () => {
                 <span class="text-gray-800 uppercase">{{ item.name }}</span>
               </template>
               <template #item-investmentFrequency="item">
-                <span class="text-gray-800">{{ item.investmentFrequency }}</span>
+                <span class="text-gray-800">{{
+                  item.investmentFrequency
+                }}</span>
               </template>
               <template #item-minimumInvestment="item">
                 <span>{{ item.minimumInvestment }}</span>
@@ -1435,15 +1451,19 @@ const sendOCBEmail = () => {
 
                         <div class="grid sm:grid-cols-2 mb-3">
                           <x-tooltip
-                            v-if="page.props.lockLeadSectionsDetails?.plan_selection"
+                            v-if="
+                              page.props.lockLeadSectionsDetails?.plan_selection
+                            "
                             placement="bottom"
                           >
-                            <ToggleManualButtonReuseTemplate :isDisabled="true" />
+                            <ToggleManualButtonReuseTemplate
+                              :isDisabled="true"
+                            />
                             <template #tooltip>
-                              No further action allowed on issued policy, If changes are
-                              required, such as increase in price, please proceed through
-                              the 'Send Update' feature using the 'Correction of Policy'
-                              option.
+                              No further action allowed on issued policy, If
+                              changes are required, such as increase in price,
+                              please proceed through the 'Send Update' feature
+                              using the 'Correction of Policy' option.
                             </template>
                           </x-tooltip>
                           <ToggleManualButtonReuseTemplate v-else />
@@ -1453,16 +1473,24 @@ const sendOCBEmail = () => {
                       <!-- Form Fields using dt/dd grid pattern like Car -->
                       <dl class="grid md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
                         <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700">Provider Name</dt>
-                          <dd class="text-gray-900">{{ planDetails.providerName }}</dd>
+                          <dt class="text-sm font-medium text-gray-700">
+                            Provider Name
+                          </dt>
+                          <dd class="text-gray-900">
+                            {{ planDetails.providerName }}
+                          </dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700">Plan Name</dt>
+                          <dt class="text-sm font-medium text-gray-700">
+                            Plan Name
+                          </dt>
                           <dd class="text-gray-900">{{ planDetails.name }}</dd>
                         </div>
 
                         <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700 mt-2">Insurance Quote No.:</dt>
+                          <dt class="text-sm font-medium text-gray-700 mt-2">
+                            Insurance Quote No.:
+                          </dt>
                           <x-input
                             model-value=""
                             placeholder=""
@@ -1474,7 +1502,9 @@ const sendOCBEmail = () => {
                           />
                         </div>
                         <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700 mt-2">Price:</dt>
+                          <dt class="text-sm font-medium text-gray-700 mt-2">
+                            Price:
+                          </dt>
                           <x-input
                             model-value=""
                             placeholder=""
@@ -1487,8 +1517,13 @@ const sendOCBEmail = () => {
                         </div>
 
                         <div class="grid sm:grid-cols-2">
-                          <dt class="text-sm font-medium text-gray-700">Investment Frequency</dt>
-                          <dd class="text-gray-900">{{ planDetails.investmentFrequency }} / Additional Single Premiums</dd>
+                          <dt class="text-sm font-medium text-gray-700">
+                            Investment Frequency
+                          </dt>
+                          <dd class="text-gray-900">
+                            {{ planDetails.investmentFrequency }} / Additional
+                            Single Premiums
+                          </dd>
                         </div>
                         <div class="grid sm:grid-cols-2"></div>
                       </dl>
@@ -1508,7 +1543,10 @@ const sendOCBEmail = () => {
                             <x-button
                               color="primary"
                               size="sm"
-                              :disabled="page.props.lockLeadSectionsDetails?.plan_selection"
+                              :disabled="
+                                page.props.lockLeadSectionsDetails
+                                  ?.plan_selection
+                              "
                             >
                               Update
                             </x-button>
@@ -1521,8 +1559,18 @@ const sendOCBEmail = () => {
                   <!-- Eligibility Tab -->
                   <TabPanel>
                     <div class="p-6">
-                      <div v-if="planDetails.eligibility && planDetails.eligibility.length > 0" class="grid grid-cols-2 gap-x-8 gap-y-6">
-                        <div v-for="item in planDetails.eligibility" :key="item.id" class="grid grid-cols-2 gap-x-4">
+                      <div
+                        v-if="
+                          planDetails.eligibility &&
+                          planDetails.eligibility.length > 0
+                        "
+                        class="grid grid-cols-2 gap-x-8 gap-y-6"
+                      >
+                        <div
+                          v-for="item in planDetails.eligibility"
+                          :key="item.id"
+                          class="grid grid-cols-2 gap-x-4"
+                        >
                           <div class="text-gray-700 font-medium text-sm">
                             {{ item.text }}
                           </div>
@@ -1540,8 +1588,18 @@ const sendOCBEmail = () => {
                   <!-- Included Benefits Tab -->
                   <TabPanel>
                     <div class="p-6">
-                      <div v-if="planDetails.includedBenefits && planDetails.includedBenefits.length > 0" class="grid grid-cols-2 gap-x-8 gap-y-6">
-                        <div v-for="item in planDetails.includedBenefits" :key="item.id" class="grid grid-cols-2 gap-x-4">
+                      <div
+                        v-if="
+                          planDetails.includedBenefits &&
+                          planDetails.includedBenefits.length > 0
+                        "
+                        class="grid grid-cols-2 gap-x-8 gap-y-6"
+                      >
+                        <div
+                          v-for="item in planDetails.includedBenefits"
+                          :key="item.id"
+                          class="grid grid-cols-2 gap-x-4"
+                        >
                           <div class="text-gray-700 font-medium text-sm">
                             {{ item.text }}
                           </div>
@@ -1559,25 +1617,59 @@ const sendOCBEmail = () => {
                   <!-- Key Features Document Tab -->
                   <TabPanel>
                     <div class="p-4">
-                      <div v-if="planDetails.keyFeatureDocument && planDetails.keyFeatureDocument.length > 0" class="space-y-3">
-                        <div v-for="doc in planDetails.keyFeatureDocument" :key="doc.id" class="inline-flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div
+                        v-if="
+                          planDetails.keyFeatureDocument &&
+                          planDetails.keyFeatureDocument.length > 0
+                        "
+                        class="space-y-3"
+                      >
+                        <div
+                          v-for="doc in planDetails.keyFeatureDocument"
+                          :key="doc.id"
+                          class="inline-flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                        >
                           <!-- PDF Icon -->
                           <div class="flex-shrink-0">
-                            <svg class="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                            <svg
+                              class="w-6 h-6 text-red-500"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fill-rule="evenodd"
+                                d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                                clip-rule="evenodd"
+                              ></path>
                             </svg>
                           </div>
 
                           <!-- Document Name -->
                           <div class="flex-shrink-0">
-                            <span class="text-blue-600 font-medium">{{ doc.text }}</span>
+                            <span class="text-blue-600 font-medium">{{
+                              doc.text
+                            }}</span>
                           </div>
 
                           <!-- Download Icon -->
                           <div class="flex-shrink-0">
-                            <a :href="doc.value" target="_blank" class="text-blue-600 hover:text-blue-800">
-                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            <a
+                              :href="doc.value"
+                              target="_blank"
+                              class="text-blue-600 hover:text-blue-800"
+                            >
+                              <svg
+                                class="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                ></path>
                               </svg>
                             </a>
                           </div>
@@ -1726,14 +1818,16 @@ const sendOCBEmail = () => {
     >
       <div class="space-y-4">
         <p class="text-gray-600">
-          Are you sure you want to send the One Click Buy (OCB) email to the customer?
-          This will send them the selected savings plans with updated rates and coverage options.
+          Are you sure you want to send the One Click Buy (OCB) email to the
+          customer? This will send them the selected savings plans with updated
+          rates and coverage options.
         </p>
         <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
           <div class="flex">
             <div class="ml-3">
               <p class="text-sm text-blue-700">
-                <strong>Customer:</strong> {{ quote.first_name }} {{ quote.last_name }}
+                <strong>Customer:</strong> {{ quote.first_name }}
+                {{ quote.last_name }}
               </p>
               <p class="text-sm text-blue-700">
                 <strong>Email:</strong> {{ quote.email }}
@@ -1753,10 +1847,7 @@ const sendOCBEmail = () => {
         </x-button>
       </template>
       <template #primary-action>
-        <x-button
-          color="orange"
-          @click.prevent="sendOCBEmail"
-        >
+        <x-button color="orange" @click.prevent="sendOCBEmail">
           Send Email
         </x-button>
       </template>
@@ -1798,18 +1889,21 @@ const sendOCBEmail = () => {
 
 /* Target vue3-easy-data-table checkboxes specifically - only for this component */
 .compact-rows :deep(.easy-checkbox label:before) {
-  border-color: #10B981 !important;
+  border-color: #10b981 !important;
 }
 
-.compact-rows :deep(.easy-checkbox input[type='checkbox']:checked + label:before) {
-  background-color: #10B981 !important;
-  border-color: #10B981 !important;
+.compact-rows
+  :deep(.easy-checkbox input[type='checkbox']:checked + label:before) {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
 }
 
-.compact-rows :deep(.easy-checkbox input[type='checkbox'].allSelected + label:before),
-.compact-rows :deep(.easy-checkbox input[type='checkbox'].partSelected + label:before) {
-  background-color: #10B981 !important;
-  border-color: #10B981 !important;
+.compact-rows
+  :deep(.easy-checkbox input[type='checkbox'].allSelected + label:before),
+.compact-rows
+  :deep(.easy-checkbox input[type='checkbox'].partSelected + label:before) {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
 }
 
 /* Remove borders from modal and tab components */
