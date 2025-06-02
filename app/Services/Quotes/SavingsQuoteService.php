@@ -46,10 +46,17 @@ class SavingsQuoteService extends BaseQuoteService
                         $iq->where('code', request('investment_frequency'));
                     });
                 });
-            });
+            })
+            ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
+            ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false);
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        if (request()->has('debug') && request()->debug == 'true') {
+            echo $query->toRawSql();
+            exit;
+        }
 
         return $query->resolveData($paginted, $forExport, $getTotalCount);
     }
