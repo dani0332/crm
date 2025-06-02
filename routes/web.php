@@ -779,8 +779,7 @@ Route::get('/add-batch-number', function () {
 
  // Command to bulk send policy documents
  Route::get('/run-policy-bulk-send', function() {
-    $command = new \App\Console\Commands\PolicyBulkSendDocuments();
-    $command->handle();
+    \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
     return 'Command executed successfully!';
 });
 
