@@ -48,10 +48,11 @@ class SavingsQuoteService extends BaseQuoteService
                 });
             })
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
-            ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false);
+            ->filterByDate('policy_expiry_date_end', 'previous_policy_expiry_date', false)
+            ->filterByPaymentDueDates('payment_due_date')
+            ->filterByDateRange('booking_date', 'policy_booking_date');
 
         $this->adjustQueryByInsurerInvoiceFilters($query);
-        $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         if (request()->has('debug') && request()->debug == 'true') {
             echo $query->toRawSql();
