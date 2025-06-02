@@ -157,7 +157,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 LoggerService::info("Payment pre-authorized for payment method: {$masterPayment->payment_methods}");
             }
         } catch (Exception $exception) {
-            LoggerService::error("Error occurred during payment creation pre-processing: {$exception->getMessage()} for code {$paymentInformation['code']}");
+            LoggerService::error("Error occurred during payment creation pre-processing: {$exception->getMessage()} for code {$paymentInformation['code']}", exception: $exception);
 
             return ['status' => 'error', 'message' => $exception->getMessage()];
         }
@@ -200,7 +200,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         } catch (Exception $exception) {
             // Rollback changes if any error occurred
             DB::rollBack();
-            LoggerService::error("Error occurred during payment creation transaction: {$exception->getMessage()} for code {$paymentInformation['code']}");
+            LoggerService::error("Error occurred during payment creation transaction: {$exception->getMessage()} for code {$paymentInformation['code']}", exception: $exception);
 
             return ['status' => 'error', 'message' => $exception->getMessage()];
         }
