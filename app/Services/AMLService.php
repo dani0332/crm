@@ -1142,10 +1142,10 @@ class AMLService
         $personalQuotestwo = $this->buildAMlCftReportQuery($request, $startDate, $endDate, false);
 
         $personalQuotes = $personalQuotesone->union($personalQuotestwo);
-        $personalQuotes = $personalQuotes->orderBy('first_name');
+        $personalQuotes = $personalQuotes->orderByRaw('COALESCE(first_name, customer_first_name) IS NULL, COALESCE(first_name, customer_first_name) ASC');
         $collection = $personalQuotes->get();
 
-        info($collection->count());
+        info($collection->toArray());
 
         // Calculate summary
         $totalCustomers = $collection->count();
@@ -1190,6 +1190,7 @@ class AMLService
             'pqr.policy_number',
             'pqr.quote_status_id',
             'pqr.insurance_provider_id',
+            'pqr.risk_score as risk_score',
             'qs.text as lead_status',
             'ip.text as insurance_provider',
             'ik.first_name as first_name',
@@ -1198,14 +1199,16 @@ class AMLService
             'i.customer_type as customer_type',
             'ci.insured_id as insured_id',
             'ik.residential_status',
-            'ik.risk_score',
+            // 'ik.risk_score',
             'ik.premium_tenure',
             'ik.transaction_volume',
             'ik.is_owner_pep',
             'pqr.created_at as last_aml_screening_date',
-            'cm.uae_resident as customer_is_uae_resident',
+            'cm.id as customer_id',
             'cm.first_name as customer_first_name',
             'cm.last_name as customer_last_name',
+            'cm.uae_resident as customer_is_uae_resident',
+            'kl.notes as remarks'
         )
             ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->whereBetween('pqr.created_at', dateQueryFilter($startDate, $endDate))
@@ -1216,6 +1219,13 @@ class AMLService
                 $query->where('pqr.email', $request->email);
             });
 
+        $latestKycLogSub = function ($query) {
+            $query->select('quote_request_id', 'decision', 'notes', 'quote_type_id')
+                ->from('kyc_logs')
+                ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
+                ->where('decision', '!=', AMLDecisionStatusEnum::INSURER_AXA);
+        };
+
         if ($request->quoteType) {
             $personalQuotes = $personalQuotes->where('pqr.quote_type_id', $request->quoteType);
             $isQuoteTypePresent = in_array($request->quoteType, $quoteTypes);
@@ -1224,10 +1234,26 @@ class AMLService
                     $join->on('pqr.id', '=', 'ci.quote_request_id')
                         ->where('ci.quote_type_id', $request->quoteType);
                 });
+                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($request) {
+                    $join->on('pqr.id', '=', 'cm.quote_request_id')
+                        ->where('cm.quote_type_id', $request->quoteType);
+                });
+                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($request) {
+                    $join->on('kl.quote_request_id', '=', 'pqr.id')
+                        ->where('kl.quote_type_id', $request->quoteType);
+                });
             } else {
                 $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($request) {
                     $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
                         ->where('ci.quote_type_id', $request->quoteType);
+                });
+                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($request) {
+                    $join->on('pqr.quote_id', '=', 'cm.quote_request_id')
+                        ->where('cm.quote_type_id', $request->quoteType);
+                });
+                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($request) {
+                    $join->on('kl.quote_request_id', '=', 'pqr.quote_id')
+                        ->where('kl.quote_type_id', $request->quoteType);
                 });
             }
         } else {
@@ -1237,17 +1263,32 @@ class AMLService
                     $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
                         ->whereNotIn('ci.quote_type_id', $quoteTypes);
                 });
+                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($quoteTypes) {
+                    $join->on('pqr.quote_id', '=', 'cm.quote_id')
+                        ->whereNotIn('cm.quote_type', $quoteTypes);
+                });
+                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypes) {
+                    $join->on('kl.quote_request_id', '=', 'pqr.quote_id')
+                        ->whereNotIn('kl.quote_type_id', $quoteTypes);
+                });
             } else {
                 $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypes) {
                     $join->on('pqr.id', '=', 'ci.quote_request_id')
                         ->whereIn('ci.quote_type_id', $quoteTypes);
+                });
+                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($quoteTypes) {
+                    $join->on('pqr.id', '=', 'cm.quote_id')
+                        ->whereIn('cm.quote_type', $quoteTypes);
+                });
+                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypes) {
+                    $join->on('kl.quote_request_id', '=', 'pqr.quote_id')
+                        ->whereIn('kl.quote_type_id', $quoteTypes);
                 });
             }
         }
 
         $personalQuotes = $personalQuotes->leftJoin('quote_status as qs', 'pqr.quote_status_id', '=', 'qs.id')
             ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id')
-            ->leftJoin('customer_members as cm', 'pqr.id', '=', 'cm.quote_id')
             ->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id')
             ->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id');
 
