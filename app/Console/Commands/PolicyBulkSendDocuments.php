@@ -41,7 +41,7 @@ class PolicyBulkSendDocuments extends Command
     public function handle(): int
     {
         // Define the array of codes to process
-        $prodCodes = [
+        $codes = [
             'BUS-UFU96QAC', 'HEA-DFEDH47G', 'HEA-M683GHGU', 'HEA-X9HJM5HD', 'HEA-Y5JX37HB',
             'HEA-MXXDCEFX', 'HEA-7F8GXP7S', 'HEA-9SK6W8Q7', 'HEA-SPFSYNCY', 'HEA-MHKSVKJ6',
             'HEA-Y5VPYLSZ', 'HEA-ZEF3H47V', 'HEA-LWPAWGWL', 'HEA-258XRNMT', 'HEA-TT4VF2UF',
@@ -52,10 +52,6 @@ class PolicyBulkSendDocuments extends Command
             'HEA-9A7599ZU', 'HEA-6YTA8VBP', 'HEA-PEMRLX8F', 'HEA-MWQYXWRW', 'HEA-P5LJTVEM',
             'HEA-QJV8L34W', 'HEA-47QFDZS4', 'HEA-C4GRJ9SG', 'HEA-TPSRFUWD', 'HEA-EABJJTCP',
             'HEA-8TZBHZTF',
-        ];
-
-        $codes = [
-            'BUS-5DP96BJW', 'HEA-2EX54NZL', 'HEA-55CW8V8S'
         ];
 
         if (empty($codes)) {
