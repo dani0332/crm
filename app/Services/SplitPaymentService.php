@@ -651,6 +651,23 @@ class SplitPaymentService
         $payment = $paymentSplit->payment;
         $sendUpdateId = $payment->send_update_log_id;
         $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
+        if (! $mainLeadObject) {
+            $extra = [
+                'modelType' => $modelType,
+                'quoteId' => $quoteId,
+                'splitId' => $splitPaymentId,
+                'amountCollected' => $amountCollected,
+                'isFromJob' => $isFromJob,
+            ];
+            LoggerService::error("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
+            if ($isFromJob) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
+
+                return false;
+            } else {
+                vAbort("Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}");
+            }
+        }
         $maxRetries = 2;
 
         if (! empty($sendUpdateId) && $sendUpdateId > 0) {
