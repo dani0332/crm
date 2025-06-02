@@ -135,7 +135,8 @@ class HomeRenewalService extends RenewalsUploadService
                 'advisor_id' => $advisorId,
                 'assignment_type' => $advisorId ? ($isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED) : null,
                 'renewal_batch_id' => $renewalQuoteProcess->renewal_batch_id,
-                'notes' => $data['notes']
+                'notes' => $data['notes'],
+                'insurer_quote_number' => (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null,
             ];
 
             LoggerService::info($logPrefix.' quote data setup to update');
@@ -464,7 +465,6 @@ class HomeRenewalService extends RenewalsUploadService
         $quoteData['insurer_quote_number'] = (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null;
         $quoteData['previous_advisor_id'] = (! empty($data['previous_advisor_email'])) ? $this->renewalsAddonService->getUserInfo($data['previous_advisor_email']) : null;
         $quoteData['additional_notes'] = $data['notes']; 
-
         return $quoteData;        
     }
 

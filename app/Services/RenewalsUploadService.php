@@ -1956,7 +1956,7 @@ class RenewalsUploadService
                                     break;
                                 }
 
-                                if ($leadPossessionType->id === RangeLookupIdEnums::LANDLORD_RENTING_OUT) {
+                                if ($leadPossessionType->id === RangeLookupIdEnums::LANDLORD_RENTING_OUT->value) {
                                     if (! $leadData->occupancy_status_for_owners) {
                                         $leadValidationErrors->push('Occupancy Status for Owners is required with Selected Ownership Status');
                                         break;
