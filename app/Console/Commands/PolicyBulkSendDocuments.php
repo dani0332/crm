@@ -93,7 +93,7 @@ class PolicyBulkSendDocuments extends Command
                 'quote_id' => $quoteObject->id,
             ];
 
-            SendBookPolicyDocumentsJob::dispatchSync($payload, $quoteObject->code, true);
+            SendBookPolicyDocumentsJob::dispatch($payload, $quoteObject->code, true);
             LoggerService::info("PolicyBulkSendDocuments - Dispatched for code: $code (Quote ID: {$quoteObject->code}) for count {$count}");
             $count++;
         }
