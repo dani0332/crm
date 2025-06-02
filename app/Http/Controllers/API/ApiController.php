@@ -408,6 +408,7 @@ class ApiController extends Controller
                     ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
                     ->whereNotNull('policy_expiry_date')
                     ->where('policy_expiry_date', '>', now())
+                    ->orderBy('id')
                     ->chunk(50, function ($quotes) {
                         foreach ($quotes as $value) {
                             if (QuoteTypes::getName($value->quote_type_id)) {
