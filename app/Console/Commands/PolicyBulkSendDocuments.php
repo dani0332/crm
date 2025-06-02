@@ -6,13 +6,10 @@ namespace App\Console\Commands;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
-use App\Models\PersonalQuote;
-use App\Models\QuoteType;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
@@ -56,6 +53,7 @@ class PolicyBulkSendDocuments extends Command
 
         if (empty($codes)) {
             $this->error('No codes provided in the $codes array.');
+
             return 1;
         }
 
@@ -66,6 +64,7 @@ class PolicyBulkSendDocuments extends Command
             $isProcessEnabled = ApplicationStorage::where('key_name', 'IS_AML_ENTITY_SEARCH_ENABLED')->first();
             if ($isProcessEnabled && $isProcessEnabled->value == 0) {
                 LoggerService::info('PolicyBulkSendDocuments - IS_AML_ENTITY_SEARCH_ENABLED is set to Disabled.');
+
                 return 0;
             }
 
@@ -75,7 +74,7 @@ class PolicyBulkSendDocuments extends Command
 
             $modelType = null;
 
-            if ($index == 0){
+            if ($index == 0) {
                 $quoteObject = BusinessQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
                 $modelType = quoteTypeCode::Business;
             } else {
@@ -85,6 +84,7 @@ class PolicyBulkSendDocuments extends Command
 
             if (! $quoteObject) {
                 $notFound[] = $code;
+
                 continue;
             }
 

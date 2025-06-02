@@ -768,7 +768,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
     Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
 
-   
 });
 
 Route::get('/add-batch-number', function () {
@@ -777,9 +776,10 @@ Route::get('/add-batch-number', function () {
     echo 'Done';
 });
 
- // Command to bulk send policy documents
- Route::get('/run-policy-bulk-send', function() {
+// Command to bulk send policy documents
+Route::get('/run-policy-bulk-send', function () {
     \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+
     return 'Command executed successfully!';
 });
 
