@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
+use App\Models\Customer;
 use App\Services\Logger\LoggerService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -57,17 +58,24 @@ class CommaSeparatedEmails extends Command
                 $primaryEmail = $emails[0];
                 $secondaryEmail = $emails[1] ?? null;
 
+                $customer = Customer::firstOrCreate([
+                    'email' => $primaryEmail,
+                ], [
+                    'updated_at' => now(),
+                ]);
+
                 $preparedData[$quote->quote_type_id][] = [
                     'id' => $quote->id,
                     'uuid' => $quote->uuid,
                     'quote_type_id' => $quote->quote_type_id,
                     'email' => trim($primaryEmail),
+                    'customer_id' => $customer->id ?? null,
                     'updated_at' => now(),
                 ];
 
-                if (! empty($quote->customer_id) && ! empty($secondaryEmail)) {
+                if (! empty($customer->id) && ! empty($secondaryEmail)) {
                     $additionalContactInfo[$quote->quote_type_id][] = [
-                        'customer_id' => $quote->customer_id,
+                        'customer_id' => $customer->id,
                         'key' => 'email',
                         'value' => trim($secondaryEmail),
                         'uuid' => $quote->uuid,
@@ -75,6 +83,7 @@ class CommaSeparatedEmails extends Command
                     ];
                 }
             }
+
             LoggerService::info('Data prepared for comma-separated emails');
 
             if (! empty($preparedData)) {
@@ -91,12 +100,14 @@ class CommaSeparatedEmails extends Command
                         DB::table($tableName)->where('uuid', $record['uuid'])
                             ->update([
                                 'email' => $record['email'],
+                                'customer_id' => $record['customer_id'],
                                 'updated_at' => $record['updated_at'],
                             ]);
 
                         DB::table('personal_quotes')->where('uuid', $record['uuid'])->where('quote_type_id', $quoteTypeId)
                             ->update([
                                 'email' => $record['email'],
+                                'customer_id' => $record['customer_id'],
                                 'updated_at' => $record['updated_at'],
                             ]);
 
@@ -125,7 +136,6 @@ class CommaSeparatedEmails extends Command
                     }
                 }
             }
-
         }
     }
 }
