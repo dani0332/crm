@@ -555,7 +555,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     private function handlePaymentDecline($request)
     {
-        $paymentCode = $request->payment_code;  
+        $paymentCode = $request->payment_code;
         LoggerService::info("Processing payment decline for {$paymentCode}");
 
         $quoteModel = $this->getQuoteModel($request->modelType, $request->quote_id, $request->send_update_id);
@@ -689,7 +689,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     isset($request->approved_document_model[$splitPayment->sr_no])
                     && count($request->approved_document_model[$splitPayment->sr_no]) > 0
                 ) {
-                    LoggerService::info("Processing approved documents for split payment - code: {$splitPaymentCode}, SR No: {$srNo}, document count: " . count($request->approved_document_model[$splitPayment->sr_no]));
+                    LoggerService::info("Processing approved documents for split payment - code: {$splitPaymentCode}, SR No: {$srNo}, document count: ".count($request->approved_document_model[$splitPayment->sr_no]));
                     foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                         $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                         if ($quoteDocumentRec) {

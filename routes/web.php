@@ -307,7 +307,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payment-split/post-to-sage', [CentralController::class, 'postPrepaymentToSage'])->name('can-post-premium-prepayment')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
-    // Child payment approve 
+    // Child payment approve
     Route::post('/payments/{quoteType}/split-payment-approve-decline', [CentralController::class, 'splitPaymentApproveDecline'])->name('approve-payments')->middleware('check_route_access');
     // Master payment approve
     Route::post('/payments/{quoteType}/master-payment-approve-capture', [CentralController::class, 'masterPaymentApproveCapture'])->name('approve-payments')->middleware('check_route_access');
