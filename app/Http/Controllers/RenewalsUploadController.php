@@ -71,13 +71,6 @@ class RenewalsUploadController extends Controller
         return $result;
     }
 
-    public function renewalsUploadUpdateNonMotor(RenewalsUploadNonMotorRequest $request)
-    {
-        $result = $this->renewalsUploadFileService->renewalsUploadUpdate($request->validated());
-
-        return $result;
-    }
-
     /**
      * fetch plans batch wise.
      *
@@ -346,23 +339,24 @@ class RenewalsUploadController extends Controller
         $month = $request->month ?? Carbon::now()->month;
 
         $lob = $request->lob ?? QuoteTypeShortCode::HOM;
+        $batch = $request->batch ?? null;
 
         $query = RenewalQuoteProcess::query()
-            ->whereHas('renewalBatch', callback: function ($query) use ($year, $month) {
+            ->with('renewalBatch')
+            ->whereHas('renewalBatch', callback: function ($query) use ($year, $month, $batch) {
                 $query->where('year', $year)
-                    ->where('month', $month);
+                    ->where('month', $month)
+                    ->when(! empty($batch), function ($query) use ($batch) {
+                        return $query->where('name', $batch);
+                    });
             })
             ->where([
                 'renewal_quote_processes.quote_type' => $lob,
                 'renewal_quote_processes.type' => RenewalsUploadType::UPDATE_LEADS,
-            ])
-            ->join('renewal_batches', 'renewal_quote_processes.renewal_batch_id', '=', 'renewal_batches.id')
-            ->select('renewal_batches.name as renewal_batch', 'renewal_quote_processes.quote_type', 'renewal_quote_processes.renewal_batch_id')
-            ->when(! empty($request->batch), function ($query) use ($request) {
-                return $query->where('renewal_quote_processes.batch', $request->batch);
-            });
+            ])->groupBy('renewal_batch_id');
 
-        $renewalQuotes = $query->distinct()->simplePaginate();
+        $renewalQuotes = $query->simplePaginate();
+
 
         $lobs = $this->renewalsUploadFileService->getNonMotorLobs();
 

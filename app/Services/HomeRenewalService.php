@@ -103,8 +103,6 @@ class HomeRenewalService extends RenewalsUploadService
                 'uploadLeadId' => $renewalUploadLead->id,
             ]);
 
-            $quoteType = QuoteTypes::HOME;
-
             if (!$quote) {
                 LoggerService::info($logPrefix.' Quote not found', [
                     'policyNumber' => $data['policy_number'],
@@ -136,7 +134,7 @@ class HomeRenewalService extends RenewalsUploadService
                 'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'advisor_id' => $advisorId,
                 'assignment_type' => $advisorId ? ($isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED) : null,
-                'renewal_batch_id' => null,
+                'renewal_batch_id' => $renewalQuoteProcess->renewal_batch_id,
                 'notes' => $data['notes']
             ];
 
@@ -149,7 +147,7 @@ class HomeRenewalService extends RenewalsUploadService
             $this->createHomeQuoteData($quoteData, $data);
     
             unset($quoteData['notes']);
-    
+
             $homeQuote = $quote->homeQuote()->updateOrCreate(
                 [
                     'uuid' => $quote->uuid,
