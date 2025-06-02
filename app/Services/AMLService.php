@@ -1149,7 +1149,7 @@ class AMLService
 
         // Calculate summary
         $totalCustomers = $collection->count();
-        $lowRisk = $collection->where('risk_score', '>=', 1)->where('risk_score', '<=', 25)->count();
+        $lowRisk = $collection->where('risk_score', '>=', 0)->where('risk_score', '<=', 25)->count();
         $mediumRisk = $collection->where('risk_score', '>=', 26)->where('risk_score', '<=', 34)->count();
         $highRisk = $collection->where('risk_score', '>=', 35)->count();
 
