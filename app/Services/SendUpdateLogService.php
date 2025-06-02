@@ -453,6 +453,7 @@ class SendUpdateLogService
             }
 
             $childLeadDetails = array_merge($childLeadDetails, [
+                'id' => $replicateObject->id,
                 'uuid' => $replicateObject->uuid,
                 'ref_id' => $replicateObject->code,
                 'quote_type_code' => $quoteTypeCode,

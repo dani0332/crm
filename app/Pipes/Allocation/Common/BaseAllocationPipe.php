@@ -3,6 +3,7 @@
 namespace App\Pipes\Allocation\Common;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
@@ -278,6 +279,11 @@ abstract class BaseAllocationPipe extends AllocationService
 
         if ($this->lead instanceof CarQuote || $this->lead instanceof TravelQuote || $this->lead instanceof HealthQuote) {
             $this->lead->sic_flow_enabled = 0;
+        }
+
+        if (empty($this->lead->lead_assignment_trigger)) {
+            LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+            $this->lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
         }
 
         $this->lead->save();

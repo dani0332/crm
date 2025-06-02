@@ -183,42 +183,6 @@ class AMLController extends Controller
     {
         LoggerService::info('fn:export - AMLController');
 
-        $query = AML::select([
-            'id',
-            'quote_request_id',
-            'quote_type_id',
-            'input',
-            'search_type',
-            'match_found',
-            'results_found',
-            'created_at',
-            'decision',
-        ])
-            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
-            ->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
-
-        $data = collect();
-
-        $query->chunk(1000, function ($chunk) use (&$data) {
-            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
-            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
-                $quoteType = QuoteTypes::getName($quoteTypeId);
-                $nameSpace = '\\App\\Models\\';
-                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
-
-                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
-                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
-                foreach ($quoteRequestData as $quoteRequest) {
-                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
-                    foreach ($amlData as $index => $value) {
-                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
-                        $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
-                    }
-                }
-            }
-            $data = $data->merge($chunk);
-        });
-
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
         $request->merge([
@@ -482,7 +446,7 @@ class AMLController extends Controller
                 }
             }
 
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
                 $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
             }
 
@@ -675,8 +639,9 @@ class AMLController extends Controller
         if ($quoteTypeId == QuoteTypes::CAR->id()) {
             $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteRequestId)->first();
             $carQuoteRequestDetails->chassis_number = $AMLCheckRequest->chassis_number;
+            $carQuoteRequestDetails->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
             if ($carQuoteRequestDetails->isDirty()) {
-                LoggerService::info('AML Screening Bridger - Chassis number updated');
+                LoggerService::info('AML Screening Bridger - Chassis number and Insurer Quote Email updated for QuoteTypeId: '.$quoteTypeId);
                 $carQuoteRequestDetails->save();
             }
         }
@@ -689,7 +654,7 @@ class AMLController extends Controller
             $personalQuoteDetailBikeRequest->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
 
             if ($bikeQuoteRequest->isDirty()) {
-                LoggerService::info('AML Screening Bridger - Chassis number updated for QuoteTypeId: '.$quoteTypeId);
+                LoggerService::info('AML Screening Bridger - Chassis number and Insurer Quote Email updated for QuoteTypeId: '.$quoteTypeId);
                 $bikeQuoteRequest->save();
             }
 
@@ -865,7 +830,7 @@ class AMLController extends Controller
 
         if ($existingEntityMapping) {
             $previousEntity = $existingEntityMapping->entity;
-            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id])->count();
+            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id ?? null])->count();
             // Reminder:: This is Jawad change for car commercial quote
             if ($entityMappingCount === 0 && empty($previousEntity->trade_license_no)) {
                 $previousEntity->delete();

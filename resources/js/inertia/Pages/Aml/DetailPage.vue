@@ -696,7 +696,6 @@ onMounted(() => {
     </div>
   </div>
   <ScreeningModel
-    v-if="screeningModel"
     v-model="screeningModel"
     :quoteTypeCodeEnum="quoteTypeCodeEnum"
   />
