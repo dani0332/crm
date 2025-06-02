@@ -206,6 +206,17 @@ const insurerPaymentLinkChanged = ref(false);
 const confirmModalClose = ref(false);
 const insurerPaymentComponent = ref(null);
 
+// Constants of lobs
+const isHealthQuote = props.quoteType === quoteTypeCodeEnum.Health;
+const isCarQuote = props.quoteType === quoteTypeCodeEnum.Car;
+const isHomeQuote = props.quoteType === quoteTypeCodeEnum.Home;
+const isTravelQuote = props.quoteType === quoteTypeCodeEnum.Travel;
+const isBikeQuote = props.quoteType === quoteTypeCodeEnum.Bike;
+const isBusinessQuote = props.quoteType === quoteTypeCodeEnum.Business;
+const isLifeQuote = props.quoteType === quoteTypeCodeEnum.Life;
+const isYachtQuote = props.quoteType === quoteTypeCodeEnum.Yacht;
+const isPetQuote = props.quoteType === quoteTypeCodeEnum.Pet;
+
 const familyEmployeDiscount = [
   quoteTypeCodeEnum.Car,
   quoteTypeCodeEnum.Health,
@@ -956,8 +967,8 @@ const handleCollectionTypeChange = () => {
 
   if (paymentMethodsForm.collection_type === 'insurer') {
     let isIPLPermission = can(permissionEnum.INSURER_PAYMENT_LINK);
-    let isHealthQuote = props.quoteType === quoteTypeCodeEnum.Health;
-    let checkCondition = !isHealthQuote || !isIPLPermission;
+    let checkCondition = (isCarQuote|| isTravelQuote) || !isIPLPermission;
+
     const excludedPaymentMethods = [
       page.props.paymentMethodsEnum?.BankTransfer,
       page.props.paymentMethodsEnum?.Cheque,
