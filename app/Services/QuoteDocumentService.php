@@ -238,8 +238,6 @@ class QuoteDocumentService extends BaseService
                     $data['quote_uuid'],
                     $documentType->id
                 )->afterCommit();
-            } else {
-                LoggerService::info('Watermark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
@@ -538,8 +536,8 @@ class QuoteDocumentService extends BaseService
         file_put_contents($sourceFilePath, $fileContent);
 
         try {
-            // Use Ghostscript as our primary watermarking approach
-            return $this->ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
+            // Use QPDF as our primary watermarking approach
+            return $this->qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType);
         } catch (\Exception $e) {
             LoggerService::error('Error in watermarkPdf: '.$e->getMessage()." for UUID: $uuid", context: [
                 'line' => $e->getLine(),
@@ -563,36 +561,49 @@ class QuoteDocumentService extends BaseService
 
             // If we can't even use the original file, re-throw the exception
             throw $e;
+        } finally {
+            // after everything remove the sourceFile from storage/temp
+            if (file_exists($sourceFilePath)) {
+                unlink($sourceFilePath);
+            }
         }
     }
 
-    /**
-     * Apply watermark using Ghostscript
-     * After this attempt it fall back to the original file
-     *
-     * @param  string  $sourceFilePath  Source PDF file path
-     * @param  string  $outputPath  Output PDF file path
-     * @param  string  $uuid  Document UUID
-     * @return void
-     */
-    private function ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
+    private function qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
     {
-        // Preprocess the PDF with Ghostscript for FPDI compatibility
+        // Preprocess the PDF with qpdf for FPDI compatibility
         $tempFilePath = storage_path('temp/preprocessed_'.$docName);
-        $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
-            '-dPDFSETTINGS=/default -dCompatibilityLevel=1.4 '.
-            '-dEmbedAllFonts=false -dSubsetFonts=false -dCompressPages=false '.
-            '-sOutputFile='.escapeshellarg($tempFilePath).' '.
-            escapeshellarg($sourceFilePath).' 2>&1';
+        $qpdfLogPath = storage_path('temp/qpdf_log_'.$uuid.'.txt'); // Add log path for qpdf
 
-        $output = shell_exec($gsCommand);
+        $decryptedTempPath = storage_path('temp/decrypted_'.$docName);
+        $decryptCommand = 'qpdf --password="" --decrypt '.escapeshellarg($sourceFilePath).' '.
+            escapeshellarg($decryptedTempPath).' > '.escapeshellarg($qpdfLogPath).' 2>&1';
 
-        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
-            LoggerService::error("Ghostscript preprocessing failed for UUID: $uuid. Output: $output");
-            throw new \Exception('Ghostscript preprocessing failed');
+        shell_exec($decryptCommand);
+
+        if (! file_exists($decryptedTempPath) || filesize($decryptedTempPath) < 100) {
+            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+            LoggerService::error("qpdf decryption failed for UUID: $uuid. DocName: $docName, Output: $logOutput");
+            throw new \Exception('qpdf decryption failed');
         }
 
-        // Apply watermark with FPDI
+        // Use qpdf to preprocess the PDF, ensuring compatibility with FPDI
+        $qpdfCommand = 'qpdf '.
+            '--no-warn '. // Suppress warnings
+            '--force-version=1.4 '. // Set PDF version to 1.4 for FPDI
+            escapeshellarg($decryptedTempPath).' '.
+            escapeshellarg($tempFilePath).' > '.
+            escapeshellarg($qpdfLogPath).' 2>&1';
+
+        $output = shell_exec($qpdfCommand);
+
+        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
+            $logOutput = file_exists($qpdfLogPath) ? file_get_contents($qpdfLogPath) : 'No log file';
+            LoggerService::error("qpdf preprocessing failed for UUID: $uuid. Output: $logOutput");
+            throw new \Exception('qpdf preprocessing failed');
+        }
+
+        // region Apply watermark with FPDI
         $pdf = new Fpdi;
         $pageCount = $pdf->setSourceFile($tempFilePath);
 
@@ -624,10 +635,19 @@ class QuoteDocumentService extends BaseService
         }
 
         $pdf->Output($outputPath, 'F');
+        // endregion
 
         // Clean up temporary file
         if (file_exists($tempFilePath)) {
             unlink($tempFilePath);
+        }
+
+        if (file_exists($qpdfLogPath)) {
+            unlink($qpdfLogPath);
+        }
+
+        if (file_exists($decryptedTempPath)) {
+            unlink($decryptedTempPath);
         }
 
         // Check if the output file was created successfully
@@ -635,8 +655,6 @@ class QuoteDocumentService extends BaseService
             LoggerService::error("FPDI watermarking failed for UUID: $uuid");
             throw new \Exception('FPDI watermarking failed');
         }
-
-        LoggerService::info("Successfully applied watermark with Ghostscript and FPDI for UUID: $uuid");
 
         return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
