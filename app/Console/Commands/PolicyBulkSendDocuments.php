@@ -7,10 +7,13 @@ namespace App\Console\Commands;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Jobs\WatermarkDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
+use App\Models\DocumentType;
 use App\Models\HealthQuote;
 use App\Services\Logger\LoggerService;
+use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Console\Command;
 
@@ -86,6 +89,17 @@ class PolicyBulkSendDocuments extends Command
                 $notFound[] = $code;
 
                 continue;
+            }
+
+            foreach ($quoteObject->documents as $document) {
+                $documentType = DocumentType::where('code', $document->document_type_code)->first();
+                $isWaterMarkQualifyDoc = app(QuoteDocumentService::class)->getWatermarkProperty($quoteObject, $documentType);
+
+                if ($quoteObject && $isWaterMarkQualifyDoc && $documentType) {
+                    WatermarkDocumentsJob::dispatchSync(
+                        $document->id, $quoteObject->uuid, $documentType->id
+                    );
+                }
             }
 
             $payload = (object) [
