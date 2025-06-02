@@ -120,9 +120,9 @@ const iconPosition = computed(() => {
   --dp-font-family: 'Inter', sans-serif;
 }
 
-.dp__icon.dp__clear_icon {
+.dp--clear-btn {
   @apply !text-orange-500;
-  /* top: v-bind(iconPosition) !important; */
+  top: 50% !important;
 }
 
 .dp__cell_disabled {
