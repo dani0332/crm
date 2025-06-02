@@ -23,12 +23,14 @@ use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Http\Requests\TravelAIGWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Jobs\HomeSyncSALJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\Payment;
+use App\Models\PersonalQuote;
 use App\Models\QuoteFlowDetails;
 use App\Scripts\DeDuplicateQuoteDetailScript;
 use App\Services\ApiService;
@@ -401,17 +403,22 @@ class ApiController extends Controller
 
                 LoggerService::info('private client tag marking activity has been started on customer', extra: $customerData);
 
-                $customer->personalQuote->chunk(100, function ($quotes) {
-                    foreach ($quotes as $value) {
-                        if (QuoteTypes::getName($value->quote_type_id)) {
-                            LoggerService::startQuoteLogging(QuoteTypes::getName($value->quote_type_id)->refId($value->uuid), LoggerFeatureEnum::PCP_CLIENT);
-                            $this->applyPcpTag($value->uuid, $value->quote_type_id);
-                            LoggerService::endLogging();
-                        } else {
-                            LoggerService::info('quote_type_id is not valid', extra: $value->quote_type_id);
+                PersonalQuote::where('customer_id', $customer->id)
+                    ->whereNull('pc_qualified')
+                    ->where('quote_status_id', '!=', QuoteStatusEnum::Cancelled)
+                    ->whereNotNull('policy_expiry_date')
+                    ->where('policy_expiry_date', '>', now())
+                    ->chunk(50, function ($quotes) {
+                        foreach ($quotes as $value) {
+                            if (QuoteTypes::getName($value->quote_type_id)) {
+                                LoggerService::startQuoteLogging(QuoteTypes::getName($value->quote_type_id)->refId($value->uuid), LoggerFeatureEnum::PCP_CLIENT);
+                                $this->applyPcpTag($value->uuid, $value->quote_type_id);
+                                LoggerService::endLogging();
+                            } else {
+                                LoggerService::info('quote_type_id is not valid', extra: $value->quote_type_id);
+                            }
                         }
-                    }
-                });
+                    });
 
                 LoggerService::info('private client tag marking activity has been ended on customer', extra: $customerData);
             }
@@ -427,5 +434,10 @@ class ApiController extends Controller
             );
         }
         LoggerService::info('private client tag exercise has been completed');
+    }
+
+    public function triggerTravelAIGWorkflow(TravelAIGWorkflowRequest $request)
+    {
+        return $this->apiService->triggerTravelAIGWorkflow($request);
     }
 }
