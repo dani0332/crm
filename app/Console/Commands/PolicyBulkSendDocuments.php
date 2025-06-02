@@ -48,7 +48,7 @@ class PolicyBulkSendDocuments extends Command
             'HEA-E6XW6Z5H', 'HEA-DPTHTL5Z', 'HEA-HREZ4S35', 'HEA-D4K4H9QZ', 'HEA-95PL8EZF',
             'HEA-9A7599ZU', 'HEA-6YTA8VBP', 'HEA-PEMRLX8F', 'HEA-MWQYXWRW', 'HEA-P5LJTVEM',
             'HEA-QJV8L34W', 'HEA-47QFDZS4', 'HEA-C4GRJ9SG', 'HEA-TPSRFUWD', 'HEA-EABJJTCP',
-            'BUS-UFU96QAC'
+            'BUS-UFU96QAC',
         ];
 
         if (empty($codes)) {
@@ -74,7 +74,7 @@ class PolicyBulkSendDocuments extends Command
 
             $modelType = null;
 
-            if ($code == "BUS-UFU96QAC"){
+            if ($code == 'BUS-UFU96QAC') {
                 $quoteObject = BusinessQuote::where('code', $code)->where('quote_status_id', QuoteStatusEnum::PolicyBooked)->latest()->first();
                 $modelType = quoteTypeCode::Business;
             } else {
