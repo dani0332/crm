@@ -2425,23 +2425,26 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => viewData)
-      .post('/payments/' + props.quoteType + '/master-payment-approve-capture', {
-        preserveScroll: true,
-        onSuccess: res => {
-          createPaymentModal.value = false;
-          setTimeout(() => {
-            location.reload();
-          }, 500);
-        },
-        onError: errors => {
-          Object.keys(errors).forEach(function (key) {
-            notification.error({
-              title: errors[key],
-              position: 'top',
+      .post(
+        '/payments/' + props.quoteType + '/master-payment-approve-capture',
+        {
+          preserveScroll: true,
+          onSuccess: res => {
+            createPaymentModal.value = false;
+            setTimeout(() => {
+              location.reload();
+            }, 500);
+          },
+          onError: errors => {
+            Object.keys(errors).forEach(function (key) {
+              notification.error({
+                title: errors[key],
+                position: 'top',
+              });
             });
-          });
+          },
         },
-      });
+      );
     return;
   }
 
