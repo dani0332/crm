@@ -44,7 +44,7 @@ class PaymentObserver
     {
         $paymentCode = $payment->code;
         LoggerService::info('Payment:Observer - Starting VAT calculation for payment code: '.$paymentCode, extra: [
-            'total_price' => $payment->total_price
+            'total_price' => $payment->total_price,
         ]);
 
         $modelType = null;
@@ -80,7 +80,7 @@ class PaymentObserver
             'total_price' => $payment->total_price,
             'model_type' => $modelType,
             'quote_id' => $quoteId,
-            'send_update_log_id' => $payment->send_update_log_id
+            'send_update_log_id' => $payment->send_update_log_id,
         ]);
 
         Payment::withoutEvents(function () use ($payment, $priceWithoutVat, $vat) {
