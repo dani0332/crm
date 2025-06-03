@@ -38,7 +38,6 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     wget \
     gnupg \
-    ghostscript \
     libwebp-dev \
     qpdf
 
@@ -78,7 +77,6 @@ libzip4 \
 zlib1g \
 libicu-dev \
 libmemcached11 \
-ghostscript \
 libwebp-dev \
 qpdf
 

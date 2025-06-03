@@ -175,8 +175,6 @@ class PersonalQuoteRepository extends BaseRepository
                     WatermarkDocumentsJob::dispatch(
                         $quoteDocument->id, $data['quote_uuid'], $documentType->id
                     )->afterCommit();
-                } else {
-                    info('Watermark job not dispatched - Ref: '.$quote->code);
                 }
 
                 $this->populateDocumentData($documentType, $quote, $filePathAzure, $fileMimeType);

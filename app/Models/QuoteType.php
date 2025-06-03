@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Config;
 
 class QuoteType extends Model
 {

@@ -756,6 +756,12 @@ class HandleInertiaRequests extends Middleware
                                 route('admin.sic-health-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),
+                                'Nationality Allocation',
+                                route('admin.nationality-allocation-config.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
                     );
             });
         }
