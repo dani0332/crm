@@ -206,9 +206,10 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
-      <template #item-renewal_batch="{ renewal_batch }">
-        {{ renewal_batch.name }}
-      </template>
+    <template #item-batch="{ batch, renewal_batch }">
+      {{ batch ? batch : renewal_batch.name }}
+    </template>
+    
       <template #item-action="{ renewal_batch, quote_type, renewal_batch_id }">
         <x-button
           :href="`/renewals/batches/${renewal_batch_id}/${quote_type}/plans-processes`"
