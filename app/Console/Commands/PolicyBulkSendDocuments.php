@@ -71,7 +71,7 @@ class PolicyBulkSendDocuments extends Command
             }
 
             if (! $code) {
-                LoggerService::error('PolicyBulkSendDocuments - Code is not found.');
+                LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
                 continue;
             }
 
@@ -87,7 +87,7 @@ class PolicyBulkSendDocuments extends Command
 
             if (! $quoteObject) {
                 $notFound[] = $code;
-                LoggerService::error('PolicyBulkSendDocuments - Code is not found.');
+                LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
                 continue;
             }
 
