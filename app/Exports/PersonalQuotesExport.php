@@ -37,6 +37,36 @@ class PersonalQuotesExport
     {
         switch (ucfirst($this->quoteType)) {
             case QuoteTypes::BIKE->value:
+                return BikeQuoteRepository::getData(true, requestParams: $requestParams)->get();
+
+            case QuoteTypes::YACHT->value:
+                return YachtQuoteRepository::getData(true, requestParams: $requestParams)->get();
+
+            case QuoteTypes::PET->value:
+                return PetQuoteRepository::getData(true, requestParams: $requestParams)->get();
+
+            case QuoteTypes::CYCLE->value:
+                return CycleQuoteRepository::getData(true, requestParams: $requestParams)->get();
+
+            case QuoteTypes::JETSKI->value:
+                return JetskiQuoteRepository::getData(true, requestParams: $requestParams)->get();
+
+            case QuoteTypes::HOME->value:
+                return HomeQuoteRepository::getData(true, requestParams: $requestParams)->get();
+
+            default:
+                return abort(404);
+        }
+    }
+
+    /**
+     * Get the query builder instance to use for chunking
+     * This is the key to memory-efficient CSV exports
+     */
+    public function getQuery($requestParams = [])
+    {
+        switch (ucfirst($this->quoteType)) {
+            case QuoteTypes::BIKE->value:
                 return BikeQuoteRepository::getData(true, requestParams: $requestParams);
 
             case QuoteTypes::YACHT->value:

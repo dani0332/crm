@@ -328,10 +328,14 @@ if (
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
 } else if (props.quoteType == quoteTypeCodeEnum.Home) {
-  initalPlanDetails = props.quoteRequest.insurance_provider;
-} else if (props.quoteType == quoteTypeCodeEnum.Life) {
+  initalPlanDetails =
+    props.quoteRequest.insurance_provider_plan ||
+    props.quoteRequest.insurance_provider;
+} 
+else if (props.quoteType == quoteTypeCodeEnum.Life) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
-} else if (quoteTypesToCheck.includes(props.quoteType)) {
+}
+else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
   initalPlanDetails = props.quoteRequest?.car_plan;
@@ -3050,6 +3054,9 @@ const providerId = computed(() => {
 
 const providerName = computed(() => {
   const plan = planDetail.value;
+  if (props.quoteType == quoteTypeCodeEnum.Home) {
+    return props.quoteRequest.insurance_provider?.text || 'Not Available';
+  }
   const ecomQuoteType = [...quoteTypesToCheck, quoteTypeCodeEnum.Bike];
 
   if (props.sendUpdate) {
@@ -3118,10 +3125,14 @@ const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
-    initalPlanDetails = props.quoteRequest.insurance_provider;
-  } else if (props.quoteType == quoteTypeCodeEnum.Life) {
+    initalPlanDetails =
+      props.quoteRequest.insurance_provider_plan ||
+      props.quoteRequest.insurance_provider;
+  }
+  else if (props.quoteType == quoteTypeCodeEnum.Life) {
     initalPlanDetails = props.quoteRequest.insurance_provider_plan;
-  } else if (quoteTypesToCheck.includes(props.quoteType)) {
+  }
+  else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;

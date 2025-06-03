@@ -1184,8 +1184,7 @@ class CRUDService extends BaseService
                 QuoteStatusEnum::PolicyCancelledReissued,
             ]) ||
             $record?->insly_migrated || $record?->insly_id ||
-            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id) ||
-            $record?->source == LeadSourceEnum::RENEWAL_UPLOAD
+            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id)
         ) {
             return true;
         }

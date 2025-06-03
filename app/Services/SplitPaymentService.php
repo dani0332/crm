@@ -651,6 +651,23 @@ class SplitPaymentService
         $payment = $paymentSplit->payment;
         $sendUpdateId = $payment->send_update_log_id;
         $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
+        if (! $mainLeadObject) {
+            $extra = [
+                'modelType' => $modelType,
+                'quoteId' => $quoteId,
+                'splitId' => $splitPaymentId,
+                'amountCollected' => $amountCollected,
+                'isFromJob' => $isFromJob,
+            ];
+            LoggerService::error("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
+            if ($isFromJob) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
+
+                return false;
+            } else {
+                vAbort("Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}");
+            }
+        }
         $maxRetries = 2;
 
         if (! empty($sendUpdateId) && $sendUpdateId > 0) {
@@ -1282,7 +1299,7 @@ class SplitPaymentService
         if ($payment) {
             $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
             if ($hasAnyAuthorizedPayment) {
-                $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
+                $validator->errors()->add('authorized', 'This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.');
             }
         }
     }

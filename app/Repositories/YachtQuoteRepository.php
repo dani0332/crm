@@ -226,7 +226,7 @@ class YachtQuoteRepository extends BaseRepository
             return 0;
         }
 
-        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
+        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()
