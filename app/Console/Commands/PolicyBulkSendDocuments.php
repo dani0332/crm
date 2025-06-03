@@ -40,18 +40,17 @@ class PolicyBulkSendDocuments extends Command
      */
     public function handle(): int
     {
+
+        LoggerService::info("PolicyBulkSendDocuments Started");
         // Define the array of codes to process
         $codes = [
-            'HEA-DFEDH47G', 'HEA-M683GHGU', 'HEA-X9HJM5HD', 'HEA-Y5JX37HB', 'HEA-8TZBHZTF',
-            'HEA-MXXDCEFX', 'HEA-7F8GXP7S', 'HEA-9SK6W8Q7', 'HEA-SPFSYNCY', 'HEA-MHKSVKJ6',
-            'HEA-Y5VPYLSZ', 'HEA-ZEF3H47V', 'HEA-LWPAWGWL', 'HEA-258XRNMT', 'HEA-TT4VF2UF',
-            'HEA-DMKHLFPG', 'HEA-V9UPJLXE', 'HEA-HUABPPXK', 'HEA-QT4GWCGR', 'HEA-VL8NZWGF',
-            'HEA-F8MYQ4BX', 'HEA-CUPPQ3NM', 'HEA-77AQ6B9Q', 'HEA-DW2G2WMR', 'HEA-8CX9QMT3',
-            'HEA-V6WKHP8E', 'HEA-XR4NSCYC', 'HEA-JEL85SRG', 'HEA-ZKGSWLQ5', 'HEA-2CKMM762',
-            'HEA-E6XW6Z5H', 'HEA-DPTHTL5Z', 'HEA-HREZ4S35', 'HEA-D4K4H9QZ', 'HEA-95PL8EZF',
-            'HEA-9A7599ZU', 'HEA-6YTA8VBP', 'HEA-PEMRLX8F', 'HEA-MWQYXWRW', 'HEA-P5LJTVEM',
-            'HEA-QJV8L34W', 'HEA-47QFDZS4', 'HEA-C4GRJ9SG', 'HEA-TPSRFUWD', 'HEA-EABJJTCP',
-            'BUS-UFU96QAC',
+            'HEA-X9HJM5HD', 'HEA-MXXDCEFX', 'HEA-7F8GXP7S', 'HEA-VJ72TGS8', 'HEA-9SK6W8Q7',
+            'HEA-MHKSVKJ6', 'HEA-ZEF3H47V', 'HEA-LWPAWGWL', 'HEA-258XRNMT', 'HEA-TT4VF2UF',
+            'HEA-VL8NZWGF', 'HEA-77AQ6B9Q', 'HEA-DW2G2WMR', 'HEA-V6WKHP8E', 'HEA-XR4NSCYC',
+            'HEA-JEL85SRG', 'HEA-ZKGSWLQ5', 'HEA-2CKMM762', 'HEA-E6XW6Z5H', 'HEA-DPTHTL5Z',
+            'HEA-HREZ4S35', 'HEA-D4K4H9QZ', 'HEA-95PL8EZF', 'HEA-6YTA8VBP', 'HEA-PEMRLX8F',
+            'HEA-MWQYXWRW', 'HEA-P5LJTVEM', 'HEA-47QFDZS4', 'HEA-EABJJTCP', 'HEA-8TZBHZTF',
+            'BUS-UFU96QAC'
         ];
 
         if (empty($codes)) {
@@ -72,6 +71,7 @@ class PolicyBulkSendDocuments extends Command
             }
 
             if (! $code) {
+                LoggerService::error('PolicyBulkSendDocuments - Code is not found.');
                 continue;
             }
 
@@ -87,11 +87,12 @@ class PolicyBulkSendDocuments extends Command
 
             if (! $quoteObject) {
                 $notFound[] = $code;
-
+                LoggerService::error('PolicyBulkSendDocuments - Code is not found.');
                 continue;
             }
 
             foreach ($quoteObject->documents as $document) {
+                LoggerService::info("PolicyBulkSendDocuments - Water mark document: {$document->id} for code: {$code}");
                 $documentType = DocumentType::where('code', $document->document_type_code)->first();
                 $isWaterMarkQualifyDoc = app(QuoteDocumentService::class)->getWatermarkProperty($quoteObject, $documentType);
 
