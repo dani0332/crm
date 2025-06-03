@@ -150,7 +150,6 @@ class TravelAllocation implements Allocation
         // Extract lead properties with null safety
         $isSIC = $this->checkLeadMethod($lead, 'isSIC', [QuoteTypes::TRAVEL]);
         $isAIG = $this->checkLeadMethod($lead, 'isAIG', [QuoteTypes::TRAVEL]);
-        $isRequestedAdvisorOrPaymentAuthorized = $this->checkLeadMethod($lead, 'isRequestedAdvisorOrPaymentAuthorized');
         $isPaymentAuthorizedOrLinkRequested = $this->checkLeadMethod($lead, 'isPaymentAuthorizedOrLinkRequested');
         $isLeadFromInstantAlfred = $this->checkLeadMethod($lead, 'isLeadFromInstantAlfred');
 
@@ -158,7 +157,7 @@ class TravelAllocation implements Allocation
 
         // Determine team assignment based on business rules
         $isAIGWithInstantAlfred = $isAIG && $isLeadFromInstantAlfred;
-        $isSICOrAIGWithRequestedAdvisor = (($isSIC && ! $isAIG) || $isAIG) && $isRequestedAdvisorOrPaymentAuthorized;
+        $isSICOrAIGWithPayment = (($isSIC && ! $isAIG) || $isAIG) && $isPaymentAuthorizedOrLinkRequested;
         $isNonSICNonAIGWithPayment = (! $isSIC && ! $isAIG) && $isPaymentAuthorizedOrLinkRequested;
 
         // Apply team assignment rules
@@ -166,11 +165,11 @@ class TravelAllocation implements Allocation
             // Rule 1: AIG leads from Instant Alfred go to default team
             $this->teamId = self::DEFAULT_TEAM_ID;
             $reason = 'AIG and Lead from Instant Alfred';
-        } elseif ($isSICOrAIGWithRequestedAdvisor) {
-            // Rule 2: SIC or AIG leads with advisor requested or payment authorized
+        } elseif ($isSICOrAIGWithPayment) {
+            // Rule 2: SIC or AIG leads with payment authorized or link requested
             $this->teamId = $sicUnassistedTeamId;
-            $reason = $isAIG ? 'AIG with advisor requested or payment authorized' :
-                              'SIC with advisor requested or payment authorized';
+            $reason = $isAIG ? 'AIG with payment authorized or link requested' :
+                              'SIC with payment authorized or link requested';
         } elseif ($isNonSICNonAIGWithPayment) {
             // Rule 3: Non-SIC, Non-AIG leads with payment authorized or link requested
             $this->teamId = $sicUnassistedTeamId;
@@ -187,7 +186,6 @@ class TravelAllocation implements Allocation
             'teamId' => $this->teamId,
             'isSIC' => $isSIC,
             'isAIG' => $isAIG,
-            'isRequestedAdvisorOrPaymentAuthorized' => $isRequestedAdvisorOrPaymentAuthorized,
             'isPaymentAuthorizedOrLinkRequested' => $isPaymentAuthorizedOrLinkRequested,
             'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred,
         ]);
