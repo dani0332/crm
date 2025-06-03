@@ -144,7 +144,7 @@ class SplitPaymentService
 
         if (! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
-            
+
             if ($isLiveApiCallStep2) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
             }
@@ -731,7 +731,7 @@ class SplitPaymentService
         $parentPayment = $paymentSplit->payment;
         $shouldCreateReceipt = $this->shouldCreateReceipt($parentPayment, $paymentSplit);
         $shouldProcessPayment = $this->shouldProcessPayment($paymentSplit, $isFromJob, $modelType);
-        
+
         // Only start transaction if we need to process the payment
         if ($shouldProcessPayment) {
             $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId, $parentPayment, $shouldCreateReceipt) {

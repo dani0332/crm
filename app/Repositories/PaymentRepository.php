@@ -648,7 +648,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         ],
                     );
                 }
-                
+
                 /* Create payment receipt for broker */
                 if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
                     app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);
