@@ -209,6 +209,7 @@ class SplitPaymentService
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
             LoggerService::info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments: Successfully created receipt');
             $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];
+
         } else {
             LoggerService::info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments Error: Document number not generated from Sage');
             $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
@@ -730,6 +731,7 @@ class SplitPaymentService
         $parentPayment = $paymentSplit->payment;
         $shouldCreateReceipt = $this->shouldCreateReceipt($parentPayment, $paymentSplit);
         $shouldProcessPayment = $this->shouldProcessPayment($paymentSplit, $isFromJob, $modelType);
+        
         // Only start transaction if we need to process the payment
         if ($shouldProcessPayment) {
             $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId, $parentPayment, $shouldCreateReceipt) {
