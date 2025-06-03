@@ -155,6 +155,13 @@ class InstantAlfredService extends BaseService
                     'tqpd.plan_name',
                 ]);
             })
+            ->when($quoteTypeId == QuoteTypeId::Home, function ($query) {
+                $query->leftJoin('quote_customer_plans as qcp', 'qcp.quote_uuid', '=', 'pqr.uuid');
+                $query->addSelect([
+                    DB::raw("JSON_UNQUOTE(qcp.plan->'$.providerName') as provider_name"),
+                    DB::raw("JSON_UNQUOTE(qcp.plan->'$.name') as plan_name"),
+                ]);
+            })
             ->groupBy('pqr.id')
             ->when(isset(request()->sortType), function ($query) {
                 $query->orderBy('pqrd.chat_initiated_at', request()->sortType);
