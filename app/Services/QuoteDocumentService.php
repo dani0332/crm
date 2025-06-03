@@ -238,8 +238,6 @@ class QuoteDocumentService extends BaseService
                     $data['quote_uuid'],
                     $documentType->id
                 )->afterCommit();
-            } else {
-                LoggerService::info('Watermark job not dispatched - Ref: '.$quote->code);
             }
 
             return $quoteDocument;
@@ -569,86 +567,6 @@ class QuoteDocumentService extends BaseService
                 unlink($sourceFilePath);
             }
         }
-    }
-
-    /**
-     * Apply watermark using Ghostscript
-     * After this attempt it fall back to the original file
-     *
-     * @param  string  $sourceFilePath  Source PDF file path
-     * @param  string  $outputPath  Output PDF file path
-     * @param  string  $uuid  Document UUID
-     * @return void
-     */
-    private function ghostscriptWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
-    {
-        // Preprocess the PDF with Ghostscript for FPDI compatibility
-        $tempFilePath = storage_path('temp/preprocessed_'.$docName);
-        $gsCommand = 'gs -q -dSAFER -dBATCH -dNOPAUSE -sDEVICE=pdfwrite '.
-            '-dPDFSETTINGS=/default -dCompatibilityLevel=1.4 '.
-            '-dNoOutputFonts -dEmbedAllFonts=false -dSubsetFonts=false -dCompressPages=false '.
-            '-sOutputFile='.escapeshellarg($tempFilePath).' '.
-            escapeshellarg($sourceFilePath).' 2>&1';
-
-        /** NOTES:
-         *  -dNoOutputFonts is the key param for font change issue
-         *      -- adding it handles Arabic but corrupt english in some cases where fonts in-compatible)
-         * */
-        $output = shell_exec($gsCommand);
-
-        if (! file_exists($tempFilePath) || filesize($tempFilePath) < 100) {
-            LoggerService::error("Ghostscript preprocessing failed for UUID: $uuid. Output: $output");
-            throw new \Exception('Ghostscript preprocessing failed');
-        }
-
-        // region Apply watermark with FPDI
-        $pdf = new Fpdi;
-        $pageCount = $pdf->setSourceFile($tempFilePath);
-
-        $watermarkImagePath = public_path('images/watermark1.png');
-        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
-
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $pdf->importPage($pageNo);
-            $size = $pdf->getTemplateSize($templateId);
-            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
-
-            // Add watermark based on orientation
-            if ($size['orientation'] === 'P') {
-                $pdf->Image(
-                    $watermarkImagePath,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
-            } else {
-                $pdf->Image(
-                    $watermarkImageAA4Path,
-                    0, 0, $size['width'], $size['height'],
-                    '', '', '', false, 300, '', false, false, 0
-                );
-            }
-
-            // Layer the original page content over the watermark
-            $pdf->useTemplate($templateId);
-        }
-
-        $pdf->Output($outputPath, 'F');
-        // endregion
-
-        // Clean up temporary file
-        if (file_exists($tempFilePath)) {
-            unlink($tempFilePath);
-        }
-
-        // Check if the output file was created successfully
-        if (! file_exists($outputPath) || filesize($outputPath) < 100) {
-            LoggerService::error("FPDI watermarking failed for UUID: $uuid");
-            throw new \Exception('FPDI watermarking failed');
-        }
-
-        LoggerService::info("Successfully applied watermark with Ghostscript and FPDI for UUID: $uuid");
-
-        return $this->storeWatermarkedMedia($docName, $uuid, $documentType);
     }
 
     private function qpdfWatermark($sourceFilePath, $outputPath, $docName, $uuid, $documentType)
