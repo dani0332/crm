@@ -331,11 +331,9 @@ if (
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
     props.quoteRequest.insurance_provider;
-} 
-else if (props.quoteType == quoteTypeCodeEnum.Life) {
+} else if (props.quoteType == quoteTypeCodeEnum.Life) {
   initalPlanDetails = props.quoteRequest.insurance_provider_plan;
-}
-else if (quoteTypesToCheck.includes(props.quoteType)) {
+} else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
   initalPlanDetails = props.quoteRequest?.car_plan;
@@ -2831,7 +2829,9 @@ const uploadDocument = (doc, files, count) => {
         },
         onSuccess: data => {
           let quoteTypes = quoteTypesToCheck.filter(
-            quoteType => quoteType !== quoteTypeCodeEnum.Home && quoteType !== quoteTypeCodeEnum.Life,
+            quoteType =>
+              quoteType !== quoteTypeCodeEnum.Home &&
+              quoteType !== quoteTypeCodeEnum.Life,
           );
           let quoteDocuments =
             quoteTypes.includes(props.quoteType) ||
@@ -3069,11 +3069,9 @@ const providerName = computed(() => {
     ecomQuoteType.includes(props.quoteType) &&
     plan.insurance_provider
   ) {
-
     console.log('Inside condition', plan.insurance_provider.text);
     return plan ? plan.insurance_provider.text : 'Not Available';
   } else {
-    
     console.log('Outside condition', plan.text);
     return plan ? plan.text : 'Not Available';
   }
@@ -3128,11 +3126,9 @@ const setPlanDetail = () => {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
-  }
-  else if (props.quoteType == quoteTypeCodeEnum.Life) {
+  } else if (props.quoteType == quoteTypeCodeEnum.Life) {
     initalPlanDetails = props.quoteRequest.insurance_provider_plan;
-  }
-  else if (quoteTypesToCheck.includes(props.quoteType)) {
+  } else if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
   } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;

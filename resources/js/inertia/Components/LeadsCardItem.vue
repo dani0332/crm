@@ -209,7 +209,7 @@ const getInsuranceType = (planId, insurance_provider_plan) => {
   }
 
   return null;
-}
+};
 </script>
 <template>
   <div
@@ -264,7 +264,6 @@ const getInsuranceType = (planId, insurance_provider_plan) => {
         <x-icon icon="sheildCheck" size="sm" class="text-primary-400" />
         <p class="text-xs">
           {{ getInsuranceType(plan_id, insurance_provider_plan) }}
-
         </p>
       </div>
       <div v-if="quoteType == 'Life'" class="flex items-center gap-2">

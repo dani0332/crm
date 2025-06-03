@@ -161,7 +161,10 @@ const editForm = reactive({
 // Make actualPremium a computed value to ensure reactivity
 const actualPremium = computed(() => {
   const basePremium = Math.max(0, parseFloat(editForm.actualPremium) || 0);
-  const overallLoadingValue = Math.max(0, parseFloat(editForm.overallLoading) || 0);
+  const overallLoadingValue = Math.max(
+    0,
+    parseFloat(editForm.overallLoading) || 0,
+  );
   const riderPrice = Math.max(0, parseFloat(getRiderPrice()) || 0);
   return basePremium + overallLoadingValue + riderPrice;
 });
@@ -384,12 +387,7 @@ const getRiderPrice = () => {
 
   const totalFinalPrice = ridersData.value
     .filter(rider => rider.active == parseInt(1)) // Filter active riders
-    .reduce(
-      (sum, rider) =>
-        Math.max(0, parseFloat(sum)),
-      0,
-    );
-
+    .reduce((sum, rider) => Math.max(0, parseFloat(sum)), 0);
 
   let totalRiderPrice = Math.max(0, parseFloat(totalActivePrice));
   // Disable Overall Loading if there is rider loading added on rider level
@@ -398,22 +396,15 @@ const getRiderPrice = () => {
     totalRiderPrice = Math.max(0, totalRiderPrice + totalRiderLoading);
   } else if (totalFinalPrice > 0) {
     totalRiderPrice = Math.max(0, totalRiderPrice + totalFinalPrice);
-  } 
+  }
 
   if (totalRiderLoading == 0) {
-    
     overallLoadingState.value = false;
   }
   return totalRiderPrice;
 };
 
-watch(
-  ridersData,
-  newRidersData => {
-  },
-  { deep: true },
-);
-
+watch(ridersData, newRidersData => {}, { deep: true });
 
 // tabs
 const tabs = ref([
@@ -439,7 +430,8 @@ const getInputRules = rider => {
 
 const computedFinalPrice = rider =>
   computed(() => {
-    const price = !rider.price || rider.price === ''
+    const price =
+      !rider.price || rider.price === ''
         ? 0
         : Math.max(0, parseFloat(rider.price));
     const loading =
@@ -524,7 +516,6 @@ const hidePlan = () => {
     })
     .finally(() => {});
 };
-
 </script>
 
 <template>
@@ -849,7 +840,8 @@ const hidePlan = () => {
                     :disabled="
                       !props.selectedPlan.isManualPlan ||
                       !rider.active ||
-                      editForm.overallLoading > 0"
+                      editForm.overallLoading > 0
+                    "
                     @keydown="e => preventInvalidInputs(e, true)"
                     :rules="[isNonNegative]"
                     class="w-full h-10 p-2 rounded-md"
@@ -861,11 +853,11 @@ const hidePlan = () => {
                   class="col-span-1"
                   v-if="props.selectedPlan.isUnderwritten"
                 >
-                  <div class="appearance-none block w-24 overflow-hidden placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]" >
+                  <div
+                    class="appearance-none block w-24 overflow-hidden placeholder-secondary-400 dark:placeholder-secondary-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-secondary-300 dark:border-secondary-700 border shadow-sm rounded-md px-3 py-2 bg-secondary-100 dark:bg-secondary-700 text-secondary-400 dark:text-secondary-600 cursor-not-allowed focus:outline-[color:var(--x-input-border)]"
+                  >
                     {{ computedFinalPrice(rider) }}
                   </div>
-
-                  
                 </div>
               </div>
             </div>
@@ -984,9 +976,7 @@ const hidePlan = () => {
             <p v-if="errorMessage" class="text-red-600">{{ errorMessage }}</p>
             <div class="flex flex-row">
               <dt class="font-bold text-sm ml-4">Total Price:</dt>
-              <dd class="text-sm">
-                &nbsp; AED {{ actualPremium.toFixed(2) }}
-              </dd>
+              <dd class="text-sm">&nbsp; AED {{ actualPremium.toFixed(2) }}</dd>
             </div>
           </div>
           <!-- Timestamps aligned to the right -->

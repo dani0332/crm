@@ -331,7 +331,6 @@ watch(
   },
   { deep: true },
 );
-
 </script>
 
 <template>
@@ -547,7 +546,10 @@ watch(
           :options="
             planSubTypes.map(item => ({
               value: item.id,
-              label: item.text == 'Term' ? 'Fixed Term Insurance' : 'Whole of Life Insurance',
+              label:
+                item.text == 'Term'
+                  ? 'Fixed Term Insurance'
+                  : 'Whole of Life Insurance',
             }))
           "
         />
