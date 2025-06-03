@@ -85,14 +85,14 @@ class OCRService
         // Record start time for OCR processing
         $startTime = microtime(true);
 
-        LoggerService::info("Starting OCR processing", extra: [
+        LoggerService::info('Starting OCR processing', extra: [
             'quote_type' => $quoteType->value,
             'quote_code' => $quote->code,
             'quote_uuid' => $quote->uuid,
             'document_type' => $documentType->code,
             'file_mime_type' => $fileMimeType,
             'user_id' => $userId,
-            'start_time' => date('Y-m-d H:i:s', (int)$startTime)
+            'start_time' => date('Y-m-d H:i:s', (int) $startTime),
         ]);
 
         $docType = OCRDocumentTypeEnum::getDocumentType($documentType);
@@ -114,12 +114,12 @@ class OCRService
             // Record start time for OCR API call
             $apiCallStartTime = microtime(true);
 
-            LoggerService::info("Starting OCR API call", extra: [
+            LoggerService::info('Starting OCR API call', extra: [
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
                 'document_type' => $documentType->code,
                 'doc_type_enum' => $docType->value,
-                'api_url' => $url
+                'api_url' => $url,
             ]);
 
             $data = $this->getData($quoteType, $quote, $url, $docType, $fileMimeType);
@@ -128,14 +128,14 @@ class OCRService
             $apiCallEndTime = microtime(true);
             $apiCallExecutionTime = round(($apiCallEndTime - $apiCallStartTime) * 1000, 2);
 
-            LoggerService::info("OCR API call completed", extra: [
+            LoggerService::info('OCR API call completed', extra: [
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
                 'document_type' => $documentType->code,
                 'api_execution_time_ms' => $apiCallExecutionTime,
                 'api_execution_time_seconds' => round($apiCallExecutionTime / 1000, 2),
-                'data_received' => !is_null($data),
-                'data_size' => is_array($data) ? count($data) : (is_string($data) ? strlen($data) : 0)
+                'data_received' => ! is_null($data),
+                'data_size' => is_array($data) ? count($data) : (is_string($data) ? strlen($data) : 0),
             ]);
 
             if ($data) {
@@ -157,7 +157,7 @@ class OCRService
                 $executionTime = round(($endTime - $startTime) * 1000, 2);
                 $dataProcessingTime = round($executionTime - $apiCallExecutionTime, 2);
 
-                LoggerService::info("OCR processing completed successfully", extra: [
+                LoggerService::info('OCR processing completed successfully', extra: [
                     'quote_type' => $quoteType->value,
                     'quote_code' => $quote->code,
                     'quote_uuid' => $quote->uuid,
@@ -166,9 +166,9 @@ class OCRService
                     'total_execution_time_seconds' => round($executionTime / 1000, 2),
                     'api_call_time_ms' => $apiCallExecutionTime,
                     'data_processing_time_ms' => $dataProcessingTime,
-                    'end_time' => date('Y-m-d H:i:s', (int)$endTime),
+                    'end_time' => date('Y-m-d H:i:s', (int) $endTime),
                     'data_filled_response' => $dataFilledResponse,
-                    'user_id' => $userId
+                    'user_id' => $userId,
                 ]);
 
                 return $dataFilledResponse;
@@ -177,7 +177,7 @@ class OCRService
                 $endTime = microtime(true);
                 $executionTime = round(($endTime - $startTime) * 1000, 2);
 
-                LoggerService::warning("OCR processing failed - no data received", extra: [
+                LoggerService::warning('OCR processing failed - no data received', extra: [
                     'quote_type' => $quoteType->value,
                     'quote_code' => $quote->code,
                     'quote_uuid' => $quote->uuid,
@@ -185,8 +185,8 @@ class OCRService
                     'total_execution_time_ms' => $executionTime,
                     'total_execution_time_seconds' => round($executionTime / 1000, 2),
                     'api_call_time_ms' => $apiCallExecutionTime,
-                    'end_time' => date('Y-m-d H:i:s', (int)$endTime),
-                    'user_id' => $userId
+                    'end_time' => date('Y-m-d H:i:s', (int) $endTime),
+                    'user_id' => $userId,
                 ]);
 
                 return false;
@@ -197,7 +197,7 @@ class OCRService
             $executionTime = isset($startTime) ? round(($endTime - $startTime) * 1000, 2) : 0;
             $apiCallExecutionTime = isset($apiCallStartTime) ? round(($endTime - $apiCallStartTime) * 1000, 2) : 0;
 
-            LoggerService::error("OCR processing failed with exception", extra: [
+            LoggerService::error('OCR processing failed with exception', extra: [
                 'quote_type' => $quoteType->value,
                 'quote_code' => $quote->code,
                 'quote_uuid' => $quote->uuid,
@@ -208,7 +208,7 @@ class OCRService
                 'error_message' => $e->getMessage(),
                 'error_file' => $e->getFile(),
                 'error_line' => $e->getLine(),
-                'user_id' => $userId
+                'user_id' => $userId,
             ]);
 
             throw $e;
