@@ -51,6 +51,16 @@ const props = defineProps({
     type: [String, null],
     default: null,
   },
+  ocrLoadingDocTypes: {
+    required: false,
+    type: Object,
+    default: () => new Set(),
+  },
+  isDocTypeLoading: {
+    required: false,
+    type: Function,
+    default: () => () => false,
+  },
 });
 
 const isLoading = ref(false);
@@ -761,6 +771,35 @@ const FieldLoader = defineComponent({
 
 // --- OCR Loading Logic ---
 const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
+
+// Helper function to check if a document type is currently being processed
+const isDocTypeLoading = (docType) => {
+  let result = false;
+  let source = 'none';
+
+  // Handle both function and string types for backwards compatibility
+  if (typeof props.ocrLoadingDocType === 'function') {
+    result = props.ocrLoadingDocType(docType);
+    source = 'function';
+  }
+  // Check the reactive Set if available
+  else if (props.ocrLoadingDocTypes && props.ocrLoadingDocTypes.has && props.ocrLoadingDocTypes.has(docType)) {
+    result = true;
+    source = 'reactiveSet';
+  }
+  // Check the function prop if available
+  else if (typeof props.isDocTypeLoading === 'function') {
+    result = props.isDocTypeLoading(docType);
+    source = 'functionProp';
+  }
+  // Fall back to old string comparison
+  else {
+    result = props.ocrLoadingDocType === docType;
+    source = 'stringComparison';
+  }
+
+  return result;
+};
 </script>
 
 <template>
@@ -888,7 +927,7 @@ const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
+                  <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)">
                     <DatePicker
                       v-model="bpForm.invoice_date"
                       type="date"
@@ -932,7 +971,7 @@ const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
+                  <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)">
                     <x-input
                       v-model="bpForm.insurer_tax_invoice_number"
                       placeholder="Insurer Tax Invoice Number"
@@ -979,7 +1018,7 @@ const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
+                  <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)">
                     <x-input
                       v-model="bpForm.insurer_commmission_invoice_number"
                       placeholder="Insurer Commission Tax Invoice Number"
@@ -1110,7 +1149,7 @@ const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
                 <dd>
                   <template v-if="commissionVatApplicableTooltip">
                     <x-tooltip class="w-full">
-                      <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
+                      <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)">
                         <x-input
                           v-model="bpForm.commission_vat_applicable"
                           @change="calculateCommission"
@@ -1138,7 +1177,7 @@ const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
                     </x-tooltip>
                   </template>
                   <template v-else>
-                    <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value">
+                    <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)">
                       <x-input
                         v-model="bpForm.commission_vat_applicable"
                         @change="calculateCommission"

@@ -6,7 +6,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, reactive, computed } from 'vue';
 
 defineProps({
   quote: Object,
@@ -1617,6 +1617,19 @@ const ocrLoading = ref(false);
 const policyDetailReloadKey = ref(0);
 const bookPolicyReloadKey = ref(0);
 const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
+const ocrLoadingDocTypes = reactive(new Set());
+
+// Helper function to check if a document type is currently being processed
+const isDocTypeLoading = (docType) => {
+  const result = ocrLoadingDocTypes.has(docType);
+  return result;
+};
+
+// Helper to check if any OCR is in progress
+const hasOcrInProgress = computed(() => {
+  const result = ocrLoadingDocTypes.size > 0;
+  return result;
+});
 
 function handleOcrNotification(event) {
   const { docType, status, userId } = event.detail || {};
@@ -1627,7 +1640,7 @@ function handleOcrNotification(event) {
     return;
   }
 
-  // For 'start' status, set loading state for supported document types
+  // For 'start' status, add document type to loading set
   if (status === 'start') {
     const supportedDocTypes = [
       ocrDocumentTypeEnum?.TAX_INVOICE?.value,
@@ -1636,13 +1649,26 @@ function handleOcrNotification(event) {
     ];
 
     if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.add(docType);
+      // Also set the old ref for backwards compatibility
       ocrLoadingDocType.value = docType;
     }
   } else {
-    // For 'end' or 'fail' status, reload data but don't show completion notification
+    // For 'end' or 'fail' status, remove document type from loading set and reload data
+    const supportedDocTypes = [
+      ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+      ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+    ];
+
+    if (supportedDocTypes.includes(docType)) {
+      ocrLoadingDocTypes.delete(docType);
+    }
     router.reload({
       onSuccess: () => {
+        // Clear both the old ref and the reactive Set for immediate UI update
         ocrLoadingDocType.value = null;
+        ocrLoadingDocTypes.clear();
         policyDetailReloadKey.value++;
         bookPolicyReloadKey.value++;
       },
@@ -3837,8 +3863,10 @@ function handleOcrNotification(event) {
       :availablePlans="availablePlansTable.data"
       :modelType="quoteType"
       :payments="payments"
-      :showOcrNotification="!!ocrLoadingDocType"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
       :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <QuoteDocument
@@ -3867,8 +3895,10 @@ function handleOcrNotification(event) {
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
-      :showOcrNotification="!!ocrLoadingDocType"
+      :showOcrNotification="hasOcrInProgress || !!ocrLoadingDocType"
       :ocrLoadingDocType="ocrLoadingDocType"
+      :ocrLoadingDocTypes="ocrLoadingDocTypes"
+      :isDocTypeLoading="isDocTypeLoading"
     />
 
     <SendUpdates

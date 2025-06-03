@@ -39,11 +39,51 @@ const props = defineProps({
     type: [String, null],
     default: null,
   },
+  ocrLoadingDocTypes: {
+    required: false,
+    type: Object,
+    default: () => new Set(),
+  },
+  isDocTypeLoading: {
+    required: false,
+    type: Function,
+    default: () => () => false,
+  },
 });
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 const notification = useNotifications('toast');
+
+// Helper function to check if a document type is currently being processed
+const isDocTypeLoading = (docType) => {
+  let result = false;
+  let source = 'none';
+
+  // Handle both function and string types for backwards compatibility
+  if (typeof props.ocrLoadingDocType === 'function') {
+    result = props.ocrLoadingDocType(docType);
+    source = 'function';
+  }
+  // Check the reactive Set if available
+  else if (props.ocrLoadingDocTypes && props.ocrLoadingDocTypes.has && props.ocrLoadingDocTypes.has(docType)) {
+    result = true;
+    source = 'reactiveSet';
+  }
+  // Check the function prop if available
+  else if (typeof props.isDocTypeLoading === 'function') {
+    result = props.isDocTypeLoading(docType);
+    source = 'functionProp';
+  }
+  // Fall back to old string comparison
+  else {
+    result = props.ocrLoadingDocType === docType;
+    source = 'stringComparison';
+  }
+
+  return result;
+};
+
 const dateToYMD = date => {
   if (date) {
     // Check if date is already in YMD format
@@ -539,7 +579,7 @@ const FieldLoader = defineComponent({
                     <span>{{ productionProcessTooltipEnum.POLICY_NUMBER }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value">
+                <FieldLoader :loading="showOcrNotification && (typeof props.isDocTypeLoading === 'function' ? props.isDocTypeLoading(ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) : props.ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value)">
                   <x-input
                     v-model="policyDetailsForm.quote_policy_number"
                     type="text"
@@ -599,7 +639,7 @@ const FieldLoader = defineComponent({
                     <span>{{ productionProcessTooltipEnum.START_DATE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value">
+                <FieldLoader :loading="showOcrNotification && (typeof props.isDocTypeLoading === 'function' ? props.isDocTypeLoading(ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) : props.ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value)">
                   <DatePicker
                     v-model="policyDetailsForm.quote_policy_start_date"
                     :rules="[isRequired, rules.policy_start_date]"
@@ -623,7 +663,7 @@ const FieldLoader = defineComponent({
                     <span>{{ productionProcessTooltipEnum.PRICE_VAT_APPLICABLE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value">
+                <FieldLoader :loading="showOcrNotification && (typeof props.isDocTypeLoading === 'function' ? props.isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value) : props.ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value)">
                   <x-input
                     v-model="policyDetailsForm.price_vat_applicable"
                     @change="calculateVatAmount(true)"
@@ -644,7 +684,7 @@ const FieldLoader = defineComponent({
                     <span>{{ productionProcessTooltipEnum.EXPIRY_DATE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value">
+                <FieldLoader :loading="showOcrNotification && (typeof props.isDocTypeLoading === 'function' ? props.isDocTypeLoading(ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) : props.ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value)">
                   <DatePicker
                     v-model="policyDetailsForm.quote_policy_expiry_date"
                     :rules="[isRequired, rules.policy_expiry_date]"
