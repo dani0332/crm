@@ -7,14 +7,13 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public $timeout = 300; // 300 (5 minutes) 900 (15 minutes)
     public $tries = 2;
@@ -30,11 +29,12 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         string $exportClass,
         string $recipientEmail,
         array $requestParams,
-
     ) {
         $this->exportClass = $exportClass;
         $this->recipientEmail = $recipientEmail;
         $this->requestParams = $requestParams;
+
+        $this->onQueue('renewals');
     }
 
     /**
