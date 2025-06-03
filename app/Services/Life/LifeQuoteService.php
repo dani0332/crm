@@ -101,7 +101,7 @@ class LifeQuoteService extends BaseService
                 $q->with([
                     'subType:id,code',
                 ]);
-            }
+            },
         ])
             ->when(auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->user()->id);
@@ -159,6 +159,7 @@ class LifeQuoteService extends BaseService
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
 
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
+
         return $query;
     }
 
