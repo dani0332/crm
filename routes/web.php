@@ -791,11 +791,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Command to bulk send policy documents
-    Route::get('/run-policy-bulk-send', function () {
-        \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+    // Route::get('/run-policy-bulk-send', function () {
+    //     \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
 
-        return 'Command executed successfully!';
-    });
+    //     return 'Command executed successfully!';
+    // });
 });
 
 // Migration Not Required For Now 21 Nov 24
