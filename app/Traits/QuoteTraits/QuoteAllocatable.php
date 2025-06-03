@@ -50,6 +50,12 @@ trait QuoteAllocatable
 
     public function markLeadAllocationFailed()
     {
+        if ($this->advisor_id) {
+            // if advisor is already assigned then we don't need to mark it as failed
+
+            return;
+        }
+
         if ($this->lead_allocation_failed_at) {
             self::withoutEvents(function () {
                 $this->update([
@@ -159,10 +165,10 @@ trait QuoteAllocatable
         return $this->insuranceProvider?->payment_gateway_id === PaymentGatewayEnum::PAYMENT_GATEWAY_PAYMENT_LINK;
     }
 
-    public function isEligibleForOrganicAssignmentForPlanB(): bool
+    public function isEligibleForOrganicAssignmentForPlanB(QuoteTypes $quoteType): bool
     {
         return $this->isInsurerPlanB()
-            && $this->isSIC(QuoteTypes::CAR)
+            && $this->isSIC($quoteType)
             && ! $this->sic_advisor_requested
             && $this->quote_status_id === QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
