@@ -44,11 +44,11 @@ class PrivateClientConfigController extends Controller
         }
         $configurations = $configurations->get();
 
-        $carMakes = CarMake::select('code as value', 'text as label')->where('is_active', true)->get()->toArray();
+        $carMakes = CarMake::select('id as value', 'text as label')->where('is_active', true)->get()->toArray();
 
-        $insurers = InsuranceProvider::select('code as value', 'text as label')->where('is_active', true)->get()->toArray();
+        $insurers = InsuranceProvider::select('id as value', 'text as label')->where('is_active', true)->get()->toArray();
 
-        $locationAreas = SubArea::select('code as value', 'text as label')->get()->toArray();
+        $locationAreas = SubArea::select('id as value', 'text as label')->get()->toArray();
 
         $isCurrentVersion = (int) $selectedVersion === (int) $allVersions[0];
 

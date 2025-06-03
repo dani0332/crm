@@ -232,8 +232,8 @@ const insuranceTypes = [
         operator: 'in',
       },
       {
-        name: 'location_area',
-        uiName: 'home_location_area',
+        name: 'sub_area_id',
+        uiName: 'home_sub_area_id',
         label: 'Location Area',
         type: 'select_multiple',
         options: 'locationAreas',
@@ -324,7 +324,8 @@ onMounted(() => {
             const formFieldName = `${type.name}_${field.uiName || field.name}`;
 
             if (field.type === 'select_multiple') {
-              const values = config.value ? config.value.split(',') : [];
+              // Split the value string into an array of IDs
+              const values = config.value ? config.value.split(',').map(v => parseInt(v.trim())) : [];
               configForm[formFieldName] = values;
             } else {
               configForm[formFieldName] = config.value;
@@ -370,8 +371,10 @@ const onSubmit = isValid => {
 
         // Format value based on field type
         if (field.type === 'select_multiple' && Array.isArray(value)) {
-          value = value.length > 0 ? value.join(',') : '';
+          // Ensure all values are properly converted to strings
+          value = value.map(v => v.toString()).join(',');
         }
+
         // Create configuration object
         const configItem = {
           quote_type_id: type.quote_type_id,
@@ -387,7 +390,6 @@ const onSubmit = isValid => {
       });
     });
 
-    console.log(configurations);
     // Send data to server
     configForm
       .transform(data => ({
