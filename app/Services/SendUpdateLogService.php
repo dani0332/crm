@@ -351,6 +351,7 @@ class SendUpdateLogService
                         $customerMemberCode = generateQuoteMemberCode($morphRelation->customer_type, $morphRelation->customer_entity_id);
                         $fillColumns = array_merge($fillColumns, [
                             'code' => $customerMemberCode,
+                            'updated_at' => null,
                         ]);
                     }
                     $newMorphRelation = $morphRelation->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
