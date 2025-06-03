@@ -302,4 +302,9 @@ class PersonalQuoteRepository extends BaseRepository
     {
         return $this->where('id', $quoteId)->first();
     }
+
+    public function fetchGetBy($column, $value)
+    {
+        return $this->where($column, $value)->with(['payments'])->first();
+    }
 }

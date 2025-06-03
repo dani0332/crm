@@ -544,6 +544,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::YACHT->value,
             QuoteTypes::LIFE->value,
             QuoteTypes::HOME->value,
+            QuoteTypes::LIFE->value,
         ]);
     }
 }

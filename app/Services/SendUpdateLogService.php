@@ -45,6 +45,7 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -623,7 +624,12 @@ class SendUpdateLogService
 
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
-            $payments = $repository::getBy('uuid', $quoteUuid)->payments;
+            $quote = $repository::getBy('uuid', $quoteUuid);
+            $payments = $quote->payments ?? null;
+            if ($payments->isEmpty()) {
+                $quote = PersonalQuoteRepository::getBy('uuid', $quoteUuid);
+                $payments = $quote->payments ?? null;
+            }
         } else {
             $quoteServiceFile = app(getServiceObject($quoteType));
             $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
