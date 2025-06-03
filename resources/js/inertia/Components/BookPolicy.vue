@@ -754,26 +754,36 @@ const FieldLoader = defineComponent({
   props: {
     loading: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   setup(props, { slots }) {
-    return () => h('div', { class: 'relative' }, [
-      slots.default && slots.default(),
-      props.loading && h('div', {
-        class: 'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10'
-      }, [
-        h('div', { class: 'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full' })
-      ])
-    ])
-  }
+    return () =>
+      h('div', { class: 'relative' }, [
+        slots.default && slots.default(),
+        props.loading &&
+          h(
+            'div',
+            {
+              class:
+                'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10',
+            },
+            [
+              h('div', {
+                class:
+                  'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full',
+              }),
+            ],
+          ),
+      ]);
+  },
 });
 
 // --- OCR Loading Logic ---
 const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 
 // Helper function to check if a document type is currently being processed
-const isDocTypeLoading = (docType) => {
+const isDocTypeLoading = docType => {
   let result = false;
   let source = 'none';
 
@@ -783,7 +793,11 @@ const isDocTypeLoading = (docType) => {
     source = 'function';
   }
   // Check the reactive Set if available
-  else if (props.ocrLoadingDocTypes && props.ocrLoadingDocTypes.has && props.ocrLoadingDocTypes.has(docType)) {
+  else if (
+    props.ocrLoadingDocTypes &&
+    props.ocrLoadingDocTypes.has &&
+    props.ocrLoadingDocTypes.has(docType)
+  ) {
     result = true;
     source = 'reactiveSet';
   }
@@ -927,7 +941,12 @@ const isDocTypeLoading = (docType) => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)">
+                  <FieldLoader
+                    :loading="
+                      showOcrNotification &&
+                      isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value)
+                    "
+                  >
                     <DatePicker
                       v-model="bpForm.invoice_date"
                       type="date"
@@ -971,7 +990,14 @@ const isDocTypeLoading = (docType) => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)">
+                  <FieldLoader
+                    :loading="
+                      showOcrNotification &&
+                      isDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+                      )
+                    "
+                  >
                     <x-input
                       v-model="bpForm.insurer_tax_invoice_number"
                       placeholder="Insurer Tax Invoice Number"
@@ -1018,7 +1044,14 @@ const isDocTypeLoading = (docType) => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)">
+                  <FieldLoader
+                    :loading="
+                      showOcrNotification &&
+                      isDocTypeLoading(
+                        ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
+                      )
+                    "
+                  >
                     <x-input
                       v-model="bpForm.insurer_commmission_invoice_number"
                       placeholder="Insurer Commission Tax Invoice Number"
@@ -1065,40 +1098,14 @@ const isDocTypeLoading = (docType) => {
                   <template v-if="commissionVatNotApplicableTooltip">
                     <x-tooltip class="w-full">
                       <x-input
-                          v-model="bpForm.commission_vat_not_applicable"
-                          @change="calculateCommission"
-                          placeholder="Commission VAT NOT APPLICABLE"
-                          class="w-full"
-                          :disabled="
-                            disableCommissionVatNotApplicable ||
-                            bpForm.isCommissionDisabled
-                          "
-                        />
-                        <div
-                          v-if="
-                            !disableCommissionVatNotApplicable &&
-                            !bp.isAllowedToUpdateCommission
-                          "
-                          class="x-input-footer text-xs mt-1"
-                        >
-                          <p class="text-error-500 dark:text-error-400">
-                            {{ commissionErrorMessage }}
-                          </p>
-                        </div>
-                      <template #tooltip>
-                        <span class="custom-tooltip-content">{{
-                          commissionVatNotApplicableTooltip
-                        }}</span>
-                      </template>
-                    </x-tooltip>
-                  </template>
-                  <template v-else>
-                    <x-input
                         v-model="bpForm.commission_vat_not_applicable"
                         @change="calculateCommission"
                         placeholder="Commission VAT NOT APPLICABLE"
                         class="w-full"
-                        :disabled="disableCommissionVatNotApplicable"
+                        :disabled="
+                          disableCommissionVatNotApplicable ||
+                          bpForm.isCommissionDisabled
+                        "
                       />
                       <div
                         v-if="
@@ -1111,6 +1118,32 @@ const isDocTypeLoading = (docType) => {
                           {{ commissionErrorMessage }}
                         </p>
                       </div>
+                      <template #tooltip>
+                        <span class="custom-tooltip-content">{{
+                          commissionVatNotApplicableTooltip
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </template>
+                  <template v-else>
+                    <x-input
+                      v-model="bpForm.commission_vat_not_applicable"
+                      @change="calculateCommission"
+                      placeholder="Commission VAT NOT APPLICABLE"
+                      class="w-full"
+                      :disabled="disableCommissionVatNotApplicable"
+                    />
+                    <div
+                      v-if="
+                        !disableCommissionVatNotApplicable &&
+                        !bp.isAllowedToUpdateCommission
+                      "
+                      class="x-input-footer text-xs mt-1"
+                    >
+                      <p class="text-error-500 dark:text-error-400">
+                        {{ commissionErrorMessage }}
+                      </p>
+                    </div>
                   </template>
                 </dd>
               </div>
@@ -1149,7 +1182,15 @@ const isDocTypeLoading = (docType) => {
                 <dd>
                   <template v-if="commissionVatApplicableTooltip">
                     <x-tooltip class="w-full">
-                      <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)">
+                      <FieldLoader
+                        :loading="
+                          showOcrNotification &&
+                          isDocTypeLoading(
+                            ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER
+                              ?.value,
+                          )
+                        "
+                      >
                         <x-input
                           v-model="bpForm.commission_vat_applicable"
                           @change="calculateCommission"
@@ -1177,7 +1218,15 @@ const isDocTypeLoading = (docType) => {
                     </x-tooltip>
                   </template>
                   <template v-else>
-                    <FieldLoader :loading="showOcrNotification && isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value)">
+                    <FieldLoader
+                      :loading="
+                        showOcrNotification &&
+                        isDocTypeLoading(
+                          ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER
+                            ?.value,
+                        )
+                      "
+                    >
                       <x-input
                         v-model="bpForm.commission_vat_applicable"
                         @change="calculateCommission"

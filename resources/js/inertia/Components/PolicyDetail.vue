@@ -56,7 +56,7 @@ const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 const notification = useNotifications('toast');
 
 // Helper function to check if a document type is currently being processed
-const isDocTypeLoading = (docType) => {
+const isDocTypeLoading = docType => {
   let result = false;
   let source = 'none';
 
@@ -66,7 +66,11 @@ const isDocTypeLoading = (docType) => {
     source = 'function';
   }
   // Check the reactive Set if available
-  else if (props.ocrLoadingDocTypes && props.ocrLoadingDocTypes.has && props.ocrLoadingDocTypes.has(docType)) {
+  else if (
+    props.ocrLoadingDocTypes &&
+    props.ocrLoadingDocTypes.has &&
+    props.ocrLoadingDocTypes.has(docType)
+  ) {
     result = true;
     source = 'reactiveSet';
   }
@@ -542,19 +546,29 @@ const FieldLoader = defineComponent({
   props: {
     loading: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   setup(props, { slots }) {
-    return () => h('div', { class: 'relative' }, [
-      slots.default && slots.default(),
-      props.loading && h('div', {
-        class: 'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10'
-      }, [
-        h('div', { class: 'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full' })
-      ])
-    ])
-  }
+    return () =>
+      h('div', { class: 'relative' }, [
+        slots.default && slots.default(),
+        props.loading &&
+          h(
+            'div',
+            {
+              class:
+                'absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center rounded z-10',
+            },
+            [
+              h('div', {
+                class:
+                  'animate-spin h-5 w-5 border-2 border-gray-600 border-t-transparent rounded-full',
+              }),
+            ],
+          ),
+      ]);
+  },
 });
 </script>
 
@@ -572,20 +586,38 @@ const FieldLoader = defineComponent({
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     Policy Number<span class="text-red-500">*</span>
                   </label>
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.POLICY_NUMBER }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.POLICY_NUMBER
+                    }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && (typeof props.isDocTypeLoading === 'function' ? props.isDocTypeLoading(ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) : props.ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value)">
+                <FieldLoader
+                  :loading="
+                    showOcrNotification &&
+                    (typeof props.isDocTypeLoading === 'function'
+                      ? props.isDocTypeLoading(
+                          ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+                        )
+                      : props.ocrLoadingDocType ===
+                        ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value)
+                  "
+                >
                   <x-input
                     v-model="policyDetailsForm.quote_policy_number"
                     type="text"
                     placeholder="Policy Number"
                     class="w-full"
-                    :custom-error="rules.quote_policy_number(policyDetailsForm.quote_policy_number)"
+                    :custom-error="
+                      rules.quote_policy_number(
+                        policyDetailsForm.quote_policy_number,
+                      )
+                    "
                     :rules="[rules.quote_policy_number]"
                     :disabled="!policyDetailsState.isEditing"
                   />
@@ -593,11 +625,15 @@ const FieldLoader = defineComponent({
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     ISSUANCE DATE <span class="text-red-500">*</span>
                   </label>
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.ISSUANCE_DATE }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.ISSUANCE_DATE
+                    }}</span>
                   </template>
                 </x-tooltip>
                 <DatePicker
@@ -612,34 +648,59 @@ const FieldLoader = defineComponent({
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     Price (VAT NOT APPLICABLE)
-                    <span v-if="isPriceVatApplicableRequired" class="text-red-500">*</span>
+                    <span
+                      v-if="isPriceVatApplicableRequired"
+                      class="text-red-500"
+                      >*</span
+                    >
                   </label>
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.PRICE_VAT_NOT_APPLICABLE }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.PRICE_VAT_NOT_APPLICABLE
+                    }}</span>
                   </template>
                 </x-tooltip>
-                  <x-input
-                    v-model="policyDetailsForm.price_vat_notapplicable"
-                    @change="calculateVatAmount(true)"
-                    :rules="[rules.price_vat_not_applicable]"
-                    type="number"
-                    placeholder="Price (VAT NOT APPLICABLE)"
-                    class="w-full"
-                    :disabled="!policyDetailsState.isEditing || (page.props.quoteType != quoteTypeCodeEnum.Life && page.props.quoteType != quoteTypeCodeEnum.Business && page.props.quoteType != quoteTypeCodeEnum.Health)"
-                  />
+                <x-input
+                  v-model="policyDetailsForm.price_vat_notapplicable"
+                  @change="calculateVatAmount(true)"
+                  :rules="[rules.price_vat_not_applicable]"
+                  type="number"
+                  placeholder="Price (VAT NOT APPLICABLE)"
+                  class="w-full"
+                  :disabled="
+                    !policyDetailsState.isEditing ||
+                    (page.props.quoteType != quoteTypeCodeEnum.Life &&
+                      page.props.quoteType != quoteTypeCodeEnum.Business &&
+                      page.props.quoteType != quoteTypeCodeEnum.Health)
+                  "
+                />
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     Start Date <span class="text-red-500">*</span>
                   </label>
                   <template #tooltip>
                     <span>{{ productionProcessTooltipEnum.START_DATE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && (typeof props.isDocTypeLoading === 'function' ? props.isDocTypeLoading(ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) : props.ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value)">
+                <FieldLoader
+                  :loading="
+                    showOcrNotification &&
+                    (typeof props.isDocTypeLoading === 'function'
+                      ? props.isDocTypeLoading(
+                          ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+                        )
+                      : props.ocrLoadingDocType ===
+                        ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value)
+                  "
+                >
                   <DatePicker
                     v-model="policyDetailsForm.quote_policy_start_date"
                     :rules="[isRequired, rules.policy_start_date]"
@@ -655,15 +716,29 @@ const FieldLoader = defineComponent({
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     Price (VAT APPLICABLE)
                     <span v-if="!isLifeQuote" class="text-red-500">*</span>
                   </label>
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.PRICE_VAT_APPLICABLE }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.PRICE_VAT_APPLICABLE
+                    }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && (typeof props.isDocTypeLoading === 'function' ? props.isDocTypeLoading(ocrDocumentTypeEnum?.TAX_INVOICE?.value) : props.ocrLoadingDocType === ocrDocumentTypeEnum?.TAX_INVOICE?.value)">
+                <FieldLoader
+                  :loading="
+                    showOcrNotification &&
+                    (typeof props.isDocTypeLoading === 'function'
+                      ? props.isDocTypeLoading(
+                          ocrDocumentTypeEnum?.TAX_INVOICE?.value,
+                        )
+                      : props.ocrLoadingDocType ===
+                        ocrDocumentTypeEnum?.TAX_INVOICE?.value)
+                  "
+                >
                   <x-input
                     v-model="policyDetailsForm.price_vat_applicable"
                     @change="calculateVatAmount(true)"
@@ -671,20 +746,37 @@ const FieldLoader = defineComponent({
                     type="number"
                     placeholder="Price (VAT APPLICABLE)"
                     class="w-full"
-                    :disabled="!policyDetailsState.isEditing || (page.props.quoteType == quoteTypeCodeEnum.Life && page.props.quoteType != quoteTypeCodeEnum.Business && page.props.quoteType != quoteTypeCodeEnum.Health)"
+                    :disabled="
+                      !policyDetailsState.isEditing ||
+                      (page.props.quoteType == quoteTypeCodeEnum.Life &&
+                        page.props.quoteType != quoteTypeCodeEnum.Business &&
+                        page.props.quoteType != quoteTypeCodeEnum.Health)
+                    "
                   />
                 </FieldLoader>
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     Expiry Date <span class="text-red-500">*</span>
                   </label>
                   <template #tooltip>
                     <span>{{ productionProcessTooltipEnum.EXPIRY_DATE }}</span>
                   </template>
                 </x-tooltip>
-                <FieldLoader :loading="showOcrNotification && (typeof props.isDocTypeLoading === 'function' ? props.isDocTypeLoading(ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) : props.ocrLoadingDocType === ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value)">
+                <FieldLoader
+                  :loading="
+                    showOcrNotification &&
+                    (typeof props.isDocTypeLoading === 'function'
+                      ? props.isDocTypeLoading(
+                          ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
+                        )
+                      : props.ocrLoadingDocType ===
+                        ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value)
+                  "
+                >
                   <DatePicker
                     v-model="policyDetailsForm.quote_policy_expiry_date"
                     :rules="[isRequired, rules.policy_expiry_date]"
@@ -700,11 +792,15 @@ const FieldLoader = defineComponent({
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     Total VAT Amount
                   </label>
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.TOTAL_VAT_AMOUNT }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.TOTAL_VAT_AMOUNT
+                    }}</span>
                   </template>
                 </x-tooltip>
                 <x-input
@@ -712,13 +808,18 @@ const FieldLoader = defineComponent({
                   type="number"
                   placeholder="Total VAT Amount"
                   class="w-full"
-                  :disabled="!can(permissionsEnum.POLICY_DETAILS_ADD_VAT) || !policyDetailsState.isEditing"
+                  :disabled="
+                    !can(permissionsEnum.POLICY_DETAILS_ADD_VAT) ||
+                    !policyDetailsState.isEditing
+                  "
                   @change="calculateTotalPrice"
                 />
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     Total Price
                   </label>
                   <template #tooltip>
@@ -738,19 +839,27 @@ const FieldLoader = defineComponent({
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     Insurer Quote Number
                     <span v-if="isCarOrBikeQuote" class="text-red-500">*</span>
                   </label>
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.INSURER_QUOTE_NUMBER }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.INSURER_QUOTE_NUMBER
+                    }}</span>
                   </template>
                 </x-tooltip>
                 <x-input
                   v-model="policyDetailsForm.quote_plan_insurer_quote_number"
                   type="text"
                   placeholder="Insurer Quote Number"
-                  :custom-error="rules.quote_plan_insurer_quote_number(policyDetailsForm.quote_plan_insurer_quote_number)"
+                  :custom-error="
+                    rules.quote_plan_insurer_quote_number(
+                      policyDetailsForm.quote_plan_insurer_quote_number,
+                    )
+                  "
                   :rules="[rules.quote_plan_insurer_quote_number]"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
@@ -758,11 +867,15 @@ const FieldLoader = defineComponent({
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip>
-                  <label class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black">
+                  <label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
+                  >
                     Issuance Status
                   </label>
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.ISSURANEC_STATUS }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.ISSURANEC_STATUS
+                    }}</span>
                   </template>
                 </x-tooltip>
                 <x-select
@@ -777,7 +890,10 @@ const FieldLoader = defineComponent({
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-input
-                  v-if="policyDetailsForm.quote_policy_issuance_status == quoteIssuanceStatusEnum.Other"
+                  v-if="
+                    policyDetailsForm.quote_policy_issuance_status ==
+                    quoteIssuanceStatusEnum.Other
+                  "
                   v-model="policyDetailsForm.quote_policy_issuance_status_other"
                   type="text"
                   label="Additionl Info"

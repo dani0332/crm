@@ -11,7 +11,9 @@ const eventName = 'ocr.notification';
 let worker;
 
 const listen = () => {
-  worker = new SharedWorker('/build/workers/pusher.worker.js?v=' + new Date().getTime());
+  worker = new SharedWorker(
+    '/build/workers/pusher.worker.js?v=' + new Date().getTime(),
+  );
   worker.port.addEventListener('message', e => {
     const currentUrl = page.props.location || '';
     const isCurrentUser = e.data.userId === page.props.auth.user.id;
@@ -25,8 +27,10 @@ const listen = () => {
       // Only show toast notification for 'start' status and CERTIFICATE_OF_ISSUANCE document type
       // Still show 'fail' status notifications for all supported document types
       if (
-        (e.data.status === 'start' && e.data.docType === page.props.ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) ||
-        (e.data.status === 'fail')
+        (e.data.status === 'start' &&
+          e.data.docType ===
+            page.props.ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value) ||
+        e.data.status === 'fail'
       ) {
         notification.info({
           title: e.data.message,
@@ -34,18 +38,20 @@ const listen = () => {
         });
       }
 
-      window.dispatchEvent(new CustomEvent('ocr-notification', {
-        detail: {
-          imageUrl: '/image/alfred-theme.png',
-          title: 'OCR Notification',
-          message: e.data.message,
-          status: e.data.status,
-          uuid: e.data.uuid,
-          error: e.data.error,
-          docType: e.data.docType,
-          userId: e.data.userId
-        }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('ocr-notification', {
+          detail: {
+            imageUrl: '/image/alfred-theme.png',
+            title: 'OCR Notification',
+            message: e.data.message,
+            status: e.data.status,
+            uuid: e.data.uuid,
+            error: e.data.error,
+            docType: e.data.docType,
+            userId: e.data.userId,
+          },
+        }),
+      );
 
       // The completion notification for 'end' status is removed as per requirements
       // Field checking is still kept for updating UI if needed
@@ -88,7 +94,7 @@ const checkRequiredPolicyFields = () => {
     { field: 'policy_number', property: 'quote_policy_number' },
     { field: 'policy_start_date', property: 'quote_policy_start_date' },
     { field: 'policy_expiry_date', property: 'quote_policy_expiry_date' },
-    { field: 'price_vat_applicable', property: 'price_vat_applicable' }
+    { field: 'price_vat_applicable', property: 'price_vat_applicable' },
   ];
 
   // Make sure all required fields have values

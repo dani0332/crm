@@ -1620,7 +1620,7 @@ const ocrDocumentTypeEnum = page.props.ocrDocumentTypeEnum;
 const ocrLoadingDocTypes = reactive(new Set());
 
 // Helper function to check if a document type is currently being processed
-const isDocTypeLoading = (docType) => {
+const isDocTypeLoading = docType => {
   const result = ocrLoadingDocTypes.has(docType);
   return result;
 };
@@ -1645,7 +1645,7 @@ function handleOcrNotification(event) {
     const supportedDocTypes = [
       ocrDocumentTypeEnum?.TAX_INVOICE?.value,
       ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
-      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
     ];
 
     if (supportedDocTypes.includes(docType)) {
@@ -1658,7 +1658,7 @@ function handleOcrNotification(event) {
     const supportedDocTypes = [
       ocrDocumentTypeEnum?.TAX_INVOICE?.value,
       ocrDocumentTypeEnum?.TAX_INVOICE_RAISED_BY_BUYER?.value,
-      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value
+      ocrDocumentTypeEnum?.CERTIFICATE_OF_ISSUANCE?.value,
     ];
 
     if (supportedDocTypes.includes(docType)) {
@@ -1678,8 +1678,6 @@ function handleOcrNotification(event) {
     });
   }
 }
-
-
 </script>
 
 <template>
