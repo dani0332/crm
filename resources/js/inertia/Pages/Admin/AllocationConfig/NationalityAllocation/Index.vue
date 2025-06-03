@@ -34,9 +34,6 @@ const filters = reactive({
   page: 1,
 });
 
-// Log the initial filter values
-console.log('Initial filters:', filters);
-
 const tableHeader = [
   { text: 'ID', value: 'id' },
   { text: 'Quote Type', value: 'quote_type.text' },
