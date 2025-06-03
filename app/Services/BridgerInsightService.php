@@ -6,6 +6,7 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Models\CustomerMembers;
 use App\Models\KycLog;
 use App\Models\ManualAMLLog;
 use App\Models\QuoteType;
@@ -181,6 +182,12 @@ class BridgerInsightService
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail, isAutomation: $isAutomation);
                                 LoggerService::info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
+                            }
+
+                            if (is_null($memberUboDetails['updated_at'])) {
+                                $customerMember = CustomerMembers::where('id', $memberUboDetails['id'])->first();
+                                $customerMember->updated_at = Carbon::now();
+                                $customerMember->save();
                             }
                         }
                     }
