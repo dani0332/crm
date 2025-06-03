@@ -41,7 +41,7 @@ class PolicyBulkSendDocuments extends Command
     public function handle(): int
     {
 
-        LoggerService::info("PolicyBulkSendDocuments Started");
+        LoggerService::info('PolicyBulkSendDocuments Started');
         // Define the array of codes to process
         $codes = [
             'HEA-X9HJM5HD', 'HEA-MXXDCEFX', 'HEA-7F8GXP7S', 'HEA-VJ72TGS8', 'HEA-9SK6W8Q7',
@@ -50,7 +50,7 @@ class PolicyBulkSendDocuments extends Command
             'HEA-JEL85SRG', 'HEA-ZKGSWLQ5', 'HEA-2CKMM762', 'HEA-E6XW6Z5H', 'HEA-DPTHTL5Z',
             'HEA-HREZ4S35', 'HEA-D4K4H9QZ', 'HEA-95PL8EZF', 'HEA-6YTA8VBP', 'HEA-PEMRLX8F',
             'HEA-MWQYXWRW', 'HEA-P5LJTVEM', 'HEA-47QFDZS4', 'HEA-EABJJTCP', 'HEA-8TZBHZTF',
-            'BUS-UFU96QAC'
+            'BUS-UFU96QAC',
         ];
 
         if (empty($codes)) {
@@ -72,6 +72,7 @@ class PolicyBulkSendDocuments extends Command
 
             if (! $code) {
                 LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
+
                 continue;
             }
 
@@ -88,6 +89,7 @@ class PolicyBulkSendDocuments extends Command
             if (! $quoteObject) {
                 $notFound[] = $code;
                 LoggerService::info('PolicyBulkSendDocuments - Code is not found.');
+
                 continue;
             }
 
