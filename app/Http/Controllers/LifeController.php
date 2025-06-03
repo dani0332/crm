@@ -189,7 +189,7 @@ class LifeController extends Controller
     public function comparisionPdf()
     {
 
-        $quote = PersonalQuote::where('uuid', 'LJW7JKY9')->first();
+        $quote = PersonalQuote::where('uuid', 'PFLS7T47')->first();
         $quotePlans = $this->lifeQuoteService->getQuotePlans($quote->uuid);
         $lifePlans = $quotePlans->quotes->plans;
         $planIds = collect($lifePlans)->take(5)->pluck('_id')->toArray();

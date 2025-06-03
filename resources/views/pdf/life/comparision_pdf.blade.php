@@ -580,102 +580,16 @@
     // $plans = [];
 
     if(isset($quotePlans->quotes->plans)){
-    foreach ($quotePlans->quotes->plans as &$quotePlan)
-    {
-        $addonsPrice = 0;
-        $addonsVat   = 0;
+       
 
-        if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
-            continue;
+        $plans = collect($plans);
+
+        if(!isset($quotePlans->isDataSorted)) {
+            $plans->sortByDesc('isRenewal');
         }
 
-        $quotePlan->exclusion = json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson());
-        $quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
-        $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
-        $quotePlan->roadSideAssistance = json_decode(collect($quotePlan->benefits->roadSideAssistance)->keyBy('code')->toJson());
-        $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
-
-        foreach ($quotePlan->addons as &$addon) {
-
-            $addon = (object) $addon;
-            //set default value to excluded
-            $addon->value = "Excluded";
-
-            //set default values
-            $addon->price = 0;
-            $addon->vat = 0;
-
-            if(sizeof($addon->carAddonOption))
-            {
-                //replace exclude with selected value if found
-
-                foreach ($addon->carAddonOption as $index =>  $carAddonOption) {
-
-                    $carAddonOption = (object) $carAddonOption;
-
-                    if($carAddonOption->isSelected) {
-                        $addon->value = 'Included';
-                        $addonsPrice += $carAddonOption->price;
-                        $addonsVat += $carAddonOption->vat;
-                        $addon->price = $carAddonOption->price;
-                        $addon->vat   = $carAddonOption->vat;
-                        break;//only one value will be selected
-                    }
-                }
-            }
-        }
-
-        $quotePlan->repairTypeInfo = ($quotePlan->repairType == \App\Enums\CarPlanType::COMP) ? \App\Enums\CarPlanType::NONAGENCY : $quotePlan->repairType;
-        $quotePlan->discountPremium += $addonsPrice;
-        $quotePlan->vat += $addonsVat;
-        $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat;
-        $plans[$quotePlan->id] = $quotePlan;
+        $planIds = $plans->pluck('id')->toArray();
     }
-
-    $plans = collect($plans);
-
-    if(!isset($quotePlans->isDataSorted)) {
-        $plans->sortByDesc('isRenewal');
-    }
-
-    $planIds = $plans->pluck('id')->toArray();
-
-
-    $features = [
-        ["code" => "heading", "title" => "Benefits"],
-        ["code" => "damage", "title" => "Loss or damage to the insured vehicle", "type" => ["feature", "inclusion", "exclusion"]],
-        ["code" => "damageLimit", "title" => "Third party property liability", "type" => "feature"],
-        ["code" => "bloodMoney", "title" => "Blood money", "type" => ["inclusion", "exclusion"]],
-        ["code" => "fireAndTheft", "title" => "Fire and theft cover", "type" => ["inclusion", "exclusion"]],
-        ["code" => "stormAndFlood", "title" => "Storm, flood", "type" => ["inclusion", "exclusion"]],
-        ["code" => "riotAndStrike", "title" => "Natural perils riot and strike", "type" => ["inclusion", "exclusion"]],
-        ["code" => "repairTypeInfo", "title" => "Repairs", "type" => "prop"],
-        ["code" => "emergencyMedicalExpenses", "title" => "Emergency medical expenses", "type" => ["inclusion", "exclusion"]],
-        ["code" => "personalBelongings", "title" => "Personal belongings", "type" => ["inclusion", "exclusion"]],
-        ["code" => "omanCover", "title" => "Oman cover (orange card not included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
-        ["code" => "offRoadCover", "title" => "Off-road cover", "type" => ["addons", "inclusion", "inclusion", "roadSideAssistance"]],
-        ["code" => "guaranteedRepairs", "title" => "Guaranteed repairs", "type" => ["inclusion", "exclusion"]],
-        ["code" => "breakdownCover", "title" => "24 hour accident and breakdown recovery", "type" => "addons"],
-        ["code" => "ambulanceCover", "title" => "Ambulance cover", "type" => ["inclusion", "exclusion"]],
-        ["code" => "excessForWindscreenDamage", "title" => "Excess for windscreen damage", "type" => ["inclusion", "exclusion"]],
-        ["code" => "heading", "title" => "Optional covers", "type" => ""],
-        ["code" => "driverCover", "title" => "Driver cover", "type" => "addons"],
-        ["code" => "passengerCover", "title" => "Passengers cover", "type" => "addons"],
-        ["code" => "carHire", "title" => "Hire car benefit", "type" => "addons"],
-        ["code" => "spacer"],
-        ["code" => "discountPremium", "title" => "Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-        ["code" => "spacer"],
-        ["code" => "vat", "title" => "Vat amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-        ["code" => "spacer"],
-        ["code" => "total", "title" => "Payable amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-        ["code" => "spacer"],
-        ["type" => "buy", "heading_class" => "no-border"],
-        ["code" => "spacer"],
-        ["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-        ["code" => "spacer"],
-        ["code" => "ancillaryExcess", "title" => "Ancillary excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-    ];
-}
 
     if(count($planIds) == 5){
             $tableClass = 'is-full';
@@ -685,16 +599,27 @@
 
 
     $plans = []; 
+    $benefits = [];
+    $planDetails = [];
+    $riders = [];
+
     foreach($lifePlans as $lifePlan){
         $plans[$lifePlan->_id] = $lifePlan;
-    }
 
-    $benefits = [];
-    foreach($lifePlans as $lifePlan){
         if(isset($lifePlan->benefits) && !empty($lifePlan->benefits)){
             $benefits[$lifePlan->_id] = $lifePlan->benefits;
         }
-    }    
+
+        $planDetails['entry_age'][$lifePlan->_id] = $lifePlan?->entryMinAge . ' - ' . $lifePlan?->entryMaxAge;
+        $planDetails['currency'][$lifePlan->_id] = $lifePlan?->currency ?? 'N/A'; 
+        $planDetails['year_of_coverage'][$lifePlan->_id] = $lifePlan?->policyTerm ?? 'N/A';
+        $planDetails['coverage'][$lifePlan->_id] = $lifePlan?->sumInsured ?? 'N/A';
+        $planDetails['exit_age'][$lifePlan->_id] = $lifePlan?->exitAge ?? 'N/A'; 
+
+        $riders[$lifePlan->_id] = $lifePlan?->riders ?? [];
+
+
+    }
 
     $paymentTerms = [
         12 => "Monthly",
@@ -845,13 +770,112 @@
             </thead>    
             
             <tbody>
-                {{-- Plan Detail Section --}}
                 <tr style="page-break-inside: avoid; page-break-before: auto; background-color: #1D83BC;">
                     <td colspan="{{ count($displayPlans) + 1 }}">
                         <p class="text-left font-bold raleway-font" style="color: #ffffff; padding-left: 2px; font-weight: 700;">
                             Plan Details
                         </p>
                     </td>
+                </tr>
+
+                <tr style="page-break-inside: avoid;">
+                    <td style="background-color: #DBEEFF; color: #5B5F60">
+                        <p class="font-bold raleway-font" style="text-align:left; font-weight: 700;">
+                            Entry age
+                        </p>
+                    </td>
+                   
+                    @foreach($displayPlans as $planId)
+                        @if(isset($planDetails['entry_age'][$planId]) && !empty($planDetails['entry_age'][$planId]))
+                            <td style="padding:0px !important;">
+                                <p>{{ $planDetails['entry_age'][$planId]}}</p>
+                            </td>
+                        @else
+                            <td>
+                                <p class="text-center not-applicable">Not applicable</p>
+                            </td>
+                        @endif
+                    @endforeach
+                </tr>
+
+                <tr style="page-break-inside: avoid;">
+                    <td style="background-color: #DBEEFF; color: #5B5F60">
+                        <p class="font-bold raleway-font" style="text-align:left; font-weight: 700;">
+                            Exit age
+                        </p>
+                    </td>
+                   
+                    @foreach($displayPlans as $planId)
+                        @if(isset($planDetails['exit_age'][$planId]) && !empty($planDetails['exit_age'][$planId]))
+                            <td style="padding:0px !important;">
+                                <p>{{ $planDetails['exit_age'][$planId]}}</p>
+                            </td>
+                        @else
+                            <td>
+                                <p class="text-center not-applicable">Not applicable</p>
+                            </td>
+                        @endif
+                    @endforeach
+                </tr>
+
+                <tr style="page-break-inside: avoid;">
+                    <td style="background-color: #DBEEFF; color: #5B5F60">
+                        <p class="font-bold raleway-font" style="text-align:left; font-weight: 700;">
+                            Coverage
+                        </p>
+                    </td>
+                   
+                    @foreach($displayPlans as $planId)
+                        @if(isset($planDetails['coverage'][$planId]) && !empty($planDetails['coverage'][$planId]))
+                            <td style="padding:0px !important;">
+                                <p>{{ $planDetails['coverage'][$planId]}}</p>
+                            </td>
+                        @else
+                            <td>
+                                <p class="text-center not-applicable">Not applicable</p>
+                            </td>
+                        @endif
+                    @endforeach
+                </tr>
+
+                <tr style="page-break-inside: avoid;">
+                    <td style="background-color: #DBEEFF; color: #5B5F60">
+                        <p class="font-bold raleway-font" style="text-align:left; font-weight: 700;">
+                            Coverage currency
+                        </p>
+                    </td>
+                   
+                    @foreach($displayPlans as $planId)
+                        @if(isset($planDetails['currency'][$planId]) && !empty($planDetails['currency'][$planId]))
+                            <td style="padding:0px !important;">
+                                <p>{{ $planDetails['currency'][$planId]}}</p>
+                            </td>
+                        @else
+                            <td>
+                                <p class="text-center not-applicable">Not applicable</p>
+                            </td>
+                        @endif
+                    @endforeach
+                </tr>
+
+                <tr style="page-break-inside: avoid;">
+                    <td style="background-color: #DBEEFF; color: #5B5F60">
+                        <p class="font-bold raleway-font" style="text-align:left; font-weight: 700;">
+                            Year of coverage
+                        </p>
+                    </td>
+                   
+                    @foreach($displayPlans as $planId)
+                        @if(isset($planDetails['year_of_coverage'][$planId]) && !empty($planDetails['year_of_coverage'][$planId]))
+                            <td style="padding:0px !important;">
+                                <p>{{ $planDetails['year_of_coverage'][$planId]}}</p>
+                            </td>
+                        @else
+                            <td>
+                                <p class="text-center not-applicable">Not applicable</p>
+                            </td>
+                        @endif
+                    @endforeach
                 </tr>
 
 
@@ -895,11 +919,13 @@
                         </p>
                     </td>
                     @foreach($displayPlans as $planId)
-                        @if(isset($benefits[$planId]) && !empty($benefits[$planId]->exclusion))
-                            <td>
-                                @foreach($benefits[$planId]->exclusion as $exclusion)
-                                    <p class="text-center">{{ $exclusion->text}}</p>
-                                @endforeach
+                        @if(isset($riders[$planId]) && !empty($riders[$planId]))
+                            <td style="padding:0px !important;">
+                                <ul style="text-align: left; padding-left:15px;padding-top:0px;font-size:10px;line-height:1;">
+                                    @foreach($riders[$planId] as $rider)
+                                        <li>{{ $rider->text }} {{ $rider->active ? '(Covered)' : '(Optional)' }}</li>
+                                    @endforeach
+                                </ul>
                             </td>
                         @else
                             <td>
