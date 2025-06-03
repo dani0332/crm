@@ -409,7 +409,7 @@ class AMLController extends Controller
             [$shouldApplicableForScreening, $insured, $entityId] = DB::transaction(function () use ($AMLCheckRequest, $quoteTypeId, $updateQuote, $getLastScreening, $processbyUser, $isAutomation, $systemUser, $quoteRequestId) {
                 // Process insured data and associations
                 [$shouldApplicableForScreening, $insured, $entityId] = $this->processInsuredDataForScreening($AMLCheckRequest, $quoteTypeId, $updateQuote, $getLastScreening);
-                
+
                 // Update PA ID if user has appropriate roles
                 if (auth()->user()?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]) || ($isAutomation && $systemUser?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]))) {
                     if (checkPersonalQuotes($quoteTypeId)) {
@@ -419,10 +419,10 @@ class AMLController extends Controller
                         $updateQuote->save();
                     }
                 }
-                
+
                 return [$shouldApplicableForScreening, $insured, $entityId];
             });
-            
+
             session()->put('amlResponseCheck', []);
             $insurerAMLScreeningResponse = [];
 
@@ -510,22 +510,22 @@ class AMLController extends Controller
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
-        
+
         // Step 1: Create or update insured record
         $insured = $this->createOrUpdateInsured($request, $isEntity);
-        
+
         // Step 2: Update personal quote if needed
         $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
-        
+
         // Step 3: Handle customer-insured mappings and associations
         $isNewAssociation = $this->handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured);
-        
+
         // Step 4: Determine if screening is applicable
         $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isNewAssociation, $getLastScreening, $isEntity);
-        
+
         // Step 5: Handle entity/customer data for backward compatibility
         $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
-        
+
         return [$shouldApplicableForScreening, $insured, $entityId];
     }
 
@@ -563,9 +563,9 @@ class AMLController extends Controller
             'customer_id' => $request->customer_id,
             'insured_id' => $insured->id,
         ])->whereNull('quote_type_id')
-          ->whereNull('quote_request_id')
-          ->first();
-        
+            ->whereNull('quote_request_id')
+            ->first();
+
         // Check existing quote mapping
         $existingQuoteMapping = CustomerInsured::where([
             'customer_id' => $request->customer_id,
@@ -578,7 +578,7 @@ class AMLController extends Controller
         if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
             // Handle insured change for existing quote
             $isNewAssociation = $this->handleInsuredChange($request, $quoteTypeId, $quote, $existingQuoteMapping, $insured);
-        } elseif (!$existingQuoteMapping) {
+        } elseif (! $existingQuoteMapping) {
             // This is a completely new quote-insured association
             $isNewAssociation = true;
             LoggerService::info('AML Screening Bridger - New insured association created for quote', [
@@ -594,7 +594,7 @@ class AMLController extends Controller
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quote->id,
             ]);
-            
+
             LoggerService::info('AML Screening Bridger - Updated orphaned customer_insured record', [
                 'customer_insured_id' => $orphanedRecord->id,
                 'customer_id' => $request->customer_id,
@@ -651,18 +651,21 @@ class AMLController extends Controller
     {
         if ($insured->wasRecentlyCreated) {
             LoggerService::info('AML Screening Bridger - '.($isEntity ? 'Insured Entity' : 'Insured Person').' created');
+
             return true;
         }
 
         if ($isNewAssociation) {
             LoggerService::info('AML Screening Bridger - '.($isEntity ? 'Insured Entity' : 'Insured Person').' association changed for quote');
+
             return true;
         }
 
-        if ($insured->isDirty() || 
-            !isset($getLastScreening->created_at) || 
+        if ($insured->isDirty() ||
+            ! isset($getLastScreening->created_at) ||
             Carbon::parse($insured->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')) {
             LoggerService::info('AML Screening Bridger - '.($isEntity ? 'Insured Entity' : 'Insured Person').' details updated');
+
             return true;
         }
 
@@ -676,6 +679,7 @@ class AMLController extends Controller
         }
 
         $this->updateCustomerData($request);
+
         return null;
     }
 
@@ -692,7 +696,7 @@ class AMLController extends Controller
         $entity = Entity::firstOrNew(['trade_license_no' => $request->trade_license_no]);
         $entity->fill($entityData);
 
-        if (!$entity->exists) {
+        if (! $entity->exists) {
             $entity->save();
             $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
         } elseif ($entity->isDirty()) {
@@ -706,7 +710,7 @@ class AMLController extends Controller
             'quote_request_id' => $quote->id,
         ], [
             'entity_id' => $entity->id,
-            'entity_type_code' => $request->entity_type_code
+            'entity_type_code' => $request->entity_type_code,
         ]);
 
         return $entity->id;
@@ -715,7 +719,7 @@ class AMLController extends Controller
     private function updateCustomerData($request): void
     {
         $customer = Customer::with('nationality')->findOrFail($request->customer_id);
-        
+
         $customer->fill([
             'nationality_id' => $request->nationality_id,
             'dob' => $request->dob,
