@@ -17,7 +17,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 300; // 300 (5 minutes) 900 (15 minutes)
-    public $tries = 1;
+    public $tries = 2;
     public $backoff = 30;
     private $exportClass;
     private $recipientEmail;
@@ -67,11 +67,6 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
             Log::info("CSV export job completed successfully for {$this->requestParams['fileName']}. Time: {$executionTime}s, Peak memory: {$peakMemory}MB");
 
-            // Explicitly mark as completed and delete the job
-            if ($this->job) {
-                $this->job->delete();
-            }
-
         } catch (\Throwable $e) {
             $executionTime = round(microtime(true) - $startTime, 2);
             $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
@@ -81,14 +76,6 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
                     return isset($trace['file']) && str_contains($trace['file'], '/app');
                 })->all(),
             ]);
-
-            // Only retry if we haven't exceeded max attempts
-            if ($this->attempts() < $this->tries) {
-                Log::warning("CSV export job [{$jobId}] will be retried. Attempts: {$this->attempts()}/{$this->tries}");
-                $this->release($this->backoff);
-
-                return;
-            }
 
             throw $e;
         } finally {
