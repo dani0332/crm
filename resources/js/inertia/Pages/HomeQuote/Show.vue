@@ -2173,6 +2173,11 @@ const shouldShowPlanDetailsSection = computed(() => {
                       :quoteType="'Home'"
                       :uuid="quote.uuid"
                       :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
+                      :payments="payments"
                     />
 
                     <x-button

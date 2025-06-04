@@ -73,6 +73,7 @@ class CarQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'registration_type',
             'vehicle_use',
             'company_name as car_company_name',
+            'lead_assignment_trigger',
             'customer_id',
         ], [
             'payment:id,paymentable_id,paymentable_type,authorized_at',

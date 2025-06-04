@@ -7,6 +7,7 @@ use App\Enums\QuoteFlowType;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
+use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\QuoteFlowDetails;
@@ -111,8 +112,10 @@ class HealthEmailService extends BaseService
 
     private function buildEmailDataForApplyNowEmail(HealthQuote $lead, ?User $advisor = null)
     {
-        $currentPlan = $lead->getCurrentPlan();
-
+        $response = Ken::request('/fetch-health-selected-plan', 'post', [
+            'quoteUID' => $lead->uuid,
+        ]);
+        $currentPlan = (object) collect($response['plans'])->first() ?? [];
         $members = $this->getMembers($currentPlan);
 
         $getDiscountPremium = function () use ($currentPlan) {

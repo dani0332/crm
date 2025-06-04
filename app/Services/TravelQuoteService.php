@@ -32,6 +32,7 @@ use App\Repositories\CustomerMembersRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\PersonalQuoteSyncTrait;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -46,6 +47,7 @@ class TravelQuoteService extends BaseService
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
+    use PersonalQuoteSyncTrait;
     use RolePermissionConditions;
 
     public function __construct(LeadAllocationService $leadAllocationService, protected TravelQuoteQueryBuilder $travelQuoteQueryBuilder)
@@ -215,6 +217,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'tqr.id');
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = tqr.id)', [QuoteTypeId::Travel]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
@@ -990,6 +993,7 @@ class TravelQuoteService extends BaseService
         $duplicateLead->save();
 
         if ($duplicateLead) {
+            $this->updatePersonalQuote($duplicateLead->uuid, QuoteTypeId::Travel, ['quote_id' => $duplicateLead->id]);
             // update morph relation in payments table
             $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
 

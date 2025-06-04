@@ -3244,6 +3244,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       }"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :payments="payments"
                     />
                     <x-button
                       v-else
@@ -3346,6 +3348,8 @@ const applyEmiratesIdNumMasking = emiratesId =>
                         }"
                         :insuranceProviderId="item.id"
                         :code="quote.code"
+                        :plans="availableSeniorPlansTable.data || []"
+                        :payments="payments"
                       />
                       <x-button
                         v-else

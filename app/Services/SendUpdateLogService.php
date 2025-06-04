@@ -116,6 +116,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -133,6 +134,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -150,6 +152,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -167,6 +170,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -184,6 +188,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -201,6 +206,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                         'travelDestinations' => [],
@@ -282,6 +288,7 @@ class SendUpdateLogService
                         ],
                         'customerMembers' => [
                             'isMorph' => true,
+                            'skipColumns' => ['updated_at'],
                         ],
                         'quoteRequestEntityMapping' => [],
                     ],
@@ -344,6 +351,7 @@ class SendUpdateLogService
                         $customerMemberCode = generateQuoteMemberCode($morphRelation->customer_type, $morphRelation->customer_entity_id);
                         $fillColumns = array_merge($fillColumns, [
                             'code' => $customerMemberCode,
+                            'updated_at' => null,
                         ]);
                     }
                     $newMorphRelation = $morphRelation->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
@@ -453,6 +461,7 @@ class SendUpdateLogService
             }
 
             $childLeadDetails = array_merge($childLeadDetails, [
+                'id' => $replicateObject->id,
                 'uuid' => $replicateObject->uuid,
                 'ref_id' => $replicateObject->code,
                 'quote_type_code' => $quoteTypeCode,
@@ -1710,6 +1719,7 @@ class SendUpdateLogService
         }
 
         if (isTapEnabled()) {
+            $btnText = $this->getUpdateButtonStatus($sendUpdateLog);
             $isTransactionApproved = $sendUpdateLog->status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED ||
                 app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_ISSUED]);
             $payment = $payment[0] ?? null;
@@ -1718,7 +1728,7 @@ class SendUpdateLogService
                     return $split->payment_method == PaymentMethodsEnum::CreditCard;
                 });
 
-                if (! $sendUpdateLog->is_booking_filled && $hasCCPayment) {
+                if ((! $sendUpdateLog->is_booking_filled && $hasCCPayment) && ($btnText != SendUpdateLogStatusEnum::SUC)) {
                     return 'Please Update the booking details.';
                 }
 

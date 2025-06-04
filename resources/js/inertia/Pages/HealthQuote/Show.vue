@@ -869,7 +869,8 @@ const options = reactive({
 watch(
   () => planFilters?.insurer,
   value => {
-    if (value) {
+    if (value && planFilters.insurer && planFilters.insurer.length > 0) {
+      planFilters.network = [];
       options.loading = true;
       const ids = planFilters.insurer.map(item => {
         return item;
@@ -879,12 +880,13 @@ watch(
         .get(url)
         .then(res => {
           if (res.data.length > 0) {
+            options.network.length = 0;
             options.network = useArrayUnique(
               res.data,
               (a, b) => a.value === b.value,
             );
           } else {
-            options.network = [];
+            options.network.length = 0;
           }
         })
         .catch(err => {
@@ -896,8 +898,12 @@ watch(
         .finally(() => {
           options.loading = false;
         });
+    } else {
+      options.network.length = 0;
+      planFilters.network = [];
     }
   },
+  { deep: true },
 );
 
 const listQuotePlansFiltered = ref([]);
@@ -1166,7 +1172,7 @@ const documentsTableItems = computed(() => {
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
       created_by: doc.created_by ? doc.created_by.name : '',
-      watermarked_doc_url: doc.watermarked_doc_url ?? doc.doc_url,
+      watermarked_doc_url: doc.watermarked_doc_url || doc.doc_url,
     };
   });
 });
@@ -3543,6 +3549,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       :uuid="quote.uuid"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="computedListQuotePlans || []"
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
+                      :payments="payments"
                     />
 
                     <x-button
@@ -3629,6 +3640,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           multiple
           truncate
           class="w-full"
+          :loading="options.loading"
         >
           <template #content-footer>
             <ui-select-actions

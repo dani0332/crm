@@ -10,6 +10,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -51,6 +52,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
@@ -180,42 +182,6 @@ class AMLController extends Controller
     public function export(Request $request)
     {
         LoggerService::info('fn:export - AMLController');
-
-        $query = AML::select([
-            'id',
-            'quote_request_id',
-            'quote_type_id',
-            'input',
-            'search_type',
-            'match_found',
-            'results_found',
-            'created_at',
-            'decision',
-        ])
-            ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
-            ->whereBetween('created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
-
-        $data = collect();
-
-        $query->chunk(1000, function ($chunk) use (&$data) {
-            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
-            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
-                $quoteType = QuoteTypes::getName($quoteTypeId);
-                $nameSpace = '\\App\\Models\\';
-                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
-
-                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
-                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
-                foreach ($quoteRequestData as $quoteRequest) {
-                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
-                    foreach ($amlData as $index => $value) {
-                        $chunk[$index]['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
-                        $chunk[$index]['aml_status'] = $quoteRequest->aml_status;
-                    }
-                }
-            }
-            $data = $data->merge($chunk);
-        });
 
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
@@ -429,8 +395,22 @@ class AMLController extends Controller
                 return $this->handleResponse(false, 'First Name missing', $isAutomation);
             }
 
-            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($value) use ($getLastScreening) {
-                return $value->updated_at >= ($getLastScreening->created_at ?? '');
+            // Filter members that need screening based on their updated_at date
+            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($member) use ($getLastScreening) {
+                $lastScreeningDate = $getLastScreening->created_at ?? '';
+
+                // Include members with null updated_at (replicated members that need screening)
+                if (is_null($member->updated_at)) {
+                    LoggerService::info('AML Screening Bridger - Including member with null updated_at (replicated member)', extra: [
+                        'member_id' => $member->id ?? 'unknown',
+                        'member_name' => ($member->first_name ?? '').' '.($member->last_name ?? ''),
+                    ]);
+
+                    return true;
+                }
+
+                // Include members that were updated after the last screening
+                return $member->updated_at >= $lastScreeningDate;
             });
         }
 
@@ -480,7 +460,7 @@ class AMLController extends Controller
                 }
             }
 
-            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
                 $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
             }
 
@@ -673,8 +653,9 @@ class AMLController extends Controller
         if ($quoteTypeId == QuoteTypes::CAR->id()) {
             $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteRequestId)->first();
             $carQuoteRequestDetails->chassis_number = $AMLCheckRequest->chassis_number;
+            $carQuoteRequestDetails->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
             if ($carQuoteRequestDetails->isDirty()) {
-                LoggerService::info('AML Screening Bridger - Chassis number updated');
+                LoggerService::info('AML Screening Bridger - Chassis number and Insurer Quote Email updated for QuoteTypeId: '.$quoteTypeId);
                 $carQuoteRequestDetails->save();
             }
         }
@@ -687,7 +668,7 @@ class AMLController extends Controller
             $personalQuoteDetailBikeRequest->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
 
             if ($bikeQuoteRequest->isDirty()) {
-                LoggerService::info('AML Screening Bridger - Chassis number updated for QuoteTypeId: '.$quoteTypeId);
+                LoggerService::info('AML Screening Bridger - Chassis number and Insurer Quote Email updated for QuoteTypeId: '.$quoteTypeId);
                 $bikeQuoteRequest->save();
             }
 
@@ -793,6 +774,91 @@ class AMLController extends Controller
         ]);
 
         return true;
+    }
+
+    public function fetchEntity(Request $request)
+    {
+        $entity = Insured::where([
+            'customer_type' => CustomerTypeEnum::Entity,
+            'trade_license_no' => $request->trade_license,
+        ])->first();
+
+        if ($entity) {
+            return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity found with the entered Trade License number']);
+        }
+
+        return response()->json(['status' => false, 'message' => 'No Entity found with the entered Trade License number']);
+    }
+
+    public function linkEntityDetails(Request $request)
+    {
+
+        // Reminder:: This patch add because data should be updated in new structure
+        $quoteType = QuoteType::where('id', $request->quote_type_id)->first();
+        $quoteObject = $this->getQuoteObject($quoteType->code, $request->quote_request_id);
+
+        // Reminder:: Entity id is Insured ID which we get from fetchEntity() this function
+        $insured = Insured::where('id', $request->entity_id)->first();
+
+        $this->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
+
+        $customerInsured = CustomerInsured::where('customer_id', $quoteObject->customer_id)
+            ->where('insured_id', $insured->id)
+            ->whereNull('quote_type_id')
+            ->whereNull('quote_request_id')
+            ->first();
+
+        if ($customerInsured) {
+            $customerInsured->update([
+                'quote_type_id' => $request->quote_type_id,
+                'quote_request_id' => $request->quote_request_id,
+            ]);
+        } else {
+            CustomerInsured::updateOrCreate([
+                'quote_type_id' => $request->quote_type_id,
+                'quote_request_id' => $request->quote_request_id,
+            ], [
+                'customer_id' => $quoteObject->customer_id,
+                'insured_id' => $insured->id,
+            ]);
+        }
+
+        // Reminder:: This code should be remove when new structure will be completly mapped
+        $oldStructureEntity = Entity::where('trade_license_no', $insured->trade_license_no)->first();
+        $existingEntityMapping = QuoteRequestEntityMapping::where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id])->first();
+
+        $updateFields = ['entity_id' => $oldStructureEntity->id, 'entity_type_code' => LookupsEnum::PARENT_ENTITY];
+        if ($request->triggeredFrom) {
+            $updateFields['entity_type_code'] = LookupsEnum::SUB_ENTITY;
+        }
+
+        QuoteRequestEntityMapping::updateOrCreate(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id], $updateFields);
+        $entity = Entity::with(
+            [
+                'quoteRequestEntityMapping' => function ($mappedEntity) use ($request) {
+                    $mappedEntity->where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id]);
+                },
+                'quoteMember',
+            ]
+        )->where('id', $oldStructureEntity->id)->first();
+
+        if ($existingEntityMapping) {
+            $previousEntity = $existingEntityMapping->entity;
+            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id ?? null])->count();
+            // Reminder:: This is Jawad change for car commercial quote
+            if ($entityMappingCount === 0 && empty($previousEntity->trade_license_no)) {
+                $previousEntity->delete();
+            }
+        }
+
+        if ($request->quote_type_id == QuoteTypeId::Car) {
+            CarQuoteRepository::where('id', $request->quote_request_id)->update([
+                'company_name' => $entity->company_name,
+                'company_address' => $entity->company_address,
+            ]);
+        }
+
+        return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity Linked Successfully']);
     }
 
     public function getInsuredDetails(Request $request): \Illuminate\Http\JsonResponse
