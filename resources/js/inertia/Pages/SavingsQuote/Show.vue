@@ -329,6 +329,18 @@ const viewButtonLoading = ref(false);
 const planDetails = ref(null);
 const exportLoader = ref(false);
 
+// Form for individual plan updates
+const planForm = useForm({
+  quote_uuid: '',
+  plan_id: '',
+  provider_name: '',
+  actual_premium: 0,
+  insurer_quote_no: '',
+  is_disabled: false,
+  is_manual_update: false,
+  current_url: '',
+});
+
 const normalPlansIds = reactive({
   ids: [],
 });
@@ -367,6 +379,8 @@ const onLoadAvailablePlansData = async () => {
             currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+            isManualUpdate: plan.isManualUpdate || false,
+            isDisabled: plan.isDisabled || false,
           };
           processedPlans.push(processedPlan);
         });
@@ -381,6 +395,8 @@ const onLoadAvailablePlansData = async () => {
             currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+            isManualUpdate: plan.isManualUpdate || false,
+            isDisabled: plan.isDisabled || false,
           };
           processedPlans.push(processedPlan);
         });
@@ -518,6 +534,72 @@ const onToggleManual = () => {
   setTimeout(() => {
     toggleManualLoader.value = false;
   }, 300);
+};
+
+const onToggleIndividualPlan = () => {
+  if (!planDetails.value) return;
+
+  toggleLoader.value = true;
+
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'savings' }), {
+      modelType: 'Savings',
+      planIds: [planDetails.value.id],
+      quote_uuid: page.props.quote.uuid,
+      toggle: planDetails.value.isDisabled,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plan has been updated',
+        position: 'top',
+      });
+      onLoadAvailablePlansDataAndPlanDetails();
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error updating plan',
+        position: 'top',
+      });
+      // Reset the toggle state on error
+      planDetails.value.isDisabled = !planDetails.value.isDisabled;
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+    });
+};
+
+const onUpdateIndividualPlan = () => {
+  if (!planDetails.value) return;
+
+  // Update form with current plan details
+  planForm.quote_uuid = page.props.quote.uuid;
+  planForm.plan_id = planDetails.value.id;
+  planForm.provider_name = planDetails.value.providerName;
+  planForm.actual_premium = planDetails.value.actualPremium || 0;
+  planForm.insurer_quote_no = planDetails.value.insurerQuoteNo || '';
+  planForm.is_disabled = planDetails.value.isDisabled;
+  planForm.is_manual_update = planDetails.value.isManualUpdate;
+  planForm.current_url = usePage().url;
+
+  // Submit the form
+  planForm.post(route('savingsPlanUpdate'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Plan updated successfully',
+        position: 'top',
+      });
+      onLoadAvailablePlansDataAndPlanDetails();
+    },
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
+    },
+  });
 };
 
 const onExportPlans = () => {
@@ -1345,24 +1427,42 @@ const sendOCBEmail = () => {
                 </div>
               </template>
               <template #item-providerName="item">
-                <p class="text-gray-800 uppercase">
+                <p class="text-primary-600 uppercase">
                   {{ item.providerName }}
                 </p>
+                <div class="flex gap-1">
+                  <x-tag
+                    v-if="item.isManualUpdate"
+                    size="xs"
+                    color="primary"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Manual
+                  </x-tag>
+                  <x-tag
+                    v-if="item.isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Hidden
+                  </x-tag>
+                </div>
               </template>
               <template #item-name="item">
-                <span class="text-gray-800 uppercase">{{ item.name }}</span>
+                <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
               <template #item-investmentFrequency="item">
-                <span class="text-gray-800">{{ item.investmentFrequency }}</span>
+                <span class="text-primary-600">{{ item.investmentFrequency }}</span>
               </template>
               <template #item-minimumInvestment="item">
-                <span>{{ item.minimumInvestment }}</span>
+                <span class="text-primary-600">{{ item.minimumInvestment }}</span>
               </template>
               <template #item-currency="item">
-                <span>{{ item.currency }}</span>
+                <span class="text-primary-600">{{ item.currency }}</span>
               </template>
               <template #item-policyTerm="item">
-                <span>{{ item.policyTerm }}</span>
+                <span class="text-primary-600">{{ item.policyTerm }}</span>
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
@@ -1419,20 +1519,29 @@ const sendOCBEmail = () => {
                   <!-- Plan Details Tab -->
                   <TabPanel class="bg-white">
                     <div class="p-6">
-                      <!-- Manual Toggle using Car pattern -->
-                      <div class="mb-6">
-                        <ToggleManualButtonTemplate v-slot="{ isDisabled }">
-                          <x-toggle
-                            v-model="isManualUpdate"
-                            color="success"
-                            label="Manual"
-                            :disabled="isDisabled"
-                            @change="onToggleManual"
-                            :loading="toggleManualLoader"
-                          />
-                        </ToggleManualButtonTemplate>
-
+                      <!-- Plan Toggle Controls -->
+                      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
                         <div class="grid sm:grid-cols-2 mb-3">
+                          <x-toggle
+                            v-model="planDetails.isDisabled"
+                            color="success"
+                            label="Hide Plan?"
+                            @change="onToggleIndividualPlan"
+                            :loading="toggleLoader"
+                          />
+                        </div>
+                        <div class="grid sm:grid-cols-2 mb-3">
+                          <ToggleManualButtonTemplate v-slot="{ isDisabled }">
+                            <x-toggle
+                              v-model="planDetails.isManualUpdate"
+                              color="success"
+                              label="Manual"
+                              :disabled="isDisabled"
+                              @change="onToggleManual"
+                              :loading="toggleManualLoader"
+                            />
+                          </ToggleManualButtonTemplate>
+
                           <x-tooltip
                             v-if="page.props.lockLeadSectionsDetails?.plan_selection"
                             placement="bottom"
@@ -1447,7 +1556,7 @@ const sendOCBEmail = () => {
                           </x-tooltip>
                           <ToggleManualButtonReuseTemplate v-else />
                         </div>
-                      </div>
+                      </dl>
 
                       <!-- Form Fields using dt/dd grid pattern like Car -->
                       <dl class="grid md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
@@ -1463,11 +1572,11 @@ const sendOCBEmail = () => {
                         <div class="grid sm:grid-cols-2">
                           <dt class="text-sm font-medium text-gray-700 mt-2">Insurance Quote No.:</dt>
                           <x-input
-                            model-value=""
-                            placeholder=""
+                            v-model="planDetails.insurerQuoteNo"
+                            placeholder="Enter quote number"
                             size="sm"
                             :disabled="
-                              !isManualUpdate ||
+                              !planDetails.isManualUpdate ||
                               page.props.lockLeadSectionsDetails?.plan_selection
                             "
                           />
@@ -1475,11 +1584,12 @@ const sendOCBEmail = () => {
                         <div class="grid sm:grid-cols-2">
                           <dt class="text-sm font-medium text-gray-700 mt-2">Price:</dt>
                           <x-input
-                            model-value=""
-                            placeholder=""
+                            v-model="planDetails.actualPremium"
+                            placeholder="Enter price"
                             size="sm"
+                            type="number"
                             :disabled="
-                              !isManualUpdate ||
+                              !planDetails.isManualUpdate ||
                               page.props.lockLeadSectionsDetails?.plan_selection
                             "
                           />
@@ -1508,6 +1618,8 @@ const sendOCBEmail = () => {
                               color="primary"
                               size="sm"
                               :disabled="page.props.lockLeadSectionsDetails?.plan_selection"
+                              @click="onUpdateIndividualPlan"
+                              :loading="planForm.processing"
                             >
                               Update
                             </x-button>
