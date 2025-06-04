@@ -138,6 +138,46 @@ class HealthEmailService extends BaseService
             }
         };
 
+        $plan = [];
+
+        if ($currentPlan) {
+            if (property_exists($currentPlan, 'name')) {
+                $plan['name'] = $currentPlan->name;
+            }
+
+            if (property_exists($currentPlan, 'providerName')) {
+                $plan['providerName'] = $currentPlan->providerName;
+            }
+
+            if (property_exists($currentPlan, 'providerCode')) {
+                $plan['providerCode'] = strtolower($currentPlan->providerCode);
+            }
+
+            if (property_exists($currentPlan, 'eligibilityName')) {
+                $plan['tpa'] = $currentPlan->eligibilityName;
+            }
+
+            if (property_exists($currentPlan, 'discountPremium')) {
+                $plan['actualPremium'] = "AED {$getDiscountPremium()}";
+            }
+
+            if (property_exists($currentPlan, 'vat')) {
+                $plan['vat'] = "AED {$getVat()}";
+            }
+
+            if (property_exists($currentPlan, 'policyWordings')) {
+                $plan['tobs'] = $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan->policyWordings));
+            }
+
+            if (property_exists($currentPlan, 'benefits') && property_exists($currentPlan->benefits, 'networkLink')) {
+                $plan['networkLinks'] = $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan->benefits->networkLink));
+            }
+
+            if (property_exists($currentPlan, 'mafLink')) {
+                $plan['mafLink'] = $currentPlan->mafLink;
+            }
+        }
+
         $payload = [
             'code' => $lead->code,
             'quoteUID' => $lead->uuid,
@@ -148,17 +188,7 @@ class HealthEmailService extends BaseService
             'email' => $lead->email,
             'totalMembers' => count($members),
             'members' => $members,
-            'plan' => [
-                'name' => $currentPlan?->name,
-                'providerName' => $currentPlan?->providerName,
-                'providerCode' => strtolower($currentPlan?->providerCode ?? ''),
-                'tpa' => $currentPlan?->eligibilityName ?? '',
-                'actualPremium' => "AED {$getDiscountPremium()}",
-                'vat' => "AED {$getVat()}",
-                'tobs' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? [])),
-                'networkLinks' => $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? [])),
-                'mafLink' => $currentPlan?->mafLink,
-            ],
+            'plan' => $plan,
             'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
         ];
 
