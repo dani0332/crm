@@ -90,6 +90,7 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -783,12 +784,19 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
         [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
         ->name('admin.nationality-allocation-config.audit-logs');
-});
 
-Route::get('/add-batch-number', function () {
-    $addBtchNuimber = new AddBatchForNonMotors;
-    $addBtchNuimber->handle();
-    echo 'Done';
+    Route::get('/add-batch-number', function () {
+        $addBtchNuimber = new AddBatchForNonMotors;
+        $addBtchNuimber->handle();
+        echo 'Done';
+    });
+
+    // Command to bulk send policy documents
+    // Route::get('/run-policy-bulk-send', function () {
+    //     \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+
+    //     return 'Command executed successfully!';
+    // });
 });
 
 // Migration Not Required For Now 21 Nov 24
