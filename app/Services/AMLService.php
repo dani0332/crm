@@ -45,7 +45,6 @@ use App\Models\PetQuote;
 use App\Models\QuoteMemberDetail;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
-use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
@@ -1162,7 +1161,7 @@ class AMLService
         $quoteObject->aml_status = $amlStatus;
         $quoteObject->save();
 
-        return $amlStatus == QuoteStatusEnum::AMLScreeningCleared ? 
+        return $amlStatus == QuoteStatusEnum::AMLScreeningCleared ?
                             AMLStatusCode::getName(AMLStatusCode::AMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::AMLScreeningFailed);
     }
 }
