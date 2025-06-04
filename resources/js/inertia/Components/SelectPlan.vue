@@ -64,6 +64,10 @@ const validatePayments = selectedPlanObj => {
       }
     }
 
+    if (!hasAnyPendingPayment.value) {
+      return resolve(false);
+    }
+
     const planIds = [];
     for (let i = 0; i < props.plans.length; i++) {
       if (props.extraDetails.selectedPlansIds.includes(props.plans[i].id)) {
@@ -86,8 +90,10 @@ const validatePayments = selectedPlanObj => {
       props.extraDetails?.planType == 'seniorPlans'
     ) {
       planIds.push({
-        providerId: selectedPlanObj.selected_insurance_provider_id,
-        planId: selectedPlanObj.selected_plan_id,
+        providerId:
+          selectedPlanObj.selected_insurance_provider_id ||
+          selectedPlanObj.insurance_provider_id,
+        planId: selectedPlanObj.selected_plan_id || selectedPlanObj.plan_id,
       });
     } else {
       planIds.push({
