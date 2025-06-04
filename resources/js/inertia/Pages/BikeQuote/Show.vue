@@ -1298,6 +1298,7 @@ function capitalizeString(str) {
       :carPlanFeaturesCodeEnum="carPlanFeaturesCodeEnum"
       :websiteURL="websiteURL"
       :linkedQuoteDetails="linkedQuoteDetails"
+      :payments="payments"
       @plan-selected="fetchUpdatedQuote"
     />
 

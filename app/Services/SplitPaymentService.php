@@ -110,7 +110,6 @@ class SplitPaymentService
         $quote = $this->getQuoteObject($request->modelType, $request->quote_id);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
         $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
-        $isAlreadyPosted = false;
         $sageLogArray = $splitPayment->sageApiLogs->keyBy('step')->toArray();
 
         $sageApiService = new SageApiService;
@@ -130,25 +129,37 @@ class SplitPaymentService
         }
 
         $isLiveApiCallStep2 = true;
-        if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {
+        $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
+
+        if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == SageEnum::STATUS_SUCCESS) {
+            LoggerService::info('SAGE API : createPrepaymentReceipts Sent Already for '.$quote->code);
             $isLiveApiCallStep2 = false;
             $sageResponse = json_decode($sageLogArray[2]['response'], true);
         } else {
+            LoggerService::info('SAGE API :  Send createPrepaymentReceipts for '.$quote->code);
             $request->merge(['sage_payment_code' => $splitPayment->payment_method]);
-            $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);
         }
 
-        if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
+        if (! empty($sageResponse['BatchNumber'])) {
             LoggerService::info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
+
             if ($isLiveApiCallStep2) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
             }
 
             $isLiveApiCallStep3 = true;
             $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
-            $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+
+            if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == SageEnum::STATUS_SUCCESS) {
+                LoggerService::info('SAGE API : readyToPostPrepaymentReceipts Sent Already for '.$quote->code);
+                $isLiveApiCallStep3 = false;
+                $readyToPostResponse = $sageLogArray[3]['response'];
+            } else {
+                LoggerService::info('SAGE API : Send readyToPostPrepaymentReceipts  for '.$quote->code);
+                $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+            }
 
             if ($readyToPostResponse !== '') {
                 $readyToPostArray = json_decode($readyToPostResponse, true);
@@ -162,7 +173,6 @@ class SplitPaymentService
 
                     if (isset($aRReceiptBatch['BatchStatus']) && $aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
-                        $isAlreadyPosted = true;
                     } else {
                         LoggerService::info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments Error: Failed to post AR Prepayment Receipts batch '.$sageResponse['BatchNumber']);
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
@@ -196,40 +206,16 @@ class SplitPaymentService
                 }
             }
 
-            // Reminder:: Please do not remove this code until all cases works fine on PROD
-            //            $isLiveApiCallStep4 = true;
-            //            $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
-            //            if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == 'success') {
-            //                $isLiveApiCallStep4 = false;
-            //                $postedResponse = json_decode($sageLogArray[4]['response'], true);
-            //            } else {
-            //                $postedResponse = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
-            //                $postedResponse = json_decode($postedResponse, true);
-            //            }
-            //
-            //            if ($isAlreadyPosted && isset($aRPostReceipts)) {
-            //                $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
-            //            } else {
-            //                if (isset($postedResponse['error'])) {
-            //                    info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber']);
-            //                    $returnMessage['response'] = 'Error while posting to sage - Ref:'.$quote->code;
-            //                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
-            //
-            //                    return $returnMessage;
-            //                } else {
-            //                    if ($isLiveApiCallStep4) {
-            //                        $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
-            //                    }
-            //                }
-            //            }
-
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
             LoggerService::info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments: Successfully created receipt');
             $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];
+
         } else {
             LoggerService::info('Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' SAGE API Payments Error: Document number not generated from Sage');
             $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
             $returnMessage['response'] = 'Document number not generated from sage - Ref:'.$quote->code;
+
+            return $returnMessage;
         }
 
         return $returnMessage;
@@ -643,12 +629,30 @@ class SplitPaymentService
     // function to process the split payment approve
     public function processSplitPaymentApprove($modelType, $quoteId, $splitPaymentId, $amountCollected, $isFromJob = false)
     {
+        // Move select queries outside transaction
         $paymentSplit = PaymentSplits::find($splitPaymentId);
         LoggerService::info("Processing split payment approval for {$paymentSplit->code} with serial no: {$paymentSplit->sr_no} is from job: ".($isFromJob ? 'true' : 'false'));
 
         $payment = $paymentSplit->payment;
         $sendUpdateId = $payment->send_update_log_id;
         $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
+        if (! $mainLeadObject) {
+            $extra = [
+                'modelType' => $modelType,
+                'quoteId' => $quoteId,
+                'splitId' => $splitPaymentId,
+                'amountCollected' => $amountCollected,
+                'isFromJob' => $isFromJob,
+            ];
+            LoggerService::error("processSplitPaymentApprove: Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}", extra: $extra);
+            if ($isFromJob) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
+
+                return false;
+            } else {
+                vAbort("Quote not found for Model Type {$modelType} and Quote Id: {$quoteId}");
+            }
+        }
         $maxRetries = 2;
 
         if (! empty($sendUpdateId) && $sendUpdateId > 0) {
@@ -674,6 +678,7 @@ class SplitPaymentService
             // Log message for creating Sage receipt
             LoggerService::info("Creating Sage receipt for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} - Current Sage receipt ID: {$paymentSplit->sage_reciept_id}");
 
+            // Handle Sage API call outside transaction
             if ((new SageApiService)->isSageEnabled() && empty($paymentSplit->sage_reciept_id)) {
                 // Create an empty Request object
                 $request = Request::createFromGlobals();
@@ -684,11 +689,10 @@ class SplitPaymentService
                     'advisor_id' => $quoteModel->advisor_id,
                 ]);
 
-                // 1- This case will run
+                // Make Sage API call outside transaction
                 $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
                 if ($sageResponse['status'] == 'success') {
                     LoggerService::info("Sage receipt created successfully for payment split Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with Document Number: {$sageResponse['response']}");
-
                     $this->handleWithDeadlockRetries(function () use ($paymentSplit, $sageResponse) {
                         $paymentSplit->sage_reciept_id = $sageResponse['response'];
                         $paymentSplit->save();
@@ -707,6 +711,7 @@ class SplitPaymentService
                     }
                 }
             }
+
             // Log message for capturing split payment
             LoggerService::info("Capturing payment for split payment Code: {$paymentSplit->code}, Serial: {$paymentSplit->sr_no} with split payment status id: {$paymentSplit->payment_status_id}");
 
@@ -733,6 +738,7 @@ class SplitPaymentService
             }
         }
 
+        // Move determination of shouldCreateReceipt outside transaction
         $paymentSplit = PaymentSplits::with([
             'payment' => function ($query) {
                 $query->with(['insuranceProvider', 'sendUpdateLog']);
@@ -740,15 +746,19 @@ class SplitPaymentService
         ])->find($splitPaymentId);
 
         $parentPayment = $paymentSplit->payment;
-
-        if (empty($paymentSplit->verified_at)) {
-            $paymentSplit->verified_at = now();
-            $paymentSplit->verified_by = Auth::user()->id ?? null;
-        }
         $shouldCreateReceipt = $this->shouldCreateReceipt($parentPayment, $paymentSplit);
-        if ($this->shouldProcessPayment($paymentSplit, $isFromJob, $modelType)) {
+        $shouldProcessPayment = $this->shouldProcessPayment($paymentSplit, $isFromJob, $modelType);
+
+        // Only start transaction if we need to process the payment
+        if ($shouldProcessPayment) {
             $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId, $parentPayment, $shouldCreateReceipt) {
                 if (! isset($paymentSplit->collection_amount)) {
+
+                    if (empty($paymentSplit->verified_at)) {
+                        $paymentSplit->verified_at = now();
+                        $paymentSplit->verified_by = Auth::user()->id ?? null;
+                    }
+
                     $paymentSplit->collection_amount = $amountCollected;
                     $paymentSplit->save();
 
@@ -1248,7 +1258,7 @@ class SplitPaymentService
                 $hasPaidCreditCardPayment = $paymentSplits->contains(function ($split) {
                     return $split->payment_method == PaymentMethodsEnum::CreditCard && $split->payment_status_id == PaymentStatusEnum::PAID;
                 });
-                if ($hasPaidCreditCardPayment) {
+                if (! $hasPaidCreditCardPayment) {
                     return [
                         'isCommissionDisabled' => true,
                         'disabledCommissionTooltip' => PaymentTooltip::DISABLED_COMMISSION,
@@ -1276,7 +1286,7 @@ class SplitPaymentService
         if ($payment) {
             $hasAnyAuthorizedPayment = $this->hasAnyAuthorizedPayment($payment->paymentSplits);
             if ($hasAnyAuthorizedPayment) {
-                $validator->errors()->add('authorized', 'Payment is authorised, and this plan cannot be selected. Please ask your manager to cancel the payment to proceed');
+                $validator->errors()->add('authorized', 'This lead is linked to an authorized payment. Please void the existing payment before switching to another plan.');
             }
         }
     }

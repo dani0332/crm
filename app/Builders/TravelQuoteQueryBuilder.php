@@ -69,6 +69,7 @@ class TravelQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'insurer_api_status_id',
             'start_date',
             'end_date',
+            'lead_assignment_trigger',
         ], [
             'nationality:id,country_name',
             'advisor:id,name,email,mobile_no,landline_no',

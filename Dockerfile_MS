@@ -38,9 +38,8 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     wget \
     gnupg \
-    ghostscript \
     libwebp-dev \
-    pdftk
+    qpdf
 
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
@@ -78,9 +77,8 @@ libzip4 \
 zlib1g \
 libicu-dev \
 libmemcached11 \
-ghostscript \
 libwebp-dev \
-pdftk
+qpdf
 
 # Set working directory
 WORKDIR /var/www

@@ -6,17 +6,17 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public $timeout = 300; // 300 (5 minutes) 900 (15 minutes)
-    public $tries = 3;
+    public $tries = 2;
     public $backoff = 30;
     private $exportClass;
     private $recipientEmail;
@@ -29,11 +29,12 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         string $exportClass,
         string $recipientEmail,
         array $requestParams,
-
     ) {
         $this->exportClass = $exportClass;
         $this->recipientEmail = $recipientEmail;
         $this->requestParams = $requestParams;
+
+        $this->onQueue('renewals');
     }
 
     /**
@@ -64,12 +65,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
             $executionTime = round(microtime(true) - $startTime, 2);
             $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
 
-            Log::info("CSV export job completed successfully. Time: {$executionTime}s, Peak memory: {$peakMemory}MB");
-
-            // Explicitly mark as completed and delete the job
-            if ($this->job) {
-                $this->job->delete();
-            }
+            Log::info("CSV export job completed successfully for {$this->requestParams['fileName']}. Time: {$executionTime}s, Peak memory: {$peakMemory}MB");
 
         } catch (\Throwable $e) {
             $executionTime = round(microtime(true) - $startTime, 2);
@@ -80,14 +76,6 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
                     return isset($trace['file']) && str_contains($trace['file'], '/app');
                 })->all(),
             ]);
-
-            // Only retry if we haven't exceeded max attempts
-            if ($this->attempts() < $this->tries) {
-                Log::warning("CSV export job [{$jobId}] will be retried. Attempts: {$this->attempts()}/{$this->tries}");
-                $this->release($this->backoff);
-
-                return;
-            }
 
             throw $e;
         } finally {
@@ -104,5 +92,22 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     public function failed(\Throwable $exception)
     {
         Log::error("CSV export job for {$this->requestParams['fileName']} has permanently failed: {$exception->getMessage()}");
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     */
+    public function middleware(): array
+    {
+        $lockKey = md5(
+            $this->exportClass.
+            $this->recipientEmail
+        );
+
+        return [
+            (new WithoutOverlapping($lockKey))
+                ->dontRelease() // Don't release back to queue if locked
+                ->expireAfter(300), // Lock expires after 5 mins (same as timeout)
+        ];
     }
 }

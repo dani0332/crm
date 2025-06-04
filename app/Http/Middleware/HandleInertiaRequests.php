@@ -328,6 +328,12 @@ class HandleInertiaRequests extends Middleware
                         'Buy Leads Tracking',
                         route('buy-leads.request.tracking'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::BUY_LEADS_EXPORT),
+                        'Export Buy Leads',
+                        route('buy-leads.request.export'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
@@ -640,6 +646,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->can(PermissionsEnum::PERMISSION_LIST),
+                        'Permissions',
+                        route('permissions.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::DEPARTMENT_LIST),
                         'Departments',
                         url('admin/departments'),
@@ -680,6 +692,12 @@ class HandleInertiaRequests extends Middleware
                         'Query Benchmarker',
                         route('admin.benchmarker.query.show'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasAnyRole([RolesEnum::Engineering, RolesEnum::Admin]),
+                        'Permissions Docs',
+                        url('/permissions-docs/index.php'),
+                        fn ($s) => $s->attributes(['icon' => 'box', 'external' => true, 'target' => '_blank'])
                     )
                     ->addIf(
                         auth()->user()->hasAnyPermission([
@@ -734,6 +752,12 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::SIC_HEALTH_CONFIG),
                                 'Configure SIC Health',
                                 route('admin.sic-health-config.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),
+                                'Nationality Allocation',
+                                route('admin.nationality-allocation-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );

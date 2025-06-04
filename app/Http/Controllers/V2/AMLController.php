@@ -9,6 +9,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -24,6 +25,7 @@ use App\Exports\KycLogs;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Http\Requests\InsuredKycRequest;
 use App\Http\Requests\SkipBridgerScreeningRequest;
 use App\Http\Requests\UpdateAMLCustomerDetailRequest;
 use App\Http\Requests\UpdateAMLEntityDetailRequest;
@@ -41,7 +43,6 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Insured;
 use App\Models\KycLog;
-use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -49,6 +50,7 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\TravelQuote;
 use App\Models\User;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -58,6 +60,7 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
+use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
 use App\Services\QuoteStatusService;
 use App\Services\SIBService;
@@ -90,6 +93,8 @@ class AMLController extends Controller
      */
     public function index(AMLRequest $request)
     {
+        LoggerService::info('fn:index - AMLController');
+
         $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
         $quotes = [];
@@ -176,6 +181,8 @@ class AMLController extends Controller
 
     public function export(Request $request)
     {
+        LoggerService::info('fn:export - AMLController');
+
         $reportDateRange = Carbon::parse($request->amlCreatedStartDate)->toDateString().' - '.Carbon::parse($request->amlCreatedEndDate)->toDateString();
 
         $request->merge([
@@ -198,6 +205,8 @@ class AMLController extends Controller
      */
     public function show(AML $aml)
     {
+        LoggerService::info('fn:show - AMLController');
+
         $amlResults = collect(json_decode($aml->results))->first() ?? [];
         $manualStatusUpdateIM = collect($amlResults->ManualStatusUpdateIM ?? []);
         $aml->quote_type_text = $aml->quotetype->text;
@@ -226,112 +235,73 @@ class AMLController extends Controller
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-        $amlRecordFetch = AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->where(function ($aml) {
-                $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-                $aml->orWhereNull('decision');
-            })->where(function ($aml) {
-                $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
-                $aml->orWhereNull('screening_type');
-            });
-        $kycLogs = $amlRecordFetch->orderBy('created_at', 'asc')->get();
-
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-        $isPersonalQuote = checkPersonalQuotes($quoteType->code);
+        LoggerService::startQuoteLogging($quoteRequest);
+        LoggerService::info('fn:amlQuoteDetails - AMLController');
 
-        if ($isPersonalQuote) {
-            $quoteRequest->quote_link = '/personal-quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
-        } else {
-            $quoteRequest->quote_link = '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
-        }
+        $quoteRequest->quote_link = checkPersonalQuotes($quoteType->code) ?
+            '/personal-quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid :
+            '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
 
-        $insuredPersonDetails = CustomerInsured::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId,
-            'customer_id' => $quoteRequest->customer_id,
-        ])->with(['customer', 'insured'])->first();
-        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
-        $entityDetails = QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
-            ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
-            ->first() ?? [];
-        $membersDetail = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code);
-
-        $uboDetails = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
+        $kycLogs = app(AMLService::class)->getKYCLogs($quoteTypeId, $quoteRequestId);
+        $lookups = app(AMLService::class)->getAMLLookups();
+        $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
+        $entityDetails = app(AMLService::class)->getEntityDetails($quoteTypeId, $quoteRequestId); // TODO:: this will only for customer member mapping, this will remove when customer member mapping updated with insured
         $nationalities = NationalityRepository::withActive()->get();
         $emirates = Emirate::where('is_active', 1)->orderBy('sort_order')->get();
-
-        $lookups = Lookup::whereIn('key', [
-            LookupsEnum::RESIDENT_STATUS,
-            LookupsEnum::DOCUMENT_ID_TYPE,
-            LookupsEnum::ENTITY_DOCUMENT_TYPE,
-            LookupsEnum::MODE_OF_CONTACT,
-            LookupsEnum::MODE_OF_DELIVERY,
-            LookupsEnum::EMPLOYMENT_SECTOR,
-            LookupsEnum::LEGAL_STRUCTURE,
-            LookupsEnum::ISSUANCE_PLACE,
-            LookupsEnum::ISSUING_AUTHORITY,
-            LookupsEnum::COMPANY_POSITION,
-            LookupsEnum::PROFESSIONAL_TITLE,
-            LookupsEnum::UBO_RELATION,
-            LookupsEnum::COMPANY_TYPE,
-            LookupsEnum::MEMBER_RELATION,
-        ])->get()->groupBy('key');
-
-        // lookups , loop through each key, replace - with _ and update key
-        $lookups = $lookups->mapWithKeys(function ($item, $key) {
-            return [str_replace('-', '_', $key) => $item];
-        });
+        $membersDetail = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code);
+        $uboDetails = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
+        $payment = Payment::where('code', $quoteRequest->code)
+            ->with(['getCustomerPaymentInstrument' => fn ($query) => $query->whereNotNull('card_holder_name')])->first();
+        $cardHolderName = $payment->getCustomerPaymentInstrument?->card_holder_name ?? '';
+        // $customerDetails = Customer::with('detail')->where('id', $quoteRequest->customer_id)->first();
 
         $checkScreeningStatus = [AMLStatusCode::AMLScreeningCleared => 2, AMLStatusCode::AMLScreeningFailed => 1];
-        $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
-
-        $payment = Payment::where('code', $quoteRequest->code)
-            ->with(['getCustomerPaymentInstrument' => function ($query) {
-                $query->whereNotNull('card_holder_name');
-            }])
-            ->first();
-        $cardHolderName = '';
-        if (isset($payment->getCustomerPaymentInstrument->card_holder_name)) {
-            $cardHolderName = $payment->getCustomerPaymentInstrument;
-        }
         $amlStatusName = AMLStatusCode::getName($quoteRequest->aml_status);
-        $data = [
+        $screeningType = AMLService::getKycType($quoteTypeId, $quoteRequestId);
+
+        if ($quoteType->code == quoteTypeCode::Business) {
+            LoggerService::info('Business lead found aginst AML Screening');
+            $businessPayload['businessTypeCode'] = BusinessQuoteType::where('id', $quoteRequest->business_type_of_insurance_id)->value('code');
+            $businessPayload['businessCoverTypeText'] = BusinessCoverType::where('id', $quoteRequest->business_cover_type_id)->value('text');
+            $businessPayload['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
+        }
+
+        return inertia('Aml/DetailPage', array_merge([
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
             'amlStatusName' => $amlStatusName,
             'amlStatusCode' => AMLStatusCode::asArray(),
-            'entityDetails' => $entityDetails,
-            'membersDetails' => $membersDetail,
-            'uboDetails' => $uboDetails,
+            'kycLogs' => $kycLogs,
+            'lookups' => $lookups,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
-            'customerTypeEnum' => CustomerTypeEnum::asArray(),
-            'kycLogs' => $kycLogs,
-            'kycStatus' => $kycStatus,
-            'customerDetails' => $customerDetails,
-            'insuredPersonDetails' => $insuredPersonDetails,
+            'insuredDetails' => $insuredDetails,
+            'entityDetails' => $entityDetails,
             'amlDecisionStatusEnum' => AMLDecisionStatusEnum::asArray(),
-            'lookups' => $lookups,
-            'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->aml_status] ?? null,
-            'cardHolderName' => $cardHolderName,
             'quoteTypeIdEnum' => QuoteTypeId::asArray(),
             'quoteStatusEnums' => QuoteStatusEnum::asArray(),
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'amlStatusEvaluation' => AMLDecisionStatusEnum::amlStatusEvaluation(),
+            'membersDetails' => $membersDetail,
+            'uboDetails' => $uboDetails,
+            'cardHolderName' => $cardHolderName,
+            // 'customerDetails' => $customerDetails,
+            'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->aml_status] ?? null,
+            'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
+            'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
-        ];
-
-        if ($quoteType->code == quoteTypeCode::Business) {
-            $data['businessTypeCode'] = BusinessQuoteType::where('id', $quoteRequest->business_type_of_insurance_id)->value('code');
-            $data['businessCoverTypeText'] = BusinessCoverType::where('id', $quoteRequest->business_cover_type_id)->value('text');
-            $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
-        }
-
-        return inertia('Aml/Details', $data);
+        ], $businessPayload ?? []));
     }
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
         $quoteType = QuoteType::where('id', $quoteTypeId)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+
+        LoggerService::startQuoteLogging($quoteObject);
+        LoggerService::info('fn:amlQuoteDetails - AMLController');
+
         if (isset(request()->decisonsForUpdatePortal)) {
             request()->merge(['ref_id' => $quoteObject->code]);
             $response = AMLService::updateAMLDecisionLexisNexis(request());
@@ -361,19 +331,19 @@ class AMLController extends Controller
         return response()->json($response);
     }
 
-    public function updateCustomerDetails(UpdateAMLCustomerDetailRequest $request)
-    {
-        $customer = CustomerRepository::updateCustomerDetails($request->customer_id, $request->safe());
+    // public function updateCustomerDetails(UpdateAMLCustomerDetailRequest $request)
+    // {
+    //     $customer = CustomerRepository::updateCustomerDetails($request->customer_id, $request->safe());
 
-        return response()->json(['success' => true]);
-    }
+    //     return response()->json(['success' => true]);
+    // }
 
-    public function updateEntityDetails(UpdateAMLEntityDetailRequest $request)
-    {
-        $entity = EntityRepository::updateEntityDetail($request->safe());
+    // public function updateEntityDetails(UpdateAMLEntityDetailRequest $request)
+    // {
+    //     $entity = EntityRepository::updateEntityDetail($request->safe());
 
-        return response()->json(['success' => true]);
-    }
+    //     return response()->json(['success' => true]);
+    // }
 
     public function checkMissingTravelAmlRequirement(Request $request)
     {
@@ -389,24 +359,22 @@ class AMLController extends Controller
 
     private function handleResponse(bool $status, string $message, bool $isAutomation = false)
     {
-        return match ($isAutomation) {
-            true => response()->json(['status' => $status, 'message' => $message]),
-            default => redirect()->back()->with($status ? 'success' : 'error', $message)
-        };
+        return $isAutomation ? response()->json(['status' => $status, 'message' => $message]) : redirect()->back()->with($status ? 'success' : 'error', $message);
     }
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
-        // info('AML Screening Bridger - Process Started - Ref-ID: '.$quoteRequestId);
+        $quoteId = $quoteRequestId;
+        $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
+        $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
+        LoggerService::startQuoteLogging($updateQuote);
+        LoggerService::info('AML Screening Bridger - Process Started');
+
         $isAutomation = $AMLCheckRequest->is_automation ?? false;
         $systemUser = User::where('name', UserNameEnum::System)->first();
         $processbyUser = $isAutomation ? $systemUser : auth()->user();
 
-        $quoteId = $quoteRequestId;
-        $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-        $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
         $getMemberOrUBODetails = AMLService::getMemberOrUBODetails($AMLCheckRequest, $quoteType, $quoteId);
-
         $getLastScreening = KycLog::withTrashed()->where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
@@ -419,14 +387,30 @@ class AMLController extends Controller
         })->whereNull('screenshot')->get()->last() ?? [];
 
         if ($getMemberOrUBODetails) {
-            // info('AML Screening Bridger - Members found against Ref-ID: '.$quoteRequestId);
+            LoggerService::info('AML Screening Bridger - Members found against');
             $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
             if (in_array(null, $memberValidateCheck)) {
+                LoggerService::info('AML Screening Bridger - Member First Name missing');
+
                 return $this->handleResponse(false, 'First Name missing', $isAutomation);
             }
 
-            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($value) use ($getLastScreening) {
-                return $value->updated_at >= ($getLastScreening->created_at ?? '');
+            // Filter members that need screening based on their updated_at date
+            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($member) use ($getLastScreening) {
+                $lastScreeningDate = $getLastScreening->created_at ?? '';
+
+                // Include members with null updated_at (replicated members that need screening)
+                if (is_null($member->updated_at)) {
+                    LoggerService::info('AML Screening Bridger - Including member with null updated_at (replicated member)', extra: [
+                        'member_id' => $member->id ?? 'unknown',
+                        'member_name' => ($member->first_name ?? '').' '.($member->last_name ?? ''),
+                    ]);
+
+                    return true;
+                }
+
+                // Include members that were updated after the last screening
+                return $member->updated_at >= $lastScreeningDate;
             });
         }
 
@@ -443,216 +427,64 @@ class AMLController extends Controller
             session()->put('amlResponseCheck', []);
             $insurerAMLScreeningResponse = [];
 
-            if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
-                // info('AML Screening Bridger - Customer Type: '.CustomerTypeEnum::Individual);
-                $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
-                $customer->nationality_id = $AMLCheckRequest->nationality_id;
-                $customer->dob = $AMLCheckRequest->dob;
-                $customer->insured_first_name = $AMLCheckRequest->insured_first_name;
-                $customer->insured_last_name = $AMLCheckRequest->insured_last_name;
-
-                $insuredPersonDetails = Insured::updateOrCreate([
-                    'id_type' => $AMLCheckRequest->screening_id_type,
-                    'id_number' => $AMLCheckRequest->screening_id_number,
-                    'customer_type' => CustomerTypeEnum::Individual,
-                ], [
-                    'first_name' => $AMLCheckRequest->insured_first_name,
-                    'last_name' => $AMLCheckRequest->insured_last_name,
-                    'dob' => $AMLCheckRequest->dob,
-                    'nationality_id' => $AMLCheckRequest->nationality_id,
-                    'gender' => $AMLCheckRequest->screening_gender,
-                ]);
-                $insuredPersonDetails->refresh();
-                CustomerInsured::updateOrCreate([
-                    'quote_type_id' => $quoteTypeId,
-                    'quote_request_id' => $updateQuote->id,
-                ], [
-                    'customer_id' => $AMLCheckRequest->customer_id,
-                    'insured_id' => $insuredPersonDetails->id,
-                ]);
-
-                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredPersonDetails);
-
-                if ($customer->isDirty() ||
-                    ! isset($getLastScreening->created_at) ||
-                    Carbon::parse($customer->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')
-                ) {
-                    $customer->save();
-                    $customer->refresh();
-
-                    // info('AML Screening Bridger - Customer Details updated - Ref-ID: '.$quoteRequestId);
-                    $getMemberOrUBODetails[] = [
-                        'first_name' => $insuredPersonDetails->first_name,
-                        'last_name' => $insuredPersonDetails->last_name,
-                        'dob' => Carbon::parse($insuredPersonDetails->dob)->format(config('constants.DATE_FORMAT_ONLY')),
-                        'nationality' => $insuredPersonDetails?->nationality->toArray() ?? [],
-                        'code' => CustomerTypeEnum::IndividualShort.'-'.$AMLCheckRequest->customer_id,
+            // Handle both Individual and Entity types with the same function
+            [$shouldApplicableForScreening, $insured, $entityId] = $this->preparedInsuredDataForScreening($AMLCheckRequest, $quoteTypeId, $updateQuote, $getLastScreening);
+            $isEntity = $AMLCheckRequest->customer_type == CustomerTypeEnum::Entity;
+            if ($shouldApplicableForScreening) {
+                if ($isEntity) {
+                    $getEntityDetailsForScreening = [
+                        'company_name' => $insured->company_name,
+                        'code' => CustomerTypeEnum::EntityShort.'-'.$entityId, // TODO:: code should be updated with insured id (Required FR for this)
                     ];
-                }
 
-                if ($quoteTypeId == QuoteTypes::CAR->id()) {
-                    $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteRequestId)->first();
-                    $carQuoteRequestDetails->chassis_number = $AMLCheckRequest->chassis_number;
-                    $carQuoteRequestDetails->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
-                    if ($carQuoteRequestDetails->isDirty()) {
-                        info('AML Screening Bridger - Chassis number and Insurer Quote Email updated - Ref-ID: '.$quoteRequestId);
-                        $carQuoteRequestDetails->save();
+                    $bridgerInsightService = new BridgerInsightService;
+                    $bridgerAPIToken = $bridgerInsightService->getJWTToken();
+
+                    LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched against Entity');
+                    BridgerAMLJob::dispatchSync($bridgerAPIToken, $getEntityDetailsForScreening, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
+
+                    if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
+                        $updateQuote->company_name = $AMLCheckRequest->company_name;
+                        $updateQuote->company_address = $AMLCheckRequest->company_address;
+                        $updateQuote->save();
                     }
-                }
-
-                if ($quoteTypeId == QuoteTypes::BIKE->id()) {
-                    $bikeQuoteRequest = BikeQuote::where('personal_quote_id', $quoteRequestId)->first();
-                    $personalQuoteDetailBikeRequest = PersonalQuoteDetail::where('personal_quote_id', $quoteRequestId)->first();
-
-                    $bikeQuoteRequest->chassis_number = $AMLCheckRequest->chassis_number;
-                    $personalQuoteDetailBikeRequest->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
-
-                    if ($bikeQuoteRequest->isDirty()) {
-                        info('AML Screening Bridger - Chassis number updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
-                        $bikeQuoteRequest->save();
-                    }
-
-                    if ($personalQuoteDetailBikeRequest->isDirty()) {
-                        // info('AML Screening Bridger - Insurer Quote Email updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
-                        $personalQuoteDetailBikeRequest->save();
-                    }
-                }
-
-                if ($quoteTypeId == QuoteTypes::HOME->id()) {
-                    $personalQuoteDetailHomeRequest = PersonalQuoteDetail::where('personal_quote_id', $quoteRequestId)->first();
-                    $personalQuoteDetailHomeRequest->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
-                    if ($personalQuoteDetailHomeRequest->isDirty()) {
-                        info('AML Screening Bridger - Insurer Quote Email updated for QuoteTypeId:'.$quoteTypeId.' - Ref-ID: '.$quoteRequestId);
-                        $personalQuoteDetailHomeRequest->save();
-                    }
-                }
-
-                if (isTapEnabled()) {
-                    // info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start - Ref-ID: '.$quoteRequestId);
-                    $enableInsurerScreening = [
-                        QuoteTypes::CAR->id(),
-                        QuoteTypes::HOME->id(),
-                        QuoteTypes::TRAVEL->id(),
-                        QuoteTypes::BIKE->id(),
-                    ];
-                    if (in_array($quoteTypeId, $enableInsurerScreening)) {
-                        session()->put('insurerAMLScreeningResponse');
-                        InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
-                        $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
-                        if (! empty($getInsurerScreeningResponse)) {
-                            $insurerAMLScreeningResponse = [
-                                'status' => $getInsurerScreeningResponse['status'],
-                                'message' => $getInsurerScreeningResponse['message'],
-                                'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
-                            ];
-                        }
-                        session()->forget('insurerAMLScreeningResponse');
-                    }
-                    // info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process completed - Ref-ID: '.$quoteRequestId);
-                }
-
-                if (empty($getMemberOrUBODetails->toArray())) {
-                    // info('AML Screening Bridger - No Member Found, AML Screening Cleared - Ref-ID: '.$quoteRequestId);
-
-                    $response = $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
-
-                    if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
-                        $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
-                    }
-
-                    return $response;
-                }
-
-                $bridgerInsightService = new BridgerInsightService;
-                $bridgerAPIToken = $bridgerInsightService->getJWTToken();
-
-                // Job dispatch for all members including customer
-                // info('AML Screening Bridger - AML Screening Job Dispatched against Individual Customer - Ref-ID: '.$quoteRequestId);
-                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
-            }
-
-            if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
-                // info('AML Screening Bridger - Customer Type: '.CustomerTypeEnum::Entity);
-                $entityDetailsForApi = [];
-                $bridgerInsightService = new BridgerInsightService;
-                $bridgerAPIToken = $bridgerInsightService->getJWTToken();
-                $fetchEntity = Entity::where(['trade_license_no' => $AMLCheckRequest->trade_license_no])->first();
-                if (! $fetchEntity) {
-                    $entity = Entity::create([
-                        'trade_license_no' => $AMLCheckRequest->trade_license_no,
-                        'company_name' => $AMLCheckRequest->company_name,
-                        'company_address' => $AMLCheckRequest->company_address,
-                        'industry_type_code' => $AMLCheckRequest->industry_type_code,
-                        'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration_id,
-                    ]);
-                    $entity->refresh();
-                    $entityId = $entity->id;
-                    $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);
-
-                    QuoteRequestEntityMapping::updateOrCreate([
-                        'quote_type_id' => $quoteType->id,
-                        'quote_request_id' => $quoteRequestId,
-                    ], ['entity_id' => $entityId, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
-
-                    $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
-                    // info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
-                    BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
                 } else {
-                    $fetchEntity->trade_license_no = $AMLCheckRequest->trade_license_no;
-                    $fetchEntity->company_name = $AMLCheckRequest->company_name;
-                    $fetchEntity->company_address = $AMLCheckRequest->company_address;
-                    $fetchEntity->industry_type_code = $AMLCheckRequest->industry_type_code;
-                    $fetchEntity->emirate_of_registration_id = $AMLCheckRequest->emirate_of_registration_id;
-                    $isEntityDetailUpdated = $fetchEntity->isDirty();
-                    $kycExist = KycLog::withTrashed()->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId, 'input' => $fetchEntity->company_name])->first();
-                    if ($isEntityDetailUpdated || ! isset($kycExist->id)) {
-                        $fetchEntity->save();
-                        $fetchEntity->refresh();
-
-                        $entityDetailsForApi = ['company_name' => $fetchEntity->company_name, 'code' => $fetchEntity->code];
-                        BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
-                    }
-                    QuoteRequestEntityMapping::updateOrCreate([
-                        'quote_type_id' => $quoteType->id,
-                        'quote_request_id' => $quoteRequestId,
-                    ], ['entity_id' => $fetchEntity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
+                    // Handle individual screening
+                    $getMemberOrUBODetails[] = [
+                        'first_name' => $insured->first_name,
+                        'last_name' => $insured->last_name,
+                        'dob' => Carbon::parse($insured->dob)->format(config('constants.DATE_FORMAT_ONLY')),
+                        'nationality' => $insured?->nationality->toArray() ?? [],
+                        'code' => CustomerTypeEnum::IndividualShort.'-'.$AMLCheckRequest->customer_id, // TODO:: code should be updated with insured id (Required FR for this)
+                    ];
                 }
-
-                // Reminder:: this patch included because of new structure, Entity and Entity quote request mapping will be remove soon.
-                $insuredEntityDetails = Insured::updateOrCreate([
-                    'trade_license_no' => $AMLCheckRequest->trade_license_no,
-                    'customer_type' => CustomerTypeEnum::Entity,
-                ], [
-                    'company_name' => $AMLCheckRequest->company_name,
-                    'company_address' => $AMLCheckRequest->company_address,
-                    'industry_type_code' => $AMLCheckRequest->industry_type_code,
-                    'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration_id,
-                ]);
-                $insuredEntityDetails->refresh();
-                CustomerInsured::updateOrCreate([
-                    'quote_type_id' => $quoteTypeId,
-                    'quote_request_id' => $updateQuote->id,
-                ], [
-                    'customer_id' => $AMLCheckRequest->customer_id,
-                    'insured_id' => $insuredEntityDetails->id,
-                ]);
-
-                $this->updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insuredEntityDetails);
-
-                if (isset($AMLCheckRequest->company_name) && in_array($quoteTypeId, [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Yacht, QuoteTypeId::Car])) {
-                    $updateQuote->company_name = $AMLCheckRequest->company_name;
-                    $updateQuote->company_address = $AMLCheckRequest->company_address;
-                    $updateQuote->save();
-                }
-
-                if (empty($entityDetailsForApi) && empty($getMemberOrUBODetails->toArray())) {
-                    return $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
-                }
-
-                // Job dispatch for all UBO members
-                // info('AML Screening Bridger - AML Screening Job Dispatched against Entity - Ref-ID: '.$quoteRequestId);
-                $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
             }
+
+            if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Home])) {
+                $this->updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote);
+            }
+
+            if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
+                $this->InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote);
+            }
+
+            // Process members (UBO or regular members)
+            if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
+                LoggerService::info('AML Screening Bridger - No Member Found, AML Screening Cleared');
+                $response = $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
+                if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
+                    $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
+                }
+
+                return $response;
+            }
+
+            $bridgerInsightService = new BridgerInsightService;
+            $bridgerAPIToken = $bridgerInsightService->getJWTToken();
+
+            // Job dispatch for all members including customer
+            LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched for Members');
+            $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
 
             $response = $this->handleResponse(true, 'Quote is updated', $isAutomation);
             if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
@@ -665,9 +497,9 @@ class AMLController extends Controller
         return $this->handleResponse(false, 'Something went wrong', $isAutomation);
     }
 
-    private function updateInsuredInPersonalQuote($quoteTypeId, $updateQuote, $insured)
+    private function updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured)
     {
-        $getPersonalQuote = PersonalQuote::where(['uuid' => $updateQuote->uuid, 'quote_type_id' => $quoteTypeId])->first();
+        $getPersonalQuote = PersonalQuote::where(['uuid' => $quote->uuid, 'quote_type_id' => $quoteTypeId])->first();
         if ($getPersonalQuote) {
             $getPersonalQuote->insured_id = $insured->id;
             $getPersonalQuote->save();
@@ -676,9 +508,280 @@ class AMLController extends Controller
         return $getPersonalQuote;
     }
 
+    private function preparedInsuredDataForScreening($request, $quoteTypeId, $quote, $getLastScreening)
+    {
+        LoggerService::info('fn:preparedInsuredDataForScreening - AMLController');
+
+        $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
+        $shouldApplicableForScreening = false;
+
+        if ($isEntity) {
+            // Entity type processing
+            $insured = Insured::updateOrCreate([
+                'customer_type' => CustomerTypeEnum::Entity,
+                'trade_license_no' => $request->trade_license_no,
+            ], [
+                'company_name' => $request->company_name,
+                'company_address' => $request->company_address,
+                'industry_type_code' => $request->industry_type_code,
+                'emirate_of_registration_id' => $request->emirate_of_registration_id,
+            ]);
+        } else {
+            // Individual type processing
+            $insured = Insured::updateOrCreate([
+                'customer_type' => CustomerTypeEnum::Individual,
+                'id_type' => $request->screening_id_type,
+                'id_number' => $request->screening_id_number,
+            ], [
+                'first_name' => $request->insured_first_name,
+                'last_name' => $request->insured_last_name,
+                'dob' => $request->dob,
+                'nationality_id' => $request->nationality_id,
+                'gender' => $request->screening_gender,
+            ]);
+        }
+        $insured->refresh();
+        $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
+        // Reminder:: this patch add becuase when migrated data from customer_details to insured table, there is no link between quote_request and customer_insured table.
+        $customerInsured = CustomerInsured::where('customer_id', $request->customer_id)
+            ->where('insured_id', $insured->id)
+            ->whereNull('quote_type_id')
+            ->whereNull('quote_request_id')
+            ->first();
+
+        if ($customerInsured) {
+            $customerInsured->update([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+            ]);
+        } else {
+            CustomerInsured::updateOrCreate([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+            ], [
+                'customer_id' => $request->customer_id,
+                'insured_id' => $insured->id,
+            ]);
+        }
+
+        if ($insured->wasRecentlyCreated) {
+            $shouldApplicableForScreening = true;
+            LoggerService::info('AML Screening Bridger - '.($isEntity ? 'Entity' : 'Insured Person').' created');
+        } else {
+            if ($insured->isDirty() || ! isset($getLastScreening->created_at) || Carbon::parse($insured->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')) {
+                $shouldApplicableForScreening = true;
+                LoggerService::info('AML Screening Bridger - '.($isEntity ? 'Entity' : 'Insured person').' details updated');
+            }
+        }
+
+        // TODO:: this patch add because universal search and customer members have dependency on customer and entity details.
+        $entityId = null;
+        if ($isEntity) {
+            $entityData = [
+                'trade_license_no' => $request->trade_license_no,
+                'company_name' => $request->company_name,
+                'company_address' => $request->company_address,
+                'industry_type_code' => $request->industry_type_code,
+                'emirate_of_registration_id' => $request->emirate_of_registration_id,
+            ];
+
+            $entity = Entity::firstOrNew(['trade_license_no' => $request->trade_license_no]);
+            $entity->fill($entityData);
+
+            if (! $entity->exists) {
+                $entity->save();
+                $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
+            } elseif ($entity->isDirty()) {
+                $entity->save();
+            }
+
+            $entity->refresh();
+            $entityId = $entity->id;
+            QuoteRequestEntityMapping::updateOrCreate([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quote->id,
+            ], ['entity_id' => $entity->id, 'entity_type_code' => $request->entity_type_code]);
+        } else {
+            $customer = Customer::with('nationality')->findOrFail($request->customer_id);
+            $customer->nationality_id = $request->nationality_id;
+            $customer->dob = $request->dob;
+            $customer->insured_first_name = $request->insured_first_name;
+            $customer->insured_last_name = $request->insured_last_name;
+
+            if ($customer->isDirty()) {
+                $customer->save();
+            }
+        }
+
+        // TODO:: third param entityId will remove when kycLogs and customer and insured code will updated
+        return [$shouldApplicableForScreening, $insured, $entityId];
+    }
+
+    private function InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote)
+    {
+        LoggerService::info('fn:InsurerScreening - AMLController');
+
+        if (isTapEnabled()) {
+            LoggerService::info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process start');
+            $enableInsurerScreening = [
+                QuoteTypes::CAR->id(),
+                QuoteTypes::HOME->id(),
+                QuoteTypes::TRAVEL->id(),
+                QuoteTypes::BIKE->id(),
+            ];
+            if (in_array($quoteTypeId, $enableInsurerScreening)) {
+                session()->put('insurerAMLScreeningResponse');
+                InsurerAMLScreeningJob::dispatchSync($quoteTypeId, $updateQuote, CustomerTypeEnum::Individual, $AMLCheckRequest->toArray());
+                $getInsurerScreeningResponse = collect(session()->get('insurerAMLScreeningResponse', []))->first();
+                if (! empty($insurerAMLScreeningResponse)) {
+                    $insurerAMLScreeningResponse = [
+                        'status' => $getInsurerScreeningResponse['status'],
+                        'message' => $getInsurerScreeningResponse['message'],
+                        'isEmailMismatched' => $getInsurerScreeningResponse['isEmailMismatched'] ?? false,
+                    ];
+                }
+                session()->forget('insurerAMLScreeningResponse');
+            }
+            LoggerService::info('AML Screening Bridger - Tap Enabled - Insurer AML Screening process completed');
+        }
+    }
+
+    private function updateChassisNumber($quoteTypeId, $AMLCheckRequest, $quoteRequestId, $updateQuote)
+    {
+        LoggerService::info('fn:updateChassisNumber - AMLController');
+
+        if ($quoteTypeId == QuoteTypes::CAR->id()) {
+            $carQuoteRequestDetails = CarQuoteRequestDetail::where('car_quote_request_id', $quoteRequestId)->first();
+            $carQuoteRequestDetails->chassis_number = $AMLCheckRequest->chassis_number;
+            $carQuoteRequestDetails->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
+            if ($carQuoteRequestDetails->isDirty()) {
+                LoggerService::info('AML Screening Bridger - Chassis number and Insurer Quote Email updated for QuoteTypeId: '.$quoteTypeId);
+                $carQuoteRequestDetails->save();
+            }
+        }
+
+        if ($quoteTypeId == QuoteTypes::BIKE->id()) {
+            $bikeQuoteRequest = BikeQuote::where('personal_quote_id', $quoteRequestId)->first();
+            $personalQuoteDetailBikeRequest = PersonalQuoteDetail::where('personal_quote_id', $quoteRequestId)->first();
+
+            $bikeQuoteRequest->chassis_number = $AMLCheckRequest->chassis_number;
+            $personalQuoteDetailBikeRequest->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
+
+            if ($bikeQuoteRequest->isDirty()) {
+                LoggerService::info('AML Screening Bridger - Chassis number and Insurer Quote Email updated for QuoteTypeId: '.$quoteTypeId);
+                $bikeQuoteRequest->save();
+            }
+
+            if ($personalQuoteDetailBikeRequest->isDirty()) {
+                $personalQuoteDetailBikeRequest->save();
+            }
+        }
+
+        if ($quoteTypeId == QuoteTypes::HOME->id()) {
+            $personalQuoteDetailHomeRequest = PersonalQuoteDetail::where('personal_quote_id', $quoteRequestId)->first();
+            $personalQuoteDetailHomeRequest->insurer_quote_email = $AMLCheckRequest->get_quote_email_gig;
+            if ($personalQuoteDetailHomeRequest->isDirty()) {
+                LoggerService::info('AML Screening Bridger - Insurer Quote Email updated for QuoteTypeId: '.$quoteTypeId);
+                $personalQuoteDetailHomeRequest->save();
+            }
+        }
+    }
+
+    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType, $processByUser = null, $isAutomation = false)
+    {
+        foreach ($membersDetails as $memberDetail) {
+            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
+        }
+
+        if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
+            $quoteTypeIds = [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Corpline];
+            QuoteStatusLog::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
+                'previous_quote_status_id' => $quoteDetails->quote_status_id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+
+            if (in_array($quoteTypeId, $quoteTypeIds)) {
+                $quoteDetails->stale_at = null;
+            }
+
+            $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
+            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
+            $quoteDetails->save();
+            // this event only working for travel lob
+            if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
+                $this->stopHapexReminder($quoteDetails);
+            }
+            // info('AML Screening Bridger - Potential Matches not Found, Quote Status changed to AML Screening Cleared - Ref-ID: '.$quoteDetails->code);
+        } else {
+            QuoteStatusLog::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningFailed,
+                'previous_quote_status_id' => $quoteDetails->quote_status_id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+
+            $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
+            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
+            $quoteDetails->save();
+            if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
+                $isPassportDocumentExist = app(QuoteDocumentService::class)->isDocumentExists(quoteTypeCode::Travel, $quoteDetails->id, DocumentTypeCode::TRVLPAS);
+                if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid && ! $isPassportDocumentExist) {
+                    $this->sendHapexReminder($quoteDetails);
+                } else {
+                    LoggerService::info(self::class.' - Hapex reminder not sent as passport document exists', extra: [
+                        'quote_uuid' => $quoteDetails->uuid,
+                        'isPassportDocumentExist' => $isPassportDocumentExist,
+                        'is_documents_valid' => $quoteDetails->is_documents_valid,
+                    ]);
+                }
+            }
+            LoggerService::info('AML Screening Bridger - Potential Matches Found, Quote Status changed to AML Screening Failed');
+        }
+
+        session()->forget('amlResponseCheck');
+    }
+
+    private function saveManualAuditLog($quoteDetails, User $processByUser)
+    {
+        if (! $quoteDetails instanceof TravelQuote) {
+            return false;
+        }
+
+        $dirty = $quoteDetails->getDirty();
+
+        if (empty($dirty)) {
+            return false;
+        }
+
+        $changes = [];
+        foreach ($dirty as $attribute => $value) {
+            $changes['old_values'][$attribute] = $quoteDetails->getOriginal($attribute);
+            $changes['new_values'][$attribute] = $value;
+        }
+
+        $quoteDetails->audits()->create([
+            'user_type' => get_class($processByUser),
+            'user_id' => $processByUser->id ?? null,
+            'event' => 'updated',
+            'old_values' => $changes['old_values'],
+            'new_values' => $changes['new_values'],
+        ]);
+
+        return true;
+    }
+
     public function fetchEntity(Request $request)
     {
-        $entity = Entity::where('trade_license_no', $request->trade_license)->first();
+        $entity = Insured::where([
+            'customer_type' => CustomerTypeEnum::Entity,
+            'trade_license_no' => $request->trade_license,
+        ])->first();
 
         if ($entity) {
             return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity found with the entered Trade License number']);
@@ -689,9 +792,42 @@ class AMLController extends Controller
 
     public function linkEntityDetails(Request $request)
     {
+
+        // Reminder:: This patch add because data should be updated in new structure
+        $quoteType = QuoteType::where('id', $request->quote_type_id)->first();
+        $quoteObject = $this->getQuoteObject($quoteType->code, $request->quote_request_id);
+
+        // Reminder:: Entity id is Insured ID which we get from fetchEntity() this function
+        $insured = Insured::where('id', $request->entity_id)->first();
+
+        $this->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
+
+        $customerInsured = CustomerInsured::where('customer_id', $quoteObject->customer_id)
+            ->where('insured_id', $insured->id)
+            ->whereNull('quote_type_id')
+            ->whereNull('quote_request_id')
+            ->first();
+
+        if ($customerInsured) {
+            $customerInsured->update([
+                'quote_type_id' => $request->quote_type_id,
+                'quote_request_id' => $request->quote_request_id,
+            ]);
+        } else {
+            CustomerInsured::updateOrCreate([
+                'quote_type_id' => $request->quote_type_id,
+                'quote_request_id' => $request->quote_request_id,
+            ], [
+                'customer_id' => $quoteObject->customer_id,
+                'insured_id' => $insured->id,
+            ]);
+        }
+
+        // Reminder:: This code should be remove when new structure will be completly mapped
+        $oldStructureEntity = Entity::where('trade_license_no', $insured->trade_license_no)->first();
         $existingEntityMapping = QuoteRequestEntityMapping::where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id])->first();
 
-        $updateFields = ['entity_id' => $request->entity_id, 'entity_type_code' => LookupsEnum::PARENT_ENTITY];
+        $updateFields = ['entity_id' => $oldStructureEntity->id, 'entity_type_code' => LookupsEnum::PARENT_ENTITY];
         if ($request->triggeredFrom) {
             $updateFields['entity_type_code'] = LookupsEnum::SUB_ENTITY;
         }
@@ -704,11 +840,12 @@ class AMLController extends Controller
                 },
                 'quoteMember',
             ]
-        )->where('id', $request->entity_id)->first();
+        )->where('id', $oldStructureEntity->id)->first();
 
         if ($existingEntityMapping) {
             $previousEntity = $existingEntityMapping->entity;
-            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id])->count();
+            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id ?? null])->count();
+            // Reminder:: This is Jawad change for car commercial quote
             if ($entityMappingCount === 0 && empty($previousEntity->trade_license_no)) {
                 $previousEntity->delete();
             }
@@ -724,19 +861,60 @@ class AMLController extends Controller
         return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity Linked Successfully']);
     }
 
-    public function getInsuredPersonDetails(Request $request): \Illuminate\Http\JsonResponse
+    public function getInsuredDetails(Request $request): \Illuminate\Http\JsonResponse
     {
-        $insuredPersonDetails = app(AMLService::class)->getInsuredPersonDetails($request->id_type, $request->id_number);
-
-        if ($insuredPersonDetails) {
-            return response()->json(['status' => true, 'response' => $insuredPersonDetails, 'message' => 'Customer found with the entered ID number']);
+        LoggerService::startQuoteLogging($request->code);
+        LoggerService::info('fn:getInsuredDetails - AMLController', extra: [
+            'customer_type' => $request->customer_type,
+            'id_type' => $request->id_type,
+            'id_number' => $request->id_number,
+            'trade_license' => $request->trade_license,
+        ]);
+        // TODO:: this condition should be move to AMLService class
+        $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
+        // TODO:: this condition should be updated later
+        if (empty($request->customer_type) || is_null($request->customer_type) || $request->customer_type == 'null') {
+            $isEntity = ! empty($request->trade_license);
         }
 
-        return response()->json(['status' => false, 'message' => 'No Customer found with the entered ID number']);
+        $whereClause = $isEntity
+            ? ['trade_license_no' => $request->trade_license, 'customer_type' => CustomerTypeEnum::Entity]
+            : [
+                'customer_type' => CustomerTypeEnum::Individual,
+                'id_type' => $request->id_type,
+                'id_number' => $request->id_number,
+            ];
+
+        $insuredDetails = Insured::with('insuredKyc')->where($whereClause)->first();
+
+        $customerType = $isEntity ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+        $status = (bool) $insuredDetails;
+        $messageType = $status ? 'found' : 'not_found';
+
+        $messages = [
+            CustomerTypeEnum::Individual => [
+                'found' => 'Customer found with the entered ID number',
+                'not_found' => 'No Customer found with the entered ID number',
+            ],
+            CustomerTypeEnum::Entity => [
+                'found' => 'Entity found with the entered Trade License number',
+                'not_found' => 'No Entity found with the entered Trade License number',
+            ],
+        ];
+
+        return response()->json([
+            'status' => $status,
+            'response' => $insuredDetails,
+            'message' => $messages[$customerType][$messageType],
+        ]);
     }
 
     public function sendBridgerResponse(Request $request)
     {
+        LoggerService::startQuoteLogging($request['quote_ref_id']);
+        LoggerService::info('fn:sendBridgerResponse - AMLController', extra: [
+            'bridger_response' => $request['bridger_response'],
+        ]);
         $response = [];
         $kycLog = KycLog::withTrashed()->where('id', $request->aml_id)->first();
         $oldDecision = $kycLog->decision;
@@ -769,7 +947,7 @@ class AMLController extends Controller
         $kycLog->results = json_encode($bridgerResponse);
         $kycLog->save();
 
-        $infoLog = 'AML Screening Bridger - AML Logs decision changed. Quote Ref-ID: '.$request['quote_ref_id'].' - Old Decision: '.$oldDecision.' - New Decision: '.$newDecision;
+        $infoLog = 'AML Screening Bridger - AML Logs decision changed. Old Decision: '.$oldDecision.' - New Decision: '.$newDecision;
 
         if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH) {
             $infoLog .= ' - Email triggered to Compliance Super User';
@@ -785,65 +963,11 @@ class AMLController extends Controller
             $response['status'] = 'success';
             $response['message'] = 'Email Triggered to Compliance Super User';
         }
-        info($infoLog.' - Triggered By: '.auth()->user()->email);
+        LoggerService::info($infoLog, extra: [
+            'triggeredBy' => auth()->user()->email,
+        ]);
 
         return response()->json($response);
-    }
-
-    private function AMLJobDispatchForMembers($quoteDetails, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType, $processByUser = null, $isAutomation = false)
-    {
-        foreach ($membersDetails as $memberDetail) {
-            BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteDetails, $quoteTypeId, $customerType, $processByUser?->email ?? auth()->user()?->email, isAutomation: $isAutomation);
-        }
-
-        if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
-            $quoteTypeIds = [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Corpline];
-            QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
-                'previous_quote_status_id' => $quoteDetails->quote_status_id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
-
-            if (in_array($quoteTypeId, $quoteTypeIds)) {
-                $quoteDetails->stale_at = null;
-            }
-
-            $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
-            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
-            $quoteDetails->save();
-            // this event only working for travel lob
-            if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
-                $this->stopHapexReminder($quoteDetails);
-            }
-            // info('AML Screening Bridger - Potential Matches not Found, Quote Status changed to AML Screening Cleared');
-        } else {
-            QuoteStatusLog::create([
-                'quote_type_id' => $quoteTypeId,
-                'quote_request_id' => $quoteRequestId,
-                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningFailed,
-                'previous_quote_status_id' => $quoteDetails->quote_status_id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
-
-            $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
-            ($isAutomation && ! Config::get('audit.console', true)) && app(AMLService::class)->saveManualAuditLog($quoteDetails, $processByUser);
-            $quoteDetails->save();
-            if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
-                $isPassportDocumentExist = app(QuoteDocumentService::class)->isDocumentExists(quoteTypeCode::Travel, $quoteDetails->id, DocumentTypeCode::TRVLPAS);
-                if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid && ! $isPassportDocumentExist) {
-                    $this->sendHapexReminder($quoteDetails);
-                } else {
-                    info(self::class.' - Hapex reminder not sent as passport document exists. Quote UUID: '.$quoteDetails->uuid.', isPassportDocumentExist: '.$isPassportDocumentExist.', is_documents_valid: '.$quoteDetails->is_documents_valid);
-                }
-            }
-            // info('AML Screening Bridger - Potential Matches Found, Quote Status changed to AML Screening Failed');
-        }
-
-        session()->forget('amlResponseCheck');
     }
 
     public function updateQuoteComment(Request $request)
@@ -866,16 +990,36 @@ class AMLController extends Controller
         return response()->json(['message' => 'Comment added successfully', 'data' => $quoteModel]);
     }
 
+    public function insuredKycDetailsUpdate(InsuredKycRequest $insuredKycRequest)
+    {
+        $quoteType = QuoteTypes::getName($insuredKycRequest->quote_type_id)->value;
+        $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
+        LoggerService::startQuoteLogging($quote);
+
+        $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
+
+        if ($preparedFormData) {
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false]);
+    }
+
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
-        info(self::class.'- stopHapexReminder Hapex reminder stopped for Quote UUID: '.$quote->uuid.' | Time - '.now());
+        LoggerService::info(self::class.'- stopHapexReminder Hapex reminder stopped', extra: [
+            'quoteUUID' => $quote->uuid,
+            'time' => now(),
+        ]);
 
         return true;
     }
 
     public function mapHapexMailPayload($quote)
     {
+        LoggerService::info('fn:mapHapexMailPayload - AMLController');
+
         $directionCode = $quote['direction_code'] == TravelQuoteEnum::TRAVEL_UAE_INBOUND ? TravelQuoteEnum::IN_BOUND : TravelQuoteEnum::OUT_BOUND;
 
         return [
@@ -916,7 +1060,10 @@ class AMLController extends Controller
     public function sendHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
-        info(self::class.'- sendHapexReminder Hapex reminder sent for Quote UUID: '.$quote->uuid.' | Time - '.now());
+        LoggerService::info(self::class.'- sendHapexReminder Hapex reminder sent', extra: [
+            'quoteUUID' => $quote->uuid,
+            'time' => now(),
+        ]);
 
         return true;
     }

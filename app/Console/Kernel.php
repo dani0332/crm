@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\PolicyBulkSendDocuments;
 use App\Console\Commands\PolicyIssuanceCommand;
 use App\Console\Commands\PolicyIssuanceDataCleanUpCommand;
 use App\Console\Commands\PolicyIssuanceMarkFailedCommand;
@@ -41,6 +42,7 @@ class Kernel extends ConsoleKernel
         PolicyIssuanceCommand::class,
         PolicyIssuanceDataCleanUpCommand::class,
         PolicyIssuanceMarkFailedCommand::class,
+        PolicyBulkSendDocuments::class,
     ];
 
     /**
@@ -126,7 +128,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
         $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(8);
-        $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
+        $schedule->command('leads:process-travel-renewals')->timezone('Asia/Dubai')->dailyAt('00:50')->onOneServer()->withoutOverlapping();
 
         $schedule->command('policy-issuance-automation:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping(4);
         $schedule->command('aml-screening-automation:run')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
