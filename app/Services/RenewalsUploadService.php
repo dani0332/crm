@@ -1356,7 +1356,7 @@ class RenewalsUploadService
                 if ($this->isCommercialRenewalQuote($carQuote)) {
                     SendCarCommercialOCBEmail::dispatch($carQuote->uuid);
                     LoggerService::info(self::class.' quote commercial OCB email sent UUID: '.$carQuote->uuid);
-                    $this->incrementBatchEmailSent( $renewalsBatchEmail->id,  $renewalQuoteProcess->id);
+                    $this->incrementBatchEmailSent($renewalsBatchEmail->id, $renewalQuoteProcess->id);
 
                     return;
                 }
@@ -1746,14 +1746,14 @@ class RenewalsUploadService
                             if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
                                 $leadValidationErrors->push('Invalid Product Type, needs to be Third Party Only or Comprehensive');
                             }
-                            if (!$this->isCarCompany($leadData) &&  $leadData->nationality && ! Nationality::where('text', $leadData->nationality)->first()) {
+                            if (! $this->isCarCompany($leadData) && $leadData->nationality && ! Nationality::where('text', $leadData->nationality)->first()) {
                                 $leadValidationErrors->push('Invalid Nationality Text');
                             }
                             if ($leadData->claim_history && ! ClaimHistory::where('text', $leadData->claim_history)->first()) {
                                 $leadValidationErrors->push('Invalid Claim History');
                             }
 
-                            if (!$this->isCarCompany($leadData) && ! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
+                            if (! $this->isCarCompany($leadData) && ! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
 
@@ -2447,11 +2447,13 @@ class RenewalsUploadService
 
     public function isCarCompany($leadData)
     {
-        return !empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY;
+        return ! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY;
     }
-    public function incrementBatchEmailSent($renewalsBatchEmailId, $renewalQuoteProcessId){
+    public function incrementBatchEmailSent($renewalsBatchEmailId, $renewalQuoteProcessId)
+    {
         RenewalsBatchEmails::where('id', $renewalsBatchEmailId)->update(['total_sent' => DB::raw('total_sent+1')]);
         RenewalQuoteProcess::where('id', $renewalQuoteProcessId)->update(['email_sent' => 1]);
+
         return true;
     }
 
