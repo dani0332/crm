@@ -10,6 +10,7 @@ class EndorsementReportExport extends BaseReportsExport
     {
         return [
             'Ref-ID',
+            'Private Client',
             'Department',
             'Policy Number',
             'Transactions',
@@ -49,7 +50,6 @@ class EndorsementReportExport extends BaseReportsExport
             'Lead Source',
             'SU Status',
             'Sage Receipt ID',
-            'Private Client',
         ];
     }
 
@@ -59,6 +59,7 @@ class EndorsementReportExport extends BaseReportsExport
 
         return [
             $quote->main_lead_code ?? 'N/A',
+            $quote->pcp_tag_formatted ?? 'N/A',
             $quote->department ?? 'N/A',
             $quote->policy_number ? $quote->policy_number : ($quote->main_lead_policy_number ?? 'N/A'),
             $quote->transactions ? $quote->transactions : 'N/A',
@@ -98,7 +99,6 @@ class EndorsementReportExport extends BaseReportsExport
             $quote->source ?? 'N/A',
             $quote->status ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
-            $quote->pcp_tag_formatted ?? 'N/A',
         ];
     }
 

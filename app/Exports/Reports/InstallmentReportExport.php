@@ -10,6 +10,7 @@ class InstallmentReportExport extends BaseReportsExport
     {
         return [
             'Ref-ID',
+            'Private Client',
             'Department',
             'Policy Number',
             'Transactions',
@@ -46,7 +47,6 @@ class InstallmentReportExport extends BaseReportsExport
             'Transaction Type',
             'Lead Source',
             'Sage Receipt ID',
-            'Private Client',
         ];
     }
 
@@ -56,6 +56,7 @@ class InstallmentReportExport extends BaseReportsExport
 
         return [
             $quote->code ?? 'N/A',
+            $quote->pcp_tag_formatted ?? 'N/A',
             $quote->department ?? 'N/A',
             $quote->policy_number ?? 'N/A',
             $quote->transactions ?? 'N/A',
@@ -92,7 +93,6 @@ class InstallmentReportExport extends BaseReportsExport
             $quote->transaction_type ?? 'N/A',
             $quote->source ?? 'N/A',
             $quote->sage_reciept_id ?? 'N/A',
-            $quote->pcp_tag_formatted ?? 'N/A',
         ];
     }
 

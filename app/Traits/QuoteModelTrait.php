@@ -311,7 +311,6 @@ trait QuoteModelTrait
         );
     }
 
-<<<<<<< HEAD
     public function pcQualifiedFormatted(): Attribute
     {
         return Attribute::make(
@@ -329,7 +328,8 @@ trait QuoteModelTrait
                 ELSE 'No'
             END
         ";
-=======
+    }
+
     public function hasOneOfPaidStatus(): bool
     {
         return $this->payments && $this->payments->count() > 0 &&
@@ -402,6 +402,5 @@ trait QuoteModelTrait
         }
 
         return implode(', ', $matchedSegments);
->>>>>>> develop
     }
 }
