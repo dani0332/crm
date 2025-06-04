@@ -10,6 +10,7 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 use Closure;
 use Exception;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
@@ -51,7 +52,7 @@ class AssignLeadPipe extends BaseAllocationPipe
                             'send-rm-intro-email',
                             $previousAdvisorId,
                             $isReAssignment
-                        )->delay(now()->addSeconds(15));
+                        )->delay(Carbon::now()->addSeconds(15));
                     }
                 })->dispatch();
         } catch (Exception $e) {
