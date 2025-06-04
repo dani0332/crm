@@ -2037,6 +2037,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :currencies="currencies"
       :plan="variantPlan"
       :lifeRiders="lifeRiders"
+      :quote="quote"
       @success="onCreateVariant"
       @error="onPlanError"
     />

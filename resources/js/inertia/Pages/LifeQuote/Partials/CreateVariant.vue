@@ -8,6 +8,7 @@ const props = defineProps({
   lifeRiders: Array,
   plan: Object,
   modelValue: Boolean,
+  quote: Object,
 });
 
 const notification = useNotifications('toast');
@@ -61,14 +62,31 @@ const validatePriceRange = value => {
   return true;
 };
 
-const validatePolicyTerm = value => {
+
+const validatePolicyTerm = (value) => {
   if (!value) return true;
+
   const policyTerm = parseFloat(value);
+  if (isNaN(policyTerm)) {
+    return 'Policy term must be a number';
+  }
+
   if (policyTerm < 1 || policyTerm > 100) {
     return 'Policy term must be between 1 to 100';
   }
+
+
+  // Only validate for api plans i.e Zurich for now 
+  if(props.plan.isApi) {
+    const maxAllowedTerm = exitAge.value - clientAge;
+    if (policyTerm > maxAllowedTerm) {
+      return `Maximum Policy Term can not be more than ${maxAllowedTerm} years (Exit Age ${exitAge.value} - Client Age ${clientAge})`;
+    }
+  }
+
   return true;
 };
+
 
 const riders = props.lifeRiders.map(rider => ({
   riderId: rider.id,
@@ -351,6 +369,9 @@ const onSubmit = isValid => {
     });
 };
 
+const exitAge = ref(null);
+const clientAge = props.quote?.life_quote?.age;
+
 // Add onMounted hook to load rider data when component is mounted
 onMounted(() => {
   if (props.plan) {
@@ -410,7 +431,7 @@ onMounted(() => {
       });
     }
 
-    console.log('Final rider data:', JSON.stringify(ridersData.value));
+    exitAge.value = props.plan?.exitAge;
   }
 });
 
@@ -426,6 +447,8 @@ const validateCoverValue = value => {
   }
   return true;
 };
+
+
 </script>
 
 <template>
