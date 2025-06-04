@@ -1304,8 +1304,7 @@ class AMLService
             ->leftJoin('insurance_provider as ip', 'pqr.insurance_provider_id', '=', 'ip.id')
             ->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id')
             ->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id');
-
-        info('personalQuotes', ['personalQuotes' => $personalQuotes->get()]);
+            
         return $personalQuotes;
     }
 }
