@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsQuoteRequest;
 use App\Services\Quotes\SavingsQuoteService;
+use App\Http\Requests\SavingsPlanUpdateRequest;
 
 class SavingsQuoteController extends Controller
 {
@@ -185,5 +186,31 @@ class SavingsQuoteController extends Controller
         ];
 
         return response()->json($data, 200);
+    }
+
+    public function savingsPlanUpdateManualProcess(SavingsPlanUpdateRequest $request)
+    {
+        // Get the response from the service
+        $response = $this->savingsQuoteService->savingsPlanModify($request);
+
+        // Check if the response is a success (e.g., 200 or 201)
+        if (is_int($response) && in_array($response, [200, 201])) {
+            return response()->json([
+                'message' => 'Savings plan has been updated successfully',
+            ], 200);
+        }
+
+        // Determine the response message
+        $responseMessage = 'Unknown error';
+        if (is_object($response) && isset($response->message)) {
+            $responseMessage = $response->message;
+        } elseif (is_string($response)) {
+            $responseMessage = $response;
+        }
+
+        // Return error as JSON for API consumption
+        return response()->json([
+            'message' => 'Savings plan has not been updated. '.$responseMessage,
+        ], 400); // 400 Bad Request or any relevant error code
     }
 }

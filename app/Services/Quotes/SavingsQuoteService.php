@@ -12,12 +12,21 @@ use App\Services\LookupService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\PaymentStatusEnum;
+use App\Models\Payment;
+use App\Models\PersonalQuote;
+use App\Services\HttpRequestService;
+use App\Services\Logger\LoggerService;
+use Carbon\Carbon;
 
 class SavingsQuoteService extends BaseQuoteService
 {
-    public function __construct()
+    protected $httpService;
+
+    public function __construct(HttpRequestService $httpService)
     {
         parent::__construct(QuoteTypes::SAVINGS);
+        $this->httpService = $httpService;
     }
 
     public function getData(bool $paginted = false, bool $forExport = false, bool $getTotalCount = false)
@@ -92,7 +101,7 @@ class SavingsQuoteService extends BaseQuoteService
             'utmCampaign' => '',
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
-            'advisorId' => (! Auth::user()->hasRole(RolesEnum::Admin)) ? Auth::id() : null,
+            'advisorId' => (! $this->hasRole(Auth::user(), RolesEnum::Admin)) ? Auth::id() : null,
         ];
 
         // Make API request to save the savings quote
@@ -156,7 +165,7 @@ class SavingsQuoteService extends BaseQuoteService
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'gender',
             ]);
 
-            $quoteData['updated_by_id'] = Auth::user()->id;
+            $quoteData['updated_by_id'] = Auth::id();
             $quote->update($quoteData);
 
             $quote->savingsQuote()->updateOrCreate(
@@ -174,7 +183,7 @@ class SavingsQuoteService extends BaseQuoteService
         $data = $this->getShowCommonData($quote);
 
         return [
-            'canAddBatchNumber' => Auth::user()->hasRole(RolesEnum::SavingsManager),
+            'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
             ...$data,
         ];
     }
@@ -265,5 +274,97 @@ class SavingsQuoteService extends BaseQuoteService
 
             return $responseBodyAsString;
         }
+    }
+
+    public function savingsPlanModify($request)
+    {
+        if (($response = $this->isPlanModifyAllowed($request->all())) === true) {
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-savings-quote-plan';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
+
+            $savingsPlanData = [
+                'quoteUID' => $request->quote_uuid,
+                'update' => true, // Always true for savings plan updates
+                'url' => strval($request->current_url ?? ''),
+                'ipAddress' => request()->ip(),
+                'userAgent' => request()->header('User-Agent'),
+                'userId' => strval(auth()->id()),
+                'plans' => [
+                    [
+                        'planId' => (int) $request->plan_id,
+                        'actualPremium' => (float) ($request->actual_premium ?? 0),
+                        'isDisabled' => (bool) ($request->is_disabled ?? false),
+                        'insurerQuoteNo' => strval($request->insurer_quote_no ?? ''),
+                        'isManualUpdate' => (bool) ($request->is_manual_update ?? false),
+                    ],
+                ],
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            return $this->httpService->processRequest($savingsPlanData, $apiCreds);
+        }
+
+        return $response;
+    }
+
+    public function isPlanModifyAllowed($data)
+    {
+        $logPrefix = self::class.' fn: isPlanModifyAllowed ';
+        $quote = PersonalQuote::where('uuid', $data['quote_uuid'])->with('paymentStatus')->first();
+        LoggerService::startQuoteLogging($quote);
+
+        $isAllowed = false;
+
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            $savingsPayment = Payment::where('code', '=', $quote->code)->first();
+            if (! empty($savingsPayment->captured_at)) {
+                $paymentCapturedAt = $savingsPayment->captured_at;
+                $today = Carbon::today();
+
+                $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
+                $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
+
+                if ($this->hasRole(Auth::user(), RolesEnum::SavingsAdvisor) && $today->lte($dateLimitForAdvisor)) {
+                    info($logPrefix.' plan modify allowed to advisor and captured days diff is '.$paymentCapturedAt);
+                    $isAllowed = true;
+                } elseif ($this->hasRole(Auth::user(), RolesEnum::SavingsManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
+                    info($logPrefix.' plan modify allowed to savings manager and captured days diff is '.$paymentCapturedAt);
+                    $isAllowed = true;
+                }
+            }
+        }
+
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && $this->hasAnyRole(Auth::user(), [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager])) {
+            info($logPrefix.' plan modify allowed to advisor');
+            $isAllowed = true;
+        }
+
+        if (
+            empty($quote->payment_status_id) ||
+            (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT]) &&
+                $this->hasAnyRole(Auth::user(), [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager]))
+        ) {
+            info($logPrefix.' plan modify allowed');
+            $isAllowed = true;
+        }
+
+        if (! $isAllowed) {
+            info($logPrefix.' plan modification is not allowed');
+
+            return 'Plan Modification is not allowed';
+        }
+        LoggerService::endLogging();
+
+        return true;
     }
 }
