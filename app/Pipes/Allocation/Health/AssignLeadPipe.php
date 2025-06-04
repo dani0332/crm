@@ -11,6 +11,7 @@ use App\Pipes\Allocation\Common\BaseAllocationPipe;
 use App\Pipes\Allocation\Handlers\AllocationRequest;
 use App\Services\Logger\LoggerService;
 use Closure;
+use Exception;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class AssignLeadPipe extends BaseAllocationPipe
@@ -36,22 +37,26 @@ class AssignLeadPipe extends BaseAllocationPipe
             return;
         }
 
-        $lead = $this->lead;
+        try {
+            $lead = $this->lead;
 
-        Haystack::build()
-            ->addJob(new GetQuotePlansJob($lead))
-            ->then(function () use ($lead, $isReAssignment, $previousAdvisorId) {
-                if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::PCP])) {
-                    IntroEmailJob::dispatch(
-                        quoteTypeCode::Health,
-                        'Capi',
-                        $lead->uuid,
-                        'send-rm-intro-email',
-                        $previousAdvisorId,
-                        $isReAssignment
-                    )->delay(now()->addSeconds(15));
-                }
-            })->dispatch();
+            Haystack::build()
+                ->addJob(new GetQuotePlansJob($lead))
+                ->then(function () use ($lead, $isReAssignment, $previousAdvisorId) {
+                    if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::PCP])) {
+                        IntroEmailJob::dispatch(
+                            quoteTypeCode::Health,
+                            'Capi',
+                            $lead->uuid,
+                            'send-rm-intro-email',
+                            $previousAdvisorId,
+                            $isReAssignment
+                        )->delay(now()->addSeconds(15));
+                    }
+                })->dispatch();
+        } catch (Exception $e) {
+            LoggerService::error($e->getMessage(), exception: $e);
+        }
     }
 
     protected function updateQuoteDetail()
