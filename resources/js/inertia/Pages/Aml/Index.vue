@@ -236,6 +236,17 @@ const quoteTypeOptions = computed(() =>
 );
 
 function downloadAmlCtfReport() {
+  resetCustomErrors();
+  const daysDifference = calculateDaysDifference(
+    filtersForm.amlCreatedStartDate,
+    filtersForm.amlCreatedEndDate,
+  );
+  if (daysDifference > 30) {
+    customErrors.amlCreatedStartDate =
+      'Allowed no. of days between start & end dates are 30 days.';
+    return;
+  }
+
   const exportData = {};
   Object.keys(availableFilters).forEach(key => {
     exportData[key] = filtersForm[key];
@@ -347,7 +358,7 @@ onMounted(() => {
           :disabled="loader.export"
           :loading="loader.export"
         >
-          Export aml ctf report
+          Export AML Risk Score Report
         </x-button>
         <x-button
           size="sm"

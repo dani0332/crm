@@ -49,6 +49,7 @@ class AmlCftReportExport implements FromCollection, WithHeadings, WithMapping, W
                 'Customer EID No/Trade license',
                 'Customer Type',
                 'Resident/Non-Resident customer',
+                'Risk Score',
                 'Customer Risk Profile (High /Medium/Low)',
                 'Insurance Policy Number',
                 'Type of insurance Policy',
@@ -79,6 +80,7 @@ class AmlCftReportExport implements FromCollection, WithHeadings, WithMapping, W
             isset($item->customer_id)
                 ? ($item->residential_status === 'uaeResident' || $item->customer_is_uae_resident === 1 ? 'Resident' : 'Non-Resident')
                 : 'Non-Resident',
+            $item->risk_score ?? '',
             is_null($item->risk_score) ? 'N/A' : ($item->risk_score <= 25 ? 'Low' : ($item->risk_score <= 34 && $item->risk_score >= 26 ? 'Medium' : 'High')),
             $item->policy_number ?? '',
             $quoteTypeName,

@@ -16,6 +16,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
@@ -1144,7 +1145,6 @@ class AMLService
         $personalQuotes = $personalQuotesone->union($personalQuotestwo);
         $personalQuotes = $personalQuotes->orderByRaw('COALESCE(first_name, customer_first_name) IS NULL, COALESCE(first_name, customer_first_name) ASC');
         $collection = $personalQuotes->get();
-
         // Calculate summary
         $totalCustomers = $collection->count();
         $lowRisk = $collection->where('risk_score', '>=', 0)->where('risk_score', '<=', 25)->count();
@@ -1168,13 +1168,15 @@ class AMLService
     {
 
         $quoteTypes = [
-            QuoteTypes::BIKE->value,
-            QuoteTypes::CYCLE->value,
-            QuoteTypes::JETSKI->value,
-            QuoteTypes::PET->value,
-            QuoteTypes::YACHT->value,
-            QuoteTypes::HOME->value,
+            QuoteTypes::BIKE,
+            QuoteTypes::CYCLE,
+            QuoteTypes::JETSKI,
+            QuoteTypes::PET,
+            QuoteTypes::YACHT,
+            QuoteTypes::HOME,
         ];
+
+        $quoteTypeIds = array_map(fn($type) => $type->id(), $quoteTypes);
 
         $personalQuotes = DB::table('personal_quotes as pqr')->select(
             'pqr.id',
@@ -1210,12 +1212,14 @@ class AMLService
             'kl.is_owner_pep as is_owner_pep',
         )
             ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
-            ->whereBetween('pqr.created_at', dateQueryFilter($startDate, $endDate))
-            ->when(isset($request->searchType) && $request->searchType === 'cdbId', function ($query) use ($request) {
-                $query->where('pqr.code', $request->code);
+            ->when(isset($startDate) && isset($endDate), function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('pqr.created_at', [$startDate, $endDate]);
             })
             ->when(isset($request->searchType) && $request->searchType === 'customerEmail', function ($query) use ($request) {
-                $query->where('pqr.email', $request->email);
+                $query->where('pqr.email', $request->searchField);
+            })
+            ->when(isset($request->searchType) && $request->searchType === 'cdbId', function ($query) use ($request) {
+                $query->where('pqr.code', $request->searchField);
             });
 
         $latestKycLogSub = function ($query) {
@@ -1226,62 +1230,64 @@ class AMLService
         };
 
         if ($request->quoteType) {
-            $personalQuotes = $personalQuotes->where('pqr.quote_type_id', $request->quoteType);
-            $isQuoteTypePresent = in_array($request->quoteType, $quoteTypes);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quoteType));
+            $personalQuotes = $personalQuotes->where('pqr.quote_type_id', $quoteTypeId);
+
+            $isQuoteTypePresent = checkPersonalQuotes($request->quoteType);
+
             if ($isQuoteTypePresent) {
-                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($request) {
+                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeId) {
                     $join->on('pqr.id', '=', 'ci.quote_request_id')
-                        ->where('ci.quote_type_id', $request->quoteType);
+                        ->where('ci.quote_type_id', $quoteTypeId);
                 });
-                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($request) {
-                    $join->on('pqr.id', '=', 'cm.quote_request_id')
-                        ->where('cm.quote_type_id', $request->quoteType);
+                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($quoteTypeId) {
+                    $join->on('pqr.id', '=', 'cm.quote_id')
+                        ->where('cm.quote_type', $quoteTypeId);
                 });
-                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($request) {
+                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeId) {
                     $join->on('kl.quote_request_id', '=', 'pqr.id')
-                        ->where('kl.quote_type_id', $request->quoteType);
+                        ->where('kl.quote_type_id', $quoteTypeId);
                 });
             } else {
-                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($request) {
+                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeId) {
                     $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
-                        ->where('ci.quote_type_id', $request->quoteType);
+                        ->where('ci.quote_type_id', $quoteTypeId);
                 });
-                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($request) {
-                    $join->on('pqr.quote_id', '=', 'cm.quote_request_id')
-                        ->where('cm.quote_type_id', $request->quoteType);
+                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($quoteTypeId) {
+                    $join->on('pqr.quote_id', '=', 'cm.quote_id')
+                        ->where('cm.quote_type', $quoteTypeId);
                 });
-                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($request) {
+                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeId) {
                     $join->on('kl.quote_request_id', '=', 'pqr.quote_id')
-                        ->where('kl.quote_type_id', $request->quoteType);
+                        ->where('kl.quote_type_id', $quoteTypeId);
                 });
             }
         } else {
-
             if ($is_sync_quote) {
-                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypes) {
+                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeIds) {
                     $join->on('pqr.quote_id', '=', 'ci.quote_request_id')
-                        ->whereNotIn('ci.quote_type_id', $quoteTypes);
+                        ->whereNotIn('ci.quote_type_id', $quoteTypeIds);
                 });
-                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($quoteTypes) {
+                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($quoteTypeIds) {
                     $join->on('pqr.quote_id', '=', 'cm.quote_id')
-                        ->whereNotIn('cm.quote_type', $quoteTypes);
+                        ->whereNotIn('cm.quote_type', $quoteTypeIds);
                 });
-                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypes) {
+                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeIds) {
                     $join->on('kl.quote_request_id', '=', 'pqr.quote_id')
-                        ->whereNotIn('kl.quote_type_id', $quoteTypes);
+                        ->whereNotIn('kl.quote_type_id', $quoteTypeIds);
                 });
             } else {
-                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypes) {
+                $personalQuotes->leftJoin('customer_insured as ci', function ($join) use ($quoteTypeIds) {
                     $join->on('pqr.id', '=', 'ci.quote_request_id')
-                        ->whereIn('ci.quote_type_id', $quoteTypes);
+                        ->whereIn('ci.quote_type_id', $quoteTypeIds);
                 });
-                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($quoteTypes) {
+                $personalQuotes->leftJoin('customer_members as cm', function ($join) use ($quoteTypeIds) {
                     $join->on('pqr.id', '=', 'cm.quote_id')
-                        ->whereIn('cm.quote_type', $quoteTypes);
+                        ->whereIn('cm.quote_type', $quoteTypeIds);
                 });
-                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypes) {
+                $personalQuotes->leftJoinSub($latestKycLogSub, 'kl', function ($join) use ($quoteTypeIds) {
                     $join->on('kl.quote_request_id', '=', 'pqr.quote_id')
-                        ->whereIn('kl.quote_type_id', $quoteTypes);
+                        ->whereIn('kl.quote_type_id', $quoteTypeIds);
                 });
             }
         }
@@ -1291,6 +1297,7 @@ class AMLService
             ->leftJoin('insured as i', 'i.id', '=', 'ci.insured_id')
             ->leftJoin('insured_kyc as ik', 'i.id', '=', 'ik.insured_id');
 
+        info('personalQuotes', ['personalQuotes' => $personalQuotes->get()]);
         return $personalQuotes;
     }
 }
