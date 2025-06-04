@@ -830,7 +830,7 @@ class AMLController extends Controller
 
         if ($existingEntityMapping) {
             $previousEntity = $existingEntityMapping->entity;
-            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id])->count();
+            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id ?? null])->count();
             // Reminder:: This is Jawad change for car commercial quote
             if ($entityMappingCount === 0 && empty($previousEntity->trade_license_no)) {
                 $previousEntity->delete();
