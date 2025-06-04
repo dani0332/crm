@@ -42,7 +42,14 @@ class AssignLeadPipe extends BaseAllocationPipe
             ->addJob(new GetQuotePlansJob($lead))
             ->then(function () use ($lead, $isReAssignment, $previousAdvisorId) {
                 if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::PCP])) {
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReAssignment)->delay(now()->addSeconds(15));
+                    IntroEmailJob::dispatch(
+                        quoteTypeCode::Health,
+                        'Capi',
+                        $lead->uuid,
+                        'send-rm-intro-email',
+                        $previousAdvisorId,
+                        $isReAssignment
+                    )->delay(now()->addSeconds(15));
                 }
             })->dispatch();
     }
