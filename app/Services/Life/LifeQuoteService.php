@@ -711,10 +711,8 @@ class LifeQuoteService extends BaseService
 
     function getRiderDetails($planId)
     {
-        $riderDetails = LifePlanRider::with(['riderOption' => function($q){
-            $q->select('rider_id', 'input_type', 'range_minimum', 'range_maximum', 'currency_id');
-        }])->where('plan_id', $planId)->get(); 
-
+        $riderDetails = LifePlanRider::inActive()->
+        with(['riderOption'])->where('plan_id', $planId)->get(); 
         return $riderDetails;
     }
 

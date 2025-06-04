@@ -20,6 +20,16 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
+// Add watch for modal visibility to call getRiderDetails when opened
+watch(
+  () => shown.value,
+  (newVal) => {
+    if (newVal && props.plan?.planId) {
+      getRiderDetails(props.plan.planId);
+    }
+  }
+);
+
 const preventInvalidInputs = (e, allowDecimals = true) => {
   const invalidChars = ['e', '-'];
   if (!allowDecimals) {
@@ -227,33 +237,34 @@ watch(
 );
 
 const getQuote = () => {
+  submitType.value = 'getQuote';
   createForm.getQuoteLoading = true;
 
   const policyTermValidation = validatePolicyTerm(createForm.policyTerm);
   const sumAssuredValidation = validatePriceRange(createForm.sumAssured);
 
-  // validate policy term
-  if (policyTermValidation !== true) {
-    createForm.getQuoteLoading = false;
+  // // validate policy term
+  // if (policyTermValidation !== true) {
+  //   createForm.getQuoteLoading = false;
 
-    notification.error({
-      title: policyTermValidation,
-      position: 'top',
-    });
-    return;
-  }
+  //   notification.error({
+  //     title: policyTermValidation,
+  //     position: 'top',
+  //   });
+  //   return;
+  // }
 
-  // validate sum assured
-  if (sumAssuredValidation !== true) {
-    createForm.getQuoteLoading = false;
+  // // validate sum assured
+  // if (sumAssuredValidation !== true) {
+  //   createForm.getQuoteLoading = false;
 
-    notification.error({
-      title: sumAssuredValidation,
-      position: 'top',
-    });
+  //   notification.error({
+  //     title: sumAssuredValidation,
+  //     position: 'top',
+  //   });
 
-    return;
-  }
+  //   return;
+  // }
 
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
@@ -300,6 +311,7 @@ const getQuote = () => {
         );
         errorMessage.value = null;
       }
+      
     })
     .catch(err => {
       errorMessage.value = err.response.data.message;
@@ -308,6 +320,24 @@ const getQuote = () => {
       createForm.getQuoteLoading = false;
     });
 };
+
+const submitType = ref('getQuote');
+
+const handleSubmit = isValid => {
+  if (!isValid) {
+    return;
+  }
+ 
+  if(submitType.value === 'getQuote') {
+    getQuote();
+    
+  } else {
+    onSubmit();
+    console.log('onSubmit');
+  }
+}
+
+
 
 const onSubmit = isValid => {
   if (!isValid) {
@@ -369,12 +399,41 @@ const onSubmit = isValid => {
     });
 };
 
+
 const exitAge = ref(null);
 const clientAge = props.quote?.life_quote?.age;
+const riderOptions = ref([]); 
+
+const getRiderDetails = async (planId) => {
+  try {
+    const res = await axios.get(`/personal-quotes/life/rider-details/${planId}`);
+
+    // Clear existing options if needed
+    riderOptions.value = [];
+
+    // Loop through the data
+    res.data.forEach(item => {
+      console.log('Item:', item);
+      if (item.rider_option) {
+          const { currency_id, range_minimum, range_maximum } = item.rider_option;
+          riderOptions.value.push({ currency_id, range_minimum, range_maximum });
+      }
+
+      console.log('Rider options:', riderOptions.value);
+    });
+
+  } catch (error) {
+    console.error('Error fetching rider details:', error);
+  }
+};
+
+
 
 // Add onMounted hook to load rider data when component is mounted
 onMounted(() => {
+
   if (props.plan) {
+    
 
     // Initialize form data from plan
     createForm.providerId = props.plan.providerId;
@@ -395,12 +454,7 @@ onMounted(() => {
     }
 
     // Handle rider data initialization
-    if (
-      props.plan.riders &&
-      Array.isArray(props.plan.riders) &&
-      props.plan.riders.length > 0
-    ) {
-      console.log('Using riders from plan:', JSON.stringify(props.plan.riders));
+    if (props.plan.riders && Array.isArray(props.plan.riders) && props.plan.riders.length > 0) {
       ridersData.value = props.plan.riders.map(rider => {
         const mappedRider = {
           riderId: rider.id,
@@ -409,14 +463,10 @@ onMounted(() => {
           coverValue: Math.max(0, parseFloat(rider.coverValue) || 0),
           text: rider.text || rider.name,
         };
-        console.log('Mapped rider:', mappedRider);
         return mappedRider;
       });
     } else {
-      console.log(
-        'No riders in plan, using lifeRiders:',
-        JSON.stringify(props.lifeRiders),
-      );
+      
       ridersData.value = props.lifeRiders.map(rider => {
         const mappedRider = {
           riderId: rider.id,
@@ -430,11 +480,10 @@ onMounted(() => {
       });
     }
 
-    exitAge.value = props.plan?.exitAge;
+    getRiderDetails(props.plan.planId);
+    exitAge.value = props.plan?.exitAge; 
   }
 });
-
-
 
 // Add validation for non-negative numbers
 const isNonNegative = value => {
@@ -460,7 +509,7 @@ const validateCoverValue = value => {
     show-close
     backdrop
     is-form
-    @submit="onSubmit"
+    @submit="handleSubmit"
   >
     <div class="mx-auto p-6 bg-white rounded-lg">
       <h2
@@ -578,7 +627,7 @@ const validateCoverValue = value => {
           <x-input
             v-model="createForm.actualPremium"
             placeholder="Enter Price"
-            :rules="[isRequired, isNonNegative, validatePriceRange]"
+            :rules="submitType === 'getQuote' ? [isNonNegative, validatePriceRange] : [isRequired, isNonNegative, validatePriceRange]"
             class="w-full"
             type="number"
             min="0"
@@ -681,7 +730,7 @@ const validateCoverValue = value => {
         <div class="flex-shrink-0 flex justify-end">
           <x-button class="mr-2" @click="shown = false"> Cancel </x-button>
           <x-button
-            @click="getQuote"
+            type="submit"
             v-if="!createForm.actualPremium && plan.isApi"
             color="emerald"
             :loading="createForm.getQuoteLoading"

@@ -219,7 +219,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::get('personal-quotes/life/cards', [LifeController::class, 'cardsView'])->name('life-quotes-card');
         Route::post('personal-quotes/life/load-more-cards', [LifeController::class, 'getCardsViewLoadMore'])->name('life-quotes-load-more-cards');
-        Route::get('personal-quotes/life/rider-details', [LifeController::class, 'riderDetails'])->name('life-plan-rider-details');
+        Route::get('personal-quotes/life/rider-details/{planId}', [LifeController::class, 'riderDetails'])->name('life-plan-rider-details');
         
         Route::resource('personal-quotes/life', LifeController::class)->names(generateRouteNames('life-quotes'));
 

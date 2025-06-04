@@ -15,6 +15,16 @@ class LifePlanRider extends Model
 
     public function riderOption()
     {
-        return $this->belongsTo(LifeRiderOption::class, 'rider_id');
+        return $this->belongsTo(LifeRiderOption::class, 'rider_id'); 
+    }
+
+    function scopeActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
+    function scopeInActive($query)
+    {
+        return $query->where('is_active', 0);
     }
 }
