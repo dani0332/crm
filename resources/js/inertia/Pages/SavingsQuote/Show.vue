@@ -327,7 +327,6 @@ const selectedPlanType = ref(null);
 const toggleLoader = ref(false);
 const viewButtonLoading = ref(false);
 const planDetails = ref(null);
-const exportLoader = ref(false);
 
 // Form for individual plan updates
 const planForm = useForm({
@@ -600,52 +599,6 @@ const onUpdateIndividualPlan = () => {
       });
     },
   });
-};
-
-const onExportPlans = () => {
-  if (selectedPlans.value.length === 0) {
-    notification.error({
-      title: 'Please select at least one plan to export',
-      position: 'top',
-    });
-    return;
-  }
-
-  exportLoader.value = true;
-
-  const planIds = selectedPlans.value.map(plan => plan.id);
-
-  axios
-    .post(route('exportPlans', { quoteType: 'savings' }), {
-      modelType: 'Savings',
-      planIds: planIds,
-      quote_uuid: page.props.quote.uuid,
-    })
-    .then(response => {
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `savings-plans-${page.props.quote.code}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
-      notification.success({
-        title: 'Plans exported successfully',
-        position: 'top',
-      });
-    })
-    .catch(error => {
-      notification.error({
-        title: 'Error exporting plans',
-        position: 'top',
-      });
-    })
-    .finally(() => {
-      exportLoader.value = false;
-    });
 };
 
 const sendOCBEmail = () => {
@@ -1348,15 +1301,7 @@ const sendOCBEmail = () => {
                   Hide
                 </x-button>
               </x-button-group>
-              <x-button
-                v-if="selectedPlans.length > 0"
-                size="sm"
-                color="emerald"
-                @click.prevent="onExportPlans"
-                :loading="exportLoader"
-              >
-                Download PDF
-              </x-button>
+
               <x-tooltip placement="top" align="left">
                 <x-button
                   @click.prevent="modals.sendConfirm = true"
