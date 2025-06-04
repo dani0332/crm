@@ -186,6 +186,12 @@ class LifeController extends Controller
         return response()->json(['providerPlan' => $providerPlan]);
     }
 
+    function riderDetails(Request $request)
+    {
+        $riderDetails = $this->lifeQuoteService->getRiderDetails($request->planId);
+        return response()->json(['riderDetails' => $riderDetails]);
+    }
+
     public function comparisionPdf()
     {
 

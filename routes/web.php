@@ -219,15 +219,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::get('personal-quotes/life/cards', [LifeController::class, 'cardsView'])->name('life-quotes-card');
         Route::post('personal-quotes/life/load-more-cards', [LifeController::class, 'getCardsViewLoadMore'])->name('life-quotes-load-more-cards');
-
+        Route::get('personal-quotes/life/rider-details', [LifeController::class, 'riderDetails'])->name('life-plan-rider-details');
+        
         Route::resource('personal-quotes/life', LifeController::class)->names(generateRouteNames('life-quotes'));
 
         Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
         Route::post('personal-quotes/life-plan-manual-create', [LifeController::class, 'lifePlanCreateQuote']);
         Route::post('personal-quotes/life-plan-update', [LifeController::class, 'lifePlanUpdate']);
         Route::post('personal-quotes/life-plan-selected', [LifeController::class, 'lifePlanSelected']);
-
         Route::post('personal-quotes/get-life-provider-plan', [LifeController::class, 'getLifeProviderPlan']);
+        Route::get('personal-quotes/life/provider-plans/{providerId}', [LifeController::class, 'getProviderPlans'])->name('life-provider-plans');
 
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
 

@@ -375,7 +375,6 @@ const clientAge = props.quote?.life_quote?.age;
 // Add onMounted hook to load rider data when component is mounted
 onMounted(() => {
   if (props.plan) {
-    console.log('Plan data:', props.plan);
 
     // Initialize form data from plan
     createForm.providerId = props.plan.providerId;
@@ -434,6 +433,8 @@ onMounted(() => {
     exitAge.value = props.plan?.exitAge;
   }
 });
+
+
 
 // Add validation for non-negative numbers
 const isNonNegative = value => {

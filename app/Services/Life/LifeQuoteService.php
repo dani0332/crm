@@ -44,6 +44,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
+use App\Models\LifePlanRider;
 use DB;
 use Illuminate\Support\Arr;
 use PDF;
@@ -706,6 +707,15 @@ class LifeQuoteService extends BaseService
         ])->loadView('pdf.life.comparision_pdf', compact('quote', 'planIds', 'lifePlans'));
 
         return ['pdf' => $pdf, 'name' => $this->generatePdfFilename($quote)];
+    }
+
+    function getRiderDetails($planId)
+    {
+        $riderDetails = LifePlanRider::with(['riderOption' => function($q){
+            $q->select('rider_id', 'input_type', 'range_minimum', 'range_maximum', 'currency_id');
+        }])->where('plan_id', $planId)->get(); 
+
+        return $riderDetails;
     }
 
     private function generatePdfFilename($quote): string
