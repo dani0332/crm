@@ -6,18 +6,16 @@ namespace App\Exports;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
-use App\Models\QuoteType;
 use App\Services\AMLService;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 
-class AmlCftReportExport implements FromCollection, WithHeadings, WithMapping, WithEvents
+class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, WithMapping
 {
-    
     use Exportable;
 
     protected array $summary;
@@ -70,10 +68,10 @@ class AmlCftReportExport implements FromCollection, WithHeadings, WithMapping, W
     {
         // Ensure QuoteTypes::getName returns a string (the enum value)
         $quoteType = QuoteTypes::getName($item->quote_type_id);
-        $quoteTypeName = $quoteType ? ($quoteType->value ?? (string)$quoteType) : '';
+        $quoteTypeName = $quoteType ? ($quoteType->value ?? (string) $quoteType) : '';
 
         return [
-            isset($item->first_name) ? trim(($item->first_name ?? '') . ' ' . ($item->last_name ?? '')) : trim(($item->customer_first_name ?? '') . ' ' . ($item->customer_last_name ?? '')),
+            isset($item->first_name) ? trim(($item->first_name ?? '').' '.($item->last_name ?? '')) : trim(($item->customer_first_name ?? '').' '.($item->customer_last_name ?? '')),
             $item->code ?? '',
             $item->emirates_id ?? '',
             $item->customer_type ?? '',
@@ -123,17 +121,17 @@ class AmlCftReportExport implements FromCollection, WithHeadings, WithMapping, W
                 $sheet->getStyle("B{$lastRow}:D{$lastRow}")->getFont()->setBold(true);
                 $sheet->getStyle("B{$lastRow}:D{$lastRow}")->getFill()->setFillType('solid')->getStartColor()->setARGB('FFFFFF00');
 
-                $sheet->setCellValue("B" . ($lastRow + 1), 'High Risk Customers');
-                $sheet->setCellValue("D" . ($lastRow + 1), $this->summary['high_risk'] ?? '');
-                $sheet->setCellValue("B" . ($lastRow + 2), 'Medium Risk Customers');
-                $sheet->setCellValue("D" . ($lastRow + 2), $this->summary['medium_risk'] ?? '');
-                $sheet->setCellValue("B" . ($lastRow + 3), 'Low Risk Customers');
-                $sheet->setCellValue("D" . ($lastRow + 3), $this->summary['low_risk'] ?? '');
+                $sheet->setCellValue('B'.($lastRow + 1), 'High Risk Customers');
+                $sheet->setCellValue('D'.($lastRow + 1), $this->summary['high_risk'] ?? '');
+                $sheet->setCellValue('B'.($lastRow + 2), 'Medium Risk Customers');
+                $sheet->setCellValue('D'.($lastRow + 2), $this->summary['medium_risk'] ?? '');
+                $sheet->setCellValue('B'.($lastRow + 3), 'Low Risk Customers');
+                $sheet->setCellValue('D'.($lastRow + 3), $this->summary['low_risk'] ?? '');
 
-                $sheet->setCellValue("A" . ($lastRow + 9), 'Note:');
-                $sheet->setCellValue("B" . ($lastRow + 9), '"This report contains sensitive personal data. Do not share externally. For compliance use only."');
-                $sheet->getStyle("B" . ($lastRow + 9))->getFont()->setBold(true);
-            }
+                $sheet->setCellValue('A'.($lastRow + 9), 'Note:');
+                $sheet->setCellValue('B'.($lastRow + 9), '"This report contains sensitive personal data. Do not share externally. For compliance use only."');
+                $sheet->getStyle('B'.($lastRow + 9))->getFont()->setBold(true);
+            },
         ];
     }
-} 
+}
