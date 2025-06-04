@@ -1143,7 +1143,6 @@ class AMLService
 
     public function updateAMLStatusAgainstDecision($request, $quoteObject)
     {
-        LoggerService::startQuoteLogging($quoteObject);
         LoggerService::info(self::class.' - '.__FUNCTION__);
 
         $fetchKycLog = KycLog::where('id', $request['aml_id'])->withTrashed();
