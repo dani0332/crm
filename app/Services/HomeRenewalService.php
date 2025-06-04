@@ -121,15 +121,11 @@ class HomeRenewalService extends RenewalsUploadService
             
             $customerData =   $this->buildCustomerData($data);
 
-            $isReAssignment = $quote->advisor_id != $advisorId;
-
             $this->updateCustomer($quote, $customerData);
 
+            $isReAssignment = $quote->advisor_id != $advisorId;
+
             $quoteData = [
-                'first_name' => $customerData['first_name'],
-                'last_name' => $customerData['last_name'],
-                'email' => $customerData['email'],
-                'mobile_no' => $customerData['mobile_no'],
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                 'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'advisor_id' => $advisorId,
@@ -138,6 +134,22 @@ class HomeRenewalService extends RenewalsUploadService
                 'notes' => $data['notes'],
                 'insurer_quote_number' => (! empty($data['insurer_quote_no'])) ? $data['insurer_quote_no'] : null,
             ];
+
+            if (!empty($customerData['first_name'])) {
+                $quoteData['first_name'] = $customerData['first_name'];
+            }
+            
+            if (!empty($customerData['last_name'])) {
+                $quoteData['last_name'] = $customerData['last_name'];
+            }
+            
+            if (!empty($customerData['email'])) {
+                $quoteData['email'] = $customerData['email'];
+            }
+
+            if (!empty($customerData['mobile_no'])) {
+                $quoteData['mobile_no'] = $customerData['mobile_no'];
+            }
 
             LoggerService::info($logPrefix.' quote data setup to update');
             
