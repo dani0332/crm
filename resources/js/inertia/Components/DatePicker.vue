@@ -90,7 +90,7 @@ const iconPosition = computed(() => {
     :range="range"
     text-input
   >
-    <template #dp-input="{ value, onEnter, onTab, onBlur, onInput }">
+    <template #dp-input="{ value, onEnter, onTab, onBlur, onInput, onPaste }">
       <x-input
         :model-value="value"
         :label="props.label"
@@ -104,8 +104,9 @@ const iconPosition = computed(() => {
         :placeholder="props.placeholder"
         :hide-footer="props.hideFooter"
         @keydown.tab="onTab"
-        @update:modelValue="onInput"
+        @change="onInput"
         @blur="onBlur"
+        @paste="onPaste"
         @keydown.enter.prevent="onEnter"
         :error="props.error"
         :required="props.required"
