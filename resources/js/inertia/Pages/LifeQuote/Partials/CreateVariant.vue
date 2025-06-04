@@ -20,6 +20,10 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
+const getCurrencyId = (currencyCode) => {
+  return props.currencies.find(currency => currency.text === currencyCode)?.id;
+}
+
 // Add watch for modal visibility to call getRiderDetails when opened
 watch(
   () => shown.value,
@@ -415,8 +419,13 @@ const getRiderDetails = async (planId) => {
     res.data.forEach(item => {
       console.log('Item:', item);
       if (item.rider_option) {
-          const { currency_id, range_minimum, range_maximum } = item.rider_option;
-          riderOptions.value.push({ currency_id, range_minimum, range_maximum });
+          const { rider_id, currency_id, range_minimum, range_maximum } = item.rider_option;
+          riderOptions.value.push({ 
+            riderId: rider_id, 
+            currency_id, 
+            range_minimum, 
+            range_maximum 
+          });
       }
 
       console.log('Rider options:', riderOptions.value);
@@ -492,12 +501,39 @@ const isNonNegative = value => {
 };
 
 const validateCoverValue = value => {
+  if (props.plan.isApi) return true;
   if (parseFloat(value) > parseFloat(createForm.sumAssured)) {
     return `Cover value must not exceed ${createForm.sumAssured}`;
   }
   return true;
 };
 
+const validateRiderCoverValue = (value, riderId) => {
+  // First check if it's an API plan
+  if (!props.plan?.isApi) return true;
+  
+  // Skip validation if value is empty
+  if (!value) return true;
+  
+  let selectedCurrencyId = getCurrencyId(createForm.currency);
+
+  // Find matching rider option by rider ID
+  const matchingOption = riderOptions.value.find(option => option.riderId === riderId && option.currency_id === selectedCurrencyId);
+  
+  if (matchingOption) {
+    const numValue = parseFloat(value);
+    
+    if (matchingOption.range_minimum && numValue < parseFloat(matchingOption.range_minimum)) {
+      return `Minimum value allowed is ${matchingOption.range_minimum}`;
+    }
+    
+    if (matchingOption.range_maximum && numValue > parseFloat(matchingOption.range_maximum)) {
+      return `Maximum value allowed is ${matchingOption.range_maximum}`;
+    }
+  }
+  
+  return true;
+};
 
 </script>
 
@@ -692,7 +728,7 @@ const validateCoverValue = value => {
             type="number"
             :rules="
               rider.active
-                ? [isNonNegative, validateCoverValue, isRequired]
+                ? [isNonNegative, validateCoverValue, isRequired, (val) => validateRiderCoverValue(val, rider.riderId)]
                 : []
             "
             step="any"
