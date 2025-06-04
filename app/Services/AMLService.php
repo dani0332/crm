@@ -45,6 +45,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteMemberDetail;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
@@ -1139,5 +1140,29 @@ class AMLService
         });
 
         return $data;
+    }
+
+    public function updateAMLStatusAgainstDecision($request, $quoteObject)
+    {
+        LoggerService::startQuoteLogging($quoteObject);
+        LoggerService::info(self::class.' - '.__FUNCTION__);
+
+        $fetchKycLog = KycLog::where('id', $request['aml_id'])->withTrashed();
+        $fetchKycLog->update([
+            'decision' => $request['aml_decision'] ?? '',
+            'notes' => trim($request['notes']) ?? '',
+            'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
+            'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
+            'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
+        ]);
+
+        $kycLog = $fetchKycLog->first();
+        $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? QuoteStatusEnum::AMLScreeningFailed : QuoteStatusEnum::AMLScreeningCleared;
+
+        $quoteObject->aml_status = $amlStatus;
+        $quoteObject->save();
+
+        return $amlStatus == QuoteStatusEnum::AMLScreeningCleared ? 
+                            AMLStatusCode::getName(AMLStatusCode::AMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::AMLScreeningFailed);
     }
 }

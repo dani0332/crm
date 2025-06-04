@@ -306,20 +306,15 @@ class AMLController extends Controller
             request()->merge(['ref_id' => $quoteObject->code]);
             $response = AMLService::updateAMLDecisionLexisNexis(request());
             if ($response['status'] == 'success') {
-                $updateQuoteStatusResp = app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
-
-                $responseMessage = ['status' => 'success', 'message' => 'Quote Status Updated'];
-                $quoteStatusText = $updateQuoteStatusResp['quote_status_text'];
-                $quoteCdbId = $updateQuoteStatusResp['quote_ref_id'];
-                $quoteTypeText = $updateQuoteStatusResp['quote_type_text'];
-                $quotePaID = $updateQuoteStatusResp['pa_id'];
-                $clientFullName = $updateQuoteStatusResp['client_name'];
+                $clientFullName = $quoteObject->first_name.' '.$quoteObject->last_name;
+                $updatedAMLStatus = app(AMLService::class)->updateAMLStatusAgainstDecision(\request()->toArray(), $quoteObject);
+                $responseMessage = ['status' => 'success', 'message' => 'AML Status Updated'];
 
                 if (
                     auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
-                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
                 }
 
                 $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];
