@@ -1145,8 +1145,6 @@ class AMLService
         $personalQuotes = $personalQuotes->orderByRaw('COALESCE(first_name, customer_first_name) IS NULL, COALESCE(first_name, customer_first_name) ASC');
         $collection = $personalQuotes->get();
 
-        info($collection->toArray());
-
         // Calculate summary
         $totalCustomers = $collection->count();
         $lowRisk = $collection->where('risk_score', '>=', 0)->where('risk_score', '<=', 25)->count();

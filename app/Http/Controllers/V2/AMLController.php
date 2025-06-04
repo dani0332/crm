@@ -1109,15 +1109,7 @@ class AMLController extends Controller
      */
     public function amlCtfReportExport()
     {
-        $summary = [
-            'total_customers' => 1122,
-            'high_risk' => 210,
-            'medium_risk' => 345,
-            'low_risk' => 567,
-        ];
-
         $fileName = 'AML_CTF_Report_' . now()->format('Ymd_His') . '.xlsx';
-        info($fileName);
-        return (new AmlCftReportExport($summary))->download($fileName);
+        return (new AmlCftReportExport())->download($fileName);
     }
 }
