@@ -127,7 +127,6 @@ class HomeRenewalService extends RenewalsUploadService
 
             $quoteData = [
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
-                'previous_policy_start_date' => (! empty($data['start_date'])) ? $this->formatDate($data['start_date']) : null,
                 'advisor_id' => $advisorId,
                 'assignment_type' => $advisorId ? ($isReAssignment ? AssignmentTypeEnum::SYSTEM_REASSIGNED : AssignmentTypeEnum::SYSTEM_ASSIGNED) : null,
                 'renewal_batch_id' => $renewalQuoteProcess->renewal_batch_id,
@@ -149,6 +148,10 @@ class HomeRenewalService extends RenewalsUploadService
 
             if (!empty($customerData['mobile_no'])) {
                 $quoteData['mobile_no'] = $customerData['mobile_no'];
+            }
+
+            if (!empty($data['start_date'])) {
+                $quoteData['previous_policy_start_date'] = $this->formatDate($data['start_date']);
             }
 
             LoggerService::info($logPrefix.' quote data setup to update');
