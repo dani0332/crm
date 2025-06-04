@@ -1157,7 +1157,7 @@ class AMLService
         ]);
 
         $kycLog = $fetchKycLog->first();
-        $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? QuoteStatusEnum::AMLScreeningFailed : QuoteStatusEnum::AMLScreeningCleared;
+        $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? AMLStatusCode::AMLScreeningFailed : AMLStatusCode::AMLScreeningCleared;
 
         $quoteObject->aml_status = $amlStatus;
         $quoteObject->save();
