@@ -86,7 +86,7 @@ class AmlCftReportExport implements FromCollection, WithEvents, WithHeadings, Wi
             $item->premium,
             $item->insurance_provider ?? '',
             $item->policy_start_date ?? '',
-            $item->policy_end_date ?? '',
+            $item->policy_expiry_date ?? '',
             $item->lead_status ?? '',
             $item->is_owner_pep ? 'Yes' : 'No',
             $item->last_aml_screening_date ?? '',
