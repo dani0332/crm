@@ -193,22 +193,22 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($quoteId) && $quoteId != '') {
-            $partialQuery->where("{$alias}.uuid", $quoteId);
+            $partialQuery->where('pqr.uuid', $quoteId);
         }
 
         if (isset($request->email) && $request->email != '') {
-            $partialQuery->where('email', $request->email);
+            $partialQuery->where('pqr.email', $request->email);
         }
 
         if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $partialQuery->where('mobile_no', $request->mobile_no);
+            $partialQuery->where('pqr.mobile_no', $request->mobile_no);
         }
 
         if (! empty($request->chat_initiated_at) && $request->email == null && $request->mobile_no == null && $quoteId == null) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request->chat_initiated_at[1]));
 
-            $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
+            $partialQuery->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
         }
 
         if ($request->email == null && $request->mobile_no == null && $quoteId == null && empty($request->chat_initiated_at)) {
@@ -216,35 +216,35 @@ class InstantAlfredService extends BaseService
             $dateFrom = now()->startOfDay();
             $dateTo = now()->endOfDay();
 
-            $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
+            $partialQuery->whereBetween('pqrd.chat_initiated_at', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->transaction_type_id) && $request->transaction_type_id != '') {
-            $partialQuery->whereIn('transaction_type_id', $request->transaction_type_id);
+            $partialQuery->whereIn('pqr.transaction_type_id', $request->transaction_type_id);
         }
 
         if (isset($request->quote_batch_id) && ! empty($request->quote_batch_id)) {
-            $partialQuery->whereIn('quote_batch_id', $request->quote_batch_id);
+            $partialQuery->whereIn('pqr.quote_batch_id', $request->quote_batch_id);
         }
 
         if (isset($request->quote_status_id) && is_array($request->quote_status_id) && count($request->quote_status_id) > 0) {
-            $partialQuery->whereIn('quote_status_id', $request->quote_status_id);
+            $partialQuery->whereIn('pqr.quote_status_id', $request->quote_status_id);
         }
 
         if (isset($request->payment_status_id) && $request->payment_status_id != '') {
-            $partialQuery->whereIn("{$alias}.payment_status_id", $request->payment_status_id);
+            $partialQuery->whereIn('pqr.payment_status_id', $request->payment_status_id);
         }
 
         if (in_array($modelType, [HealthQuote::class, CarQuote::class]) && isset($request->assigment_type) && $request->assigment_type != '') {
-            $partialQuery->where('assignment_type', $request->assigment_type);
+            $partialQuery->where('pqr.assignment_type', $request->assigment_type);
         }
 
         if (isset($request->sale_leads) && $request->sale_leads != '') {
             if ($request->sale_leads == quoteTypeCode::yesText) {
-                $partialQuery->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]);
+                $partialQuery->whereIn('pqr.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]);
             }
             if ($request->sale_leads == quoteTypeCode::noText) {
-                $partialQuery->whereNotNull('quote_status_id');
+                $partialQuery->whereNotNull('pqr.quote_status_id');
             }
         }
 

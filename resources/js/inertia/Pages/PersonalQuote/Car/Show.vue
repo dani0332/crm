@@ -2955,7 +2955,6 @@ const isCommercialVehicle = computed(() => {
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                >
                 <x-select
                   label="IS VEHICLE MODIFIED?"
                   required
