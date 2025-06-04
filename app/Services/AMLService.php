@@ -1111,6 +1111,14 @@ class AMLService
             $quoteTypeGroup = $chunk->groupBy('quote_type_id');
             foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
                 $quoteType = QuoteTypes::getName($quoteTypeId);
+
+                // Skip if quote type is not found
+                if (! $quoteType) {
+                    LoggerService::warning("Quote type not found for ID: {$quoteTypeId}");
+
+                    continue;
+                }
+
                 $nameSpace = '\\App\\Models\\';
                 $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType->value) . 'Quote';
 
