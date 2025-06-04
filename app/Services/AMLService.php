@@ -1202,13 +1202,14 @@ class AMLService
             // 'ik.risk_score',
             'ik.premium_tenure',
             'ik.transaction_volume',
-            'ik.is_owner_pep',
+            // 'ik.is_owner_pep',
             'pqr.created_at as last_aml_screening_date',
             'cm.id as customer_id',
             'cm.first_name as customer_first_name',
             'cm.last_name as customer_last_name',
             'cm.uae_resident as customer_is_uae_resident',
-            'kl.notes as remarks'
+            'kl.notes as remarks',
+            'kl.is_owner_pep as is_owner_pep',
         )
             ->where('pqr.quote_status_id', QuoteStatusEnum::PolicyBooked)
             ->whereBetween('pqr.created_at', dateQueryFilter($startDate, $endDate))
@@ -1220,7 +1221,7 @@ class AMLService
             });
 
         $latestKycLogSub = function ($query) {
-            $query->select('quote_request_id', 'decision', 'notes', 'quote_type_id')
+            $query->select('quote_request_id', 'decision', 'notes', 'quote_type_id', 'is_owner_pep')
                 ->from('kyc_logs')
                 ->where('decision', '!=', AMLDecisionStatusEnum::RYU)
                 ->where('decision', '!=', AMLDecisionStatusEnum::INSURER_AXA);
