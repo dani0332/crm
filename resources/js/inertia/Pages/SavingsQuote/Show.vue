@@ -364,7 +364,7 @@ const onLoadAvailablePlansData = async () => {
           const processedPlan = {
             ...plan,
             investmentFrequency: 'Regular',
-            currency: 'USD',
+            currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
           };
@@ -378,7 +378,7 @@ const onLoadAvailablePlansData = async () => {
           const processedPlan = {
             ...plan,
             investmentFrequency: 'Lumpsum',
-            currency: 'USD',
+            currency: plan.currencyName || 'USD',
             minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
           };
