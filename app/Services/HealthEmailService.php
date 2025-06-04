@@ -114,6 +114,19 @@ class HealthEmailService extends BaseService
         }, $documents);
     }
 
+    private function getValueFromRatesPerCopay($currentPlan, $property)
+    {
+        if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+            $ratesPerCopay = is_array($currentPlan->ratesPerCopay) ? $currentPlan->ratesPerCopay : (array) $currentPlan->ratesPerCopay;
+
+            $ratesPerCopay = collect($ratesPerCopay)->first();
+
+            return $ratesPerCopay[$property] ?? 0;
+        }
+
+        return null;
+    }
+
     private function getPlanData($currentPlan)
     {
         if (! $currentPlan || ! is_object($currentPlan) || empty((array) $currentPlan)) {
@@ -122,33 +135,16 @@ class HealthEmailService extends BaseService
 
         $plan = [];
 
-        $getDiscountPremium = function () use ($currentPlan) {
-            if ($currentPlan->discountPremium ?? null) {
-                return $currentPlan->discountPremium;
+        $getValueFromPlanOrRates = function (string $property) use ($currentPlan) {
+            if (property_exists($currentPlan, $property) && ($currentPlan->$property ?? null)) {
+                return $currentPlan->{$property};
             }
 
-            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
-                $ratesPerCopay = is_array($currentPlan->ratesPerCopay) ? $currentPlan->ratesPerCopay : (array) $currentPlan->ratesPerCopay;
-
-                $ratesPerCopay = collect($ratesPerCopay)->first();
-
-                return $ratesPerCopay['discountPremium'] ?? 0;
-            }
+            return $this->getValueFromRatesPerCopay($currentPlan, $property);
         };
 
-        $getVat = function () use ($currentPlan) {
-            if ($currentPlan->vat ?? null) {
-                return $currentPlan->vat;
-            }
-
-            if ($currentPlan && property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
-                $ratesPerCopay = is_array($currentPlan->ratesPerCopay) ? $currentPlan->ratesPerCopay : (array) $currentPlan->ratesPerCopay;
-
-                $ratesPerCopay = collect($ratesPerCopay)->first();
-
-                return $ratesPerCopay['vat'] ?? 0;
-            }
-        };
+        $discountPremium = $getValueFromPlanOrRates('discountPremium');
+        $vat = $getValueFromPlanOrRates('vat');
 
         if (property_exists($currentPlan, 'name')) {
             $plan['name'] = $currentPlan->name;
@@ -166,8 +162,8 @@ class HealthEmailService extends BaseService
             $plan['tpa'] = $currentPlan->eligibilityName;
         }
 
-        $plan['actualPremium'] = "AED {$getDiscountPremium()}";
-        $plan['vat'] = "AED {$getVat()}";
+        $plan['actualPremium'] = "AED {$discountPremium}";
+        $plan['vat'] = "AED {$vat}";
 
         if (property_exists($currentPlan, 'policyWordings')) {
             $plan['tobs'] = $this->includeHostInAttachmentPath(array_map(fn ($item) => (array) $item, $currentPlan->policyWordings));
