@@ -196,13 +196,7 @@ class QuoteAllocation extends Command
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->where(function ($q) {
-                $q->leadAllocationFailed()
-                    ->orWhere->sicFlowDisabled()
-                    ->orWhere(function ($subQuery) {
-                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
-                    });
-            })
+            ->eligibleForAllocation(QuoteTypes::TRAVEL)
             ->take($chunkSize);
 
         info("For Travel - leads fetch query is : {$leads->toRawSql()}");

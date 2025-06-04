@@ -1,6 +1,7 @@
 <script setup>
 const props = defineProps({
   roles: Object,
+  permissions: Array,
 });
 
 const page = usePage();
@@ -21,6 +22,7 @@ const tableHeader = ref([
 
 const filters = reactive({
   name: '',
+  permission: '',
   page: 1,
 });
 
@@ -41,13 +43,11 @@ const getRoleByName = () => {
   });
 };
 
-watchDebounced(
-  () => filters.name,
-  () => {
-    getRoleByName();
-  },
-  { debounce: 1000, maxWait: 5000 },
-);
+const resetFilters = () => {
+  filters.name = '';
+  filters.permission = '';
+  getRoleByName();
+};
 </script>
 <template>
   <Head title="Roles List" />
@@ -60,9 +60,36 @@ watchDebounced(
     </div>
   </div>
   <x-divider class="my-4" />
-  <x-form :auto-focus="false">
-    <div class="grid sm:grid-cols-1 md:grid-cols-1 gap-4">
-      <x-input label="NAME" required class="w-full" v-model="filters.name" />
+  <x-form :auto-focus="false" @submit="getRoleByName">
+    <div class="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
+      <x-input
+        class="w-full"
+        v-model="filters.name"
+        label="NAME"
+        placeholder="Search by name"
+      />
+
+      <x-select
+        label="PERMISSION"
+        class="w-full"
+        v-model="filters.permission"
+        :options="
+          permissions.map(permission => ({
+            label: permission.name,
+            value: permission.id,
+          }))
+        "
+        option-text="name"
+        option-value="id"
+        placeholder="Search by permission"
+        filterable
+      />
+    </div>
+    <div class="flex justify-end gap-3 mt-4">
+      <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+      <x-button size="sm" color="primary" @click.prevent="resetFilters">
+        Reset
+      </x-button>
     </div>
   </x-form>
   <DataTable

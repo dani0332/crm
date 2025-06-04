@@ -1172,7 +1172,7 @@ const documentsTableItems = computed(() => {
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
       created_by: doc.created_by ? doc.created_by.name : '',
-      watermarked_doc_url: doc.watermarked_doc_url ?? doc.doc_url,
+      watermarked_doc_url: doc.watermarked_doc_url || doc.doc_url,
     };
   });
 });
@@ -3531,6 +3531,11 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       :uuid="quote.uuid"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="computedListQuotePlans || []"
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
+                      :payments="payments"
                     />
 
                     <x-button

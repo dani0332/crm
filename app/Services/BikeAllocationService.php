@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\BikePlanType;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -40,6 +41,17 @@ use Illuminate\Support\Facades\DB;
 
 class BikeAllocationService extends AllocationService
 {
+    protected bool $hasNationalityConfig = false;
+    protected array $advisorIDs = [];
+    protected array $excludedAdvisorIds = [];
+
+    protected function resetProps(): void
+    {
+        $this->hasNationalityConfig = false;
+        $this->advisorIDs = [];
+        $this->excludedAdvisorIds = [];
+    }
+
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         // Check if Dubai Now exclusion should be applied
@@ -235,8 +247,10 @@ class BikeAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource)
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $bikeLead)
     {
+        $this->resetProps();
+
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
         LoggerService::info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
 
@@ -251,6 +265,8 @@ class BikeAllocationService extends AllocationService
         if (! $isReassignmentJob) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
+
+        $this->resolveNationalityConfig($bikeLead);
 
         // Iterate through user statuses in the specified order.
         foreach ($statusOrder as $status) {
@@ -293,6 +309,15 @@ class BikeAllocationService extends AllocationService
             })
             ->where('quote_type_id', QuoteTypes::BIKE->id())
             ->activeUser()
+            ->when(
+                $this->hasNationalityConfig,
+                fn ($q) => $q->whereIn('user_id', $this->advisorIDs),
+                function ($q) {
+                    if (! empty($this->excludedAdvisorIds)) {
+                        $q->whereNotIn('user_id', $this->excludedAdvisorIds);
+                    }
+                },
+            )
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -306,6 +331,10 @@ class BikeAllocationService extends AllocationService
 
     public function getRules($bikeLead)
     {
+        if ($this->hasNationalityConfig) {
+            return collect([]);
+        }
+
         return $this->getRulesForLeadSource($bikeLead);
     }
 
@@ -378,26 +407,30 @@ class BikeAllocationService extends AllocationService
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
         LoggerService::info('Available User IDs are: '.json_encode($availableUserIds));
 
-        if (count($rules) > 0) {
-            // If there are rules, retrieve user IDs from the rule records.
-            $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
-
-            LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
-
-            // Find the intersection of available user IDs and rule user IDs.
-            $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
-
-            LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
+        if ($this->hasNationalityConfig) {
+            $finalEligibleUserIds = $availableUserIds;
         } else {
-            // If no rules are found, get user IDs from rule lead sources.
-            $ruleUsers = $this->getRuleUsers();
+            if (count($rules) > 0) {
+                // If there are rules, retrieve user IDs from the rule records.
+                $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
 
-            LoggerService::info('No rule found so filtering rule users: '.json_encode($ruleUsers));
+                LoggerService::info('Rule user IDs are: '.json_encode($ruleUserIds));
 
-            // Find the difference between available user IDs and rule users.
-            $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
+                // Find the intersection of available user IDs and rule user IDs.
+                $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
 
-            LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+                LoggerService::info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
+            } else {
+                // If no rules are found, get user IDs from rule lead sources.
+                $ruleUsers = $this->getRuleUsers();
+
+                LoggerService::info('No rule found so filtering rule users: '.json_encode($ruleUsers));
+
+                // Find the difference between available user IDs and rule users.
+                $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
+
+                LoggerService::info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+            }
         }
 
         $finalEligibleUserIds = $this->fetchOnlyBikeEligibleAdvisors($finalEligibleUserIds);
@@ -463,6 +496,8 @@ class BikeAllocationService extends AllocationService
         $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId, QuoteTypes::BIKE->id()) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::BIKE->id());
 
         LoggerService::info('Completed assignment of lead, and lead count update is done for quote with code: '.$bikeQuote->code);
+
+        $this->resetProps();
     }
 
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
@@ -480,6 +515,13 @@ class BikeAllocationService extends AllocationService
         $lead->auto_assigned = true;
         $lead->assignment_type = $assignmentType;
 
+        LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
+        ]);
+        if (empty($lead->lead_assignment_trigger)) {
+            LoggerService::info(self::class.' - assignLeadToUserAndGetQuote: Setting lead_assignment_trigger to LEAD_AUTO_ASSIGNED');
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::LEAD_AUTO_ASSIGNED;
+        }
         // Get the latest quote batch and assign it to the lead.
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
@@ -606,5 +648,31 @@ class BikeAllocationService extends AllocationService
         LoggerService::info('Final eligible users after filtering for bike advisors: '.json_encode($finalEligibleUserIds));
 
         return $finalEligibleUserIds;
+    }
+
+    private function resolveNationalityConfig($lead)
+    {
+        $config = NationalityAllocationService::find(QuoteTypes::BIKE, $lead->nationality_id);
+
+        if ($config) {
+            $this->hasNationalityConfig = true;
+            $this->advisorIDs = NationalityAllocationService::getUserIDs($config);
+            LoggerService::info(self::class." - Nationality Config found for Nationality ID: {$lead->nationality_id} | Advisor IDs: ".implode(', ', $this->advisorIDs));
+        } else {
+            $this->resolveExcludedAdvisorIds();
+        }
+
+        return $config;
+    }
+
+    private function resolveExcludedAdvisorIds()
+    {
+        $excludedAdvisorIds = NationalityAllocationService::getExcludedUserIds(QuoteTypes::BIKE);
+
+        if (empty($excludedAdvisorIds)) {
+            return;
+        }
+
+        $this->excludedAdvisorIds = $excludedAdvisorIds;
     }
 }

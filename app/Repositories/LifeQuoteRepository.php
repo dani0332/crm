@@ -203,8 +203,7 @@ class LifeQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria();
         $this->adjustQueryByDateFilters($query, 'life_quote_request');
 
-        return $query->orderBy('life_quote_request.created_at', 'desc')
-            ->get();
+        return $query->orderBy('life_quote_request.created_at', 'desc');
     }
 
     public function fetchCreateDuplicate(array $dataArr): object
