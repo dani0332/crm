@@ -20,7 +20,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
 // Custom validation for numbers with commas
-const isRequiredNumber = (value) => {
+const isRequiredNumber = value => {
   if (!value) return 'This field is required';
   // Remove commas and check if it's a valid number
   const num = Number(value.toString().replace(/,/g, ''));
@@ -325,7 +325,9 @@ onMounted(() => {
 
             if (field.type === 'select_multiple') {
               // Split the value string into an array of IDs
-              const values = config.value ? config.value.split(',').map(v => parseInt(v.trim())) : [];
+              const values = config.value
+                ? config.value.split(',').map(v => parseInt(v.trim()))
+                : [];
               configForm[formFieldName] = values;
             } else {
               configForm[formFieldName] = config.value;
@@ -340,7 +342,7 @@ onMounted(() => {
 });
 
 // Add number formatting functions
-const formatNumber = (value) => {
+const formatNumber = value => {
   if (!value) return '';
   // Remove any existing commas and convert to number
   const num = Number(value.toString().replace(/,/g, ''));
@@ -349,7 +351,7 @@ const formatNumber = (value) => {
   return num.toLocaleString();
 };
 
-const parseNumber = (value) => {
+const parseNumber = value => {
   if (!value) return '';
   // Remove commas and return the number as string
   return value.toString().replace(/,/g, '');
@@ -481,8 +483,14 @@ const onSubmit = isValid => {
             <div class="grid grid-cols-4 gap-4">
               <div>
                 <x-input
-                  :modelValue="formatNumber(configForm['life_sum_insured_value_usd'])"
-                  @update:modelValue="val => configForm['life_sum_insured_value_usd'] = parseNumber(val)"
+                  :modelValue="
+                    formatNumber(configForm['life_sum_insured_value_usd'])
+                  "
+                  @update:modelValue="
+                    val =>
+                      (configForm['life_sum_insured_value_usd'] =
+                        parseNumber(val))
+                  "
                   class="!mb-0"
                   :rules="[validateAtLeastOneSum]"
                   :disabled="!isCurrentVersion"
@@ -498,8 +506,14 @@ const onSubmit = isValid => {
               </div>
               <div>
                 <x-input
-                  :modelValue="formatNumber(configForm['life_sum_insured_value_aed'])"
-                  @update:modelValue="val => configForm['life_sum_insured_value_aed'] = parseNumber(val)"
+                  :modelValue="
+                    formatNumber(configForm['life_sum_insured_value_aed'])
+                  "
+                  @update:modelValue="
+                    val =>
+                      (configForm['life_sum_insured_value_aed'] =
+                        parseNumber(val))
+                  "
                   class="!mb-0"
                   :rules="[validateAtLeastOneSum]"
                   :disabled="!isCurrentVersion"
@@ -515,8 +529,14 @@ const onSubmit = isValid => {
               </div>
               <div>
                 <x-input
-                  :modelValue="formatNumber(configForm['life_sum_insured_value_gbp'])"
-                  @update:modelValue="val => configForm['life_sum_insured_value_gbp'] = parseNumber(val)"
+                  :modelValue="
+                    formatNumber(configForm['life_sum_insured_value_gbp'])
+                  "
+                  @update:modelValue="
+                    val =>
+                      (configForm['life_sum_insured_value_gbp'] =
+                        parseNumber(val))
+                  "
                   class="!mb-0"
                   :rules="[validateAtLeastOneSum]"
                   :disabled="!isCurrentVersion"
@@ -532,8 +552,14 @@ const onSubmit = isValid => {
               </div>
               <div>
                 <x-input
-                  :modelValue="formatNumber(configForm['life_sum_insured_value_eur'])"
-                  @update:modelValue="val => configForm['life_sum_insured_value_eur'] = parseNumber(val)"
+                  :modelValue="
+                    formatNumber(configForm['life_sum_insured_value_eur'])
+                  "
+                  @update:modelValue="
+                    val =>
+                      (configForm['life_sum_insured_value_eur'] =
+                        parseNumber(val))
+                  "
                   class="!mb-0"
                   :rules="[validateAtLeastOneSum]"
                   :disabled="!isCurrentVersion"
@@ -593,8 +619,19 @@ const onSubmit = isValid => {
                   </div>
                   <div v-else></div>
                   <x-input
-                    :modelValue="formatNumber(configForm[`${insuranceType.name}_${field.uiName || field.name}`])"
-                    @update:modelValue="val => configForm[`${insuranceType.name}_${field.uiName || field.name}`] = parseNumber(val)"
+                    :modelValue="
+                      formatNumber(
+                        configForm[
+                          `${insuranceType.name}_${field.uiName || field.name}`
+                        ],
+                      )
+                    "
+                    @update:modelValue="
+                      val =>
+                        (configForm[
+                          `${insuranceType.name}_${field.uiName || field.name}`
+                        ] = parseNumber(val))
+                    "
                     class="!mb-0"
                     :rules="
                       configForm[
