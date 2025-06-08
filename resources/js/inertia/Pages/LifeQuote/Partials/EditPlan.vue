@@ -20,6 +20,11 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
+const getCurrencyId = (currencyCode) => {
+  return props.currencies.find(currency => currency.text === currencyCode)?.id;
+}
+
+
 let riders = props.lifeRiders.map(rider => ({
   riderId: rider.id,
   active: 0,
@@ -362,6 +367,8 @@ onMounted(() => {
       loading: parseInt(rider?.loading) ?? 0,
       finalPrice: parseInt(rider?.finalPrice) ?? 0,
     }));
+
+    getRiderDetails(props.selectedPlan.planId);
   }
 });
 
@@ -461,6 +468,12 @@ const isNonNegative = value => {
 };
 
 const validateCoverValue = value => {
+
+  if(props.selectedPlan.isApi) {
+    return true;
+  }
+
+  // only validate for manual plans
   if (parseFloat(value) > parseFloat(editForm.sumAssured)) {
     return `Cover value must not exceed ${editForm.sumAssured}`;
   }
@@ -516,6 +529,84 @@ const hidePlan = () => {
     })
     .finally(() => {});
 };
+
+const submitType = ref('getQuote');
+const riderOptions = ref([]);
+
+// get rider details
+const getRiderDetails = async (planId) => {
+  try {
+    const res = await axios.get(`/personal-quotes/life/rider-details/${planId}`);
+
+    // Clear existing options if needed
+    riderOptions.value = [];
+
+    // Loop through the data
+    res.data.forEach(item => {
+      console.log('Item:', item);
+      if (item.rider_option) {
+          const { rider_id, currency_id, range_minimum, range_maximum } = item.rider_option;
+          riderOptions.value.push({ 
+            riderId: rider_id, 
+            currency_id, 
+            range_minimum, 
+            range_maximum 
+          });
+      }
+
+      console.log('Rider options:', riderOptions.value);
+    });
+
+  } catch (error) {
+    console.error('Error fetching rider details:', error);
+  }
+};
+
+
+const handleSubmit = isValid => {
+  console.log('handleSubmit', isValid);
+  if (!isValid) {
+    return;
+  }
+ 
+  if(submitType.value === 'getQuote') {
+    getQuote();
+    console.log('getQuote');
+  } else {
+    onSubmit();
+    console.log('onSubmit');
+  }
+}
+const validateRiderCoverValue = (value, riderId) => {
+  // First check if it's an API plan
+  if (!props.selectedPlan?.isApi) return true;
+  
+  // Skip validation if value is empty
+  if (!value) return true;
+  
+  let selectedCurrencyId = getCurrencyId(editForm.currency);
+
+  // Find matching rider option by rider ID
+  const matchingOption = riderOptions.value.find(option => option.riderId === riderId && option.currency_id === selectedCurrencyId);
+  console.log('matchingOption', matchingOption, riderId);
+  console.log('riderOptions', riderOptions.value);
+  
+
+  if (matchingOption) {
+    const numValue = parseFloat(value);
+    
+    if (matchingOption.range_minimum && numValue < parseFloat(matchingOption.range_minimum)) {
+      return `Minimum value allowed is ${matchingOption.range_minimum}`;
+    }
+    
+    if (matchingOption.range_maximum && numValue > parseFloat(matchingOption.range_maximum)) {
+      return `Maximum value allowed is ${matchingOption.range_maximum}`;
+    }
+  }
+  
+  return true;
+};
+
 </script>
 
 <template>
@@ -527,7 +618,7 @@ const hidePlan = () => {
     show-close
     backdrop
     is-form
-    @submit="onSubmit"
+    @submit="handleSubmit"
     @close="closeModal"
   >
     <div class="w-full">
@@ -803,7 +894,7 @@ const hidePlan = () => {
                     :disabled="!rider.active"
                     :rules="
                       rider.active
-                        ? [isRequired, isNonNegative, validateCoverValue]
+                        ? [isRequired, isNonNegative, validateCoverValue, (val) => validateRiderCoverValue(val, rider.riderId)]
                         : []
                     "
                     type="number"
@@ -992,8 +1083,7 @@ const hidePlan = () => {
 
           <div v-else-if="showGetQuoteBtn">
             <x-button
-              type="button"
-              @click="getQuote()"
+              type="submit"
               color="blue"
               :loading="extraAttr.getQuoteLoading"
             >
