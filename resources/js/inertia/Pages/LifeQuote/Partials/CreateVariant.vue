@@ -30,6 +30,7 @@ watch(
   (newVal) => {
     if (newVal && props.plan?.planId) {
       getRiderDetails(props.plan.planId);
+      submitType.value = props.plan.isApi ? 'getQuote' : 'onSubmit';
     }
   }
 );
@@ -93,6 +94,7 @@ const validatePolicyTerm = (value) => {
   // Only validate for api plans i.e Zurich for now 
   if(props.plan.isApi) {
     const maxAllowedTerm = exitAge.value - clientAge;
+    console.log('maxAllowedTerm', maxAllowedTerm, exitAge.value, clientAge);
     if (policyTerm > maxAllowedTerm) {
       return `Maximum Policy Term can not be more than ${maxAllowedTerm} years (Exit Age ${exitAge.value} - Client Age ${clientAge})`;
     }
@@ -247,29 +249,6 @@ const getQuote = () => {
   const policyTermValidation = validatePolicyTerm(createForm.policyTerm);
   const sumAssuredValidation = validatePriceRange(createForm.sumAssured);
 
-  // // validate policy term
-  // if (policyTermValidation !== true) {
-  //   createForm.getQuoteLoading = false;
-
-  //   notification.error({
-  //     title: policyTermValidation,
-  //     position: 'top',
-  //   });
-  //   return;
-  // }
-
-  // // validate sum assured
-  // if (sumAssuredValidation !== true) {
-  //   createForm.getQuoteLoading = false;
-
-  //   notification.error({
-  //     title: sumAssuredValidation,
-  //     position: 'top',
-  //   });
-
-  //   return;
-  // }
-
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
     price: isNaN(rider.price)
@@ -315,6 +294,8 @@ const getQuote = () => {
         );
         errorMessage.value = null;
       }
+
+      submitType.value = 'onSubmit';
       
     })
     .catch(err => {
@@ -325,7 +306,7 @@ const getQuote = () => {
     });
 };
 
-const submitType = ref('getQuote');
+const submitType = props?.plan?.isApi ? ref('getQuote') : ref('onSubmit');
 
 const handleSubmit = isValid => {
   if (!isValid) {
@@ -334,7 +315,7 @@ const handleSubmit = isValid => {
  
   if(submitType.value === 'getQuote') {
     getQuote();
-    
+    console.log('getQuote');
   } else {
     onSubmit();
     console.log('onSubmit');
@@ -342,11 +323,7 @@ const handleSubmit = isValid => {
 }
 
 
-
-const onSubmit = isValid => {
-  if (!isValid) {
-    return;
-  }
+const onSubmit = () => {
 
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
@@ -442,7 +419,6 @@ const getRiderDetails = async (planId) => {
 onMounted(() => {
 
   if (props.plan) {
-    
 
     // Initialize form data from plan
     createForm.providerId = props.plan.providerId;
@@ -490,7 +466,7 @@ onMounted(() => {
     }
 
     getRiderDetails(props.plan.planId);
-    exitAge.value = props.plan?.exitAge; 
+    exitAge.value = props.plan?.exitAge ?? 79; 
   }
 });
 
