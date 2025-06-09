@@ -104,7 +104,7 @@
       "php-http/discovery": true
     },
     "platform": {
-        "ext-mongodb": "2.1.0"
+      "ext-mongodb": "2.1.0"
     }
   },
   "minimum-stability": "dev",
