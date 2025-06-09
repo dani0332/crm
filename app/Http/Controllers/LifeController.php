@@ -78,7 +78,6 @@ class LifeController extends Controller
 
         $data = $this->lifeQuoteService->getShowData($uuid);
 
-
         return inertia('LifeQuote/Show', $data);
     }
 
@@ -187,9 +186,10 @@ class LifeController extends Controller
         return response()->json(['providerPlan' => $providerPlan]);
     }
 
-    function riderDetails(Request $request)
+    public function riderDetails(Request $request)
     {
         $riderDetails = $this->lifeQuoteService->getRiderDetails($request->planId);
+
         return response()->json($riderDetails);
     }
 

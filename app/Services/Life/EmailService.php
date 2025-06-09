@@ -53,7 +53,7 @@ class EmailService
         try {
             $response = app(BirdService::class)->triggerWebHookRequest($flowUrl, $emailData);
 
-            LoggerService::info('sendLifeOCAEmail - Bird flow triggered successfully', extra:[
+            LoggerService::info('sendLifeOCAEmail - Bird flow triggered successfully', extra: [
                 'email' => $emailData->customerEmail,
             ]);
 
@@ -105,7 +105,8 @@ class EmailService
 
     }
 
-    protected function scheduleFileDeletion($filePath){
+    protected function scheduleFileDeletion($filePath)
+    {
         // Use a job to handle file deletion
         DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(120));
     }
@@ -158,7 +159,7 @@ class EmailService
         return (object) $data;
     }
 
-    private function getQuote(string $quoteUID):PersonalQuote
+    private function getQuote(string $quoteUID): PersonalQuote
     {
         return PersonalQuote::where([
             'uuid' => $quoteUID,

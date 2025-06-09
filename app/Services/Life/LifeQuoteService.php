@@ -23,6 +23,7 @@ use App\Models\DocumentType;
 use App\Models\InsuranceProviderPlan;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifeNumberOfYears;
+use App\Models\LifePlanRider;
 use App\Models\LifeQuote;
 use App\Models\LifeRider;
 use App\Models\Lookup;
@@ -44,7 +45,6 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
-use App\Models\LifePlanRider;
 use DB;
 use Illuminate\Support\Arr;
 use PDF;
@@ -709,10 +709,11 @@ class LifeQuoteService extends BaseService
         return ['pdf' => $pdf, 'name' => $this->generatePdfFilename($quote)];
     }
 
-    function getRiderDetails($planId)
+    public function getRiderDetails($planId)
     {
         $riderDetails = LifePlanRider::inActive()->
-        with(['riderOption'])->where('plan_id', $planId)->get(); 
+        with(['riderOption'])->where('plan_id', $planId)->get();
+
         return $riderDetails;
     }
 
