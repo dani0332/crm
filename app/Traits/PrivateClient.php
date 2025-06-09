@@ -82,9 +82,9 @@ trait PrivateClient
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
         $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
 
-        dd((new $modelClass)->where('uuid', $model->uuid)
+        return (new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause)
-            ->toRawSql());
+            ->exists();
     }
 
     /**
