@@ -91,7 +91,6 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
 use App\Services\AddBatchForNonMotors;
-use App\Services\QuoteDocumentService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -808,13 +807,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
 // });
 
-
 Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
     // Dispatch job to background queue instead of running synchronously
     \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType);
-    
+
     return response()->json([
         'message' => "Handbook documents check for {$quoteType} has been queued for background processing",
-        'status' => 'dispatched'
+        'status' => 'dispatched',
     ]);
 });
