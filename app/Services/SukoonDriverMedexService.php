@@ -33,8 +33,8 @@ class SukoonDriverMedexService
     private $paymentToken;
     private $documentPolicyNumber;
 
-    private $paymentPlan; // TODO:: confirm this is constant or dynamic
-    private $amountDisclaimerText; // TODO:: confirm this is constant or dynamic
+    private $paymentPlan;
+    private $amountDisclaimerText;
 
     private $documentTemplateIds;
     private $mappedDocumentTemplates = [];
@@ -496,10 +496,9 @@ class SukoonDriverMedexService
 
         return [
             'form_name' => 'plan_picker',
-            // 'plan_option' => $this->productSlug.'-'.strtolower(EmbeddedProductEnum::$shortCode()->value), TODO::
             'plan_option' => $this->productSlug.'-personal_non_commercial_vehicles',
-            "payment_plan" => $this->paymentPlan, // TODO:: make dynamic
-            "amount_disclaimer_text" => $this->amountDisclaimerText, // TODO:: make dynamic
+            "payment_plan" => $this->paymentPlan,
+            "amount_disclaimer_text" => $this->amountDisclaimerText,
             'policy_number' => $this->policyNumber
         ];
     }
