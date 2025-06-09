@@ -1610,6 +1610,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
+      :expanded="sectionExpanded"
+    />
+
     <lead-raw-data
       :modelType="'Life'"
       :uuid="$page.props.quote.uuid"

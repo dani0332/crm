@@ -42,8 +42,6 @@ use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
-use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
 use App\Services\LeadsCountService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
@@ -58,14 +56,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind(CarAllocationService::class, function ($app) {
-            return new CarAllocationService;
-        });
-
-        $this->app->bind(HealthAllocationService::class, function ($app) {
-            return new HealthAllocationService;
-        });
-
         $this->app->singletonIf(LeadsCountService::class, function ($app) {
             return new LeadsCountService;
         });

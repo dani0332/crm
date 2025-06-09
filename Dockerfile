@@ -44,7 +44,6 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     nodejs \
     yarn \
-    ghostscript \
     libwebp-dev \
     qpdf
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp

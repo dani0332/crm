@@ -27,7 +27,7 @@ use Illuminate\Support\Str;
 
 trait QuoteModelTrait
 {
-    use Filterable, QuoteAllocatable;
+    use Filterable, Logable, QuoteAllocatable;
 
     /**
      * @return mixed|void

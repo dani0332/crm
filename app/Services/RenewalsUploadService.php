@@ -1584,7 +1584,7 @@ class RenewalsUploadService
         $carQuote->save();
 
         $notes = 'Change quote status to Quoted as OCB sent';
-        app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id(), $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
+        app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id(), $carQuote->uuid, quoteStatusCode::QUOTED, $notes);
     }
 
     /**
