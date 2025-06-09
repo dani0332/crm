@@ -192,8 +192,8 @@ class SavingsQuoteService extends BaseQuoteService
 
     public function getSelectedCustomerPlans(string $uuid)
     {
-        return QuoteCustomerPlan::forQuote($uuid)
-            ->forQuoteType($this->quoteType->id())
+        return QuoteCustomerPlan::byQuoteUuid($uuid)
+            ->byQuoteType($this->quoteType->id())
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($plan) {

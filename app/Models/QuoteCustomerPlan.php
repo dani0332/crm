@@ -33,7 +33,7 @@ class QuoteCustomerPlan extends Model
     /**
      * Scope to filter by quote UUID
      */
-    public function scopeForQuote($query, string $uuid)
+    public function scopeByQuoteUuid($query, string $uuid)
     {
         return $query->where('quote_uuid', $uuid);
     }
@@ -41,7 +41,7 @@ class QuoteCustomerPlan extends Model
     /**
      * Scope to filter by quote type
      */
-    public function scopeForQuoteType($query, int $quoteTypeId)
+    public function scopeByQuoteType($query, int $quoteTypeId)
     {
         return $query->where('quote_type_id', $quoteTypeId);
     }
