@@ -315,14 +315,14 @@ class AMLController extends Controller
             $response = AMLService::updateAMLDecisionLexisNexis(request());
             if ($response['status'] == 'success') {
                 $clientFullName = $quoteObject->first_name.' '.$quoteObject->last_name;
-                $updatedAMLStatus = app(AMLService::class)->updateAMLStatusAgainstDecision(\request()->toArray(), $quoteObject);
+                $updatedAMLStatus = app(AMLService::class)->updateAMLStatusAgainstDecision(request()->toArray(), $quoteObject);
                 $responseMessage = ['status' => 'success', 'message' => 'AML Status Updated'];
 
                 if (
                     auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
-                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
+                    // app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
                     if (! empty(request()->complianceComponent)) {
                         app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComponent);
                     }
@@ -365,11 +365,6 @@ class AMLController extends Controller
         return response()->json($travelQuoteService->checkCustomerTravelInfoIsComplete($customerTravelInfo), 200);
     }
 
-    private function handleResponse(bool $status, string $message, bool $isAutomation = false)
-    {
-        return $isAutomation ? response()->json(['status' => $status, 'message' => $message]) : redirect()->back()->with($status ? 'success' : 'error', $message);
-    }
-
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
         $quoteId = $quoteRequestId;
@@ -377,78 +372,38 @@ class AMLController extends Controller
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
 
         LoggerService::startQuoteLogging($updateQuote, LoggerFeatureEnum::AML_SCREENING);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__);
-        LoggerService::info('AML Screening Bridger - Process Started');
+        LoggerService::info(self::class.' fn: '.__FUNCTION__. ' - AML Screening Bridger - Process Started');
 
-        $isAutomation = $AMLCheckRequest->is_automation ?? false;
         $systemUser = User::where('name', UserNameEnum::System)->first();
+        $isAutomation = $AMLCheckRequest->is_automation ?? false;
         $processbyUser = $isAutomation ? $systemUser : auth()->user();
 
-        $getMemberOrUBODetails = AMLService::getMemberOrUBODetails($AMLCheckRequest, $quoteType, $quoteId);
-        $getLastScreening = KycLog::withTrashed()->where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId,
-        ])->where(function ($ryuFilter) {
-            $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-            $ryuFilter->orWhereNull('decision');
-        })->where(function ($aml) {
-            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
-            $aml->orWhereNull('screening_type');
-        })->whereNull('screenshot')->get()->last() ?? [];
-
-        if ($getMemberOrUBODetails) {
-            LoggerService::info('AML Screening Bridger - Validation check - Members found against quote');
-            $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
-            if (in_array(null, $memberValidateCheck)) {
-                LoggerService::info('AML Screening Bridger - Validation check - Member First Name missing');
-
-                return $this->handleResponse(false, 'First Name missing', $isAutomation);
-            }
-
-            // Filter members that need screening based on their updated_at date
-            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($member) use ($getLastScreening) {
-                $lastScreeningDate = $getLastScreening->created_at ?? '';
-
-                // Include members with null updated_at (replicated members that need screening)
-                if (is_null($member->updated_at)) {
-                    LoggerService::info('AML Screening Bridger - Including member with null updated_at (replicated member)', extra: [
-                        'member_id' => $member->id ?? 'unknown',
-                        'member_name' => ($member->first_name ?? '').' '.($member->last_name ?? ''),
-                    ]);
-
-                    return true;
-                }
-
-                // Include members that were updated after the last screening
-                return $member->updated_at >= $lastScreeningDate;
-            });
-        }
-
-        dd($getMemberOrUBODetails->toArray());
 
         if ($updateQuote) {
+            [$status, $message, $getMemberOrUBODetails, $getLastScreening] = app(AMLService::class)->prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote);
+
+            if(!$status) {
+                return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
+            }
+            
             // Wrap insured processing and related operations in a single transaction
             [$shouldApplicableForScreening, $insured, $entityId] = DB::transaction(function () use ($AMLCheckRequest, $quoteTypeId, $updateQuote, $getLastScreening, $processbyUser, $isAutomation, $systemUser, $quoteRequestId) {
-                // Process insured data and associations
                 [$shouldApplicableForScreening, $insured, $entityId] = app(AMLService::class)->processInsuredDataForScreening($AMLCheckRequest, $quoteTypeId, $updateQuote, $getLastScreening);
-                
-                // Update PA ID if user has appropriate roles
-                if (auth()->user()?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]) || ($isAutomation && $systemUser?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]))) {
-                    if (checkPersonalQuotes($quoteTypeId)) {
-                        AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['pa_id' => $processbyUser->id]);
-                    } else {
-                        $updateQuote->pa_id = $processbyUser->id;
-                        $updateQuote->save();
-                    }
-                }
+                app(AMLService::class)->updatePAIdPersonalQuote([
+                    'isAutomation' => $isAutomation,
+                    'systemUser' => $systemUser,
+                    'processbyUser' => $processbyUser,
+                    'quoteTypeId' => $quoteTypeId,
+                    'quoteRequestId' => $quoteRequestId,
+                ], $updateQuote);
 
                 return [$shouldApplicableForScreening, $insured, $entityId];
             });
 
             session()->put('amlResponseCheck', []);
             $insurerAMLScreeningResponse = [];
-
             $isEntity = $AMLCheckRequest->customer_type == CustomerTypeEnum::Entity;
+
             if ($shouldApplicableForScreening) {
                 if ($isEntity) {
                     $getEntityDetailsForScreening = [
@@ -490,7 +445,7 @@ class AMLController extends Controller
             // Process members (UBO or regular members)
             if (empty($getMemberOrUBODetails->toArray()) && ! $shouldApplicableForScreening) {
                 LoggerService::info('AML Screening Bridger - No Member Found for Screening, AML Screening Cleared');
-                $response = $this->handleResponse(true, 'AML Screening Completed', $isAutomation);
+                $response = app(AMLService::class)->handleResponse(true, 'AML Screening Completed', $isAutomation);
                 if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
                     $response->with('info', ['message' => $insurerAMLScreeningResponse['message']]);
                 }
@@ -505,7 +460,7 @@ class AMLController extends Controller
             LoggerService::info('AML Screening Bridger - AML Screening Job Dispatched for Members');
             $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, $processbyUser, isAutomation: $isAutomation);
 
-            $response = $this->handleResponse(true, 'Quote is updated', $isAutomation);
+            $response = app(AMLService::class)->handleResponse(true, 'Quote is updated', $isAutomation);
             if (! empty($insurerAMLScreeningResponse) && ! $isAutomation) {
                 $response = $response->with('info', ['message' => $insurerAMLScreeningResponse['message'], 'isEmailMismatched' => $insurerAMLScreeningResponse['isEmailMismatched']]);
             }
@@ -513,7 +468,7 @@ class AMLController extends Controller
             return $response;
         }
 
-        return $this->handleResponse(false, 'Something went wrong', $isAutomation);
+        return app(AMLService::class)->handleResponse(false, 'Something went wrong', $isAutomation);
     }
 
     private function InsurerScreening($quoteTypeId, $AMLCheckRequest, $updateQuote)

@@ -698,7 +698,7 @@ class HomeQuoteRepository extends BaseRepository
                 'latestInsured' => function ($q) {
                     $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
                 },
-                'insured.insuredKyc:id,insured_id',
+                'latestInsured.insuredKyc:id,insured_id',
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
@@ -729,7 +729,7 @@ class HomeQuoteRepository extends BaseRepository
 
         if ($response) {
             // Only access insured property if response exists
-            $insured = $response->insured ?? null;
+            $insured = $response->latestInsured ?? null;
             if ($insured && $insured->id_type === 'emiratesId') {
                 $response->emirates_id_number = $insured->id_number;
             } else {

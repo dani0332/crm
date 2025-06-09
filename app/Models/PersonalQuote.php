@@ -367,7 +367,7 @@ class PersonalQuote extends Model implements AuditableContract
             'id', // insured.id
             'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-        )->latest('customer_insured.id');
+        )->latest('customer_insured.updated_at');
     }
 
     // Alternative: Direct relationship to customer_insured records

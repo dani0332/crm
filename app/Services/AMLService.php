@@ -439,6 +439,64 @@ class AMLService
         return true;
     }
 
+    public function getLatestScreening($quoteRequestId, $quoteTypeId)
+    {
+        return KycLog::withTrashed()->where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+        ])->where(function ($ryuFilter) {
+            $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+            $ryuFilter->orWhereNull('decision');
+        })->where(function ($aml) {
+            $aml->whereNotIn('screening_type', [AMLScreeningTypeEnum::INSURER_AXA]);
+            $aml->orWhereNull('screening_type');
+        })->whereNull('screenshot')->get()->last() ?? [];
+    }
+
+    public function handleResponse(bool $status, string $message, bool $isAutomation = false)
+    {
+        return $isAutomation ? response()->json(['status' => $status, 'message' => $message]) : redirect()->back()->with($status ? 'success' : 'error', $message);
+    }
+
+    public function prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote)
+    {
+        $getMemberOrUBODetails = $this->getMemberOrUBODetails($AMLCheckRequest, $quoteType, $updateQuote->id);
+        $getLastScreening = $this->getLatestScreening($updateQuote->id, $quoteType->id);
+        $membersDetails = $getMemberOrUBODetails;
+
+        if (!empty($getMemberOrUBODetails->toArray())) {
+            LoggerService::info('AML Screening Bridger - Validation check - Members found against quote');
+            $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
+            if (in_array(null, $memberValidateCheck)) {
+                LoggerService::info('AML Screening Bridger - Validation check - Member First Name missing');
+
+                return [false, 'First Name missing', [], $getLastScreening];
+            }
+
+            // Filter members that need screening based on their updated_at date
+            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($member) use ($getLastScreening) {
+                $lastScreeningDate = $getLastScreening->created_at ?? '';
+
+                // Include members with null updated_at (replicated members that need screening)
+                if (is_null($member->updated_at)) {
+                    LoggerService::info('AML Screening Bridger - Including member with null updated_at (replicated member)', extra: [
+                        'member_id' => $member->id ?? 'unknown',
+                        'member_name' => ($member->first_name ?? '').' '.($member->last_name ?? ''),
+                    ]);
+
+                    return true;
+                }
+
+                // Include members that were updated after the last screening
+                return $member->updated_at >= $lastScreeningDate;
+            });
+
+            $membersDetails = $getMemberOrUBODetails;
+        }
+
+        return [true, '', $membersDetails, $getLastScreening];
+    }
+
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
         LoggerService::info('fn:getMemberOrUBODetails - AMLService');
@@ -851,7 +909,7 @@ class AMLService
             'customer_id' => $customerId,
         ])
             ->with(['customer', 'insured', 'insured.insuredKyc'])
-            ->orderBy('id', 'desc')
+            ->orderBy('updated_at', 'desc')
             ->first();
 
         if (! $customerInsured) {
@@ -1163,20 +1221,13 @@ class AMLService
         LoggerService::info(self::class.' fn: '.__FUNCTION__);
 
         $isEntity = $request->customer_type == CustomerTypeEnum::Entity;
-        
-        // Step 1: Create or update insured record
+
         $insured = $this->createOrUpdateInsured($request, $isEntity);
-        
-        // // Step 2: Update personal quote if needed
         $this->updateInsuredInPersonalQuote($quoteTypeId, $quote, $insured);
-        
-        // // Step 3: Handle customer-insured mappings and associations
-        $isNewAssociation = $this->handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured);
-        
-        // // Step 4: Determine if screening is applicable
-        $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isNewAssociation, $getLastScreening, $isEntity);
-        
-        // // Step 5: Handle entity/customer data for backward compatibility
+
+        $isCustomerInsuredAssociationUpdated = $this->handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured);
+        $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isCustomerInsuredAssociationUpdated, $getLastScreening, $isEntity);
+
         $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
         
         return [$shouldApplicableForScreening, $insured, $entityId];
@@ -1226,6 +1277,8 @@ class AMLService
 
     private function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
     {
+        $isCustomerInsuredAssociationUpdated  = false;
+
         // Check for orphaned record (without quote mapping) first
         $orphanedRecord = CustomerInsured::where([
             'customer_id' => $request->customer_id,
@@ -1237,6 +1290,7 @@ class AMLService
           // Create or update the customer-insured mapping
         if ($orphanedRecord) {
             // Update the existing orphaned record instead of deleting and creating new
+            $isCustomerInsuredAssociationUpdated  = true;
             $orphanedRecord->update([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quote->id,
@@ -1259,15 +1313,14 @@ class AMLService
             ])->orderBy('updated_at', 'desc')->first();
 
             if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
-                $isNewAssociation = true;
                 // Create new record or update existing quote mapping
+                $isCustomerInsuredAssociationUpdated  = true;
                 CustomerInsured::updateOrCreate([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                    'updated_at' => now()
-                ]);
+                ],['updated_at' => now()]);
 
                 // Update quote status
                 $quote->update(['kyc_decision' => Kyc::PENDING]);
@@ -1280,13 +1333,13 @@ class AMLService
 
             } elseif (!$existingQuoteMapping) {
                 // This is a completely new quote-insured association
+                $isCustomerInsuredAssociationUpdated  = true;
                 CustomerInsured::updateOrCreate([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                    'updated_at' => now()
-                ]);
+                ],['updated_at' => now()]);
 
                 LoggerService::info('AML Screening Bridger - New insured association created for quote', [
                     'insured_id' => $insured->id,
@@ -1295,32 +1348,32 @@ class AMLService
             }
         }
 
-        // TODO:: ye check karna hai kis par chalega abhi set nh huwa
-        return true;
+        return $isCustomerInsuredAssociationUpdated;
     }
 
-    private function shouldApplyScreening($insured, bool $isNewAssociation, $getLastScreening, bool $isEntity): bool
+    private function shouldApplyScreening($insured, bool $isCustomerInsuredAssociationUpdated, $getLastScreening, bool $isEntity): bool
     {
         if ($insured->wasRecentlyCreated) {
-            LoggerService::info('AML Screening Bridger - '.($isEntity ? 'Insured Entity' : 'Insured Person').' created');
+            LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile created');
             return true;
         }
 
-        if ($isNewAssociation) {
-            LoggerService::info('AML Screening Bridger - '.($isEntity ? 'Insured Entity' : 'Insured Person').' association changed for quote');
+        if ($isCustomerInsuredAssociationUpdated) {
+            LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile association changed for quote');
             return true;
         }
 
         if ($insured->isDirty() || 
             !isset($getLastScreening->created_at) || 
             Carbon::parse($insured->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')) {
-            LoggerService::info('AML Screening Bridger - '.($isEntity ? 'Insured Entity' : 'Insured Person').' details updated');
+            LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile details updated');
             return true;
         }
 
         return false;
     }
 
+    // TODO:: this function is added because universal search and customer members have dependency on customer and entity details.
     private function handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, bool $isEntity): ?int
     {
         if ($isEntity) {
@@ -1377,6 +1430,19 @@ class AMLService
 
         if ($customer->isDirty()) {
             $customer->save();
+        }
+    }
+
+    public function updatePAIdPersonalQuote($payload, $updateQuote)
+    {
+        // Update PA ID if user has appropriate roles
+        if (auth()->user()?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]) || ($payload['isAutomation'] && $payload['systemUser']?->hasAnyRole([RolesEnum::AML, RolesEnum::PA]))) {
+            if (checkPersonalQuotes($payload['quoteTypeId'])) {
+                AMLService::updatePaIdForPersonalQuotes($payload['quoteTypeId'], $payload['quoteRequestId'], true, ['pa_id' => $payload['processbyUser']->id]);
+            } else {
+                $updateQuote->pa_id = $payload['processbyUser']->id;
+                $updateQuote->save();
+            }
         }
     }
 

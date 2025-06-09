@@ -373,6 +373,7 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType = page.props.quote?.latest_insured?.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote?.insured?.customer_type || null,
@@ -380,8 +381,8 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.insured?.first_name || '',
-  insured_last_name: page.props.quote?.insured?.last_name || '',
+  insured_first_name: page.props.quote?.latest_insured?.first_name || '',
+  insured_last_name: page.props.quote?.latest_insured?.last_name || '',
   emirates_id_number: page.props.quote.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer?.emirates_id_expiry_date || null,
@@ -1329,7 +1330,7 @@ const shouldShowPlanDetailsSection = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote?.insured?.customer_type ?? '' }}</dd>
+                <dd>{{ enabledCustomerType ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
@@ -1537,7 +1538,7 @@ const shouldShowPlanDetailsSection = computed(() => {
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
-                quote?.insured?.customer_type == page.props.customerTypeEnum.Individual
+                enabledCustomerType == page.props.customerTypeEnum.Individual
                   ? 'Customer '
                   : 'Entity '
               }}
@@ -1558,7 +1559,7 @@ const shouldShowPlanDetailsSection = computed(() => {
             <div class="text-sm">
               <dl
                 v-if="
-                  quote?.insured?.customer_type === page.props.customerTypeEnum.Individual
+                  enabledCustomerType == page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -1676,7 +1677,7 @@ const shouldShowPlanDetailsSection = computed(() => {
               </dl>
               <dl
                 v-if="
-                  quote?.insured?.customer_type === page.props.customerTypeEnum.Entity
+                  enabledCustomerType == page.props.customerTypeEnum.Entity
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
@@ -1880,7 +1881,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     </x-modal>
 
     <MemberDetails
-      v-if="quote?.insured?.customer_type == page.props.customerTypeEnum.Individual"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Individual"
       :quote="quote"
       :membersDetails="membersDetails"
       :nationalities="nationalities"
@@ -1891,7 +1892,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     />
 
     <UBODetails
-      v-if="quote?.insured?.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"
@@ -2340,7 +2341,7 @@ const shouldShowPlanDetailsSection = computed(() => {
     <AuditLogs
       :title="'KYC Audit Logs'"
       :type="'App\\Models\\InsuredKyc'"
-      :id="quote?.insured?.insured_kyc?.id"
+      :id="quote?.latest_insured?.insured_kyc?.id"
     />
 
     <ApiLogs :type="modelClassHome" :id="$page.props?.quote?.home_quote?.id" />
