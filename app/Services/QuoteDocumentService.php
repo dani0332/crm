@@ -917,7 +917,7 @@ class QuoteDocumentService extends BaseService
             $policyWordingDocuments = $this->formatPolicyWordingDocumentUrls($travelPolicyWordingDocs);
         }
         else {
-            abort(404);
+            LoggerService::error("Invalid quote type: {$quoteType}");
         }
         $filteredDocuments = $this->filterAttachments($policyWordingDocuments);
 
@@ -926,6 +926,7 @@ class QuoteDocumentService extends BaseService
             'missing_documents' => $filteredDocuments,
             'total_missing' => count($filteredDocuments)
         ]);
+
     }
 
     public function formatPolicyWordingDocumentUrls($policyWordingDocs)
