@@ -658,6 +658,7 @@ class AMLController extends Controller
 
         $this->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
 
+        // NEED TO CHANGE TO LATEST INSURED
         $customerInsured = CustomerInsured::where('customer_id', $quoteObject->customer_id)
             ->where('insured_id', $insured->id)
             ->whereNull('quote_type_id')
@@ -854,6 +855,7 @@ class AMLController extends Controller
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
         LoggerService::startQuoteLogging($quote);
 
+        // NEED TO CHANGE TO LATEST INSURED
         $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
 
         if ($preparedFormData) {

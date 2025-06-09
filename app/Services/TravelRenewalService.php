@@ -176,7 +176,7 @@ class TravelRenewalService extends AllocationService
             'members' => $members,
             'destinationIds' => $destinationIds,
             'emiratesIdNumber' => $customer->emirates_id_number ?? null,
-            'emiratesIdExpiryDate' => $customer->emirates_id_expiry_date ?? null,
+            'emiratesIdExpiryDate' => $customer->emirates_id_expiry_date ?? null,// NEED TO CHANGE TO LATEST INSURED
             'insuredFirstName' => isset($customer->insured->first_name) ? $customer->insured->first_name : (isset($customer->insured_first_name) ? $customer->insured_first_name : ''),
             'insuredLastName' => isset($customer->insured->last_name) ? $customer->insured->last_name : (isset($customer->insured_last_name) ? $customer->insured_last_name : ''),
             'isEcommerce' => $quote->is_ecommerce ?? null,

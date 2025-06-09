@@ -151,7 +151,7 @@ class HealthQuoteService extends BaseService
             'hqr.risk_score',
             'hqr.enquiry_count',
             'hqr.policy_booking_date',
-            'insured.customer_type',
+            'insured.customer_type', // NEED TO CHANGE TO LATEST INSURED
             // DB::raw('IF(EXISTS (
             //     SELECT *
             //     FROM quote_request_entity_mapping

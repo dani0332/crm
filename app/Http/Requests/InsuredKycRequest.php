@@ -26,6 +26,7 @@ class InsuredKycRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
+        // NEED TO CHANGE TO LATEST INSURED
         // Get the insured record to determine customer type
         /*if ($this->has('insured_id') && $this->insured_id) {
             $insured = Insured::find($this->insured_id);

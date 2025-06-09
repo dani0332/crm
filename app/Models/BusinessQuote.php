@@ -169,6 +169,7 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasOne(BusinessQuoteRequestDetail::class);
     }
 
+    // NEED TO CHANGE TO LATEST INSURED
     public function insured(): HasManyThrough
     {
         return $this->hasManyThrough(

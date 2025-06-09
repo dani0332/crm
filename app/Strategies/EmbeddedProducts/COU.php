@@ -12,7 +12,7 @@ class COU extends EmbeddedProduct
             'product.embeddedProduct',
             'quoteRequest.customer',
             'quoteRequest.customer.nationality',
-            'quoteRequest.customer.customerInsured',
+            'quoteRequest.customer.customerInsured', // NEED TO CHANGE TO LATEST INSURED
             'quoteRequest.customer.customerInsured.insured',
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',

@@ -110,6 +110,7 @@ class Customer extends Model implements AuditableContract
         return $this->hasMany(CustomerAdditionalContact::class, 'customer_id', 'id');
     }
 
+    // NEED TO CHANGE TO LATEST INSURED
     public function insured(): HasOneThrough
     {
         return $this->hasOneThrough(

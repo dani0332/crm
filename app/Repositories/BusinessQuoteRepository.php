@@ -94,10 +94,10 @@ class BusinessQuoteRepository extends BaseRepository
                 'customer',
                 'transactionType',
                 'insuranceProviderDetails',
-                'insured' => function ($q) use ($quoteTypeId) {
+                'insured' => function ($q) use ($quoteTypeId) { // NEED TO CHANGE TO LATEST INSURED
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
-                'insured.insuredKyc:id,insured_id',
+                'insured.insuredKyc:id,insured_id', // NEED TO CHANGE TO LATEST INSURED
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
@@ -108,7 +108,7 @@ class BusinessQuoteRepository extends BaseRepository
                         'paymentSplits.paymentCharges',
                     ]);
                 },
-                'insured' => function ($q) {
+                'insured' => function ($q) { // NEED TO CHANGE TO LATEST INSURED
                     $q->where('customer_insured.quote_type_id', QuoteTypeId::Business)->latest('customer_insured.id');
                 },
                 'quoteRequestEntityMapping' => function ($entityMapping) {

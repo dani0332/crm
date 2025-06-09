@@ -124,7 +124,7 @@ const kycFormDetails = useForm({
   customer_id: page.props.quoteRequest.customer_id,
   quote_uuid: page.props.quoteRequest.uuid,
   quote_type_id: page.props.quoteType.id,
-  insured_id: insuredDetails?.insured?.id,
+  insured_id: insuredDetails?.insured?.id, // NEED TO CHANGE TO LATEST INSURED
   first_name:
     insuredDetails?.insured?.insured_kyc?.first_name ??
     insuredDetails?.insured?.first_name ??

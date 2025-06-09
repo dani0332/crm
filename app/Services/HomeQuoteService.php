@@ -112,8 +112,7 @@ class HomeQuoteService extends BaseService
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
             'hqr.renewal_import_code',
-            'insured.customer_type',
-            'insured.first_name as insured_first_name',
+            'insured.first_name as insured_first_name', // NEED TO CHANGE TO LATEST INSURED
             'insured.last_name as insured_last_name',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
             'c.emirates_id_expiry_date',

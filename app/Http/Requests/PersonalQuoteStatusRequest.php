@@ -60,6 +60,7 @@ class PersonalQuoteStatusRequest extends FormRequest
                 },
             ])->where('id', $quoteObject->customer_id)->first();
 
+            // NEED TO CHANGE TO LATEST INSURED
             $customerProfileDetails = [
                 'insured_first_name' => ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? null,
                 'insured_last_name' => ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? null,

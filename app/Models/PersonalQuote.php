@@ -370,18 +370,6 @@ class PersonalQuote extends Model implements AuditableContract
         )->latest('customer_insured.updated_at');
     }
 
-    // Alternative: Direct relationship to customer_insured records
-    // public function customerInsuredRecords(): \Illuminate\Database\Eloquent\Relations\HasMany
-    // {
-    //     return $this->hasMany(CustomerInsured::class, 'quote_request_id');
-    // }
-
-    // Legacy method for backward compatibility (keeping the original name)
-    // public function insured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
-    // {
-    //     return $this->latestInsured(); // Or use activeInsured() if you prefer
-    // }
-
     public function homeQuote()
     {
         return $this->hasOne(HomeQuote::class, 'personal_quote_id', 'id');

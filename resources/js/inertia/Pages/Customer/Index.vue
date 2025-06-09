@@ -166,7 +166,7 @@ function onReset() {
       </template>
 
       <template #item-insured_first_name="{ customer }">
-        {{
+        {{// NEED TO CHANGE TO LATEST INSURED
           customer?.insured?.first_name ?? customer?.insured_first_name ?? ''
         }}
       </template>

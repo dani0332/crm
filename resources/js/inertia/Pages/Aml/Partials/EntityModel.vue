@@ -62,7 +62,7 @@ const insuredFormDetails = useForm({
   customer_id: props.quoteDetails.customer_id,
   customer_type: props.customerTypeEnum.Entity,
   quote_type: props.quoteType.code,
-
+// NEED TO CHANGE TO LATEST INSURED
   insured_first_name:
     props.quoteDetails?.customer?.insured?.first_name ??
     props.quoteDetails?.customer?.insured_first_name ??

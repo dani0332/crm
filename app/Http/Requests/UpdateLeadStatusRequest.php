@@ -134,6 +134,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 $validator->errors()->add('value', 'The lead is marked as '.quoteStatusCode::LOST.' and cannot be changed.');
             }
 
+            // NEED TO CHANGE TO LATEST INSURED
             $fetchLastAMLCheck = KycLog::withTrashed()->where([
                 'quote_request_id' => request()->leadId,
                 'quote_type_id' => $quoteTypesIds[request()->modelType] ?? '',
@@ -160,6 +161,7 @@ class UpdateLeadStatusRequest extends FormRequest
                     },
                 ])->where('id', $quoteObject->customer_id)->first();
 
+                // NEED TO CHANGE TO LATEST INSURED
                 $customerProfileDetails = [
                     'insured_first_name' => ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? null,
                     'insured_last_name' => ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? null,

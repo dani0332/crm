@@ -217,6 +217,7 @@ class CentralController extends Controller
             $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
             $customer->update($emiratesDetails);
 
+            // NEED TO CHANGE TO LATEST INSURED
             $insuredPersonDetails = Insured::updateOrCreate([
                 'id_type' => 'emiratesId',
                 'id_number' => $customerProfileRequest->emirates_id_number,

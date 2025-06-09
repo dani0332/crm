@@ -138,7 +138,7 @@ const customerProfileForm = useForm({
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-
+// NEED TO CHANGE TO LATEST INSURED
   insured_first_name: page.props.quote?.latest_insured?.first_name || '',
   insured_last_name: page.props.quote?.latest_insured?.last_name || '',
   emirates_id_number: page.props.quote?.emirates_id_number || null,
@@ -659,6 +659,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
+            
             <div class="text-sm">
               <dl
                 v-if="

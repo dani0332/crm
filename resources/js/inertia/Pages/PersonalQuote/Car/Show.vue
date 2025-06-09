@@ -1344,7 +1344,7 @@ const customerProfileForm = useForm({
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.record.id,
-
+// NEED TO CHANGE TO LATEST INSURED
   insured_first_name: page.props.record.insured_first_name || '',
   insured_last_name: page.props.record.insured_last_name || '',
   emirates_id_number: page.props.record.emirates_id_number || null,

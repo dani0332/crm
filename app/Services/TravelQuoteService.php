@@ -149,7 +149,7 @@ class TravelQuoteService extends BaseService
             //     WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
             //     "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             // as customer_type'),
-            'insured.first_name as insured_first_name',
+            'insured.first_name as insured_first_name', // NEED TO CHANGE TO LATEST INSURED
             'insured.last_name as insured_last_name',
             'insured_kyc.id as insured_kyc_id',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),

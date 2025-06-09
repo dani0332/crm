@@ -28,6 +28,7 @@ class MDX extends EmbeddedProduct
             $quoteTypeId = QuoteTypes::getIdFromValue($quoteType);
         }
 
+        // NEED TO CHANGE TO LATEST INSURED
         $customerInsured = $quoteObject->customer?->customerInsured
             ->where('quote_request_id', $quoteObject->id)
             ->where('quote_type_id', $quoteTypeId)
@@ -38,6 +39,7 @@ class MDX extends EmbeddedProduct
             $lastName = $quoteObject->last_name ?? '';
             $emiratesIdNumber = '';
         } else {
+            // NEED TO CHANGE TO LATEST INSURED
             $firstName = ($customerInsured?->insured?->first_name ?? $quoteObject->customer?->insured_first_name) ?? '';
             $lastName = ($customerInsured?->insured?->last_name ?? $quoteObject->customer?->insured_last_name) ?? '';
             $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $quoteObject->customer?->emirates_id_number) ?? '';
