@@ -306,7 +306,7 @@ class AMLController extends Controller
             $response = AMLService::updateAMLDecisionLexisNexis(request());
             if ($response['status'] == 'success') {
                 $clientFullName = $quoteObject->first_name.' '.$quoteObject->last_name;
-                $updatedAMLStatus = app(AMLService::class)->updateAMLStatusAgainstDecision(\request()->toArray(), $quoteObject);
+                $updatedAMLStatus = app(AMLService::class)->updateAMLStatusAgainstDecision(request()->toArray(), $quoteObject);
                 $responseMessage = ['status' => 'success', 'message' => 'AML Status Updated'];
 
                 if (
