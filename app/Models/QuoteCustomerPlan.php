@@ -11,13 +11,11 @@ class QuoteCustomerPlan extends Model
     use HasFactory;
 
     protected $table = 'quote_customer_plans';
-
     protected $fillable = [
         'quote_uuid',
         'quote_type_id',
         'plan',
     ];
-
     protected $casts = [
         'plan' => 'array',
     ];
@@ -45,8 +43,6 @@ class QuoteCustomerPlan extends Model
     {
         return $query->where('quote_type_id', $quoteTypeId);
     }
-
-
 
     /**
      * Get provider name from plan JSON

@@ -4,22 +4,22 @@ namespace App\Services\Quotes;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenderEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\Nationality;
+use App\Models\Payment;
+use App\Models\PersonalQuote;
+use App\Models\QuoteCustomerPlan;
 use App\Models\SavingsQuote;
+use App\Services\HttpRequestService;
+use App\Services\Logger\LoggerService;
 use App\Services\LookupService;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Enums\PaymentStatusEnum;
-use App\Models\Payment;
-use App\Models\PersonalQuote;
-use App\Services\HttpRequestService;
-use App\Services\Logger\LoggerService;
-use Carbon\Carbon;
-use App\Models\QuoteCustomerPlan;
 
 class SavingsQuoteService extends BaseQuoteService
 {
