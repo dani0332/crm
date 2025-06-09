@@ -49,6 +49,7 @@ const props = defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  selectedCustomerPlans: Array,
 });
 
 const page = usePage();
@@ -923,7 +924,35 @@ const sendOCBEmail = () => {
             <x-divider class="mb-4 mt-1" />
           </div>
 
-          // TODO
+          <div v-if="selectedCustomerPlans && selectedCustomerPlans.length > 0">
+            <div class="inline-block">
+              <table class="border border-gray-300">
+                <thead>
+                  <tr class="bg-primary-600 text-white">
+                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider border-r border-primary-500">
+                      PROVIDER NAME
+                    </th>
+                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                      PLAN NAME
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="plan in selectedCustomerPlans" :key="plan.id" class="hover:bg-gray-50">
+                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-300">
+                      {{ plan.provider_name || 'N/A' }}
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {{ plan.plan_name || 'N/A' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div v-else class="text-center py-8 text-gray-500">
+            <p>No plans selected yet</p>
+          </div>
         </template>
       </Collapsible>
     </div>

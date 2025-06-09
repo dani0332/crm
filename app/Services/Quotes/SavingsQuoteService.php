@@ -18,6 +18,7 @@ use App\Models\PersonalQuote;
 use App\Services\HttpRequestService;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use App\Models\QuoteCustomerPlan;
 
 class SavingsQuoteService extends BaseQuoteService
 {
@@ -184,8 +185,24 @@ class SavingsQuoteService extends BaseQuoteService
 
         return [
             'canAddBatchNumber' => $this->hasRole(Auth::user(), RolesEnum::SavingsManager),
+            'selectedCustomerPlans' => $this->getSelectedCustomerPlans($uuid),
             ...$data,
         ];
+    }
+
+    public function getSelectedCustomerPlans(string $uuid)
+    {
+        return QuoteCustomerPlan::forQuote($uuid)
+            ->forQuoteType($this->quoteType->id())
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($plan) {
+                return [
+                    'id' => $plan->id,
+                    'plan_name' => $plan->plan_name,
+                    'provider_name' => $plan->provider_name,
+                ];
+            });
     }
 
     public function getSavingsQuoteLookUpData()
@@ -291,7 +308,7 @@ class SavingsQuoteService extends BaseQuoteService
                 'url' => strval($request->current_url ?? ''),
                 'ipAddress' => request()->ip(),
                 'userAgent' => request()->header('User-Agent'),
-                'userId' => strval(auth()->id()),
+                'userId' => strval(Auth::id()),
                 'plans' => [
                     [
                         'planId' => (int) $request->plan_id,
