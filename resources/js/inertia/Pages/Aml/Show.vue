@@ -74,7 +74,7 @@ const complianceComponent = reactive({
 const transactionVolumeOptions = [
   { value: 'less-than-3-in-month', label: 'Less than 3 transactions in a month' },
   { value: '4-7-in-month', label: '4 to 7 transactions in a month' },
-  { value: 'more-than-8-in-month', label: 'More than 8 transactions in a monthnthly' },
+  { value: 'more-than-8-in-month', label: 'More than 8 transactions in a monthly' },
 ];
 const transactionActivitiesOptions = [
   { value: 'less_expected_annual_activity', label: 'Less than expected Annual Activity' },
