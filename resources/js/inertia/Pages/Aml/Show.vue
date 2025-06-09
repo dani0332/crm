@@ -79,7 +79,7 @@ const transactionVolumeOptions = [
     label: 'Less than 3 transactions in a month',
   },
   { value: '4-7-in-month', label: '4 to 7 transactions in a month' },
-  { value: 'more-than-8-in-month', label: 'More than 8 transactions in a monthly' },
+  { value: 'more-than-8-in-month', label: 'More than 8 transactions in a month' },
 ];
 const transactionActivitiesOptions = [
   {
