@@ -1165,10 +1165,16 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                     />
                   </dd>
                 </div>
+                <div>
+                  <EntityRiskRatingScoreDetails
+                    :quote="quote"
+                    :modelType="quoteType"
+                  />
+                </div>
               </dl>
               <div
-                class="flex justify-end"
                 v-if="readOnlyMode.isDisable === true"
+                class="flex justify-end"
               >
                 <x-button
                   v-if="isProfileUpdateAllow"
@@ -1182,23 +1188,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 </x-button>
               </div>
             </div>
-            <dl></dl>
-            <div class="flex justify-end">
-              <x-button
-                v-if="isProfileUpdateAllow"
-                class="mt-4"
-                color="emerald"
-                size="sm"
-                :loading="customerProfileForm.processing"
-                type="submit"
-              >
-                Update Profile
-              </x-button>
-            </div>
-            <EntityRiskRatingScoreDetails
-              :quote="quote"
-              :modelType="quoteType"
-            />
           </x-form>
         </template>
       </Collapsible>
