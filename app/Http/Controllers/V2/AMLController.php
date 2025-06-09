@@ -203,7 +203,7 @@ class AMLController extends Controller
      *
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function show(AML $aml)
+    public function show(AML $aml, $insuredId = null, $customerId = null)
     {
         LoggerService::info('fn:show - AMLController');
 
@@ -212,6 +212,7 @@ class AMLController extends Controller
         $aml->quote_type_text = $aml->quotetype->text;
         $quoteType = QuoteType::where('id', $aml->quote_type_id)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $aml->quote_request_id);
+        $insured = Insured::where('id', $insuredId)->with('insuredKyc')->first() ?? null;
 
         if (isset($amlResults->Watchlist)) {
             $amlResults = collect($amlResults->Watchlist->Matches)->filter(function ($value) use ($manualStatusUpdateIM) {
@@ -229,6 +230,9 @@ class AMLController extends Controller
             'quoteStatusCode' => quoteStatusCode::asArray(),
             'amlDecisionStatusCode' => AMLDecisionStatusEnum::asArray(),
             'quoteObject' => $quoteObject,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'insured' => $insured ?? null,
+            'customerId' => $customerId ?? null,
         ]);
     }
 
@@ -244,6 +248,10 @@ class AMLController extends Controller
             '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
 
         $kycLogs = app(AMLService::class)->getKYCLogs($quoteTypeId, $quoteRequestId);
+        $isAnyEscalated = $kycLogs->isNotEmpty() ? count($kycLogs->filter(function ($log) {
+            return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
+        })) : 0;
+
         $lookups = app(AMLService::class)->getAMLLookups();
         $insuredDetails = app(AMLService::class)->getInsuredDetails($quoteRequest->customer_id, $quoteTypeId, $quoteRequestId);
         $entityDetails = app(AMLService::class)->getEntityDetails($quoteTypeId, $quoteRequestId); // TODO:: this will only for customer member mapping, this will remove when customer member mapping updated with insured
@@ -291,6 +299,7 @@ class AMLController extends Controller
             'defaultNationality' => GenericRequestEnum::DEFAULT_NATIONALITY,
             'screeningType' => $screeningType,
             'gigInsurerDefaultEmail' => GenericModelTypeEnum::GIG_INSURER_SCREENIN_DEFAULT_EMAIL,
+            'isAnyEscalated' => $isAnyEscalated,
         ], $businessPayload ?? []));
     }
 
@@ -307,7 +316,7 @@ class AMLController extends Controller
             $response = AMLService::updateAMLDecisionLexisNexis(request());
             if ($response['status'] == 'success') {
                 $clientFullName = $quoteObject->first_name.' '.$quoteObject->last_name;
-                $updatedAMLStatus = app(AMLService::class)->updateAMLStatusAgainstDecision(\request()->toArray(), $quoteObject);
+                $updatedAMLStatus = app(AMLService::class)->updateAMLStatusAgainstDecision(request()->toArray(), $quoteObject);
                 $responseMessage = ['status' => 'success', 'message' => 'AML Status Updated'];
 
                 if (
@@ -315,6 +324,9 @@ class AMLController extends Controller
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
                     app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
+                    if (! empty(request()->complianceComponent)) {
+                        app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComponent);
+                    }
                 }
 
                 $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];
