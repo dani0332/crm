@@ -2,8 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\QuoteStatusEnum;
-use App\Events\PrivateClientUpdatedEvent;
 use App\Jobs\Audit\LogAllocation;
 use App\Models\PersonalQuote;
 use App\Observers\Traits\Observable;
@@ -42,10 +40,6 @@ class PersonalQuoteObserver
 
         if ($personalQuote->isDirty('quote_status_id')) {
             $this->handleQuoteStatusChange($personalQuote);
-        }
-
-        if (in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])) {
-            event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
         }
     }
 }
