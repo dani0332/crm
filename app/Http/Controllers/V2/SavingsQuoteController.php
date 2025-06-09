@@ -195,9 +195,7 @@ class SavingsQuoteController extends Controller
 
         // Check if the response is a success (e.g., 200 or 201)
         if (is_int($response) && in_array($response, [200, 201])) {
-            return response()->json([
-                'message' => 'Savings plan has been updated successfully',
-            ], 200);
+            return redirect()->back()->with('message', 'Savings plan has been updated successfully');
         }
 
         // Determine the response message
@@ -208,9 +206,7 @@ class SavingsQuoteController extends Controller
             $responseMessage = $response;
         }
 
-        // Return error as JSON for API consumption
-        return response()->json([
-            'message' => 'Savings plan has not been updated. '.$responseMessage,
-        ], 400); // 400 Bad Request or any relevant error code
+        // Return error as redirect for Inertia
+        return redirect()->back()->with('error', 'Savings plan has not been updated. '.$responseMessage);
     }
 }
