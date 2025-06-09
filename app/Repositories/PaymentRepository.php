@@ -653,7 +653,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->is_approved = 0;
             $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
             $payment->save();
-            app(SplitPaymentService::class)->updateLeadStatus($payment, 'fetch update total price'); // update lead status
+            app(SplitPaymentService::class)->updateLeadStatus($payment); // update lead status
 
             return response()->json(['message' => 'Total Price Updated Successfully']);
         }
@@ -970,7 +970,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             $newPaymentStatus = $payment->payment_status_id;
             LoggerService::info("Master payment code: {$payment->code} - Payment status updated from {$oldPaymentStatus} to {$newPaymentStatus}");
-            app(SplitPaymentService::class)->updateLeadStatus($payment, 'set master payment status'); // update lead status
+            app(SplitPaymentService::class)->updateLeadStatus($payment); // update lead status
         }
     }
 
@@ -1087,7 +1087,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $quotePayment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
         if ($quotePayment) {
             if (! $quotePayment->price_vat_applicable) {
-                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat('updatePriceVatApplicableAndVat', $quotePayment->total_price, $modelType, $quote->id, $quotePayment->code);
+                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($quotePayment->total_price, $modelType, $quote->id, $quotePayment->code);
                 $quotePayment->update([
                     'price_vat_applicable' => $priceWithoutVat,
                     'price_vat' => $vat,

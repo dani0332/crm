@@ -66,7 +66,6 @@ class PaymentObserver
         }
 
         [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat(
-            'payment observer',
             $payment->total_price,
             $modelType,
             $quoteId,

@@ -940,7 +940,7 @@ class SplitPaymentService
                 }
             }
             if (! $sendUpdateId) {
-                $this->updateLeadStatus($masterPayment, 'process master payment approval');
+                $this->updateLeadStatus($masterPayment);
                 LoggerService::info("Master payment code: {$quoteModel->code} Lead status updated for quote according to payment status");
             }
 
@@ -963,11 +963,8 @@ class SplitPaymentService
     }
 
     // Update lead status for ecomm quotes
-    public function updateLeadStatus($payment, $source = null)
+    public function updateLeadStatus($payment)
     {
-        if ($source != null) {
-            info("Master payment code: {$payment->code} -update lead status called source: {$source}");
-        }
         $quoteModel = $payment->paymentable;
         $ecommQuotes = [
             CarQuote::class,
@@ -980,7 +977,7 @@ class SplitPaymentService
 
             if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                 $quoteModel->payment_paid_at = now();
-                LoggerService::info("Master payment code: {$payment->code} - Quote type: {$payment->paymentable_type} - Payment paid at updated to: ".now()->format('Y-m-d H:i:s'));
+                LoggerService::info("Master payment code: {$payment->code} - Quote type: {$payment->paymentable_type}");
 
                 // Update lead source for revival quotes after payment is paid
                 $isRevival = $quoteModel->source == LeadSourceEnum::REVIVAL || $quoteModel->source == LeadSourceEnum::REVIVAL_REPLIED;
@@ -1048,7 +1045,7 @@ class SplitPaymentService
         if (! $vatValue) {
             return [$priceWithoutVat, $vat];
         }
-        [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat('calculatePriceAndVat', $masterTotalPrice, $modelType, $quoteId, $paymentCode, $send_update_id);
+        [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($masterTotalPrice, $modelType, $quoteId, $paymentCode, $send_update_id);
         if ($vat > 0) {
             $discount = 0;
 
@@ -1080,7 +1077,7 @@ class SplitPaymentService
         return [round($priceWithoutVat, 2), round($vat, 2)];
     }
 
-    public function calculateMasterPriceAndVat($source, $masterTotalPrice, $modelType, $quoteId, $paymentCode, $send_update_id = null)
+    public function calculateMasterPriceAndVat($masterTotalPrice, $modelType, $quoteId, $paymentCode, $send_update_id = null)
     {
         $vat = 0;
         $priceWithoutVat = $masterTotalPrice;
@@ -1088,9 +1085,8 @@ class SplitPaymentService
         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
 
         if (! $vatValue) {
-            LoggerService::info('SplitPaymentService - No VAT value found in application storage, returning original price for source: '.$source.' payment code: '.$paymentCode, extra: [
-                'masterTotalPrice' => $masterTotalPrice,
-                'source' => $source,
+            LoggerService::info('SplitPaymentService - No VAT value found in application storage payment code: '.$paymentCode, extra: [
+                'masterTotalPrice' => $masterTotalPrice
             ]);
 
             return [$priceWithoutVat, $vat];
@@ -1101,23 +1097,19 @@ class SplitPaymentService
 
         if ($send_update_id > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
-            LoggerService::info('SplitPaymentService - Processing send update log for payment code: '.$paymentCode, extra: [
-                'source' => $source,
-            ]);
+            LoggerService::info('SplitPaymentService - Processing send update log for payment code: '.$paymentCode);
         } else {
             if (in_array($modelType, $ecommLobs)) {
                 $computedPrice = $masterTotalPrice;
                 LoggerService::info('SplitPaymentService - Processing ecommLob quote for payment code: '.$paymentCode, extra: [
                     'modelType' => $modelType,
                     'computedPrice' => $computedPrice,
-                    'source' => $source,
                 ]);
             } else {
                 $quoteModel = $this->getQuoteObject($modelType, $quoteId);
                 $quoteCode = $quoteModel->code;
                 LoggerService::info('SplitPaymentService - Processing non-ecommLob quote for payment code: '.$paymentCode, extra: [
-                    'modelType' => $modelType,
-                    'source' => $source,
+                    'modelType' => $modelType
                 ]);
             }
         }
@@ -1126,16 +1118,14 @@ class SplitPaymentService
             if (isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
                 $computedPrice = $quoteModel->price_vat_applicable;
                 LoggerService::info('SplitPaymentService - Using price_vat_applicable from quote for payment code: '.$paymentCode, extra: [
-                    'price_vat_applicable' => $quoteModel->price_vat_applicable,
-                    'source' => $source,
+                    'price_vat_applicable' => $quoteModel->price_vat_applicable
                 ]);
             }
 
             if (isset($quoteModel->price_vat_not_applicable) && $quoteModel->price_vat_not_applicable > 0) {
                 $priceVatNotApplicable = $quoteModel->price_vat_not_applicable;
                 LoggerService::info('SplitPaymentService - Using price_vat_not_applicable from payment code: '.$paymentCode, extra: [
-                    'price_vat_not_applicable' => $quoteModel->price_vat_not_applicable,
-                    'source' => $source,
+                    'price_vat_not_applicable' => $quoteModel->price_vat_not_applicable
                 ]);
             }
         }
@@ -1147,8 +1137,7 @@ class SplitPaymentService
                 LoggerService::info('SplitPaymentService - ecommLob VAT calculation for payment code: '.$paymentCode, extra: [
                     'modelType' => $modelType,
                     'priceWithoutVat' => $priceWithoutVat,
-                    'vat' => $vat,
-                    'source' => $source,
+                    'vat' => $vat
                 ]);
             } else {
                 $priceWithoutVat = $computedPrice;
@@ -1156,8 +1145,7 @@ class SplitPaymentService
                 LoggerService::info('SplitPaymentService - non-ecommLob VAT calculation for payment code: '.$paymentCode, extra: [
                     'modelType' => $modelType,
                     'priceWithoutVat' => $priceWithoutVat,
-                    'vat' => $vat,
-                    'source' => $source,
+                    'vat' => $vat
                 ]);
             }
 
@@ -1165,8 +1153,7 @@ class SplitPaymentService
             LoggerService::info('SplitPaymentService - Final price after adding non-applicable VAT amount for payment code: '.$paymentCode, extra: [
                 'final_priceWithoutVat' => $priceWithoutVat,
                 'priceVatNotApplicable' => $priceVatNotApplicable,
-                'vat' => $vat,
-                'source' => $source,
+                'vat' => $vat
             ]);
 
             return [round($priceWithoutVat, 2), round($vat, 2)];
@@ -1174,8 +1161,7 @@ class SplitPaymentService
 
         LoggerService::info('SplitPaymentService - No computed price available, using default values for payment code: '.$paymentCode, extra: [
             'priceWithoutVat' => $priceWithoutVat,
-            'vat' => $vat,
-            'source' => $source,
+            'vat' => $vat
         ]);
 
         return [round($priceWithoutVat, 2), round($vat, 2)];
