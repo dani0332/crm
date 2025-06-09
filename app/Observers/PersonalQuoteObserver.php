@@ -45,7 +45,7 @@ class PersonalQuoteObserver
         }
 
         if (
-            isset($dirty['quote_status_id']) &&
+            $personalQuote->isDirty('quote_status_id') &&
             in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
         ) {
             event(new PrivateClientUpdatedEvent($personalQuote, $personalQuote->quote_type_id));
