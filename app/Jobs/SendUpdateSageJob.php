@@ -47,7 +47,7 @@ class SendUpdateSageJob implements ShouldQueue
      */
     public function handle(SageApiService $sageApiService): void
     {
-        LoggerService::startFeatureLogging( LoggerFeatureEnum::SAGE_ENDORSEMENT_BOOKING);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SAGE_ENDORSEMENT_BOOKING);
         info('job:SendUpdateSageJob - Process Start - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid);
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
