@@ -87,7 +87,9 @@ const onLoadAuditLogData = async () => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg">{{ props.title ?? 'Audit Logs' }}</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            {{ props.title ?? 'Audit Logs' }}
+          </h3>
         </div>
       </template>
       <template #body>
