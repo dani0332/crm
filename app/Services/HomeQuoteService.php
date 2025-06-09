@@ -179,6 +179,7 @@ class HomeQuoteService extends BaseService
                 $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id)', [QuoteTypeId::Home]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
