@@ -670,8 +670,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::controller(SendUpdateLogController::class)->prefix('send-update')->name('send-update.')->group(function () {
         Route::post('get-options', 'getOptions')->name('get-options');
-        Route::get('/', 'index')->name('index');
-        Route::post('/', 'store')->name('store');
+        Route::post('/store', 'store')->name('store');
         Route::get('/{uuid}', 'show')->name('show');
         Route::patch('/update/{id}', 'update')->name('update');
         Route::post('/save-details', 'savePriceDetails')->name('save-price-details');
