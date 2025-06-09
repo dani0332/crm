@@ -799,7 +799,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
         // Dispatch job to background queue instead of running synchronously
-        \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType);
+        \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
 
         return response()->json([
             'message' => "Handbook documents check for {$quoteType} has been queued for background processing",

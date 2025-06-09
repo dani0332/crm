@@ -20,15 +20,16 @@ class CheckHandbookDocumentsJob implements ShouldQueue
     public int $tries = 1;
     public int $timeout = 300; // 5 minutes
     private $quoteType;
-
+    private $lockPostfix;
     /**
      * Create a new job instance.
      *
      * @param  string  $quoteType  The type of quote to check (Car, Health, Travel)
      */
-    public function __construct($quoteType)
+    public function __construct($quoteType, $lockPostfix)
     {
         $this->quoteType = $quoteType;
+        $this->lockPostfix = $lockPostfix;
     }
 
     /**
@@ -83,7 +84,7 @@ class CheckHandbookDocumentsJob implements ShouldQueue
     public function middleware()
     {
         return [
-            new WithoutOverlapping('handbook-check-'.$this->quoteType),
+            new WithoutOverlapping('handbook-check-'.$this->quoteType.'-'.$this->lockPostfix),
         ];
     }
 }
