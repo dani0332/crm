@@ -913,23 +913,22 @@ class QuoteDocumentService extends BaseService
         } elseif ($quoteType == quoteTypeCode::Health) {
             $healthPolicyWordingDocs = HealthPlanPolicyWording::get();
             $policyWordingDocuments = $this->formatPolicyWordingDocumentUrls($healthPolicyWordingDocs);
-
         } elseif ($quoteType == quoteTypeCode::Travel) {
             $travelPolicyWordingDocs = TravelPlanPolicyWording::get();
             $policyWordingDocuments = $this->formatPolicyWordingDocumentUrls($travelPolicyWordingDocs);
         } else {
             LoggerService::error("Invalid quote type: {$quoteType}");
-            return; // Early return to prevent undefined variable error
+            return;
         }
         
         $filteredDocuments = $this->filterAttachments($policyWordingDocuments);
-
         LoggerService::info("Missing policy wording documents for {$quoteType}", extra: [
             'quote_type' => $quoteType,
             'missing_documents' => $filteredDocuments,
             'total_missing' => count($filteredDocuments),
         ]);
 
+        return;
     }
 
     public function formatPolicyWordingDocumentUrls($policyWordingDocs)
