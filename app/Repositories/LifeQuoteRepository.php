@@ -171,7 +171,7 @@ class LifeQuoteRepository extends BaseRepository
             'lifeQuote.purposeOfInsurance', 'lifeQuote.children', 'lifeQuote.currency', 'lifeQuote.insuranceTenure', 'lifeQuote.numberOfYears', 'lifeQuote.maritalStatus',
             'lifeQuote.paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
             'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod',
-            'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob', 'insured',
+            'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob', 'insured', 'insured.insuredKyc:id,insured_id',
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },

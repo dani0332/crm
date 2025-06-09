@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
 use App\Models\SageProcess;
@@ -45,7 +46,7 @@ class BookPolicyOnSageJob implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::startQuoteLogging($this->quote);
+        LoggerService::startQuoteLogging($this->quote, LoggerFeatureEnum::SAGE_POLICY_BOOKING);
         LoggerService::info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Started');
 
         $this->sageProcess = SageProcess::find($this->sageProcess->id);

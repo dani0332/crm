@@ -10,7 +10,7 @@ use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -201,9 +201,9 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->allowedColumns;
     }
-    public function insured(): HasManyThrough
+    public function insured(): HasOneThrough
     {
-        return $this->hasManyThrough(
+        return $this->hasOneThrough(
             Insured::class,
             CustomerInsured::class,
             'quote_request_id', // customer_insured.quote_request_id, relation between life_quote and customer_insured.
