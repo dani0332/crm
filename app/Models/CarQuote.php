@@ -140,6 +140,18 @@ class CarQuote extends BaseModel
         return $this->belongsTo(Customer::class);
     }
 
+    public function lastInsured()
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // Foreign key on customer_insured table...
+            'id',               // Foreign key on insured table...
+            'id',               // Local key on car_quote_request table...
+            'insured_id'        // Local key on customer_insured table...
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Car);
+    }
+
     public function nationality()
     {
         return $this->belongsTo(Nationality::class, 'nationality_id')->select(['id', 'code', 'text']);

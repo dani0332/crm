@@ -21,6 +21,7 @@ use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
+use App\Jobs\SukoonDriverMedexPurchaseFlowJob;
 use App\Models\ApplicationStorage;
 use App\Models\CustomerAddress;
 use App\Models\DocumentType;
@@ -349,12 +350,9 @@ class EmbeddedProductRepository extends BaseRepository
                 } else {
 
                     // EP Send documents
-                    $data = [];
-                    $data['quoteId'] = $leadId;
-                    $data['modelType'] = $modelType;
-                    $data['epId'] = $embedded_product_id;
-                    $data['regenerate'] = $resendEmail;
-                    $this->fetchSendDocument($data);
+                    $quoteObject = $this->getQuoteObject($modelType, $leadId);
+                    $quoteObject->load('lastInsured');
+                    SukoonDriverMedexPurchaseFlowJob::dispatch($quoteObject);
                 }
             }
         }
