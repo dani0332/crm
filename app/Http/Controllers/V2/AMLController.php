@@ -247,7 +247,7 @@ class AMLController extends Controller
             '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
 
         $kycLogs = app(AMLService::class)->getKYCLogs($quoteTypeId, $quoteRequestId);
-        $isAnyEscalated = $kycLogs->isNotEmpty() ? count($kycLogs->filter(function($log) {
+        $isAnyEscalated = $kycLogs->isNotEmpty() ? count($kycLogs->filter(function ($log) {
             return $log['decision'] == AMLDecisionStatusEnum::ESCALATED;
         })) : 0;
 

@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\HomeInsurerRequestResponses;
 use App\Models\HomeQuote;
-use App\Models\Insured;
-use App\Models\InsuredKyc;
 use App\Models\InsurerRequestResponse;
 use App\Models\TravelInsurerRequestResponses;
 use App\Models\TravelQuote;
