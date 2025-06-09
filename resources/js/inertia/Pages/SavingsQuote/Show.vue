@@ -712,9 +712,7 @@ const sendOCBEmail = () => {
           >
         </x-tooltip>
         <template v-else>
-          <!-- TODO: Uncomment v-if when tested on local and add v-if="can(permissionsEnum.SavingsQuotesEdit)" -->
-          <!-- <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.SavingsQuotesEdit)" /> -->
-          <LeadEditBtnReuseTemplate />
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.SavingsQuotesEdit)" />
         </template>
 
         <Link
