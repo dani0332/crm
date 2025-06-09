@@ -178,22 +178,21 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             'previous_advisor' => ['index' => 43, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
             'notes' => ['index' => 44, 'title' => 'Notes', 'rules' => 'max:500'],
             'is_gcc' => ['index' => 45, 'title' => 'Is GCC', 'rules' => 'max:3'],
-           
+
         ];
 
         if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
             $columns['make']['rules'][] = 'required';
             $columns['model']['rules'][] = 'required';
             $columns['year']['rules'][] = 'required';
-            if (isset($row[6]) && $row[6] != CarVehicleUse::PRIVATE){
-            // if vehicle use is not private, then these fields are not required 
+            if (isset($row[6]) && $row[6] != CarVehicleUse::PRIVATE) {
+                // if vehicle use is not private, then these fields are not required
                 $columns['dob']['rules'][] = 'required';
                 $columns['driving_experience']['rules'][] = 'required';
                 $columns['nationality']['rules'][] = 'required';
             }
-           
+
             $columns['registration_location']['rules'][] = 'required';
-        
 
         }
 
@@ -287,7 +286,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                         );
                     }
                     info("Checking vehicle use and driver fields relationship for row: $rowIndex, vehicle_use: {$row[6]}");
-                      if (isset($row[17]) && empty($row[17])) {
+                    if (isset($row[17]) && empty($row[17])) {
                         $validator->errors()->add(
                             $rowIndex.'.17',
                             'Date of Birth is required.'
@@ -305,8 +304,6 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                             'Nationality is required.'
                         );
                     }
-                  
-                    
 
                 }
             }
