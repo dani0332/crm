@@ -921,8 +921,6 @@ class QuoteDocumentService extends BaseService
         }
         $filteredDocuments = $this->filterAttachments($policyWordingDocuments);
 
-        info("Missing policy wording documents for {$quoteType}", $filteredDocuments);
-        
         LoggerService::info("Missing policy wording documents for {$quoteType}", extra: [
             'quote_type' => $quoteType,
             'missing_documents' => $filteredDocuments,
