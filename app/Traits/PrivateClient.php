@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
 use App\Models\PersonalQuote;
@@ -29,7 +30,7 @@ trait PrivateClient
             return false;
         }
 
-        $modelClass = QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
+        $modelClass = $quoteTypeId === QuoteTypeId::Yacht || $quoteTypeId === QuoteTypeId::Home ? PersonalQuote::class : QuoteTypes::getQuoteTypeIdToClass($quoteTypeId);
         if (! class_exists($modelClass)) {
             LoggerService::warning('Model class not found.', extra: [
                 'quoteTypeId' => $quoteTypeId,
@@ -59,7 +60,12 @@ trait PrivateClient
 
     private function findLeadModel(string $modelClass, string $leadUuid, int $quoteTypeId)
     {
-        $model = (new $modelClass)->where('uuid', $leadUuid)->first();
+        $model = (new $modelClass)->where('uuid', $leadUuid);
+
+        if ($quoteTypeId === QuoteTypeId::Home) {
+            $model->with('homeQuote');
+        }
+        $model = $model->first();
 
         if (! $model) {
             LoggerService::warning('Lead not found.', extra: [
@@ -76,9 +82,9 @@ trait PrivateClient
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
         $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
 
-        return (new $modelClass)->where('uuid', $model->uuid)
+        dd((new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause)
-            ->exists();
+            ->toRawSql());
     }
 
     /**

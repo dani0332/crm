@@ -100,8 +100,8 @@ const insuranceTypes = [
     quote_type_id: 1,
     fields: [
       {
-        name: 'premium',
-        uiName: 'car_premium',
+        name: 'price_with_vat',
+        uiName: 'car_price_with_vat',
         label: 'Total Price',
         type: 'price',
         currency: 'AED',
@@ -140,8 +140,8 @@ const insuranceTypes = [
     quote_type_id: 3,
     fields: [
       {
-        name: 'premium',
-        uiName: 'health_premium',
+        name: 'price_with_vat',
+        uiName: 'health_price_with_vat',
         label: 'Total Price',
         type: 'price',
         currency: 'AED',
@@ -216,8 +216,8 @@ const insuranceTypes = [
     quote_type_id: 2,
     fields: [
       {
-        name: 'premium',
-        uiName: 'home_premium',
+        name: 'price_with_vat',
+        uiName: 'home_price_with_vat',
         label: 'Total Price',
         type: 'price',
         currency: 'AED',
@@ -248,8 +248,8 @@ const insuranceTypes = [
     quote_type_id: 7,
     fields: [
       {
-        name: 'premium',
-        uiName: 'yacht_premium',
+        name: 'price_with_vat',
+        uiName: 'yacht_price_with_vat',
         label: 'Total Price',
         type: 'price',
         currency: 'AED',
