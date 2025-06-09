@@ -1161,7 +1161,7 @@ class AMLService
         $quoteObject->aml_status = $amlStatus;
         $quoteObject->save();
 
-        return $amlStatus == QuoteStatusEnum::AMLScreeningCleared ?
+        return $amlStatus == AMLStatusCode::AMLScreeningCleared ?
                             AMLStatusCode::getName(AMLStatusCode::AMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::AMLScreeningFailed);
     }
 }
