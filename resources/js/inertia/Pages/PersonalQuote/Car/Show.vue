@@ -4193,6 +4193,14 @@ const isCommercialVehicle = computed(() => {
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
   />
+
+  <AuditLogs
+    :title="'KYC Audit Logs'"
+    :type="'App\\Models\\InsuredKyc'"
+    :id="record?.insured_kyc_id"
+    :expanded="sectionExpanded"
+  />
+
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"
