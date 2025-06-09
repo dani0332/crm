@@ -920,7 +920,7 @@ class QuoteDocumentService extends BaseService
             LoggerService::error("Invalid quote type: {$quoteType}");
             return;
         }
-        
+
         $filteredDocuments = $this->filterAttachments($policyWordingDocuments);
         LoggerService::info("Missing policy wording documents for {$quoteType}", extra: [
             'quote_type' => $quoteType,
