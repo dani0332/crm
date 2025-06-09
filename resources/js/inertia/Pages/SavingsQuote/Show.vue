@@ -364,6 +364,21 @@ const selectedProviderPlan = ref({
   premium: page.props?.quote?.plans?.premium,
 });
 
+const displayPlans = computed(() => {
+  const plans = [...(props.selectedCustomerPlans || [])];
+
+  // Always ensure we have exactly 3 rows (max 3 plans possible)
+  while (plans.length < 3) {
+    plans.push({
+      id: null,
+      provider_name: null,
+      plan_name: null,
+    });
+  }
+
+  return plans;
+});
+
 const handlePlanSelected = plan => {
   selectedProviderPlan.value.id = plan.id;
   selectedProviderPlan.value.planName = plan.planName;
@@ -924,34 +939,29 @@ const sendOCBEmail = () => {
             <x-divider class="mb-4 mt-1" />
           </div>
 
-          <div v-if="selectedCustomerPlans && selectedCustomerPlans.length > 0">
-            <div class="inline-block">
-              <table class="border border-gray-300">
-                <thead>
-                  <tr class="bg-primary-600 text-white">
-                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider border-r border-primary-500">
-                      PROVIDER NAME
-                    </th>
-                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                      PLAN NAME
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="plan in selectedCustomerPlans" :key="plan.id" class="hover:bg-gray-50">
-                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-300">
-                      {{ plan.provider_name || 'N/A' }}
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {{ plan.plan_name || 'N/A' }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div v-else class="text-center py-8 text-gray-500">
-            <p>No plans selected yet</p>
+          <div>
+            <table class="border border-gray-300 text-sm">
+              <thead>
+                <tr class="bg-primary-600 text-white">
+                  <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider border-r border-white whitespace-nowrap">
+                    PROVIDER NAME
+                  </th>
+                  <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap">
+                    PLAN NAME
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white">
+                <tr v-for="(plan, index) in displayPlans" :key="plan.id || `empty-${index}`" class="border-b border-gray-300 last:border-b-0">
+                  <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-300 whitespace-nowrap">
+                    {{ plan.provider_name || 'N/A' }}
+                  </td>
+                  <td class="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">
+                    {{ plan.plan_name || 'N/A' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </template>
       </Collapsible>
