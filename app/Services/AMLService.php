@@ -1141,7 +1141,6 @@ class AMLService
         return $data;
     }
 
-    
     public function updateAMLStatusAgainstDecision($request, $quoteObject)
     {
         LoggerService::info(self::class.' - '.__FUNCTION__);
