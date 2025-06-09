@@ -45,6 +45,7 @@ class PolicyIssuanceJob implements ShouldBeUnique, ShouldQueue
     public function handle(): void
     {
         $this->process = $this->process->refresh();
+        $quote = $this->process->model;
 
         info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 

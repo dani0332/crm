@@ -6,6 +6,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import SelectPlan from '../../Components/SelectPlan.vue';
 
 const props = defineProps({
   quote: Object,
@@ -49,6 +50,7 @@ const props = defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  selectedCustomerPlans: Array,
 });
 
 const page = usePage();
@@ -328,7 +330,18 @@ const selectedPlanType = ref(null);
 const toggleLoader = ref(false);
 const viewButtonLoading = ref(false);
 const planDetails = ref(null);
-const exportLoader = ref(false);
+
+// Form for individual plan updates
+const planForm = useForm({
+  quote_uuid: '',
+  plan_id: '',
+  provider_name: '',
+  actual_premium: 0,
+  insurer_quote_no: '',
+  is_disabled: false,
+  is_manual_update: false,
+  current_url: '',
+});
 
 const normalPlansIds = reactive({
   ids: [],
@@ -345,6 +358,26 @@ const planDetailsTabs = ref([
   { index: 3, label: 'Key Features Document' },
 ]);
 
+const selectedProviderPlan = ref({
+  id: page.props?.quote?.plan_id,
+  planName: page.props?.quote?.plans?.name,
+  providerName: page.props?.quote?.plans?.providerName,
+  premium: page.props?.quote?.plans?.premium,
+});
+
+const handlePlanSelected = plan => {
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
+  });
+  onLoadAvailablePlansData();
+};
+
 const onLoadAvailablePlansData = async () => {
   availablePlansTable.isLoading = true;
   let data = {
@@ -354,8 +387,6 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-      console.log('onLoadAvailablePlansData', res.data);
-
       // Process the response data to flatten regular and lumpsum plans
       const processedPlans = [];
 
@@ -365,12 +396,15 @@ const onLoadAvailablePlansData = async () => {
           const processedPlan = {
             ...plan,
             investmentFrequency: 'Regular',
-            currency: 'USD',
-            minimumInvestment: getEligibilityValue(
-              plan.eligibility,
-              'minimum_investment_amount',
-            ),
+            currency: plan.currencyName || 'USD',
+            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+            isManualUpdate: plan.isManualUpdate || false,
+            isDisabled: plan.isDisabled || false,
+            // Add properties needed by SelectPlan component
+            actualPremium: plan.actualPremium, // Keep actual value - advisor must manually set premium to enable selection
+            insuranceProviderId: plan.providerId || plan.insuranceProviderId,
+            providerCode: plan.providerCode,
           };
           processedPlans.push(processedPlan);
         });
@@ -382,12 +416,15 @@ const onLoadAvailablePlansData = async () => {
           const processedPlan = {
             ...plan,
             investmentFrequency: 'Lumpsum',
-            currency: 'USD',
-            minimumInvestment: getEligibilityValue(
-              plan.eligibility,
-              'minimum_investment_amount',
-            ),
+            currency: plan.currencyName || 'USD',
+            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
+            isManualUpdate: plan.isManualUpdate || false,
+            isDisabled: plan.isDisabled || false,
+            // Add properties needed by SelectPlan component
+            actualPremium: plan.actualPremium, // Keep actual value - advisor must manually set premium to enable selection
+            insuranceProviderId: plan.providerId || plan.insuranceProviderId,
+            providerCode: plan.providerCode,
           };
           processedPlans.push(processedPlan);
         });
@@ -527,53 +564,70 @@ const onToggleManual = () => {
   }, 300);
 };
 
-const onExportPlans = () => {
-  if (selectedPlans.value.length === 0) {
-    notification.error({
-      title: 'Please select at least one plan to export',
-      position: 'top',
-    });
-    return;
-  }
+const onToggleIndividualPlan = () => {
+  if (!planDetails.value) return;
 
-  exportLoader.value = true;
-
-  const planIds = selectedPlans.value.map(plan => plan.id);
+  toggleLoader.value = true;
 
   axios
-    .post(route('exportPlans', { quoteType: 'savings' }), {
+    .post(route('manualPlanToggle', { quoteType: 'savings' }), {
       modelType: 'Savings',
-      planIds: planIds,
+      planIds: [planDetails.value.id],
       quote_uuid: page.props.quote.uuid,
+      toggle: planDetails.value.isDisabled,
     })
     .then(response => {
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute(
-        'download',
-        `savings-plans-${page.props.quote.code}.pdf`,
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
       notification.success({
-        title: 'Plans exported successfully',
+        title: 'Plan has been updated',
         position: 'top',
       });
+      onLoadAvailablePlansDataAndPlanDetails();
     })
     .catch(error => {
       notification.error({
-        title: 'Error exporting plans',
+        title: 'Error updating plan',
         position: 'top',
       });
+      // Reset the toggle state on error
+      planDetails.value.isDisabled = !planDetails.value.isDisabled;
     })
     .finally(() => {
-      exportLoader.value = false;
+      toggleLoader.value = false;
     });
+};
+
+const onUpdateIndividualPlan = () => {
+  if (!planDetails.value) return;
+
+  // Update form with current plan details
+  planForm.quote_uuid = page.props.quote.uuid;
+  planForm.plan_id = planDetails.value.id;
+  planForm.provider_name = planDetails.value.providerName;
+  planForm.actual_premium = planDetails.value.actualPremium || 0;
+  planForm.insurer_quote_no = planDetails.value.insurerQuoteNo || '';
+  planForm.is_disabled = planDetails.value.isDisabled;
+  planForm.is_manual_update = planDetails.value.isManualUpdate;
+  planForm.current_url = usePage().url;
+
+  // Submit the form
+  planForm.post(route('savingsPlanUpdate'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Plan updated successfully',
+        position: 'top',
+      });
+      onLoadAvailablePlansDataAndPlanDetails();
+    },
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
+    },
+  });
 };
 
 const sendOCBEmail = () => {
@@ -660,9 +714,7 @@ const sendOCBEmail = () => {
           >
         </x-tooltip>
         <template v-else>
-          <!-- TODO: Uncomment v-if when tested on local and add v-if="can(permissionsEnum.SavingsQuotesEdit)" -->
-          <!-- <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.SavingsQuotesEdit)" /> -->
-          <LeadEditBtnReuseTemplate />
+          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.SavingsQuotesEdit)" />
         </template>
 
         <Link
@@ -873,7 +925,35 @@ const sendOCBEmail = () => {
             <x-divider class="mb-4 mt-1" />
           </div>
 
-          // TODO
+          <div v-if="selectedCustomerPlans && selectedCustomerPlans.length > 0">
+            <div class="inline-block">
+              <table class="border border-gray-300">
+                <thead>
+                  <tr class="bg-primary-600 text-white">
+                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider border-r border-primary-500">
+                      PROVIDER NAME
+                    </th>
+                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
+                      PLAN NAME
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-for="plan in selectedCustomerPlans" :key="plan.id" class="hover:bg-gray-50">
+                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-300">
+                      {{ plan.provider_name || 'N/A' }}
+                    </td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                      {{ plan.plan_name || 'N/A' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div v-else class="text-center py-8 text-gray-500">
+            <p>No plans selected yet</p>
+          </div>
         </template>
       </Collapsible>
     </div>
@@ -1282,15 +1362,7 @@ const sendOCBEmail = () => {
                   Hide
                 </x-button>
               </x-button-group>
-              <x-button
-                v-if="selectedPlans.length > 0"
-                size="sm"
-                color="emerald"
-                @click.prevent="onExportPlans"
-                :loading="exportLoader"
-              >
-                Download PDF
-              </x-button>
+
               <x-tooltip placement="top" align="left">
                 <x-button
                   @click.prevent="modals.sendConfirm = true"
@@ -1360,26 +1432,42 @@ const sendOCBEmail = () => {
                 </div>
               </template>
               <template #item-providerName="item">
-                <p class="text-gray-800 uppercase">
+                <p class="text-primary-600 uppercase">
                   {{ item.providerName }}
                 </p>
+                <div class="flex gap-1">
+                  <x-tag
+                    v-if="item.isManualUpdate"
+                    size="xs"
+                    color="primary"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Manual
+                  </x-tag>
+                  <x-tag
+                    v-if="item.isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Hidden
+                  </x-tag>
+                </div>
               </template>
               <template #item-name="item">
-                <span class="text-gray-800 uppercase">{{ item.name }}</span>
+                <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
               <template #item-investmentFrequency="item">
-                <span class="text-gray-800">{{
-                  item.investmentFrequency
-                }}</span>
+                <span class="text-primary-600">{{ item.investmentFrequency }}</span>
               </template>
               <template #item-minimumInvestment="item">
-                <span>{{ item.minimumInvestment }}</span>
+                <span class="text-primary-600">{{ item.minimumInvestment }}</span>
               </template>
               <template #item-currency="item">
-                <span>{{ item.currency }}</span>
+                <span class="text-primary-600">{{ item.currency }}</span>
               </template>
               <template #item-policyTerm="item">
-                <span>{{ item.policyTerm }}</span>
+                <span class="text-primary-600">{{ item.policyTerm }}</span>
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
@@ -1395,6 +1483,32 @@ const sendOCBEmail = () => {
                   >
                     View
                   </x-button>
+                  <span>
+                    <SelectPlan
+                      v-if="selectedProviderPlan.id != item.id"
+                      @update:selectedPlanChanged="handlePlanSelected"
+                      :plan="item"
+                      :quoteType="'Savings'"
+                      :uuid="quote.uuid"
+                      :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
+                      :payments="payments"
+                      :insuranceProviderId="item.insuranceProviderId"
+                    />
+
+                    <x-button
+                      v-else
+                      size="xs"
+                      color="orange"
+                      outlined
+                      :disabled="true"
+                    >
+                      Selected
+                    </x-button>
+                  </span>
                 </div>
               </template>
             </DataTable>
@@ -1436,20 +1550,29 @@ const sendOCBEmail = () => {
                   <!-- Plan Details Tab -->
                   <TabPanel class="bg-white">
                     <div class="p-6">
-                      <!-- Manual Toggle using Car pattern -->
-                      <div class="mb-6">
-                        <ToggleManualButtonTemplate v-slot="{ isDisabled }">
-                          <x-toggle
-                            v-model="isManualUpdate"
-                            color="success"
-                            label="Manual"
-                            :disabled="isDisabled"
-                            @change="onToggleManual"
-                            :loading="toggleManualLoader"
-                          />
-                        </ToggleManualButtonTemplate>
-
+                      <!-- Plan Toggle Controls -->
+                      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
                         <div class="grid sm:grid-cols-2 mb-3">
+                          <x-toggle
+                            v-model="planDetails.isDisabled"
+                            color="success"
+                            label="Hide Plan?"
+                            @change="onToggleIndividualPlan"
+                            :loading="toggleLoader"
+                          />
+                        </div>
+                        <div class="grid sm:grid-cols-2 mb-3">
+                          <ToggleManualButtonTemplate v-slot="{ isDisabled }">
+                            <x-toggle
+                              v-model="planDetails.isManualUpdate"
+                              color="success"
+                              label="Manual"
+                              :disabled="isDisabled"
+                              @change="onToggleManual"
+                              :loading="toggleManualLoader"
+                            />
+                          </ToggleManualButtonTemplate>
+
                           <x-tooltip
                             v-if="
                               page.props.lockLeadSectionsDetails?.plan_selection
@@ -1468,7 +1591,7 @@ const sendOCBEmail = () => {
                           </x-tooltip>
                           <ToggleManualButtonReuseTemplate v-else />
                         </div>
-                      </div>
+                      </dl>
 
                       <!-- Form Fields using dt/dd grid pattern like Car -->
                       <dl class="grid md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
@@ -1492,11 +1615,11 @@ const sendOCBEmail = () => {
                             Insurance Quote No.:
                           </dt>
                           <x-input
-                            model-value=""
-                            placeholder=""
+                            v-model="planDetails.insurerQuoteNo"
+                            placeholder="Enter quote number"
                             size="sm"
                             :disabled="
-                              !isManualUpdate ||
+                              !planDetails.isManualUpdate ||
                               page.props.lockLeadSectionsDetails?.plan_selection
                             "
                           />
@@ -1506,11 +1629,12 @@ const sendOCBEmail = () => {
                             Price:
                           </dt>
                           <x-input
-                            model-value=""
-                            placeholder=""
+                            v-model="planDetails.actualPremium"
+                            placeholder="Enter price"
                             size="sm"
+                            type="number"
                             :disabled="
-                              !isManualUpdate ||
+                              !planDetails.isManualUpdate ||
                               page.props.lockLeadSectionsDetails?.plan_selection
                             "
                           />
@@ -1543,10 +1667,9 @@ const sendOCBEmail = () => {
                             <x-button
                               color="primary"
                               size="sm"
-                              :disabled="
-                                page.props.lockLeadSectionsDetails
-                                  ?.plan_selection
-                              "
+                              :disabled="page.props.lockLeadSectionsDetails?.plan_selection"
+                              @click="onUpdateIndividualPlan"
+                              :loading="planForm.processing"
                             >
                               Update
                             </x-button>

@@ -273,6 +273,10 @@ const updateSelectedPlan = () => {
             props.plan?.vat +
             (props.plan?.loadingPrice || 0);
           break;
+        case 'savings':
+          // For savings quotes, the premium is typically the investment amount
+          premium = res.data.plan?.planProcessValue?.totalPremium || props.plan?.actualPremium || 0;
+          break;
         default:
           break;
       }
