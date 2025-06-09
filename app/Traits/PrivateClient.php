@@ -15,6 +15,15 @@ use Illuminate\Support\Facades\Schema;
 
 trait PrivateClient
 {
+    private const OPERATOR_IN = 'in';
+    private const OPERATOR_NOT_IN = 'not in';
+    private const OPERATOR_BETWEEN = 'between';
+    private const OPERATOR_NOT_BETWEEN = 'not between';
+    private const OPERATOR_LIKE = 'like';
+    private const OPERATOR_NOT_LIKE = 'not like';
+    private const OPERATOR_IS_NULL = 'is null';
+    private const OPERATOR_IS_NOT_NULL = 'is not null';
+
     /**
      * Apply PCP conditions and update pcp_tag on customer profile.
      */
@@ -80,7 +89,7 @@ trait PrivateClient
     private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass): bool
     {
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
-        $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
+        $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model, ['sub_area_id']);
 
         return (new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause)
@@ -235,37 +244,96 @@ trait PrivateClient
         return $this->columnsCache[$modelClass];
     }
 
-    private function buildConfigWhereClause($configs, $tableColumns, $model)
+    private function buildConfigWhereClause($configs, $tableColumns, $model, $checkRelationColumns = [])
     {
-        return function ($outerQuery) use ($configs, $tableColumns, $model) {
+        return function ($outerQuery) use ($configs, $tableColumns, $model, $checkRelationColumns) {
+            $relationConditions = [];
+
             foreach ($configs as $config) {
                 $field = trim($config->field_name);
-                if (! in_array($field, $tableColumns)) {
+
+                // Check if field exists in main table
+                $isInMainTable = in_array($field, $tableColumns);
+
+                $relations = $model->getRelations();
+                foreach ($relations as $relationName => $relation) {
+                    if ($relation && method_exists($relation, 'getTable')) {
+                        $relationColumns = Schema::getColumnListing($relation->getTable());
+                        // Check if any of the checkRelationColumns exist in relationColumns
+                        if (! empty(array_intersect($checkRelationColumns, $relationColumns))) {
+                            $relation = $relationName;
+                            // Only get operator and values if this is a relation field
+                            if (in_array($field, $checkRelationColumns)) {
+                                $operator = strtolower(trim($config->operator));
+                                $value = trim($config->value);
+                                $values = array_map('trim', explode(',', $value));
+
+                                foreach ($checkRelationColumns as $column) {
+                                    if (in_array($column, $relationColumns)) {
+                                        $relationConditions[] = [
+                                            'column' => $column,
+                                            'operator' => $operator,
+                                            'values' => $values,
+                                        ];
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (! $isInMainTable) {
                     continue;
                 }
+
                 $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $tableColumns);
                 $operator = strtolower(trim($config->operator));
                 $value = trim($config->value);
                 $currency_type_id = trim($config->currency_type_id);
                 $values = array_map('trim', explode(',', $value));
 
-                $outerQuery->orWhere(function ($q) use ($field, $operator, $value, $values, $currency_type_id, $model, $hasSumInsuredCurrency) {
-                    match ($operator) {
-                        'in' => $q->whereIn($field, $values),
-                        'not in' => $q->whereNotIn($field, $values),
-                        'between' => count($values) === 2 ? $q->whereBetween($field, $values) : null,
-                        'not between' => count($values) === 2 ? $q->whereNotBetween($field, $values) : null,
-                        'like' => $q->where($field, 'like', "%$value%"),
-                        'not like' => $q->where($field, 'not like', "%$value%"),
-                        'is null' => $q->whereNull($field),
-                        'is not null' => $q->whereNotNull($field),
-                        '=', '!=', '<', '<=', '>', '>=' => $q->where($field, $operator, $value),
-                        default => null,
-                    };
+                $outerQuery->orWhere(function ($q) use ($field, $operator, $value, $values, $currency_type_id, $model, $hasSumInsuredCurrency, $isInMainTable) {
+                    if ($isInMainTable) {
+                        match ($operator) {
+                            self::OPERATOR_IN => $q->whereIn($field, $values),
+                            self::OPERATOR_NOT_IN => $q->whereNotIn($field, $values),
+                            self::OPERATOR_BETWEEN => count($values) === 2 ? $q->whereBetween($field, $values) : null,
+                            self::OPERATOR_NOT_BETWEEN => count($values) === 2 ? $q->whereNotBetween($field, $values) : null,
+                            self::OPERATOR_LIKE => $q->where($field, 'like', "%$value%"),
+                            self::OPERATOR_NOT_LIKE => $q->where($field, 'not like', "%$value%"),
+                            self::OPERATOR_IS_NULL => $q->whereNull($field),
+                            self::OPERATOR_IS_NOT_NULL => $q->whereNotNull($field),
+                            '=', '!=', '<', '<=', '>', '>=' => $q->where($field, $operator, $value),
+                            default => null,
+                        };
+                    }
 
                     if ($hasSumInsuredCurrency && ! is_null($model->sum_insured_currency_id) && ! empty($model->sum_insured_currency_id)) {
                         $q->where('sum_insured_currency_id', $currency_type_id);
                     }
+                });
+            }
+
+            if (! empty($relationConditions)) {
+                $outerQuery->orWhere(function ($q) use ($relation, $relationConditions) {
+                    $q->whereHas($relation, function ($query) use ($relationConditions) {
+                        $query->select(array_unique(array_column($relationConditions, 'column')));
+                        foreach ($relationConditions as $condition) {
+                            match ($condition['operator']) {
+                                self::OPERATOR_IN => $query->orWhereIn($condition['column'], $condition['values']),
+                                self::OPERATOR_NOT_IN => $query->orWhereNotIn($condition['column'], $condition['values']),
+                                self::OPERATOR_BETWEEN => count($condition['values']) === 2 ? $query->orWhereBetween($condition['column'], $condition['values']) : null,
+                                self::OPERATOR_NOT_BETWEEN => count($condition['values']) === 2 ? $query->orWhereNotBetween($condition['column'], $condition['values']) : null,
+                                self::OPERATOR_LIKE => $query->orWhere($condition['column'], 'like', "%{$condition['values'][0]}%"),
+                                self::OPERATOR_NOT_LIKE => $query->orWhere($condition['column'], 'not like', "%{$condition['values'][0]}%"),
+                                self::OPERATOR_IS_NULL => $query->orWhereNull($condition['column']),
+                                self::OPERATOR_IS_NOT_NULL => $query->orWhereNotNull($condition['column']),
+                                '=', '!=', '<', '<=', '>', '>=' => $query->orWhere($condition['column'], $condition['operator'], $condition['values'][0]),
+                                default => null,
+                            };
+                        }
+                    });
                 });
             }
         };
