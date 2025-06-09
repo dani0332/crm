@@ -26,13 +26,14 @@ use App\Models\TravelPlanPolicyWording;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use PhpOffice\PhpWord\IOFactory;
 use setasign\Fpdi\Fpdi;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+
 class QuoteDocumentService extends BaseService
 {
     protected $client;
@@ -40,7 +41,7 @@ class QuoteDocumentService extends BaseService
 
     public function __construct()
     {
-        $this->client = new Client();
+        $this->client = new Client;
     }
 
     /**
@@ -903,20 +904,20 @@ class QuoteDocumentService extends BaseService
         $payment->save();
     }
 
-    public function checkHandbookDocuments($quoteType){
+    public function checkHandbookDocuments($quoteType)
+    {
 
         if ($quoteType == quoteTypeCode::Car) {
             $carPolicyWordingDocs = CarPlanPolicyWording::get();
             $policyWordingDocuments = $this->formatPolicyWordingDocumentUrls($carPolicyWordingDocs);
-        } else if ($quoteType == quoteTypeCode::Health) {
+        } elseif ($quoteType == quoteTypeCode::Health) {
             $healthPolicyWordingDocs = HealthPlanPolicyWording::get();
             $policyWordingDocuments = $this->formatPolicyWordingDocumentUrls($healthPolicyWordingDocs);
 
-        } else if ($quoteType == quoteTypeCode::Travel) {
+        } elseif ($quoteType == quoteTypeCode::Travel) {
             $travelPolicyWordingDocs = TravelPlanPolicyWording::get();
             $policyWordingDocuments = $this->formatPolicyWordingDocumentUrls($travelPolicyWordingDocs);
-        }
-        else {
+        } else {
             abort(404);
         }
         $filteredDocuments = $this->filterAttachments($policyWordingDocuments);
@@ -924,7 +925,7 @@ class QuoteDocumentService extends BaseService
         LoggerService::info("Missing policy wording documents for {$quoteType}", extra: [
             'quote_type' => $quoteType,
             'missing_documents' => $filteredDocuments,
-            'total_missing' => count($filteredDocuments)
+            'total_missing' => count($filteredDocuments),
         ]);
     }
 
@@ -936,9 +937,10 @@ class QuoteDocumentService extends BaseService
                 $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
             }
             $policyWordingDocumentURL = preg_replace('/\s+$/m', '', $policyWording->link);
+
             return [
                 'id' => $policyWording->id,
-                'url' => $policyWordingDocumentURL
+                'url' => $policyWordingDocumentURL,
             ];
         });
     }
@@ -953,6 +955,7 @@ class QuoteDocumentService extends BaseService
             }
             $attachments[] = $document['id'];
         }
+
         return $attachments;
     }
 
