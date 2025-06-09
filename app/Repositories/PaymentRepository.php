@@ -665,13 +665,30 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         LoggerService::startFeatureLogging(LoggerFeatureEnum::APPROVE_DECLINE_CHILD_PAYMENT);
         $maxRetries = 2;
+        $successMessage = 'Payment Verified';
 
-        return $this->handleWithDeadlockRetries(function () use ($request) {
-            $successMessage = 'Payment Verified';
-            $splitPayment = PaymentSplits::find($request->splitPaymentId);
-            $splitPaymentCode = $splitPayment->code;
-            $srNo = $splitPayment->sr_no;
-            $masterPayment = $splitPayment->payment;
+        // Move fetching data outside transaction
+        $splitPayment = PaymentSplits::find($request->splitPaymentId);
+        $splitPaymentCode = $splitPayment->code;
+        $srNo = $splitPayment->sr_no;
+        $masterPayment = $splitPayment->payment;
+
+        // Prepare to store Sage receipt ID if successful
+        $sageReceiptId = null;
+
+        // Process Sage API call outside transaction if needed
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled()) {
+            $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
+
+            if ($sageResponse['status'] != 'success') {
+                vAbort($sageResponse['response']);
+            }
+
+            $sageReceiptId = $sageResponse['response'];
+        }
+
+        // Now handle database operations within transaction
+        return $this->handleWithDeadlockRetries(function () use ($request, $splitPayment, $masterPayment, $sageReceiptId, $successMessage, $splitPaymentCode, $srNo) {
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 LoggerService::info("Split payment approval started for code: {$splitPaymentCode}, SR No: {$srNo}");
                 $paymentInformation = [
@@ -707,44 +724,23 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
 
-                // create sage receipt
-                if ((new SageApiService)->isSageEnabled()) {
-                    LoggerService::info("Sage is enabled, creating sage receipt for - code: {$splitPaymentCode}, SR No: {$srNo}");
-                    $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
-                    if ($sageResponse['status'] == 'success') {
-                        LoggerService::info("Sage receipt created successfully - code: {$splitPaymentCode}, SR No: {$srNo}, receipt ID: {$sageResponse['response']}");
-                        $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
-                        $splitPayment->update($paymentInformation);
-                        if ($masterPayment) {
-                            $newCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
-                            LoggerService::info("Updating master payment captured amount - code: {$splitPaymentCode}, SR No: {$srNo}, new amount: {$newCapturedAmount}");
-                            $masterPayment->update(
-                                [
-                                    'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                                    'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                                ],
-                            );
-                        }
-                    } else {
-                        $failMessage = $sageResponse['response'];
-                        LoggerService::error("Sage receipt creation failed - code: {$splitPaymentCode}, SR No: {$srNo}, message: {$failMessage}");
-                        vAbort($failMessage);
-                    }
-                } else {
-                    LoggerService::info("Sage is not enabled, updating split payment directly - code: {$splitPaymentCode}, SR No: {$srNo}");
-                    $splitPayment->update($paymentInformation);
-
-                    if ($masterPayment) {
-                        $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
-                        LoggerService::info("Updating master payment captured amount - code: {$splitPaymentCode}, SR No: {$srNo}, new amount: {$masterCapturedAmount}");
-                        $masterPayment->update(
-                            [
-                                'captured_amount' => $masterCapturedAmount,
-                                'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                            ],
-                        );
-                    }
+                // Add sage receipt ID if it exists
+                if ($sageReceiptId) {
+                    $paymentInformation['sage_reciept_id'] = $sageReceiptId;
                 }
+
+                $splitPayment->update($paymentInformation);
+
+                if ($masterPayment) {
+                    $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
+                    $masterPayment->update(
+                        [
+                            'captured_amount' => $masterCapturedAmount,
+                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
+                        ],
+                    );
+                }
+
                 /* Create payment receipt for broker */
                 if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
                     LoggerService::info("Creating broker receipt for - code: {$splitPaymentCode}, SR No: {$srNo}, collection type: {$masterPayment->collection_type}");

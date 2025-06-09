@@ -88,7 +88,7 @@ class ApplyRuleExclusionPipe extends BaseAllocationPipe
                 } else {
                     info(self::class."-Lead is not registered as a company, applying commercial rules for lead with Ref-ID:  {$lead->uuid} | Time: ".now());
 
-                    return $this->getCommercialRule($lead);
+                    return $this->getCommercialRule();
                 }
             }
         }
