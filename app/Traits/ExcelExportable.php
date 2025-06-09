@@ -76,7 +76,7 @@ trait ExcelExportable
             $requestParams['recipientEmail'],
             $requestParams
         );
-        info('Dispatched ExportCsvAndSendEmailJob');
+        // info('Dispatched ExportCsvAndSendEmailJob');
 
         // Return response to the user that export is being processed
         return response()->json([
@@ -141,7 +141,7 @@ trait ExcelExportable
             // Use the query builder version of collection if available
             if (method_exists($this, 'getQuery')) {
                 // Process data in memory-efficient chunks
-                logger()->info('Starting CSV export with chunking');
+                info('Starting CSV export with chunking');
                 $query = $this->getQuery($requestParams);
 
                 // Use database chunking for efficient memory usage
@@ -172,7 +172,7 @@ trait ExcelExportable
             } else {
                 // Fallback to less efficient memory approach if query builder not available
                 $data = $this->collection($requestParams);
-                logger()->debug('Using regular collection method - may use more memory');
+                info('Using regular collection method - may use more memory');
 
                 foreach ($data as $record) {
                     fputcsv($stream, $this->map($record));
