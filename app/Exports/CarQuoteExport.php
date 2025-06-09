@@ -83,14 +83,11 @@ class CarQuoteExport
             'PREVIOUS POLICY NUMBER',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
-<<<<<<< HEAD
             'PC CUSTOMER',
-=======
             'ASSIGNMENT TYPE',
             'ADVISOR REQUESTED',
             'SEGMENT',
             'LEAD ASSIGNMENT TRIGGER',
->>>>>>> develop
         ];
     }
 
@@ -146,14 +143,11 @@ class CarQuoteExport
             $quote->previous_quote_policy_number ?? '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
-<<<<<<< HEAD
             $quote->customer?->pcp_tag_formatted ?? '',
-=======
             $quote->assignment_type ? AssignmentTypeEnum::getAssignmentTypeText($quote->assignment_type) : '',
             (isset($quote->sic_advisor_requested) && $quote->sic_advisor_requested) ? 'Yes' : 'No',
             $quote->getSegments($quote, QuoteTypeId::Car) ?? '',
             $quote->lead_assignment_trigger ? LeadAssignmentTriggerEnum::getAssignmentTypeText($quote->lead_assignment_trigger) : '',
->>>>>>> develop
         ];
     }
 }
