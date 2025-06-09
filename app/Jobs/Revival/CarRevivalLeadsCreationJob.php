@@ -16,6 +16,7 @@ use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\CarQuoteService;
 use App\Services\EmailServices\CarEmailService;
+use App\Services\Logger\LoggerService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
@@ -31,7 +32,6 @@ use Throwable;
 
 class CarRevivalLeadsCreationJob implements ShouldQueue
 {
-    use Batchable;
     use Batchable, Dispatchable, InteractsWithQueue, Queueable;
     use GenericQueriesAllLobs;
 
@@ -66,14 +66,14 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
 
         $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ENABLED)->value('value');
         if ($dttEnabled == 0) {
-            info($logPrefix.'Dtt is not enabled from cms');
+            LoggerService::info($logPrefix.'Dtt is not enabled from cms');
 
             return false;
         }
 
         $this->lead->refresh();
         if ($this->lead->is_revived) {
-            info($logPrefix.$this->lead->uuid.' - Lead Already Revived');
+            LoggerService::info($logPrefix.$this->lead->uuid.' - Lead Already Revived');
 
             return false;
         }
@@ -122,16 +122,16 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
             if (! $carQuoteExists) {
                 $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
                 if (isset($capiResponse->errors) && empty($capiResponse->quoteUID)) {
-                    info($logPrefix.'Error Creating Revival Lead '.$this->lead->uuid);
+                    LoggerService::info($logPrefix.'Error Creating Revival Lead '.$this->lead->uuid);
 
                     return false;
                 } else {
                     $revivalCarQuoteUUID = $capiResponse->quoteUID;
-                    info($logPrefix.$this->lead->uuid.' - childLeadCreated - '.$revivalCarQuoteUUID);
+                    LoggerService::info($logPrefix.$this->lead->uuid.' - childLeadCreated - '.$revivalCarQuoteUUID);
                 }
             } else {
                 $revivalCarQuoteUUID = $carQuoteExists->uuid;
-                info($logPrefix.$this->lead->uuid.' - childLeadFound - '.$revivalCarQuoteUUID);
+                LoggerService::info($logPrefix.$this->lead->uuid.' - childLeadFound - '.$revivalCarQuoteUUID);
                 $revivedLead = DttRevival::where([
                     'quote_type_id' => QuoteTypes::CAR->id(),
                     'uuid' => $revivalCarQuoteUUID,
@@ -189,7 +189,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
 
                 if ($response == 201) {
-                    info($logPrefix.'carRevivalParentLead - '.$revivalCarQuoteUUID.' - Email Sent');
+                    LoggerService::info($logPrefix.'carRevivalParentLead - '.$revivalCarQuoteUUID.' - Email Sent');
 
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
@@ -207,21 +207,21 @@ class CarRevivalLeadsCreationJob implements ShouldQueue
                         'callSource' => 'imcrm',
                     ]);
 
-                    info($logPrefix.'send-ocb-whatsapp-revival - '.$revivalCarQuoteUUID.' - '.json_encode($response));
+                    LoggerService::info($logPrefix.'send-ocb-whatsapp-revival - '.$revivalCarQuoteUUID.' - '.json_encode($response));
 
                     CarQuote::find($this->lead->id)->update(['is_revived' => true]);
                 } else {
-                    info($logPrefix.'carRevivalParentLead - '.$this->lead->uuid.' - childLead - '.$revivalCarQuoteUUID.'emailIsNotSent - '.$emailData->customerEmail);
+                    LoggerService::info($logPrefix.'carRevivalParentLead - '.$this->lead->uuid.' - childLead - '.$revivalCarQuoteUUID.'emailIsNotSent - '.$emailData->customerEmail);
                 }
             }
         } catch (\Exception $exception) {
-            Log::error($logPrefix.'DTT Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
+            LoggerService::error($logPrefix.'DTT Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
         }
     }
 
     public function failed(Throwable $exception)
     {
-        Log::error('CarRevivalLeadsCreationJob - Failed - '.$this->lead->id.' Error: '.$exception->getMessage());
+        LoggerService::error('CarRevivalLeadsCreationJob - Failed - '.$this->lead->id.' Error: '.$exception->getMessage());
     }
 
     public function middleware()
