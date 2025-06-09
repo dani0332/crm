@@ -53,7 +53,9 @@ class EmailService
         try {
             $response = app(BirdService::class)->triggerWebHookRequest($flowUrl, $emailData);
 
-            LoggerService::info('sendLifeOCAEmail - Bird flow triggered successfully');
+            LoggerService::info('sendLifeOCAEmail - Bird flow triggered successfully', extra:[
+                'email' => $emailData->customerEmail,
+            ]);
 
             return $response ?? null;
         } catch (\Exception $e) {
@@ -96,12 +98,14 @@ class EmailService
 
         LoggerService::info(self::class.' - attachLifeComparisionPdf - Public URL generated');
 
-        return $publicUrl; // Use output() to get raw PDF content
+        return [
+            'pdfLink' => $publicUrl,
+            'pdfName' => $pdf['name'],
+        ];
 
     }
 
-    protected function scheduleFileDeletion($filePath)
-    {
+    protected function scheduleFileDeletion($filePath){
         // Use a job to handle file deletion
         DeleteTempOCBPDFFileJob::dispatch($filePath)->delay(now()->addMinutes(120));
     }
@@ -147,13 +151,14 @@ class EmailService
         $tempUrlPDF = $this->attachComparisionPdf($lead, $plans);
 
         if (! empty($tempUrlPDF)) {
-            $data['pdfLink'] = $tempUrlPDF;
+            $data['pdfLink'] = $tempUrlPDF['pdfLink'];
+            $data['pdfName'] = $tempUrlPDF['pdfName'];
         }
 
         return (object) $data;
     }
 
-    private function getQuote(string $quoteUID)
+    private function getQuote(string $quoteUID):PersonalQuote
     {
         return PersonalQuote::where([
             'uuid' => $quoteUID,

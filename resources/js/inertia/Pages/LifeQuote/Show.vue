@@ -211,12 +211,8 @@ const computedListQuotePlans = computed(() => {
   return listQuotePlansFiltered.value;
 });
 
-const validateEmailSending = () => {
-  if (selectedPlans.value.length === 0) {
-    modals.sendConfirm = true;
-    return;
-  }
-  const hiddenPlans = selectedPlans.value.filter(plan => plan.isHidden);
+const sendOCAEmail = () => {
+  const hiddenPlans = selectedPlans.value.filter(plan => plan.isDisabled);
   if (hiddenPlans.length > 0) {
     notification.error({
       title: 'You cannot select a hidden plan',
@@ -225,14 +221,16 @@ const validateEmailSending = () => {
     modals.sendConfirm = false;
     return;
   }
-  if (selectedPlans.value.length < 6) {
+ 
+  if (selectedPlans.value.length < 1) {
     notification.error({
-      title: 'Minimum 6 plans should be selected',
+      title: 'Minimum 1 plan should be selected',
       position: 'top',
     });
     modals.sendConfirm = false;
     return;
   }
+  
   if (selectedPlans.value.length > 6) {
     notification.error({
       title: 'Maximum 6 plans can be selected',
@@ -241,7 +239,11 @@ const validateEmailSending = () => {
     modals.sendConfirm = false;
     return;
   }
-  modals.sendConfirm = true;
+
+  loader.value.link = true;
+
+  
+
 };
 
 const getPaymentTermTitle = months => {
@@ -774,6 +776,9 @@ const confirmSendEmail = () => {
   loader.value.link = true;
   const first_name = page.props.quote.first_name || '';
   const last_name = page.props.quote.last_name || '';
+
+  
+
 };
 
 const selectPlan = (planId, quoteId, version, planUuid) => {
@@ -1664,8 +1669,9 @@ const applyEmiratesIdNumMasking = emiratesId =>
           <x-divider class="my-4" />
           <div class="flex flex-wrap gap-3 justify-end mb-3">
             <x-button
-              @click.prevent="validateEmailSending"
+              @click.prevent="sendOCAEmail"
               size="sm"
+              :loading="loader.link"
               color="orange"
               :disabled="doesEmailStatusExist || isOcaButtonDisabled"
               v-if="readOnlyMode.isDisable === true"
