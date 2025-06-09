@@ -1175,11 +1175,6 @@ class AMLService
                 InsuredKyc::create($kycData);
             }
 
-            // this should be removed after data migration.
-            if (isset($complianceQuestions['customer_id']) && $complianceQuestions['customer_id'] != null) {
-                CustomerDetail::where('customer_id', $complianceQuestions['customer_id'])->update($sameFields);
-            }
-
             LoggerService::info('KYCComplianceQuestions updated');
         } catch (Exception $exception) {
             LoggerService::error('KYCComplianceQuestions failed to update', exception: $exception);
