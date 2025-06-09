@@ -2,9 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\AMLStatusCode;
 use App\Enums\QuoteStatusEnum;
-use App\Models\KycLog;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
