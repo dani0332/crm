@@ -2337,6 +2337,12 @@ const shouldShowPlanDetailsSection = computed(() => {
       :quoteCode="$page.props.quote.code"
     />
 
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
+    />
+
     <ApiLogs :type="modelClassHome" :id="$page.props?.quote?.home_quote?.id" />
 
     <LeadHistory :quote="$page.props.quote" />

@@ -146,7 +146,7 @@ trait ExcelExportable
                 $query = $this->getQuery($requestParams);
 
                 // Use database chunking for efficient memory usage
-                $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords, &$chunkCount, &$totalChunkTime, $exportName) {
+                $query->chunk($chunkSize, function ($records) use ($stream, &$totalRecords, &$chunkCount, &$totalChunkTime) {
                     $chunkStartTime = microtime(true);
                     $chunkCount++;
 
@@ -164,7 +164,7 @@ trait ExcelExportable
                     $chunkTime = round((microtime(true) - $chunkStartTime) * 1000, 2); // in milliseconds
                     $totalChunkTime += $chunkTime;
 
-                    logger()->debug("{$exportName}: Chunk #{$chunkCount} processed. Memory: {$currentMemory}MB, Memory diff: {$memoryDiff}MB, Chunk Time: {$chunkTime}ms, Total time: {$totalChunkTime}ms");
+                    // logger()->debug("{$exportName}: Chunk #{$chunkCount} processed. Memory: {$currentMemory}MB, Memory diff: {$memoryDiff}MB, Chunk Time: {$chunkTime}ms, Total time: {$totalChunkTime}ms");
 
                     // Force garbage collection to free memory
                     gc_collect_cycles();

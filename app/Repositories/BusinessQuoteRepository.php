@@ -85,6 +85,7 @@ class BusinessQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($queryWhere)
     {
+        $quoteTypeId = QuoteTypes::BUSINESS->id();
         $quote = $this->where($queryWhere)
             ->with([
                 'advisor',
@@ -93,6 +94,10 @@ class BusinessQuoteRepository extends BaseRepository
                 'customer',
                 'transactionType',
                 'insuranceProviderDetails',
+                'insured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
+                'insured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',

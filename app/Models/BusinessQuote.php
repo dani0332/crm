@@ -10,6 +10,7 @@ use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -179,4 +180,17 @@ class BusinessQuote extends Model implements AuditableContract
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Business);
     }
+
+    // TODO:: this function deployed on develop, need to verified all the functionality before sharing the PR
+    // public function insured(): HasOneThrough
+    // {
+    //     return $this->hasOneThrough(
+    //         Insured::class,
+    //         CustomerInsured::class,
+    //         'quote_request_id', // customer_insured.quote_request_id, relation between personal_quote and customer_insured.
+    //         'id', // insured.id
+    //         'id', // business_quote_request.id
+    //         'insured_id' // customer_insured.insured_id
+    //     );
+    // }
 }

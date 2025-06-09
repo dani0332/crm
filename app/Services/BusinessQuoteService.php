@@ -84,6 +84,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.stale_at',
                 'i.customer_type',
                 // DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+                'insured_kyc.id as insured_kyc_id',
                 'c.insured_first_name as customer_insured_first_name',
                 'c.insured_last_name as customer_insured_last_name',
                 'c.emirates_id_number',
@@ -152,6 +153,7 @@ class BusinessQuoteService extends BaseService
                 $query->whereRaw('ci.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id)', [QuoteTypeId::Business]);
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
+            ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 

@@ -207,6 +207,7 @@ class CycleQuoteRepository extends BaseRepository
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                     $q->whereRaw('customer_insured.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = '.$this->getTable().'.id)', [$quoteTypeId]);
                 },
+                'insured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentSplits' => function ($query) {
