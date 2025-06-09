@@ -130,19 +130,19 @@ class EmailService
             'customerFullName' => $customerFullName,
             'customerName' => $customerFullName,
             'refID' => $lead->code,
-            'customerMobile' => $lead->mobile_no ?? '',
+            'customerMobile' => $lead->mobile_no ?? null,
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::LIFE, $lead->uuid),
             'flowExecutedAt' => $lead->automated_flow_executed_at ?? null,
 
             // Advisor-related data
             'advisorId' => $advisor?->id,
-            'advisorName' => $advisor?->name ?? '',
-            'advisorEmail' => $advisor?->email ?? '',
+            'advisorName' => $advisor?->name ?? null,
+            'advisorEmail' => $advisor?->email ?? null,
             'advisorDetails' => $advisor ?? null,
-            'landLine' => $advisor?->landline_no ?? '',
-            'mobilePhone' => $advisor?->mobile_no ?? '',
-            'whatsAppNumber' => $advisor?->mobile_no ? formatMobileNo($advisor->mobile_no) : '',
-            'mobileNoWithoutSpaces' => $advisor?->mobile_no ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : '',
+            'landLine' => $advisor?->landline_no ?? null,
+            'mobilePhone' => $advisor?->mobile_no ?? null,
+            'whatsAppNumber' => $advisor?->mobile_no ? formatMobileNo($advisor->mobile_no) : null,
+            'mobileNoWithoutSpaces' => $advisor?->mobile_no ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : null,
 
             // Workflow-related data
             'workflowType' => $workflowType,
