@@ -79,6 +79,7 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
@@ -274,14 +275,13 @@ class RenewalsUploadService
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
                 foreach ($leads as $lead) {
-                    $jobs[] = new CreateRenewalQuotesJob($lead);
+                    $jobs[] = (new CreateRenewalQuotesJob($lead))->delay(now()->addSeconds(2));
                 }
             });
 
             if ($jobs != null && count($jobs)) {
-                Haystack::build()
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -294,7 +294,6 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
-                    ->withDelay(2)
                     ->dispatch();
             } else {
                 LoggerService::info($logPrefix.' No jobs to create quotes');
@@ -319,14 +318,13 @@ class RenewalsUploadService
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
                 foreach ($leads as $lead) {
-                    $jobs[] = new UpdateRenewalQuotesJob($lead);
+                    $jobs[] = (new UpdateRenewalQuotesJob($lead))->delay(now()->addSeconds(2));
                 }
             });
 
             if ($jobs != null && count($jobs)) {
-                Haystack::build()
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -340,7 +338,6 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
-                    ->withDelay(2)
                     ->dispatch();
 
                 LoggerService::info($logPrefix.' jobs dispatched');
@@ -398,7 +395,7 @@ class RenewalsUploadService
             $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
                 foreach ($leads as $lead) {
                     if (! $lead->renewalUploadLead->skip_plans) {
-                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
+                        $jobs[] = (new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess))->delay(now()->addSeconds(10));
                     } else {
                         LoggerService::info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
@@ -415,9 +412,8 @@ class RenewalsUploadService
             if ($jobs != null && count($jobs)) {
                 LoggerService::info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
-                Haystack::build()
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalStatusProcess) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -432,7 +428,6 @@ class RenewalsUploadService
                         EmbeddedProductRepository::generateEPRenewal($batch);
                     })
                     ->allowFailures()
-                    ->withDelay(10)
                     ->dispatch();
 
                 LoggerService::info($logPrefix.' all jobs are scheduled');
@@ -1956,15 +1951,14 @@ class RenewalsUploadService
             $this->getOcbLeadsQuery($batch)
                 ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
                     foreach ($leads as $lead) {
-                        $jobs[] = new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead);
+                        $jobs[] = (new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead))->delay(now()->addSeconds(1));
                     }
                 });
 
             if ($jobs != null && count($jobs)) {
                 LoggerService::info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
-                Haystack::build()
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -1986,7 +1980,6 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
-                    ->withDelay(1)
                     ->dispatch();
             } else {
                 LoggerService::info($logPrefix.' No leads to schedule OCB email');
@@ -2109,15 +2102,14 @@ class RenewalsUploadService
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
                 foreach ($leads as $lead) {
-                    $jobs[] = new CreateTravelRenewalQuotesJob($lead);
+                    $jobs[] = (new CreateTravelRenewalQuotesJob($lead))->delay(now()->addSeconds(2));
                 }
             });
 
             if ($jobs != null && count($jobs)) {
                 LoggerService::info('the value of $jobs is : '.count($jobs));
-                Haystack::build()
+                Bus::batch($jobs)
                     ->onQueue('renewals')
-                    ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
                         LoggerService::info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -2130,7 +2122,6 @@ class RenewalsUploadService
                         LoggerService::info($logPrefix.' everything done');
                     })
                     ->allowFailures()
-                    ->withDelay(2)
                     ->dispatch();
             } else {
                 LoggerService::info($logPrefix.' No jobs to create quotes');
