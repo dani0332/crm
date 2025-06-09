@@ -3,6 +3,7 @@
 use App\Enums\EnvEnum;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\ActivitesController;
+use App\Http\Controllers\AdvisorController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\Allocations\LeadAllocationController as V2LeadAllocationController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
+use App\Http\Controllers\NationalityAllocationConfigurationController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\QuoteDocumentController;
@@ -156,6 +158,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/reports/fetch-advisors-by-department', [ReportsController::class, 'fetchAdvisorListByDepartment']);
     Route::post('/reports/fetch-advisor-by-sub-team', [ReportsController::class, 'fetchAdvisorListBySubTeam']);
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
+    Route::post('/advisors/by-quote-type', [AdvisorController::class, 'getAdvisorsByQuoteType'])->name('advisors.by-quote-type');
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport'])->name('advisor-conversion-report-view');
     Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
 
@@ -658,8 +661,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::controller(SendUpdateLogController::class)->prefix('send-update')->name('send-update.')->group(function () {
         Route::post('get-options', 'getOptions')->name('get-options');
-        Route::get('/', 'index')->name('index');
-        Route::post('/', 'store')->name('store');
+        Route::post('/store', 'store')->name('store');
         Route::get('/{uuid}', 'show')->name('show');
         Route::patch('/update/{id}', 'update')->name('update');
         Route::post('/save-details', 'savePriceDetails')->name('save-price-details');
@@ -768,12 +770,33 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('insurer-aml-status-logs', [CentralController::class, 'getInsurerAMLResponse'])->name('insurer-aml-status-logs');
     Route::get('check-missing-travelAml-requirement', [AMLController::class, 'checkMissingTravelAmlRequirement'])->name('check-missing-travelAml-requirement');
-});
 
-Route::get('/add-batch-number', function () {
-    $addBtchNuimber = new AddBatchForNonMotors;
-    $addBtchNuimber->handle();
-    echo 'Done';
+    Route::resource('nationality-allocation-config', NationalityAllocationConfigurationController::class)->names([
+        'index' => 'admin.nationality-allocation-config.index',
+        'create' => 'admin.nationality-allocation-config.create',
+        'store' => 'admin.nationality-allocation-config.store',
+        'show' => 'admin.nationality-allocation-config.show',
+        'edit' => 'admin.nationality-allocation-config.edit',
+        'update' => 'admin.nationality-allocation-config.update',
+        'destroy' => 'admin.nationality-allocation-config.destroy',
+    ]);
+
+    Route::get('nationality-allocation-config/{nationalityAllocationConfig}/audit-logs',
+        [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
+        ->name('admin.nationality-allocation-config.audit-logs');
+
+    Route::get('/add-batch-number', function () {
+        $addBtchNuimber = new AddBatchForNonMotors;
+        $addBtchNuimber->handle();
+        echo 'Done';
+    });
+
+    // Command to bulk send policy documents
+    // Route::get('/run-policy-bulk-send', function () {
+    //     \Illuminate\Support\Facades\Artisan::call('policy:bulk-send-documents');
+
+    //     return 'Command executed successfully!';
+    // });
 });
 
 // Migration Not Required For Now 21 Nov 24

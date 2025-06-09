@@ -62,7 +62,6 @@ use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\Logger\LoggerService;
 use App\Services\QuoteDocumentService;
-use App\Services\QuoteStatusService;
 use App\Services\SIBService;
 use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
@@ -315,20 +314,15 @@ class AMLController extends Controller
             request()->merge(['ref_id' => $quoteObject->code]);
             $response = AMLService::updateAMLDecisionLexisNexis(request());
             if ($response['status'] == 'success') {
-                $updateQuoteStatusResp = app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
-
-                $responseMessage = ['status' => 'success', 'message' => 'Quote Status Updated'];
-                $quoteStatusText = $updateQuoteStatusResp['quote_status_text'];
-                $quoteCdbId = $updateQuoteStatusResp['quote_ref_id'];
-                $quoteTypeText = $updateQuoteStatusResp['quote_type_text'];
-                $quotePaID = $updateQuoteStatusResp['pa_id'];
-                $clientFullName = $updateQuoteStatusResp['client_name'];
+                $clientFullName = $quoteObject->first_name.' '.$quoteObject->last_name;
+                $updatedAMLStatus = app(AMLService::class)->updateAMLStatusAgainstDecision(\request()->toArray(), $quoteObject);
+                $responseMessage = ['status' => 'success', 'message' => 'AML Status Updated'];
 
                 if (
                     auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
-                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
                     if (! empty(request()->complianceComponent)) {
                         app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComponent);
                     }
@@ -407,8 +401,22 @@ class AMLController extends Controller
                 return $this->handleResponse(false, 'First Name missing', $isAutomation);
             }
 
-            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($value) use ($getLastScreening) {
-                return $value->updated_at >= ($getLastScreening->created_at ?? '');
+            // Filter members that need screening based on their updated_at date
+            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($member) use ($getLastScreening) {
+                $lastScreeningDate = $getLastScreening->created_at ?? '';
+
+                // Include members with null updated_at (replicated members that need screening)
+                if (is_null($member->updated_at)) {
+                    LoggerService::info('AML Screening Bridger - Including member with null updated_at (replicated member)', extra: [
+                        'member_id' => $member->id ?? 'unknown',
+                        'member_name' => ($member->first_name ?? '').' '.($member->last_name ?? ''),
+                    ]);
+
+                    return true;
+                }
+
+                // Include members that were updated after the last screening
+                return $member->updated_at >= $lastScreeningDate;
             });
         }
 
@@ -842,7 +850,7 @@ class AMLController extends Controller
 
         if ($existingEntityMapping) {
             $previousEntity = $existingEntityMapping->entity;
-            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id])->count();
+            $entityMappingCount = QuoteRequestEntityMapping::where(['entity_id' => $previousEntity->id ?? null])->count();
             // Reminder:: This is Jawad change for car commercial quote
             if ($entityMappingCount === 0 && empty($previousEntity->trade_license_no)) {
                 $previousEntity->delete();
