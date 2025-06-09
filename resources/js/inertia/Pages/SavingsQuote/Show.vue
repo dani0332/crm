@@ -6,6 +6,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import SelectPlan from '../../Components/SelectPlan.vue';
 
 const props = defineProps({
   quote: Object,
@@ -355,6 +356,26 @@ const planDetailsTabs = ref([
   { index: 3, label: 'Key Features Document' },
 ]);
 
+const selectedProviderPlan = ref({
+  id: page.props?.quote?.plan_id,
+  planName: page.props?.quote?.plans?.name,
+  providerName: page.props?.quote?.plans?.providerName,
+  premium: page.props?.quote?.plans?.premium,
+});
+
+const handlePlanSelected = plan => {
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments', 'quoteRequest', 'quote', 'bookPolicyDetails'],
+  });
+  onLoadAvailablePlansData();
+};
+
 const onLoadAvailablePlansData = async () => {
   availablePlansTable.isLoading = true;
   let data = {
@@ -364,8 +385,6 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-      console.log('onLoadAvailablePlansData', res.data);
-
       // Process the response data to flatten regular and lumpsum plans
       const processedPlans = [];
 
@@ -380,6 +399,10 @@ const onLoadAvailablePlansData = async () => {
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
+            // Add properties needed by SelectPlan component
+            actualPremium: plan.actualPremium, // Keep actual value - advisor must manually set premium to enable selection
+            insuranceProviderId: plan.providerId || plan.insuranceProviderId,
+            providerCode: plan.providerCode,
           };
           processedPlans.push(processedPlan);
         });
@@ -396,6 +419,10 @@ const onLoadAvailablePlansData = async () => {
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
+            // Add properties needed by SelectPlan component
+            actualPremium: plan.actualPremium, // Keep actual value - advisor must manually set premium to enable selection
+            insuranceProviderId: plan.providerId || plan.insuranceProviderId,
+            providerCode: plan.providerCode,
           };
           processedPlans.push(processedPlan);
         });
@@ -1423,6 +1450,32 @@ const sendOCBEmail = () => {
                   >
                     View
                   </x-button>
+                  <span>
+                    <SelectPlan
+                      v-if="selectedProviderPlan.id != item.id"
+                      @update:selectedPlanChanged="handlePlanSelected"
+                      :plan="item"
+                      :quoteType="'Savings'"
+                      :uuid="quote.uuid"
+                      :code="quote.code"
+                      :plans="availablePlansTable.data || []"
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
+                      :payments="payments"
+                      :insuranceProviderId="item.insuranceProviderId"
+                    />
+
+                    <x-button
+                      v-else
+                      size="xs"
+                      color="orange"
+                      outlined
+                      :disabled="true"
+                    >
+                      Selected
+                    </x-button>
+                  </span>
                 </div>
               </template>
             </DataTable>
