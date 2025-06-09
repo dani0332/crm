@@ -286,7 +286,7 @@ const submitInsuredKycForm = isValid => {
   }
 };
 function changeIncomeSource() {
-  kycFormDetails.is_partner == kycFormDetails.income_source
+  kycFormDetails.is_partner = kycFormDetails.income_source
     ? kycFormDetails.income_source == 'employed'
       ? 2
       : 1
