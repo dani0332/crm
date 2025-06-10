@@ -17,12 +17,11 @@ class SendCarCommercialOCBEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-
     public $tries = 3;
     public $timeout = 120;
     public $backoff = 60;
     private $quoteUuid;
-    
+
     public function __construct($quoteUuid)
     {
         $this->quoteUuid = $quoteUuid;
@@ -39,7 +38,7 @@ class SendCarCommercialOCBEmail implements ShouldQueue
             if (! $carLead) {
                 LoggerService::info(self::class." - Car Lead Not Found");
                 return;
-            }-
+            }
             LoggerService::info(self::class." - Sending car company commercial ocb email" ,['lead_status_id' => $carLead->quote_status_id]);
             $carEmailService->sendCarCompanyCommercialOCB($carLead);
             if ($carLead->quote_status_id == QuoteStatusEnum::NewLead) {
