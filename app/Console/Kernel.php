@@ -139,7 +139,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('quotes-syncing:retry')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
 
         $schedule->command('horizon:snapshot')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
-        $schedule->command('remove-pcp-tag')->timezone('Asia/Dubai')->everyFourHours()->onOneServer()->withoutOverlapping();
+        $schedule->command('remove-pcp-tag')->timezone('Asia/Dubai')->everyNinetyMinutes()->onOneServer()->withoutOverlapping();
     }
 
     /**
