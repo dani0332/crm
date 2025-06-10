@@ -81,7 +81,7 @@ class SukoonDriverMedexService
 
         try {
             $this->validateCustomerDetails($quote);
-            $userDetail = $this->prepareUserDetails($quote, $transaction);
+            $userDetail = $this->prepareUserDetails($quote);
 
             // STEP #1 init
             $this->init();
@@ -101,7 +101,7 @@ class SukoonDriverMedexService
             // STEP #5 preReviewSubmittedData | Skiped
 
             // STEP #6 submitPlan
-            $this->formSubmit($this->prepareAdditionalData($quote, $transaction));
+            $this->formSubmit($this->prepareAdditionalData());
 
             // STEP #7 reviewSubmittedData
             $this->confirmPolicy();
@@ -307,7 +307,7 @@ class SukoonDriverMedexService
      * @param  mixed  $transaction  The transaction object.
      * @return array The prepared user details.
      */
-    private function prepareUserDetails($quote, $transaction)
+    private function prepareUserDetails($quote)
     {
         $lastInsuredData = $quote->lastInsured;
         $insuredKyc = $lastInsuredData?->insuredKyc;
@@ -491,10 +491,8 @@ class SukoonDriverMedexService
      * @param  mixed  $quote  The quote object.
      * @return array The prepared additional data.
      */
-    private function prepareAdditionalData($quote, $transaction)
+    private function prepareAdditionalData()
     {
-        // $shortCode = $transaction->product->embeddedProduct->short_code;
-
         return [
             'form_name' => 'plan_picker',
             'plan_option' => $this->productSlug.'-personal_non_commercial_vehicles',
