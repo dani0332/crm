@@ -185,7 +185,6 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             $columns['make']['rules'][] = 'required';
             $columns['model']['rules'][] = 'required';
             $columns['year']['rules'][] = 'required';
-           
 
             $columns['registration_location']['rules'][] = 'required';
 
