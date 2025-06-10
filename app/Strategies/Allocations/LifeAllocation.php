@@ -30,7 +30,7 @@ class LifeAllocation extends BaseAllocation
         if (isLeadFic($this->lead->uuid)) {
             LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users');   
             $users = $this->getFicRulesUsers();
-            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users  Ids: '.json_encode($users->pluck('id')->toArray()));
+            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule  ',['users_ids' => $users->pluck('id')->toArray()] );
             return $users->pluck('email')->toArray();
         }
         $santosh = 'santhosh.ganesan@insurancemarket.ae';

@@ -225,4 +225,6 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_UNIVERSAL_SEARCH = 'ENABLE_UNIVERSAL_SEARCH';
     public const CYCLE_ADVISORS = 'CYCLE_ADVISORS';
     public const CORPLINE_ADVISORS = 'CORPLINE_ADVISORS';
+    public const FIC_LIFE_EMAIL = 'FIC_LIFE_EMAIL';
+    public const FIC_LIFE_EMAIL_SWITCH = 'FIC_LIFE_EMAIL_SWITCH';
 }
