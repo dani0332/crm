@@ -2,6 +2,8 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -9,18 +11,26 @@ use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class PersonalQuotesExport
+class PersonalQuotesExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
-    private $quoteType = '';
-    private $quoteTypes = [];
+    private string $quoteType = '';
+    private array $quoteTypes = [];
 
-    public function __construct()
-    {
-        $this->quoteType = request()->segment(1);
+    public function __construct(
+        private BikeQuoteRepository $bikeQuoteRepository,
+        private YachtQuoteRepository $yachtQuoteRepository,
+        private PetQuoteRepository $petQuoteRepository,
+        private CycleQuoteRepository $cycleQuoteRepository,
+        private JetskiQuoteRepository $jetskiQuoteRepository,
+        private HomeQuoteRepository $homeQuoteRepository
+    ) {
+        $this->quoteType = request()->segment(1) ?? '';
         $this->quoteTypes = [
             QuoteTypes::BIKE->value,
             QuoteTypes::YACHT->value,
@@ -31,29 +41,29 @@ class PersonalQuotesExport
         ];
     }
 
-    public function collection($requestParams)
+    public function collection(array $requestParams = []): Collection
     {
         switch (ucfirst($this->quoteType)) {
             case QuoteTypes::BIKE->value:
-                return BikeQuoteRepository::getData(true, requestParams: $requestParams)->get();
+                return $this->bikeQuoteRepository->fetchGetData(true, requestParams: $requestParams)->get();
 
             case QuoteTypes::YACHT->value:
-                return YachtQuoteRepository::getData(true, requestParams: $requestParams)->get();
+                return $this->yachtQuoteRepository->fetchGetData(true, requestParams: $requestParams)->get();
 
             case QuoteTypes::PET->value:
-                return PetQuoteRepository::getData(true, requestParams: $requestParams)->get();
+                return $this->petQuoteRepository->fetchGetData(true, requestParams: $requestParams)->get();
 
             case QuoteTypes::CYCLE->value:
-                return CycleQuoteRepository::getData(true, requestParams: $requestParams)->get();
+                return $this->cycleQuoteRepository->fetchGetData(true, requestParams: $requestParams)->get();
 
             case QuoteTypes::JETSKI->value:
-                return JetskiQuoteRepository::getData(true, requestParams: $requestParams)->get();
+                return $this->jetskiQuoteRepository->fetchGetData(true, requestParams: $requestParams)->get();
 
             case QuoteTypes::HOME->value:
-                return HomeQuoteRepository::getData(true, requestParams: $requestParams)->get();
+                return $this->homeQuoteRepository->fetchGetData(true, false, $requestParams)->get();
 
             default:
-                return abort(404);
+                abort(404);
         }
     }
 
@@ -61,29 +71,29 @@ class PersonalQuotesExport
      * Get the query builder instance to use for chunking
      * This is the key to memory-efficient CSV exports
      */
-    public function getQuery($requestParams = [])
+    public function getQuery(array $requestParams = []): ?Builder
     {
         switch (ucfirst($this->quoteType)) {
             case QuoteTypes::BIKE->value:
-                return BikeQuoteRepository::getData(true, requestParams: $requestParams);
+                return $this->bikeQuoteRepository->fetchGetData(true, requestParams: $requestParams);
 
             case QuoteTypes::YACHT->value:
-                return YachtQuoteRepository::getData(true, requestParams: $requestParams);
+                return $this->yachtQuoteRepository->fetchGetData(true, requestParams: $requestParams);
 
             case QuoteTypes::PET->value:
-                return PetQuoteRepository::getData(true, requestParams: $requestParams);
+                return $this->petQuoteRepository->fetchGetData(true, requestParams: $requestParams);
 
             case QuoteTypes::CYCLE->value:
-                return CycleQuoteRepository::getData(true, requestParams: $requestParams);
+                return $this->cycleQuoteRepository->fetchGetData(true, requestParams: $requestParams);
 
             case QuoteTypes::JETSKI->value:
-                return JetskiQuoteRepository::getData(true, requestParams: $requestParams);
+                return $this->jetskiQuoteRepository->fetchGetData(true, requestParams: $requestParams);
 
             case QuoteTypes::HOME->value:
-                return HomeQuoteRepository::getData(true, requestParams: $requestParams);
+                return $this->homeQuoteRepository->fetchGetData(true, false, $requestParams);
 
             default:
-                return abort(404);
+                abort(404);
         }
     }
 
@@ -92,13 +102,12 @@ class PersonalQuotesExport
         if (in_array(ucfirst($this->quoteType), $this->quoteTypes)) {
             return $this->getHeadings($this->quoteType);
         } else {
-            return abort(404);
+            abort(404);
         }
     }
 
-    protected function getHeadings($quoteType)
+    protected function getHeadings(string $quoteType): array
     {
-
         switch (ucfirst($quoteType)) {
             case QuoteTypes::BIKE->value:
                 return [
@@ -221,6 +230,9 @@ class PersonalQuotesExport
                     'PREVIOUS POLICY PREMIUM',
                     'PREVIOUS POLICY NUMBER',
                 ];
+
+            default:
+                abort(404);
         }
     }
 
@@ -229,11 +241,11 @@ class PersonalQuotesExport
         if (in_array(ucfirst($this->quoteType), $this->quoteTypes)) {
             return $this->getValues($this->quoteType, $quote);
         } else {
-            return abort(404);
+            abort(404);
         }
     }
 
-    protected function getValues($quoteType, $quote)
+    protected function getValues(string $quoteType, $quote): array
     {
         switch (ucfirst($quoteType)) {
             case QuoteTypes::BIKE->value:
@@ -357,6 +369,31 @@ class PersonalQuotesExport
                     $quote->previous_quote_policy_premium ? $quote->previous_quote_policy_premium : '',
                     $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
                 ];
+
+            default:
+                abort(404);
         }
+    }
+
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        $quoteTypeIdMap = [
+            QuoteTypes::BIKE->value => QuoteTypeId::Bike,
+            QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
+            QuoteTypes::PET->value => QuoteTypeId::Pet,
+            QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
+            QuoteTypes::JETSKI->value => QuoteTypeId::Jetski,
+            QuoteTypes::HOME->value => QuoteTypeId::Home,
+        ];
+
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => $quoteTypeIdMap[ucfirst($this->quoteType)] ?? null,
+            'exportType' => 'personal_quotes',
+            'dynamicQuoteType' => ucfirst($this->quoteType),
+        ];
     }
 }

@@ -218,6 +218,7 @@ The following export classes have been migrated to the new structure:
 5. **BusinessQuoteExport** ✅ Migrated
 6. **KycLogsExport** ✅ Migrated
 7. **HomeQuoteExport** ✅ Migrated
+8. **PersonalQuotesExport** ✅ Migrated
 
 ## Remaining Export Classes to Migrate
 
@@ -246,7 +247,7 @@ The following export classes still use the old `ExcelExportable` trait and need 
 
 ⚠️ **Current Priority** - Must complete before Phase 3:
 
-- Migrate the remaining 10 export classes (listed in Phase 3)
+- Migrate the remaining 9 export classes (listed in Phase 3)
 - Update their controllers to use new classes
 - Ensure all functionality is preserved
 - Test each migration thoroughly
@@ -255,14 +256,13 @@ The following export classes still use the old `ExcelExportable` trait and need 
 
 ⚠️ **Cannot be completed yet** - The following components are still in use:
 
-- **ExportCsvAndSendEmailJob** - Used by 10 remaining export classes via ExcelExportable trait
-- **ExcelExportable trait** - Used by 10 export classes that haven't been migrated yet
+- **ExportCsvAndSendEmailJob** - Used by 9 remaining export classes via ExcelExportable trait
+- **ExcelExportable trait** - Used by 9 export classes that haven't been migrated yet
 
 **Remaining classes using old system:**
 
 - TmLeadsExport
 - RMQuotesExport
-- PersonalQuotesExport
 - CarQuoteExportWithEmailMobile
 - AmtQuoteExport
 - EmbeddedProductReport
