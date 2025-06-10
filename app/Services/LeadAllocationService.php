@@ -37,6 +37,7 @@ use App\Services\Logger\LoggerService;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
@@ -221,16 +222,18 @@ class LeadAllocationService extends BaseService
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 DB::commit();
 
-                Haystack::build()
-                    ->addJob(new GetQuotePlansJob($lead))
-                    ->then(function () use ($lead) {
-                        if (
-                            in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-                            && $lead->quote_status_id == QuoteStatusEnum::Qualified
-                        ) {
-                            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
-                        }
-                    })->dispatch();
+                Bus::batch([
+                    new GetQuotePlansJob($lead)
+                ])
+                ->then(function () use ($lead) {
+                    if (
+                        in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                        && $lead->quote_status_id == QuoteStatusEnum::Qualified
+                    ) {
+                        IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
+                    }
+                })
+                ->dispatch();
 
                 return true;
             } catch (\Exception $e) {
