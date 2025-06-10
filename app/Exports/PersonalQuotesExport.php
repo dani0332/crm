@@ -15,6 +15,8 @@ class PersonalQuotesExport
 {
     use ExcelExportable;
 
+    private const PC_CUSTOMER = 'PC CUSTOMER';
+
     private $quoteType = '';
     private $quoteTypes = [];
 
@@ -121,7 +123,7 @@ class PersonalQuotesExport
                     'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
-                    'PC CUSTOMER',
+                    self::PC_CUSTOMER,
                 ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
@@ -145,7 +147,7 @@ class PersonalQuotesExport
                     'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
-                    'PC CUSTOMER',
+                    self::PC_CUSTOMER,
                 ];
 
             case QuoteTypes::PET->value:
@@ -180,7 +182,7 @@ class PersonalQuotesExport
                     'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
-                    'PC CUSTOMER',
+                    self::PC_CUSTOMER,
                 ];
 
             case QuoteTypes::CYCLE->value:
@@ -203,7 +205,7 @@ class PersonalQuotesExport
                     'PREVIOUS POLICY NUMBER',
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
-                    'PC CUSTOMER',
+                    self::PC_CUSTOMER,
                 ];
 
             case QuoteTypes::HOME->value:
@@ -224,7 +226,7 @@ class PersonalQuotesExport
                     'PREVIOUS POLICY EXPIRY DATE',
                     'PREVIOUS POLICY PREMIUM',
                     'PREVIOUS POLICY NUMBER',
-                    'PC CUSTOMER',
+                    self::PC_CUSTOMER,
                 ];
         }
     }
