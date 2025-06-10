@@ -16,11 +16,12 @@ class SendCarCommercialOCBEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $quoteUuid;
+
     public $tries = 3;
     public $timeout = 120;
     public $backoff = 60;
-
+    private $quoteUuid;
+    
     public function __construct($quoteUuid)
     {
         $this->quoteUuid = $quoteUuid;
@@ -33,20 +34,16 @@ class SendCarCommercialOCBEmail implements ShouldQueue
     {
         try {
             $carLead = CarQuote::where('uuid', $this->quoteUuid)->first();
-
             if (! $carLead) {
                 LoggerService::info(self::class." - Car Lead Not Found - Ref ID: {$this->quoteUuid} | Time: ".now());
-
                 return;
             }
-
             LoggerService::info(self::class." - Sending car company commercial ocb email for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
             $carEmailService->sendCarCompanyCommercialOCB($carLead);
             if ($carLead->quote_status_id == QuoteStatusEnum::NewLead) {
                 $carLead->quote_status_id = QuoteStatusEnum::Quoted;
                 $carLead->save();
             }
-
         } catch (\Throwable $th) {
             LoggerService::error(self::class." - Exception encountered: '{$th->getMessage()} | Line: {$th->getLine()} | File: {$th->getFile()} ' - Ref ID: {$this->quoteUuid} | Time: ".now());
         }

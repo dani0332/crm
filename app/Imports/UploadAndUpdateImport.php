@@ -130,7 +130,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             'insurer' => ['index' => 4, 'title' => 'Insurance Provider', 'rules' => 'required|max:100'],
             'registration_type' => ['index' => 5, 'title' => 'Registration Type', 'rules' => 'nullable|max:100|in:'.implode(',', CarRegistrationType::getValues())],
             'vehicle_use' => ['index' => 6, 'title' => 'Vehicle Use', 'rules' => 'nullable|max:100|in:'.implode(',', CarVehicleUse::getValues())],
-            'business_activity' => ['index' => 7, 'title' => 'Business Activity', 'rules' => 'nullable|max:100'],
+            'business_activity' => ['index' => 7, 'title' => 'Business Activity', 'rules' => 'nullable'],
             'driver_name' => ['index' => 8, 'title' => 'Driver Name', 'rules' => 'nullable|max:100'],
 
             'product_type' => ['index' => 9, 'title' => 'Product Type', 'rules' => 'required|max:100'],
