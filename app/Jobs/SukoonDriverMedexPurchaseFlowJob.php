@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Enums\QuoteTypeId;
 use App\Services\Logger\LoggerService;
 use App\Services\SukoonDriverMedexService;
-use App\Strategies\EmbeddedProducts\EmbeddedProduct;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,15 +20,19 @@ class SukoonDriverMedexPurchaseFlowJob implements ShouldQueue
     public $tries = 2;
     public $timeout = 300;
     public $backoff = 300;
+
     private $quoteObject;
+    private $quoteTypeId;
+    private $transaction;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($lead)
+    public function __construct($lead, $quoteTypeId, $transaction)
     {
-        $lead = $lead->load('embeddedTransactions', 'embeddedTransactions.product', 'embeddedTransactions.product.embeddedProduct', 'emirate', 'customer');
         $this->quoteObject = $lead;
+        $this->quoteTypeId = $quoteTypeId;
+        $this->transaction = $transaction;
     }
 
     /**
@@ -37,26 +40,11 @@ class SukoonDriverMedexPurchaseFlowJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $quoteTypeId = QuoteTypeId::Car;
-        $transactions = $this->quoteObject->embeddedTransactions()->where([
-            ['quote_type_id', '=', $quoteTypeId],
-            ['quote_request_id',  '=', $this->quoteObject->id],
-            ['is_selected',  '=', 1],
-        ])->get();
-
-        $transaction = $transactions->where(function ($transact) {
-            if (isset($transact->product) && isset($transact->product->embeddedProduct)) {
-                return EmbeddedProduct::checkSukoonDriverMedex($transact->product->embeddedProduct->short_code);
-            } else {
-                throw new Exception('No embedded product found for the selected transaction');
-            }
-        })->first();
-        LoggerService::info('CL: '.get_class().' FN: handle. Transaction: '.$transaction);
-
-        if (! isset($transaction) || empty($transaction)) {
-            throw new Exception('No transaction found for the selected product');
+        if (! in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+            throw new Exception('Only (Car / Bike) LOB are eligible');
         }
-        app(SukoonDriverMedexService::class)->processPurchaseFlow($this->quoteObject, $transaction);
+
+        app(SukoonDriverMedexService::class)->processPurchaseFlow($this->quoteObject, $this->quoteTypeId, $this->transaction);
     }
 
     /**

@@ -28,6 +28,7 @@ class SukoonDriverMedexService
     private $baseUrl;
     private $sessionId;
     private $currentQuote;
+    private $quoteTypeId;
     private $productSlug;
     private $policyNumber;
     private $paymentGateway;
@@ -75,13 +76,20 @@ class SukoonDriverMedexService
      * @param  mixed  $transaction  The transaction object.
      * @return void
      */
-    public function processPurchaseFlow($quote, $transaction)
+    public function processPurchaseFlow($quote, $quoteTypeId, $transaction)
     {
         $this->currentQuote = $quote;
+        $this->quoteTypeId = $quoteTypeId;
+
+        LoggerService::startQuoteLogging($this->currentQuote);
 
         try {
+
+            if (! in_array($this->quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+                throw new Exception('Only (Car / Bike) LOB are eligible');
+            }
+
             $this->validateCustomerDetails($quote);
-            $userDetail = $this->prepareUserDetails($quote);
 
             // STEP #1 init
             $this->init();
@@ -90,11 +98,11 @@ class SukoonDriverMedexService
             $this->login();
             if(empty($this->sessionId))
                 throw new Exception('Session id is missing');
-        
+
             // STEP #3 getForm | Skiped
 
             // STEP #4 submitPersonalDetail
-            $this->submitPersonalDetail($transaction, $userDetail);
+            $this->submitPersonalDetail($transaction, $this->prepareUserDetails($quote));
             if(empty($this->policyNumber) || empty($this->paymentPlan) || empty($this->amountDisclaimerText))
                 throw new Exception('Policy No, Payment Plan or Amount Disclaimer Text is missing');
 
@@ -154,6 +162,10 @@ class SukoonDriverMedexService
 
             $response = $client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) {
                 $msg = $response->json()['msg'] ?? "{$this->logPrefix} API Request Exception";
+                $this->fetchErrors($response);
+
+                $responseData = $response->json();
+                $responseData['errorMessages'] = $this->errorMessages;
                 throw new Exception($msg);
             });
 
@@ -170,6 +182,7 @@ class SukoonDriverMedexService
 
             if($responseData['has_errors'] ?? null) {
                 $this->fetchErrors($response);
+                $responseData['errorMessages'] = $this->errorMessages;
                 $this->logRequest('failed', 'Request Error', $data, $url, $responseData, $parentFunction);
                 return $response;
             }
@@ -328,7 +341,7 @@ class SukoonDriverMedexService
             'mobile' => '+971505027325',
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
-            'emirate' => $quote->emirate->text,
+            'emirate' => $quote->emirate->text ?? '',
             'emirates_id_number' => $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '', //'784-1989-8057715-1'
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
             'is_resident' => $quote->emirate ? 'Yes' : 'No',
@@ -664,7 +677,7 @@ class SukoonDriverMedexService
                 
                 $document = $embeddedTransaction->documents()->where('document_type_code', $docCode)->first();
                 if(!empty($document)) {
-                    $docNameParts = explode('_', $document->doc_name);
+                    $docNameParts = explode('-', $document->doc_name);
                     $existedDocTimestamp = reset($docNameParts);
                     if($existedDocTimestamp >= $fileCreatedTimestamp) {
                         continue;
@@ -685,6 +698,12 @@ class SukoonDriverMedexService
     public function downloadDocument($quote, $embeddedTransaction, $docId, $docCode, $fileCreatedTimestamp)
     {
         try {
+            $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', $this->quoteTypeId)->first();
+            if(empty($documentType)) {
+                $this->logFailure('DocumentType is missing', "DocumentType is not available for doc_code: {$docCode} & quote_type_id: {$this->quoteTypeId}", ['ref_id' => $quote->code]);
+                return false;
+            }
+
             $result = $this->request('/policy/download-document/'.$docId, 'get', headers: ['x-session-id' => $this->sessionId]);
             $content = $result->body();
 
@@ -709,12 +728,11 @@ class SukoonDriverMedexService
             }
 
             if ($filename != '') {
-                $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', QuoteTypeId::Car)->first();
                 $docUuid = $this->generateUniqueUuid();
 
                 $dir = 'documents/'.$documentType->folder_path;
                 $originalName = $filename;
-                $docName = preg_replace('/\s+/', '', $fileCreatedTimestamp.'_'.$filename);
+                $docName = preg_replace('/\s+/', '', $fileCreatedTimestamp.'-'.$filename);
                 $uploadedDocument = $this->uploadDocument($docName, $content, $dir)?->getData();
 
                 if(!($uploadedDocument->success ?? false)) {
