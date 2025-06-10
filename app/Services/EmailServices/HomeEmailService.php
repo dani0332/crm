@@ -4,6 +4,7 @@ namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteFlowType;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
@@ -23,7 +24,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use App\Enums\QuoteStatusEnum;
 
 class HomeEmailService extends BaseService
 {
@@ -124,7 +124,6 @@ class HomeEmailService extends BaseService
                 // update lead status to quoted
                 $lead->quote_status_id = QuoteStatusEnum::Quoted;
                 $lead->save();
-                
 
             } else {
                 LoggerService::error('Home Renewals OCB Email failed', extra: [

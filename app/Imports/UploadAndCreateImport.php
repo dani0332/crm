@@ -11,6 +11,7 @@ use App\Traits\RenewalsImportTrait;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -19,8 +20,8 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
-use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
-class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation, SkipsEmptyRows
+
+class UploadAndCreateImport implements OnEachRow, SkipsEmptyRows, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
     use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 

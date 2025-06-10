@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Enums\ProcessStatusCode;
 use App\Models\RenewalsBatchEmails;
+use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
-use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,7 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
-use App\Services\HomeRenewalService;
+
 class ScheduleHomeRenewalOcbEmails implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;

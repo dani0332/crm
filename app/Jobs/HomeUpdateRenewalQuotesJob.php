@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalsUploadLeads;
+use App\Services\HomeRenewalService;
 use App\Services\Logger\LoggerService;
-use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
-use App\Services\HomeRenewalService;
+
 class HomeUpdateRenewalQuotesJob implements ShouldQueue, StackableJob
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;

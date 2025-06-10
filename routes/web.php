@@ -264,7 +264,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Non Motor
-    
+
     Route::group(['prefix' => 'renewals'], function () {
         Route::get('non-motor/update', [RenewalsUploadController::class, 'updateNonMotorRenewals'])->name('non-motor-renewals-upload-update')->middleware('permission:'.PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR);
         Route::post('non-motor/upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdateNonMotor'])->name('upload-update-non-motor')->middleware('permission:'.PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR);

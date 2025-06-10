@@ -38,15 +38,12 @@ use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
 use App\Jobs\Renewals\CreateRenewalsWorkflowJob;
 use App\Jobs\Renewals\CreateTravelRenewalQuotesJob;
-use App\Jobs\Renewals\FetchPlansForHomeRenewalsQuoteJob;
 use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
-use App\Jobs\Renewals\HomeRenewalBatchEmailJob;
 use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
-use App\Jobs\ScheduleHomeRenewalOcbEmails;
 use App\Jobs\SendPCPCarOCBEmailJob;
 use App\Jobs\SendPCPFollowupsJob;
 use App\Models\ApplicationStorage;
@@ -468,7 +465,6 @@ class RenewalsUploadService
         }
     }
 
-
     /**
      * fetch plans for individual quote.
      *
@@ -523,7 +519,7 @@ class RenewalsUploadService
             RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
-   
+
     /**
      * @return bool
      */
@@ -580,13 +576,12 @@ class RenewalsUploadService
             $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead);
 
             if ($validationResult) {
-                
-                LoggerService::info($logPrefix.' validation and quote update is completed',extra:[
+
+                LoggerService::info($logPrefix.' validation and quote update is completed', extra: [
                     'quoteType' => $renewalsUploadLead->quote_type,
                 ]);
-                
-                
-                if($renewalsUploadLead->quote_type == QuoteTypeShortCode::HOM) {
+
+                if ($renewalsUploadLead->quote_type == QuoteTypeShortCode::HOM) {
                     app(HomeRenewalService::class)->updateQuotes($renewalsUploadLead);
                 } else {
                     $this->updateQuotes($renewalsUploadLead);
@@ -1352,7 +1347,6 @@ class RenewalsUploadService
         return $this->carQuoteService->renewalCreatePlan($planData);
     }
 
-
     public function getquoteStatusIdbyCode($quoteStatus)
     {
         return QuoteStatus::where('code', '=', $quoteStatus)->value('id');
@@ -1936,7 +1930,7 @@ class RenewalsUploadService
                         break;
                     case QuoteTypeShortCode::HOM:
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && strtoupper($lead->quote_type) == QuoteTypeShortCode::HOM) {
-                            
+
                             if ($leadData->location_area) {
                                 $locationArea = SubArea::where('text', $leadData->location_area)->exists();
                                 if (! $locationArea) {
@@ -2040,7 +2034,7 @@ class RenewalsUploadService
                                     break;
                                 }
                             }
-                            if (isset($leadData->previous_advisor_email) && !empty($leadData->previous_advisor_email)) {
+                            if (isset($leadData->previous_advisor_email) && ! empty($leadData->previous_advisor_email)) {
                                 if (! $this->renewalsAddonService->getUserInfo($leadData->previous_advisor_email)) {
                                     $leadValidationErrors->push('Invalid Previous Advisor Email');
                                     break;
@@ -2537,7 +2531,6 @@ class RenewalsUploadService
 
         return $count;
     }
-
 
     private function isFakeEmail($email)
     {

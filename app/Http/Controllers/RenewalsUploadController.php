@@ -11,6 +11,7 @@ use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
 use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
+use App\Exports\RenewalHomeFailedValidationExport;
 use App\Http\Requests\RenewalsUploadNonMotorRequest;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Http\Requests\ScheduleRenewalsOcbRequest;
@@ -34,7 +35,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\RenewalHomeFailedValidationExport;
 
 class RenewalsUploadController extends Controller
 {
@@ -129,7 +129,7 @@ class RenewalsUploadController extends Controller
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ])->count();
-        
+
         if ($totalPending) {
             $renewalStatusProcess = RenewalStatusProcess::create([
                 'renewal_batch_id' => $batch,
@@ -365,7 +365,6 @@ class RenewalsUploadController extends Controller
 
         $renewalQuotes = $query->simplePaginate();
 
-
         $lobs = $this->renewalsUploadFileService->getNonMotorLobs();
 
         $years = array_combine(range(date('Y'), 2010), range(date('Y'), 2010));
@@ -534,7 +533,7 @@ class RenewalsUploadController extends Controller
     public function downloadValidationFailed($id)
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
-        
+
         switch ($renewaUploadLead->quote_type) {
             case QuoteTypeShortCode::HOM:
                 return Excel::download(new RenewalHomeFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
@@ -615,6 +614,7 @@ class RenewalsUploadController extends Controller
     {
 
         $quotes = $this->renewalsUploadFileService->getExport($request);
+
         return $quotes;
     }
 
