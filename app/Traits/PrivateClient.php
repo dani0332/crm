@@ -321,15 +321,15 @@ trait PrivateClient
                         $query->select(array_unique(array_column($relationConditions, 'column')));
                         foreach ($relationConditions as $condition) {
                             match ($condition['operator']) {
-                                self::OPERATOR_IN => $query->orWhereIn($condition['column'], $condition['values']),
-                                self::OPERATOR_NOT_IN => $query->orWhereNotIn($condition['column'], $condition['values']),
-                                self::OPERATOR_BETWEEN => count($condition['values']) === 2 ? $query->orWhereBetween($condition['column'], $condition['values']) : null,
-                                self::OPERATOR_NOT_BETWEEN => count($condition['values']) === 2 ? $query->orWhereNotBetween($condition['column'], $condition['values']) : null,
-                                self::OPERATOR_LIKE => $query->orWhere($condition['column'], 'like', "%{$condition['values'][0]}%"),
-                                self::OPERATOR_NOT_LIKE => $query->orWhere($condition['column'], 'not like', "%{$condition['values'][0]}%"),
-                                self::OPERATOR_IS_NULL => $query->orWhereNull($condition['column']),
-                                self::OPERATOR_IS_NOT_NULL => $query->orWhereNotNull($condition['column']),
-                                '=', '!=', '<', '<=', '>', '>=' => $query->orWhere($condition['column'], $condition['operator'], $condition['values'][0]),
+                                self::OPERATOR_IN => $query->whereIn($condition['column'], $condition['values']),
+                                self::OPERATOR_NOT_IN => $query->whereNotIn($condition['column'], $condition['values']),
+                                self::OPERATOR_BETWEEN => count($condition['values']) === 2 ? $query->whereBetween($condition['column'], $condition['values']) : null,
+                                self::OPERATOR_NOT_BETWEEN => count($condition['values']) === 2 ? $query->whereNotBetween($condition['column'], $condition['values']) : null,
+                                self::OPERATOR_LIKE => $query->where($condition['column'], 'like', "%{$condition['values'][0]}%"),
+                                self::OPERATOR_NOT_LIKE => $query->where($condition['column'], 'not like', "%{$condition['values'][0]}%"),
+                                self::OPERATOR_IS_NULL => $query->whereNull($condition['column']),
+                                self::OPERATOR_IS_NOT_NULL => $query->whereNotNull($condition['column']),
+                                '=', '!=', '<', '<=', '>', '>=' => $query->where($condition['column'], $condition['operator'], $condition['values'][0]),
                                 default => null,
                             };
                         }
