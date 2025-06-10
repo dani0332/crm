@@ -464,7 +464,8 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 5 THEN "Bought Lead"
                 WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
-                DB::raw('COALESCE(insured.customer_type, "Individual") as customer_type'), // NEED TO CHANGE TO LATEST INSURED
+                'insured.customer_type',
+                // DB::raw('COALESCE(insured.customer_type, "Individual") as customer_type'),
                 'insured.first_name as insured_first_name',
                 'insured.last_name as insured_last_name',
                 'insured_kyc.id as insured_kyc_id',
@@ -549,7 +550,6 @@ class CarQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'cqr.id');
-                // TODO:: this should be get the latest record based on the updated_at, same condition implemented in the lead listing. updated at always be updated when aml screening is done.
                 $insuredCustomerMapping->whereRaw('ic.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = cqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Car]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')

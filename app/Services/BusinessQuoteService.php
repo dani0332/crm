@@ -83,7 +83,6 @@ class BusinessQuoteService extends BaseService
                 'bqr.kyc_decision',
                 'bqr.stale_at',
                 'i.customer_type',
-                // DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
                 'insured_kyc.id as insured_kyc_id',
                 'c.insured_first_name as customer_insured_first_name',
                 'c.insured_last_name as customer_insured_last_name',
@@ -150,8 +149,8 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('customer_insured as ci', function ($query) {
                 $query->on('ci.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $query->on('ci.quote_request_id', '=', 'bqr.id');
-                $query->whereRaw('ci.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id)', [QuoteTypeId::Business]);
-            }) // NEED TO CHANGE TO LATEST INSURED
+                $query->whereRaw('ci.id = (SELECT id FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id ORDER BY updated_at DESC LIMIT 1)', [QuoteTypeId::Business]);
+            })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
             ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');

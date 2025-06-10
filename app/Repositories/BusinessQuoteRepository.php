@@ -94,10 +94,10 @@ class BusinessQuoteRepository extends BaseRepository
                 'customer',
                 'transactionType',
                 'insuranceProviderDetails',
-                'insured' => function ($q) use ($quoteTypeId) { // NEED TO CHANGE TO LATEST INSURED
+                'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
-                'insured.insuredKyc:id,insured_id', // NEED TO CHANGE TO LATEST INSURED
+                'latestInsured.insuredKyc:id,insured_id', 
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',
@@ -108,9 +108,6 @@ class BusinessQuoteRepository extends BaseRepository
                         'paymentSplits.paymentCharges',
                     ]);
                 },
-                'insured' => function ($q) { // NEED TO CHANGE TO LATEST INSURED
-                    $q->where('customer_insured.quote_type_id', QuoteTypeId::Business)->latest('customer_insured.id');
-                },
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
@@ -120,7 +117,6 @@ class BusinessQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
             ])
             ->firstOrFail();
 

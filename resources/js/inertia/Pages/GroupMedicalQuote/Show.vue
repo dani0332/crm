@@ -202,19 +202,19 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const enabledCustomerType = page.props.quote.latest_insured?.customer_type ?? page.props.customerTypeEnum.Entity;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.customer_type,
+  customer_type: enabledCustomerType,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
-// NEED TO CHANGE TO LATEST INSURED
   insured_first_name:
-    page.props.quote.insured_first_name ??
+    page.props.quote.latest_insured.first_name ??
     page.props.quote.customer_insured_first_name ??
     '',
   insured_last_name:
-    page.props.quote.insured_last_name ??
+    page.props.quote.latest_insured.last_name ??
     page.props.quote.customer_insured_last_name ??
     '',
   emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
@@ -559,7 +559,7 @@ const allowStatusUpdate = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
-                <dd>{{ quote.customer_type }}</dd>
+                <dd>{{ enabledCustomerType }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -970,7 +970,7 @@ const allowStatusUpdate = computed(() => {
     </x-modal>
 
     <UBODetails
-      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
       :quote="quote"
       :UBOsDetails="UBOsDetails"
       :nationalities="nationalities"

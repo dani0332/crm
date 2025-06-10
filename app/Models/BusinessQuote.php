@@ -169,29 +169,29 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasOne(BusinessQuoteRequestDetail::class);
     }
 
-    // NEED TO CHANGE TO LATEST INSURED
-    public function insured(): HasManyThrough
+    // Get all insured records for this quote (multiple AML screenings)
+    public function insureds(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
         return $this->hasManyThrough(
             Insured::class,
             CustomerInsured::class,
-            'quote_request_id', // customer_insured.quote_request_id, relation between Business Quote and customer_insured.
+            'quote_request_id', // customer_insured.quote_request_id
             'id', // insured.id
-            'id', // business_quote_request.id
+            'id', // personal_quotes.id
             'insured_id' // customer_insured.insured_id
-        )->where('customer_insured.quote_type_id', QuoteTypeId::Business);
+        );
     }
 
-    // TODO:: this function deployed on develop, need to verified all the functionality before sharing the PR
-    // public function insured(): HasOneThrough
-    // {
-    //     return $this->hasOneThrough(
-    //         Insured::class,
-    //         CustomerInsured::class,
-    //         'quote_request_id', // customer_insured.quote_request_id, relation between personal_quote and customer_insured.
-    //         'id', // insured.id
-    //         'id', // business_quote_request.id
-    //         'insured_id' // customer_insured.insured_id
-    //     );
-    // }
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // personal_quotes.id
+            'insured_id' // customer_insured.insured_id
+        )->latest('customer_insured.updated_at');
+    }
 }
