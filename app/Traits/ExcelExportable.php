@@ -110,6 +110,7 @@ trait ExcelExportable
         } else {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS');
             $fromName = config('constants.MAIL_FROM_NAME');
+            $emailSubject = $emailL_sys.' - '.$emailSubject;
         }
 
         // Generate CSV content in memory using chunking

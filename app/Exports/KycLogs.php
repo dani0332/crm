@@ -14,6 +14,11 @@ class KycLogs
         return app(AMLService::class)->getAMLData(requestParams: $requestParams);
     }
 
+    public function getQuery($requestParams = [])
+    {
+        return app(AMLService::class)->getAMLData(requestParams: $requestParams);
+    }
+
     public function headings(): array
     {
         return [
