@@ -89,7 +89,11 @@ trait PrivateClient
     private function doesLeadMatchPcpCriteria($model, $configs, string $modelClass): bool
     {
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
-        $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model, ['sub_area_id']);
+        $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
+
+        dd((new $modelClass)->where('uuid', $model->uuid)
+            ->where($whereClause)
+            ->toRawSql());
 
         return (new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause)
@@ -244,10 +248,9 @@ trait PrivateClient
         return $this->columnsCache[$modelClass];
     }
 
-    private function buildConfigWhereClause($configs, $tableColumns, $model, $checkRelationColumns = [])
+    private function buildConfigWhereClause($configs, $tableColumns, $model)
     {
-        return function ($outerQuery) use ($configs, $tableColumns, $model, $checkRelationColumns) {
-            $relationConditions = [];
+        return function ($outerQuery) use ($configs, $tableColumns, $model) {
 
             foreach ($configs as $config) {
                 $field = trim($config->field_name);
@@ -255,32 +258,30 @@ trait PrivateClient
                 // Check if field exists in main table
                 $isInMainTable = in_array($field, $tableColumns);
 
-                $relations = $model->getRelations();
-                foreach ($relations as $relationName => $relation) {
-                    if ($relation && method_exists($relation, 'getTable')) {
-                        $relationColumns = Schema::getColumnListing($relation->getTable());
-                        // Check if any of the checkRelationColumns exist in relationColumns
-                        if (! empty(array_intersect($checkRelationColumns, $relationColumns))) {
-                            $relation = $relationName;
-                            // Only get operator and values if this is a relation field
-                            if (in_array($field, $checkRelationColumns)) {
-                                $operator = strtolower(trim($config->operator));
-                                $value = trim($config->value);
-                                $values = array_map('trim', explode(',', $value));
+                // Static handling for sub_area_id
+                if ($field === 'sub_area_id') {
+                    $operator = strtolower(trim($config->operator));
+                    $value = trim($config->value);
+                    $values = array_map('trim', explode(',', $value));
 
-                                foreach ($checkRelationColumns as $column) {
-                                    if (in_array($column, $relationColumns)) {
-                                        $relationConditions[] = [
-                                            'column' => $column,
-                                            'operator' => $operator,
-                                            'values' => $values,
-                                        ];
-                                    }
-                                }
-                            }
-                            break;
-                        }
-                    }
+                    $outerQuery->orWhere(function ($q) use ($values, $operator) {
+                        $q->whereHas('homeQuote', function ($query) use ($values, $operator) {
+                            match ($operator) {
+                                self::OPERATOR_IN => $query->whereIn('sub_area_id', $values),
+                                self::OPERATOR_NOT_IN => $query->whereNotIn('sub_area_id', $values),
+                                self::OPERATOR_BETWEEN => count($values) === 2 ? $query->whereBetween('sub_area_id', $values) : null,
+                                self::OPERATOR_NOT_BETWEEN => count($values) === 2 ? $query->whereNotBetween('sub_area_id', $values) : null,
+                                self::OPERATOR_LIKE => $query->where('sub_area_id', 'like', "%{$values[0]}%"),
+                                self::OPERATOR_NOT_LIKE => $query->where('sub_area_id', 'not like', "%{$values[0]}%"),
+                                self::OPERATOR_IS_NULL => $query->whereNull('sub_area_id'),
+                                self::OPERATOR_IS_NOT_NULL => $query->whereNotNull('sub_area_id'),
+                                '=', '!=', '<', '<=', '>', '>=' => $query->where('sub_area_id', $operator, $values[0]),
+                                default => null,
+                            };
+                        });
+                    });
+
+                    continue;
                 }
 
                 if (! $isInMainTable) {
@@ -312,28 +313,6 @@ trait PrivateClient
                     if ($hasSumInsuredCurrency && ! is_null($model->sum_insured_currency_id) && ! empty($model->sum_insured_currency_id)) {
                         $q->where('sum_insured_currency_id', $currency_type_id);
                     }
-                });
-            }
-
-            if (! empty($relationConditions)) {
-                $outerQuery->orWhere(function ($q) use ($relation, $relationConditions) {
-                    $q->whereHas($relation, function ($query) use ($relationConditions) {
-                        $query->select(array_unique(array_column($relationConditions, 'column')));
-                        foreach ($relationConditions as $condition) {
-                            match ($condition['operator']) {
-                                self::OPERATOR_IN => $query->whereIn($condition['column'], $condition['values']),
-                                self::OPERATOR_NOT_IN => $query->whereNotIn($condition['column'], $condition['values']),
-                                self::OPERATOR_BETWEEN => count($condition['values']) === 2 ? $query->whereBetween($condition['column'], $condition['values']) : null,
-                                self::OPERATOR_NOT_BETWEEN => count($condition['values']) === 2 ? $query->whereNotBetween($condition['column'], $condition['values']) : null,
-                                self::OPERATOR_LIKE => $query->where($condition['column'], 'like', "%{$condition['values'][0]}%"),
-                                self::OPERATOR_NOT_LIKE => $query->where($condition['column'], 'not like', "%{$condition['values'][0]}%"),
-                                self::OPERATOR_IS_NULL => $query->whereNull($condition['column']),
-                                self::OPERATOR_IS_NOT_NULL => $query->whereNotNull($condition['column']),
-                                '=', '!=', '<', '<=', '>', '>=' => $query->where($condition['column'], $condition['operator'], $condition['values'][0]),
-                                default => null,
-                            };
-                        }
-                    });
                 });
             }
         };
