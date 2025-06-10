@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Traits;
 
 use App\Contracts\CsvExportableInterface;
-use App\Jobs\CsvExportEmailJob;
+use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 trait ModernCsvExportable
 {
@@ -52,13 +54,12 @@ trait ModernCsvExportable
         $fileName = $fileName.'-'.Carbon::now()->format('Y-m-d');
         $requestParams = $this->processEmailParameters($fileName, $requestParams);
 
-        // Dispatch the new cleaner job
-        CsvExportEmailJob::dispatch(
-            $this,
+        // Use ExportCsvAndSendEmailJob instead to avoid serialization issues with dependencies
+        // CsvExportEmailJob expects an instance which can contain non-serializable dependencies
+        ExportCsvAndSendEmailJob::dispatch(
+            static::class, // Pass class name instead of instance
             $requestParams['recipientEmail'],
-            $requestParams['subject'],
-            $requestParams,
-            $requestParams['ccRecipients'] ?? []
+            $requestParams
         );
 
         return response()->json([
@@ -73,11 +74,11 @@ trait ModernCsvExportable
     {
         // Set recipient email if not provided
         if (empty($requestParams['recipientEmail'])) {
-            if (! auth()->check()) {
-                throw new \UnauthorizedHttpException('', 'User not authenticated');
+            if (! Auth::check()) {
+                throw new UnauthorizedHttpException('', 'User not authenticated');
             }
 
-            $currentUser = User::find(auth()->user()->id);
+            $currentUser = User::find(Auth::user()->id);
             $requestParams['recipientEmail'] = $currentUser->email;
             $requestParams['recipientName'] = $currentUser->name;
         }
@@ -119,5 +120,30 @@ trait ModernCsvExportable
             'timestamp' => Carbon::now()->toISOString(),
             'parameters' => $requestParams,
         ];
+    }
+
+    /**
+     * Compatibility method for ExportCsvAndSendEmailJob
+     * Delegates to the new CsvExportService for actual implementation
+     */
+    public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
+    {
+        // Ensure this class implements the required interface
+        if (! $this instanceof CsvExportableInterface) {
+            throw new \InvalidArgumentException(
+                'Class must implement CsvExportableInterface to use sendEmailWithCSVAttachment functionality'
+            );
+        }
+
+        // Use the modern email export service
+        $emailExportService = app(\App\Services\EmailExportService::class);
+
+        $emailExportService->sendCsvByEmail(
+            $this,
+            $recipientEmail,
+            $emailSubject,
+            $requestParams,
+            $ccRecipients
+        );
     }
 }
