@@ -63,7 +63,7 @@ const fetchLatestSageError = async () => {
         },
       },
     );
-    NProgress.done(); 
+    NProgress.done();
     if (response?.data?.error) {
       notification.error({
         title: 'Sage API Error',
