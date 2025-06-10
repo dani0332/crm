@@ -15,6 +15,7 @@ use App\Models\InsurerRequestResponse;
 use App\Models\QuoteDocument;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use DateTime;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -647,7 +648,8 @@ class SukoonDriverMedexService
 
                 $docId = $document['doc_id'] ?? '';
                 $docName = $document['name'] ?? '';
-
+                $fileCreated = DateTime::createFromFormat('d/m/Y H:i', $document['file_created'] ?? now('UTC')->format('d/m/Y H:i'));
+                $fileCreatedTimestamp = $fileCreated->getTimestamp();
 
                 $docNamePrefix = explode('-', $docName)[0];
                 $docCode = match ($docNamePrefix) {
@@ -661,7 +663,17 @@ class SukoonDriverMedexService
                     continue;
                 }
 
-                $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode);
+                
+                $document = $embeddedTransaction->documents()->where('document_type_code', $docCode)->first();
+                if(!empty($document)) {
+                    $docNameParts = explode('_', $document->doc_name);
+                    $existedDocTimestamp = reset($docNameParts);
+                    if($existedDocTimestamp >= $fileCreatedTimestamp) {
+                        continue;
+                    }
+                }
+
+                $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode, $fileCreatedTimestamp);
             }
 
             $generatedDocumentCounts = count($response['documents'] ?? []);
@@ -672,7 +684,7 @@ class SukoonDriverMedexService
     }
 
 
-    public function downloadDocument($quote, $embeddedTransaction, $docId, $docCode)
+    public function downloadDocument($quote, $embeddedTransaction, $docId, $docCode, $fileCreatedTimestamp)
     {
         try {
             $result = $this->request('/policy/download-document/'.$docId, 'get', headers: ['x-session-id' => $this->sessionId]);
@@ -704,7 +716,8 @@ class SukoonDriverMedexService
 
                 $dir = 'documents/'.$documentType->folder_path;
                 $originalName = $filename;
-                $uploadedDocument = $this->uploadDocument($filename, $content, $dir)?->getData();
+                $docName = preg_replace('/\s+/', '', $fileCreatedTimestamp.'_'.$filename);
+                $uploadedDocument = $this->uploadDocument($docName, $content, $dir)?->getData();
 
                 if(!($uploadedDocument->success ?? false)) {
                     $message = 'Document is not uploaded';
@@ -739,10 +752,9 @@ class SukoonDriverMedexService
         }
     }
 
-    public function uploadDocument($filename, $content, $dir)
+    public function uploadDocument($docName, $content, $dir)
     {
         try {
-            $docName = preg_replace('/\s+/', '', uniqid().'_'.$filename);
             $fileNameAzure = uniqid()."_{$this->currentQuote->uuid}_$docName}";
             $docUrl = "{$dir}/{$fileNameAzure}";
             $filePathAzure = Storage::disk('azureIM')->put($docUrl, $content);
@@ -751,7 +763,7 @@ class SukoonDriverMedexService
                 throw new Exception('failed to upload document, doc_name: ' .$docName. ' doc_url: '. $docUrl);
             }
 
-            LoggerService::info("{$this->logPrefix} upload document filename {$filename}");
+            LoggerService::info("{$this->logPrefix} upload document doc_name: {$docName}");
             return response()->json(['success' => $filePathAzure, 'doc_name' => $docName, 'doc_url' => $docUrl]);
 
         } catch (Exception $e) {
