@@ -3724,6 +3724,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured_kyc_id"
+      :expanded="sectionExpanded"
+    />
+
     <ApiLogs
       v-if="can(permissionEnum.API_LOG_VIEW)"
       :type="modelClass"

@@ -9,6 +9,7 @@ use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -165,5 +166,17 @@ class BusinessQuote extends Model implements AuditableContract
     public function quoteDetail()
     {
         return $this->hasOne(BusinessQuoteRequestDetail::class);
+    }
+
+    public function insured(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id, relation between personal_quote and customer_insured.
+            'id', // insured.id
+            'id', // business_quote_request.id
+            'insured_id' // customer_insured.insured_id
+        );
     }
 }

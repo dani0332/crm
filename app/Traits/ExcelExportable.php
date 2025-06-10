@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Enums\EnvEnum;
 use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
+use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -76,7 +77,7 @@ trait ExcelExportable
             $requestParams['recipientEmail'],
             $requestParams
         );
-        info('Dispatched ExportCsvAndSendEmailJob');
+        // info('Dispatched ExportCsvAndSendEmailJob');
 
         // Return response to the user that export is being processed
         return response()->json([
@@ -110,6 +111,7 @@ trait ExcelExportable
         } else {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS');
             $fromName = config('constants.MAIL_FROM_NAME');
+            $emailSubject = $emailL_sys.' - '.$emailSubject;
         }
 
         // Generate CSV content in memory using chunking
@@ -141,7 +143,7 @@ trait ExcelExportable
             // Use the query builder version of collection if available
             if (method_exists($this, 'getQuery')) {
                 // Process data in memory-efficient chunks
-                logger()->info('Starting CSV export with chunking');
+                LoggerService::info('Starting CSV export with chunking');
                 $query = $this->getQuery($requestParams);
 
                 // Use database chunking for efficient memory usage
@@ -172,7 +174,7 @@ trait ExcelExportable
             } else {
                 // Fallback to less efficient memory approach if query builder not available
                 $data = $this->collection($requestParams);
-                logger()->debug('Using regular collection method - may use more memory');
+                LoggerService::info('Using regular collection method - may use more memory');
 
                 foreach ($data as $record) {
                     fputcsv($stream, $this->map($record));
@@ -248,14 +250,14 @@ trait ExcelExportable
 
             $finalMemory = round(memory_get_usage(true) / 1024 / 1024, 2);
             $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
-            logger()->info("CSV export completed. Records: {$totalRecords}, Final memory: {$finalMemory}MB, Peak memory: {$peakMemory}MB");
+            LoggerService::info("CSV export completed. Records: {$totalRecords}, Final memory: {$finalMemory}MB, Peak memory: {$peakMemory}MB");
 
         } catch (\Throwable $e) {
             // Clean up the file in case of an error
             if (file_exists($csvFilePath)) {
                 unlink($csvFilePath);
             }
-            logger()->error('Error in CSV export: '.$e->getMessage(), [
+            LoggerService::error('Error in CSV export: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
             throw $e;

@@ -82,17 +82,10 @@ class CarQuoteService extends BaseService
         $driverName = $request->driver_name ?? null;
 
         if ($registrationType == CarRegistrationType::COMPANY) {
-            if ($vehicleUse == CarVehicleUse::PRIVATE) {
-                $name = explode(' ', $driverName);
-                $firstName = reset($name);
-                unset($name[0]);
-                $lastName = implode(' ', $name) ?? null;
-            } else {
-                $name = explode(' ', $request->company_contact_name);
-                $firstName = reset($name);
-                unset($name[0]);
-                $lastName = implode(' ', $name) ?? null;
-            }
+            $name = explode(' ', $request->company_contact_name);
+            $firstName = reset($name);
+            unset($name[0]);
+            $lastName = implode(' ', $name) ?? null;
         }
 
         $dataArr = [
@@ -131,6 +124,7 @@ class CarQuoteService extends BaseService
             'companyAddress' => $request->company_address ?? null,
             'pointOfContactName' => $request->company_contact_name ?? null,
             'businessActivityId' => $request->business_activity_id ?? null,
+            'driverName' => $driverName,
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
@@ -164,17 +158,6 @@ class CarQuoteService extends BaseService
         $carQuote->company_name = $request->company_name ?? null;
         $carQuote->company_address = $request->company_address ?? null;
 
-        if ($request->company_contact_name) {
-            $name = explode(' ', $request->company_contact_name);
-            $companyFirstName = reset($name);
-            unset($name[0]);
-            $companyLastName = implode(' ', $name) ?? ' ';
-            $carQuote->customer->update([
-                'first_name' => $companyFirstName,
-                'last_name' => $companyLastName,
-            ]);
-        }
-
         $driverName = $request->driver_name ?? null;
         $firstName = $request->first_name ?? null;
         $lastName = $request->last_name ?? null;
@@ -184,17 +167,11 @@ class CarQuoteService extends BaseService
             ->where('quote_request_id', $carQuote->id)
             ->first();
         if ($registrationType == CarRegistrationType::COMPANY) {
-            if ($vehicleUse == CarVehicleUse::PRIVATE) {
-                $name = explode(' ', $driverName);
-                $firstName = reset($name);
-                unset($name[0]);
-                $lastName = implode(' ', $name) ?? null;
-            } else {
-                $name = explode(' ', $request->company_contact_name);
-                $firstName = reset($name);
-                unset($name[0]);
-                $lastName = implode(' ', $name) ?? null;
-            }
+
+            $name = explode(' ', $request->company_contact_name);
+            $firstName = reset($name);
+            unset($name[0]);
+            $lastName = implode(' ', $name) ?? null;
 
             if (! $entityMapping) {
 
@@ -229,6 +206,7 @@ class CarQuoteService extends BaseService
         $carQuote->nationality_id = $request->nationality_id ?? null;
         $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id ?? null;
         $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id ?? null;
+        $carQuote->driver_name = $driverName;
 
         if ($request->year_of_manufacture) {
             $carQuote->year_of_manufacture = $request->year_of_manufacture;
@@ -348,6 +326,7 @@ class CarQuoteService extends BaseService
                 'cqr.id',
                 'cqr.first_name',
                 'cqr.last_name',
+                'cqr.driver_name',
                 DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
                 'cqr.company_name AS car_company_name',
                 'cqr.company_address AS car_company_address',
@@ -423,6 +402,7 @@ class CarQuoteService extends BaseService
                 'cqr.currently_insured_with',
                 'cqr.currently_insured_with as currently_insured_with_text',
                 'ls.text as lost_reason',
+                'ls.id as lost_reason_id',
                 'cqr.previous_quote_policy_number',
                 DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
                 DB::raw('DATE_FORMAT(cqr.previous_policy_start_date, "%d-%m-%Y") as previous_policy_start_date'),
@@ -469,6 +449,7 @@ class CarQuoteService extends BaseService
                 'cpip.code as plan_provider_code',
                 'insured.first_name as insured_first_name',
                 'insured.last_name as insured_last_name',
+                'insured_kyc.id as insured_kyc_id',
                 DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),
                 'c.emirates_id_expiry_date',
                 'c.receive_marketing_updates',
@@ -553,6 +534,7 @@ class CarQuoteService extends BaseService
                 $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = cqr.id)', [QuoteTypeId::Car]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->groupBy('cqr.id')
             ->where('cqr.uuid', $id)
             ->first();
