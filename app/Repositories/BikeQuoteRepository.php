@@ -151,6 +151,7 @@ class BikeQuoteRepository extends BaseRepository
                 'insured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
+                'insured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -253,7 +254,9 @@ class BikeQuoteRepository extends BaseRepository
 
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
-        return ($forExport) ? $query->get() : $query;
+        // logger()->debug('Bike toRawSql: '.$query->toRawSql());
+
+        return $query;
     }
 
     public function fetchExport()

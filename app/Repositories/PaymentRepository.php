@@ -580,11 +580,28 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchUpdatePaymentStatus($request)
     {
         $maxRetries = 2;
+        $successMessage = 'Payment Verified';
 
-        return $this->handleWithDeadlockRetries(function () use ($request) {
-            $successMessage = 'Payment Verified';
-            $splitPayment = PaymentSplits::find($request->splitPaymentId);
-            $masterPayment = $splitPayment->payment;
+        // Move fetching data outside transaction
+        $splitPayment = PaymentSplits::find($request->splitPaymentId);
+        $masterPayment = $splitPayment->payment;
+
+        // Prepare to store Sage receipt ID if successful
+        $sageReceiptId = null;
+
+        // Process Sage API call outside transaction if needed
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled()) {
+            $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
+
+            if ($sageResponse['status'] != 'success') {
+                vAbort($sageResponse['response']);
+            }
+
+            $sageReceiptId = $sageResponse['response'];
+        }
+
+        // Now handle database operations within transaction
+        return $this->handleWithDeadlockRetries(function () use ($request, $splitPayment, $masterPayment, $sageReceiptId, $successMessage) {
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 $paymentInformation = [
                     'collection_amount' => $request->collection_amount,
@@ -615,37 +632,23 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
 
-                // create sage receipt
-                if ((new SageApiService)->isSageEnabled()) {
-                    $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
-                    if ($sageResponse['status'] == 'success') {
-                        $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
-                        $splitPayment->update($paymentInformation);
-                        if ($masterPayment) {
-                            $masterPayment->update(
-                                [
-                                    'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                                    'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                                ],
-                            );
-                        }
-                    } else {
-                        $failMessage = $sageResponse['response'];
-                        vAbort($failMessage);
-                    }
-                } else {
-                    $splitPayment->update($paymentInformation);
-
-                    if ($masterPayment) {
-                        $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
-                        $masterPayment->update(
-                            [
-                                'captured_amount' => $masterCapturedAmount,
-                                'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                            ],
-                        );
-                    }
+                // Add sage receipt ID if it exists
+                if ($sageReceiptId) {
+                    $paymentInformation['sage_reciept_id'] = $sageReceiptId;
                 }
+
+                $splitPayment->update($paymentInformation);
+
+                if ($masterPayment) {
+                    $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
+                    $masterPayment->update(
+                        [
+                            'captured_amount' => $masterCapturedAmount,
+                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
+                        ],
+                    );
+                }
+
                 /* Create payment receipt for broker */
                 if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
                     app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);

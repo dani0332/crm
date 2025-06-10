@@ -1114,6 +1114,14 @@ class AMLService
             $quoteTypeGroup = $chunk->groupBy('quote_type_id');
             foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
                 $quoteType = QuoteTypes::getName($quoteTypeId);
+
+                // Skip if quote type is not found
+                if (! $quoteType) {
+                    LoggerService::warning("Quote type not found for ID: {$quoteTypeId}");
+
+                    continue;
+                }
+
                 $nameSpace = '\\App\\Models\\';
                 $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
 
@@ -1131,5 +1139,67 @@ class AMLService
         });
 
         return $data;
+    }
+
+    public function saveKYCComplianceQuestions($complianceQuestions)
+    {
+        LoggerService::info('fn:saveKYCComplianceQuestions - AMLService', extra: [
+            'insured_id' => $complianceQuestions['insured_id'],
+        ]);
+
+        try {
+            $sameFields = [
+                'pep' => $complianceQuestions['pep'] ?? null,
+                'financial_sanctions' => $complianceQuestions['financial_sanctions'] ?? null,
+                'dual_nationality' => $complianceQuestions['dual_nationality'] ?? null,
+                'in_sanction_list' => $complianceQuestions['in_sanction_list'] ?? null,
+                'deal_sanction_list' => $complianceQuestions['deal_sanction_list'] ?? null,
+                'is_operation_high_risk' => $complianceQuestions['is_operation_high_risk'] ?? null,
+                'transaction_pattern' => $complianceQuestions['transaction_pattern'] ?? null,
+                'is_partner' => $complianceQuestions['is_partner'] ?? null,
+            ];
+
+            $kycData = array_merge($sameFields, [
+                'insured_id' => $complianceQuestions['insured_id'],
+                'is_sanction_match' => $complianceQuestions['is_sanction_match'] ?? null,
+                'in_fatf' => $complianceQuestions['in_fatf'] ?? null,
+                'is_owner_high_risk' => $complianceQuestions['is_owner_high_risk'] ?? null,
+                'transaction_volume' => $complianceQuestions['transaction_volume'] ?? null,
+                'transaction_activities' => $complianceQuestions['transaction_activities'] ?? null,
+            ]);
+
+            if ($insuredKyc = InsuredKyc::where('insured_id', $complianceQuestions['insured_id'])->first()) {
+                $insuredKyc->update($kycData);
+            } else {
+                InsuredKyc::create($kycData);
+            }
+
+            LoggerService::info('KYCComplianceQuestions updated');
+        } catch (Exception $exception) {
+            LoggerService::error('KYCComplianceQuestions failed to update', exception: $exception);
+        }
+    }
+
+    public function updateAMLStatusAgainstDecision($request, $quoteObject)
+    {
+        LoggerService::info(self::class.' - '.__FUNCTION__);
+
+        $fetchKycLog = KycLog::where('id', $request['aml_id'])->withTrashed();
+        $fetchKycLog->update([
+            'decision' => $request['aml_decision'] ?? '',
+            'notes' => trim($request['notes']) ?? '',
+            'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
+            'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
+            'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
+        ]);
+
+        $kycLog = $fetchKycLog->first();
+        $amlStatus = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? AMLStatusCode::AMLScreeningFailed : AMLStatusCode::AMLScreeningCleared;
+
+        $quoteObject->aml_status = $amlStatus;
+        $quoteObject->save();
+
+        return $amlStatus == AMLStatusCode::AMLScreeningCleared ?
+                            AMLStatusCode::getName(AMLStatusCode::AMLScreeningCleared) : AMLStatusCode::getName(AMLStatusCode::AMLScreeningFailed);
     }
 }

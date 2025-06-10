@@ -2957,7 +2957,6 @@ const isCommercialVehicle = computed(() => {
             </div>
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
-                >
                 <x-select
                   label="IS VEHICLE MODIFIED?"
                   required
@@ -3477,9 +3476,14 @@ const isCommercialVehicle = computed(() => {
                       :has-child-lead="
                         page.props.linkedQuoteDetails.childLeadsCount > 0
                       "
+                      :extraDetails="{
+                        selectedPlansIds: [selectedProviderPlan?.id],
+                      }"
                       :uuid="quote.uuid"
                       :insuranceProviderId="item.id"
                       :code="quote.code"
+                      :plans="availablePlansItems || []"
+                      :payments="payments"
                     />
 
                     <x-button
@@ -4191,6 +4195,14 @@ const isCommercialVehicle = computed(() => {
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
   />
+
+  <AuditLogs
+    :title="'KYC Audit Logs'"
+    :type="'App\\Models\\InsuredKyc'"
+    :id="record?.insured_kyc_id"
+    :expanded="sectionExpanded"
+  />
+
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="modelClass"

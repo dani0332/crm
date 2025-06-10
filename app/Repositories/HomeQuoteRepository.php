@@ -127,7 +127,7 @@ class HomeQuoteRepository extends BaseRepository
             ->when(
                 $forTotalLeadsCount,
                 fn ($query) => $query->count(),
-                fn ($query) => $query->when($forExport, fn ($query) => $query->get(), fn ($query) => $query->simplePaginate()->withQueryString())
+                fn ($query) => $query->when($forExport, fn ($query) => $query, fn ($query) => $query->simplePaginate()->withQueryString())
             );
     }
 
@@ -698,6 +698,7 @@ class HomeQuoteRepository extends BaseRepository
                 'insured' => function ($q) {
                     $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
                 },
+                'insured.insuredKyc:id,insured_id',
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },

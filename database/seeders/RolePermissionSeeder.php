@@ -27,6 +27,7 @@ class RolePermissionSeeder extends Seeder
         $this->sendUpdateCancelPermission();
         $this->addRenewalsUploadPermission();
         // $this->addPolicyDetailsAddVatPermission();
+        $this->addNationalityAllocationConfigPermission();
     }
 
     private function addReceiveNotificationsPermission()
@@ -229,6 +230,17 @@ class RolePermissionSeeder extends Seeder
         Permission::firstOrCreate([
             'name' => PermissionsEnum::RENEWALS_BATCHES_NONMOTOR,
             'guard_name' => 'web',
+        ]);
+    }
+
+    private function addNationalityAllocationConfigPermission(): void
+    {
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG,
+            'guard_name' => 'web',
+        ], [
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 }

@@ -101,13 +101,28 @@ class JetskiQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::JETSKI->id())
+        $quoteTypeId = QuoteTypes::JETSKI->id();
+
+        return $this->byQuoteTypeId($quoteTypeId)
             ->where($column, $value)
-            ->with(['jetskiQuote', 'nationality', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable']);
-            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+            ->with([
+                'jetskiQuote',
+                'nationality',
+                'advisor',
+                'quoteDetail.lostReason',
+                'insured' => function ($q) use ($quoteTypeId) {
+                    $q->where('customer_insured.quote_type_id', $quoteTypeId);
+                },
+                'insured.insuredKyc:id,insured_id',
+                'payments' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable']);
+                },
+                'createdBy',
+                'updatedBy',
+                'customer.additionalContactInfo',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                }])->firstOrFail();
     }
 
     /**
@@ -161,7 +176,7 @@ class JetskiQuoteRepository extends BaseRepository
 
         $query->orderBy('personal_quotes.'.(request()->get('sortBy') ?? 'created_at'), request()->get('sortType') ?? 'desc');
 
-        return ($forExport) ? $query->get() : $query;
+        return $query;
     }
 
 }
