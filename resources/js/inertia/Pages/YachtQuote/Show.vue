@@ -92,7 +92,9 @@ const isProfileUpdateAllow = computed(() => {
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
-const enabledCustomerType = page.props.quote?.latest_insured?.customer_type ?? page.props.customerTypeEnum.Individual;
+const enabledCustomerType =
+  page.props.quote?.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote?.latest_insured?.customer_type,

@@ -154,7 +154,9 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
-const enabledCustomerType = page.props.quote?.latest_insured?.customer_type ?? page.props.customerTypeEnum.Individual;
+const enabledCustomerType =
+  page.props.quote?.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote?.latest_insured?.customer_type,
@@ -164,7 +166,8 @@ const customerProfileForm = useForm({
 
   insured_first_name: page.props.quote?.latest_insured?.first_name || '',
   insured_last_name: page.props.quote?.latest_insured?.last_name || '',
-  emirates_id_number: page.props.quote?.latest_insured?.emirates_id_number || null,
+  emirates_id_number:
+    page.props.quote?.latest_insured?.emirates_id_number || null,
   emirates_id_expiry_date:
     page.props.quote?.customer?.emirates_id_expiry_date || null,
 

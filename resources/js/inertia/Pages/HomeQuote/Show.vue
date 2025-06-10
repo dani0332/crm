@@ -373,7 +373,9 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
-const enabledCustomerType = page.props.quote?.latest_insured?.customer_type ?? page.props.customerTypeEnum.Individual;
+const enabledCustomerType =
+  page.props.quote?.latest_insured?.customer_type ??
+  page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote?.insured?.customer_type || null,
@@ -1676,9 +1678,7 @@ const shouldShowPlanDetailsSection = computed(() => {
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="
-                  enabledCustomerType == page.props.customerTypeEnum.Entity
-                "
+                v-if="enabledCustomerType == page.props.customerTypeEnum.Entity"
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
