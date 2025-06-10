@@ -91,10 +91,6 @@ trait PrivateClient
         $tableColumns = $this->getCachedTableColumns($modelClass, $model->getTable());
         $whereClause = $this->buildConfigWhereClause($configs, $tableColumns, $model);
 
-        dd((new $modelClass)->where('uuid', $model->uuid)
-            ->where($whereClause)
-            ->toRawSql());
-
         return (new $modelClass)->where('uuid', $model->uuid)
             ->where($whereClause)
             ->exists();
@@ -251,35 +247,12 @@ trait PrivateClient
     private function buildConfigWhereClause($configs, $tableColumns, $model)
     {
         return function ($outerQuery) use ($configs, $tableColumns, $model) {
-
             foreach ($configs as $config) {
                 $field = trim($config->field_name);
-
-                // Check if field exists in main table
                 $isInMainTable = in_array($field, $tableColumns);
 
-                // Static handling for sub_area_id
                 if ($field === 'sub_area_id') {
-                    $operator = strtolower(trim($config->operator));
-                    $value = trim($config->value);
-                    $values = array_map('trim', explode(',', $value));
-
-                    $outerQuery->orWhere(function ($q) use ($values, $operator) {
-                        $q->whereHas('homeQuote', function ($query) use ($values, $operator) {
-                            match ($operator) {
-                                self::OPERATOR_IN => $query->whereIn('sub_area_id', $values),
-                                self::OPERATOR_NOT_IN => $query->whereNotIn('sub_area_id', $values),
-                                self::OPERATOR_BETWEEN => count($values) === 2 ? $query->whereBetween('sub_area_id', $values) : null,
-                                self::OPERATOR_NOT_BETWEEN => count($values) === 2 ? $query->whereNotBetween('sub_area_id', $values) : null,
-                                self::OPERATOR_LIKE => $query->where('sub_area_id', 'like', "%{$values[0]}%"),
-                                self::OPERATOR_NOT_LIKE => $query->where('sub_area_id', 'not like', "%{$values[0]}%"),
-                                self::OPERATOR_IS_NULL => $query->whereNull('sub_area_id'),
-                                self::OPERATOR_IS_NOT_NULL => $query->whereNotNull('sub_area_id'),
-                                '=', '!=', '<', '<=', '>', '>=' => $query->where('sub_area_id', $operator, $values[0]),
-                                default => null,
-                            };
-                        });
-                    });
+                    $this->handleSubAreaIdCondition($outerQuery, $config);
 
                     continue;
                 }
@@ -288,33 +261,55 @@ trait PrivateClient
                     continue;
                 }
 
-                $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $tableColumns);
-                $operator = strtolower(trim($config->operator));
-                $value = trim($config->value);
-                $currency_type_id = trim($config->currency_type_id);
-                $values = array_map('trim', explode(',', $value));
-
-                $outerQuery->orWhere(function ($q) use ($field, $operator, $value, $values, $currency_type_id, $model, $hasSumInsuredCurrency, $isInMainTable) {
-                    if ($isInMainTable) {
-                        match ($operator) {
-                            self::OPERATOR_IN => $q->whereIn($field, $values),
-                            self::OPERATOR_NOT_IN => $q->whereNotIn($field, $values),
-                            self::OPERATOR_BETWEEN => count($values) === 2 ? $q->whereBetween($field, $values) : null,
-                            self::OPERATOR_NOT_BETWEEN => count($values) === 2 ? $q->whereNotBetween($field, $values) : null,
-                            self::OPERATOR_LIKE => $q->where($field, 'like', "%$value%"),
-                            self::OPERATOR_NOT_LIKE => $q->where($field, 'not like', "%$value%"),
-                            self::OPERATOR_IS_NULL => $q->whereNull($field),
-                            self::OPERATOR_IS_NOT_NULL => $q->whereNotNull($field),
-                            '=', '!=', '<', '<=', '>', '>=' => $q->where($field, $operator, $value),
-                            default => null,
-                        };
-                    }
-
-                    if ($hasSumInsuredCurrency && ! is_null($model->sum_insured_currency_id) && ! empty($model->sum_insured_currency_id)) {
-                        $q->where('sum_insured_currency_id', $currency_type_id);
-                    }
-                });
+                $this->handleMainTableCondition($outerQuery, $config, $model, $tableColumns);
             }
+        };
+    }
+
+    private function handleSubAreaIdCondition($outerQuery, $config)
+    {
+        $operator = strtolower(trim($config->operator));
+        $value = trim($config->value);
+        $values = array_map('trim', explode(',', $value));
+
+        $outerQuery->orWhere(function ($q) use ($values, $operator) {
+            $q->whereHas('homeQuote', function ($query) use ($values, $operator) {
+                $this->applyOperatorCondition($query, 'sub_area_id', $operator, $values);
+            });
+        });
+    }
+
+    private function handleMainTableCondition($outerQuery, $config, $model, $tableColumns)
+    {
+        $field = trim($config->field_name);
+        $operator = strtolower(trim($config->operator));
+        $value = trim($config->value);
+        $currency_type_id = trim($config->currency_type_id);
+        $values = array_map('trim', explode(',', $value));
+        $hasSumInsuredCurrency = in_array('sum_insured_currency_id', $tableColumns);
+
+        $outerQuery->orWhere(function ($q) use ($field, $operator, $value, $values, $currency_type_id, $model, $hasSumInsuredCurrency) {
+            $this->applyOperatorCondition($q, $field, $operator, $values, $value);
+
+            if ($hasSumInsuredCurrency && ! is_null($model->sum_insured_currency_id) && ! empty($model->sum_insured_currency_id)) {
+                $q->where('sum_insured_currency_id', $currency_type_id);
+            }
+        });
+    }
+
+    private function applyOperatorCondition($query, $field, $operator, $values, $value = null)
+    {
+        match ($operator) {
+            self::OPERATOR_IN => $query->whereIn($field, $values),
+            self::OPERATOR_NOT_IN => $query->whereNotIn($field, $values),
+            self::OPERATOR_BETWEEN => count($values) === 2 ? $query->whereBetween($field, $values) : null,
+            self::OPERATOR_NOT_BETWEEN => count($values) === 2 ? $query->whereNotBetween($field, $values) : null,
+            self::OPERATOR_LIKE => $query->where($field, 'like', "%$value%"),
+            self::OPERATOR_NOT_LIKE => $query->where($field, 'not like', "%$value%"),
+            self::OPERATOR_IS_NULL => $query->whereNull($field),
+            self::OPERATOR_IS_NOT_NULL => $query->whereNotNull($field),
+            '=', '!=', '<', '<=', '>', '>=' => $query->where($field, $operator, $value),
+            default => null,
         };
     }
 }
