@@ -47,7 +47,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue
      */
     public function handle()
     {
-        LoggerService::info('HealthRevivalFollowUpEmailJob -  UUID: ' . $this->uuid . ' - Type: ' . $this->type);
+        LoggerService::info('HealthRevivalFollowUpEmailJob -  UUID: '.$this->uuid.' - Type: '.$this->type);
 
         if ($this->uuid == null || $this->type == null) {
             LoggerService::info('HealthRevivalFollowUpEmailJob - UUID or Type Null. UUID: '.$this->uuid.' - Type: '.$this->type);
@@ -71,7 +71,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue
 
     private function unrepliedWithPreviousPlantype()
     {
-        LoggerService::info('HealthRevivalFollowUpEmailJob - Unreplied With Previous Plantype - UUID: ' . $this->uuid);
+        LoggerService::info('HealthRevivalFollowUpEmailJob - Unreplied With Previous Plantype - UUID: '.$this->uuid);
 
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadStatusArray = [QuoteStatusEnum::ApplicationPending, QuoteStatusEnum::Stale, QuoteStatusEnum::Lost];
@@ -304,7 +304,7 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue
 
     private function sendDTTFollowUpEmail($emailData)
     {
-        LoggerService::info('HealthRevivalFollowUpEmailJob - Send DTT Follow Up Email - UUID: ' . $emailData->uuid);
+        LoggerService::info('HealthRevivalFollowUpEmailJob - Send DTT Follow Up Email - UUID: '.$emailData->uuid);
 
         $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
         if ($response == 201) {

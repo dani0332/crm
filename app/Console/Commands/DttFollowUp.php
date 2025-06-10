@@ -10,7 +10,6 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class DttFollowUp extends Command
 {
