@@ -63,8 +63,7 @@ const fetchLatestSageError = async () => {
         },
       },
     );
-    NProgress.done();
-    console.log('fetchLatestSageError : get error call : ', response.data);
+    NProgress.done(); 
     if (response?.data?.error) {
       notification.error({
         title: 'Sage API Error',
@@ -75,10 +74,6 @@ const fetchLatestSageError = async () => {
     }
     return;
   }
-  console.log(
-    'fetchLatestSageError : isPolicyOrEndorsementBookingFailed : ',
-    isPolicyOrEndorsementBookingFailed,
-  );
 };
 
 const fetchSageAPILogs = async () => {
