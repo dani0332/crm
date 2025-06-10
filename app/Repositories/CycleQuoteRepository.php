@@ -67,8 +67,15 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
@@ -79,8 +86,8 @@ class CycleQuoteRepository extends BaseRepository
             'quoteDetail',
             'renewalBatchModel',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
             ->when(isset(request()->advisors) && ! empty(request()->advisors), function ($query) {
                 $advisors = request()->advisors;
@@ -120,7 +127,7 @@ class CycleQuoteRepository extends BaseRepository
             // return $query->count();
         }
 
-        return ($forExport) ? $query->get() : $query;
+        return ($forExport) ? $query : $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()
@@ -199,6 +206,7 @@ class CycleQuoteRepository extends BaseRepository
                 'insured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
+                'insured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentSplits' => function ($query) {

@@ -151,6 +151,7 @@ class BikeQuoteRepository extends BaseRepository
                 'insured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
+                'insured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -212,8 +213,15 @@ class BikeQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false, $requestParams = [])
     {
+        if (! Auth::check()) {
+            $user = $requestParams['user'] ?? null;
+            unset($requestParams['user']);
+            Auth::login($user);
+            DB::setDefaultConnection('mysql_read');
+            request()->merge($requestParams);
+        }
 
         $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
             'quoteStatus',
@@ -223,8 +231,8 @@ class BikeQuoteRepository extends BaseRepository
             'payments',
             'renewalBatchModel',
         ])
-            ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
+            ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
+                $query->where('advisor_id', auth()->id());
             })
             ->filter(! $forExport)
             ->withFakeLeadCriteria()
@@ -246,7 +254,9 @@ class BikeQuoteRepository extends BaseRepository
 
         $query->orderBy('personal_quotes.'.(request()->sortBy ?? 'created_at'), request()->sortType ?? 'desc');
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        // logger()->debug('Bike toRawSql: '.$query->toRawSql());
+
+        return $query;
     }
 
     public function fetchExport()

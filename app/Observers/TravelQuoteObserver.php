@@ -2,14 +2,19 @@
 
 namespace App\Observers;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
+use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\TravelQuote;
 use App\Repositories\PaymentRepository;
+use App\Services\Logger\LoggerService;
+use App\Services\SIBService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -42,9 +47,22 @@ class TravelQuoteObserver
             ];
         }
 
+        if ($this->shouldStopSIC($dirty, $travelQuote)) {
+            // Implement your logic to stop SIC follow-up emails here
+            LoggerService::info(self::class." - Stopping SIC follow-up emails for quote uuid: {$travelQuote->uuid} with status: {$travelQuote->quote_status_id} and payment status: {$travelQuote->payment_status}");
+            $sicEventName = getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_DISABLE);
+            if ($sicEventName) {
+                SIBService::createWorkflowEvent($sicEventName, $travelQuote);
+                LoggerService::info(self::class." - SIC workflow stopped for lead uuid : {$travelQuote->uuid}");
+            } else {
+                LoggerService::info(self::class.' - SIC workflow key not found');
+            }
+        }
         if (isset($dirty['advisor_id'])) {
             try {
                 $travelQuote->markLeadAllocationPassed();
+
+                LogAllocation::dispatch($travelQuote, QuoteTypes::TRAVEL);
 
                 // If advisor is not CHS advisor, then send FTC email
                 if (isCHSAdvisor($dirty['advisor_id'])) {
@@ -104,5 +122,23 @@ class TravelQuoteObserver
             (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($travelQuote, $payment, QuoteTypes::TRAVEL->value);
 
         }
+    }
+
+    protected function shouldStopSIC(array $dirty, TravelQuote $travelQuote): bool
+    {
+        // Stop SIC follow-up emails based on lead status or payment status
+        static $stopSICStatuses = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+        ];
+
+        static $stopSICPaymentStatuses = [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::CANCELLED,
+        ];
+
+        return (isset($dirty['quote_status_id']) && in_array($travelQuote->quote_status_id, $stopSICStatuses, true)) || (isset($dirty['payment_status_id']) && in_array($travelQuote->payment_status_id, $stopSICPaymentStatuses, true));
     }
 }

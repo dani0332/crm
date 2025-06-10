@@ -78,6 +78,8 @@ const confirmDeleteData = reactive({
   member: null,
   activity: null,
   contact: null,
+  doc_id: null,
+  doc_uuid: null,
 });
 
 const confirmData = reactive({
@@ -333,9 +335,10 @@ const quoteDocumentsTable = reactive({
   ],
 });
 
-const onDocDelete = name => {
+const onDocDelete = (doc_id, doc_uuid) => {
   modals.docConfirm = true;
-  confirmDeleteData.docs = name;
+  confirmDeleteData.doc_id = doc_id;
+  confirmDeleteData.doc_uuid = doc_uuid;
 };
 
 const confirmDeleteDoc = () => {
@@ -343,8 +346,8 @@ const confirmDeleteDoc = () => {
   router.post(
     `/documents/delete`,
     {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
+      doc_id: confirmDeleteData.doc_id,
+      doc_uuid: confirmDeleteData.doc_uuid,
     },
     {
       preserveScroll: true,
@@ -846,10 +849,6 @@ const sendPolicyToClient = () => {
             <dt class="font-medium">Policy Number</dt>
             <dd>{{ quote.policy_number }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Policy Expiry Date</dt>
-            <dd>{{ quote.policy_expiry_date }}</dd>
-          </div>
         </dl>
       </div>
     </div>
@@ -1245,20 +1244,20 @@ const sendPolicyToClient = () => {
       >
         <template #item-original_name="item">
           <a
-            :href="cdnPath + (item.watermarked_doc_url ?? item.doc_url)"
+            :href="cdnPath + (item.watermarked_doc_url || item.doc_url)"
             target="_blank"
             class="text-primary-600"
           >
             {{ item.original_name }}
           </a>
         </template>
-        <template #item-action="{ doc_name }">
+        <template #item-action="{ id, doc_uuid }">
           <div>
             <x-button
               size="xs"
               color="error"
               outlined
-              @click.prevent="onDocDelete(doc_name)"
+              @click.prevent="onDocDelete(id, doc_uuid)"
             >
               Delete
             </x-button>

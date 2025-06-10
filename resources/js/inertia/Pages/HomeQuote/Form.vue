@@ -1,6 +1,4 @@
 <script setup>
-import { options } from 'sanitize-html';
-
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -546,213 +544,213 @@ const onLoadAvailablePlansData = async () => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="FIRST NAME" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            maxLength="20"
-            :error="quoteForm.errors.first_name"
-          />
-        </x-field>
-        <x-field label="LAST NAME" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            type="text"
-            maxLength="50"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-          />
-        </x-field>
-        <x-field label="EMAIL" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :disabled="isEdit"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm?.errors?.email"
-          />
-        </x-field>
-        <x-field label="MOBILE NUMBER" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :disabled="isEdit"
-            :rules="[isRequired, isMobileNo]"
-            class="w-full"
-            :error="quoteForm?.errors?.mobile_no"
-          />
-        </x-field>
-        <x-field label="LOCATION AREA" required>
-          <ComboBox
-            v-model="quoteForm.sub_area_id"
-            :rules="[isRequired]"
-            :single="true"
-            :options="locationAreaOptions"
-            class="w-full"
-            :hasError="formFieldReq.sub_area_id"
-            :error="quoteForm.errors.sub_area_id"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          type="text"
+          label="FIRST NAME"
+          required
+          :rules="[isRequired]"
+          class="w-full"
+          maxLength="20"
+          :error="quoteForm.errors.first_name"
+        />
+        <x-input
+          v-model="quoteForm.last_name"
+          type="text"
+          label="LAST NAME"
+          required
+          maxLength="50"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+        />
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          label="EMAIL"
+          required
+          :disabled="isEdit"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm?.errors?.email"
+        />
+        <x-input
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          label="MOBILE NUMBER"
+          required
+          :disabled="isEdit"
+          :rules="[isRequired, isMobileNo]"
+          class="w-full"
+          :error="quoteForm?.errors?.mobile_no"
+        />
 
-        <x-field label="DATE OF BIRTH">
-          <DatePicker v-model="quoteForm.dob" name="created_at_start" />
-        </x-field>
-        <x-field label="NATIONALITY">
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="
-              nationalities.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-          />
-        </x-field>
-        <x-field label="GENDER">
-          <x-select
-            v-model="quoteForm.gender"
-            :options="gender"
-            placeholder="Gender"
-          />
-        </x-field>
-        <x-field label="COMPANY NAME">
-          <x-input
-            v-model="quoteForm.company_name"
-            type="text"
-            class="w-full"
-            :error="quoteForm?.errors?.company_name"
-          />
-        </x-field>
-        <x-field label="COMPANY ADDRESS">
-          <x-input
-            v-model="quoteForm.company_address"
-            type="text"
-            class="w-full"
-            :error="quoteForm?.errors?.company_address"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.sub_area_id"
+          :rules="[isRequired]"
+          :options="locationAreaOptions"
+          class="w-full"
+          :error="quoteForm.errors.sub_area_id"
+          label="LOCATION AREA"
+          filterable
+          placeholder="Search by Location Area"
+          required
+        />
 
-        <x-field label="Floor and Villa/ Apartment number" required>
-          <x-input
-            type="text"
-            :rules="[isRequired]"
-            v-model="quoteForm.addressObj.villa_apartment_office_no"
-            class="w-full"
-            :error="quoteForm?.errors?.villa_apartment_office_no"
-          />
-        </x-field>
+        <DatePicker
+          v-model="quoteForm.dob"
+          name="created_at_start"
+          label="DATE OF BIRTH"
+        />
 
-        <x-field label="Villa/ Building name" required>
-          <x-input
-            type="text"
-            :rules="[isRequired]"
-            v-model="quoteForm.addressObj.villa_building_name"
-            class="w-full"
-            :error="quoteForm?.errors?.villa_building_name"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :rules="[isRequired]"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.nationality_id"
+          label="NATIONALITY"
+          filterable
+          placeholder="Search by Nationality"
+          required
+        />
 
-        <x-field label="Street name" required>
-          <x-input
-            type="text"
-            :rules="[isRequired]"
-            v-model="quoteForm.addressObj.street_name"
-            class="w-full"
-            :error="quoteForm?.errors?.street_name"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.gender"
+          :options="gender"
+          placeholder="Gender"
+          label="GENDER"
+        />
 
-        <x-field label="OWNERSHIP STATUS" required>
-          <x-select
-            v-model="quoteForm.iam_possesion_type_id"
-            :rules="[isRequired]"
-            :options="possessionTypeOptions"
-            @update:modelValue="handleConditionalFields"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="TYPE OF PROPERTY" required>
-          <x-select
-            v-model="quoteForm.ilivein_accommodation_type_id"
-            :rules="[isRequired]"
-            :options="accommodationTypeOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field
+        <x-input
+          v-model="quoteForm.company_name"
+          type="text"
+          class="w-full"
+          :error="quoteForm?.errors?.company_name"
+          label="COMPANY NAME"
+        />
+
+        <x-input
+          v-model="quoteForm.company_address"
+          type="text"
+          class="w-full"
+          :error="quoteForm?.errors?.company_address"
+          label="COMPANY ADDRESS"
+        />
+
+        <x-input
+          type="text"
+          :rules="[isRequired]"
+          v-model="quoteForm.addressObj.villa_apartment_office_no"
+          class="w-full"
+          :error="quoteForm?.errors?.villa_apartment_office_no"
+          label="Floor and Villa/ Apartment number"
+          required
+        />
+
+        <x-input
+          type="text"
+          :rules="[isRequired]"
+          v-model="quoteForm.addressObj.villa_building_name"
+          class="w-full"
+          :error="quoteForm?.errors?.villa_building_name"
+          label="Villa/ Building name"
+          required
+        />
+
+        <x-input
+          type="text"
+          :rules="[isRequired]"
+          v-model="quoteForm.addressObj.street_name"
+          class="w-full"
+          :error="quoteForm?.errors?.street_name"
+          label="Street name"
+          required
+        />
+
+        <x-select
+          v-model="quoteForm.iam_possesion_type_id"
+          :rules="[isRequired]"
+          :options="possessionTypeOptions"
+          @update:modelValue="handleConditionalFields"
+          class="w-full"
+          label="OWNERSHIP STATUS"
+          required
+        />
+
+        <x-select
+          v-model="quoteForm.ilivein_accommodation_type_id"
+          :rules="[isRequired]"
+          :options="accommodationTypeOptions"
+          class="w-full"
+          label="TYPE OF PROPERTY"
+          required
+        />
+
+        <x-select
+          v-if="showTypeOfOwnerOccupancy"
+          v-model="quoteForm.owner_occupancy_type_id"
+          :rules="[isRequired]"
+          :options="typeOfOwnerOccupancyOptions"
+          class="w-full"
           label="TYPE OF OWNER'S OCCUPANCY"
           required
-          v-if="showTypeOfOwnerOccupancy"
-        >
-          <x-select
-            v-model="quoteForm.owner_occupancy_type_id"
-            :rules="[isRequired]"
-            :options="typeOfOwnerOccupancyOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="TYPE OF COVERAGE YOU NEED" required>
-          <x-select
-            v-model="quoteForm.type_of_coverage_you_need"
-            :rules="[isRequired]"
-            :options="typeOfCoverageYouNeedOptions"
-            @update:modelValue="handleCoverageChange"
-            class="w-full"
-          />
-        </x-field>
-        <x-field
+        />
+
+        <x-select
+          v-model="quoteForm.type_of_coverage_you_need"
+          :rules="[isRequired]"
+          :options="typeOfCoverageYouNeedOptions"
+          @update:modelValue="handleCoverageChange"
+          class="w-full"
+          label="TYPE OF COVERAGE YOU NEED"
+          required
+        />
+
+        <x-input
+          v-if="showBuildingField"
+          v-model="quoteForm.building_aed"
+          type="number"
+          class="w-full"
+          :rules="[isRequired, minValue(100000)]"
+          :error="quoteForm.errors.building_aed"
           label="BUILDING VALUE IN AED"
           required
-          v-if="showBuildingField"
-        >
-          <x-input
-            v-model="quoteForm.building_aed"
-            type="number"
-            class="w-full"
-            :rules="[isRequired, minValue(100000)]"
-            :error="quoteForm.errors.building_aed"
-          />
-        </x-field>
-        <x-field
+        />
+
+        <x-select
+          v-if="showContentsField"
+          v-model="quoteForm.contents_aed"
+          :rules="[isRequired]"
+          :options="contentValueInAEDOptions"
+          class="w-full"
           label="CONTENTS VALUE IN AED"
           required
-          v-if="showContentsField"
-        >
-          <x-select
-            v-model="quoteForm.contents_aed"
-            :rules="[isRequired]"
-            :options="contentValueInAEDOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field
+        />
+
+        <x-select
+          v-if="showPersonalBelongingsField"
+          v-model="quoteForm.personal_belongings_aed"
+          :rules="[isRequired]"
+          :options="personalBelongingsInAEDOptions"
+          class="w-full"
           label="PERSONAL BELONGINGS IN AED"
           required
-          v-if="showPersonalBelongingsField"
-        >
-          <x-select
-            v-model="quoteForm.personal_belongings_aed"
-            :rules="[isRequired]"
-            :options="personalBelongingsInAEDOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field
+        />
+
+        <x-select
+          v-model="quoteForm.have_claimed_losses"
+          :rules="[isRequired]"
+          :options="claimOptions"
+          class="w-full"
           label="Have you made any claims or experienced any losses in the past 5 years?"
           required
-        >
-          <x-select
-            v-model="quoteForm.have_claimed_losses"
-            :rules="[isRequired]"
-            :options="claimOptions"
-            class="w-full"
-          />
-        </x-field>
+        />
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

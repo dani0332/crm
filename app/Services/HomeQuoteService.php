@@ -176,8 +176,10 @@ class HomeQuoteService extends BaseService
             ->leftJoin('customer_insured as ic', function ($insuredCustomerMapping) {
                 $insuredCustomerMapping->on('ic.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
                 $insuredCustomerMapping->on('ic.quote_request_id', '=', 'hqr.id');
+                $insuredCustomerMapping->whereRaw('ic.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = hqr.id)', [QuoteTypeId::Home]);
             })
             ->leftJoin('insured', 'ic.insured_id', '=', 'insured.id')
+            ->leftJoin('insured_kyc', 'insured.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
@@ -242,6 +244,8 @@ class HomeQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HomeQuote, $request, $response);
+
+            $this->selfAssign(QuoteTypes::HOME, $response->quoteUID);
         }
 
         return $response;

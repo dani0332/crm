@@ -73,6 +73,7 @@ class BusinessQuoteService extends BaseService
                 'rb.name as renewal_batch_text',
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
+                'bqr.previous_policy_start_date',
                 'bqr.previous_quote_policy_premium',
                 'bqr.gender',
                 'bqr.device',
@@ -81,6 +82,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.renewal_import_code',
                 'bqr.kyc_decision',
                 'bqr.stale_at',
+                'insured_kyc.id as insured_kyc_id',
                 DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
                 'c.insured_first_name as customer_insured_first_name',
                 'c.insured_last_name as customer_insured_last_name',
@@ -147,8 +149,10 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('customer_insured as ci', function ($query) {
                 $query->on('ci.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $query->on('ci.quote_request_id', '=', 'bqr.id');
+                $query->whereRaw('ci.id = (SELECT MAX(id) FROM customer_insured WHERE quote_type_id = ? AND quote_request_id = bqr.id)', [QuoteTypeId::Business]);
             })
             ->leftJoin('insured as i', 'ci.insured_id', '=', 'i.id')
+            ->leftJoin('insured_kyc', 'i.id', '=', 'insured_kyc.insured_id')
             ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
@@ -257,6 +261,8 @@ class BusinessQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::BusinessQuote, $request, $response);
+
+            $this->selfAssign(QuoteTypes::BUSINESS, $response->quoteUID);
         }
 
         return $response;

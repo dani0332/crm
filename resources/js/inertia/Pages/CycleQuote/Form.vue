@@ -93,156 +93,152 @@ const gender = computed(() => {
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="First Name" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.first_name"
-            maxLength="20"
-          />
-        </x-field>
-        <x-field label="Last Name" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-            maxLength="50"
-          />
-        </x-field>
-        <x-field label="Email" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :disabled="editMode"
-            :rules="[isRequired, isEmail]"
-            class="w-full"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
-        <x-field label="Mobile Number" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :disabled="editMode"
-            :rules="[isRequired, isMobileNo]"
-            class="w-full"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
-        <x-field label="Date of Birth">
-          <DatePicker
-            v-model="quoteForm.dob"
-            :utc="false"
-            model-type="yyyy-MM-dd"
-            name="created_at_start"
-          />
-        </x-field>
-        <x-field label="Nationality">
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="
-              nationalities.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-          />
-        </x-field>
-        <x-field label="Gender">
-          <x-select
-            v-model="quoteForm.gender"
-            :options="gender"
-            placeholder="Gender"
-          />
-        </x-field>
-        <x-field label="Cycle Make" required>
-          <x-input
-            v-model="quoteForm.cycle_make"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.cycle_make"
-          />
-        </x-field>
-        <x-field label="Cycle Model" required>
-          <x-input
-            v-model="quoteForm.cycle_model"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.cycle_model"
-          />
-        </x-field>
-        <x-field label="Year of manufacture" required>
-          <x-select
-            v-model="quoteForm.year_of_manufacture_id"
-            :rules="[isRequired]"
-            :options="YearOfManufacture"
-            class="w-full"
-            :error="quoteForm.errors.year_of_manufacture_id"
-          />
-        </x-field>
-        <x-field label="Purchased value(AED)" required>
-          <x-input
-            v-model="quoteForm.asset_value"
-            type="number"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.asset_value"
-          />
-        </x-field>
-        <x-field label="Accessories" required>
-          <x-input
-            v-model="quoteForm.accessories"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.accessories"
-          />
-        </x-field>
+        <x-input
+          v-model="quoteForm.first_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.first_name"
+          maxLength="20"
+          label="First Name"
+          required
+        />
+        <x-input
+          v-model="quoteForm.last_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+          maxLength="50"
+          label="Last Name"
+          required
+        />
+        <x-input
+          v-model="quoteForm.email"
+          type="email"
+          :disabled="editMode"
+          :rules="[isRequired, isEmail]"
+          class="w-full"
+          :error="quoteForm.errors.email"
+          label="Email"
+          required
+        />
+        <x-input
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          :disabled="editMode"
+          :rules="[isRequired, isMobileNo]"
+          class="w-full"
+          :error="quoteForm.errors.mobile_no"
+          label="Mobile Number"
+          required
+        />
+        <DatePicker
+          v-model="quoteForm.dob"
+          :utc="false"
+          model-type="yyyy-MM-dd"
+          name="created_at_start"
+          label="Date of Birth"
+        />
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :rules="[isRequired]"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.nationality_id"
+          label="NATIONALITY"
+          filterable
+          placeholder="Search by Nationality"
+          required
+        ></x-select>
+        <x-select
+          v-model="quoteForm.gender"
+          :options="gender"
+          placeholder="Gender"
+          label="Gender"
+        />
+        <x-input
+          v-model="quoteForm.cycle_make"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.cycle_make"
+          label="Cycle Make"
+          required
+        />
+        <x-input
+          v-model="quoteForm.cycle_model"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.cycle_model"
+          label="Cycle Model"
+          required
+        />
+        <x-select
+          v-model="quoteForm.year_of_manufacture_id"
+          :rules="[isRequired]"
+          :options="YearOfManufacture"
+          class="w-full"
+          :error="quoteForm.errors.year_of_manufacture_id"
+          label="Year of manufacture"
+          required
+        />
+        <x-input
+          v-model="quoteForm.asset_value"
+          type="number"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.asset_value"
+          label="Purchased value(AED)"
+          required
+        />
+        <x-input
+          v-model="quoteForm.accessories"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.accessories"
+          label="Accessories"
+          required
+        />
 
         <div class="px-2 w-full">
           <div class="mb-2">
-            <x-field
-              label="Have you had any accidents or injuries whilst cycling in the past
-              3 years in the UAE"
-              required
-            >
-              <div class="flex gap-12 mt-2">
-                <x-form-group
-                  v-model="quoteForm.has_accident"
-                  :rules="[isRequired]"
-                >
-                  <x-radio value="1" label="Yes" />
-                  <x-radio value="0" label="No" />
-                </x-form-group>
-              </div>
-            </x-field>
+            <div class="flex gap-12 mt-2">
+              <x-form-group
+                v-model="quoteForm.has_accident"
+                :rules="[isRequired]"
+                label="Have you had any accidents or injuries whilst cycling in the past
+                  3 years in the UAE"
+                required
+              >
+                <x-radio value="1" label="Yes" />
+                <x-radio value="0" label="No" />
+              </x-form-group>
+            </div>
           </div>
         </div>
 
         <div class="px-2 w-full">
           <div class="mb-2">
-            <x-field
-              label="Confirm that your bicycle is currently in good condition and there
-              is no existing damage"
-              required
-            >
-              <div class="flex gap-12 mt-2">
-                <x-form-group
-                  v-model="quoteForm.has_good_condition"
-                  :rules="[isRequired]"
-                >
-                  <x-radio value="1" label="Yes" />
-                  <x-radio value="0" label="No" />
-                </x-form-group>
-              </div>
-            </x-field>
+            <div class="flex gap-12 mt-2">
+              <x-form-group
+                v-model="quoteForm.has_good_condition"
+                :rules="[isRequired]"
+                label="Confirm that your bicycle is currently in good condition and there
+                  is no existing damage"
+                required
+              >
+                <x-radio value="1" label="Yes" />
+                <x-radio value="0" label="No" />
+              </x-form-group>
+            </div>
           </div>
         </div>
       </div>

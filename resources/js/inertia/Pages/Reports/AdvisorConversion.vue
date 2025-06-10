@@ -29,7 +29,10 @@ const isDirty = ref(false);
 const isMounted = ref(false);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const toast = useToast();
+const { maxSelections } = useRules();
 
+const carRegistrationTypeEnum = page.props.carRegistrationType;
+const carVehicleUseEnum = page.props.carVehicleUse;
 const {
   currentPageFirstIndex,
   currentPageLastIndex,
@@ -246,6 +249,8 @@ const getFiltersObject = () => {
     insurance_for: '',
     travel_coverage: '',
     segment_filter: 'all',
+    registration_type: '',
+    vehicle_use: '',
   };
 };
 
@@ -826,6 +831,39 @@ const getAdvisorLabel = () => {
   return label;
 };
 
+const registrationTypeOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carRegistrationTypeEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const vehicleUseOptions = [
+  { value: 'All', label: 'All' },
+  ...Object.values(carVehicleUseEnum).map(item => ({
+    value: item,
+    label: item.charAt(0).toUpperCase() + item.slice(1),
+  })),
+];
+
+const commericalOptions = [
+  { value: 'All', label: 'All' },
+  { value: true, label: 'Yes' },
+  { value: false, label: 'No' },
+];
+
+const isVehicleUseDisabled = computed(() => {
+  return filters.registration_type === carRegistrationTypeEnum.COMPANY;
+});
+
+const showCommercialRule = computed(() => {
+  if (filters.registration_type !== carRegistrationTypeEnum.PERSONAL) {
+    filters.isCommercial = '';
+  }
+  return filters.registration_type === carRegistrationTypeEnum.PERSONAL;
+});
+
 const getRouteByLob = computed(() => {
   const routeMap = {
     [quoteTypeCodeEnum.Car]: 'car.show',
@@ -869,14 +907,15 @@ function sortPremium(order) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <ComboBox
+        <x-select
           v-model="filters.lob"
           label="LOB"
           placeholder="Select LOB"
           :options="quoteTypesOptions"
           class="w-full"
-          :single="true"
           @update:modelValue="onLobChange"
+          filterable
+          filterPlaceholder="Filter LOB...."
         />
 
         <DatePicker
@@ -911,7 +950,7 @@ function sortPremium(order) {
           class="w-full"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.batches"
           label="Batch Number"
           placeholder="Search by Batch Number"
@@ -921,15 +960,31 @@ function sortPremium(order) {
               label: filterOptions.batches[key],
             }))
           "
-          :max-limit="8"
-        />
+          :rules="[maxSelections(8)]"
+          filterable
+          filterPlaceholder="Filter Batch Number...."
+          truncate
+          multiple
+          helper="You can select up to 8 batch numbers"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.batches = Object.keys(filterOptions.batches).map(
+                  batch => batch,
+                )
+              "
+              @clear="filters.batches = []"
+            />
+          </template>
+        </x-select>
 
         <x-tooltip placement="top" v-if="canShow('tiers')">
           <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike">
             Development for Bike Tiers still in progress
           </template>
           <template #tooltip v-else> Select Tiers </template>
-          <ComboBox
+          <x-select
             :disabled="filters.lob === quoteTypeCodeEnum.Bike"
             :class="{
               'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
@@ -943,24 +998,59 @@ function sortPremium(order) {
                 label: filterOptions.tiers[key],
               }))
             "
-          />
+            filterable
+            filterPlaceholder="Filter Tiers...."
+            truncate
+            multiple
+          >
+            <template #content-footer>
+              <ui-select-actions
+                @select-all="
+                  filters.tiers = Object.keys(filterOptions.tiers).map(
+                    tier => tier,
+                  )
+                "
+                @clear="filters.tiers = []"
+              />
+            </template>
+          </x-select>
         </x-tooltip>
 
-        <ComboBox
+        <x-select
           v-if="filters.lob !== quoteTypeCodeEnum.Health"
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
+          virtualList
+          :virtual-list-item-height="34"
+          :virtual-list-overscan="10"
           :options="
             Object.keys(filterOptions.leadSources).map(key => ({
               value: key,
               label: filterOptions.leadSources[key],
             }))
           "
-          :max-limit="3"
-        />
-        
-        <ComboBox
+          :rules="[maxSelections(3)]"
+          filterable
+          filterPlaceholder="Filter Lead Source..."
+          truncate
+          multiple
+          helper="You can select up to 3 lead sources"
+          class="w-full"
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.leadSources = Object.keys(
+                  filterOptions.leadSources,
+                ).map(leadSource => leadSource)
+              "
+              @clear="filters.leadSources = []"
+            />
+          </template>
+        </x-select>
+
+        <x-select
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
           :class="{
@@ -972,9 +1062,20 @@ function sortPremium(order) {
           :options="teamOptions"
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Teams...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="filters.teams = teamOptions.map(team => team.value)"
+              @clear="filters.teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('sub_teams')"
           :disabled="!isDisabled('sub_teams')"
           :class="{
@@ -986,9 +1087,22 @@ function sortPremium(order) {
           :options="subteamOptions"
           @update:model-value="onSubTeamChange"
           :loading="loaders.subteamOptions"
-        />
+          filterable
+          filterPlaceholder="Filter SubTeams...."
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.sub_teams = subteamOptions.map(subteam => subteam.value)
+              "
+              @clear="filters.sub_teams = []"
+            />
+          </template>
+        </x-select>
 
-        <ComboBox
+        <x-select
           v-if="canShow('advisors')"
           :disabled="!isDisabled('advisors')"
           :class="{
@@ -998,7 +1112,21 @@ function sortPremium(order) {
           :label="getAdvisorLabel()"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
-        />
+          filterable
+          filterPlaceholder="Filter Advisors...."
+          placeholder="Search by Advisors"
+          truncate
+          multiple
+        >
+          <template #content-footer>
+            <ui-select-actions
+              @select-all="
+                filters.advisors = advisorOptions.map(advisor => advisor.value)
+              "
+              @clear="filters.advisors = []"
+            />
+          </template>
+        </x-select>
         <x-select
           v-if="canShow('isEmbeddedProducts')"
           v-model="filters.isEmbeddedProducts"
@@ -1011,15 +1139,26 @@ function sortPremium(order) {
         />
         <x-select
           v-if="canShow('isCommercial')"
-          v-model="filters.isCommercial"
-          label="Commercial"
+          v-model="filters.registration_type"
+          label="Registration Type"
           placeholder="Select any option"
-          :options="[
-            { value: 'All', label: 'All' },
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
+          :options="registrationTypeOptions"
         />
+        <x-select
+          v-if="isVehicleUseDisabled"
+          v-model="filters.vehicle_use"
+          label="Vehicle Use"
+          placeholder="Select any option"
+          :options="vehicleUseOptions"
+        />
+        <x-select
+          v-if="canShow('isCommercial') && showCommercialRule"
+          v-model="filters.isCommercial"
+          label="Commercial Rule"
+          placeholder="Select any option"
+          :options="commericalOptions"
+        />
+
         <x-select
           v-if="canShow('insurance_type')"
           v-model="filters.insurance_type"
@@ -1058,7 +1197,7 @@ function sortPremium(order) {
           placeholder="Select travel coverage"
           class="w-full"
         />
-        <ComboBox
+        <x-select
           v-if="
             can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
           "
@@ -1070,8 +1209,27 @@ function sortPremium(order) {
               filters.lob === 'Travel' ? segment.value !== 'sic-revival' : true,
             )
           "
-          :single="true"
+          filterable
+          filterPlaceholder="Filter Segment...."
         />
+        <x-tooltip placement="top" v-if="canShow('tiers')">
+          <template #tooltip> Select Tiers </template>
+          <ComboBox
+            :disabled="filters.lob === quoteTypeCodeEnum.Car"
+            :class="{
+              'opacity-50': filters.lob === quoteTypeCodeEnum.Car,
+            }"
+            v-model="filters.tiers"
+            label="Tiers"
+            placeholder="Search by Tiers"
+            :options="
+              Object.keys(filterOptions.tiers).map(key => ({
+                value: key,
+                label: filterOptions.tiers[key],
+              }))
+            "
+          />
+        </x-tooltip>
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">
@@ -1107,9 +1265,7 @@ function sortPremium(order) {
       <template #header-total_leads>
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Total Leads</span>
-          <template #tooltip>
-            All leads from InsuranceMarket.ae.
-          </template>
+          <template #tooltip> All leads from InsuranceMarket.ae. </template>
         </x-tooltip>
         <span v-else>Total Leads</span>
       </template>
@@ -1146,7 +1302,9 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Not Interested</span>
           <template #tooltip>
-            Lead status marked as lost due to no response, already purchased insurance, comparing options, budget issues, invalid visa, or ineligibility due to medical conditions or age etc.
+            Lead status marked as lost due to no response, already purchased
+            insurance, comparing options, budget issues, invalid visa, or
+            ineligibility due to medical conditions or age etc.
           </template>
         </x-tooltip>
         <span v-else>Not Interested</span>
@@ -1156,20 +1314,18 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>In Progress</span>
           <template #tooltip>
-            Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or 'Quoted,' from InsuranceMarket.ae.
+            Quotes with statuses like 'Follow-up Call,' 'Pending Payment,' or
+            'Quoted,' from InsuranceMarket.ae.
           </template>
         </x-tooltip>
         <span v-else>In Progress</span>
       </template>
 
       <template #header-manual_created>
-        <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
+        <x-tooltip>
           <span>Manually Created</span>
-          <template #tooltip>
-            All leads from IMCRM.
-          </template>
+          <template #tooltip> All leads from IMCRM. </template>
         </x-tooltip>
-        <span v-else>Manually Created</span>
       </template>
 
       <template #header-bad_leads>
@@ -1186,7 +1342,9 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Sale Leads</span>
           <template #tooltip>
-            Quotes from InsuranceMarket.ae where payment is 'Captured' or status is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to customer,' and 'Policy Booked', Booking failed.
+            Quotes from InsuranceMarket.ae where payment is 'Captured' or status
+            is 'Transaction Approved' or 'Policy Issued,' 'Policy sent to
+            customer,' and 'Policy Booked', Booking failed.
           </template>
         </x-tooltip>
         <span v-else>Sale Leads</span>
@@ -1196,7 +1354,8 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>Created Sale Leads</span>
           <template #tooltip>
-            Quotes from IMCRM source where payment is 'Captured' or status is 'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
+            Quotes from IMCRM source where payment is 'Captured' or status is
+            'Policy Booked,' 'Policy sent to customer,' or 'Booking Failed.'
           </template>
         </x-tooltip>
         <span v-else>Created Sale Leads</span>
@@ -1206,7 +1365,8 @@ function sortPremium(order) {
         <x-tooltip v-if="filters.lob === quoteTypeCodeEnum.Health">
           <span>IM Renewals</span>
           <template #tooltip>
-            Quotes from InsuranceMarket.ae source with status 'IMRenewal' and source 'renewal upload.'
+            Quotes from InsuranceMarket.ae source with status 'IMRenewal' and
+            source 'renewal upload.'
           </template>
         </x-tooltip>
         <span v-else>IM Renewals</span>
@@ -1447,7 +1607,6 @@ function sortPremium(order) {
               </Link>
             </template>
           </DataTable>
-          
         </div>
         <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
           <x-spinner size="lg" color="#1d83bc" />

@@ -111,7 +111,7 @@ class CRUDService extends BaseService
         $lowerCaseModelType = strtolower($model->modelType);
 
         $dataQuery = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
-            ->getGridData($model, $request);
+            ->getGridData(model: $model);
 
         if ($request->has('debug') && $request->debug == 'true') {
             echo $dataQuery->toRawSql();
@@ -264,6 +264,7 @@ class CRUDService extends BaseService
             $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
 
             $previousQuoteStatus = $entity->quote_status_id;
+
             // if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
                 $entity->quote_status_id = QuoteStatusEnum::Quoted;
@@ -281,6 +282,16 @@ class CRUDService extends BaseService
                 $entity->quote_status_date = now();
                 if ($entity->stale_at) {
                     $entity->stale_at = null;
+                }
+            }
+
+            if (
+                strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+            ) {
+                // Only allow if quote has payment link history and payment method is insurer payment link
+                if (method_exists($entity, 'hasInsurerPaymentLink') && $entity->hasInsurerPaymentLink() && ! $entity->canUpdateToTransactionApproved() && ! auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+                    // throw new \Exception('Cannot update to Transaction Approved status. Quote must have payment link history.');
+                    return ['entity' => $entity, 'error' => 'Cannot update to Transaction Approved status. Quote must have payment initiated and payment link sent to customer.'];
                 }
             }
 
@@ -826,7 +837,7 @@ class CRUDService extends BaseService
                         $text = 'No';
                         $score = 1;
                     }
-                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold “Dual Nationality”?', 'value' => $text];
+                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold "Dual Nationality"?', 'value' => $text];
                     $customerScore += $score;
 
                     if ($customerDetail->deal_sanction_list == 1) {
@@ -1170,8 +1181,7 @@ class CRUDService extends BaseService
                 QuoteStatusEnum::PolicyCancelledReissued,
             ]) ||
             $record?->insly_migrated || $record?->insly_id ||
-            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id) ||
-            $record?->source == LeadSourceEnum::RENEWAL_UPLOAD
+            (is_object($record) && property_exists($record, 'quoteDetail') && $record->quoteDetail?->insly_id)
         ) {
             return true;
         }

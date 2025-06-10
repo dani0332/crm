@@ -84,9 +84,10 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-const onDocDelete = name => {
+const onDocDelete = (doc_id, doc_uuid) => {
   modals.docConfirm = true;
-  confirmDeleteData.docs = name;
+  confirmDeleteData.doc_id = doc_id;
+  confirmDeleteData.doc_uuid = doc_uuid;
 };
 
 const confirmDeleteDoc = () => {
@@ -94,8 +95,8 @@ const confirmDeleteDoc = () => {
   router.post(
     `/documents/delete`,
     {
-      docName: confirmDeleteData.docs,
-      quoteId: isSendUpdatePage ? props.extras.sendLogId : page.props.quote.id,
+      doc_id: confirmDeleteData.doc_id,
+      doc_uuid: confirmDeleteData.doc_uuid,
     },
     {
       preserveScroll: true,
@@ -399,7 +400,7 @@ const getS3TempUrl = async docURL => {
             </a>
             <a
               v-else
-              :href="storageUrl + (item.watermarked_doc_url ?? item.doc_url)"
+              :href="storageUrl + (item.watermarked_doc_url || item.doc_url)"
               target="_blank"
               class="text-primary-600"
             >
@@ -407,7 +408,7 @@ const getS3TempUrl = async docURL => {
             </a>
           </template>
           <template
-            #item-action="{ doc_name }"
+            #item-action="{ doc_name, id, doc_uuid }"
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
           >
             <div>
@@ -427,7 +428,7 @@ const getS3TempUrl = async docURL => {
                 size="xs"
                 color="error"
                 outlined
-                @click.prevent="onDocDelete(doc_name)"
+                @click.prevent="onDocDelete(id, doc_uuid)"
                 class="focus:ring-2 focus:ring-black"
               >
                 Delete
@@ -534,7 +535,7 @@ const getS3TempUrl = async docURL => {
                   :key="quoteDocument.id"
                   :href="
                     storageUrl +
-                    (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)
+                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
                   "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
@@ -562,7 +563,7 @@ const getS3TempUrl = async docURL => {
                   :key="quoteDocument.id"
                   :href="
                     storageUrl +
-                    (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)
+                    (quoteDocument.watermarked_doc_url || quoteDocument.doc_url)
                   "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"

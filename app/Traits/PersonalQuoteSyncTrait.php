@@ -30,6 +30,7 @@ use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Repositories\PersonalQuoteRepository;
+use App\Services\Logger\LoggerService;
 use Exception;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -408,6 +409,7 @@ trait PersonalQuoteSyncTrait
      */
     public function updatePersonalQuote($uuid, $quoteTypeId, $data)
     {
+        LoggerService::info('fn:updatePersonalQuote - Code : '.$uuid);
         $personalQuote = PersonalQuoteRepository::where([
             'quote_type_id' => $quoteTypeId,
             'uuid' => $uuid,

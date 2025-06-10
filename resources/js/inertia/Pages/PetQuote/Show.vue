@@ -385,32 +385,32 @@ const applyEmiratesIdNumMasking = emiratesId =>
       @submit="onCreateDuplicate"
     >
       <div class="grid gap-4">
-        <x-field label="LOBs" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            :options="
-              duplicateAllowedLobs.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-        </x-field>
-        <x-field label="Reason" required>
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-        </x-field>
+        <x-select
+          label="LOBs"
+          required
+          v-model="leadDuplicateForm.lob_team"
+          :options="
+            duplicateAllowedLobs.map(lob => ({
+              value: lob,
+              label: lob,
+            }))
+          "
+          :rules="[isRequired]"
+          placeholder="Select LOB For Duplication"
+          class="w-full"
+          multiple
+        />
+        <x-select
+          v-model="leadDuplicateForm.lob_team_sub_selection"
+          :rules="[isRequired]"
+          class="w-full"
+          :options="[
+            { value: 'new_enquiry', label: 'New enquiry' },
+            { value: 'record_only', label: 'Record purposes only' },
+          ]"
+          label="Reason"
+          required
+        />
       </div>
       <template #secondary-action>
         <x-button
@@ -806,12 +806,12 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                   <dd>
-                    <ComboBox
+                    <x-select
                       v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
                       :options="emiratesOptions"
                       class="w-full"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      filterable
                     />
                   </dd>
                 </div>
@@ -829,28 +829,28 @@ const applyEmiratesIdNumMasking = emiratesId =>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      :single="true"
+                    <x-select
                       v-model="customerProfileForm.industry_type_code"
-                      placeholder="SELECT INDUSTRY TYPE"
                       :options="industryTypeOptions"
                       class="w-full"
+                      placeholder="SELECT INDUSTRY TYPE"
+                      filterable
                     />
                   </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ENTITY TYPE</dt>
                   <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      placeholder="SELECT ENTITY TYPE"
+                    <x-select
+                      :modelValue="customerProfileForm.entity_type_code"
                       :options="[
                         { label: 'Parent', value: 'Parent' },
                         { label: 'Sub Entity', value: 'SubEntity' },
                       ]"
                       class="w-full"
+                      placeholder="SELECT ENTITY TYPE"
+                      filterable
+                      @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
                 </div>
@@ -1121,6 +1121,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :quote-type="quoteType"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
+
+    <AuditLogs
+      :title="'KYC Audit Logs'"
+      :type="'App\\Models\\InsuredKyc'"
+      :id="quote?.insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
 

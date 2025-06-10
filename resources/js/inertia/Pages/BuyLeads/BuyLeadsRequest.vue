@@ -138,34 +138,34 @@ const maxLeadsOptions = computed(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-3">
-      <x-field label="Line Of Business" required>
-        <x-select
-          placeholder="Select LOB"
-          :options="lobs"
-          filterable
-          v-model="requestForm.quote_type"
-          :rules="[isRequired]"
-          @update:modelValue="requestForm.count = null"
-        ></x-select>
-      </x-field>
+      <x-select
+        label="Line Of Business"
+        required
+        placeholder="Select LOB"
+        :options="lobs"
+        filterable
+        v-model="requestForm.quote_type"
+        :rules="[isRequired]"
+        @update:modelValue="requestForm.count = null"
+      ></x-select>
       <div class="flex items-center gap-4">
         <x-tooltip placement="top-left">
-          <x-field label="Buy Leads" required>
-            <x-select
-              :disabled="
-                requestForm.quote_type == null ||
-                maximumLeads == 0 ||
-                isRequestAlreadySubmitted ||
-                table.loading
-              "
-              v-model="requestForm.count"
-              placeholder="Select the number of leads to buy"
-              :rules="[isRequired, validateMaximumLeads]"
-              :options="maxLeadsOptions"
-              :loading="table.loading"
-            >
-            </x-select>
-          </x-field>
+          <x-select
+            label="Buy Leads"
+            required
+            :disabled="
+              requestForm.quote_type == null ||
+              maximumLeads == 0 ||
+              isRequestAlreadySubmitted ||
+              table.loading
+            "
+            v-model="requestForm.count"
+            placeholder="Select the number of leads to buy"
+            :rules="[isRequired, validateMaximumLeads]"
+            :options="maxLeadsOptions"
+            :loading="table.loading"
+          >
+          </x-select>
           <template #tooltip>
             <div>
               You may request up to {{ maximumLeads }} leads per day for the

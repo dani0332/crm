@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Jobs\Audit\LogAllocation;
 use App\Models\GenericModel;
 use App\Models\QuoteViewCount;
 use App\Models\User;
@@ -458,6 +460,37 @@ class BaseService
 
         $this->addOrUpdateQuoteViewCount($lead, $quoteType->id(), $userId);
 
+        LoggerService::info(self::class.' - handleAssignment: Checking lead_assignment_trigger', extra: [
+            'current_value' => $lead->lead_assignment_trigger ?? 'null',
+        ]);
+        if (empty($lead->lead_assignment_trigger)) {
+            LoggerService::info(self::class.' - handleAssignment: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
+            $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
+        }
+
         $lead->save();
+    }
+
+    public function selfAssign(QuoteTypes $quoteType, string $uuid)
+    {
+        $lead = $quoteType->model()->where('uuid', $uuid)->first();
+
+        if (! $lead) {
+            return;
+        }
+
+        if ($lead->advisor_id && $lead->source === config('constants.SOURCE_NAME')) {
+            $lead->assignment_type = AssignmentTypeEnum::SELF_ASSIGNED;
+            LoggerService::info(self::class.' - selfAssign: Checking lead_assignment_trigger', extra: [
+                'current_value' => $lead->lead_assignment_trigger ?? 'null',
+            ]);
+            if (empty($lead->lead_assignment_trigger)) {
+                LoggerService::info(self::class.' - selfAssign: Setting lead_assignment_trigger to MANUAL_ALLOCATION');
+                $lead->lead_assignment_trigger = LeadAssignmentTriggerEnum::MANUAL_ALLOCATION;
+            }
+            $lead->saveQuietly();
+
+            LogAllocation::dispatch($lead, $quoteType);
+        }
     }
 }

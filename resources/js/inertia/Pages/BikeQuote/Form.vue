@@ -279,187 +279,192 @@ const chassisNumberRule = v => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="FIRST NAME" required>
-          <x-input
-            v-model="quoteForm.first_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.first_name"
-            maxLength="20"
-          />
-        </x-field>
-        <x-field label="LAST NAME" required>
-          <x-input
-            v-model="quoteForm.last_name"
-            type="text"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.last_name"
-            maxLength="50"
-          />
-        </x-field>
-        <x-field label="EMAIL" required>
-          <x-input
-            v-model="quoteForm.email"
-            type="email"
-            :disabled="editMode"
-            :rules="[isRequired, isEmail]"
-            class="w-full"
-            :error="quoteForm.errors.email"
-          />
-        </x-field>
-        <x-field label="PHONE NUMBER" required>
-          <x-input
-            v-model="quoteForm.mobile_no"
-            type="tel"
-            :disabled="editMode"
-            :rules="[isRequired, isMobileNo]"
-            class="w-full"
-            :error="quoteForm.errors.mobile_no"
-          />
-        </x-field>
-        <x-field label="DATE OF BIRTH" required>
-          <DatePicker
-            v-model="quoteForm.dob"
-            name="created_at_start"
-            :rules="[isRequired]"
-            :hasError="quoteForm.errors.dob || formFieldReq.dob"
-          />
-        </x-field>
-        <x-field label="NATIONALITY" required>
-          <ComboBox
-            v-model="quoteForm.nationality_id"
-            :single="true"
-            :options="
-              nationalities.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            :hasError="isEmptyField || formFieldReq.nationality_id"
-            :error="quoteForm.errors.nationality_id"
-          />
-        </x-field>
-        <x-field label="GENDER">
-          <x-select
-            v-model="quoteForm.gender"
-            :options="gender"
-            placeholder="Gender"
-          />
-        </x-field>
-        <x-field label="UAE LICENCE HELD FOR" required>
-          <x-select
-            v-model="quoteForm.uae_license_held_for_id"
-            :rules="[isRequired]"
-            :options="
-              uaeLicenses.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.uae_license_held_for_id"
-          />
-        </x-field>
+        <x-input
+          label="FIRST NAME"
+          required
+          v-model="quoteForm.first_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.first_name"
+          maxLength="20"
+        />
 
-        <x-field label="HOME COUNTRY DRIVING LICENSE HELD FOR">
-          <x-select
-            v-model="quoteForm.back_home_license_held_for_id"
-            :options="
-              dropdownSource.back_home_license_held_for_id.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-          />
-        </x-field>
+        <x-input
+          label="LAST NAME"
+          required
+          v-model="quoteForm.last_name"
+          type="text"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.last_name"
+          maxLength="50"
+        />
 
-        <x-field label="BIKE MAKE" required>
-          <ComboBox
-            v-model="quoteForm.make_id"
-            :rules="[isRequired]"
-            :single="true"
-            :options="bikeMakeOptions"
-            @update:modelValue="getBikeModel()"
-            class="w-full"
-            :hasError="isEmptyField || formFieldReq.make_id"
-            :error="quoteForm.errors.make_id"
-          />
-        </x-field>
+        <x-input
+          label="EMAIL"
+          required
+          v-model="quoteForm.email"
+          type="email"
+          :disabled="editMode"
+          :rules="[isRequired, isEmail]"
+          class="w-full"
+          :error="quoteForm.errors.email"
+        />
 
-        <x-field label="BIKE MODEL" required>
-          <ComboBox
-            v-model="quoteForm.model_id"
-            :rules="[isRequired]"
-            :single="true"
-            :options="bikeModelOptions"
-            @update:modelValue="getModelDetails(true)"
-            class="w-full"
-            :hasError="isEmptyField || formFieldReq.model_id"
-            :disabled="isBikeModelDisabled || !bikeModelOptions.length"
-            :error="quoteForm.errors.model_id"
-          />
-        </x-field>
+        <x-input
+          label="PHONE NUMBER"
+          required
+          v-model="quoteForm.mobile_no"
+          type="tel"
+          :disabled="editMode"
+          :rules="[isRequired, isMobileNo]"
+          class="w-full"
+          :error="quoteForm.errors.mobile_no"
+        />
 
-        <x-field label="BIKE MODEL YEAR" required>
-          <x-select
-            v-model="quoteForm.year_of_manufacture"
-            :rules="[isRequired]"
-            :options="
-              yearOfManufacture.map(item => ({
-                value: item.text,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.year_of_manufacture"
-          />
-        </x-field>
+        <DatePicker
+          label="DATE OF BIRTH"
+          required
+          v-model="quoteForm.dob"
+          name="created_at_start"
+          :rules="[isRequired]"
+          :hasError="quoteForm.errors.dob || formFieldReq.dob"
+        />
+        <x-select
+          v-model="quoteForm.nationality_id"
+          :rules="[isRequired]"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.nationality_id"
+          label="NATIONALITY"
+          filterable
+          placeholder="Search by Nationality"
+          required
+        ></x-select>
 
-        <x-field label="CC" required>
-          <x-input
-            v-model="quoteForm.cubic_capacity"
-            type="number"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.cubic_capacity"
-            @keypress="ccValidation"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.gender"
+          :options="gender"
+          placeholder="Gender"
+          label="GENDER"
+        />
+        <x-select
+          v-model="quoteForm.uae_license_held_for_id"
+          :rules="[isRequired]"
+          :options="
+            uaeLicenses.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.uae_license_held_for_id"
+          label="UAE LICENCE HELD FOR"
+          required
+        />
 
-        <x-field label="BIKE VALUE" required v-if="isEdit">
-          <x-input
-            v-model="quoteForm.bike_value"
-            type="number"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.bike_value"
-            @keydown="validateDecimal"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.back_home_license_held_for_id"
+          :options="
+            dropdownSource.back_home_license_held_for_id.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          label="HOME COUNTRY DRIVING LICENSE HELD FOR"
+        />
 
-        <x-field label="BIKE VALUE(AT ENQUIRY)" required>
-          <x-input
-            v-model="quoteForm.bike_value_tier"
-            type="number"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.bike_value_tier"
-            @keydown="validateDecimal"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.make_id"
+          :rules="[isRequired]"
+          :options="bikeMakeOptions"
+          class="w-full"
+          :error="quoteForm.errors.make_id"
+          @update:modelValue="getBikeModel()"
+          filterable
+          placeholder="Search by Bike Make"
+          required
+          label="BIKE MAKE"
+        />
 
-        <x-field label="SEAT CAPACITY" required>
-          <x-input
-            v-model="quoteForm.seat_capacity"
-            class="w-full"
-            type="number"
-            :rules="[isRequired]"
-            :error="quoteForm.errors.seat_capacity"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.model_id"
+          :rules="[isRequired]"
+          :options="bikeModelOptions"
+          class="w-full"
+          @update:modelValue="getModelDetails(true)"
+          :disabled="isBikeModelDisabled || !bikeModelOptions.length"
+          :error="quoteForm.errors.model_id"
+          label="BIKE MODEL"
+          required
+          placeholder="Search by Bike Model"
+        />
+
+        <x-select
+          label="BIKE MODEL YEAR"
+          required
+          v-model="quoteForm.year_of_manufacture"
+          :rules="[isRequired]"
+          :options="
+            yearOfManufacture.map(item => ({
+              value: item.text,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.year_of_manufacture"
+        />
+
+        <x-input
+          v-model="quoteForm.cubic_capacity"
+          type="number"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.cubic_capacity"
+          @keypress="ccValidation"
+          label="CC"
+          required
+        />
+
+        <x-input
+          label="BIKE VALUE"
+          required
+          v-if="isEdit"
+          v-model="quoteForm.bike_value"
+          type="number"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.bike_value"
+          @keydown="validateDecimal"
+        />
+
+        <x-input
+          label="BIKE VALUE(AT ENQUIRY)"
+          required
+          v-model="quoteForm.bike_value_tier"
+          type="number"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.bike_value_tier"
+          @keydown="validateDecimal"
+        />
+
+        <x-input
+          label="SEAT CAPACITY"
+          required
+          v-model="quoteForm.seat_capacity"
+          class="w-full"
+          type="number"
+          :rules="[isRequired]"
+          :error="quoteForm.errors.seat_capacity"
+        />
 
         <div>
           <template v-if="chassisNumberDisabled">
@@ -484,95 +489,91 @@ const chassisNumberRule = v => {
             />
           </template>
           <template v-else>
-            <x-field label="CHASSIS NUMBER">
-              <x-input
-                v-model="quoteForm.chassis_number"
-                class="w-full"
-                type="text"
-                placeholder="Enter Chassis Number"
-                :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
-                @keypress="chassisNumberValidate('keypress')"
-                @blur="chassisNumberValidate('blur')"
-                :error="quoteForm.errors.chassis_number"
-              />
-            </x-field>
+            <x-input
+              label="CHASSIS NUMBER"
+              v-model="quoteForm.chassis_number"
+              class="w-full"
+              type="text"
+              placeholder="Enter Chassis Number"
+              :rules="quoteForm.chassis_number ? [chassisNumberRule] : []"
+              @keypress="chassisNumberValidate('keypress')"
+              @blur="chassisNumberValidate('blur')"
+              :error="quoteForm.errors.chassis_number"
+            />
           </template>
         </div>
 
-        <x-field label="EMIRATES OF REGISTRATION" required>
-          <x-select
-            v-model="quoteForm.emirate_of_registration_id"
-            :rules="[isRequired]"
-            :options="
-              dropdownSource.emirate_of_registration_id.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.emirate_of_registration_id"
-          />
-        </x-field>
+        <x-select
+          label="EMIRATES OF REGISTRATION"
+          required
+          v-model="quoteForm.emirate_of_registration_id"
+          :rules="[isRequired]"
+          :options="
+            dropdownSource.emirate_of_registration_id.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.emirate_of_registration_id"
+        />
 
-        <x-field label="TYPE OF BIKE INSURANCE" required>
-          <x-select
-            v-model="quoteForm.insurance_type_id"
-            :rules="[isRequired]"
-            :options="
-              dropdownSource.car_type_insurance_id.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-            :error="quoteForm.errors.insurance_type_id"
-          />
-        </x-field>
+        <x-select
+          label="TYPE OF BIKE INSURANCE"
+          required
+          v-model="quoteForm.insurance_type_id"
+          :rules="[isRequired]"
+          :options="
+            dropdownSource.car_type_insurance_id.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+          :error="quoteForm.errors.insurance_type_id"
+        />
 
-        <x-field label="CURRENTLY INSURED WITH" required>
-          <ComboBox
-            v-model="quoteForm.currently_insured_with"
-            :rules="[isRequired]"
-            :single="true"
-            :options="currentlyInsuredWithOptions"
-            class="w-full"
-            :hasError="isEmptyField || formFieldReq.currently_insured_with"
-            :error="quoteForm.errors.currently_insured_with"
-          />
-        </x-field>
+        <x-select
+          v-model="quoteForm.currently_insured_with"
+          :rules="[isRequired]"
+          :options="currentlyInsuredWithOptions"
+          class="w-full"
+          :error="quoteForm.errors.currently_insured_with"
+          label="CURRENTLY INSURED WITH"
+          filterable
+          placeholder="Search by Currently Insured With"
+          required
+          error="quoteForm.errors.currently_insured_with"
+        />
 
-        <x-field label="CLAIM HISTORY" required>
-          <x-select
-            v-model="quoteForm.claim_history_id"
-            :rules="[isRequired]"
-            :options="bikeClaimHistoryOptions"
-            class="w-full"
-            :error="quoteForm.errors.claim_history_id"
-          />
-        </x-field>
+        <x-select
+          label="CLAIM HISTORY"
+          required
+          v-model="quoteForm.claim_history_id"
+          :rules="[isRequired]"
+          :options="bikeClaimHistoryOptions"
+          class="w-full"
+          :error="quoteForm.errors.claim_history_id"
+        />
 
-        <x-field
+        <x-select
           label="CAN YOU PROVIDE NO-CLAIMS LETTER FROM YOUR PREVIOUS INSURERS?"
-        >
-          <x-select
-            v-model="quoteForm.has_ncd_supporting_documents_dropdown"
-            :options="[
-              { value: 'y', label: 'Yes' },
-              { value: 'n', label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
+          v-model="quoteForm.has_ncd_supporting_documents_dropdown"
+          :options="[
+            { value: 'y', label: 'Yes' },
+            { value: 'n', label: 'No' },
+          ]"
+          class="w-full"
+        />
 
-        <x-field label="ADDITIONAL NOTES">
-          <x-textarea
-            v-model="quoteForm.additional_notes"
-            type="textarea"
-            rows="5"
-            class="w-full"
-            :adjust-to-text="false"
-          />
-        </x-field>
+        <x-textarea
+          label="ADDITIONAL NOTES"
+          v-model="quoteForm.additional_notes"
+          type="textarea"
+          rows="5"
+          class="w-full"
+          :adjust-to-text="false"
+        />
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
