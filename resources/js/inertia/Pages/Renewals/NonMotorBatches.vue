@@ -212,7 +212,7 @@ onMounted(() => {
     
       <template #item-action="{ renewal_batch, quote_type, renewal_batch_id }">
         <x-button
-          :href="`/renewals/batches/${renewal_batch_id}/${quote_type}/plans-processes`"
+          :href="`/renewals/batches-non-motor/${renewal_batch_id}/${quote_type}/plans-processes`"
           class="text-primary-500 btn-passed mr-2"
           color="primary"
         >

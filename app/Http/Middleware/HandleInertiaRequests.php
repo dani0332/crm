@@ -553,7 +553,14 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->canAny([PermissionsEnum::RenewalsUpload, PermissionsEnum::RenewalsUploadedLeadList, PermissionsEnum::RenewalsUploadUpdate, PermissionsEnum::RenewalsBatches])) {
+        if (auth()->user()->canAny([
+            PermissionsEnum::RenewalsUpload, 
+            PermissionsEnum::RenewalsUploadedLeadList, 
+            PermissionsEnum::RenewalsUploadUpdate, 
+            PermissionsEnum::RenewalsBatches, 
+            PermissionsEnum::RENEWAL_UPLOAD_NONMOTOR,
+            PermissionsEnum::RENEWALS_BATCHES_NONMOTOR
+            ])) {
             $nav = $nav->add('Renewals', '', function (Section $section) {
                 $section
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUpload), 'Upload & Create', route('renewals-upload-create'), fn ($s) => $s->attributes(['icon' => 'box']))

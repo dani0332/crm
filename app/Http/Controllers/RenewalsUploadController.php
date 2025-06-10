@@ -614,9 +614,7 @@ class RenewalsUploadController extends Controller
     public function export(Request $request)
     {
 
-        dd($request->all());
         $quotes = $this->renewalsUploadFileService->getExport($request);
-
         return $quotes;
     }
 
