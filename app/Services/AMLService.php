@@ -1166,18 +1166,12 @@ class AMLService
                 'is_owner_high_risk' => $complianceQuestions['is_owner_high_risk'] ?? null,
                 'transaction_volume' => $complianceQuestions['transaction_volume'] ?? null,
                 'transaction_activities' => $complianceQuestions['transaction_activities'] ?? null,
-                'customer_id' => $complianceQuestions['customer_id'] ?? null,
             ]);
 
             if ($insuredKyc = InsuredKyc::where('insured_id', $complianceQuestions['insured_id'])->first()) {
                 $insuredKyc->update($kycData);
             } else {
                 InsuredKyc::create($kycData);
-            }
-
-            // this should be removed after data migration.
-            if (isset($complianceQuestions['customer_id']) && $complianceQuestions['customer_id'] != null) {
-                CustomerDetail::where('customer_id', $complianceQuestions['customer_id'])->update($sameFields);
             }
 
             LoggerService::info('KYCComplianceQuestions updated');
