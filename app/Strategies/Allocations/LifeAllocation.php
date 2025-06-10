@@ -4,9 +4,9 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\RolesEnum;
 use App\Models\Nationality;
+use App\Models\User;
 use App\Services\Logger\LoggerService;
 use App\Services\RuleService;
-use App\Models\User;
 
 class LifeAllocation extends BaseAllocation
 {
@@ -28,9 +28,10 @@ class LifeAllocation extends BaseAllocation
         $amount = $this->lead->currency?->getAED((float) $this->lead?->sum_insured_value ?? 0);
 
         if (isLeadFic($this->lead->uuid)) {
-            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users');   
+            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule users');
             $users = $this->getFicRulesUsers();
-            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule  ',['users_ids' => $users->pluck('id')->toArray()] );
+            LoggerService::info(self::class.'::getAdvisorEmails - Lead is FIC, fetching FIC rule  ', ['users_ids' => $users->pluck('id')->toArray()]);
+
             return $users->pluck('email')->toArray();
         }
         $santosh = 'santhosh.ganesan@insurancemarket.ae';
@@ -42,7 +43,6 @@ class LifeAllocation extends BaseAllocation
         $gaurav = 'gaurav.sharma@insurancemarket.ae';
         $vivian = 'vivian.sandel@insurancemarket.ae';
         $sourabh = 'sourabh.yadav@insurancemarket.ae';
-    
 
         $emails = [];
 
@@ -94,7 +94,8 @@ class LifeAllocation extends BaseAllocation
 
     private function getFicRulesUsers()
     {
-       $usersIds = app(RuleService::class)->getFicRulesUsers();
-       return User::select('id', 'email')->whereIn('id', $usersIds)->get();
+        $usersIds = app(RuleService::class)->getFicRulesUsers();
+
+        return User::select('id', 'email')->whereIn('id', $usersIds)->get();
     }
 }

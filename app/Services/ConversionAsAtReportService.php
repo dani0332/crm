@@ -96,7 +96,7 @@ class ConversionAsAtReportService extends BaseService
                 'segment_filter' => $request->segment_filter,
                 'page' => $request->page,
             ];
-            
+
             $query = $this->applyFilters($query, $filters, $alias, $detailAlias, $model->getForeignKey());
 
             $query = $query->get();
@@ -233,7 +233,7 @@ class ConversionAsAtReportService extends BaseService
             $query->when($filters->segment_filter == QuoteSegmentEnum::FIC->value, function ($q) use ($tagName) {
                 $q->where('quote_tags.name', $tagName);
             })->when($filters->segment_filter == QuoteSegmentEnum::NON_FIC->value, function ($q) use ($tagName) {
-                $q->whereNotIn('quote_tags.name', [$tagName]); 
+                $q->whereNotIn('quote_tags.name', [$tagName]);
             });
         }
 

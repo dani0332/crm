@@ -9,13 +9,13 @@ use App\Enums\QuoteTypes;
 use App\Jobs\Audit\LogAllocation;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendFICEmailForLife;
 use App\Models\LifeQuote;
 use App\Repositories\PaymentRepository;
 use App\Services\SendEmailCustomerService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\SendFICEmailForLife;
 
 class LifeQuoteObserver
 {
@@ -47,7 +47,7 @@ class LifeQuoteObserver
         }
         if (isset($dirty['advisor_id'])) {
             LogAllocation::dispatch($lifeQuote, QuoteTypes::LIFE);
-            if(isLeadFic($lifeQuote->uuid)){
+            if (isLeadFic($lifeQuote->uuid)) {
                 SendFICEmailForLife::dispatch($lifeQuote->uuid)->delay(now()->addSeconds(10));
             }
             if ($lifeQuote->source != LeadSourceEnum::IMCRM) {

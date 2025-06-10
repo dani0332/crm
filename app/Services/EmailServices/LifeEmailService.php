@@ -3,34 +3,30 @@
 namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteFlowType;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
-use App\Models\QuoteFlowDetails;
+use App\Models\PersonalQuote;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\BirdService;
 use App\Services\Logger\LoggerService;
-use App\Models\LifeQuote;
-use App\Models\PersonalQuote;
 
 class LifeEmailService extends BaseService
 {
-    public function sendFICEmail(PersonalQuote $personalQuote){
+    public function sendFICEmail(PersonalQuote $personalQuote)
+    {
         LoggerService::startQuoteLogging(QuoteTypes::LIFE->refId($personalQuote->uuid));
 
         $lifeFICEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::FIC_LIFE_EMAIL)->first();
-        
+
         LoggerService::info('| sendFICEmail - Initiating process');
 
-       
-        if ($lifeFICEmail && !empty($lifeFICEmail->value)) {
-             // Fetch the advisor
+        if ($lifeFICEmail && ! empty($lifeFICEmail->value)) {
+            // Fetch the advisor
             $advisor = User::find($personalQuote->advisor_id);
             if (! $advisor) {
-                    LoggerService::info('sendFICEmail - Advisor not found');
+                LoggerService::info('sendFICEmail - Advisor not found');
             }
             $emailData = $this->buildEmailData($personalQuote, $advisor, WorkflowTypeEnum::LIFE_FIC_EMAIL);
             $response = app(BirdService::class)->triggerWebHookRequest($lifeFICEmail->value, $emailData);
@@ -66,7 +62,6 @@ class LifeEmailService extends BaseService
             // Workflow-related data
             'workflowType' => $workflowType,
         ];
-
 
         return (object) $data;
     }

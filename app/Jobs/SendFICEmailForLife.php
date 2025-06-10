@@ -2,21 +2,22 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Services\EmailServices\LifeEmailService;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 use App\Services\Logger\LoggerService;
-use App\Enums\QuoteTypes;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class SendFICEmailForLife implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     private $quoteUuid;
     public $tries = 3;
     public $timeout = 15;
@@ -26,7 +27,6 @@ class SendFICEmailForLife implements ShouldQueue
     {
         $this->quoteUuid = $quoteUuid;
     }
-  
 
     /**
      * Execute the job.

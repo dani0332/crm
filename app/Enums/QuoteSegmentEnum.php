@@ -14,7 +14,6 @@ enum QuoteSegmentEnum: string
     case FIC = 'fic';
     case NON_FIC = 'non-fic';
 
-    
     public function label()
     {
         return match ($this) {
@@ -37,7 +36,7 @@ enum QuoteSegmentEnum: string
             self::AIG => 'AIG',
             self::FIC => 'FIC',
             self::NON_FIC => 'Non-FIC',
-            
+
         };
     }
 
@@ -48,7 +47,7 @@ enum QuoteSegmentEnum: string
         if ($quoteTypeId == QuoteTypeId::Health) {
             $caseList = collect($caseList)->whereNotIn('value', self::SIC_REVIVAL->value);
         }
-     
+
         foreach ($caseList as $case) {
             $values[] = [
                 'value' => $case->value,
