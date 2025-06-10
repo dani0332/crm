@@ -277,6 +277,24 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Customer::class);
     }
+    
+    public function lastInsured()
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // Foreign key on customer_insured table...
+            'id',               // Foreign key on insured table...
+            'id',               // Local key on personal_quotes table...
+            'insured_id'        // Local key on customer_insured table...
+        )
+        ->where('customer_insured.quote_type_id', $this->quote_type_id);
+    }
+    
+    public function embeddedTransactions()
+    {
+        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
+    }
 
     public function leadHistory()
     {
@@ -328,6 +346,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function emirates()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
+    }
+
+    public function emirate()
+    {
+        return $this->emirates();
     }
 
     public function claimHistory()
