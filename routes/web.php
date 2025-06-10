@@ -644,7 +644,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);
-        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails'])->name('amlQuoteDetails');
+        Route::get('aml/{aml}/{insuredId?}/{customerId?}', [AMLController::class, 'show'])->name('aml.show');
         Route::post('send-bridger-response', [AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
         Route::get('aml-fetch-entity', [AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
@@ -660,8 +661,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::controller(SendUpdateLogController::class)->prefix('send-update')->name('send-update.')->group(function () {
         Route::post('get-options', 'getOptions')->name('get-options');
-        Route::get('/', 'index')->name('index');
-        Route::post('/', 'store')->name('store');
+        Route::post('/store', 'store')->name('store');
         Route::get('/{uuid}', 'show')->name('show');
         Route::patch('/update/{id}', 'update')->name('update');
         Route::post('/save-details', 'savePriceDetails')->name('save-price-details');
@@ -797,6 +797,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     //     return 'Command executed successfully!';
     // });
+
+    Route::get('/check-handbook-documents/{quoteType}', function ($quoteType) {
+        // Dispatch job to background queue instead of running synchronously
+        \App\Jobs\CheckHandbookDocumentsJob::dispatch($quoteType, Carbon::now()->format('YmdHi'));
+
+        return response()->json([
+            'message' => "Handbook documents check for {$quoteType} has been queued for background processing",
+            'status' => 'dispatched',
+        ]);
+    });
 });
 
 // Migration Not Required For Now 21 Nov 24
