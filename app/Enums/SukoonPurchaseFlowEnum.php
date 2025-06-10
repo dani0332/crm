@@ -64,12 +64,12 @@ final class SukoonPurchaseFlowEnum extends Enum
 
     public static function getTitle(int $stepNumber): string
     {
-        return self::STEPS_TITLE[$stepNumber ?? 0];
+        return self::STEPS_TITLE[$stepNumber] ?? "";
     }
 
     public static function getName(int $stepNumber): string
     {
-        return self::STEPS_NAME[$stepNumber ?? 0];
+        return self::STEPS_NAME[$stepNumber] ?? "";
     }
 
     public function getStepNumber(string $stepName): int
