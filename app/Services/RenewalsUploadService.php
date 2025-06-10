@@ -1123,8 +1123,8 @@ class RenewalsUploadService
             if (! checkPersonalQuotes($quoteType)) {
                 $this->syncQuote($quote, $quoteData);
             }
-            if( in_array($quoteType->code, [quoteTypeCode::Car]) &&  isset($data['registration_type'])  &&  $data['registration_type'] == CarRegistrationType::COMPANY) {
-                $this->getCustomerEntity($quote,$data);
+            if (in_array($quoteType->code, [quoteTypeCode::Car]) && isset($data['registration_type']) && $data['registration_type'] == CarRegistrationType::COMPANY) {
+                $this->getCustomerEntity($quote, $data);
             }
             LoggerService::info($logPrefix.' quote updated UUID: '.$quote->uuid);
 
