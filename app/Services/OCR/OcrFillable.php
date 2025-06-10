@@ -4,8 +4,10 @@ namespace App\Services\OCR;
 
 use App\Enums\InsurerProviderEnum;
 use App\Enums\OCRDocumentTypeEnum;
+use App\Enums\ApplicationStorageEnums;
 use App\Services\Logger\LoggerService;
 use App\Services\SplitPaymentService;
+use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -69,7 +71,13 @@ trait OcrFillable
         $price = $this->resolveProp($data, 'price');
 
         if ($this->isEnabled($quote, $providersWithPriceVatApplicable)) {
-            $dataToUpdate['price_vat_applicable'] = $this->resolveProp($price, 'baseAmount') ?? $quote->price_vat_applicable;
+            $vatPercentage = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+            $priceVatApplicable = $this->resolveProp($price, 'baseAmount') ?? $quote->price_vat_applicable;
+            $vatAmount = $priceVatApplicable * $vatPercentage / 100;
+            $priceWithVat = $priceVatApplicable + $vatAmount;
+            $dataToUpdate['price_with_vat'] = $priceWithVat;
+            $dataToUpdate['vat'] = $vatAmount;
+            $dataToUpdate['price_vat_applicable'] = $priceVatApplicable;
         }
 
         if ($this->isEnabled($quote, $providersWithPolicyIssuanceDate)) {
