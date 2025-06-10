@@ -18,6 +18,9 @@ class PrivateClientConfigController extends Controller
 {
     use PrivateClient;
 
+    private const LABEL_TEXT = 'text as label';
+    private const VALUE_TEXT = 'id as value';
+
     public function __construct()
     {
         $this->middleware('role:'.Arr::join([RolesEnum::SeniorManagement, RolesEnum::Admin], '|'), ['only' => ['show']]);
@@ -44,11 +47,11 @@ class PrivateClientConfigController extends Controller
         }
         $configurations = $configurations->get();
 
-        $carMakes = CarMake::select('id as value', 'text as label')->where('is_active', true)->get()->toArray();
+        $carMakes = CarMake::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get()->toArray();
 
-        $insurers = InsuranceProvider::select('id as value', 'text as label')->where('is_active', true)->get()->toArray();
+        $insurers = InsuranceProvider::select(self::VALUE_TEXT, self::LABEL_TEXT)->where('is_active', true)->get()->toArray();
 
-        $locationAreas = SubArea::select('id as value', 'text as label')->get()->toArray();
+        $locationAreas = SubArea::select(self::VALUE_TEXT, self::LABEL_TEXT)->get()->toArray();
 
         $isCurrentVersion = (int) $selectedVersion === (int) $allVersions[0];
 
