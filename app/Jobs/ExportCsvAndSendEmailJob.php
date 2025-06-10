@@ -7,11 +7,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 600; // 300 (5 minutes) 900 (15 minutes)
     public $tries = 2;
@@ -22,6 +23,10 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
     /**
      * Create a new job instance.
+     *
+     * @param  string  $exportClass  - The export class name (string, not instance)
+     * @param  string  $recipientEmail  - Recipient email address
+     * @param  array  $requestParams  - Clean array of parameters (no Request objects or models)
      */
     public function __construct(
         string $exportClass,
