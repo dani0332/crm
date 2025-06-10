@@ -185,12 +185,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             $columns['make']['rules'][] = 'required';
             $columns['model']['rules'][] = 'required';
             $columns['year']['rules'][] = 'required';
-            if (isset($row[6]) && $row[6] != CarVehicleUse::PRIVATE) {
-                // if vehicle use is not private, then these fields are not required
-                $columns['dob']['rules'][] = 'required';
-                $columns['driving_experience']['rules'][] = 'required';
-                $columns['nationality']['rules'][] = 'required';
-            }
+           
 
             $columns['registration_location']['rules'][] = 'required';
 
@@ -303,7 +298,6 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                             'Nationality is required.'
                         );
                     }
-
                 }
             }
         });
