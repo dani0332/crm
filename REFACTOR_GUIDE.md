@@ -308,3 +308,64 @@ CsvExportEmailJob::dispatch(
 ```
 
 This refactoring provides a much cleaner, more maintainable codebase while preserving all existing functionality.
+
+## Export-to-Email Pattern
+
+### **New Standardized Approach**
+
+A reusable helper method has been added to the base `Controller` class to standardize export-to-email functionality across all controllers:
+
+```php
+// In any controller extending Controller
+public function exportToEmail(Request $request)
+{
+    $exportClassMap = [
+        'report_type_1' => ExportClass1::class,
+        'report_type_2' => ExportClass2::class,
+    ];
+
+    return $this->handleExportToEmail($request, $exportClassMap, 'Custom Subject Prefix');
+}
+```
+
+### **Features:**
+
+1. **Automatic Detection**: Detects if export class uses new `CsvExportableInterface` or old `ExcelExportable` trait
+2. **Graceful Fallback**: Falls back to old system for unmigrated export classes
+3. **Validation**: Built-in request validation for email, subject, and CC recipients
+4. **Error Handling**: Proper error responses for unsupported report types
+5. **Standardized Response**: Consistent JSON response format across all controllers
+
+### **Usage Examples:**
+
+**Request Format:**
+
+```json
+{
+  "report": "car_quotes",
+  "recipientEmail": "user@example.com",
+  "subject": "Car Quotes Export",
+  "ccRecipients": ["manager@example.com"]
+}
+```
+
+**Response (Success):**
+
+```json
+{
+  "message": "Your export is being processed. You will receive an email with the CSV file shortly.",
+  "report_type": "car_quotes",
+  "recipient": "user@example.com",
+  "subject": "Quote Export: car_quotes"
+}
+```
+
+**Response (Unsupported):**
+
+```json
+{
+  "error": "Email export is not yet supported for this report type.",
+  "report_type": "some_report",
+  "suggestion": "Please use the download option instead..."
+}
+```

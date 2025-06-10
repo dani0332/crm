@@ -7,8 +7,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ExportCsvAndSendEmailJob implements ShouldQueue
@@ -79,9 +77,6 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 
             throw $e;
         } finally {
-            // Clean up resources
-            DB::setDefaultConnection('mysql');
-            Auth::logout();
             gc_collect_cycles();
         }
     }

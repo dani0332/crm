@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Services\InstantAlfredService;
+use App\Traits\ExcelExportable;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -10,9 +11,11 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 
 class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMapping
 {
-    use Exportable;
+    use ExcelExportable, Exportable {
+        ExcelExportable::download insteadof Exportable;
+    }
 
-    public function collection()
+    public function collection($requestParams = [])
     {
         return app(InstantAlfredService::class)->generateChatDetailedReport();
     }

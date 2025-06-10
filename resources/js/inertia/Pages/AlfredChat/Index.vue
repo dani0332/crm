@@ -106,6 +106,7 @@ const isError = ref(false);
 const loader = reactive({
   table: false,
   view: false,
+  emailExport: false,
 });
 const showChatLogs = ref(false);
 
@@ -240,6 +241,58 @@ const downloadReport = () => {
   const data = useObjToUrl(useCleanObj({ ...filters, ...serverOptions.value }));
   const url = route('exportChatData');
   window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+const exportViaEmail = async () => {
+  try {
+    loader.emailExport = true;
+
+    // Validate required fields
+    if (!filters.report) {
+      notification.error({
+        title: 'Export Error',
+        text: 'Please select a report type before exporting.',
+      });
+      return;
+    }
+
+    const data = {
+      ...useCleanObj({ ...filters, ...serverOptions.value }),
+      recipientEmail: page.props.auth.user.email, // Use current user's email
+      report: filters.report, // This is required by the validation
+    };
+
+    const response = await axios.post(
+      route('instant-alfred.export-email'),
+      data,
+    );
+
+    if (response.data.success !== false) {
+      notification.success({
+        title: 'Export Initiated',
+        text:
+          response.data.message ||
+          'Your export has been queued and will be sent to your email shortly.',
+      });
+    } else {
+      notification.error({
+        title: 'Export Failed',
+        text:
+          response.data.message ||
+          'Failed to initiate export. Please try again.',
+      });
+    }
+  } catch (error) {
+    console.error('Export via email error:', error);
+    notification.error({
+      title: 'Export Error',
+      text:
+        error.response?.data?.message ||
+        'An error occurred while initiating the export. Please try again.',
+    });
+  } finally {
+    loader.emailExport = false;
+  }
 };
 </script>
 
@@ -406,7 +459,7 @@ const downloadReport = () => {
     </div>
 
     <div class="flex justify-between gap-3">
-      <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+      <div v-if="can(permissionsEnum.DATA_EXTRACTION)" class="flex gap-2">
         <x-tooltip v-if="reportButtonCon.disable" position="right">
           <x-button size="sm" color="emerald">Export Excel</x-button>
           <template #tooltip v-if="reportButtonCon.msg">
@@ -423,6 +476,27 @@ const downloadReport = () => {
           color="emerald"
           @click.prevent="downloadReport"
           >Export Excel</x-button
+        >
+
+        <x-tooltip v-if="reportButtonCon.disable" position="right">
+          <x-button size="sm" color="emerald" :loading="loader.emailExport">
+            Export via Email
+          </x-button>
+          <template #tooltip v-if="reportButtonCon.msg">
+            <span class="font-medium">
+              {{ reportButtonCon.msg }}
+            </span>
+          </template>
+        </x-tooltip>
+
+        <x-button
+          :disabled="reportButtonCon.disable"
+          v-else
+          size="sm"
+          color="blue"
+          :loading="loader.emailExport"
+          @click.prevent="exportViaEmail"
+          >Export via Email</x-button
         >
       </div>
 

@@ -7,6 +7,7 @@ use App\Jobs\ExportCsvAndSendEmailJob;
 use App\Models\User;
 use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -97,6 +98,9 @@ trait ExcelExportable
      */
     public function sendEmailWithCSVAttachment($recipientEmail, $emailSubject, $requestParams, $ccRecipients = [], $fileName = 'export')
     {
+        // Set read database connection for export operations
+        DB::setDefaultConnection('mysql_read');
+
         if (! isset($this->quoteType)) {
             $this->quoteType = $requestParams['quoteType'] ?? null;
         }
