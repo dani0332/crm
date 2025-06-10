@@ -580,12 +580,37 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchUpdatePaymentStatus($request)
     {
         $maxRetries = 2;
+        $successMessage = 'Payment Verified';
 
-        return $this->handleWithDeadlockRetries(function () use ($request) {
-            $successMessage = 'Payment Verified';
-            $splitPayment = PaymentSplits::find($request->splitPaymentId);
-            $masterPayment = $splitPayment->payment;
-            $quote = $masterPayment?->paymentable;
+        // Move fetching data outside transaction
+        $splitPayment = PaymentSplits::find($request->splitPaymentId);
+        $masterPayment = $splitPayment->payment;
+        $quote = $masterPayment?->paymentable;
+        $sageResponseStatus = false;
+
+        /* Handle NRA case where payment is approved after policy/send update is booked */
+        $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quote, $splitPayment);
+        info(self::class.' fn:'.__FUNCTION__.' Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
+        
+        // Process Sage API call outside transaction if needed
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID && (new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt) {
+            $sageRequest = $request->safe();
+            $sageRequest->userId = auth()->id();
+            $sageRequest->quoteType = $request->modelType;
+            $sageRequest->advisor_id = $quote->advisor_id;
+
+            /* Handle NRA case where payment is approved after policy/send update is booked */
+            $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment);
+
+            if (!$sageResponse['status']) {
+                vAbort($sageResponse['message']);
+            }
+
+            $sageResponseStatus = $sageResponse['status'];
+        }
+
+        // Now handle database operations within transaction
+        return $this->handleWithDeadlockRetries(function () use ($request, $splitPayment, $masterPayment, $sageResponseStatus, $successMessage, $shouldCreatePrepaymentPremiumReceipt) {
             if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                 $paymentInformation = [
                     'collection_amount' => $request->collection_amount,
@@ -599,10 +624,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 ];
 
                 // associate approved documents with payment split
-                if (
-                    isset($request->approved_document_model[$splitPayment->sr_no])
-                    && count($request->approved_document_model[$splitPayment->sr_no]) > 0
-                ) {
+                if (isset($request->approved_document_model[$splitPayment->sr_no]) && count($request->approved_document_model[$splitPayment->sr_no]) > 0) {
                     foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                         $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                         if ($quoteDocumentRec) {
@@ -617,31 +639,16 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
 
-                /* Handle NRA case where payment is approved after policy/send update is booked */
-                $shouldCreatePrepaymentPremiumReceipt = (new SageApiService)->shouldCreateAndSchedulePostPrepayment($quote, $splitPayment);
-                info(self::class.' fn:'.__FUNCTION__.' Child payment code: '.$splitPayment->code.' with serial no: '.$splitPayment->sr_no.' trigger creation of Premium Sage receipt  : ', ['$shouldCreatePrepaymentPremiumReceipt' => $shouldCreatePrepaymentPremiumReceipt]);
-                // create sage receipt
-                if ((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt) {
-                    $sageRequest = $request->safe();
-                    $sageRequest->userId = auth()->id();
-                    $sageRequest->quoteType = $request->modelType;
-                    $sageRequest->advisor_id = $quote->advisor_id;
-                    /* Handle NRA case where payment is approved after policy/send update is booked */
-                    $sageResponse = (new SageApiService)->createPrepaymentPremiumReceipt($sageRequest, $quote, $masterPayment, $splitPayment);
-                    if ($sageResponse['status']) {
-                        if ($masterPayment) {
-                            $masterPayment->update(
-                                [
-                                    'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                                    'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                                ],
-                            );
-                        }
-                    } else {
-                        $failMessage = $sageResponse['message'];
-                        vAbort($failMessage);
-                    }
-                } else {
+                if ($sageResponseStatus && $masterPayment) {
+                    $masterPayment->update(
+                        [
+                            'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
+                        ],
+                    );
+                }
+
+                if (!((new SageApiService)->isSageEnabled() && $shouldCreatePrepaymentPremiumReceipt)) {
                     $splitPayment->update($paymentInformation);
 
                     if ($masterPayment) {
