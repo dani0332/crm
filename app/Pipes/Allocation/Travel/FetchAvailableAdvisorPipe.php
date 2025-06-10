@@ -93,7 +93,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
         // Extract lead properties with null safety
         $isSIC = $this->checkLeadMethod($lead, 'isSIC', [$this->allocationRequest->getQuoteType()]);
         $isAIG = $this->checkLeadMethod($lead, 'isAIG', [$this->allocationRequest->getQuoteType()]);
-        $isRequestedAdvisorOrPaymentAuthorized = $this->checkLeadMethod($lead, 'isRequestedAdvisorOrPaymentAuthorized');
         $isPaymentAuthorizedOrLinkRequested = $this->checkLeadMethod($lead, 'isPaymentAuthorizedOrLinkRequested');
         $isLeadFromInstantAlfred = $this->checkLeadMethod($lead, 'isLeadFromInstantAlfred');
 
@@ -101,7 +100,7 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
 
         // Determine team assignment based on business rules
         $isAIGWithInstantAlfred = $isAIG && $isLeadFromInstantAlfred;
-        $isSICOrAIGWithRequestedAdvisor = (($isSIC && ! $isAIG) || $isAIG) && $isRequestedAdvisorOrPaymentAuthorized;
+        $isSICOrAIGWithPayment = (($isSIC && ! $isAIG) || $isAIG) && $isPaymentAuthorizedOrLinkRequested;
         $isNonSICNonAIGWithPayment = (! $isSIC && ! $isAIG) && $isPaymentAuthorizedOrLinkRequested;
 
         $teamId = null;
@@ -111,11 +110,11 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             // Rule 1: AIG leads from Instant Alfred go to default team
             $teamId = self::DEFAULT_TEAM_ID;
             $reason = 'AIG and Lead from Instant Alfred';
-        } elseif ($isSICOrAIGWithRequestedAdvisor) {
-            // Rule 2: SIC or AIG leads with advisor requested or payment authorized
+        } elseif ($isSICOrAIGWithPayment) {
+            // Rule 2: SIC or AIG leads with payment authorized or link requested
             $teamId = $sicUnassistedTeamId;
-            $reason = $isAIG ? 'AIG with advisor requested or payment authorized' :
-                              'SIC with advisor requested or payment authorized';
+            $reason = $isAIG ? 'AIG with payment authorized or link requested' :
+                              'SIC with payment authorized or link requested';
         } elseif ($isNonSICNonAIGWithPayment) {
             // Rule 3: Non-SIC, Non-AIG leads with payment authorized or link requested
             $teamId = $sicUnassistedTeamId;
@@ -132,7 +131,6 @@ class FetchAvailableAdvisorPipe extends BaseAllocationPipe
             'teamId' => $teamId,
             'isSIC' => $isSIC,
             'isAIG' => $isAIG,
-            'isRequestedAdvisorOrPaymentAuthorized' => $isRequestedAdvisorOrPaymentAuthorized,
             'isPaymentAuthorizedOrLinkRequested' => $isPaymentAuthorizedOrLinkRequested,
             'isLeadFromInstantAlfred' => $isLeadFromInstantAlfred,
         ]);
