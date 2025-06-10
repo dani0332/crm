@@ -644,24 +644,31 @@ const onUpdateIndividualPlan = () => {
   });
 };
 
-const sendOCBEmail = () => {
+// Processing state for OCB email - matching Home implementation
+const processingOCBEmailNB = ref(false);
+
+const confirmSendEmail = () => {
+  processingOCBEmailNB.value = true;
   axios
-    .post(route('sendOCBEmail', { quoteType: 'savings' }), {
-      modelType: 'Savings',
-      quote_uuid: page.props.quote.uuid,
+    .post(`/quotes/savings/${page.props.quote.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
     })
     .then(response => {
+      processingOCBEmailNB.value = false;
       notification.success({
-        title: 'OCB Email sent successfully to customer',
+        title: response.data.success,
         position: 'top',
       });
-      modals.sendConfirm = false;
     })
     .catch(error => {
       notification.error({
         title: 'Error sending OCB Email',
         position: 'top',
       });
+      processingOCBEmailNB.value = false;
+    })
+    .finally(() => {
+      processingOCBEmailNB.value = false;
       modals.sendConfirm = false;
     });
 };
@@ -1368,15 +1375,18 @@ const sendOCBEmail = () => {
 
               <x-tooltip placement="top" align="left">
                 <x-button
-                  @click.prevent="modals.sendConfirm = true"
-                  size="sm"
-                  color="orange"
-                  class="mr-2"
-                  :disabled="quote.advisor_id != $page.props.auth.user.id"
-                >
-                  Send Savings Plans email to Customer
-                </x-button>
-                <template #tooltip>
+                @click.prevent="modals.sendConfirm = true"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                :disabled="quote.advisor_id != $page.props.auth.user.id"
+                v-if="
+                  readOnlyMode.isDisable === true
+                "
+              >
+              Send Savings Plans email to Customer
+              </x-button>
+              <template #tooltip>
                   <div>
                     When clicked, this button sends the One Click Buy (OCB)
                     email to the customer with updated savings plans and coverage
@@ -1865,46 +1875,30 @@ const sendOCBEmail = () => {
 
     <x-modal
       v-model="modals.sendConfirm"
-      size="md"
-      title="Send OCB Email"
+      title="Send Email"
       show-close
       backdrop
     >
-      <div class="space-y-4">
-        <p class="text-gray-600">
-          Are you sure you want to send the One Click Buy (OCB) email to the customer?
-          This will send them the selected savings plans with updated rates and coverage options.
-        </p>
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
-          <div class="flex">
-            <div class="ml-3">
-              <p class="text-sm text-blue-700">
-                <strong>Customer:</strong> {{ quote.first_name }} {{ quote.last_name }}
-              </p>
-              <p class="text-sm text-blue-700">
-                <strong>Email:</strong> {{ quote.email }}
-              </p>
-            </div>
-          </div>
+      <p>Are you sure send email to customer?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.sendConfirm = false"
+            :disable="processingOCBEmailNB"
+          >
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            :loading="processingOCBEmailNB"
+            @click.prevent="confirmSendEmail"
+          >
+            Send
+          </x-button>
         </div>
-      </div>
-      <template #secondary-action>
-        <x-button
-          ghost
-          tabindex="-1"
-          @click.prevent="modals.sendConfirm = false"
-          size="sm"
-        >
-          Cancel
-        </x-button>
-      </template>
-      <template #primary-action>
-        <x-button
-          color="orange"
-          @click.prevent="sendOCBEmail"
-        >
-          Send Email
-        </x-button>
       </template>
     </x-modal>
   </div>
