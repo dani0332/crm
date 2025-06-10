@@ -16,6 +16,7 @@ class PersonalQuotesExport
     use ExcelExportable;
 
     private const PC_CUSTOMER = 'PC CUSTOMER';
+    private const ADVISOR_ASSIGNED_DATE = 'ADVISOR ASSIGNED DATE';
 
     private $quoteType = '';
     private $quoteTypes = [];
@@ -111,7 +112,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
-                    'ADVISOR ASSIGNED DATE',
+                    self::ADVISOR_ASSIGNED_DATE,
                     'LAST MODIFIED DATE',
                     'PREMIUM',
                     'POLICY NUMBER',
@@ -134,7 +135,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
-                    'ADVISOR ASSIGNED DATE',
+                    self::ADVISOR_ASSIGNED_DATE,
                     'LAST MODIFIED DATE',
                     'PREMIUM',
                     'POLICY NUMBER',
@@ -158,7 +159,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
-                    'ADVISOR ASSIGNED DATE',
+                    self::ADVISOR_ASSIGNED_DATE,
                     'LAST MODIFIED DATE',
                     'TRANSAPP CODE',
                     'SOURCE',
@@ -193,7 +194,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
-                    'ADVISOR ASSIGNED DATE',
+                    self::ADVISOR_ASSIGNED_DATE,
                     'LAST MODIFIED DATE',
                     'PREMIUM',
                     'POLICY NUMBER',
@@ -216,6 +217,7 @@ class PersonalQuotesExport
                     'LEAD STATUS',
                     'ADVISOR',
                     'CREATED DATE',
+                    self::ADVISOR_ASSIGNED_DATE,
                     'LAST MODIFIED DATE',
                     'TRANSAPP CODE',
                     'SOURCE',
