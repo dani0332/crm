@@ -48,7 +48,6 @@ use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
 use Hidehalo\Nanoid\Client;
-use Illuminate\Bus\Batch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -793,7 +792,7 @@ class HealthQuoteService extends BaseService
                 'advisor_assigned_by_id' => auth()->user()->id,
             ];
         }
-        
+
         HealthQuoteRequestDetail::updateOrCreate(
             ['health_quote_request_id' => $id],
             $data
@@ -1300,7 +1299,7 @@ class HealthQuoteService extends BaseService
         $quote_type = $request->modelType;
         $quoteBatch = QuoteBatches::latest()->first();
         $jobs = [];
-        
+
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
 

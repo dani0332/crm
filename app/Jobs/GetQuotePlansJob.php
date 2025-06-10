@@ -2,8 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\HealthTeamType;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Services\HealthQuoteService;
 use App\Services\Logger\LoggerService;

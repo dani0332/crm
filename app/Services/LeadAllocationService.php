@@ -40,7 +40,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class LeadAllocationService extends BaseService
 {
@@ -223,17 +222,17 @@ class LeadAllocationService extends BaseService
                 DB::commit();
 
                 Bus::batch([
-                    new GetQuotePlansJob($lead)
+                    new GetQuotePlansJob($lead),
                 ])
-                ->then(function () use ($lead) {
-                    if (
-                        in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-                        && $lead->quote_status_id == QuoteStatusEnum::Qualified
-                    ) {
-                        IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
-                    }
-                })
-                ->dispatch();
+                    ->then(function () use ($lead) {
+                        if (
+                            in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                            && $lead->quote_status_id == QuoteStatusEnum::Qualified
+                        ) {
+                            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
+                        }
+                    })
+                    ->dispatch();
 
                 return true;
             } catch (\Exception $e) {
