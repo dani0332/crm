@@ -2,11 +2,11 @@
 
 namespace App\Jobs\Renewals;
 
-use App\Console\Commands\Common\Batchable;
 use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalsUploadLeads;
 use App\Services\Logger\LoggerService;
 use App\Services\RenewalsUploadService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
