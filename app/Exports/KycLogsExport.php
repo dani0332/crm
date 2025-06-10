@@ -5,7 +5,7 @@ namespace App\Exports;
 use App\Services\AMLService;
 use App\Traits\ExcelExportable;
 
-class KycLogs
+class KycLogsExport
 {
     use ExcelExportable;
 
