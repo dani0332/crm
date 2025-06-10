@@ -285,7 +285,6 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
                             'Driver Name is required.'
                         );
                     }
-                    info("Checking vehicle use and driver fields relationship for row: $rowIndex, vehicle_use: {$row[6]}");
                     if (isset($row[17]) && empty($row[17])) {
                         $validator->errors()->add(
                             $rowIndex.'.17',

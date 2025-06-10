@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Enums\QuoteTypes;
 
 class SendCarCommercialOCBEmail implements ShouldQueue
 {
@@ -32,20 +33,22 @@ class SendCarCommercialOCBEmail implements ShouldQueue
      */
     public function handle(CarEmailService $carEmailService): void
     {
+        LoggerService::startQuoteLogging(QuoteTypes::CAR->refId($this->quoteUuid));
         try {
             $carLead = CarQuote::where('uuid', $this->quoteUuid)->first();
             if (! $carLead) {
-                LoggerService::info(self::class." - Car Lead Not Found - Ref ID: {$this->quoteUuid} | Time: ".now());
+                LoggerService::info(self::class." - Car Lead Not Found");
                 return;
-            }
-            LoggerService::info(self::class." - Sending car company commercial ocb email for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
+            }-
+            LoggerService::info(self::class." - Sending car company commercial ocb email" ,['lead_status_id' => $carLead->quote_status_id]);
             $carEmailService->sendCarCompanyCommercialOCB($carLead);
             if ($carLead->quote_status_id == QuoteStatusEnum::NewLead) {
                 $carLead->quote_status_id = QuoteStatusEnum::Quoted;
                 $carLead->save();
             }
-        } catch (\Throwable $th) {
-            LoggerService::error(self::class." - Exception encountered: '{$th->getMessage()} | Line: {$th->getLine()} | File: {$th->getFile()} ' - Ref ID: {$this->quoteUuid} | Time: ".now());
+        } catch (\Exception $exception) {
+            LoggerService::error(self::class." - Exception encountered: ", exception: $exception);
         }
+        
     }
 }
