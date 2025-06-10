@@ -5,6 +5,7 @@ namespace App\Services\PolicyIssuanceAutomation\Travel;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
@@ -83,6 +84,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $this->policyIssuance = $process;
         $quote = $process->model;
+        LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::POLICY_AUTOMATION);
 
         LoggerService::info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' started');
 

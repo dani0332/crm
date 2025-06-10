@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Services\EmailServices\CarEmailService;
 use App\Services\Logger\LoggerService;
@@ -11,7 +12,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Enums\QuoteTypes;
 
 class SendCarCommercialOCBEmail implements ShouldQueue
 {
@@ -36,18 +36,19 @@ class SendCarCommercialOCBEmail implements ShouldQueue
         try {
             $carLead = CarQuote::where('uuid', $this->quoteUuid)->first();
             if (! $carLead) {
-                LoggerService::info(self::class." - Car Lead Not Found");
+                LoggerService::info(self::class.' - Car Lead Not Found');
+
                 return;
             }
-            LoggerService::info(self::class." - Sending car company commercial ocb email" ,['lead_status_id' => $carLead->quote_status_id]);
+            LoggerService::info(self::class.' - Sending car company commercial ocb email', ['lead_status_id' => $carLead->quote_status_id]);
             $carEmailService->sendCarCompanyCommercialOCB($carLead);
             if ($carLead->quote_status_id == QuoteStatusEnum::NewLead) {
                 $carLead->quote_status_id = QuoteStatusEnum::Quoted;
                 $carLead->save();
             }
         } catch (\Exception $exception) {
-            LoggerService::error(self::class." - Exception encountered: ", exception: $exception);
+            LoggerService::error(self::class.' - Exception encountered: ', exception: $exception);
         }
-        
+
     }
 }

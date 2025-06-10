@@ -15,7 +15,7 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    public $timeout = 300; // 300 (5 minutes) 900 (15 minutes)
+    public $timeout = 600; // 300 (5 minutes) 900 (15 minutes)
     public $tries = 2;
     public $backoff = 30;
     private $exportClass;

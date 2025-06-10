@@ -1338,6 +1338,16 @@ class RenewalsUploadService
             $carQuote = CarQuote::find($renewalQuoteProcess->quote_id);
             LoggerService::info('Renewals OCB Email started for uuid: '.$carQuote->uuid);
 
+            if ($carQuote->quote_status_id != null && in_array($carQuote->quote_status_id, [
+                QuoteStatusEnum::PolicyIssued,
+                QuoteStatusEnum::PolicyBooked,
+                QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            ])) {
+                LoggerService::info('Quote status is not eligible for OCB email as quote status id: '.$carQuote->quote_status_id);
+
+                return;
+            }
+
             if ($carQuote->previous_quote_policy_number != null) {
 
                 $response = Ken::request('/send-motor-renewal-ocb-whatsapp', 'post', [
@@ -2051,7 +2061,13 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ])
             ->whereHas('carQuote', function ($q) {
-                $q->whereNull('paid_at');
+                $q->whereNull('paid_at')
+                    ->whereNotIn(
+                        'quote_status_id', [
+                            QuoteStatusEnum::PolicyIssued,
+                            QuoteStatusEnum::PolicyBooked,
+                            QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+                        ]);
             })->groupBy('quote_id');
     }
 
