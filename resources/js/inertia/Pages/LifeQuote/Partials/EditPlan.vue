@@ -175,10 +175,8 @@ const actualPremium = computed(() => {
 });
 
 // Update the Plan (if it is manual)
-const onSubmit = isValid => {
-  if (!isValid) {
-    return;
-  }
+const onSubmit = () => {
+  
   editForm.actualPremium = Number(
     parseFloat(editForm.actualPremium).toFixed(2),
   );
@@ -345,9 +343,9 @@ const getQuote = () => {
       extraAttr.getQuoteLoading = false;
       showGetQuoteBtn.value = false;
       showSaveButton.value = true;
+      submitType.value = 'onSubmit';
     })
     .catch(err => {
-      console.log(err);
       errorMessage.value = err.response.data.message;
     })
     .finally(() => {
@@ -530,7 +528,7 @@ const hidePlan = () => {
     .finally(() => {});
 };
 
-const submitType = ref('getQuote');
+const submitType = props.selectedPlan.isApi ? ref('getQuote') : ref('onSubmit');
 const riderOptions = ref([]);
 
 // get rider details
@@ -596,11 +594,11 @@ const validateRiderCoverValue = (value, riderId) => {
     const numValue = parseFloat(value);
     
     if (matchingOption.range_minimum && numValue < parseFloat(matchingOption.range_minimum)) {
-      return `Minimum value allowed is ${matchingOption.range_minimum}`;
+      return `Value can be between ${matchingOption.range_minimum} and ${matchingOption.range_maximum}`;
     }
     
     if (matchingOption.range_maximum && numValue > parseFloat(matchingOption.range_maximum)) {
-      return `Maximum value allowed is ${matchingOption.range_maximum}`;
+      return `Value can be between ${matchingOption.range_minimum} and ${matchingOption.range_maximum}`;
     }
   }
   
@@ -916,7 +914,7 @@ const validateRiderCoverValue = (value, riderId) => {
                       !props.selectedPlan.isManualPlan || !rider.active
                     "
                     @keydown="e => preventInvalidInputs(e, true)"
-                    :rules="[isNonNegative]"
+                    :rules="rider.active ? [isNonNegative] : []"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="rider.price"
                   />
@@ -934,7 +932,7 @@ const validateRiderCoverValue = (value, riderId) => {
                       editForm.overallLoading > 0
                     "
                     @keydown="e => preventInvalidInputs(e, true)"
-                    :rules="[isNonNegative]"
+                    :rules="rider.active ? [isNonNegative] : []"
                     class="w-full h-10 p-2 rounded-md"
                     v-model="rider.loading"
                   />
