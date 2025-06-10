@@ -2,21 +2,28 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Services\AMLService;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class KycLogsExport
+class KycLogsExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
-    public function collection($requestParams = [])
+    public function __construct(
+        private AMLService $amlService
+    ) {}
+
+    public function collection(array $requestParams = []): Collection
     {
-        return app(AMLService::class)->getAMLData(requestParams: $requestParams);
+        return $this->amlService->getAMLData(requestParams: $requestParams);
     }
 
-    public function getQuery($requestParams = [])
+    public function getQuery(array $requestParams = []): ?Builder
     {
-        return app(AMLService::class)->getAMLData(requestParams: $requestParams);
+        return $this->amlService->getAMLData(requestParams: $requestParams);
     }
 
     public function headings(): array
@@ -46,6 +53,22 @@ class KycLogsExport
             date(config('constants.datetime_format'), strtotime($item->created_at)),
             $item->aml_status,
             $item->decision,
+        ];
+    }
+
+    /**
+     * Get export metadata with AML/KYC-specific information
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'exportType' => 'kyc_logs',
+            'includesAML' => true,
+            'includesPII' => true, // Contains personally identifiable information
+            'dataSource' => 'aml_service',
         ];
     }
 }

@@ -207,6 +207,76 @@ public function register()
 4. **Testability**: Clean dependencies and separation of concerns
 5. **Maintainability**: Clear structure and single responsibility principle
 
+## Migration Status
+
+The following export classes have been migrated to the new structure:
+
+1. **CarQuoteExport** ✅ Migrated
+2. **HealthQuotesExport** ✅ Migrated
+3. **TravelQuoteExport** ✅ Migrated
+4. **LifeQuotesExport** ✅ Migrated
+5. **BusinessQuoteExport** ✅ Migrated
+6. **KycLogsExport** ✅ Migrated
+7. **HomeQuoteExport** ✅ Migrated
+
+## Remaining Export Classes to Migrate
+
+The following export classes still use the old `ExcelExportable` trait and need migration:
+
+1. **TmLeadsExport**
+2. **RMQuotesExport**
+3. **AmtQuoteExport**
+4. **CarQuoteExportWithEmailMobile**
+5. **EmbeddedProductReport**
+6. **CarQuoteExportWithPlans**
+7. **RenewalQuotesExport**
+8. **RetentionReportExport**
+9. **CarQuoteExportWithMakeModelTrims**
+10. **PersonalQuotesExport**
+
+## Cleanup Plan
+
+### Phase 1: Complete ✅
+
+- Created new interface and services
+- Migrated 6 export classes to new structure
+- Cleaned up example/demo files
+
+### Phase 2: Remaining Migration
+
+⚠️ **Current Priority** - Must complete before Phase 3:
+
+- Migrate the remaining 10 export classes (listed in Phase 3)
+- Update their controllers to use new classes
+- Ensure all functionality is preserved
+- Test each migration thoroughly
+
+### Phase 3: Final Cleanup (After Phase 2)
+
+⚠️ **Cannot be completed yet** - The following components are still in use:
+
+- **ExportCsvAndSendEmailJob** - Used by 10 remaining export classes via ExcelExportable trait
+- **ExcelExportable trait** - Used by 10 export classes that haven't been migrated yet
+
+**Remaining classes using old system:**
+
+- TmLeadsExport
+- RMQuotesExport
+- PersonalQuotesExport
+- CarQuoteExportWithEmailMobile
+- AmtQuoteExport
+- EmbeddedProductReport
+- CarQuoteExportWithPlans
+- RenewalQuotesExport
+- RetentionReportExport
+- CarQuoteExportWithMakeModelTrims
+
+**After migrating all remaining classes:**
+
+- Remove old `ExportCsvAndSendEmailJob`
+- Remove old `ExcelExportable` trait
+- Clean up any remaining references
+
 ## Backward Compatibility
 
 The old `ExportCsvAndSendEmailJob` and `ExcelExportable` trait remain functional but should be migrated gradually to the new structure. Both can coexist during the migration period.

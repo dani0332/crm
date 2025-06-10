@@ -2,17 +2,30 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Repositories\HomeQuoteRepository;
-use App\Traits\ExcelExportable;
+use App\Traits\ModernCsvExportable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
-class HomeQuoteExport
+class HomeQuoteExport implements CsvExportableInterface
 {
-    use ExcelExportable;
+    use ModernCsvExportable;
 
-    public function collection($requestParams = [])
+    public function __construct(
+        private HomeQuoteRepository $homeQuoteRepository
+    ) {}
+
+    public function collection(array $requestParams = []): Collection
     {
-        return HomeQuoteRepository::getData(true, false, $requestParams);
+        return $this->homeQuoteRepository->fetchGetData(true, false, $requestParams)->get();
     }
+
+    public function getQuery(array $requestParams = []): ?Builder
+    {
+        return $this->homeQuoteRepository->fetchGetData(true, false, $requestParams);
+    }
+
     public function headings(): array
     {
         return [
@@ -60,6 +73,18 @@ class HomeQuoteExport
             $quote->previous_quote_policy_number ? $quote->previous_quote_policy_number : '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+        ];
+    }
+
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'personal_quotes',
+            'quoteTypeId' => 2, // QuoteTypeId::Home
+            'exportType' => 'home_quotes',
         ];
     }
 }
