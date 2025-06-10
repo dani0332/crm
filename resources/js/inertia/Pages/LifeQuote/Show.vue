@@ -221,7 +221,7 @@ const sendOCAEmail = () => {
     modals.sendConfirm = false;
     return;
   }
- 
+
   if (selectedPlans.value.length < 1) {
     notification.error({
       title: 'Minimum 1 plan should be selected',
@@ -230,7 +230,7 @@ const sendOCAEmail = () => {
     modals.sendConfirm = false;
     return;
   }
-  
+
   if (selectedPlans.value.length > 6) {
     notification.error({
       title: 'Maximum 6 plans can be selected',
@@ -241,9 +241,6 @@ const sendOCAEmail = () => {
   }
 
   loader.value.link = true;
-
-  
-
 };
 
 const getPaymentTermTitle = months => {
@@ -776,9 +773,6 @@ const confirmSendEmail = () => {
   loader.value.link = true;
   const first_name = page.props.quote.first_name || '';
   const last_name = page.props.quote.last_name || '';
-
-  
-
 };
 
 const selectPlan = (planId, quoteId, version, planUuid) => {
@@ -2171,7 +2165,6 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
-
     <ApiLogs
       :type="modelClass"
       :id="$page.props.quote?.life_quote?.id"
@@ -2179,14 +2172,13 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :expanded="sectionExpanded"
     />
 
-    
     <AuditLogs
       :title="'KYC Audit Logs'"
       :type="'App\\Models\\InsuredKyc'"
       :id="quote?.insured?.insured_kyc?.id"
       :expanded="sectionExpanded"
     />
-    
+
     <lead-raw-data
       :modelType="'Life'"
       :uuid="$page.props.quote.uuid"

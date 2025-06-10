@@ -20,10 +20,9 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
-const getCurrencyId = (currencyCode) => {
+const getCurrencyId = currencyCode => {
   return props.currencies.find(currency => currency.text === currencyCode)?.id;
-}
-
+};
 
 let riders = props.lifeRiders.map(rider => ({
   riderId: rider.id,
@@ -176,7 +175,6 @@ const actualPremium = computed(() => {
 
 // Update the Plan (if it is manual)
 const onSubmit = () => {
-  
   editForm.actualPremium = Number(
     parseFloat(editForm.actualPremium).toFixed(2),
   );
@@ -466,8 +464,7 @@ const isNonNegative = value => {
 };
 
 const validateCoverValue = value => {
-
-  if(props.selectedPlan.isApi) {
+  if (props.selectedPlan.isApi) {
     return true;
   }
 
@@ -532,9 +529,11 @@ const submitType = props.selectedPlan.isApi ? ref('getQuote') : ref('onSubmit');
 const riderOptions = ref([]);
 
 // get rider details
-const getRiderDetails = async (planId) => {
+const getRiderDetails = async planId => {
   try {
-    const res = await axios.get(`/personal-quotes/life/rider-details/${planId}`);
+    const res = await axios.get(
+      `/personal-quotes/life/rider-details/${planId}`,
+    );
 
     // Clear existing options if needed
     riderOptions.value = [];
@@ -543,68 +542,74 @@ const getRiderDetails = async (planId) => {
     res.data.forEach(item => {
       console.log('Item:', item);
       if (item.rider_option) {
-          const { rider_id, currency_id, range_minimum, range_maximum } = item.rider_option;
-          riderOptions.value.push({ 
-            riderId: rider_id, 
-            currency_id, 
-            range_minimum, 
-            range_maximum 
-          });
+        const { rider_id, currency_id, range_minimum, range_maximum } =
+          item.rider_option;
+        riderOptions.value.push({
+          riderId: rider_id,
+          currency_id,
+          range_minimum,
+          range_maximum,
+        });
       }
 
       console.log('Rider options:', riderOptions.value);
     });
-
   } catch (error) {
     console.error('Error fetching rider details:', error);
   }
 };
-
 
 const handleSubmit = isValid => {
   console.log('handleSubmit', isValid);
   if (!isValid) {
     return;
   }
- 
-  if(submitType.value === 'getQuote') {
+
+  if (submitType.value === 'getQuote') {
     getQuote();
     console.log('getQuote');
   } else {
     onSubmit();
     console.log('onSubmit');
   }
-}
+};
 const validateRiderCoverValue = (value, riderId) => {
   // First check if it's an API plan
   if (!props.selectedPlan?.isApi) return true;
-  
+
   // Skip validation if value is empty
   if (!value) return true;
-  
+
   let selectedCurrencyId = getCurrencyId(editForm.currency);
 
   // Find matching rider option by rider ID
-  const matchingOption = riderOptions.value.find(option => option.riderId === riderId && option.currency_id === selectedCurrencyId);
+  const matchingOption = riderOptions.value.find(
+    option =>
+      option.riderId === riderId && option.currency_id === selectedCurrencyId,
+  );
   console.log('matchingOption', matchingOption, riderId);
   console.log('riderOptions', riderOptions.value);
-  
 
   if (matchingOption) {
     const numValue = parseFloat(value);
-    
-    if (matchingOption.range_minimum && numValue < parseFloat(matchingOption.range_minimum)) {
+
+    if (
+      matchingOption.range_minimum &&
+      numValue < parseFloat(matchingOption.range_minimum)
+    ) {
       return `Value can be between ${matchingOption.range_minimum} and ${matchingOption.range_maximum}`;
     }
-    
-    if (matchingOption.range_maximum && numValue > parseFloat(matchingOption.range_maximum)) {
+
+    if (
+      matchingOption.range_maximum &&
+      numValue > parseFloat(matchingOption.range_maximum)
+    ) {
       return `Value can be between ${matchingOption.range_minimum} and ${matchingOption.range_maximum}`;
     }
   }
-  
+
   return true;
 };
-
 </script>
 
 <template>
@@ -892,7 +897,12 @@ const validateRiderCoverValue = (value, riderId) => {
                     :disabled="!rider.active"
                     :rules="
                       rider.active
-                        ? [isRequired, isNonNegative, validateCoverValue, (val) => validateRiderCoverValue(val, rider.riderId)]
+                        ? [
+                            isRequired,
+                            isNonNegative,
+                            validateCoverValue,
+                            val => validateRiderCoverValue(val, rider.riderId),
+                          ]
                         : []
                     "
                     type="number"

@@ -20,19 +20,19 @@ const shown = computed({
   set: value => emit('update:modelValue', value),
 });
 
-const getCurrencyId = (currencyCode) => {
+const getCurrencyId = currencyCode => {
   return props.currencies.find(currency => currency.text === currencyCode)?.id;
-}
+};
 
 // Add watch for modal visibility to call getRiderDetails when opened
 watch(
   () => shown.value,
-  (newVal) => {
+  newVal => {
     if (newVal && props.plan?.planId) {
       getRiderDetails(props.plan.planId);
       submitType.value = props.plan.isApi ? 'getQuote' : 'onSubmit';
     }
-  }
+  },
 );
 
 const preventInvalidInputs = (e, allowDecimals = true) => {
@@ -77,8 +77,7 @@ const validatePriceRange = value => {
   return true;
 };
 
-
-const validatePolicyTerm = (value) => {
+const validatePolicyTerm = value => {
   if (!value) return true;
 
   const policyTerm = parseFloat(value);
@@ -90,9 +89,8 @@ const validatePolicyTerm = (value) => {
     return 'Policy term must be between 1 to 100';
   }
 
-
-  // Only validate for api plans i.e Zurich for now 
-  if(props.plan.isApi) {
+  // Only validate for api plans i.e Zurich for now
+  if (props.plan.isApi) {
     const maxAllowedTerm = exitAge.value - clientAge;
     console.log('maxAllowedTerm', maxAllowedTerm, exitAge.value, clientAge);
     if (policyTerm > maxAllowedTerm) {
@@ -102,7 +100,6 @@ const validatePolicyTerm = (value) => {
 
   return true;
 };
-
 
 const riders = props.lifeRiders.map(rider => ({
   riderId: rider.id,
@@ -296,7 +293,6 @@ const getQuote = () => {
       }
 
       submitType.value = 'onSubmit';
-      
     })
     .catch(err => {
       errorMessage.value = err.response.data.message;
@@ -312,19 +308,17 @@ const handleSubmit = isValid => {
   if (!isValid) {
     return;
   }
- 
-  if(submitType.value === 'getQuote') {
+
+  if (submitType.value === 'getQuote') {
     getQuote();
     console.log('getQuote');
   } else {
     onSubmit();
     console.log('onSubmit');
   }
-}
-
+};
 
 const onSubmit = () => {
-
   const processedRiders = ridersData.value.map(rider => ({
     ...rider,
     price: Number(parseFloat(rider.price).toFixed(2)) || 0,
@@ -380,14 +374,15 @@ const onSubmit = () => {
     });
 };
 
-
 const exitAge = ref(null);
 const clientAge = props.quote?.life_quote?.age;
-const riderOptions = ref([]); 
+const riderOptions = ref([]);
 
-const getRiderDetails = async (planId) => {
+const getRiderDetails = async planId => {
   try {
-    const res = await axios.get(`/personal-quotes/life/rider-details/${planId}`);
+    const res = await axios.get(
+      `/personal-quotes/life/rider-details/${planId}`,
+    );
 
     // Clear existing options if needed
     riderOptions.value = [];
@@ -396,30 +391,26 @@ const getRiderDetails = async (planId) => {
     res.data.forEach(item => {
       console.log('Item:', item);
       if (item.rider_option) {
-          const { rider_id, currency_id, range_minimum, range_maximum } = item.rider_option;
-          riderOptions.value.push({ 
-            riderId: rider_id, 
-            currency_id, 
-            range_minimum, 
-            range_maximum 
-          });
+        const { rider_id, currency_id, range_minimum, range_maximum } =
+          item.rider_option;
+        riderOptions.value.push({
+          riderId: rider_id,
+          currency_id,
+          range_minimum,
+          range_maximum,
+        });
       }
 
       console.log('Rider options:', riderOptions.value);
     });
-
   } catch (error) {
     console.error('Error fetching rider details:', error);
   }
 };
 
-
-
 // Add onMounted hook to load rider data when component is mounted
 onMounted(() => {
-
   if (props.plan) {
-
     // Initialize form data from plan
     createForm.providerId = props.plan.providerId;
     createForm.planId = props.plan.planId;
@@ -439,7 +430,11 @@ onMounted(() => {
     }
 
     // Handle rider data initialization
-    if (props.plan.riders && Array.isArray(props.plan.riders) && props.plan.riders.length > 0) {
+    if (
+      props.plan.riders &&
+      Array.isArray(props.plan.riders) &&
+      props.plan.riders.length > 0
+    ) {
       ridersData.value = props.plan.riders.map(rider => {
         const mappedRider = {
           riderId: rider.id,
@@ -451,7 +446,6 @@ onMounted(() => {
         return mappedRider;
       });
     } else {
-      
       ridersData.value = props.lifeRiders.map(rider => {
         const mappedRider = {
           riderId: rider.id,
@@ -466,7 +460,7 @@ onMounted(() => {
     }
 
     getRiderDetails(props.plan.planId);
-    exitAge.value = props.plan?.exitAge ?? 79; 
+    exitAge.value = props.plan?.exitAge ?? 79;
   }
 });
 
@@ -487,30 +481,38 @@ const validateCoverValue = value => {
 const validateRiderCoverValue = (value, riderId) => {
   // First check if it's an API plan
   if (!props.plan?.isApi) return true;
-  
+
   // Skip validation if value is empty
   if (!value) return true;
-  
+
   let selectedCurrencyId = getCurrencyId(createForm.currency);
 
   // Find matching rider option by rider ID
-  const matchingOption = riderOptions.value.find(option => option.riderId === riderId && option.currency_id === selectedCurrencyId);
-  
+  const matchingOption = riderOptions.value.find(
+    option =>
+      option.riderId === riderId && option.currency_id === selectedCurrencyId,
+  );
+
   if (matchingOption) {
     const numValue = parseFloat(value);
-    
-    if (matchingOption.range_minimum && numValue < parseFloat(matchingOption.range_minimum)) {
+
+    if (
+      matchingOption.range_minimum &&
+      numValue < parseFloat(matchingOption.range_minimum)
+    ) {
       return `Minimum value allowed is ${matchingOption.range_minimum}`;
     }
-    
-    if (matchingOption.range_maximum && numValue > parseFloat(matchingOption.range_maximum)) {
+
+    if (
+      matchingOption.range_maximum &&
+      numValue > parseFloat(matchingOption.range_maximum)
+    ) {
       return `Maximum value allowed is ${matchingOption.range_maximum}`;
     }
   }
-  
+
   return true;
 };
-
 </script>
 
 <template>
@@ -639,7 +641,11 @@ const validateRiderCoverValue = (value, riderId) => {
           <x-input
             v-model="createForm.actualPremium"
             placeholder="Enter Price"
-            :rules="submitType === 'getQuote' ? [isNonNegative, validatePriceRange] : [isRequired, isNonNegative, validatePriceRange]"
+            :rules="
+              submitType === 'getQuote'
+                ? [isNonNegative, validatePriceRange]
+                : [isRequired, isNonNegative, validatePriceRange]
+            "
             class="w-full"
             type="number"
             min="0"
@@ -704,7 +710,12 @@ const validateRiderCoverValue = (value, riderId) => {
             type="number"
             :rules="
               rider.active
-                ? [isNonNegative, validateCoverValue, isRequired, (val) => validateRiderCoverValue(val, rider.riderId)]
+                ? [
+                    isNonNegative,
+                    validateCoverValue,
+                    isRequired,
+                    val => validateRiderCoverValue(val, rider.riderId),
+                  ]
                 : []
             "
             step="any"
