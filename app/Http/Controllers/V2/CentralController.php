@@ -118,7 +118,26 @@ class CentralController extends Controller
             QuoteTypes::HOME->value,
         ])) {
             if ($request['exportType'] == 'email') {
-                return app(PersonalQuotesExport::class)->emailCSV($quoteType.'-List', $request->all());
+                // Extract specific fields to avoid PDO serialization issues
+                $requestParams = [
+                    'quoteType' => $request->input('quoteType'),
+                    'exportType' => $request->input('exportType'),
+                    'recipientEmail' => $request->input('recipientEmail'),
+                    'subject' => $request->input('subject'),
+                    'ccRecipients' => $request->input('ccRecipients'),
+                    'quote_status_id' => $request->input('quote_status_id'),
+                    'payment_status_id' => $request->input('payment_status_id'),
+                    'quote_batch_id' => $request->input('quote_batch_id'),
+                    'created_at' => $request->input('created_at'),
+                    'advisor_id' => $request->input('advisor_id'),
+                    'lost_reason_id' => $request->input('lost_reason_id'),
+                    'sortBy' => $request->input('sortBy'),
+                    'sortType' => $request->input('sortType'),
+                    'page' => $request->input('page'),
+                    'user' => auth()->user(), // Add current user for job context
+                ];
+
+                return app(PersonalQuotesExport::class)->emailCSV($quoteType.'-List', $requestParams);
             }
 
             return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
