@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
@@ -112,6 +113,7 @@ class HomeQuoteService extends BaseService
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
             'hqr.renewal_import_code',
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
             DB::raw('IF(insured.id_type = "emiratesId", insured.id_number, "") as emirates_id_number'),

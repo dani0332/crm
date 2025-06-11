@@ -146,7 +146,11 @@ class UpdateLeadStatusRequest extends FormRequest
 
             if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelLeadTransactionApproved == false) {
                 
-                $customer = Customer::with('latestInsured')->where('id', $quoteObject->customer_id)->first();
+                $customer = Customer::with(['latestInsured' => function ($query) use ($quoteTypesIds) {
+                    $query->where('quote_request_id', request()->leadId)
+                        ->where('quote_type_id', $quoteTypesIds[request()->modelType]);
+                }])->where('id', $quoteObject->customer_id)->first();
+                
                 $customerProfileDetails = [
                     'insured_first_name' => ($customer?->latestInsured?->first_name ?? $customer->insured_first_name) ?? null,
                     'insured_last_name' => ($customer?->latestInsured?->last_name ?? $customer->insured_last_name) ?? null,

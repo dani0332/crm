@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
@@ -81,7 +82,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.renewal_import_code',
                 'bqr.kyc_decision',
                 'bqr.stale_at',
-                'i.customer_type',
+                DB::raw('COALESCE(i.customer_type, "'.CustomerTypeEnum::Entity.'") as customer_type'),
                 'insured_kyc.id as insured_kyc_id',
                 'c.insured_first_name as customer_insured_first_name',
                 'c.insured_last_name as customer_insured_last_name',

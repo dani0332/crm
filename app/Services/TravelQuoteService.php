@@ -142,8 +142,8 @@ class TravelQuoteService extends BaseService
             'tqr.kyc_decision',
             'tqr.is_documents_valid',
             // 'tqr.prefill_plan_id',
-            'insured.customer_type', // It's always return individual
-            'insured.customer_type as insured_customer_type',
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'), // It's always return individual
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as insured_customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
             'insured_kyc.id as insured_kyc_id',

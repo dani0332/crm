@@ -444,8 +444,7 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 5 THEN "Bought Lead"
                 WHEN cqr.assignment_type = 6 THEN "ReAssigned as Bought Lead" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
-                'insured.customer_type',
-                // DB::raw('COALESCE(insured.customer_type, "Individual") as customer_type'),
+                DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
                 'insured.first_name as insured_first_name',
                 'insured.last_name as insured_last_name',
                 'insured_kyc.id as insured_kyc_id',

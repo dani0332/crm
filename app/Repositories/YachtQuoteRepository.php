@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -150,6 +151,7 @@ class YachtQuoteRepository extends BaseRepository
             ])
             ->firstOrFail();
 
+        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;

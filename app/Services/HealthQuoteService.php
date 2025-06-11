@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Builders\HealthQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
@@ -150,7 +151,7 @@ class HealthQuoteService extends BaseService
             'hqr.risk_score',
             'hqr.enquiry_count',
             'hqr.policy_booking_date',
-            'insured.customer_type',
+            DB::raw('COALESCE(insured.customer_type, "'.CustomerTypeEnum::Individual.'") as customer_type'),
             'insured.first_name as insured_first_name',
             'insured.last_name as insured_last_name',
             'insured_kyc.id as insured_kyc_id',

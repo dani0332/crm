@@ -728,6 +728,7 @@ class HomeQuoteRepository extends BaseRepository
             ->first();
 
         if ($response) {
+            $response->customer_type = $response->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
             // Only access insured property if response exists
             $insured = $response->latestInsured ?? null;
             if ($insured && $insured->id_type === 'emiratesId') {

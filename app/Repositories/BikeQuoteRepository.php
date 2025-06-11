@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -189,6 +190,7 @@ class BikeQuoteRepository extends BaseRepository
             ])
             ->firstOrFail();
 
+        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Individual;
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $data = ! empty($quote) ? $quote->toArray() : [];
