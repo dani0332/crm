@@ -87,29 +87,36 @@ class CsvExportService
         if ($query) {
             LoggerService::info('Using chunked query processing for CSV export');
 
-            $query->chunk($chunkSize, function ($records) use ($stream, $exporter, &$totalRecords, $flushInterval) {
-                $chunkBuffer = [];
+            // Check if exporter has custom chunked processing
+            if (method_exists($exporter, 'processChunkedQuery')) {
+                LoggerService::info('Using custom chunked processing for export');
+                $totalRecords = $exporter->processChunkedQuery($query, $requestParams, $stream);
+            } else {
+                // Default chunked processing
+                $query->chunk($chunkSize, function ($records) use ($stream, $exporter, &$totalRecords, $flushInterval) {
+                    $chunkBuffer = [];
 
-                foreach ($records as $record) {
-                    $chunkBuffer[] = $exporter->map($record);
-                    $totalRecords++;
-                }
+                    foreach ($records as $record) {
+                        $chunkBuffer[] = $exporter->map($record);
+                        $totalRecords++;
+                    }
 
-                // Write chunk buffer to file
-                foreach ($chunkBuffer as $row) {
-                    fputcsv($stream, $row);
-                }
+                    // Write chunk buffer to file
+                    foreach ($chunkBuffer as $row) {
+                        fputcsv($stream, $row);
+                    }
 
-                // Flush to disk and manage memory periodically
-                if ($totalRecords % $flushInterval === 0) {
-                    fflush($stream); // Force write to disk
-                    gc_collect_cycles(); // Garbage collection
-                    // LoggerService::info("CSV export progress: {$totalRecords} records written");
-                }
+                    // Flush to disk and manage memory periodically
+                    if ($totalRecords % $flushInterval === 0) {
+                        fflush($stream); // Force write to disk
+                        gc_collect_cycles(); // Garbage collection
+                        // LoggerService::info("CSV export progress: {$totalRecords} records written");
+                    }
 
-                // Clear chunk buffer to free memory
-                unset($chunkBuffer);
-            });
+                    // Clear chunk buffer to free memory
+                    unset($chunkBuffer);
+                });
+            }
         } else {
             // Fallback to collection method with chunked writing
             LoggerService::info('Using collection method for CSV export');

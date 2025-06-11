@@ -27,8 +27,9 @@ interface CsvExportableInterface
     /**
      * Get the query builder instance for chunked processing (optional)
      * If not implemented, will fall back to collection() method
+     * Can return either Eloquent\Builder or Query\Builder
      */
-    public function getQuery(array $requestParams = []): ?Builder;
+    public function getQuery(array $requestParams = []): Builder|\Illuminate\Database\Query\Builder|null;
 
     /**
      * Get export metadata

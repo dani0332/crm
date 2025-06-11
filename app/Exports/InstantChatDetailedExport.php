@@ -2,22 +2,30 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Services\InstantAlfredService;
-use App\Traits\ExcelExportable;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Traits\ModernCsvExportable;
 
-class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMapping
+class InstantChatDetailedExport implements CsvExportableInterface
 {
-    use ExcelExportable, Exportable {
-        ExcelExportable::download insteadof Exportable;
+    use ModernCsvExportable;
+
+    public function collection(array $requestParams = []): \Illuminate\Support\Collection
+    {
+        // Note: InstantAlfredService currently uses request() directly,
+        // so parameters are handled via the request instance
+        return app(InstantAlfredService::class)->generateChatDetailedReport();
     }
 
-    public function collection($requestParams = [])
+    /**
+     * Get the query builder instance to use for chunking
+     * Note: InstantAlfredService doesn't support query builders yet, so this returns null
+     * for now, falling back to collection() method
+     */
+    public function getQuery(array $requestParams = []): \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder|null
     {
-        return app(InstantAlfredService::class)->generateChatDetailedReport();
+        // Future enhancement: Could implement chunked processing if InstantAlfredService supports it
+        return null;
     }
 
     public function headings(): array
@@ -72,5 +80,20 @@ class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMap
 
         // If it's not a BSONDocument, return it as-is (assuming it's already a string or null)
         return $channel ?? 'N/A';
+    }
+
+    /**
+     * Get export metadata for instant chat detailed reports
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'instant_chat_logs',
+            'exportType' => 'instant_chat_detailed',
+            'description' => 'Detailed report of instant chat interactions and messages',
+        ];
     }
 }

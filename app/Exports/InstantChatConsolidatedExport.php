@@ -2,23 +2,36 @@
 
 namespace App\Exports;
 
+use App\Contracts\CsvExportableInterface;
 use App\Enums\QuoteStatusEnum;
 use App\Services\InstantAlfredService;
-use App\Traits\ExcelExportable;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Traits\InstantChatChunkedExportable;
+use App\Traits\ModernCsvExportable;
 
-class InstantChatConsolidatedExport implements FromCollection, WithHeadings, WithMapping
+class InstantChatConsolidatedExport implements CsvExportableInterface
 {
-    use ExcelExportable, Exportable {
-        ExcelExportable::download insteadof Exportable;
+    use InstantChatChunkedExportable, ModernCsvExportable;
+
+    public function collection(array $requestParams = []): \Illuminate\Support\Collection
+    {
+        // Note: InstantAlfredService currently uses request() directly,
+        // so parameters are handled via the request instance
+        return app(InstantAlfredService::class)->generateChatConsolidateReport();
     }
 
-    public function collection($requestParams = [])
+    /**
+     * Get the query builder instance to use for chunking
+     * Returns the base SQL query builder for chunked processing with MongoDB integration
+     */
+    public function getQuery(array $requestParams = []): \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder|null
     {
-        return app(InstantAlfredService::class)->generateChatConsolidateReport();
+        $instantAlfredService = app(InstantAlfredService::class);
+        $query = $instantAlfredService->getChatConsolidateReportQuery($requestParams);
+
+        // The InstantAlfredService returns a Query\Builder, but our interface expects Eloquent\Builder
+        // Since we have a custom processChunkedQuery method, this type mismatch is handled there
+        // @phpstan-ignore-next-line
+        return $query;
     }
 
     public function headings(): array
@@ -97,5 +110,20 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
         return implode(', ', $channels);
 
         return 'N/A';
+    }
+
+    /**
+     * Get export metadata for instant chat consolidated reports
+     */
+    public function getExportMetadata(array $requestParams = []): array
+    {
+        return [
+            'exportClass' => static::class,
+            'timestamp' => now()->toISOString(),
+            'parameters' => $requestParams,
+            'sourceTable' => 'instant_chat_logs',
+            'exportType' => 'instant_chat_consolidated',
+            'description' => 'Consolidated report of instant chat interactions',
+        ];
     }
 }

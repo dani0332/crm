@@ -255,6 +255,48 @@ class InstantAlfredService extends BaseService
         return $partialQuery;
     }
 
+    /**
+     * Get the base query builder for consolidated chat reports (chunked processing)
+     * This method returns a query builder instead of executing it, allowing for chunked processing
+     */
+    public function getChatConsolidateReportQuery(array $requestParams = [])
+    {
+        // Create a request instance from parameters if not available
+        $request = $this->createRequestFromParams($requestParams);
+
+        return $this->processSqlChatFilters($request);
+    }
+
+    /**
+     * Get the base query builder for detailed chat reports (chunked processing)
+     * Note: This is more complex due to MongoDB integration, so for now we return null
+     * to fall back to collection-based processing
+     */
+    public function getChatDetailedReportQuery(array $requestParams = [])
+    {
+        // Detailed reports require MongoDB aggregation which doesn't support chunked query builders
+        // Return null to fall back to collection-based processing
+        return null;
+    }
+
+    /**
+     * Create a request instance from parameters array
+     * This helps support both request() and parameter-based processing
+     */
+    private function createRequestFromParams(array $requestParams = [])
+    {
+        $currentRequest = request();
+
+        // If we have parameters, merge them with current request
+        if (! empty($requestParams)) {
+            // Create new request instance with merged data
+            $mergedData = array_merge($currentRequest->all(), $requestParams);
+            $currentRequest->merge($mergedData);
+        }
+
+        return $currentRequest;
+    }
+
     public function generateChatConsolidateReport()
     {
 
@@ -292,6 +334,82 @@ class InstantAlfredService extends BaseService
         });
 
         return $data;
+    }
+
+    /**
+     * Process a chunk of consolidated chat data (used by chunked CSV export)
+     * This method processes MongoDB data for a chunk of SQL records
+     */
+    public function processConsolidatedChunk($sqlRecords, array $requestParams = [])
+    {
+        $request = $this->createRequestFromParams($requestParams);
+
+        // Extract UUIDs from the chunk
+        $uuids = collect($sqlRecords)->pluck('uuid')->toArray();
+
+        if (empty($uuids)) {
+            return collect($sqlRecords);
+        }
+
+        // Create MongoDB pipeline for this chunk
+        $mongoPipeline = $this->createPipeline($request, $uuids, $request->report ?? 'consolidated');
+
+        try {
+            // Get MongoDB results for this chunk
+            $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline))->toArray();
+            $mongoResultsCollection = collect($mongoResults);
+
+            // Merge SQL and MongoDB data
+            foreach ($sqlRecords as $sqlRecord) {
+                $relatedMongoRecord = $mongoResultsCollection->firstWhere('_id', $sqlRecord->uuid);
+
+                // Set quote type
+                $sqlRecord->quote_type = $request->quoteType ?? explode('-', $sqlRecord->code ?? '')[0] ?? 'N/A';
+
+                // Set lead assignment trigger text
+                $sqlRecord->lead_assignment_trigger_text = $sqlRecord->lead_assignment_trigger
+                    ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlRecord->lead_assignment_trigger)
+                    : 'N/A';
+
+                // Merge MongoDB data if available
+                if ($relatedMongoRecord) {
+                    $sqlRecord->communication_channels = $relatedMongoRecord['communication_channels'] ?? [];
+                    $sqlRecord->customer_interactions = $relatedMongoRecord['customer_interactions'] ?? 0;
+                    $sqlRecord->ai_interactions = $relatedMongoRecord['ai_interactions'] ?? 0;
+                    $sqlRecord->total_ai_interactions = $relatedMongoRecord['total_ai_interactions'] ?? 0;
+                    $sqlRecord->fallbacks = $relatedMongoRecord['fallbacks'] ?? 0;
+                    $sqlRecord->date_of_first_interaction = $relatedMongoRecord['date_of_first_interaction'] ?? 'N/A';
+                } else {
+                    // Set default values if no MongoDB data found
+                    $sqlRecord->communication_channels = [];
+                    $sqlRecord->customer_interactions = 0;
+                    $sqlRecord->ai_interactions = 0;
+                    $sqlRecord->total_ai_interactions = 0;
+                    $sqlRecord->fallbacks = 0;
+                    $sqlRecord->date_of_first_interaction = 'N/A';
+                }
+            }
+        } catch (\Exception $e) {
+            // Log error but continue processing with default values
+            \Illuminate\Support\Facades\Log::error('MongoDB processing failed for consolidated chunk', [
+                'uuids_count' => count($uuids),
+                'error' => $e->getMessage(),
+            ]);
+
+            // Set default values for all records in chunk
+            foreach ($sqlRecords as $sqlRecord) {
+                $sqlRecord->quote_type = $request->quoteType ?? 'N/A';
+                $sqlRecord->lead_assignment_trigger_text = 'N/A';
+                $sqlRecord->communication_channels = [];
+                $sqlRecord->customer_interactions = 0;
+                $sqlRecord->ai_interactions = 0;
+                $sqlRecord->total_ai_interactions = 0;
+                $sqlRecord->fallbacks = 0;
+                $sqlRecord->date_of_first_interaction = 'N/A';
+            }
+        }
+
+        return collect($sqlRecords);
     }
 
     public function generateChatDetailedReport()
