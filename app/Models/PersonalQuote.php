@@ -348,11 +348,6 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
     }
 
-    public function emirate()
-    {
-        return $this->emirates();
-    }
-
     public function claimHistory()
     {
         return $this->belongsTo(ClaimHistory::class, 'claim_history_id');
