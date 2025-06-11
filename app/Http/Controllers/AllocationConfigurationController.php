@@ -1,15 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Http\Controllers;
 
+use App\Enums\QuoteTypes;
 use App\Http\Requests\AllocationConfigurationRequest;
 use App\Models\Allocation\AllocationConfiguration;
 use App\Models\QuoteType;
 use App\Services\AllocationConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Response;
 
 class AllocationConfigurationController extends Controller
@@ -23,9 +23,6 @@ class AllocationConfigurationController extends Controller
         return QuoteType::where('is_active', 1)->whereIn('short_code', ['SAV'])->get();
     }
 
-    /**
-     * Display the allocation configuration form
-     */
     public function index(Request $request): Response
     {
         return inertia('Admin/AllocationConfig/AllocationConfiguration/Form', [
@@ -34,16 +31,15 @@ class AllocationConfigurationController extends Controller
         ]);
     }
 
-    /**
-     * Fetch configuration for a specific quote type (API endpoint)
-     */
     public function fetchConfiguration(Request $request)
     {
         $request->validate([
-            'quote_type' => 'required|string',
+            'quote_type' => [Rule::enum(QuoteTypes::class)],
         ]);
 
-        $configuration = AllocationConfiguration::where('quote_type', $request->quote_type)->first();
+        $quoteType = QuoteTypes::from($request->quote_type);
+
+        $configuration = $this->allocationConfigurationService->getConfig($quoteType);
 
         return response()->json([
             'success' => true,
@@ -51,11 +47,9 @@ class AllocationConfigurationController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created allocation configuration
-     */
     public function store(AllocationConfigurationRequest $request)
     {
+        dd($request->all());
         try {
             $configuration = $this->allocationConfigurationService->createConfiguration(
                 $request->validated(),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\QuoteTypes;
 use App\Models\Allocation\AllocationConfiguration;
 use App\Models\Nationality;
 use Illuminate\Support\Collection;
@@ -115,63 +116,6 @@ class AllocationConfigurationService
     }
 
     /**
-     * Validate bracket structure
-     */
-    public function validateBracketStructure(array $brackets): bool
-    {
-        foreach ($brackets as $bracket) {
-            if (! isset($bracket['min']) || ! isset($bracket['max']) || ! isset($bracket['profiles'])) {
-                return false;
-            }
-
-            if (! is_numeric($bracket['min']) || ! is_numeric($bracket['max'])) {
-                return false;
-            }
-
-            if ($bracket['min'] > $bracket['max']) {
-                return false;
-            }
-
-            foreach ($bracket['profiles'] as $profile) {
-                if (! isset($profile['advisorIds']) || ! isset($profile['nationalityIds'])) {
-                    return false;
-                }
-
-                if (! is_array($profile['advisorIds']) || ! is_array($profile['nationalityIds'])) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Check for overlapping brackets
-     */
-    public function hasOverlappingBrackets(array $brackets): bool
-    {
-        $count = count($brackets);
-
-        for ($i = 0; $i < $count; $i++) {
-            for ($j = $i + 1; $j < $count; $j++) {
-                $bracket1 = $brackets[$i];
-                $bracket2 = $brackets[$j];
-
-                // Check if brackets overlap
-                if (
-                    ($bracket1['min'] <= $bracket2['max'] && $bracket1['max'] >= $bracket2['min']) ||
-                    ($bracket2['min'] <= $bracket1['max'] && $bracket2['max'] >= $bracket1['min'])
-                ) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * Get configuration by quote type
      */
     public function getConfigurationByQuoteType(string $quoteType): ?AllocationConfiguration
@@ -210,5 +154,10 @@ class AllocationConfigurationService
         }
 
         return null;
+    }
+
+    public function getConfig(QuoteTypes $quoteType): AllocationConfiguration
+    {
+        return AllocationConfiguration::where('quote_type', $quoteType)->first();
     }
 }
