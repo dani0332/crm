@@ -502,7 +502,7 @@ class CentralService extends BaseService
             case QuoteTypes::SAVINGS->value:
                 $endpoint = '/process-savings-quote-plan';
                 $data = [
-                    'planIds' => [intval($data->plan_id)],
+                    'planId' => intval($data->plan_id),
                     'quoteUID' => $uuid,
                     'quoteTypeId' => QuoteTypeId::Savings,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
