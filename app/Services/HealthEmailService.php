@@ -326,4 +326,30 @@ class HealthEmailService extends BaseService
             return false;
         }
     }
+
+    public function sendSICHealthFollowupsWA($lead)
+    {
+        try {
+            
+        LoggerService::startQuoteLogging(QuoteTypes::HEALTH->refId($lead->uuid));
+        LoggerService::info('Sending SIC Health Followups WA ');
+        $isFollowupExecuted = isFollowupExecuted($lead->uuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value);
+            if($isFollowupExecuted){
+                LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");
+                return;
+            }
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::SIC_HEALTH_FOLLOWUPS_WA);
+            $workflowURL = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
+            $response = app(BirdService::class)->triggerWebHookRequest($workflowURL, $emailData);
+
+            createQuoteWorkFlowDetails($lead, $response, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value, QuoteTypeId::Health);
+            
+            LoggerService::info("SIC Health Followups WA executed for lead: {$lead->uuid}");
+
+        } catch (\Exception $exception) {
+            LoggerService::error('Error sending SIC Health Followups WA ', exception: $exception);
+        }
+
+    }
 }

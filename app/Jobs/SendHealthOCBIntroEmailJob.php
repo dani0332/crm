@@ -12,6 +12,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use App\Enums\QuoteTypes;
+use App\Services\Logger\LoggerService;
+use App\Enums\QuoteFlowType;
 
 class SendHealthOCBIntroEmailJob implements ShouldQueue
 {
@@ -59,6 +62,15 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
                 info("SendHealthOCBIntroEmailJob - Skipping OCB Email because REVIVAL - UUID: {$this->quoteUuid}");
 
                 return;
+            }
+
+            if(getWhatsappConsent(QuoteTypes::HEALTH, $this->quoteUuid)){
+                if(!isFollowupExecuted($this->quoteUuid, QuoteFlowType::SIC_HEALTH_FOLLOWUPS_WA->value)){
+                    SendHealthSICWAFollowupJob::dispatch($this->quoteUuid)->delay(now()->addSeconds(50));
+                }
+                else {
+                    LoggerService::info("SIC Health Followups WA already executed for lead: {$lead->uuid}");
+                }
             }
 
             if ($lead->sic_flow_enabled) {
