@@ -51,29 +51,51 @@ class AllocationConfigurationController extends Controller
     /**
      * Store a newly created allocation configuration
      */
-    public function store(AllocationConfigurationRequest $request): RedirectResponse
+    public function store(AllocationConfigurationRequest $request)
     {
-        $this->allocationConfigurationService->createConfiguration(
-            $request->validated(),
-            Auth::id()
-        );
+        try {
+            $configuration = $this->allocationConfigurationService->createConfiguration(
+                $request->validated(),
+                Auth::id()
+            );
 
-        return redirect()->route('admin.allocation-configuration.index', ['quote_type' => $request->quote_type])
-            ->with('success', 'Allocation configuration saved successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Allocation configuration saved successfully.',
+                'data' => $configuration,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save allocation configuration.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
      * Update the specified allocation configuration
      */
-    public function update(AllocationConfigurationRequest $request, AllocationConfiguration $allocationConfiguration): RedirectResponse
+    public function update(AllocationConfigurationRequest $request, AllocationConfiguration $allocationConfiguration)
     {
-        $this->allocationConfigurationService->updateConfiguration(
-            $allocationConfiguration,
-            $request->validated(),
-            Auth::id()
-        );
+        try {
+            $updatedConfiguration = $this->allocationConfigurationService->updateConfiguration(
+                $allocationConfiguration,
+                $request->validated(),
+                Auth::id()
+            );
 
-        return redirect()->route('admin.allocation-configuration.index', ['quote_type' => $request->quote_type])
-            ->with('success', 'Allocation configuration updated successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Allocation configuration updated successfully.',
+                'data' => $updatedConfiguration,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update allocation configuration.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

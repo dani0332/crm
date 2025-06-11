@@ -14,6 +14,13 @@ const { isRequired } = useRules();
 // Loading state for quote type changes
 const isQuoteTypeLoading = ref(false);
 
+// Form submission loading state
+const isSubmitting = ref(false);
+
+// Success/error messages
+const successMessage = ref('');
+const errorMessage = ref('');
+
 // Template data - this will be populated by template components
 const templateData = ref({});
 
@@ -182,9 +189,11 @@ console.log('AllocationConfiguration Form initialized');
 console.log('Initial form.quote_type:', form.quote_type);
 console.log('Quote type options:', quoteTypeOptions.value);
 
-function onSubmit(isValid) {
+async function onSubmit(isValid) {
   if (isValid) {
-    form.processing = true;
+    isSubmitting.value = true;
+    errorMessage.value = '';
+    successMessage.value = '';
 
     // Merge common form data with template-specific data
     const submitData = {
@@ -192,41 +201,55 @@ function onSubmit(isValid) {
       ...templateData.value,
     };
 
-    if (currentConfiguration.value) {
-      form.submit(
-        'put',
-        route(
-          'admin.allocation-configuration.update',
-          currentConfiguration.value.id,
-        ),
-        {
-          data: submitData,
-          onError: errors => {
-            Object.keys(errors).forEach(function (key) {
-              form.setError(key, errors[key]);
-            });
-            form.processing = false;
-            return false;
-          },
-          onSuccess: () => {
-            form.processing = false;
-          },
-        },
-      );
-    } else {
-      form.submit('post', route('admin.allocation-configuration.store'), {
-        data: submitData,
-        onError: errors => {
-          Object.keys(errors).forEach(function (key) {
-            form.setError(key, errors[key]);
-          });
-          form.processing = false;
-          return false;
-        },
-        onSuccess: () => {
-          form.processing = false;
-        },
-      });
+    try {
+      let response;
+
+      if (currentConfiguration.value) {
+        // Update existing configuration
+        response = await axios.put(
+          route(
+            'admin.allocation-configuration.update',
+            currentConfiguration.value.id,
+          ),
+          submitData,
+        );
+      } else {
+        // Create new configuration
+        response = await axios.post(
+          route('admin.allocation-configuration.store'),
+          submitData,
+        );
+      }
+
+      if (response.data.success) {
+        successMessage.value = response.data.message;
+        // Update current configuration with the returned data
+        currentConfiguration.value = response.data.data;
+        // Clear any form errors
+        form.clearErrors();
+      } else {
+        errorMessage.value =
+          response.data.message ||
+          'An error occurred while saving the configuration.';
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+
+      if (error.response && error.response.status === 422) {
+        // Validation errors
+        const validationErrors = error.response.data.errors || {};
+        Object.keys(validationErrors).forEach(key => {
+          form.setError(key, validationErrors[key][0]);
+        });
+        errorMessage.value =
+          'Please correct the validation errors and try again.';
+      } else if (error.response && error.response.data.message) {
+        errorMessage.value = error.response.data.message;
+      } else {
+        errorMessage.value = 'An unexpected error occurred. Please try again.';
+      }
+    } finally {
+      isSubmitting.value = false;
     }
   }
 }
@@ -382,15 +405,30 @@ function onSubmit(isValid) {
 
         <!-- Success/Error Messages -->
         <div
+          v-if="successMessage"
+          class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4"
+        >
+          <p class="text-sm text-green-700">{{ successMessage }}</p>
+        </div>
+
+        <div
+          v-if="errorMessage"
+          class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"
+        >
+          <p class="text-sm text-red-700">{{ errorMessage }}</p>
+        </div>
+
+        <!-- Legacy flash messages (keep for backwards compatibility) -->
+        <div
           v-if="$page.props.flash.success"
-          class="bg-green-50 border border-green-200 rounded-lg p-4"
+          class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4"
         >
           <p class="text-sm text-green-700">{{ $page.props.flash.success }}</p>
         </div>
 
         <div
           v-if="$page.props.flash.error"
-          class="bg-red-50 border border-red-200 rounded-lg p-4"
+          class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4"
         >
           <p class="text-sm text-red-700">{{ $page.props.flash.error }}</p>
         </div>
@@ -407,7 +445,7 @@ function onSubmit(isValid) {
                 size="md"
                 color="emerald"
                 type="submit"
-                :loading="form.processing"
+                :loading="isSubmitting"
               >
                 {{ currentConfiguration ? 'Update' : 'Save' }}
                 {{ form.quote_type }} Configuration
