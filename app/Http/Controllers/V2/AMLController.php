@@ -652,10 +652,8 @@ class AMLController extends Controller
 
         // Reminder:: Entity id is Insured ID which we get from fetchEntity() this function
         $insured = Insured::where('id', $request->entity_id)->first();
-
         $this->updateInsuredInPersonalQuote($request->quote_type_id, $quoteObject, $insured);
 
-        // NEED TO CHANGE TO LATEST INSURED
         $customerInsured = CustomerInsured::where('customer_id', $quoteObject->customer_id)
             ->where('insured_id', $insured->id)
             ->whereNull('quote_type_id')
@@ -666,6 +664,7 @@ class AMLController extends Controller
             $customerInsured->update([
                 'quote_type_id' => $request->quote_type_id,
                 'quote_request_id' => $request->quote_request_id,
+                'updated_at' => now(),
             ]);
         } else {
             CustomerInsured::updateOrCreate([
@@ -674,6 +673,7 @@ class AMLController extends Controller
             ], [
                 'customer_id' => $quoteObject->customer_id,
                 'insured_id' => $insured->id,
+                'updated_at' => now(),
             ]);
         }
 

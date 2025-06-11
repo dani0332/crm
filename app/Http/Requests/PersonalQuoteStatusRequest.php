@@ -50,22 +50,12 @@ class PersonalQuoteStatusRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $quoteObject = PersonalQuote::where('uuid', request()->quote_uuid)->firstOrFail();
-            // TODO:: Insured mapping verified
-
-            $customer = Customer::with([
-                'insured' => function ($query) {
-                    $query->where('quote_request_id', request()->quoteId)
-                        ->where('quote_type_id', QuoteTypes::getIdFromValue(request()->quoteType));
-                },
-            ])->where('id', $quoteObject->customer_id)->first();
-
-            // NEED TO CHANGE TO LATEST INSURED
+            $quoteObject = PersonalQuote::with('latestInsured', 'customer')->where('uuid', request()->quote_uuid)->firstOrFail();
             $customerProfileDetails = [
-                'insured_first_name' => ($customer?->insured?->first_name ?? $customer->insured_first_name) ?? null,
-                'insured_last_name' => ($customer?->insured?->last_name ?? $customer->insured_last_name) ?? null,
-                'emirates_id_number' => ($customer?->insured?->id_type == 'emiratesId') ? $customer?->insured?->id_number : ($customer->emirates_id_number ?? null),
-                'emirates_id_expiry_date' => $customer->emirates_id_expiry_date ?? null,
+                'insured_first_name' => ($quoteObject?->latestInsured?->first_name ?? $quoteObject?->customer?->insured_first_name) ?? null,
+                'insured_last_name' => ($quoteObject?->latestInsured?->last_name ?? $quoteObject?->customer?->insured_last_name) ?? null,
+                'emirates_id_number' => ($quoteObject?->latestInsured?->id_type == 'emiratesId') ? $quoteObject?->latestInsured?->id_number : ($quoteObject?->customer?->emirates_id_number ?? null),
+                'emirates_id_expiry_date' => $quoteObject?->customer?->emirates_id_expiry_date ?? null,
             ];
 
             if (in_array(null, $customerProfileDetails) && request()->quote_status_id == QuoteStatusEnum::TransactionApproved) {
