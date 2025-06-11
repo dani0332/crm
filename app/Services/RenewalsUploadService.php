@@ -1494,6 +1494,9 @@ class RenewalsUploadService
                 $ecomDetails = $this->healthQuoteService->getEcomDetails($quote);
                 $premium = isset($ecomDetails['priceWithVAT']) && $ecomDetails['priceWithVAT'] > 0 && $ecomDetails['priceWithVAT'] != '' && $ecomDetails['priceWithVAT'] != null ? $ecomDetails['priceWithVAT'] : $response->totalPremium;
                 $this->createHealthPayment($quote, $leadData, $premium, $renewalQuoteProcess);
+            } else {
+                // If payment link is not present, then update the renewal quote process good count
+                $this->updateRenewalQuoteProcess($renewalQuoteProcess, false, []);
             }
 
             return $response;
