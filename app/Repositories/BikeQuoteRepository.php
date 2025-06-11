@@ -3,8 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;

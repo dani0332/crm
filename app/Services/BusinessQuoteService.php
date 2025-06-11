@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\AMLStatusCode;
-use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;

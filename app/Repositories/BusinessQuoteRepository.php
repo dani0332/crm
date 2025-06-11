@@ -2,10 +2,8 @@
 
 namespace App\Repositories;
 
-use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
@@ -97,7 +95,7 @@ class BusinessQuoteRepository extends BaseRepository
                 'latestInsured' => function ($q) use ($quoteTypeId) {
                     $q->where('customer_insured.quote_type_id', $quoteTypeId);
                 },
-                'latestInsured.insuredKyc:id,insured_id', 
+                'latestInsured.insuredKyc:id,insured_id',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',

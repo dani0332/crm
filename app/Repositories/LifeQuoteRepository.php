@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\AMLStatusCode;
-use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -122,28 +121,28 @@ class LifeQuoteRepository extends BaseRepository
     public function fetchGetBy($column, $value)
     {
         $quote = $this->where($column, $value)->with([
-            'advisor', 
-            'quoteStatus', 
-            'nationality', 
-            'previousAdvisor', 
+            'advisor',
+            'quoteStatus',
+            'nationality',
+            'previousAdvisor',
             'lifeQuoteRequestDetail.lostReason',
-            'purposeOfInsurance', 
-            'children', 
-            'currency', 
-            'insuranceTenure', 
-            'numberOfYears', 
+            'purposeOfInsurance',
+            'children',
+            'currency',
+            'insuranceTenure',
+            'numberOfYears',
             'maritalStatus',
-            'paymentStatus', 
-            'customer.additionalContactInfo', 
-            'transactionType', 
+            'paymentStatus',
+            'customer.additionalContactInfo',
+            'transactionType',
             'insuranceProvider',
-            'payments.paymentMethod', 
-            'payments.paymentStatus', 
-            'payments.paymentSplits.paymentStatus', 
+            'payments.paymentMethod',
+            'payments.paymentStatus',
+            'payments.paymentSplits.paymentStatus',
             'payments.paymentSplits.paymentMethod',
-            'payments.paymentSplits.documents', 
-            'payments.paymentSplits.verifiedByUser', 
-            'payments.paymentSplits.processJob', 
+            'payments.paymentSplits.documents',
+            'payments.paymentSplits.verifiedByUser',
+            'payments.paymentSplits.processJob',
             'latestInsured' => function ($q) {
                 $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
             },

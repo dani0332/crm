@@ -3,14 +3,12 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLDecisionStatusEnum;
-use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\DocumentTypeCode;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\GenericRequestEnum;
-use App\Enums\Kyc;
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
@@ -372,20 +370,19 @@ class AMLController extends Controller
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
 
         LoggerService::startQuoteLogging($updateQuote, LoggerFeatureEnum::AML_SCREENING);
-        LoggerService::info(self::class.' fn: '.__FUNCTION__. ' - AML Screening Bridger - Process Started');
+        LoggerService::info(self::class.' fn: '.__FUNCTION__.' - AML Screening Bridger - Process Started');
 
         $systemUser = User::where('name', UserNameEnum::System)->first();
         $isAutomation = $AMLCheckRequest->is_automation ?? false;
         $processbyUser = $isAutomation ? $systemUser : auth()->user();
 
-
         if ($updateQuote) {
             [$status, $message, $getMemberOrUBODetails, $getLastScreening] = app(AMLService::class)->prepareScreeningData($AMLCheckRequest, $quoteType, $updateQuote);
 
-            if(!$status) {
+            if (! $status) {
                 return app(AMLService::class)->handleResponse($status, $message, $isAutomation);
             }
-            
+
             // Wrap insured processing and related operations in a single transaction
             [$shouldApplicableForScreening, $insured, $entityId] = DB::transaction(function () use ($AMLCheckRequest, $quoteTypeId, $updateQuote, $getLastScreening, $processbyUser, $isAutomation, $systemUser, $quoteRequestId) {
                 [$shouldApplicableForScreening, $insured, $entityId] = app(AMLService::class)->processInsuredDataForScreening($AMLCheckRequest, $quoteTypeId, $updateQuote, $getLastScreening);
