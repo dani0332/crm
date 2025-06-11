@@ -10,7 +10,6 @@ use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class DttHealthFollowUp extends Command
 {
