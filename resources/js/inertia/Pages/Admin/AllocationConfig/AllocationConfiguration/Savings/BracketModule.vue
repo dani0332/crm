@@ -68,8 +68,8 @@ const removeProfile = (bracket, profileIndex) => {
       </div>
 
       <div v-if="brackets.length === 0" class="text-center py-8 text-gray-500">
-        No "{{ type }}" brackets configured. Click "Create new price bracket" to
-        create one.
+        No {{ type.toLowerCase() }} brackets configured. Click "Create new price
+        bracket" to create one.
       </div>
 
       <div v-else class="space-y-6">
@@ -109,29 +109,45 @@ const removeProfile = (bracket, profileIndex) => {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label class="block text-sm font-medium text-gray-700">
-                Minimum Amount (USD) <span class="text-red-500">*</span>
+                Minimum Amount <span class="text-red-500">*</span>
               </label>
-              <input
+              <x-input
                 v-model.number="bracket.min"
                 type="number"
                 min="0"
                 step="0.01"
+                class="!mb-0 mt-1"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
+              >
+                <template #suffix>
+                  <div
+                    class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                  >
+                    <span>USD</span>
+                  </div>
+                </template>
+              </x-input>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">
-                Maximum Amount (USD) <span class="text-red-500">*</span>
+                Maximum Amount <span class="text-red-500">*</span>
               </label>
-              <input
+              <x-input
                 v-model.number="bracket.max"
                 type="number"
                 min="0"
                 step="0.01"
+                class="!mb-0 mt-1"
                 required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
+              >
+                <template #suffix>
+                  <div
+                    class="absolute inset-y-0 right-2 my-auto mr-2 inline h-5 w-5 shrink-0 select-none text-secondary-400"
+                  >
+                    <span>USD</span>
+                  </div>
+                </template>
+              </x-input>
             </div>
           </div>
 
