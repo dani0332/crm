@@ -134,7 +134,6 @@ class SavingsQuoteService extends BaseQuoteService
                     'currentlyInsuredWith',
                     'advisor',
                     'paymentStatus',
-                    'payments',
                     'quoteDetail',
                     'quoteDetail.lostReason',
                     'renewalBatchModel',
@@ -143,6 +142,25 @@ class SavingsQuoteService extends BaseQuoteService
                     'customer.additionalContactInfo',
                     'insuranceProviderPlan',
                     'insuranceProvider',
+                    'payments' => function ($q) {
+                        $q->with([
+                            'paymentStatus',
+                            'personalPlan',
+                            'paymentMethod',
+                            'paymentStatusLogs',
+                            'insuranceProvider',
+                            'paymentSplits' => function ($q) {
+                                $q->with([
+                                    'paymentStatus',
+                                    'paymentMethod',
+                                    'documents',
+                                    'verifiedByUser',
+                                    'paymentCharges',
+                                ])
+                                    ->orderBy('sr_no', 'asc');
+                            },
+                        ]);
+                    },
                 ])->select([
                     'personal_quotes.*',
                 ])->selectRaw("
