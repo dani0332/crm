@@ -9,6 +9,7 @@ use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class DttHealthFollowUp extends Command
@@ -108,13 +109,11 @@ class DttHealthFollowUp extends Command
 
         $jobs = [];
         foreach ($revivalLeads as $item) {
-            $jobs[] = new HealthRevivalFollowUpEmailJob($item['uuid'], $item['type']);
+            $jobs[] = (new HealthRevivalFollowUpEmailJob($item['uuid'], $item['type']))->delay(now()->addSeconds(10));
         }
 
         if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
-
+            Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
                     info($logPrefix.' all jobs completed successfully');
                 })
@@ -125,7 +124,7 @@ class DttHealthFollowUp extends Command
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(10)
+                ->name('Health Revival Follow Up Email Jobs')
                 ->dispatch();
         } else {
             info($logPrefix.'No HealthRevivalFollowUpEmailJobs Found');

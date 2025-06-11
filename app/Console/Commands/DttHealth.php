@@ -12,6 +12,7 @@ use App\Models\Transaction;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class DttHealth extends Command
@@ -118,13 +119,11 @@ class DttHealth extends Command
 
         $jobs = [];
         foreach ($filteredLeads as $item) {
-            $jobs[] = new HealthRevivalLeadsCreationJob($item);
+            $jobs[] = (new HealthRevivalLeadsCreationJob($item))->delay(now()->addSeconds(30));
         }
 
         if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
-
+            Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
                     info($logPrefix.' all jobs completed successfully');
                 })
@@ -135,7 +134,7 @@ class DttHealth extends Command
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(30)
+                ->name('Health DTT Batch Jobs')
                 ->dispatch();
         } else {
             info($logPrefix.'------No lead Found------');
