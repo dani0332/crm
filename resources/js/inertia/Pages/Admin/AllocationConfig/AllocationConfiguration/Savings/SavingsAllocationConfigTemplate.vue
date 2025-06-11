@@ -21,6 +21,7 @@ const emit = defineEmits(['data-update']);
 
 const lumpsumBrackets = ref([]);
 const regularBrackets = ref([]);
+const validationErrors = ref({});
 
 const initializeData = () => {
   if (props.configuration) {
@@ -42,9 +43,95 @@ const emitData = () => {
   emit('data-update', data);
 };
 
+const validateBracket = (bracket, bracketIndex, type) => {
+  const errors = [];
+
+  if (!bracket.min || bracket.min <= 0) {
+    errors.push(
+      `${type} Bracket ${bracketIndex + 1}: Minimum amount is required and must be greater than 0`,
+    );
+  }
+
+  if (!bracket.max || bracket.max <= 0) {
+    errors.push(
+      `${type} Bracket ${bracketIndex + 1}: Maximum amount is required and must be greater than 0`,
+    );
+  }
+
+  if (
+    bracket.min &&
+    bracket.max &&
+    parseFloat(bracket.min) >= parseFloat(bracket.max)
+  ) {
+    errors.push(
+      `${type} Bracket ${bracketIndex + 1}: Minimum amount must be less than maximum amount`,
+    );
+  }
+
+  if (!bracket.profiles || bracket.profiles.length === 0) {
+    errors.push(
+      `${type} Bracket ${bracketIndex + 1}: At least one advisor profile is required`,
+    );
+  } else {
+    bracket.profiles.forEach((profile, profileIndex) => {
+      if (!profile.advisorIds || profile.advisorIds.length === 0) {
+        errors.push(
+          `${type} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one advisor must be selected`,
+        );
+      }
+
+      if (!profile.nationalityIds || profile.nationalityIds.length === 0) {
+        errors.push(
+          `${type} Bracket ${bracketIndex + 1}, Profile ${profileIndex + 1}: At least one nationality must be selected`,
+        );
+      }
+    });
+  }
+
+  return errors;
+};
+
+const validateAllBrackets = () => {
+  const errors = [];
+
+  if (
+    lumpsumBrackets.value.length === 0 &&
+    regularBrackets.value.length === 0
+  ) {
+    errors.push('At least one bracket (Lumpsum or Regular) must be configured');
+    return errors;
+  }
+
+  lumpsumBrackets.value.forEach((bracket, index) => {
+    errors.push(...validateBracket(bracket, index, 'Lumpsum'));
+  });
+
+  regularBrackets.value.forEach((bracket, index) => {
+    errors.push(...validateBracket(bracket, index, 'Regular'));
+  });
+
+  return errors;
+};
+
+const validate = () => {
+  const errors = validateAllBrackets();
+  validationErrors.value = errors;
+  return {
+    isValid: errors.length === 0,
+    errors: errors,
+  };
+};
+
+const clearValidationErrors = () => {
+  validationErrors.value = {};
+};
+
 watch(
   [lumpsumBrackets, regularBrackets],
   () => {
+    if (Object.keys(validationErrors.value).length > 0) {
+      clearValidationErrors();
+    }
     emitData();
   },
   { deep: true },
@@ -70,7 +157,6 @@ const createEmptyBracket = () => ({
   profiles: [],
 });
 
-// Lumpsum bracket handlers
 const addLumpsumBracket = () => {
   lumpsumBrackets.value.push(createEmptyBracket());
 };
@@ -79,7 +165,6 @@ const removeLumpsumBracket = index => {
   lumpsumBrackets.value.splice(index, 1);
 };
 
-// Regular bracket handlers
 const addRegularBracket = () => {
   regularBrackets.value.push(createEmptyBracket());
 };
@@ -88,7 +173,6 @@ const removeRegularBracket = index => {
   regularBrackets.value.splice(index, 1);
 };
 
-// Profile handlers (these will be handled by the BracketModule component internally)
 const onAddProfile = () => {
   // Profile addition is handled within BracketModule
 };
@@ -96,11 +180,27 @@ const onAddProfile = () => {
 const onRemoveProfile = () => {
   // Profile removal is handled within BracketModule
 };
+
+defineExpose({
+  validate,
+  clearValidationErrors,
+});
 </script>
 
 <template>
   <div class="space-y-6">
-    <!-- Lumpsum Brackets -->
+    <div
+      v-if="validationErrors.length > 0"
+      class="bg-red-50 border border-red-200 rounded-lg p-4"
+    >
+      <h4 class="text-sm font-medium text-red-800 mb-2">
+        Please correct the following errors:
+      </h4>
+      <ul class="text-sm text-red-700 list-disc list-inside space-y-1">
+        <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+      </ul>
+    </div>
+
     <BracketModule
       title="Investment Frequency - Lumpsum"
       type="Lumpsum"
@@ -113,7 +213,6 @@ const onRemoveProfile = () => {
       @remove-profile="onRemoveProfile"
     />
 
-    <!-- Regular Brackets -->
     <BracketModule
       title="Investment Frequency - Regular"
       type="Regular"
