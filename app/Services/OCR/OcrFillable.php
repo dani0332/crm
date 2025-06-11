@@ -165,7 +165,10 @@ trait OcrFillable
         }
 
         if ($this->isEnabled($quote, $providersWithCommissionVatApplicable)) {
-            $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->comission_vat_applicable;
+            if(! $quote->payment?->commission_vat_applicable){
+                $dataToUpdate['commission_vat_applicable'] = $this->resolveProp($commission, 'baseAmount') ?? $quote->payment?->commission_vat_applicable;
+            }
+
         }
 
         if (! empty($dataToUpdate)) {
