@@ -103,7 +103,6 @@ const onRemoveProfile = () => {
     <!-- Lumpsum Brackets -->
     <BracketModule
       title="Investment Frequency - Lumpsum"
-      type="Lumpsum"
       :brackets="lumpsumBrackets"
       :advisor-options="advisorOptions"
       :nationality-options="nationalityOptions"
@@ -116,7 +115,6 @@ const onRemoveProfile = () => {
     <!-- Regular Brackets -->
     <BracketModule
       title="Investment Frequency - Regular"
-      type="Regular"
       :brackets="regularBrackets"
       :advisor-options="advisorOptions"
       :nationality-options="nationalityOptions"

@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 
-import SavingsAllocationConfigTemplate from './SavingsAllocationConfigTemplate.vue';
+import SavingsAllocationConfigTemplate from './Savings/SavingsAllocationConfigTemplate.vue';
 
 const props = defineProps({
   quoteTypes: Array,
