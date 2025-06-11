@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\QuoteTypes;
-use App\Http\Requests\AllocationConfigurationRequest;
-use App\Models\Allocation\AllocationConfiguration;
-use App\Services\AllocationConfigurationService;
-use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Response;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteType;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
+use App\Services\AllocationConfigurationService;
+use App\Models\Allocation\AllocationConfiguration;
+use App\Http\Requests\AllocationConfigurationRequest;
 
 class AllocationConfigurationController extends Controller
 {
@@ -20,13 +21,18 @@ class AllocationConfigurationController extends Controller
     ) {
     }
 
+    private function getQuoteTypes()
+    {
+        return QuoteType::where('is_active', 1)->whereIn('short_code', ['SAV', 'CAR'])->get();
+    }
+
     /**
      * Display the allocation configuration form
      */
     public function index(Request $request): Response
     {
         return inertia('Admin/AllocationConfig/AllocationConfiguration/Form', [
-            'quoteTypes' => QuoteTypes::allTypesWithIds(),
+            'quoteTypes' => $this->getQuoteTypes(),
             'nationalities' => $this->allocationConfigurationService->getNationalities(),
         ]);
     }

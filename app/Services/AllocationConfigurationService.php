@@ -71,14 +71,6 @@ class AllocationConfigurationService
     }
 
     /**
-     * Get all advisors for dropdown
-     */
-    public function getAdvisors(): Collection
-    {
-        return User::where('is_active', 1)->get();
-    }
-
-    /**
      * Get all nationalities for dropdown
      */
     public function getNationalities(): Collection
