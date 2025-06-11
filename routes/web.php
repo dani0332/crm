@@ -796,6 +796,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // Allocation Configuration Routes
     Route::get('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'index'])
         ->name('admin.allocation-configuration.index');
+    Route::post('allocation-configuration/fetch', [\App\Http\Controllers\AllocationConfigurationController::class, 'fetchConfiguration'])
+        ->name('admin.allocation-configuration.fetch');
     Route::post('allocation-configuration', [\App\Http\Controllers\AllocationConfigurationController::class, 'store'])
         ->name('admin.allocation-configuration.store');
     Route::put('allocation-configuration/{allocationConfiguration}', [\App\Http\Controllers\AllocationConfigurationController::class, 'update'])

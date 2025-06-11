@@ -5,17 +5,11 @@ import { Link } from '@inertiajs/vue3';
 import SavingsAllocationConfigTemplate from './SavingsAllocationConfigTemplate.vue';
 
 const props = defineProps({
-  configuration: Object,
   quoteTypes: Array,
-  advisors: Array,
   nationalities: Array,
-  selectedQuoteType: String,
 });
 
 const { isRequired } = useRules();
-
-// Always start with empty quote type selection - user must choose first
-const selectedQuoteType = ref('');
 
 // Loading state for quote type changes
 const isQuoteTypeLoading = ref(false);
@@ -102,17 +96,15 @@ const fetchConfiguration = async quoteTypeName => {
 
   try {
     console.log('Fetching configuration for quote type:', quoteTypeName);
-    const response = await axios.get(
-      route('admin.allocation-configuration.index'),
+    const response = await axios.post(
+      route('admin.allocation-configuration.fetch'),
       {
-        params: {
-          quote_type: quoteTypeName,
-        },
+        quote_type: quoteTypeName,
       },
     );
 
-    if (response.data.props && response.data.props.configuration) {
-      currentConfiguration.value = response.data.props.configuration;
+    if (response.data.success && response.data.data) {
+      currentConfiguration.value = response.data.data;
       console.log('Configuration found:', currentConfiguration.value);
     } else {
       currentConfiguration.value = null;
@@ -126,7 +118,7 @@ const fetchConfiguration = async quoteTypeName => {
 
 // Handle quote type change
 const handleQuoteTypeChange = async newQuoteType => {
-  console.log('Quote type changed to:', newQuoteType);
+  console.log('handleQuoteTypeChange called with:', newQuoteType);
 
   // Set loading state
   isQuoteTypeLoading.value = true;
@@ -163,6 +155,20 @@ const handleQuoteTypeChange = async newQuoteType => {
   }
 };
 
+// Watch form.quote_type for changes (like NationalityAllocation does)
+watch(
+  () => form.quote_type,
+  (newQuoteType, oldQuoteType) => {
+    console.log('form.quote_type watcher triggered:', {
+      newQuoteType,
+      oldQuoteType,
+    });
+    if (newQuoteType && newQuoteType !== oldQuoteType) {
+      handleQuoteTypeChange(newQuoteType);
+    }
+  },
+);
+
 // Handle template data updates
 const onTemplateDataUpdate = data => {
   templateData.value = data;
@@ -172,6 +178,9 @@ const onTemplateDataUpdate = data => {
 initializeOptions();
 
 // Clean startup - no initial data fetching, user must select quote type first
+console.log('AllocationConfiguration Form initialized');
+console.log('Initial form.quote_type:', form.quote_type);
+console.log('Quote type options:', quoteTypeOptions.value);
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -243,20 +252,19 @@ function onSubmit(isValid) {
             <div class="max-w-md">
               <x-field label="Quote Type" required>
                 <x-select
-                  v-model="selectedQuoteType"
+                  v-model="form.quote_type"
                   :options="quoteTypeOptions"
                   placeholder="Select Quote Type"
                   filterable
                   :rules="[isRequired]"
                   :error="form.errors.quote_type"
                   :loading="isQuoteTypeLoading"
-                  @change="handleQuoteTypeChange"
                 />
               </x-field>
 
               <!-- No quote type selected yet -->
               <div
-                v-if="!selectedQuoteType && !isQuoteTypeLoading"
+                v-if="!form.quote_type && !isQuoteTypeLoading"
                 class="mt-2 text-sm text-gray-500"
               >
                 Please select a quote type to begin configuration
@@ -264,13 +272,12 @@ function onSubmit(isValid) {
 
               <!-- Quote type selected and loaded -->
               <div
-                v-if="selectedQuoteType && !isQuoteTypeLoading"
+                v-if="form.quote_type && !isQuoteTypeLoading"
                 class="mt-2 text-sm text-gray-600"
               >
                 <div class="flex items-center space-x-2">
                   <span
-                    >Quote Type ID:
-                    {{ getQuoteTypeId(selectedQuoteType) }}</span
+                    >Quote Type ID: {{ getQuoteTypeId(form.quote_type) }}</span
                   >
                   <span class="text-green-600">•</span>
                   <span v-if="advisorOptions.length > 0"
@@ -305,16 +312,16 @@ function onSubmit(isValid) {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Fetching {{ selectedQuoteType }} advisors and configuration...
+                Fetching {{ form.quote_type }} advisors and configuration...
               </div>
             </div>
           </div>
         </div>
 
         <!-- Template Rendering Based on Quote Type -->
-        <div v-if="selectedQuoteType && !isQuoteTypeLoading">
+        <div v-if="form.quote_type && !isQuoteTypeLoading">
           <!-- Savings Template -->
-          <div v-if="selectedQuoteType === 'Savings'">
+          <div v-if="form.quote_type === 'Savings'">
             <SavingsAllocationConfigTemplate
               :configuration="currentConfiguration"
               :advisor-options="advisorOptions"
@@ -327,12 +334,12 @@ function onSubmit(isValid) {
           <div v-else>
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <h3 class="text-lg font-medium text-yellow-900 mb-2">
-                {{ selectedQuoteType }} Configuration
+                {{ form.quote_type }} Configuration
               </h3>
               <p class="text-sm text-yellow-700">
-                Configuration template for {{ selectedQuoteType }} is coming
-                soon. This will be customized based on the specific requirements
-                for {{ selectedQuoteType }} products.
+                Configuration template for {{ form.quote_type }} is coming soon.
+                This will be customized based on the specific requirements for
+                {{ form.quote_type }} products.
               </p>
             </div>
           </div>
@@ -340,7 +347,7 @@ function onSubmit(isValid) {
 
         <!-- Loading state for template rendering -->
         <div
-          v-if="selectedQuoteType && isQuoteTypeLoading"
+          v-if="form.quote_type && isQuoteTypeLoading"
           class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
         >
           <div class="p-6 bg-white border-b border-gray-200">
@@ -367,7 +374,7 @@ function onSubmit(isValid) {
                   ></path>
                 </svg>
                 <p class="mt-2 text-sm text-gray-600">
-                  Loading {{ selectedQuoteType }} configuration template...
+                  Loading {{ form.quote_type }} configuration template...
                 </p>
               </div>
             </div>
@@ -391,7 +398,7 @@ function onSubmit(isValid) {
 
         <!-- Form Actions -->
         <div
-          v-if="selectedQuoteType && !isQuoteTypeLoading"
+          v-if="form.quote_type && !isQuoteTypeLoading"
           class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
         >
           <div class="p-6 bg-white border-b border-gray-200">
@@ -404,7 +411,7 @@ function onSubmit(isValid) {
                 :loading="form.processing"
               >
                 {{ currentConfiguration ? 'Update' : 'Save' }}
-                {{ selectedQuoteType }} Configuration
+                {{ form.quote_type }} Configuration
               </x-button>
             </div>
           </div>

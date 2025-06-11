@@ -25,20 +25,26 @@ class AllocationConfigurationController extends Controller
      */
     public function index(Request $request): Response
     {
-        $quoteType = $request->get('quote_type');
-        $configuration = null;
-
-        // If quote type is provided, try to find existing configuration
-        if ($quoteType) {
-            $configuration = AllocationConfiguration::where('quote_type', $quoteType)->first();
-        }
-
         return inertia('Admin/AllocationConfig/AllocationConfiguration/Form', [
-            'configuration' => $configuration,
             'quoteTypes' => QuoteTypes::allTypesWithIds(),
-            'advisors' => $this->allocationConfigurationService->getAdvisors(),
             'nationalities' => $this->allocationConfigurationService->getNationalities(),
-            'selectedQuoteType' => $quoteType,
+        ]);
+    }
+
+    /**
+     * Fetch configuration for a specific quote type (API endpoint)
+     */
+    public function fetchConfiguration(Request $request)
+    {
+        $request->validate([
+            'quote_type' => 'required|string',
+        ]);
+
+        $configuration = AllocationConfiguration::where('quote_type', $request->quote_type)->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => $configuration,
         ]);
     }
 
