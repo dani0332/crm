@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use Inertia\Response;
-use App\Enums\QuoteTypes;
+use App\Http\Requests\AllocationConfigurationRequest;
+use App\Models\Allocation\AllocationConfiguration;
 use App\Models\QuoteType;
+use App\Services\AllocationConfigurationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\RedirectResponse;
-use App\Services\AllocationConfigurationService;
-use App\Models\Allocation\AllocationConfiguration;
-use App\Http\Requests\AllocationConfigurationRequest;
+use Inertia\Response;
 
 class AllocationConfigurationController extends Controller
 {
     public function __construct(
         private readonly AllocationConfigurationService $allocationConfigurationService
-    ) {
-    }
+    ) {}
 
     private function getQuoteTypes()
     {

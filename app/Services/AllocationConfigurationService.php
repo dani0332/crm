@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Allocation\AllocationConfiguration;
-use App\Models\User;
 use App\Models\Nationality;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -93,7 +92,7 @@ class AllocationConfigurationService
     {
         $configuration = $this->findApplicableConfiguration($quoteType);
 
-        if (!$configuration) {
+        if (! $configuration) {
             return null;
         }
 
@@ -121,11 +120,11 @@ class AllocationConfigurationService
     public function validateBracketStructure(array $brackets): bool
     {
         foreach ($brackets as $bracket) {
-            if (!isset($bracket['min']) || !isset($bracket['max']) || !isset($bracket['profiles'])) {
+            if (! isset($bracket['min']) || ! isset($bracket['max']) || ! isset($bracket['profiles'])) {
                 return false;
             }
 
-            if (!is_numeric($bracket['min']) || !is_numeric($bracket['max'])) {
+            if (! is_numeric($bracket['min']) || ! is_numeric($bracket['max'])) {
                 return false;
             }
 
@@ -134,11 +133,11 @@ class AllocationConfigurationService
             }
 
             foreach ($bracket['profiles'] as $profile) {
-                if (!isset($profile['advisorIds']) || !isset($profile['nationalityIds'])) {
+                if (! isset($profile['advisorIds']) || ! isset($profile['nationalityIds'])) {
                     return false;
                 }
 
-                if (!is_array($profile['advisorIds']) || !is_array($profile['nationalityIds'])) {
+                if (! is_array($profile['advisorIds']) || ! is_array($profile['nationalityIds'])) {
                     return false;
                 }
             }
@@ -189,7 +188,7 @@ class AllocationConfigurationService
     {
         $configuration = $this->getConfigurationByQuoteType($quoteType);
 
-        if (!$configuration) {
+        if (! $configuration) {
             return null;
         }
 

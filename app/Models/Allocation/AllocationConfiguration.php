@@ -4,8 +4,8 @@ namespace App\Models\Allocation;
 
 use App\Enums\QuoteTypes;
 use App\Models\BaseMongoModel;
-use App\Models\User;
 use App\Models\QuoteType;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -21,14 +21,12 @@ class AllocationConfiguration extends BaseMongoModel implements AuditableContrac
         'regular_brackets',
         'history',
     ];
-
     protected $casts = [
         'quote_type' => QuoteTypes::class,
         'lumpsum_brackets' => 'array',
         'regular_brackets' => 'array',
         'history' => 'array',
     ];
-
     protected $auditInclude = [
         'quote_type_id',
         'quote_type',
@@ -66,6 +64,7 @@ class AllocationConfiguration extends BaseMongoModel implements AuditableContrac
                 $user = User::find($entry['user_id']);
                 $entry['user_name'] = $user?->name ?? 'Unknown User';
             }
+
             return $entry;
         })->toArray();
     }

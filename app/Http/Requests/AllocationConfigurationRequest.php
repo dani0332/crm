@@ -120,8 +120,8 @@ class AllocationConfigurationRequest extends FormRequest
             $allocationService = app(AllocationConfigurationService::class);
 
             // Validate lumpsum brackets structure
-            if ($this->has('lumpsum_brackets') && !empty($this->lumpsum_brackets)) {
-                if (!$allocationService->validateBracketStructure($this->lumpsum_brackets)) {
+            if ($this->has('lumpsum_brackets') && ! empty($this->lumpsum_brackets)) {
+                if (! $allocationService->validateBracketStructure($this->lumpsum_brackets)) {
                     $validator->errors()->add('lumpsum_brackets', 'Invalid bracket structure for lumpsum brackets.');
                 }
 
@@ -131,8 +131,8 @@ class AllocationConfigurationRequest extends FormRequest
             }
 
             // Validate regular brackets structure
-            if ($this->has('regular_brackets') && !empty($this->regular_brackets)) {
-                if (!$allocationService->validateBracketStructure($this->regular_brackets)) {
+            if ($this->has('regular_brackets') && ! empty($this->regular_brackets)) {
+                if (! $allocationService->validateBracketStructure($this->regular_brackets)) {
                     $validator->errors()->add('regular_brackets', 'Invalid bracket structure for regular brackets.');
                 }
 
