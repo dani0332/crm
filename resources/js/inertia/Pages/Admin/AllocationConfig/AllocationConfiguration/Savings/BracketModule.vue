@@ -6,6 +6,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  type: {
+    type: String,
+    required: true,
+  },
   brackets: {
     type: Array,
     required: true,
@@ -64,8 +68,8 @@ const removeProfile = (bracket, profileIndex) => {
       </div>
 
       <div v-if="brackets.length === 0" class="text-center py-8 text-gray-500">
-        No {{ title.toLowerCase() }} brackets configured. Click "Create new
-        price bracket" to create one.
+        No "{{ type }}" brackets configured. Click "Create new price bracket" to
+        create one.
       </div>
 
       <div v-else class="space-y-6">
@@ -76,7 +80,7 @@ const removeProfile = (bracket, profileIndex) => {
         >
           <div class="flex items-center justify-between mb-4">
             <h4 class="text-md font-medium text-gray-800">
-              {{ title }} (Bracket {{ bracketIndex + 1 }})
+              {{ type }} (Bracket {{ bracketIndex + 1 }})
             </h4>
             <x-button
               size="sm"
