@@ -74,8 +74,7 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.buy_lead_status as BLStatus',
                 'lead_allocation.normal_allocation_enabled as normalAllocationEnabled',
                 'lead_allocation.buy_lead_reset_capacity as blResetCap',
-                DB::RAW('(SELECT COUNT(*) FROM health_quote_request WHERE advisor_id = lead_allocation.user_id AND source LIKE "%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%") as im_total_assigned_leads'),
-                LIKE])
+                DB::RAW('(SELECT COUNT(*) FROM health_quote_request WHERE advisor_id = lead_allocation.user_id AND source LIKE "%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%") as im_total_assigned_leads')])
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
                 ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
