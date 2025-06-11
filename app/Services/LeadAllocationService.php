@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\DaysNameEnum;
-use App\Enums\EnvEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -74,7 +73,7 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.buy_lead_status as BLStatus',
                 'lead_allocation.normal_allocation_enabled as normalAllocationEnabled',
                 'lead_allocation.buy_lead_reset_capacity as blResetCap',
-                DB::RAW('(SELECT COUNT(*) FROM health_quote_request WHERE advisor_id = lead_allocation.user_id AND source LIKE "%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%") as im_total_assigned_leads'),
+                DB::RAW('(SELECT COUNT(*) FROM health_quote_request WHERE advisor_id = lead_allocation.user_id AND source = "'.LeadSourceEnum::IMCRM.'") as im_total_assigned_leads'),
             ])
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
