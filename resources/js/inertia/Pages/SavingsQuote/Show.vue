@@ -365,6 +365,21 @@ const selectedProviderPlan = ref({
   premium: page.props?.quote?.plans?.premium,
 });
 
+const displayPlans = computed(() => {
+  const plans = [...(props.selectedCustomerPlans || [])];
+
+  // Always ensure we have exactly 3 rows (max 3 plans possible)
+  while (plans.length < 3) {
+    plans.push({
+      id: null,
+      provider_name: null,
+      plan_name: null,
+    });
+  }
+
+  return plans;
+});
+
 const handlePlanSelected = plan => {
   selectedProviderPlan.value.id = plan.id;
   selectedProviderPlan.value.planName = plan.planName;
@@ -397,7 +412,10 @@ const onLoadAvailablePlansData = async () => {
             ...plan,
             investmentFrequency: 'Regular',
             currency: plan.currencyName || 'USD',
-            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
+            minimumInvestment: getEligibilityValue(
+              plan.eligibility,
+              'minimum_investment_amount',
+            ),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
@@ -417,7 +435,10 @@ const onLoadAvailablePlansData = async () => {
             ...plan,
             investmentFrequency: 'Lumpsum',
             currency: plan.currencyName || 'USD',
-            minimumInvestment: getEligibilityValue(plan.eligibility, 'minimum_investment_amount'),
+            minimumInvestment: getEligibilityValue(
+              plan.eligibility,
+              'minimum_investment_amount',
+            ),
             policyTerm: getEligibilityValue(plan.eligibility, 'policy_term'),
             isManualUpdate: plan.isManualUpdate || false,
             isDisabled: plan.isDisabled || false,
@@ -613,10 +634,6 @@ const onUpdateIndividualPlan = () => {
   planForm.post(route('savingsPlanUpdate'), {
     preserveScroll: true,
     onSuccess: () => {
-      notification.success({
-        title: 'Plan updated successfully',
-        position: 'top',
-      });
       onLoadAvailablePlansDataAndPlanDetails();
     },
     onError: errors => {
@@ -630,24 +647,31 @@ const onUpdateIndividualPlan = () => {
   });
 };
 
-const sendOCBEmail = () => {
+// Processing state for OCB email - matching Home implementation
+const processingOCBEmailNB = ref(false);
+
+const confirmSendEmail = () => {
+  processingOCBEmailNB.value = true;
   axios
-    .post(route('sendOCBEmail', { quoteType: 'savings' }), {
-      modelType: 'Savings',
-      quote_uuid: page.props.quote.uuid,
+    .post(`/quotes/savings/${page.props.quote.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
     })
     .then(response => {
+      processingOCBEmailNB.value = false;
       notification.success({
-        title: 'OCB Email sent successfully to customer',
+        title: response.data.success,
         position: 'top',
       });
-      modals.sendConfirm = false;
     })
     .catch(error => {
       notification.error({
         title: 'Error sending OCB Email',
         position: 'top',
       });
+      processingOCBEmailNB.value = false;
+    })
+    .finally(() => {
+      processingOCBEmailNB.value = false;
       modals.sendConfirm = false;
     });
 };
@@ -714,7 +738,9 @@ const sendOCBEmail = () => {
           >
         </x-tooltip>
         <template v-else>
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.SavingsQuotesEdit)" />
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.SavingsQuotesEdit)"
+          />
         </template>
 
         <Link
@@ -925,34 +951,39 @@ const sendOCBEmail = () => {
             <x-divider class="mb-4 mt-1" />
           </div>
 
-          <div v-if="selectedCustomerPlans && selectedCustomerPlans.length > 0">
-            <div class="inline-block">
-              <table class="border border-gray-300">
-                <thead>
-                  <tr class="bg-primary-600 text-white">
-                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider border-r border-primary-500">
-                      PROVIDER NAME
-                    </th>
-                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">
-                      PLAN NAME
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="plan in selectedCustomerPlans" :key="plan.id" class="hover:bg-gray-50">
-                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 border-r border-gray-300">
-                      {{ plan.provider_name || 'N/A' }}
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {{ plan.plan_name || 'N/A' }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div v-else class="text-center py-8 text-gray-500">
-            <p>No plans selected yet</p>
+          <div>
+            <table class="border border-gray-300 text-sm">
+              <thead>
+                <tr class="bg-primary-600 text-white">
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider border-r border-white whitespace-nowrap"
+                  >
+                    PROVIDER NAME
+                  </th>
+                  <th
+                    class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap"
+                  >
+                    PLAN NAME
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white">
+                <tr
+                  v-for="(plan, index) in displayPlans"
+                  :key="plan.id || `empty-${index}`"
+                  class="border-b border-gray-300 last:border-b-0"
+                >
+                  <td
+                    class="px-3 py-2 text-sm text-gray-900 border-r border-gray-300 whitespace-nowrap"
+                  >
+                    {{ plan.provider_name || 'N/A' }}
+                  </td>
+                  <td class="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">
+                    {{ plan.plan_name || 'N/A' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </template>
       </Collapsible>
@@ -1370,6 +1401,7 @@ const sendOCBEmail = () => {
                   color="orange"
                   class="mr-2"
                   :disabled="quote.advisor_id != $page.props.auth.user.id"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Send Savings Plans email to Customer
                 </x-button>
@@ -1458,10 +1490,14 @@ const sendOCBEmail = () => {
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
               <template #item-investmentFrequency="item">
-                <span class="text-primary-600">{{ item.investmentFrequency }}</span>
+                <span class="text-primary-600">{{
+                  item.investmentFrequency
+                }}</span>
               </template>
               <template #item-minimumInvestment="item">
-                <span class="text-primary-600">{{ item.minimumInvestment }}</span>
+                <span class="text-primary-600">{{
+                  item.minimumInvestment
+                }}</span>
               </template>
               <template #item-currency="item">
                 <span class="text-primary-600">{{ item.currency }}</span>
@@ -1667,7 +1703,10 @@ const sendOCBEmail = () => {
                             <x-button
                               color="primary"
                               size="sm"
-                              :disabled="page.props.lockLeadSectionsDetails?.plan_selection"
+                              :disabled="
+                                page.props.lockLeadSectionsDetails
+                                  ?.plan_selection
+                              "
                               @click="onUpdateIndividualPlan"
                               :loading="planForm.processing"
                             >
@@ -1934,45 +1973,30 @@ const sendOCBEmail = () => {
 
     <x-modal
       v-model="modals.sendConfirm"
-      size="md"
-      title="Send OCB Email"
+      title="Send Email"
       show-close
       backdrop
     >
-      <div class="space-y-4">
-        <p class="text-gray-600">
-          Are you sure you want to send the One Click Buy (OCB) email to the
-          customer? This will send them the selected savings plans with updated
-          rates and coverage options.
-        </p>
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
-          <div class="flex">
-            <div class="ml-3">
-              <p class="text-sm text-blue-700">
-                <strong>Customer:</strong> {{ quote.first_name }}
-                {{ quote.last_name }}
-              </p>
-              <p class="text-sm text-blue-700">
-                <strong>Email:</strong> {{ quote.email }}
-              </p>
-            </div>
-          </div>
+      <p>Are you sure send email to customer?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.sendConfirm = false"
+            :disable="processingOCBEmailNB"
+          >
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            :loading="processingOCBEmailNB"
+            @click.prevent="confirmSendEmail"
+          >
+            Send
+          </x-button>
         </div>
-      </div>
-      <template #secondary-action>
-        <x-button
-          ghost
-          tabindex="-1"
-          @click.prevent="modals.sendConfirm = false"
-          size="sm"
-        >
-          Cancel
-        </x-button>
-      </template>
-      <template #primary-action>
-        <x-button color="orange" @click.prevent="sendOCBEmail">
-          Send Email
-        </x-button>
       </template>
     </x-modal>
   </div>

@@ -514,6 +514,7 @@ class ManagementReport
             9 => 'pet-quotes-show',
             10 => 'cycle-quotes-show',
             11 => 'jetski-quotes-show',
+            18 => 'savings-quotes-show',
         ];
 
         $routeName = $types[$quoteTypeID];

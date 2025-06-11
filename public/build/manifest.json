@@ -1,19 +1,27 @@
 {
   "resources/js/inertia/inertia.js": {
 <<<<<<< HEAD
+<<<<<<< HEAD
     "file": "assets/inertia-eBVuDNgk.js",
 =======
     "file": "assets/inertia-C0dnZF1Z.js",
 >>>>>>> 441f125c3eb77c947f0a8b784029036bc5ae0c01
+=======
+    "file": "assets/inertia-5R9VTtWm.js",
+>>>>>>> edbb15d4aa0f88cc65354e8137bec069bba85981
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
     "css": [
 <<<<<<< HEAD
+<<<<<<< HEAD
       "assets/inertia-r6ZdieP5.css"
 =======
       "assets/inertia-CKAXTfnC.css"
 >>>>>>> 441f125c3eb77c947f0a8b784029036bc5ae0c01
+=======
+      "assets/inertia-BSEt7wUg.css"
+>>>>>>> edbb15d4aa0f88cc65354e8137bec069bba85981
     ]
   }
 }

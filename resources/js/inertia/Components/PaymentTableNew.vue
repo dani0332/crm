@@ -219,7 +219,7 @@ const quoteTypesToCheck = [
   quoteTypeCodeEnum.Health,
   quoteTypeCodeEnum.Travel,
   quoteTypeCodeEnum.Home,
-  quoteTypeCodeEnum.Savings,
+  quoteTypeCodeEnum.SAVINGS,
 ]; //Ecommerce LOBs
 // Declare initialAmount.value variable
 const initialAmount = ref(0);
@@ -330,6 +330,8 @@ if (
   initalPlanDetails =
     props.quoteRequest.insurance_provider_plan ||
     props.quoteRequest.insurance_provider;
+} else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
+  initalPlanDetails = props.quoteRequest.insurance_provider_plan;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == quoteTypeCodeEnum.Bike) {
@@ -3011,6 +3013,11 @@ const getPlanName = computed(() => {
     return homePlanText.value || 'Not Available';
   }
 
+  if (props.quoteType === quoteTypeCodeEnum.SAVINGS) {
+    return props.quoteRequest?.insurance_provider_plan?.text ||
+           'Not Available';
+  }
+
   return quoteTypesToCheck.includes(props.quoteType) && plan
     ? plan.text
     : 'Not Available';
@@ -3038,6 +3045,9 @@ const providerId = computed(() => {
 const providerName = computed(() => {
   const plan = planDetail.value;
   if (props.quoteType == quoteTypeCodeEnum.Home) {
+    return props.quoteRequest.insurance_provider?.text || 'Not Available';
+  }
+  if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     return props.quoteRequest.insurance_provider?.text || 'Not Available';
   }
   const ecomQuoteType = [...quoteTypesToCheck, quoteTypeCodeEnum.Bike];
@@ -3101,6 +3111,10 @@ const setPlanDetail = () => {
   if (props.quoteType == 'Business' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest.insurance_provider_details;
   } else if (props.quoteType == quoteTypeCodeEnum.Home) {
+    initalPlanDetails =
+      props.quoteRequest.insurance_provider_plan ||
+      props.quoteRequest.insurance_provider;
+  } else if (props.quoteType == quoteTypeCodeEnum.SAVINGS) {
     initalPlanDetails =
       props.quoteRequest.insurance_provider_plan ||
       props.quoteRequest.insurance_provider;
