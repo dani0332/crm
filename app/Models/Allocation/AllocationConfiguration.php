@@ -17,23 +17,20 @@ class AllocationConfiguration extends BaseMongoModel implements AuditableContrac
     protected $fillable = [
         'quote_type_id',
         'quote_type',
-        'lumpsum_brackets',
-        'regular_brackets',
+        'savings_brackets',
         'history',
     ];
 
     protected $casts = [
         'quote_type' => QuoteTypes::class,
-        'lumpsum_brackets' => 'array',
-        'regular_brackets' => 'array',
+        'savings_brackets' => 'array',
         'history' => 'array',
     ];
 
     protected $auditInclude = [
         'quote_type_id',
         'quote_type',
-        'lumpsum_brackets',
-        'regular_brackets',
+        'savings_brackets',
     ];
 
     /**
