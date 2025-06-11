@@ -58,7 +58,7 @@ class EmailExportService
     ): void {
         $emailConfig = $this->getEmailConfiguration($subject);
         $emailParams = $this->buildEmailParameters($csvFilePath, $requestParams);
-        dd('end');
+
         Mail::send(
             ['html' => 'ExportCSVMail'],
             $emailParams,

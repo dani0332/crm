@@ -108,8 +108,6 @@ class InstantChatConsolidatedExport implements CsvExportableInterface
         sort($channels); // Sort channels alphabetically
 
         return implode(', ', $channels);
-
-        return 'N/A';
     }
 
     /**
