@@ -20,7 +20,7 @@ class AllocationConfigurationController extends Controller
 
     private function getQuoteTypes()
     {
-        return QuoteType::where('is_active', 1)->whereIn('short_code', ['SAV', 'CAR'])->get();
+        return QuoteType::where('is_active', 1)->whereIn('short_code', ['SAV'])->get();
     }
 
     /**
