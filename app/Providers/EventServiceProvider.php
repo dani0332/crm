@@ -11,6 +11,7 @@ use App\Events\QuoteEmailUpdated;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Listeners\Axiom\HandleAxiomBatchFlush;
 use App\Listeners\HandleBikeAdvisorUpdated;
+use App\Listeners\HandleBookPolicyJobFailed;
 use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\HandleHealthAdvisorUpdated;
 use App\Listeners\HandleTravelAdvisorUpdated;
@@ -27,7 +28,6 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Lab404\Impersonate\Events\TakeImpersonation;
-use App\Listeners\HandleBookPolicyJobFailed;
 
 class EventServiceProvider extends ServiceProvider
 {

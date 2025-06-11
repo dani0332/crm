@@ -90,7 +90,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         if (str_contains($message, SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
             LoggerService::info('Policy Book : BookPolicyOnSageJob failed: Quote Code'.$this->quote->code.' - Error Code : '.$code.' - Error : '.$message);
-        }elseif ($this->isFailedDueToAttemptsOrTimeout($message)) {
+        } elseif ($this->isFailedDueToAttemptsOrTimeout($message)) {
             // Set status to pending instead of failed when job has been attempted too many times
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message);
             LoggerService::info('Policy Book : BookPolicyOnSageJob failed: Quote Code'.$this->quote->code.' - Error Code : '.$code.' - Error : '.$message);
