@@ -12,16 +12,14 @@ use Illuminate\Support\Facades\DB;
 
 class AllocationConfigurationService
 {
-    /**
-     * Create a new allocation configuration
-     */
     public function createConfiguration(array $data, int $userId): AllocationConfiguration
     {
         return DB::transaction(function () use ($data, $userId) {
-            $configuration = AllocationConfiguration::create([
+            return AllocationConfiguration::create([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
-                'savings_brackets' => $data['savings_brackets'] ?? [],
+                'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
+                'regular_brackets' => $data['regular_brackets'] ?? [],
                 'history' => [[
                     'ip' => request()->ip(),
                     'user_id' => $userId,
@@ -31,15 +29,11 @@ class AllocationConfigurationService
                         'new' => $data,
                     ],
                 ]],
+                'created_by' => $userId,
             ]);
-
-            return $configuration;
         });
     }
 
-    /**
-     * Update an existing allocation configuration
-     */
     public function updateConfiguration(AllocationConfiguration $configuration, array $data, int $userId): AllocationConfiguration
     {
         return DB::transaction(function () use ($configuration, $data, $userId) {
