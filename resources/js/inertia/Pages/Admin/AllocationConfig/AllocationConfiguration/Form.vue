@@ -14,10 +14,8 @@ const props = defineProps({
 
 const { isRequired } = useRules();
 
-// Initialize selected quote type
-const selectedQuoteType = ref(
-  props.selectedQuoteType || props.configuration?.quote_type || '',
-);
+// Always start with empty quote type selection - user must choose first
+const selectedQuoteType = ref('');
 
 // Loading state for quote type changes
 const isQuoteTypeLoading = ref(false);
@@ -25,15 +23,12 @@ const isQuoteTypeLoading = ref(false);
 // Template data - this will be populated by template components
 const templateData = ref({});
 
+// Dynamic data that will be fetched based on quote type
+const advisorOptions = ref([]);
+const nationalityOptions = ref([]);
+
 // Initialize form with only common data
 const getInitialFormData = () => {
-  if (props.configuration) {
-    return {
-      quote_type_id: props.configuration.quote_type_id,
-      quote_type: props.configuration.quote_type,
-    };
-  }
-
   return {
     quote_type_id: '',
     quote_type: '',
@@ -50,53 +45,93 @@ const quoteTypeOptions = computed(() => {
   }));
 });
 
-// Transform advisors and nationalities for x-select component
-const advisorOptions = computed(() => {
-  return props.advisors.map(advisor => ({
+// Initialize options from props
+const initializeOptions = () => {
+  advisorOptions.value = props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
   }));
-});
 
-const nationalityOptions = computed(() => {
-  return props.nationalities.map(nationality => ({
+  nationalityOptions.value = props.nationalities.map(nationality => ({
     value: nationality.id,
     label: nationality.text,
   }));
-});
+};
 
 const getQuoteTypeId = quoteTypeName => {
   const quoteType = props.quoteTypes.find(qt => qt.name === quoteTypeName);
   return quoteType ? quoteType.id : '';
 };
 
-const onQuoteTypeChange = async () => {
-  if (selectedQuoteType.value) {
-    // Start loading
-    isQuoteTypeLoading.value = true;
+// Fetch advisors based on selected quote type
+const fetchAdvisors = async quoteTypeName => {
+  if (!quoteTypeName) {
+    advisorOptions.value = [];
+    return;
+  }
 
-    try {
-      form.quote_type = selectedQuoteType.value;
-      form.quote_type_id = getQuoteTypeId(selectedQuoteType.value);
+  try {
+    const response = await axios.post('/advisors/by-quote-type', {
+      quote_type: quoteTypeName,
+    });
 
-      // Reset template data when quote type changes
+    if (
+      response.data.success &&
+      response.data.data &&
+      response.data.data.length > 0
+    ) {
+      advisorOptions.value = response.data.data.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+      }));
+    } else {
+      advisorOptions.value = [];
+    }
+  } catch (error) {
+    console.error('Error fetching advisors:', error);
+    advisorOptions.value = [];
+  }
+};
+
+// Fetch nationalities (if needed based on quote type)
+const fetchNationalities = async () => {
+  // For now, we'll use the initial nationalities
+  // This can be extended if different quote types need different nationalities
+  return;
+};
+
+// Handle quote type change
+const handleQuoteTypeChange = async newQuoteType => {
+  console.log('Quote type changed to:', newQuoteType);
+
+  // Set loading state
+  isQuoteTypeLoading.value = true;
+
+  try {
+    // Update form fields
+    if (newQuoteType) {
+      form.quote_type = newQuoteType;
+      form.quote_type_id = getQuoteTypeId(newQuoteType);
+
+      // Reset template data
       templateData.value = {};
 
-      // Update URL to include quote type parameter
-      window.history.replaceState(
-        {},
-        '',
-        route('admin.allocation-configuration.index', {
-          quote_type: selectedQuoteType.value,
-        }),
-      );
-
-      // Add a small delay to show loading effect
-      await new Promise(resolve => setTimeout(resolve, 500));
-    } finally {
-      // Stop loading
-      isQuoteTypeLoading.value = false;
+      // Fetch advisors
+      await fetchAdvisors(newQuoteType);
+    } else {
+      form.quote_type = '';
+      form.quote_type_id = '';
+      templateData.value = {};
+      advisorOptions.value = [];
     }
+
+    // Small delay for UX
+    await new Promise(resolve => setTimeout(resolve, 800));
+  } catch (error) {
+    console.error('Error handling quote type change:', error);
+  } finally {
+    // Always reset loading state
+    isQuoteTypeLoading.value = false;
   }
 };
 
@@ -105,16 +140,10 @@ const onTemplateDataUpdate = data => {
   templateData.value = data;
 };
 
-// Watch for changes in selected quote type to load existing configuration
-watch(selectedQuoteType, newQuoteType => {
-  if (newQuoteType && !props.configuration) {
-    // Load existing configuration for this quote type if it exists
-    const url = route('admin.allocation-configuration.index', {
-      quote_type: newQuoteType,
-    });
-    window.location.href = url;
-  }
-});
+// Initialize options on mount
+initializeOptions();
+
+// No initial fetching - user must select quote type first
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -190,21 +219,40 @@ function onSubmit(isValid) {
                   :rules="[isRequired]"
                   :error="form.errors.quote_type"
                   :loading="isQuoteTypeLoading"
-                  :disabled="isQuoteTypeLoading"
-                  @change="onQuoteTypeChange"
+                  @change="handleQuoteTypeChange"
                 />
               </x-field>
 
+              <!-- No quote type selected yet -->
+              <div
+                v-if="!selectedQuoteType && !isQuoteTypeLoading"
+                class="mt-2 text-sm text-gray-500"
+              >
+                Please select a quote type to begin configuration
+              </div>
+
+              <!-- Quote type selected and loaded -->
               <div
                 v-if="selectedQuoteType && !isQuoteTypeLoading"
                 class="mt-2 text-sm text-gray-600"
               >
-                Quote Type ID: {{ getQuoteTypeId(selectedQuoteType) }}
+                <div class="flex items-center space-x-2">
+                  <span
+                    >Quote Type ID:
+                    {{ getQuoteTypeId(selectedQuoteType) }}</span
+                  >
+                  <span class="text-green-600">•</span>
+                  <span v-if="advisorOptions.length > 0"
+                    >{{ advisorOptions.length }} advisors available</span
+                  >
+                  <span v-else class="text-gray-500">No advisors found</span>
+                </div>
               </div>
 
+              <!-- Loading state -->
               <div
                 v-if="isQuoteTypeLoading"
-                class="mt-2 text-sm text-blue-600 flex items-center"
+                class="mt-2 text-sm text-blue-600 flex items-center animate-pulse"
               >
                 <svg
                   class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600"
@@ -226,7 +274,7 @@ function onSubmit(isValid) {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Loading configuration for {{ selectedQuoteType }}...
+                Fetching {{ selectedQuoteType }} advisors and configuration...
               </div>
             </div>
           </div>
