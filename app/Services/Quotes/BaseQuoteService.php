@@ -180,7 +180,7 @@ abstract class BaseQuoteService extends BaseService
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'noteDocumentType' => $noteDocumentType,
-            'quoteDocuments' => $quoteNotes,
+            'quoteDocuments' => $quoteDocuments,
             'storageUrl' => storageUrl(),
             'isBetaUser' => $this->hasRole(Auth::user(), RolesEnum::BetaUser),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',

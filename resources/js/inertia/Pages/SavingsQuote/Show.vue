@@ -1912,7 +1912,7 @@ const confirmSendEmail = () => {
 
     <QuoteDocument
       :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
+      :quote-documents="quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.quote_detail?.insly_id"
