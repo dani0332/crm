@@ -14,6 +14,8 @@ use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Repositories\EmbeddedProductRepository;
+use App\Enums\quoteTypeCode;
 
 class TravelQuoteObserver
 {
@@ -87,6 +89,17 @@ class TravelQuoteObserver
             }
         }
 
+        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyCancelled) {
+            try {
+                EmbeddedProductRepository::cancelEmbeddedProducts($travelQuote->id, quoteTypeCode::Travel);
+            } catch (Exception $e) {
+                Log::error('TravelQuoteObserver - cancel embedded products failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $travelQuote->uuid,
+                ]);
+            }
+        }
+
         if (
             isset($dirty['quote_status_id']) &&
             in_array($travelQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
@@ -97,6 +110,15 @@ class TravelQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+
+            try {
+                EmbeddedProductRepository::capturePayment($travelQuote->id, quoteTypeCode::Travel);
+            } catch (Exception $e) {
+                Log::error('TravelQuoteObserver - capture embedded products failed', [
+                    'error' => $e->getMessage(),
+                    'uuid' => $travelQuote->uuid,
+                ]);
+            }
         }
 
         if (
