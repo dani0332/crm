@@ -43,7 +43,8 @@ class AllocationConfigurationService
             $configuration->update([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
-                'savings_brackets' => $data['savings_brackets'] ?? [],
+                'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
+                'regular_brackets' => $data['regular_brackets'] ?? [],
             ]);
 
             // Add to history

@@ -19,6 +19,7 @@ class AllocationConfiguration extends BaseMongoModel
         'created_by',
         'updated_by',
     ];
+
     protected $casts = [
         'quote_type' => QuoteTypes::class,
         'lumpsum_brackets' => 'array',
