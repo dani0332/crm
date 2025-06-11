@@ -23,7 +23,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Enums\UserNameEnum;
 use App\Enums\WorkflowTypeEnum;
-use App\Exports\KycLogs;
+use App\Exports\KycLogsExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -190,10 +190,10 @@ class AMLController extends Controller
         ]);
 
         if ($request->exportType == 'email') {
-            return app(KycLogs::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
+            return app(KycLogsExport::class)->emailCSV("AML Logs {$reportDateRange}", $request->all());
         }
 
-        return app(KycLogs::class)->download("AML Logs {$reportDateRange}");
+        return app(KycLogsExport::class)->download("AML Logs {$reportDateRange}");
     }
 
     /**
