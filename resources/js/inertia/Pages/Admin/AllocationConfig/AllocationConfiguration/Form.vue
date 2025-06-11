@@ -137,14 +137,12 @@ const onTemplateDataUpdate = data => {
 
 initializeOptions();
 
-// TODO: Review this function later
 async function onSubmit(isValid) {
   if (isValid) {
     isSubmitting.value = true;
     errorMessage.value = '';
     successMessage.value = '';
 
-    // Merge common form data with template-specific data
     const submitData = {
       ...form.data(),
       ...templateData.value,
@@ -172,9 +170,7 @@ async function onSubmit(isValid) {
 
       if (response.data.success) {
         successMessage.value = response.data.message;
-        // Update current configuration with the returned data
         currentConfiguration.value = response.data.data;
-        // Clear any form errors
         form.clearErrors();
       } else {
         errorMessage.value =
@@ -185,7 +181,6 @@ async function onSubmit(isValid) {
       console.error('Error submitting form:', error);
 
       if (error.response && error.response.status === 422) {
-        // Validation errors
         const validationErrors = error.response.data.errors || {};
         Object.keys(validationErrors).forEach(key => {
           form.setError(key, validationErrors[key][0]);
