@@ -21,7 +21,6 @@ use App\Exports\CarQuoteExportWithEmailMobile;
 use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\HealthQuotesExport;
-use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
@@ -142,13 +141,6 @@ class CentralController extends Controller
                 }
 
                 return app(LifeQuotesExport::class)->download('life_leads');
-
-            case QuoteTypes::HOME->value:
-                if ($request['exportType'] == 'email') {
-                    return app(HomeQuoteExport::class)->emailCSV('Home-List', $request->all());
-                }
-
-                return app(HomeQuoteExport::class)->download('home_leads');
 
             case QuoteTypes::AMT->value:
                 if ($request['exportType'] == 'email') {
