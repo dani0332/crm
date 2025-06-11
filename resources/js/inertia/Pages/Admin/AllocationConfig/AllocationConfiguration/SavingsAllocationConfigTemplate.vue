@@ -18,11 +18,9 @@ const props = defineProps({
 
 const emit = defineEmits(['data-update']);
 
-// Internal state management
 const lumpsumBrackets = ref([]);
 const regularBrackets = ref([]);
 
-// Initialize data from configuration
 const initializeData = () => {
   if (props.configuration) {
     lumpsumBrackets.value = props.configuration.lumpsum_brackets || [];
@@ -32,11 +30,9 @@ const initializeData = () => {
     regularBrackets.value = [];
   }
 
-  // Emit initial data
   emitData();
 };
 
-// Emit data to parent
 const emitData = () => {
   const data = {
     lumpsum_brackets: lumpsumBrackets.value,
@@ -45,7 +41,6 @@ const emitData = () => {
   emit('data-update', data);
 };
 
-// Watch for changes and emit data
 watch(
   [lumpsumBrackets, regularBrackets],
   () => {
@@ -54,12 +49,10 @@ watch(
   { deep: true },
 );
 
-// Initialize on mount
 onMounted(() => {
   initializeData();
 });
 
-// Watch for configuration changes (in case of external updates)
 watch(
   () => props.configuration,
   newConfig => {
@@ -81,7 +74,6 @@ const createEmptyProfile = () => ({
   nationalityIds: [],
 });
 
-// Lumpsum Bracket Methods
 const addLumpsumBracket = () => {
   lumpsumBrackets.value.push(createEmptyBracket());
 };
@@ -90,7 +82,6 @@ const removeLumpsumBracket = index => {
   lumpsumBrackets.value.splice(index, 1);
 };
 
-// Regular Bracket Methods
 const addRegularBracket = () => {
   regularBrackets.value.push(createEmptyBracket());
 };
@@ -99,7 +90,6 @@ const removeRegularBracket = index => {
   regularBrackets.value.splice(index, 1);
 };
 
-// Profile Methods (shared between lumpsum and regular)
 const addProfile = bracket => {
   bracket.profiles.push(createEmptyProfile());
 };
@@ -111,18 +101,6 @@ const removeProfile = (bracket, profileIndex) => {
 
 <template>
   <div class="space-y-6">
-    <!-- Savings Specific Configuration -->
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-      <h3 class="text-lg font-medium text-blue-900 mb-2">
-        Savings Investment Configuration
-      </h3>
-      <p class="text-sm text-blue-700">
-        Configure allocation rules for Savings products with Lumpsum and Regular
-        investment brackets.
-      </p>
-    </div>
-
-    <!-- Lumpsum Investment Brackets -->
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
       <div class="p-6 bg-white border-b border-gray-200">
         <div class="flex items-center justify-between mb-4">
