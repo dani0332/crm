@@ -234,7 +234,7 @@ class BikeQuoteRepository extends BaseRepository
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->filter(! $forExport)
+            ->filter(false, $forTotalLeadsCount)
             ->withFakeLeadCriteria()
             ->select([
                 '*',

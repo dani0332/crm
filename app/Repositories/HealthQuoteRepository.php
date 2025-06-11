@@ -32,7 +32,7 @@ class HealthQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::HealthAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filter(false, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {

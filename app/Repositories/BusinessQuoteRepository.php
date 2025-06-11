@@ -67,7 +67,7 @@ class BusinessQuoteRepository extends BaseRepository
         )), function ($query) {
             $query->where('advisor_id', auth()->id());
         })
-            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filter(false, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
         $this->adjustQueryByDateFilters($query, 'business_quote_request');
         $query->orderBy('business_quote_request.created_at', 'desc');

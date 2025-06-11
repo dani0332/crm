@@ -38,7 +38,7 @@ class TravelQuoteRepository extends BaseRepository
             'paymentStatus',
             'insuranceProvider',
         ])
-            ->filter(! $forExport)
+            ->filter(false)
             ->withFakeLeadCriteria();
 
         if (request()->has('travel_start_date') && request('travel_start_date') != '') {

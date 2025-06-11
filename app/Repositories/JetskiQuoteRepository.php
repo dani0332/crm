@@ -156,7 +156,7 @@ class JetskiQuoteRepository extends BaseRepository
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
             })
-            ->filter(! $forExport, $forTotalLeadsCount)
+            ->filter(false, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->select([
                 '*',
