@@ -14,12 +14,12 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RetentionReportEnum;
 use App\Enums\SendPolicyTypeEnum;
-use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
 use App\Exports\CarQuoteExportWithEmailMobile;
 use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
+use App\Exports\GroupMedicalExport;
 use App\Exports\HealthQuotesExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\NonPUAQuoteExport;
@@ -144,10 +144,10 @@ class CentralController extends Controller
 
             case QuoteTypes::AMT->value:
                 if ($request['exportType'] == 'email') {
-                    return app(AmtQuoteExport::class)->emailCSV('AMT-List', $request->all());
+                    return app(GroupMedicalExport::class)->emailCSV('Group-Medical-List', $request->all());
                 }
 
-                return app(AmtQuoteExport::class)->download('amt_leads');
+                return app(GroupMedicalExport::class)->download('group_medical_leads');
 
             case QuoteTypes::BUSINESS->value:
                 if ($request['exportType'] == 'email') {

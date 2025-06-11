@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Contracts\CsvExportableInterface;
 use App\Services\Logger\LoggerService;
+use Illuminate\Support\Facades\DB;
 
 class CsvExportService
 {
@@ -33,20 +34,30 @@ class CsvExportService
             mkdir($tempDir, 0755, true);
         }
 
+        // Start with write mode to create/truncate file for headers
         $stream = fopen($csvFilePath, 'w');
         if (! $stream) {
             throw new \RuntimeException("Cannot create CSV file at: {$csvFilePath}");
         }
 
         try {
-            // Write CSV headers
+            DB::setDefaultConnection('mysql_read');
+            // Write CSV headers first
             fputcsv($stream, $exporter->headings());
+            fclose($stream);
+
+            // Reopen in append mode for chunked data writing
+            $stream = fopen($csvFilePath, 'a');
+            if (! $stream) {
+                throw new \RuntimeException("Cannot reopen CSV file in append mode: {$csvFilePath}");
+            }
 
             $totalRecords = $this->writeDataToStream($stream, $exporter, $requestParams);
 
             fclose($stream);
 
             LoggerService::info("CSV export completed. Records: {$totalRecords}, File: {$fileName}.csv");
+            DB::setDefaultConnection('mysql');
 
             return [
                 'filePath' => $csvFilePath,
@@ -55,6 +66,7 @@ class CsvExportService
 
         } catch (\Throwable $e) {
             fclose($stream);
+            DB::setDefaultConnection('mysql');
             $this->cleanupFile($csvFilePath);
             throw $e;
         }
@@ -67,6 +79,7 @@ class CsvExportService
     {
         $totalRecords = 0;
         $chunkSize = 1000;
+        $flushInterval = 5000; // Flush to disk every 5000 records
 
         // Try to use query builder for chunked processing
         $query = $exporter->getQuery($requestParams);
@@ -74,32 +87,66 @@ class CsvExportService
         if ($query) {
             LoggerService::info('Using chunked query processing for CSV export');
 
-            $query->chunk($chunkSize, function ($records) use ($stream, $exporter, &$totalRecords, $chunkSize) {
+            $query->chunk($chunkSize, function ($records) use ($stream, $exporter, &$totalRecords, $flushInterval) {
+                $chunkBuffer = [];
+
                 foreach ($records as $record) {
-                    fputcsv($stream, $exporter->map($record));
+                    $chunkBuffer[] = $exporter->map($record);
                     $totalRecords++;
                 }
 
-                // Force garbage collection to manage memory
-                if ($totalRecords % ($chunkSize * 5) === 0) {
-                    gc_collect_cycles();
+                // Write chunk buffer to file
+                foreach ($chunkBuffer as $row) {
+                    fputcsv($stream, $row);
                 }
+
+                // Flush to disk and manage memory periodically
+                if ($totalRecords % $flushInterval === 0) {
+                    fflush($stream); // Force write to disk
+                    gc_collect_cycles(); // Garbage collection
+                    // LoggerService::info("CSV export progress: {$totalRecords} records written");
+                }
+
+                // Clear chunk buffer to free memory
+                unset($chunkBuffer);
             });
         } else {
-            // Fallback to collection method
+            // Fallback to collection method with chunked writing
             LoggerService::info('Using collection method for CSV export');
 
             $data = $exporter->collection($requestParams);
+            $rowBuffer = [];
+            $bufferSize = 100;
+
             foreach ($data as $record) {
-                fputcsv($stream, $exporter->map($record));
+                $rowBuffer[] = $exporter->map($record);
                 $totalRecords++;
 
-                // Manage memory for large datasets
-                if ($totalRecords % 100 === 0) {
-                    gc_collect_cycles();
+                // Write buffer when it reaches buffer size
+                if (count($rowBuffer) >= $bufferSize) {
+                    foreach ($rowBuffer as $row) {
+                        fputcsv($stream, $row);
+                    }
+                    $rowBuffer = []; // Clear buffer
+
+                    // Flush and manage memory periodically
+                    if ($totalRecords % $flushInterval === 0) {
+                        fflush($stream);
+                        gc_collect_cycles();
+                        LoggerService::info("CSV export progress: {$totalRecords} records written");
+                    }
                 }
             }
+
+            // Write remaining buffer
+            foreach ($rowBuffer as $row) {
+                fputcsv($stream, $row);
+            }
         }
+
+        // Final flush to ensure all data is written
+        fflush($stream);
+        LoggerService::info("CSV export completed: {$totalRecords} total records written");
 
         return $totalRecords;
     }
