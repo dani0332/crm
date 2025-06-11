@@ -3,6 +3,7 @@
 namespace App\Jobs\EP;
 
 use App\Repositories\EmbeddedProductRepository;
+use App\Services\Logger\LoggerService;
 use App\Traits\GenericQueriesAllLobs;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -42,9 +43,9 @@ class SendEPJob implements ShouldQueue
     {
         try {
 
-            info("Sent EP - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
+            LoggerService::info("Sent EP - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
             EmbeddedProductRepository::sendDocumentsByLead($this->quoteId, $this->modelType, $this->epId, $this->isResend);
-            info("Sent EP completed - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
+            LoggerService::info("Sent EP completed - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} ---- ");
 
         } catch (Exception $e) {
             Log::error("Sent EP ERROR - {$this->quoteId} - {$this->modelType} - {$this->epId} - {$this->isResend} - ".$e->getMessage());
