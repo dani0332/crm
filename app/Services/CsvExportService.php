@@ -61,7 +61,7 @@ class CsvExportService
         if ($query) {
             LoggerService::info('Using chunked query processing for CSV export');
 
-            $query->chunk($chunkSize, function ($records) use ($stream, $exporter, &$totalRecords) {
+            $query->chunk($chunkSize, function ($records) use ($stream, $exporter, &$totalRecords, $chunkSize) {
                 foreach ($records as $record) {
                     fputcsv($stream, $exporter->map($record));
                     $totalRecords++;
