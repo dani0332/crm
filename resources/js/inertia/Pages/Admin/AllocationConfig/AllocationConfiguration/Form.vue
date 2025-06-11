@@ -146,7 +146,7 @@ const handleQuoteTypeChange = async newQuoteType => {
     }
 
     // Small delay for UX
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 300));
   } catch (error) {
     console.error('Error handling quote type change:', error);
   } finally {
@@ -258,7 +258,6 @@ function onSubmit(isValid) {
                   filterable
                   :rules="[isRequired]"
                   :error="form.errors.quote_type"
-                  :loading="isQuoteTypeLoading"
                 />
               </x-field>
 
@@ -290,7 +289,7 @@ function onSubmit(isValid) {
               <!-- Loading state -->
               <div
                 v-if="isQuoteTypeLoading"
-                class="mt-2 text-sm text-blue-600 flex items-center animate-pulse"
+                class="mt-2 text-sm text-blue-600 flex items-center"
               >
                 <svg
                   class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600"
