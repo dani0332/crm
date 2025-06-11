@@ -3494,7 +3494,7 @@ const fullAddress = computed(() => {
       :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
       :code="quote.code"
       :quote="quote"
-      :modelType="quoteType"
+      :modelType="modelType.toLowerCase()"
       :expanded="sectionExpanded"
     />
 
