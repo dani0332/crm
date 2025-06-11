@@ -95,10 +95,16 @@ const validateAllBrackets = () => {
   const errors = [];
 
   if (
-    lumpsumBrackets.value.length === 0 &&
+    lumpsumBrackets.value.length === 0 ||
     regularBrackets.value.length === 0
   ) {
-    errors.push('At least one bracket (Lumpsum or Regular) must be configured');
+    if (lumpsumBrackets.value.length === 0) {
+      errors.push('At least one Lumpsum bracket must be configured');
+    }
+
+    if (regularBrackets.value.length === 0) {
+      errors.push('At least one Regular bracket must be configured');
+    }
     return errors;
   }
 
