@@ -55,7 +55,6 @@ trait ModernCsvExportable
         $requestParams = $this->processEmailParameters($fileName, $requestParams);
 
         // Use ExportCsvAndSendEmailJob instead to avoid serialization issues with dependencies
-        // CsvExportEmailJob expects an instance which can contain non-serializable dependencies
         ExportCsvAndSendEmailJob::dispatch(
             static::class, // Pass class name instead of instance
             $requestParams['recipientEmail'],
@@ -72,6 +71,11 @@ trait ModernCsvExportable
      */
     private function processEmailParameters(string $fileName, array $requestParams): array
     {
+        // Ensure we have a user for the job context (query builders need this)
+        if (! isset($requestParams['user']) && Auth::check()) {
+            $requestParams['user'] = Auth::user();
+        }
+
         // Set recipient email if not provided
         if (empty($requestParams['recipientEmail'])) {
             if (! Auth::check()) {

@@ -8,6 +8,7 @@ use App\Contracts\CsvExportableInterface;
 use App\Enums\EnvEnum;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
 class EmailExportService
@@ -123,7 +124,7 @@ class EmailExportService
     }
 
     /**
-     * Get recipient name from request params or current user
+     * Get recipient name from request params or user lookup
      */
     private function getRecipientName(array $requestParams): string
     {
@@ -132,15 +133,7 @@ class EmailExportService
             return $requestParams['recipientName'];
         }
 
-        // Check if current user matches recipient email
-        if (Auth::check() &&
-            isset($requestParams['recipientEmail']) &&
-            $requestParams['recipientEmail'] === Auth::user()->email
-        ) {
-            return Auth::user()->name;
-        }
-
-        // Try to get from user by email
+        // Try to get from user by email (jobs don't have session auth)
         if (isset($requestParams['recipientEmail'])) {
             $user = User::where('email', $requestParams['recipientEmail'])->first();
             if ($user) {
