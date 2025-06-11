@@ -133,7 +133,7 @@ class CsvExportService
                     if ($totalRecords % $flushInterval === 0) {
                         fflush($stream);
                         gc_collect_cycles();
-                        LoggerService::info("CSV export progress: {$totalRecords} records written");
+                        // LoggerService::info("CSV export progress: {$totalRecords} records written");
                     }
                 }
             }
