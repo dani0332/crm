@@ -698,6 +698,7 @@ class HomeQuoteRepository extends BaseRepository
                 'insured' => function ($q) {
                     $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
                 },
+                'insured.insuredKyc:id,insured_id',
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
