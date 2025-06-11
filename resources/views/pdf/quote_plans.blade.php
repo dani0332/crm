@@ -665,6 +665,32 @@
             @endforeach
         </tr>
 
+        <tr>
+            <th class="bg-light-blue">
+                <p class="quote-info raleway-font" style="font-size: 14px; ">Gross Price</p>
+            </th>
+            @foreach ($planIds as $planId)
+                <th>
+                    <p class="text-center" style="font-size: 14px">
+                        AED {{$plans[$planId]->discountPremium ?? 0 }}
+                    </p>
+                </th>
+            @endforeach
+        </tr>
+
+        <tr>
+            <th class="bg-light-blue">
+                <p class="quote-info raleway-font" style="font-size: 14px; ">VAT</p>
+            </th>
+            @foreach ($planIds as $planId)
+                <th>
+                    <p class="text-center" style="font-size: 14px">
+                        AED {{$plans[$planId]->vat ?? 0 }}
+                    </p>
+                </th>
+            @endforeach
+        </tr>
+
         {{-- Total price (with VAT) --}}
         <tr>
             <th class="bg-light-blue">
