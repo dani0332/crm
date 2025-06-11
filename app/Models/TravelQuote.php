@@ -343,4 +343,9 @@ class TravelQuote extends Model implements AuditableContract
     {
         return in_array($this->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || $this->quote_status_id == QuoteStatusEnum::PaymentLinkRequestedByCustomer;
     }
+
+    public function embeddedTransactions()
+    {
+        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
+    }
 }

@@ -6,11 +6,9 @@ use App\Builders\CarQuoteQueryBuilder;
 use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
-use App\Enums\BirdFlowStatusEnum;
 use App\Enums\CarRegistrationType;
 use App\Enums\CarVehicleUse;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
 use App\Enums\PaymentStatusEnum;
@@ -26,8 +24,6 @@ use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
-use App\Models\CustomerAdditionalContact;
-use App\Models\CustomerAddress;
 use App\Models\Entity;
 use App\Models\QuoteBatches;
 use App\Models\QuoteRequestEntityMapping;
@@ -2043,61 +2039,6 @@ class CarQuoteService extends BaseService
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
             ->whereColumn('cqp.plan_id', 'cqr.plan_id');
-    }
-
-    public function sendAddressNotificationToCustomer($lead, $address)
-    {
-        LoggerService::info('Checking for sending courier notification : '.$lead->uuid);
-
-        // Use a different variable name for the result of the query
-        $existingAddress = CustomerAddress::where([
-            'quote_uuid' => $lead->uuid,
-            'customer_id' => $lead->customer_id,
-        ])->first();
-
-        if (empty($existingAddress?->type)) {
-            LoggerService::info('Sending address notification to customer for lead : '.$lead->uuid);
-            // only trigger bird flow if address is not already added
-            $this->triggerBirdFlow($lead, $address, BirdFlowStatusEnum::ADDRESS_ADDED);
-        }
-    }
-
-    public function triggerBirdFlow($lead, $address, $actionType)
-    {
-        if ($lead->embeddedTransactions()->exists()) {
-            LoggerService::info('Checking for courier transaction for lead : '.$lead->uuid);
-            $courierEmbeddedTransaction = $lead->embeddedTransactions
-                ->filter(function ($transaction) {
-                    return $transaction->product?->embeddedProduct?->short_code === EmbeddedProductEnum::COURIER;
-                });
-        }
-
-        if (
-            ($selectedTransaction = $courierEmbeddedTransaction?->firstWhere('is_selected', 1)) &&
-            in_array($selectedTransaction->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::AUTHORISED])
-        ) {
-            LoggerService::info('Triggering Bird Courier Flow for address notification for lead : '.$lead->uuid);
-            $embeddedTransactionRefId = $courierEmbeddedTransaction->first()->code;
-            $address = app(CustomerAddressService::class)->fetchFormattedAddress($address);
-            $customerAdditionalContact = CustomerAdditionalContact::select('value')
-                ->firstWhere([
-                    ['customer_id', $lead->customer_id],
-                    ['key', 'alternate_mobile_no'],
-                ]);
-            $payload = [
-                'quoteUID' => $lead->uuid,
-                'quoteTypeId' => (int) QuoteTypes::CAR->id(),
-                'actionType' => $actionType,
-                'refId' => $embeddedTransactionRefId,
-                'address' => $address,
-                'alternateNumber' => $customerAdditionalContact->value ?? '',
-            ];
-            LoggerService::info('Payload for Bird Courier Flow : '.json_encode($payload));
-
-            Ken::request('/trigger-bird-courier-flow', 'post', $payload);
-        } else {
-            LoggerService::info('Either No courier embedded transaction found or payment is not CAPTURED OR AUTHORISED for lead : '.$lead->uuid);
-        }
     }
 
     public function pauseAndResumeFollowUpCounters($data)

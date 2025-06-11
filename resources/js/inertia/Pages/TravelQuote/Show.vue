@@ -67,6 +67,7 @@ defineProps({
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
   isAllianceProvider: Boolean,
+  customerAddressData: Object,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -1571,6 +1572,44 @@ function capitalizeString(str) {
 const applyEmiratesIdNumMasking = emiratesId =>
   (customerProfileForm.emirates_id_number =
     applyEmiratesNumberMasking(emiratesId));
+
+const fullAddress = computed(() => {
+  const address = page.props?.customerAddressData;
+
+  if (!address) {
+    return null; // Return null if customerAddressData is null or undefined
+  }
+
+  const {
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  } = address;
+
+  const parts = [
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  ];
+
+  // Check if all parts are null or undefined
+  const allPartsAreNull = parts.every(part => part == null);
+
+  if (allPartsAreNull) {
+    return null;
+  }
+
+  // Filter out null or undefined parts and join the rest with comma and space
+  return parts.filter(part => part).join(', ');
+});
 </script>
 
 <template>
@@ -2253,6 +2292,21 @@ const applyEmiratesIdNumMasking = emiratesId =>
                     />
                   </dd>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
+                </div>
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
               </dl>
               <dl
@@ -2350,6 +2404,21 @@ const applyEmiratesIdNumMasking = emiratesId =>
                       @update:modelValue="entityTypeChange($event)"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData?.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
+                        ? 'RESIDENCE ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
                 </div>
               </dl>
               <div class="flex justify-end">

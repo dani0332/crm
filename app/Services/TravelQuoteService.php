@@ -40,6 +40,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use App\Services\CustomerAddressService;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 
 class TravelQuoteService extends BaseService
 {
@@ -351,6 +353,11 @@ class TravelQuoteService extends BaseService
 
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
             LoggerService::info(self::class." lead source is renewal upload so about to dispatch SendOCBTravelRenewalIntroEmailJob Ref-ID: {$response->quoteUID} | Time:  ".now());
+
+            $customerId = app(CustomerService::class)->getCustomerIdByEmail($request->email);
+            if ($request->has('addressObj') && !empty(array_filter((array) $request->input('addressObj')))) {
+                app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $response->quoteUID);
+            }
         }
 
         return $response;
@@ -802,6 +809,13 @@ class TravelQuoteService extends BaseService
 
         $travelQuote->details = $request->details;
         $travelQuote->save();
+
+        $customerId = app(CustomerService::class)->getCustomerIdByEmail($travelQuote->email);
+        if (($request->has('addressObj') && !empty(array_filter((array) $request->input('addressObj'))))) {
+            app(CustomerAddressService::class)->sendAddressNotificationToCustomer($travelQuote, $request->input('addressObj'), QuoteTypeId::Travel);
+            app(CustomerAddressService::class)->createOrUpdateCustomerAddress($request->input('addressObj'), $customerId, $travelQuote->uuid);
+            SyncCourierQuoteWithMacrm::dispatch($travelQuote, QuoteTypeId::Travel);
+        }
 
         if (! empty($request->destination_ids)) {
             $travelQuote->load('travelDestinations');
