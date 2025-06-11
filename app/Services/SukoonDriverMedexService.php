@@ -333,6 +333,8 @@ class SukoonDriverMedexService
             $lastName = ($insuredKyc?->last_name ?? $quote->customer?->insured_last_name) ?? '';
         }
 
+        $emirate = ($quote->isBike() ?? false) ? $quote->bikeQuote->emirates : $quote->emirate;
+
         return [
             'form_name' => 'personal_details',
             "title" => $lastInsuredData->gender == 'Male' ? "Mr" : 'Ms',
@@ -341,10 +343,10 @@ class SukoonDriverMedexService
             'mobile' => '+971505027325',
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'nationality' => 'AE',
-            'emirate' => $quote->emirate->text ?? '',
+            'emirate' => $emirate->text ?? '',
             'emirates_id_number' => $insuredKyc?->id_type == 'emiratesId' ? $insuredKyc?->id_number : '', //'784-1989-8057715-1'
             'dob' => ! empty($quote->dob) ? Carbon::parse($quote->dob)->format('Y-m-d') : '',
-            'is_resident' => $quote->emirate ? 'Yes' : 'No',
+            'is_resident' => $emirate ? 'Yes' : 'No',
             'address' => $insuredKyc?->residential_address ?? ''
         ];
     }
