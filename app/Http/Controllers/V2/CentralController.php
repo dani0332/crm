@@ -7,6 +7,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -368,6 +369,9 @@ class CentralController extends Controller
      */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SELECT_INSURANCE_PROVIDER);
+        LoggerService::info("Select plan for Non ECOM lead Quote Type: {$quoteType}, Code: {$request->code}, with Insurance Provider: {$request->provider_code}");
+
         $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
         app(AMLService::class)->clearAmlStatusForNonGIG($quoteType, $code, $request->provider_code);
@@ -377,6 +381,8 @@ class CentralController extends Controller
 
     public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::SELECT_PLAN);
+        LoggerService::info("Select plan for Ecom lead Quote Type: {$quoteType}, Code: {$request->code}, with Insurance Provider: {$request->provider_code}");
 
         $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
@@ -388,25 +394,26 @@ class CentralController extends Controller
     // Migrate payments from old system to new system
     public function migratePayment(MigratePaymentsRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::MIGRATE_PAYMENT);
         $successMessage = PaymentRepository::migratePayments($request);
 
         return $successMessage;
     }
 
-    // Update split payment status
-    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
+    // This method is called when capture/approve split payment
+    public function splitPaymentApproveDecline(SplitPaymentUpdateRequest $request)
     {
-        $successMessage = PaymentRepository::updatePaymentStatus($request);
+        $successMessage = PaymentRepository::splitPaymentApproveDecline($request);
 
         return back()->with('success', $successMessage);
     }
 
-    // Approve split payments
-    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
+    // This method is called when capture/approve/decline master payment
+    public function masterPaymentApproveCapture(SplitPaymentApproveRequest $request)
     {
-        LoggerService::info("Processing split payment approve {$request->payment_code}");
+        LoggerService::info("Master payment approve/capture/decline called for payment code : {$request->payment_code}");
 
-        $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+        $successMessage = PaymentRepository::masterPaymentApproveCapture($request);
         if (! $successMessage) {
             return back()->with('error', 'Error in approving payment');
         }
@@ -430,8 +437,10 @@ class CentralController extends Controller
     // Retry CC split payment
     public function retrySplitPayment(RetrySplitPaymentRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::RETRY_SPLIT_PAYMENT);
         $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
-        LoggerService::info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+        $splitPayment = $paymentProcessJob->splitPayment;
+        LoggerService::info("Retry split payment called & Manual CC Payments Job Started For Payment Split code : {$splitPayment->code} & sr no : {$splitPayment->sr_no}");
 
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
@@ -445,7 +454,10 @@ class CentralController extends Controller
     // Delete split payment
     public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
     {
-        return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::DELETE_SPLIT_PAYMENT);
+        LoggerService::info("Delete split payment called Payment Split code : {$request->code}");
+
+        return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id, $request->code);
     }
 
     // Store new payment
@@ -462,6 +474,7 @@ class CentralController extends Controller
     // Update payment
     public function updateNewPayment(UpdatePaymentRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::UPDATE_PAYMENT);
         $response = PaymentRepository::updateNewPayment($request);
         if ($response['status'] == 'success') {
             return redirect()->back()->with('success', $response['message']);
@@ -711,6 +724,7 @@ class CentralController extends Controller
 
     public function voidPayment(Request $request): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::VOID_PAYMENT);
         $response = app(CentralService::class)->voidPayment($request);
 
         return response()->json(['status' => $response['status'], 'message' => $response['message']]);
@@ -756,6 +770,7 @@ class CentralController extends Controller
 
     public function paymentsCaptureValidtion(PaymentCaptureValidtionRequest $request)
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::CAPTURE_PAYMENT_VALIDATION);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
         $response = (new CentralService)->capturePaymentValidation($request->uuid, $quoteTypeId, $request->captureAmount, $request->quoteCode);
 
@@ -814,10 +829,12 @@ class CentralController extends Controller
 
     public function deletePayment(Request $request): \Illuminate\Http\JsonResponse
     {
+        LoggerService::startFeatureLogging(LoggerFeatureEnum::DELETE_PARENT_PAYMENT);
         $validatedRequest = (object) $request->validate([
             'payment_id' => 'required',
             'payment_code' => 'required',
         ]);
+        LoggerService::info("Delete parent payment called for payment code : {$request->payment_code}");
 
         $response = app(CentralService::class)->deletePayment($validatedRequest);
 

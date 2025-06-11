@@ -55,6 +55,10 @@ class RenewalFailedValidationExport implements FromCollection, WithStrictNullCom
             $firstRow->mobile_no = 'Customer Mobile';
             $firstRow->quote_type = 'Insurance Type';
             $firstRow->insurer = 'Insurance Provider';
+            $firstRow->registration_type = 'Registration Type';
+            $firstRow->vehicle_usage = 'Vehicle Use';
+            $firstRow->business_activity = 'Business Activity';
+            $firstRow->driver_name = 'Driver Name';
             $firstRow->product_type = 'Product Type';
             $firstRow->advisor = 'Advisor Email';
             $firstRow->policy_number = 'Policy Number';
