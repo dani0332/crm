@@ -5,6 +5,7 @@ namespace App\Jobs\Renewals;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
 use App\Services\RenewalsUploadService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,13 +13,11 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
-class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
+class FetchPlansForRenewalsQuoteJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $renewalQuoteProcess;
     protected $renewalStatusProcess;
