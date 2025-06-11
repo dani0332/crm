@@ -43,9 +43,7 @@ class CsvExportService
             fputcsv($stream, $exporter->headings());
 
             $totalRecords = $this->writeDataToStream($stream, $exporter, $requestParams);
-            if ($totalRecords > 0) {
-                $totalRecords = $totalRecords - 1;
-            }
+
             fclose($stream);
 
             LoggerService::info("CSV export completed. Records: {$totalRecords}, File: {$fileName}.csv");
