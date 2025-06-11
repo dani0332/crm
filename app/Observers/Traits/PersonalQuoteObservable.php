@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
+use App\Jobs\SendFICEmailForLife;
 use App\Jobs\SendHomeOCBIntroEmailJob;
 use App\Models\PersonalQuote;
 use App\Repositories\EmbeddedProductRepository;
@@ -17,7 +18,6 @@ use App\Services\SendEmailCustomerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\SendFICEmailForLife;
 
 trait PersonalQuoteObservable
 {
@@ -62,7 +62,7 @@ trait PersonalQuoteObservable
                 info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
             }
         }
-        if($personalQuote->isLife()){
+        if ($personalQuote->isLife()) {
             if (isLeadFic($personalQuote->uuid)) {
                 SendFICEmailForLife::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
             }
