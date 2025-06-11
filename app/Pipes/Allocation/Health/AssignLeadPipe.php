@@ -13,6 +13,7 @@ use App\Services\Logger\LoggerService;
 use Carbon\Carbon;
 use Closure;
 use Exception;
+use Illuminate\Support\Facades\Bus;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class AssignLeadPipe extends BaseAllocationPipe
@@ -41,8 +42,11 @@ class AssignLeadPipe extends BaseAllocationPipe
         try {
             $lead = $this->lead;
 
-            Haystack::build()
-                ->addJob(new GetQuotePlansJob($lead))
+            Bus::batch(
+                [
+                    new GetQuotePlansJob($lead),
+                ]
+            )
                 ->then(function () use ($lead, $isReAssignment, $previousAdvisorId) {
                     if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED, HealthTeamType::PCP])) {
                         IntroEmailJob::dispatch(

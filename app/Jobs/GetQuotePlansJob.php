@@ -5,17 +5,16 @@ namespace App\Jobs;
 use App\Enums\QuoteTypeShortCode;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
-class GetQuotePlansJob implements ShouldQueue, StackableJob
+class GetQuotePlansJob implements ShouldQueue
 {
-    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, Stackable;
+    use Batchable, Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable;
 
     public $tries = 3;
     public $timeout = 30;
