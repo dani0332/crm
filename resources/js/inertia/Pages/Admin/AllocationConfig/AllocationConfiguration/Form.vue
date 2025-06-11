@@ -26,6 +26,7 @@ const templateData = ref({});
 // Dynamic data that will be fetched based on quote type
 const advisorOptions = ref([]);
 const nationalityOptions = ref([]);
+const currentConfiguration = ref(null);
 
 // Initialize form with only common data
 const getInitialFormData = () => {
@@ -45,17 +46,13 @@ const quoteTypeOptions = computed(() => {
   }));
 });
 
-// Initialize options from props
+// Initialize options from props (only nationalities, no advisors initially)
 const initializeOptions = () => {
-  advisorOptions.value = props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
-
   nationalityOptions.value = props.nationalities.map(nationality => ({
     value: nationality.id,
     label: nationality.text,
   }));
+  // Don't initialize advisors - they will be fetched when quote type is selected
 };
 
 const getQuoteTypeId = quoteTypeName => {
@@ -71,6 +68,7 @@ const fetchAdvisors = async quoteTypeName => {
   }
 
   try {
+    console.log('Fetching advisors for quote type:', quoteTypeName);
     const response = await axios.post('/advisors/by-quote-type', {
       quote_type: quoteTypeName,
     });
@@ -84,8 +82,10 @@ const fetchAdvisors = async quoteTypeName => {
         value: advisor.id,
         label: advisor.name,
       }));
+      console.log('Advisors fetched:', advisorOptions.value.length);
     } else {
       advisorOptions.value = [];
+      console.log('No advisors found');
     }
   } catch (error) {
     console.error('Error fetching advisors:', error);
@@ -93,11 +93,35 @@ const fetchAdvisors = async quoteTypeName => {
   }
 };
 
-// Fetch nationalities (if needed based on quote type)
-const fetchNationalities = async () => {
-  // For now, we'll use the initial nationalities
-  // This can be extended if different quote types need different nationalities
-  return;
+// Fetch existing configuration for the selected quote type
+const fetchConfiguration = async quoteTypeName => {
+  if (!quoteTypeName) {
+    currentConfiguration.value = null;
+    return;
+  }
+
+  try {
+    console.log('Fetching configuration for quote type:', quoteTypeName);
+    const response = await axios.get(
+      route('admin.allocation-configuration.index'),
+      {
+        params: {
+          quote_type: quoteTypeName,
+        },
+      },
+    );
+
+    if (response.data.props && response.data.props.configuration) {
+      currentConfiguration.value = response.data.props.configuration;
+      console.log('Configuration found:', currentConfiguration.value);
+    } else {
+      currentConfiguration.value = null;
+      console.log('No existing configuration found');
+    }
+  } catch (error) {
+    console.error('Error fetching configuration:', error);
+    currentConfiguration.value = null;
+  }
 };
 
 // Handle quote type change
@@ -116,13 +140,17 @@ const handleQuoteTypeChange = async newQuoteType => {
       // Reset template data
       templateData.value = {};
 
-      // Fetch advisors
-      await fetchAdvisors(newQuoteType);
+      // Fetch both advisors and configuration in parallel
+      await Promise.all([
+        fetchAdvisors(newQuoteType),
+        fetchConfiguration(newQuoteType),
+      ]);
     } else {
       form.quote_type = '';
       form.quote_type_id = '';
       templateData.value = {};
       advisorOptions.value = [];
+      currentConfiguration.value = null;
     }
 
     // Small delay for UX
@@ -140,10 +168,10 @@ const onTemplateDataUpdate = data => {
   templateData.value = data;
 };
 
-// Initialize options on mount
+// Initialize options on mount (only nationalities, no advisors or configuration)
 initializeOptions();
 
-// No initial fetching - user must select quote type first
+// Clean startup - no initial data fetching, user must select quote type first
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -155,10 +183,13 @@ function onSubmit(isValid) {
       ...templateData.value,
     };
 
-    if (props.configuration) {
+    if (currentConfiguration.value) {
       form.submit(
         'put',
-        route('admin.allocation-configuration.update', props.configuration.id),
+        route(
+          'admin.allocation-configuration.update',
+          currentConfiguration.value.id,
+        ),
         {
           data: submitData,
           onError: errors => {
@@ -285,7 +316,7 @@ function onSubmit(isValid) {
           <!-- Savings Template -->
           <div v-if="selectedQuoteType === 'Savings'">
             <SavingsAllocationConfigTemplate
-              :configuration="configuration"
+              :configuration="currentConfiguration"
               :advisor-options="advisorOptions"
               :nationality-options="nationalityOptions"
               @data-update="onTemplateDataUpdate"
@@ -372,7 +403,7 @@ function onSubmit(isValid) {
                 type="submit"
                 :loading="form.processing"
               >
-                {{ props.configuration ? 'Update' : 'Save' }}
+                {{ currentConfiguration ? 'Update' : 'Save' }}
                 {{ selectedQuoteType }} Configuration
               </x-button>
             </div>
