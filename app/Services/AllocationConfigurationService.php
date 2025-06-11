@@ -21,8 +21,7 @@ class AllocationConfigurationService
             $configuration = AllocationConfiguration::create([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
-                'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
-                'regular_brackets' => $data['regular_brackets'] ?? [],
+                'savings_brackets' => $data['savings_brackets'] ?? [],
                 'history' => [[
                     'ip' => request()->ip(),
                     'user_id' => $userId,
@@ -50,8 +49,7 @@ class AllocationConfigurationService
             $configuration->update([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
-                'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
-                'regular_brackets' => $data['regular_brackets'] ?? [],
+                'savings_brackets' => $data['savings_brackets'] ?? [],
             ]);
 
             // Add to history
@@ -73,45 +71,11 @@ class AllocationConfigurationService
     }
 
     /**
-     * Delete an allocation configuration
-     */
-    public function deleteConfiguration(AllocationConfiguration $configuration, int $userId): bool
-    {
-        return DB::transaction(function () use ($configuration, $userId) {
-            // Add deletion record to history
-            $history = $configuration->history ?? [];
-            $history[] = [
-                'ip' => request()->ip(),
-                'user_id' => $userId,
-                'action' => 'delete',
-                'changes' => [
-                    'old' => $configuration->toArray(),
-                    'new' => [],
-                ],
-            ];
-
-            $configuration->update(['history' => $history]);
-
-            return $configuration->delete();
-        });
-    }
-
-    /**
      * Get all advisors for dropdown
      */
     public function getAdvisors(): Collection
     {
-        return User::select('id', 'name')
-            ->whereNotNull('name')
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get()
-            ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                ];
-            });
+        return User::where('is_active', 1)->get();
     }
 
     /**
@@ -119,16 +83,44 @@ class AllocationConfigurationService
      */
     public function getNationalities(): Collection
     {
-        return Nationality::select('id', 'text')
-            ->withActive()
-            ->orderBy('text')
-            ->get()
-            ->map(function ($nationality) {
-                return [
-                    'id' => $nationality->id,
-                    'name' => $nationality->text,
-                ];
-            });
+        return Nationality::where('is_active', 1)->get();
+    }
+
+    /**
+     * Find applicable allocation configuration for a quote
+     */
+    public function findApplicableConfiguration(string $quoteType, array $criteria = []): ?AllocationConfiguration
+    {
+        return AllocationConfiguration::where('quote_type', $quoteType)->first();
+    }
+
+    /**
+     * Get allocation profile for specific criteria
+     */
+    public function getAllocationProfile(string $quoteType, float $amount, int $nationalityId, string $frequency = 'lumpsum'): ?array
+    {
+        $configuration = $this->findApplicableConfiguration($quoteType);
+
+        if (!$configuration) {
+            return null;
+        }
+
+        $brackets = $frequency === 'lumpsum'
+            ? ($configuration->lumpsum_brackets ?? [])
+            : ($configuration->regular_brackets ?? []);
+
+        foreach ($brackets as $bracket) {
+            if ($amount >= $bracket['min'] && $amount <= $bracket['max']) {
+                // Find matching profile based on nationality
+                foreach ($bracket['profiles'] ?? [] as $profile) {
+                    if (in_array($nationalityId, $profile['nationalityIds'] ?? [])) {
+                        return $profile;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
