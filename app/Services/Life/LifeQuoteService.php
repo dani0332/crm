@@ -396,7 +396,7 @@ class LifeQuoteService extends BaseService
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
         $currencyRanges = app(LookupService::class)->getCurrencyRanges();
-        
+
         return [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
