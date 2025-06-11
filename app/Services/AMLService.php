@@ -464,7 +464,7 @@ class AMLService
         $getLastScreening = $this->getLatestScreening($updateQuote->id, $quoteType->id);
         $membersDetails = $getMemberOrUBODetails;
 
-        if (!empty($getMemberOrUBODetails->toArray())) {
+        if (! empty($getMemberOrUBODetails->toArray())) {
             LoggerService::info('AML Screening Bridger - Validation check - Members found against quote');
             $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
             if (in_array(null, $memberValidateCheck)) {
@@ -1234,7 +1234,7 @@ class AMLService
         $shouldApplicableForScreening = $this->shouldApplyScreening($insured, $isCustomerInsuredAssociationUpdated, $getLastScreening, $isEntity);
 
         $entityId = $this->handleLegacyEntityCustomerData($request, $quoteTypeId, $quote, $isEntity);
-        
+
         return [$shouldApplicableForScreening, $insured, $entityId];
     }
 
@@ -1282,7 +1282,7 @@ class AMLService
 
     private function handleCustomerInsuredMappings($request, $quoteTypeId, $quote, $insured): bool
     {
-        $isCustomerInsuredAssociationUpdated  = false;
+        $isCustomerInsuredAssociationUpdated = false;
 
         // Check for orphaned record (without quote mapping) first
         $orphanedRecord = CustomerInsured::where([
@@ -1292,16 +1292,16 @@ class AMLService
             ->whereNull('quote_request_id')
             ->first();
 
-          // Create or update the customer-insured mapping
+        // Create or update the customer-insured mapping
         if ($orphanedRecord) {
             // Update the existing orphaned record instead of deleting and creating new
-            $isCustomerInsuredAssociationUpdated  = true;
+            $isCustomerInsuredAssociationUpdated = true;
             $orphanedRecord->update([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quote->id,
                 'updated_at' => now(),
             ]);
-            
+
             LoggerService::info('AML Screening Bridger - Updated orphaned customer_insured record', [
                 'customer_insured_id' => $orphanedRecord->id,
                 'customer_id' => $request->customer_id,
@@ -1319,13 +1319,13 @@ class AMLService
 
             if ($existingQuoteMapping && $existingQuoteMapping->insured_id !== $insured->id) {
                 // Create new record or update existing quote mapping
-                $isCustomerInsuredAssociationUpdated  = true;
+                $isCustomerInsuredAssociationUpdated = true;
                 CustomerInsured::updateOrCreate([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ],['updated_at' => now()]);
+                ], ['updated_at' => now()]);
 
                 // Update quote status
                 $quote->update(['kyc_decision' => Kyc::PENDING]);
@@ -1336,15 +1336,15 @@ class AMLService
                     'quote_id' => $quote->id,
                 ]);
 
-            } elseif (!$existingQuoteMapping) {
+            } elseif (! $existingQuoteMapping) {
                 // This is a completely new quote-insured association
-                $isCustomerInsuredAssociationUpdated  = true;
+                $isCustomerInsuredAssociationUpdated = true;
                 CustomerInsured::updateOrCreate([
                     'customer_id' => $request->customer_id,
                     'insured_id' => $insured->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
-                ],['updated_at' => now()]);
+                ], ['updated_at' => now()]);
 
                 LoggerService::info('AML Screening Bridger - New insured association created for quote', [
                     'insured_id' => $insured->id,
@@ -1360,18 +1360,21 @@ class AMLService
     {
         if ($insured->wasRecentlyCreated) {
             LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile created');
+
             return true;
         }
 
         if ($isCustomerInsuredAssociationUpdated) {
             LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile association changed for quote');
+
             return true;
         }
 
-        if ($insured->isDirty() || 
-            !isset($getLastScreening->created_at) || 
+        if ($insured->isDirty() ||
+            ! isset($getLastScreening->created_at) ||
             Carbon::parse($insured->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')) {
             LoggerService::info('AML Screening Bridger - Insured '.($isEntity ? 'Entity' : 'Person').' profile details updated');
+
             return true;
         }
 
@@ -1386,6 +1389,7 @@ class AMLService
         }
 
         $this->updateCustomerData($request);
+
         return null;
     }
 
@@ -1402,7 +1406,7 @@ class AMLService
         $entity = Entity::firstOrNew(['trade_license_no' => $request->trade_license_no]);
         $entity->fill($entityData);
 
-        if (!$entity->exists) {
+        if (! $entity->exists) {
             $entity->save();
             $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
         } elseif ($entity->isDirty()) {
@@ -1416,7 +1420,7 @@ class AMLService
             'quote_request_id' => $quote->id,
         ], [
             'entity_id' => $entity->id,
-            'entity_type_code' => $request->entity_type_code
+            'entity_type_code' => $request->entity_type_code,
         ]);
 
         return $entity->id;
@@ -1425,7 +1429,7 @@ class AMLService
     private function updateCustomerData($request): void
     {
         $customer = Customer::with('nationality')->findOrFail($request->customer_id);
-        
+
         $customer->fill([
             'nationality_id' => $request->nationality_id,
             'dob' => $request->dob,
