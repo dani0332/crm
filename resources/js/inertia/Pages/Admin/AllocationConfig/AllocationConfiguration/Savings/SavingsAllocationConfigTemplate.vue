@@ -158,8 +158,8 @@ watch(
 );
 
 const createEmptyBracket = () => ({
-  min: 0,
-  max: 0,
+  min: null,
+  max: null,
   profiles: [],
 });
 

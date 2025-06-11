@@ -177,7 +177,7 @@ const removeProfile = (bracket, profileIndex) => {
                 required
                 @input="handleMinInput($event, bracket)"
                 @blur="handleMinBlur($event, bracket)"
-                placeholder="0.00"
+                placeholder="1000"
               >
                 <template #suffix>
                   <div
@@ -198,7 +198,7 @@ const removeProfile = (bracket, profileIndex) => {
                 required
                 @input="handleMaxInput($event, bracket)"
                 @blur="handleMaxBlur($event, bracket)"
-                placeholder="0.00"
+                placeholder="2000"
               >
                 <template #suffix>
                   <div
