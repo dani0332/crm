@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Enums\Logger\LoggerFeatureEnum;
 use App\Enums\SageEnum;
+use App\Models\PaymentSplits;
+use App\Models\SageProcess;
 use App\Services\Logger\LoggerService;
 use App\Services\SageApiService;
 use Illuminate\Bus\Queueable;
@@ -14,8 +16,6 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Throwable;
-use App\Models\PaymentSplits;
-use App\Models\SageProcess;
 
 class PostPrepaymentToSageJob implements ShouldQueue
 {
