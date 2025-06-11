@@ -633,10 +633,6 @@ const onUpdateIndividualPlan = () => {
   planForm.post(route('savingsPlanUpdate'), {
     preserveScroll: true,
     onSuccess: () => {
-      notification.success({
-        title: 'Plan updated successfully',
-        position: 'top',
-      });
       onLoadAvailablePlansDataAndPlanDetails();
     },
     onError: errors => {
