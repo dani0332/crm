@@ -16,6 +16,7 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use App\Repositories\EmbeddedProductRepository;
 use App\Enums\quoteTypeCode;
+use App\Services\Logger\LoggerService;
 
 class TravelQuoteObserver
 {
@@ -93,10 +94,7 @@ class TravelQuoteObserver
             try {
                 EmbeddedProductRepository::cancelEmbeddedProducts($travelQuote->id, quoteTypeCode::Travel);
             } catch (Exception $e) {
-                Log::error('TravelQuoteObserver - cancel embedded products failed', [
-                    'error' => $e->getMessage(),
-                    'uuid' => $travelQuote->uuid,
-                ]);
+                LoggerService::error('TravelQuoteObserver - cancel embedded products failed', [], $e, ['ref_id' => $travelQuote->uuid]);
             }
         }
 
@@ -114,10 +112,7 @@ class TravelQuoteObserver
             try {
                 EmbeddedProductRepository::capturePayment($travelQuote->id, quoteTypeCode::Travel);
             } catch (Exception $e) {
-                Log::error('TravelQuoteObserver - capture embedded products failed', [
-                    'error' => $e->getMessage(),
-                    'uuid' => $travelQuote->uuid,
-                ]);
+                LoggerService::error('TravelQuoteObserver - capture embedded products failed', [], $e, ['ref_id' => $travelQuote->uuid]);
             }
         }
 
