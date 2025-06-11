@@ -5,54 +5,50 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Enums\QuoteTypes;
-use App\Services\AllocationConfigurationService;
+use App\Models\Allocation\AllocationConfiguration;
+use App\Models\Nationality;
+use App\Models\QuoteType;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class AllocationConfigurationRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true; // Authorization handled by middleware
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         $rules = [
-            'quote_type_id' => ['required', 'integer', 'min:1'],
-            'quote_type' => ['required', 'string', Rule::enum(QuoteTypes::class)],
-            'lumpsum_brackets' => ['nullable', 'array'],
-            'lumpsum_brackets.*.min' => ['required_with:lumpsum_brackets', 'numeric', 'min:0'],
+            'quote_type_id' => ['required', 'integer', Rule::exists(QuoteType::class, 'id')],
+            'quote_type' => ['required', Rule::enum(QuoteTypes::class)],
+
+            'lumpsum_brackets' => ['required', 'array'],
+            'lumpsum_brackets.*.min' => ['required_with:lumpsum_brackets', 'numeric', 'min:1'],
             'lumpsum_brackets.*.max' => ['required_with:lumpsum_brackets', 'numeric', 'gte:lumpsum_brackets.*.min'],
             'lumpsum_brackets.*.profiles' => ['required_with:lumpsum_brackets', 'array', 'min:1'],
             'lumpsum_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
-            'lumpsum_brackets.*.profiles.*.advisorIds.*' => ['integer', 'exists:users,id'],
+            'lumpsum_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
             'lumpsum_brackets.*.profiles.*.nationalityIds' => ['required', 'array', 'min:1'],
-            'lumpsum_brackets.*.profiles.*.nationalityIds.*' => ['integer', 'exists:nationality,id'],
+            'lumpsum_brackets.*.profiles.*.nationalityIds.*' => ['integer', Rule::exists(Nationality::class, 'id')],
 
-            'regular_brackets' => ['nullable', 'array'],
-            'regular_brackets.*.min' => ['required_with:regular_brackets', 'numeric', 'min:0'],
+            'regular_brackets' => ['required', 'array'],
+            'regular_brackets.*.min' => ['required_with:regular_brackets', 'numeric', 'min:1'],
             'regular_brackets.*.max' => ['required_with:regular_brackets', 'numeric', 'gte:regular_brackets.*.min'],
             'regular_brackets.*.profiles' => ['required_with:regular_brackets', 'array', 'min:1'],
             'regular_brackets.*.profiles.*.advisorIds' => ['required', 'array', 'min:1'],
-            'regular_brackets.*.profiles.*.advisorIds.*' => ['integer', 'exists:users,id'],
+            'regular_brackets.*.profiles.*.advisorIds.*' => ['integer', Rule::exists(User::class, 'id')],
             'regular_brackets.*.profiles.*.nationalityIds' => ['required', 'array', 'min:1'],
-            'regular_brackets.*.profiles.*.nationalityIds.*' => ['integer', 'exists:nationality,id'],
+            'regular_brackets.*.profiles.*.nationalityIds.*' => ['integer', Rule::exists(Nationality::class, 'id')],
         ];
 
-        // Add unique validation for update operations
         if ($this->route('allocationConfiguration')) {
             $rules['quote_type'] = [
                 'required',
-                'string',
                 Rule::enum(QuoteTypes::class),
-                Rule::unique('allocation_configurations')
+                Rule::unique(AllocationConfiguration::class)
                     ->ignore($this->route('allocationConfiguration'))
                     ->where(function ($query) {
                         return $query->where('quote_type_id', $this->quote_type_id);
@@ -61,9 +57,8 @@ class AllocationConfigurationRequest extends FormRequest
         } else {
             $rules['quote_type'] = [
                 'required',
-                'string',
                 Rule::enum(QuoteTypes::class),
-                Rule::unique('allocation_configurations')
+                Rule::unique(AllocationConfiguration::class)
                     ->where(function ($query) {
                         return $query->where('quote_type_id', $this->quote_type_id);
                     }),
@@ -73,9 +68,6 @@ class AllocationConfigurationRequest extends FormRequest
         return $rules;
     }
 
-    /**
-     * Get custom validation messages.
-     */
     public function messages(): array
     {
         return [
@@ -111,54 +103,92 @@ class AllocationConfigurationRequest extends FormRequest
         ];
     }
 
-    /**
-     * Configure the validator instance.
-     */
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            $allocationService = app(AllocationConfigurationService::class);
-
-            // Validate lumpsum brackets structure
             if ($this->has('lumpsum_brackets') && ! empty($this->lumpsum_brackets)) {
-                if (! $allocationService->validateBracketStructure($this->lumpsum_brackets)) {
+                if (! $this->validateBracketStructure($this->lumpsum_brackets)) {
                     $validator->errors()->add('lumpsum_brackets', 'Invalid bracket structure for lumpsum brackets.');
                 }
 
-                if ($allocationService->hasOverlappingBrackets($this->lumpsum_brackets)) {
+                if ($this->hasOverlappingBrackets($this->lumpsum_brackets)) {
                     $validator->errors()->add('lumpsum_brackets', 'Overlapping brackets detected in lumpsum brackets.');
                 }
             }
 
-            // Validate regular brackets structure
             if ($this->has('regular_brackets') && ! empty($this->regular_brackets)) {
-                if (! $allocationService->validateBracketStructure($this->regular_brackets)) {
+                if (! $this->validateBracketStructure($this->regular_brackets)) {
                     $validator->errors()->add('regular_brackets', 'Invalid bracket structure for regular brackets.');
                 }
 
-                if ($allocationService->hasOverlappingBrackets($this->regular_brackets)) {
+                if ($this->hasOverlappingBrackets($this->regular_brackets)) {
                     $validator->errors()->add('regular_brackets', 'Overlapping brackets detected in regular brackets.');
                 }
             }
 
-            // Ensure at least one bracket type is provided
             if (empty($this->lumpsum_brackets) && empty($this->regular_brackets)) {
                 $validator->errors()->add('brackets', 'At least one bracket type (lumpsum or regular) must be configured.');
             }
         });
     }
 
-    /**
-     * Get the validated data from the request.
-     */
     public function validated($key = null, $default = null)
     {
         $validated = parent::validated($key, $default);
 
-        // Ensure empty arrays for brackets if not provided
         $validated['lumpsum_brackets'] = $validated['lumpsum_brackets'] ?? [];
         $validated['regular_brackets'] = $validated['regular_brackets'] ?? [];
 
         return $validated;
+    }
+
+    private function validateBracketStructure(array $brackets): bool
+    {
+        foreach ($brackets as $bracket) {
+            if (! isset($bracket['min']) || ! isset($bracket['max']) || ! isset($bracket['profiles'])) {
+                return false;
+            }
+
+            if (! is_numeric($bracket['min']) || ! is_numeric($bracket['max'])) {
+                return false;
+            }
+
+            if ($bracket['min'] > $bracket['max']) {
+                return false;
+            }
+
+            foreach ($bracket['profiles'] as $profile) {
+                if (! isset($profile['advisorIds']) || ! isset($profile['nationalityIds'])) {
+                    return false;
+                }
+
+                if (! is_array($profile['advisorIds']) || ! is_array($profile['nationalityIds'])) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function hasOverlappingBrackets(array $brackets): bool
+    {
+        $count = count($brackets);
+
+        for ($i = 0; $i < $count; $i++) {
+            for ($j = $i + 1; $j < $count; $j++) {
+                $bracket1 = $brackets[$i];
+                $bracket2 = $brackets[$j];
+
+                if (
+                    ($bracket1['min'] <= $bracket2['max'] && $bracket1['max'] >= $bracket2['min']) ||
+                    ($bracket2['min'] <= $bracket1['max'] && $bracket2['max'] >= $bracket1['min'])
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
