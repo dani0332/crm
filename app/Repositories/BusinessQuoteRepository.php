@@ -118,11 +118,8 @@ class BusinessQuoteRepository extends BaseRepository
                 $this->getTable().'.*',
             ])
             ->firstOrFail();
-
-        $quote->insured_customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Entity;
-
-        // This return customer type as individual always
-        // $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Entity;
+        
+        $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Entity;
 
         return $quote;
     }

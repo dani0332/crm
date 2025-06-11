@@ -13,8 +13,11 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeShortCode;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuotePlanDetail;
+use App\Models\CustomerInsured;
+use App\Models\Insured;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteTag;
@@ -302,11 +305,16 @@ trait QuoteModelTrait
     {
         return Attribute::make(
             get: function () {
-                $exists = QuoteRequestEntityMapping::where('quote_type_id', QuoteTypeId::Health)
-                    ->where('quote_request_id', $this->id)
-                    ->exists();
+                // Extract the prefix from the quote code (before the first dash)
+                $codePrefix = explode('-', $this->code)[0] ?? '';
+                
+                // Get the latest insured record and return its customer_type
+                // If code prefix is BUS, default to Entity, otherwise default to Individual
+                $defaultType = ($codePrefix === QuoteTypeShortCode::BUS) 
+                    ? CustomerTypeEnum::Entity 
+                    : CustomerTypeEnum::Individual;
 
-                return $exists ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+                return $this->latestInsured?->customer_type ?? $defaultType;
             }
         );
     }

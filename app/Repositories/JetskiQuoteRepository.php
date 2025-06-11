@@ -145,6 +145,9 @@ class JetskiQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'renewalBatchModel',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypes::JETSKI->id());
+            },
         ])->when(auth()->user() && auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->id());
         })

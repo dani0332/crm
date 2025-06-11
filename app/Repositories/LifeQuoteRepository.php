@@ -76,7 +76,9 @@ class LifeQuoteRepository extends BaseRepository
     {
         $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
             'renewalBatchModel', 'lifeQuoteRequestDetail', 'paymentStatus',
-            'payments'])
+            'payments', 'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypeId::Life);
+            }])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })

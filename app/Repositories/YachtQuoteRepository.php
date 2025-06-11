@@ -183,6 +183,9 @@ class YachtQuoteRepository extends BaseRepository
             'paymentStatus',
             'payments',
             'quoteDetail',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypes::YACHT->id());
+            },
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());

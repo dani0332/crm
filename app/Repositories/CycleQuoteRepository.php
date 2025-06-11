@@ -84,6 +84,9 @@ class CycleQuoteRepository extends BaseRepository
             'payments',
             'quoteDetail',
             'renewalBatchModel',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypes::CYCLE->id());
+            },
         ])
             ->when(auth()->user() && auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());

@@ -159,6 +159,9 @@ class HomeQuoteRepository extends BaseRepository
             'homeQuote',
             'homeQuote.homeQuoteRequestDetail',
             'homeQuote.homeQuoteRequestDetail.lostReason',
+            'latestInsured' => function ($q) {
+                $q->where('customer_insured.quote_type_id', QuoteTypeId::Home);
+            },
             'payments' => function ($query) {
                 $query->with([
                     'paymentStatus',

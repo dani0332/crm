@@ -325,7 +325,7 @@ const travelerForm = useForm({
   emirates_id_number: '',
   gender: null,
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.insured_customer_type,
+  customer_type: page.props.quote.customer_type,
 });
 
 const travelerFieldReq = reactive({
@@ -1210,10 +1210,10 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
-const enabledCustomerType = page.props.quote?.insured_customer_type ?? page.props.customerTypeEnum.Individual;
+const enabledCustomerType = page.props.quote?.customer_type ?? page.props.customerTypeEnum.Individual;
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
-  customer_type: page.props.quote.insured_customer_type,
+  customer_type: page.props.quote.customer_type,
   quote_type: page.props.modelType,
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,

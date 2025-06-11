@@ -210,11 +210,11 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
   insured_first_name:
-    page.props.quote.latest_insured.first_name ??
+    page.props.quote.latest_insured?.first_name ??
     page.props.quote.customer_insured_first_name ??
     '',
   insured_last_name:
-    page.props.quote.latest_insured.last_name ??
+    page.props.quote.latest_insured?.last_name ??
     page.props.quote.customer_insured_last_name ??
     '',
   emirates_id_number: page.props.quote?.customer.emirates_id_number || null,

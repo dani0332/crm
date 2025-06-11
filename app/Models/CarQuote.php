@@ -489,4 +489,30 @@ class CarQuote extends BaseModel
     {
         return $this->is_renewal_tier_email_sent == 1;
     }
+
+    public function insured()
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // Foreign key on customer_insured
+            'id',               // Foreign key on insured
+            'id',               // Local key on car_quote_requests
+            'insured_id'        // Local key on customer_insured
+        )->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    // Get the latest/most recent insured record for this quote
+    public function latestInsured(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Insured::class,
+            CustomerInsured::class,
+            'quote_request_id', // customer_insured.quote_request_id
+            'id', // insured.id
+            'id', // car_quote_requests.id
+            'insured_id' // customer_insured.insured_id
+        )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
+        ->latest('customer_insured.updated_at');
+    }
 }
