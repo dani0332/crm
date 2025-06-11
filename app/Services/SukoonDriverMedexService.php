@@ -33,7 +33,6 @@ class SukoonDriverMedexService
     private $policyNumber;
     private $paymentGateway;
     private $paymentToken;
-    private $documentPolicyNumber;
 
     private $paymentPlan;
     private $amountDisclaimerText;
@@ -121,11 +120,12 @@ class SukoonDriverMedexService
 
             // STEP (#10 initiatePaymentProcess) & (#11 completeInvoicePayment)
             $this->initiateAndCompletePayment($transaction);
-            if(empty($this->documentPolicyNumber))
+            $transaction->refresh();
+            if(empty($transaction->certificate_number))
                 throw new Exception('Document Policy Number is missing');
 
             // STEP #12 getPolicyScheduleCoi 
-            $this->getPolicyScheduleCoi();
+            $this->getPolicyScheduleCoi($transaction);
 
             // STEP #13 getCustomerTaxInvoice
             $this->getCustomerTaxInvoice();
@@ -584,7 +584,7 @@ class SukoonDriverMedexService
 
             if ($result) {
                 $transaction->update(['certificate_number' => $result['policy_number']]);
-                return $this->documentPolicyNumber = $result['policy_number'];
+                return $result['policy_number'];
             }
 
             throw new Exception('Payment complete API failed');
@@ -609,8 +609,6 @@ class SukoonDriverMedexService
 
                 // STEP #11 completeInvoicePayment
                 $this->completeInvoicePayment($transaction);
-            } else {
-                $this->documentPolicyNumber = $transaction->certificate_number;
             }
         } catch (Exception $e) {
             throw $e;
@@ -618,10 +616,10 @@ class SukoonDriverMedexService
     }
 
 
-    public function getPolicyScheduleCoi()
+    public function getPolicyScheduleCoi($transaction)
     {
         try {
-            $result = $this->request('/policy/'.$this->documentPolicyNumber.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
+            $result = $this->request('/policy/'.$transaction->certificate_number.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
         } catch (Exception $e) {
             throw $e;
         }
@@ -648,11 +646,11 @@ class SukoonDriverMedexService
     public function getDocuments($quote, $embeddedTransaction)
     {
         try {
-            $result = $this->request('/policy/'.$this->documentPolicyNumber.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
+            $result = $this->request('/policy/'.$embeddedTransaction->certificate_number.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
             $response = $result->json();
 
             foreach(($response['documents'] ?? []) as $document) {
-                
+
                 if(empty($document)) {
                     continue;
                 }
