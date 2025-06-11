@@ -7,6 +7,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
+        * {
+            font-family: 'Prompt', sans-serif !important;
+        }
+
         html {
             line-height: 1.5;
             margin: 0px;
@@ -63,7 +67,7 @@
         .header {
             color: #ffffff;
             font-size: 14px;
-            font-weight: 600;
+            /*font-weight: 600;*/
             text-align: center;
             padding: 8px 10px;
             width: 100%;
@@ -92,7 +96,7 @@
         td > p,
         th > p {
             padding: 4px;
-            font-size: 14px;
+            font-size: 12px;
             text-align: center;
             font-weight: 400;
         }
@@ -126,9 +130,11 @@
         }
         .bg-light-blue {
             border: 1px solid #bfbfbf;
-            background: #EFF6FF;
-            padding: 8px;
-            color: #252525;
+            padding: 1px 8px;
+            color: #5B5F60;
+        }
+        .bg-light-blue p {
+            /*padding: 1px !important;*/
         }
         .section {
             color: #333393;
@@ -137,13 +143,13 @@
         .text-black{color: #000000;}
         .provider {
             border: 1px solid #bfbfbf;
-            font-size: 15px;
-            line-height: 28px;
+            font-size: 14px;
+            line-height: 1;
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
-            max-height: 50px;
-            height: 50px;
+            max-height: 35px;
+            height: 35px;
         }
         .spacer {
             padding: 3px;
@@ -152,12 +158,11 @@
         .quote-info {
             vertical-align: bottom;
             margin-top: -1px;
-            background: #EFF6FF;
             font-size: 14px;
+            font-weight: 600;
             text-align: left;
-            padding: 8px;
+            padding: 0;
             max-width: 100%;
-            font-weight: normal;
         }
         div.quote-info  {
 
@@ -185,16 +190,15 @@
             border-radius: 5px;
             margin-bottom: 0px;
         }
-        .btn-buy
-        {
+        .btn-buy {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 12px 15px;
+        padding: 3px 35px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
             font-size: 14px;
-            font-weight: bold;
+            font-weight: normal;
             border-radius: 5px;
         }
         .btn-buy:hover{
@@ -208,8 +212,9 @@
             width: 100px;
         }
         @page {
-            margin-bottom:0px;
-            margin-top:20px;
+            margin: 0;
+            padding: 0;
+            margin-bottom: 170px;
         }
         .container
         {
@@ -242,6 +247,8 @@
         .text-right {text-align: right;}
         .full-page-image {
             width: 100%;
+            z-index: 999;
+            height: 88%;
         }
         .text-center {text-align: center;}
         /*.badge-success {
@@ -280,7 +287,7 @@
         .header-text {
             display: table-cell;
             text-align: left;
-            width: 75%;
+            /*width: 75%;*/
             vertical-align: middle;
         }
 
@@ -312,6 +319,9 @@
 
         header {
             position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             width: 100%;
             height: 150px;
         }
@@ -432,6 +442,28 @@
             display: inline-block;
         }
         /* End Header styles from home_quote_plans.blade.php */
+
+        /* table td,
+        table th {
+            max-width: 160px;
+            width: 160px;
+            height: auto;
+            padding: 2px;
+            text-align: center;
+            vertical-align: middle;
+            word-wrap: break-word;
+            white-space: normal;
+        } */
+
+        .re_border{
+            border: 1px solid red;
+        }
+        .bl_border{
+            border: 1px solid blue;
+        }
+        .gr_border{
+            border: 1px solid green;
+        }
     </style>
 </head>
 
@@ -544,7 +576,7 @@
 
 @endphp
 {{--First Page --}}
-<img src="{{public_path('images/quote_plans_pages/P1-1.jpg')}}" class="full-page-image" style="width: 50%;" />
+<img src="{{public_path('images/quote_plans_pages/P1-1.jpg')}}" class="full-page-image" />
 <div style="page-break-after: always;"></div>
 
 {{-- Second Page --}}
@@ -553,20 +585,20 @@
 
 {{-- PDF Page Header --}}
 <header>
-    <div class="header">
-        <div class="logo">
+    <div class="header gr_border">
+        <div class="logo re_border">
             <img class="im-logo" src="{{ getIMLogo(true, true) }}" alt="logo">
         </div>
-        <div class="header-bottom">
+        <div class="header-bottom re_border">
             <!-- Left Side Text -->
             <div class="header-text">
-                <strong class="raleway-font" style="font-weight: 600 !important;">Car insurance comparison table</strong>
+                <strong class="raleway-font" style="font-weight: 600 !important;">Car Insurance Comparison Table</strong>
                 <span class="separator">|</span>
                 Name: <span class="header-text-highlight">{{ $quote->first_name }} {{ $quote->last_name }}</span>
                 <span class="separator">|</span>
-                Vehicle: <span class="header-text-highlight">{{ @$quote->carMake->text . ' ' . @$quote->carModel->text . ' ' . @$quote->year_of_manufacture }}</span>
+                Car Type: <span class="header-text-highlight">{{ @$quote->carMake->text . ' ' . @$quote->carModel->text . ' ' . @$quote->year_of_manufacture }}</span>
                 <span class="separator">|</span>
-                Coverage type: <span class="header-text-highlight">Car Insurance</span>
+                Year: <span class="header-text-highlight">{{ @$quote->year_of_manufacture }}</span>
             </div>
 
             <!-- Right Side Quote Number -->
@@ -581,18 +613,17 @@
 
 {{-- PDF Page Inner Content --}}
 <main>
-    <table class="main-table {{ $tableClass ?? 'is-full' }}">
+    <table class="main-table {{ $tableClass ?? 'is-full' }}" style="margin-top:200px">
         <thead>
-        <p style="margin-top:70px"></p>
         <tr>
-            <th class="label" rowspan="2">
-                <p class="raleway-font" style="">Insurance company
+            <th class="bg-light-blue" rowspan="2">
+                <p class="quote-info raleway-font" style="">Insurance company
                 </p>
             </th>
             @foreach ($planIds as $planId)
                 <th class="provider" style="border: solid 1px #bfbfbf;">
                     <div class="rounded-full">
-                        <p class="relative top-[40%] m-auto text-xs raleway-font">
+                        <p class="relative top-[40%] m-auto text-xs">
                             @php
                                 $providerLogoImage = public_path(
                                     'images/insurance_providers/' .
@@ -612,7 +643,7 @@
         <tr>
             @foreach ($planIds as $planId)
                 <th style="border: solid 1px #bfbfbf; text-align: center;">
-                    <p class="text-center raleway-font" style="font-size: 14px">
+                    <p class="text-center" style="font-size: 14px">
                         {{ $plans[$planId]->providerName ?? '' }}
                     </p>
                 </th>
@@ -621,13 +652,13 @@
 
         {{-- Plan Name --}}
         <tr>
-            <th class="label">
-                <p class="raleway-font" style="">Plan name
+            <th class="bg-light-blue">
+                <p class="quote-info raleway-font" style="">Plan name
                 </p>
             </th>
             @foreach ($planIds as $planId)
                 <th>
-                    <p class="text-center raleway-font" style="font-size: 14px">
+                    <p class="text-center" style="font-size: 14px">
                         {{ $plans[$planId]->name ?? '' }}
                     </p>
                 </th>
@@ -636,8 +667,8 @@
 
         {{-- Total price (with VAT) --}}
         <tr>
-            <th class="label">
-                <p class="raleway-font" style="font-size: 14px; ">Total price (with VAT)</p>
+            <th class="bg-light-blue">
+                <p class="quote-info raleway-font" style="font-size: 14px; ">Total price (with VAT)</p>
             </th>
             @foreach ($planIds as $planId)
                 <th>
@@ -645,7 +676,7 @@
                         @php
                             if (isset($plans[$planId])) {
                                 $buyNowFullLink = $websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId;
-                                $buyNowText = 'Buy Now';
+                                $buyNowText = 'BUY NOW';
 
                                 $totalPrice = ($plans[$planId]->discountPremium ?? 0) + ($plans[$planId]->vat ?? 0);
                                 $totalPriceFormatted = number_format($totalPrice, 2);
@@ -655,9 +686,9 @@
                                         $buyNowFullLink .
                                         '">' .
                                         $buyNowText .
-                                        '<br>' .
-                                        '<small style="font-size: 10px; font-weight: normal;">AED </small>' .
-                                        '<strong style="font-size: 14px; font-weight: bold;">' .
+                                        '<br/>' .
+                                        '<span style="font-size: 10px; font-weight: normal;">AED </span>' .
+                                        '<strong>' .
                                         $totalPriceFormatted .
                                         '</strong>' .
                                         '</a>';
@@ -886,12 +917,15 @@
 </div>
 
 
+
 {{-- Second Last Page --}}
+<div style="page-break-after: always;"></div>
 <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_second_last_page_with_header.jpg') }}"
      class="full-page-image" />
-<div style="page-break-after: always;"></div>
+
 
 {{-- Last Page --}}
+<div style="page-break-after: always;"></div>
 <img src="{{ public_path('images/quote_plans_pages/ecom_home/home_pdf_last_page_with_header.jpg') }}"
      class="full-page-image" />
 </body>
