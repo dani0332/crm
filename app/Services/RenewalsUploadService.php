@@ -1114,9 +1114,7 @@ class RenewalsUploadService
             }
 
             if (in_array($quoteType->code, [quoteTypeCode::Car]) && isset($data['registration_type']) && $data['registration_type'] == CarRegistrationType::COMPANY) {
-
                 $this->setCarCommericalQuoteData($quoteData, $data);
-
             }
 
             LoggerService::info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
@@ -1125,7 +1123,9 @@ class RenewalsUploadService
             if (! checkPersonalQuotes($quoteType)) {
                 $this->syncQuote($quote, $quoteData);
             }
-
+            if (in_array($quoteType->code, [quoteTypeCode::Car]) && isset($data['registration_type']) && $data['registration_type'] == CarRegistrationType::COMPANY) {
+                $this->getCustomerEntity($quote, $data);
+            }
             LoggerService::info($logPrefix.' quote updated UUID: '.$quote->uuid);
 
             if (! empty($advisorId) && $quote->advisor_id != $advisorId) {
@@ -1907,7 +1907,8 @@ class RenewalsUploadService
                             }
                             if (! empty($leadData->registration_type) && $leadData->registration_type == CarRegistrationType::COMPANY) {
                                 if (! empty($leadData->vehicle_use) && $leadData->vehicle_use == CarVehicleUse::COMMERCIAL) {
-                                    if (isset($leadData->business_activity) && empty($leadData->business_activity)) {
+
+                                    if (empty($leadData->business_activity)) {
                                         $leadValidationErrors->push('Business Activity is required');
                                     }
                                     if (! empty($leadData->business_activity) && ! BusinessActivity::where('name', $leadData->business_activity)->first()) {

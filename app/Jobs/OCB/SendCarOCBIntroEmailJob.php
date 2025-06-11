@@ -49,6 +49,7 @@ class SendCarOCBIntroEmailJob implements ShouldQueue
         $this->triggerOnlyWorkflow = $triggerOnlyWorkflow;
         $this->handleZeroPlans = $handleZeroPlans;
         $this->forceSicWorkflow = $forceSicWorkflow;
+        $this->afterCommit();
     }
 
     /**
