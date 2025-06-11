@@ -767,6 +767,12 @@ class HandleInertiaRequests extends Middleware
                                 route('admin.nationality-allocation-config.index'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::NATIONALITY_ALLOCATION_CONFIG),
+                                'Configuration Module',
+                                route('admin.allocation-configuration.index'),
+                                fn ($s) => $s->attributes(['icon' => 'settings'])
+                            )
                     );
             });
         }
