@@ -473,7 +473,7 @@ class SukoonDriverMedexService
     {
         try {
             if ($transaction->quote_policy == null) {
-                $response = $this->formSubmit($userDetail, $transaction, false); // TODO:: true
+                $response = $this->formSubmit($userDetail, $transaction, true);
 
                 $fields = collect($response['form']['fields'] ?? []);
 
@@ -583,7 +583,7 @@ class SukoonDriverMedexService
             ])->json();
 
             if ($result) {
-                // $transaction->update(['certificate_number' => $result['policy_number']]); // TODO:: uncomment
+                $transaction->update(['certificate_number' => $result['policy_number']]);
                 return $this->documentPolicyNumber = $result['policy_number'];
             }
 
@@ -602,7 +602,7 @@ class SukoonDriverMedexService
     private function initiateAndCompletePayment($transaction)
     {
         try {
-            if ($transaction->certificate_number == null || true) { // TODO:: remove || true check
+            if ($transaction->certificate_number == null) {
 
                 // STEP #10 initiatePaymentProcess
                 $this->paymentInitiate();
