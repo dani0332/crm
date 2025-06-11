@@ -27,6 +27,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Lab404\Impersonate\Events\TakeImpersonation;
+use App\Listeners\HandleBookPolicyJobFailed;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -86,6 +87,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         \Illuminate\Queue\Events\JobFailed::class => [
             HandleAxiomBatchFlush::class,
+            HandleBookPolicyJobFailed::class,
         ],
         \Illuminate\Queue\Events\JobReleasedAfterException::class => [
             HandleAxiomBatchFlush::class,

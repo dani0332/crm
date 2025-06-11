@@ -89,14 +89,14 @@ class BookPolicyOnSageJob implements ShouldQueue
 
         if (str_contains($message, SageEnum::SAGE_TIMEOUT_REQUEST_MESSAGE)) {
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_TIMEOUT_STATUS, $message);
+            LoggerService::info('Policy Book : BookPolicyOnSageJob failed: Quote Code'.$this->quote->code.' - Error Code : '.$code.' - Error : '.$message);
+        }elseif ($this->isFailedDueToAttemptsOrTimeout($message)) {
+            // Set status to pending instead of failed when job has been attempted too many times
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message);
+            LoggerService::info('Policy Book : BookPolicyOnSageJob failed: Quote Code'.$this->quote->code.' - Error Code : '.$code.' - Error : '.$message);
         } else {
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
-        }
-
-        if ($this->isFailedDueToAttemptsOrTimeout($message)) {
-            LoggerService::info('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message);
-        } else {
-            LoggerService::error('Policy Book : BookPolicyOnSageJob failed: '.$this->quote->code.' - Code : '.$code.' - Error : '.$message);
+            LoggerService::error('Policy Book : BookPolicyOnSageJob failed: Quote Code'.$this->quote->code.' - Error Code : '.$code.' - Error : '.$message);
         }
 
         LoggerService::info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
