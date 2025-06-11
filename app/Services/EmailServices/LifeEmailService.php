@@ -55,6 +55,7 @@ class LifeEmailService extends BaseService
             'advisorName' => $advisor?->name ?? '',
             'advisorEmail' => $advisor?->email ?? '',
             'advisorDetails' => $advisor ?? null,
+            'advisorProfilePath' => (! empty($advisor->profile_photo_path) ? $advisor->profile_photo_path : ''),
             'landLine' => $advisor?->landline_no ?? '',
             'mobilePhone' => $advisor?->mobile_no ?? '',
             'whatsAppNumber' => $advisor?->mobile_no ? formatMobileNo($advisor->mobile_no) : '',
