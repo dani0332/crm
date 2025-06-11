@@ -141,6 +141,8 @@ class SavingsQuoteService extends BaseQuoteService
                     'nationality',
                     'customer',
                     'customer.additionalContactInfo',
+                    'insuranceProviderPlan',
+                    'insuranceProvider',
                 ])->select([
                     'personal_quotes.*',
                 ])->selectRaw("
