@@ -156,6 +156,7 @@ class SavingsQuoteService extends BaseQuoteService
                                     'documents',
                                     'verifiedByUser',
                                     'paymentCharges',
+                                    'processJob'
                                 ])
                                     ->orderBy('sr_no', 'asc');
                             },
