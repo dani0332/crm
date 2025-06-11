@@ -9,6 +9,7 @@ const props = defineProps({
   plan: Object,
   modelValue: Boolean,
   quote: Object,
+  currencyRanges: Array,
 });
 
 const notification = useNotifications('toast');
@@ -24,6 +25,25 @@ const getCurrencyId = currencyCode => {
   return props.currencies.find(currency => currency.text === currencyCode)?.id;
 };
 
+
+const validateSumAssured = () => {
+  
+  if(!props.plan.isApi) return true;
+
+  const currencyRange = props.currencyRanges.find(
+    range => range.code === createForm.currency,
+  );
+  if (currencyRange) {
+    if (createForm.sumAssured < currencyRange.min_value) {
+      return 'Sum assured must be between ' + currencyRange.min_value + ' - ' + currencyRange.max_value;
+    }
+    if (createForm.sumAssured > currencyRange.max_value) {
+      return 'Sum assured must be between ' + currencyRange.min_value + ' - ' + currencyRange.max_value;  
+    }
+  }
+  return true;
+};
+
 // Add watch for modal visibility to call getRiderDetails when opened
 watch(
   () => shown.value,
@@ -31,6 +51,9 @@ watch(
     if (newVal && props.plan?.planId) {
       getRiderDetails(props.plan.planId);
       submitType.value = props.plan.isApi ? 'getQuote' : 'onSubmit';
+      exitAge.value = props.plan?.exitAge;
+      
+
     }
   },
 );
@@ -69,7 +92,7 @@ const preventInvalidInputs = (e, allowDecimals = true) => {
 };
 
 const validatePriceRange = value => {
-  if (!value) return true;
+  if (!createForm.isManualPlan) return true;
   const price = parseFloat(value);
   if ((createForm.isManualPlan && price < 1) || price > 100000000) {
     return 'Value must be between 1 and 100,000,000';
@@ -92,7 +115,6 @@ const validatePolicyTerm = value => {
   // Only validate for api plans i.e Zurich for now
   if (props.plan.isApi) {
     const maxAllowedTerm = exitAge.value - clientAge;
-    console.log('maxAllowedTerm', maxAllowedTerm, exitAge.value, clientAge);
     if (policyTerm > maxAllowedTerm) {
       return `Maximum Policy Term can not be more than ${maxAllowedTerm} years (Exit Age ${exitAge.value} - Client Age ${clientAge})`;
     }
@@ -460,7 +482,7 @@ onMounted(() => {
     }
 
     getRiderDetails(props.plan.planId);
-    exitAge.value = props.plan?.exitAge ?? 79;
+    exitAge.value = props.plan?.exitAge;
   }
 });
 
@@ -513,6 +535,8 @@ const validateRiderCoverValue = (value, riderId) => {
 
   return true;
 };
+
+
 </script>
 
 <template>
@@ -594,7 +618,7 @@ const validateRiderCoverValue = (value, riderId) => {
             <x-input
               v-model="createForm.sumAssured"
               placeholder="Enter Sum Assured"
-              :rules="[isRequired, isNonNegative, validatePriceRange]"
+              :rules="[isRequired, isNonNegative, validatePriceRange,validateSumAssured]"
               class="w-full"
               type="number"
               min="0"

@@ -59,7 +59,9 @@ defineProps({
   lifeRiders: Array,
   paymentGatewayEnum: Array,
   isFuncsEnabled: Array,
+  currencyRanges: Array,
 });
+
 
 const { isRequired, emiratesNumber } = useRules();
 const notification = useNotifications('toast');
@@ -2038,6 +2040,7 @@ const applyEmiratesIdNumMasking = emiratesId =>
       :plan="variantPlan"
       :lifeRiders="lifeRiders"
       :quote="quote"
+      :currencyRanges="currencyRanges"
       @success="onCreateVariant"
       @error="onPlanError"
     />

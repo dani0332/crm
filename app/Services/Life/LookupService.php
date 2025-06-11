@@ -4,8 +4,10 @@ namespace App\Services\Life;
 
 use App\Enums\LookupsEnum;
 use App\Models\Lookup;
+use App\Models\RangeLookup;
 use App\Services\BaseService;
 use App\Services\SendUpdateLogService;
+use App\Enums\RangeLookUpEnum;
 
 class LookupService extends BaseService
 {
@@ -22,5 +24,12 @@ class LookupService extends BaseService
         ])
             ->withChildTree($quoteTypeId, app(SendUpdateLogService::class)->checkSendUpdatePermissions())
             ->get();
+    }
+
+    public function getCurrencyRanges()
+    {
+        return RangeLookup::where([
+            'key' => RangeLookUpEnum::CURRENCY_COVERAGE,
+        ])->select('code', 'min_value', 'max_value')->get();
     }
 }

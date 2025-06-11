@@ -395,7 +395,8 @@ class LifeQuoteService extends BaseService
         $ecomLifeInsuranceQuoteUrl = config('constants.ECOM_LIFE_INSURANCE_QUOTE_URL');
         $currencies = app(CurrencyTypeService::class)->getActive();
         $lifeRiders = LifeRider::where('type', 'checkbox')->whereIn('code', [LifeRiderEnum::CRITICAL_ILLNESS, LifeRiderEnum::PERMANENT_AND_TOTAL_DISABILITY, LifeRiderEnum::WAIVER_OF_PREMIUM])->get();
-
+        $currencyRanges = app(LookupService::class)->getCurrencyRanges();
+        
         return [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -444,6 +445,7 @@ class LifeQuoteService extends BaseService
             'currencies' => $currencies,
             'lifeRiders' => $lifeRiders,
             'availablePlan' => $this->getQuotePlans($uuid),
+            'currencyRanges' => $currencyRanges,
         ];
     }
 
