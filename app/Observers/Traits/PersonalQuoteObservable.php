@@ -17,6 +17,7 @@ use App\Services\SendEmailCustomerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SendFICEmailForLife;
 
 trait PersonalQuoteObservable
 {
@@ -59,6 +60,11 @@ trait PersonalQuoteObservable
                 $this->IntroAndReassignEmail($personalQuote, $oldAdvisorId);
             } else {
                 info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+            }
+        }
+        if($personalQuote->isLife()){
+            if (isLeadFic($personalQuote->uuid)) {
+                SendFICEmailForLife::dispatch($personalQuote->uuid)->delay(now()->addSeconds(10));
             }
         }
     }
