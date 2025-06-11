@@ -82,7 +82,7 @@ class HealthQuoteQueryBuilder extends BaseQuoteQueryBuilder
             'salaryBand:id,text',
             'memberCategory:id,text',
             'renewalBatch:id,name',
-            'insured:id,first_name,last_name', // NEED TO CHANGE TO LATEST INSURED
+            'insured:id,first_name,last_name',
             'customer:id,emirates_id_expiry_date,receive_marketing_updates',
             'quoteRequestEntityMapping:id,quote_request_id,entity_id,entity_type_code',
             'quoteRequestEntityMapping.entity:id,code,trade_license_no,company_name,company_address,industry_type_code,emirate_of_registration_id',

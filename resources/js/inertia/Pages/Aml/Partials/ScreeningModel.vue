@@ -177,7 +177,7 @@ const screeningFormDetails = useForm({
   customer_id: quoteRequest.customer_id,
   quote_type: page.props.quoteType.code,
   // Individual Type
-  screening_id_type: page.props.insuredDetails?.insured?.id_type ?? null, // NEED TO CHANGE TO LATEST INSURED
+  screening_id_type: page.props.insuredDetails?.insured?.id_type ?? null,
   screening_id_number: page.props.insuredDetails?.insured?.id_number ?? null,
   insured_first_name:
     page.props.insuredDetails?.insured?.first_name ??

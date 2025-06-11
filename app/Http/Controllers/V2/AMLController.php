@@ -322,7 +322,7 @@ class AMLController extends Controller
                     auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)
                 ) {
-                    // app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
+                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $updatedAMLStatus, $quoteObject->code, $quoteType->text, $quoteObject->pa_id, $clientFullName);
                     if (! empty(request()->complianceComponent)) {
                         app(AMLService::class)->saveKYCComplianceQuestions(request()->complianceComponent);
                     }
@@ -855,7 +855,6 @@ class AMLController extends Controller
         $quote = $this->getQuoteObjectBy($quoteType, $insuredKycRequest->quote_uuid, 'uuid');
         LoggerService::startQuoteLogging($quote);
 
-        // NEED TO CHANGE TO LATEST INSURED
         $preparedFormData = app(AMLService::class)->prepareInsuredKycFormData($insuredKycRequest, $quote, $quoteType);
 
         if ($preparedFormData) {

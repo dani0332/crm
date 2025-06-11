@@ -72,10 +72,10 @@ class EmbeddedProduct
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
-            // NEED TO CHANGE TO LATEST INSURED
             $customerInsured = $customer?->customerInsured
                 ->where('quote_request_id', $item->quote_request_id)
                 ->where('quote_type_id', $item->quote_type_id)
+                ->latest('updated_at')
                 ->first() ?? null;
             $advisorName = $quoteObject->advisor->name ?? '';
             $nationality = $quoteObject->customer->nationality->text ?? '';
@@ -94,7 +94,6 @@ class EmbeddedProduct
                 $lastName = $quoteObject->last_name ?? '';
                 $emiratesIdNumber = '';
             } else {
-                // NEED TO CHANGE TO LATEST INSURED
                 $firstName = ($customerInsured?->insured?->first_name ?? $customer?->insured_first_name) ?? '';
                 $lastName = ($customerInsured?->insured?->last_name ?? $customer?->insured_last_name) ?? '';
                 $emiratesIdNumber = ($customerInsured?->insured?->id_number ?? $customer?->emirates_id_number) ?? '';
@@ -152,7 +151,6 @@ class EmbeddedProduct
 
     protected function getReportRelations()
     {
-        // NEED TO CHANGE TO LATEST INSURED
         return [
             'product.embeddedProduct',
             'quoteRequest.customer',

@@ -80,13 +80,13 @@ const dateFormat = date =>
 
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
-  customer_id: props.quote.customer_id, // NEED TO CHANGE TO LATEST INSURED
+  customer_id: props.quote.customer_id,
   first_name:
-    props.quote?.customer?.insured?.first_name ??
+    props.quote?.customer?.latest_insured?.first_name ??
     props.quote?.customer.insured_first_name ??
     props.quote.first_name,
   last_name:
-    props.quote?.customer?.insured?.last_name ??
+    props.quote?.customer?.latest_insured?.last_name ??
     props.quote?.customer.insured_last_name ??
     props.quote.last_name,
   dob: dateFormat(props.quote.dob) || '',

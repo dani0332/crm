@@ -130,7 +130,7 @@ if (can(permissionsEnum.AMLDecisionUpdate)) {
 onMounted(() => {
   enableComplianceComments();
 });
-// NEED TO CHANGE TO LATEST INSURED
+
 const customerId = props.quoteRequest.customer_id ?? null;
 const insuredId = props.insuredDetails?.insured?.id ?? null;
 </script>

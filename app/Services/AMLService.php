@@ -910,7 +910,7 @@ class AMLService
             'customer_id' => $customerId,
         ])
             ->with(['customer', 'insured', 'insured.insuredKyc'])
-            ->orderBy('updated_at', 'desc')
+            ->latest('updated_at')
             ->first();
 
         if (! $customerInsured) {

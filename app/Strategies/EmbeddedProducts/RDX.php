@@ -8,7 +8,6 @@ class RDX extends MDX
 {
     protected function getReportRelations()
     {
-        // NEED TO CHANGE TO LATEST INSURED
         return [
             'product.embeddedProduct',
             'quoteRequest.customer',

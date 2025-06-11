@@ -236,7 +236,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping, Wit
             $row->VehicleType ?? self::NA_VALUE,
             $row->PlanName ?? self::NA_VALUE,
             $row->PlanType ?? self::NA_VALUE,
-            $row->Insurer ?? self::NA_VALUE, // NEED TO CHANGE TO LATEST INSURED
+            $row->Insurer ?? self::NA_VALUE,
             $row->PremiumAuth ?? self::NA_VALUE,
             $row->PremiumCaptured ?? self::NA_VALUE,
             $this->formatDate($row->dob),
