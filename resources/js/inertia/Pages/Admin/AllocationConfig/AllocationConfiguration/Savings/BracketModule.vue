@@ -31,6 +31,66 @@ const emit = defineEmits([
   'remove-profile',
 ]);
 
+// Validation functions
+const validatePositiveNumber = value => {
+  const num = parseFloat(value);
+  return !isNaN(num) && num >= 0;
+};
+
+const formatNumberInput = event => {
+  let value = event.target.value;
+
+  // Allow empty value (user can clear the field completely)
+  if (value === '') {
+    return '';
+  }
+
+  // Remove any non-numeric characters except decimal point
+  value = value.replace(/[^0-9.]/g, '');
+
+  // Allow empty value after character removal
+  if (value === '') {
+    return '';
+  }
+
+  // Ensure only one decimal point
+  const parts = value.split('.');
+  if (parts.length > 2) {
+    value = parts[0] + '.' + parts.slice(1).join('');
+  }
+  // Limit to 2 decimal places
+  if (parts[1] && parts[1].length > 2) {
+    value = parts[0] + '.' + parts[1].substring(0, 2);
+  }
+
+  event.target.value = value;
+  return value;
+};
+
+const handleMinInput = (event, bracket) => {
+  const formattedValue = formatNumberInput(event);
+  // Allow empty values, don't force to 0 immediately
+  bracket.min = formattedValue;
+};
+
+const handleMaxInput = (event, bracket) => {
+  const formattedValue = formatNumberInput(event);
+  // Allow empty values, don't force to 0 immediately
+  bracket.max = formattedValue;
+};
+
+const handleMinBlur = (event, bracket) => {
+  const value = event.target.value;
+  // Convert to number on blur, default to 0 if empty
+  bracket.min = value === '' ? 0 : parseFloat(value);
+};
+
+const handleMaxBlur = (event, bracket) => {
+  const value = event.target.value;
+  // Convert to number on blur, default to 0 if empty
+  bracket.max = value === '' ? 0 : parseFloat(value);
+};
+
 const createEmptyProfile = () => ({
   advisorIds: [],
   nationalityIds: [],
@@ -112,12 +172,12 @@ const removeProfile = (bracket, profileIndex) => {
                 Minimum Amount <span class="text-red-500">*</span>
               </label>
               <x-input
-                v-model.number="bracket.min"
-                type="number"
-                min="0"
-                step="0.01"
+                v-model="bracket.min"
                 class="!mb-0 mt-1"
                 required
+                @input="handleMinInput($event, bracket)"
+                @blur="handleMinBlur($event, bracket)"
+                placeholder="0.00"
               >
                 <template #suffix>
                   <div
@@ -133,12 +193,12 @@ const removeProfile = (bracket, profileIndex) => {
                 Maximum Amount <span class="text-red-500">*</span>
               </label>
               <x-input
-                v-model.number="bracket.max"
-                type="number"
-                min="0"
-                step="0.01"
+                v-model="bracket.max"
                 class="!mb-0 mt-1"
                 required
+                @input="handleMaxInput($event, bracket)"
+                @blur="handleMaxBlur($event, bracket)"
+                placeholder="0.00"
               >
                 <template #suffix>
                   <div
