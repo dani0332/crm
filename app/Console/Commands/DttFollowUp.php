@@ -8,6 +8,7 @@ use App\Models\DttRevival;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Bus;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class DttFollowUp extends Command
@@ -69,13 +70,11 @@ class DttFollowUp extends Command
 
         $jobs = [];
         foreach ($unreplied as $item) {
-            $jobs[] = new CarRevivalFollowUpEmailJob($item);
+            $jobs[] = (new CarRevivalFollowUpEmailJob($item))->delay(now()->addSeconds(10));
         }
 
         if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
-
+            Bus::batch($jobs)
                 ->then(function () use ($logPrefix) {
                     info($logPrefix.' all jobs completed successfully');
                 })
@@ -86,7 +85,7 @@ class DttFollowUp extends Command
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(10)
+                ->name('Car Revival Follow Up Email Jobs')
                 ->dispatch();
         } else {
             info($logPrefix.'No lead Found');

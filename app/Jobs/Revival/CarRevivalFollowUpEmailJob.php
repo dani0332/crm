@@ -18,16 +18,15 @@ use App\Services\EmailServices\CarEmailService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use Carbon\Carbon;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
-class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
+class CarRevivalFollowUpEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, Stackable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3;
     public $timeout = 60;
