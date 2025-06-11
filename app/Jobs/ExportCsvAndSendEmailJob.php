@@ -53,8 +53,8 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
         Log::info("CSV export job started for {$this->requestParams['fileName']}. Memory: {$initialMemory}MB, Attempt: {$this->attempts()}");
 
         try {
-            // Instantiate the export class
-            $exportInstance = app($this->exportClass);
+            // Instantiate the export class with constructor parameters if needed
+            $exportInstance = $this->instantiateExportClass();
 
             // Process CSV and send email
             $exportInstance->sendEmailWithCSVAttachment(
@@ -92,6 +92,22 @@ class ExportCsvAndSendEmailJob implements ShouldQueue
     public function failed(\Throwable $exception)
     {
         Log::error("CSV export job for {$this->requestParams['fileName']} has permanently failed: {$exception->getMessage()}");
+    }
+
+    /**
+     * Instantiate the export class with appropriate constructor parameters
+     */
+    private function instantiateExportClass()
+    {
+        // Handle PersonalQuotesExport which needs quoteType in constructor
+        if ($this->exportClass === 'App\\Exports\\PersonalQuotesExport') {
+            $quoteType = $this->requestParams['quoteType'] ?? null;
+
+            return app($this->exportClass, ['quoteType' => $quoteType]);
+        }
+
+        // For other export classes, use default instantiation
+        return app($this->exportClass);
     }
 
     /**

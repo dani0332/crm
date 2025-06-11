@@ -28,9 +28,12 @@ class PersonalQuotesExport implements CsvExportableInterface
         private PetQuoteRepository $petQuoteRepository,
         private CycleQuoteRepository $cycleQuoteRepository,
         private JetskiQuoteRepository $jetskiQuoteRepository,
-        private HomeQuoteRepository $homeQuoteRepository
+        private HomeQuoteRepository $homeQuoteRepository,
+        ?string $quoteType = null
     ) {
-        $this->quoteType = request()->segment(1) ?? '';
+        // Use provided quote type first, then try request input (for job context),
+        // then fall back to URL segment (for direct calls)
+        $this->quoteType = $quoteType ?? request()->input('quoteType') ?? request()->segment(1) ?? '';
         $this->quoteTypes = [
             QuoteTypes::BIKE->value,
             QuoteTypes::YACHT->value,

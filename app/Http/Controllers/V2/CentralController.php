@@ -137,10 +137,10 @@ class CentralController extends Controller
                     'user' => auth()->user(), // Add current user for job context
                 ];
 
-                return app(PersonalQuotesExport::class)->emailCSV($quoteType.'-List', $requestParams);
+                return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->emailCSV($quoteType.'-List', $requestParams);
             }
 
-            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
+            return app(PersonalQuotesExport::class, ['quoteType' => $quoteType])->download($quoteType.'_leads');
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
