@@ -19,7 +19,6 @@ class AllocationConfiguration extends BaseMongoModel
         'created_by',
         'updated_by',
     ];
-
     protected $casts = [
         'quote_type' => QuoteTypes::class,
         'lumpsum_brackets' => 'collection',
@@ -46,46 +45,5 @@ class AllocationConfiguration extends BaseMongoModel
 
             return $entry;
         })->toArray();
-    }
-
-    // Custom accessors to ensure proper array handling
-    public function getLumpsumBracketsAttribute($value)
-    {
-        if (is_string($value)) {
-            return json_decode($value, true) ?? [];
-        }
-        return $value ?? [];
-    }
-
-    public function getRegularBracketsAttribute($value)
-    {
-        if (is_string($value)) {
-            return json_decode($value, true) ?? [];
-        }
-        return $value ?? [];
-    }
-
-    public function getHistoryAttribute($value)
-    {
-        if (is_string($value)) {
-            return json_decode($value, true) ?? [];
-        }
-        return $value ?? [];
-    }
-
-    // Custom mutators to ensure proper array storage
-    public function setLumpsumBracketsAttribute($value)
-    {
-        $this->attributes['lumpsum_brackets'] = is_array($value) ? $value : [];
-    }
-
-    public function setRegularBracketsAttribute($value)
-    {
-        $this->attributes['regular_brackets'] = is_array($value) ? $value : [];
-    }
-
-    public function setHistoryAttribute($value)
-    {
-        $this->attributes['history'] = is_array($value) ? $value : [];
     }
 }
