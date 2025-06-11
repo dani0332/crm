@@ -25,6 +25,8 @@ const advisorOptions = ref([]);
 const nationalityOptions = ref([]);
 const currentConfiguration = ref(null);
 
+const savingsTemplateRef = ref(null);
+
 const getInitialFormData = () => {
   return {
     quote_type: '',
@@ -139,6 +141,26 @@ initializeOptions();
 
 async function onSubmit(isValid) {
   if (isValid) {
+    if (
+      form.quote_type === props.quoteTypeCodeEnum.SAVINGS &&
+      savingsTemplateRef.value
+    ) {
+      if (advisorOptions.value.length === 0) {
+        errorMessage.value =
+          'No advisors available for this quote type. Please ensure advisors are configured.';
+        isSubmitting.value = false;
+        return;
+      }
+
+      const templateValidation = savingsTemplateRef.value.validate();
+
+      if (!templateValidation.isValid) {
+        errorMessage.value = 'Please correct the configuration errors below.';
+        isSubmitting.value = false;
+        return;
+      }
+    }
+
     isSubmitting.value = true;
     errorMessage.value = '';
     successMessage.value = '';
@@ -172,6 +194,11 @@ async function onSubmit(isValid) {
         successMessage.value = response.data.message;
         currentConfiguration.value = response.data.data;
         form.clearErrors();
+
+        // Clear template validation errors on success
+        if (savingsTemplateRef.value) {
+          savingsTemplateRef.value.clearValidationErrors();
+        }
       } else {
         errorMessage.value =
           response.data.message ||
@@ -280,6 +307,7 @@ async function onSubmit(isValid) {
             :advisor-options="advisorOptions"
             :nationality-options="nationalityOptions"
             @data-update="onTemplateDataUpdate"
+            ref="savingsTemplateRef"
           />
         </div>
 
