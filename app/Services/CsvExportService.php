@@ -14,6 +14,16 @@ class CsvExportService
      */
     public function generateCsvFile(CsvExportableInterface $exporter, array $requestParams = []): string
     {
+        $result = $this->generateCsvFileWithCount($exporter, $requestParams);
+
+        return $result['filePath'];
+    }
+
+    /**
+     * Generate CSV file and return file path with record count
+     */
+    public function generateCsvFileWithCount(CsvExportableInterface $exporter, array $requestParams = []): array
+    {
         $fileName = $this->generateFileName($requestParams);
         $csvFilePath = storage_path("temp/{$fileName}.csv");
 
@@ -33,12 +43,17 @@ class CsvExportService
             fputcsv($stream, $exporter->headings());
 
             $totalRecords = $this->writeDataToStream($stream, $exporter, $requestParams);
-
+            if ($totalRecords > 0) {
+                $totalRecords = $totalRecords - 1;
+            }
             fclose($stream);
 
             LoggerService::info("CSV export completed. Records: {$totalRecords}, File: {$fileName}.csv");
 
-            return $csvFilePath;
+            return [
+                'filePath' => $csvFilePath,
+                'recordCount' => $totalRecords,
+            ];
 
         } catch (\Throwable $e) {
             fclose($stream);

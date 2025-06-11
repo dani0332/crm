@@ -27,8 +27,10 @@ class EmailExportService
         array $requestParams = [],
         array $ccRecipients = []
     ): void {
-        // Generate CSV file
-        $csvFilePath = $this->csvExportService->generateCsvFile($exporter, $requestParams);
+        // Generate CSV file and get record count
+        $csvResult = $this->csvExportService->generateCsvFileWithCount($exporter, $requestParams);
+        $csvFilePath = $csvResult['filePath'];
+        $requestParams['recordCount'] = $csvResult['recordCount'];
 
         try {
             $this->sendEmailWithAttachment(
