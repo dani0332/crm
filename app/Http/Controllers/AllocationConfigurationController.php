@@ -49,7 +49,6 @@ class AllocationConfigurationController extends Controller
 
     public function store(AllocationConfigurationRequest $request)
     {
-        dd($request->all());
         try {
             $configuration = $this->allocationConfigurationService->createConfiguration(
                 $request->validated(),
