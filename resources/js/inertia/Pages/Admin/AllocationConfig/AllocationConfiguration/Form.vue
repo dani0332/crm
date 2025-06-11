@@ -22,23 +22,21 @@ const selectedQuoteType = ref(
 // Loading state for quote type changes
 const isQuoteTypeLoading = ref(false);
 
-// Initialize form with configuration data or defaults
+// Template data - this will be populated by template components
+const templateData = ref({});
+
+// Initialize form with only common data
 const getInitialFormData = () => {
   if (props.configuration) {
     return {
       quote_type_id: props.configuration.quote_type_id,
       quote_type: props.configuration.quote_type,
-      lumpsum_brackets: props.configuration.lumpsum_brackets || [],
-      regular_brackets: props.configuration.regular_brackets || [],
-      // Add other quote type specific data as needed
     };
   }
 
   return {
     quote_type_id: '',
     quote_type: '',
-    lumpsum_brackets: [],
-    regular_brackets: [],
   };
 };
 
@@ -81,11 +79,8 @@ const onQuoteTypeChange = async () => {
       form.quote_type = selectedQuoteType.value;
       form.quote_type_id = getQuoteTypeId(selectedQuoteType.value);
 
-      // Reset form data when quote type changes
-      if (selectedQuoteType.value === 'Savings') {
-        form.lumpsum_brackets = [];
-        form.regular_brackets = [];
-      }
+      // Reset template data when quote type changes
+      templateData.value = {};
 
       // Update URL to include quote type parameter
       window.history.replaceState(
@@ -105,6 +100,11 @@ const onQuoteTypeChange = async () => {
   }
 };
 
+// Handle template data updates
+const onTemplateDataUpdate = data => {
+  templateData.value = data;
+};
+
 // Watch for changes in selected quote type to load existing configuration
 watch(selectedQuoteType, newQuoteType => {
   if (newQuoteType && !props.configuration) {
@@ -120,11 +120,18 @@ function onSubmit(isValid) {
   if (isValid) {
     form.processing = true;
 
+    // Merge common form data with template-specific data
+    const submitData = {
+      ...form.data(),
+      ...templateData.value,
+    };
+
     if (props.configuration) {
       form.submit(
         'put',
         route('admin.allocation-configuration.update', props.configuration.id),
         {
+          data: submitData,
           onError: errors => {
             Object.keys(errors).forEach(function (key) {
               form.setError(key, errors[key]);
@@ -139,6 +146,7 @@ function onSubmit(isValid) {
       );
     } else {
       form.submit('post', route('admin.allocation-configuration.store'), {
+        data: submitData,
         onError: errors => {
           Object.keys(errors).forEach(function (key) {
             form.setError(key, errors[key]);
@@ -229,10 +237,10 @@ function onSubmit(isValid) {
           <!-- Savings Template -->
           <div v-if="selectedQuoteType === 'Savings'">
             <SavingsAllocationConfigTemplate
-              v-model:lumpsumBrackets="form.lumpsum_brackets"
-              v-model:regularBrackets="form.regular_brackets"
+              :configuration="configuration"
               :advisor-options="advisorOptions"
               :nationality-options="nationalityOptions"
+              @data-update="onTemplateDataUpdate"
             />
           </div>
 

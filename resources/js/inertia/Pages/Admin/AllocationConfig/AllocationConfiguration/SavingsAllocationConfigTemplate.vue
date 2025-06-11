@@ -472,16 +472,12 @@
 </template>
 
 <script setup>
-import { ref, toRefs } from 'vue';
+import { ref, reactive, watch, onMounted } from 'vue';
 
 const props = defineProps({
-  lumpsumBrackets: {
-    type: Array,
-    default: () => [],
-  },
-  regularBrackets: {
-    type: Array,
-    default: () => [],
+  configuration: {
+    type: Object,
+    default: null,
   },
   advisorOptions: {
     type: Array,
@@ -493,9 +489,59 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['update:lumpsumBrackets', 'update:regularBrackets']);
+const emit = defineEmits(['data-update']);
 
-const { lumpsumBrackets, regularBrackets } = toRefs(props);
+// Internal state management
+const lumpsumBrackets = ref([]);
+const regularBrackets = ref([]);
+
+// Initialize data from configuration
+const initializeData = () => {
+  if (props.configuration) {
+    lumpsumBrackets.value = props.configuration.lumpsum_brackets || [];
+    regularBrackets.value = props.configuration.regular_brackets || [];
+  } else {
+    lumpsumBrackets.value = [];
+    regularBrackets.value = [];
+  }
+
+  // Emit initial data
+  emitData();
+};
+
+// Emit data to parent
+const emitData = () => {
+  const data = {
+    lumpsum_brackets: lumpsumBrackets.value,
+    regular_brackets: regularBrackets.value,
+  };
+  emit('data-update', data);
+};
+
+// Watch for changes and emit data
+watch(
+  [lumpsumBrackets, regularBrackets],
+  () => {
+    emitData();
+  },
+  { deep: true },
+);
+
+// Initialize on mount
+onMounted(() => {
+  initializeData();
+});
+
+// Watch for configuration changes (in case of external updates)
+watch(
+  () => props.configuration,
+  newConfig => {
+    if (newConfig) {
+      initializeData();
+    }
+  },
+  { deep: true },
+);
 
 const createEmptyBracket = () => ({
   min: 0,
@@ -510,24 +556,20 @@ const createEmptyProfile = () => ({
 
 // Lumpsum Bracket Methods
 const addLumpsumBracket = () => {
-  const updatedBrackets = [...lumpsumBrackets.value, createEmptyBracket()];
-  emit('update:lumpsumBrackets', updatedBrackets);
+  lumpsumBrackets.value.push(createEmptyBracket());
 };
 
 const removeLumpsumBracket = index => {
-  const updatedBrackets = lumpsumBrackets.value.filter((_, i) => i !== index);
-  emit('update:lumpsumBrackets', updatedBrackets);
+  lumpsumBrackets.value.splice(index, 1);
 };
 
 // Regular Bracket Methods
 const addRegularBracket = () => {
-  const updatedBrackets = [...regularBrackets.value, createEmptyBracket()];
-  emit('update:regularBrackets', updatedBrackets);
+  regularBrackets.value.push(createEmptyBracket());
 };
 
 const removeRegularBracket = index => {
-  const updatedBrackets = regularBrackets.value.filter((_, i) => i !== index);
-  emit('update:regularBrackets', updatedBrackets);
+  regularBrackets.value.splice(index, 1);
 };
 
 // Profile Methods (shared between lumpsum and regular)
