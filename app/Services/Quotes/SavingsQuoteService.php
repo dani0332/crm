@@ -144,21 +144,6 @@ class SavingsQuoteService extends BaseQuoteService
                     'currentlyInsuredWith',
                     'advisor',
                     'paymentStatus',
-                    'payments' => function ($query) {
-                        $query->with([
-                            'paymentStatus',
-                            'personalPlan',
-                            'paymentMethod',
-                            'paymentStatusLogs',
-                            'insuranceProvider',
-                            'paymentable',
-                            'paymentSplits.paymentStatus',
-                            'paymentSplits.paymentMethod',
-                            'paymentSplits.verifiedByUser',
-                            'paymentSplits.documents',
-                            'paymentSplits.processJob',
-                        ]);
-                    },
                     'quoteDetail',
                     'quoteDetail.lostReason',
                     'renewalBatchModel',
@@ -167,6 +152,27 @@ class SavingsQuoteService extends BaseQuoteService
                     'customer.additionalContactInfo',
                     'insuranceProvider:id,text,code',
                     'insuranceProviderPlan',
+                    'insuranceProvider',
+                    'payments' => function ($q) {
+                        $q->with([
+                            'paymentStatus',
+                            'personalPlan',
+                            'paymentMethod',
+                            'paymentStatusLogs',
+                            'insuranceProvider',
+                            'paymentSplits' => function ($q) {
+                                $q->with([
+                                    'paymentStatus',
+                                    'paymentMethod',
+                                    'documents',
+                                    'verifiedByUser',
+                                    'paymentCharges',
+                                    'processJob'
+                                ])
+                                    ->orderBy('sr_no', 'asc');
+                            },
+                        ]);
+                    },
                     'documents' => function ($q) {
                         $q->with('createdBy')->orderBy('created_at', 'desc');
                     },
