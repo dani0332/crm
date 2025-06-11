@@ -91,7 +91,29 @@ class LeadAllocationService extends BaseService
                 $query->whereIn('lead_allocation.user_id', $userIds);
             }
 
-            return $query->get();
+            $results = $query->get();
+
+            $userIds = $results->pluck('userId')->toArray();
+
+            $healthQuoteCounts = HealthQuote::whereIn('advisor_id', $userIds)
+                ->where('source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%')
+                ->whereHas('healthQuoteRequestDetail', function ($query) {
+                    $query->whereBetween('advisor_assigned_date', [
+                        now()->startOfDay(),
+                        now()->endOfDay(),
+                    ]);
+                })
+                ->select('advisor_id', DB::raw('COUNT(*) as count'))
+                ->groupBy('advisor_id')
+                ->pluck('count', 'advisor_id')
+                ->toArray();
+
+            // Add the counts to the results
+            foreach ($results as $result) {
+                $result->im_total_assigned_leads = $healthQuoteCounts[$result->userId] ?? 0;
+            }
+
+            return $results;
         } catch (\Exception $e) {
             LoggerService::error('Error getting grid data: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
