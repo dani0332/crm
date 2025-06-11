@@ -1,106 +1,3 @@
-<template>
-  <Head title="Allocation Configuration" />
-
-  <h2 class="font-semibold text-xl text-gray-800 leading-tight mb-6">
-    Allocation Configuration
-  </h2>
-
-  <div class="py-6">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-      <x-form @submit="onSubmit" :auto-focus="false">
-        <!-- Quote Type Selection -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-          <div class="p-6 bg-white border-b border-gray-200">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">
-              Select Quote Type
-            </h3>
-
-            <div class="max-w-md">
-              <x-field label="Quote Type" required>
-                <x-select
-                  v-model="selectedQuoteType"
-                  :options="quoteTypeOptions"
-                  placeholder="Select Quote Type"
-                  filterable
-                  :rules="[isRequired]"
-                  :error="form.errors.quote_type"
-                  @change="onQuoteTypeChange"
-                />
-              </x-field>
-
-              <div v-if="selectedQuoteType" class="mt-2 text-sm text-gray-600">
-                Quote Type ID: {{ getQuoteTypeId(selectedQuoteType) }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Template Rendering Based on Quote Type -->
-        <div v-if="selectedQuoteType">
-          <!-- Savings Template -->
-          <div v-if="selectedQuoteType === 'Savings'">
-            <SavingsAllocationConfigTemplate
-              v-model:savingsBrackets="form.savings_brackets"
-              :advisor-options="advisorOptions"
-              :nationality-options="nationalityOptions"
-            />
-          </div>
-
-          <!-- Default Template for Other Quote Types -->
-          <div v-else>
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h3 class="text-lg font-medium text-yellow-900 mb-2">
-                {{ selectedQuoteType }} Configuration
-              </h3>
-              <p class="text-sm text-yellow-700">
-                Configuration template for {{ selectedQuoteType }} is coming
-                soon. This will be customized based on the specific requirements
-                for {{ selectedQuoteType }} products.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Success/Error Messages -->
-        <div
-          v-if="$page.props.flash.success"
-          class="bg-green-50 border border-green-200 rounded-lg p-4"
-        >
-          <p class="text-sm text-green-700">{{ $page.props.flash.success }}</p>
-        </div>
-
-        <div
-          v-if="$page.props.flash.error"
-          class="bg-red-50 border border-red-200 rounded-lg p-4"
-        >
-          <p class="text-sm text-red-700">{{ $page.props.flash.error }}</p>
-        </div>
-
-        <!-- Form Actions -->
-        <div
-          v-if="selectedQuoteType"
-          class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
-        >
-          <div class="p-6 bg-white border-b border-gray-200">
-            <x-divider class="my-4" />
-            <div class="flex justify-end gap-3 mb-4">
-              <x-button
-                size="md"
-                color="emerald"
-                type="submit"
-                :loading="form.processing"
-              >
-                {{ props.configuration ? 'Update' : 'Save' }}
-                {{ selectedQuoteType }} Configuration
-              </x-button>
-            </div>
-          </div>
-        </div>
-      </x-form>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
@@ -240,3 +137,106 @@ function onSubmit(isValid) {
   }
 }
 </script>
+
+<template>
+  <Head title="Allocation Configuration" />
+
+  <h2 class="font-semibold text-xl text-gray-800 leading-tight mb-6">
+    Allocation Configuration
+  </h2>
+
+  <div class="py-6">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+      <x-form @submit="onSubmit" :auto-focus="false">
+        <!-- Quote Type Selection -->
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+          <div class="p-6 bg-white border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              Select Quote Type
+            </h3>
+
+            <div class="max-w-md">
+              <x-field label="Quote Type" required>
+                <x-select
+                  v-model="selectedQuoteType"
+                  :options="quoteTypeOptions"
+                  placeholder="Select Quote Type"
+                  filterable
+                  :rules="[isRequired]"
+                  :error="form.errors.quote_type"
+                  @change="onQuoteTypeChange"
+                />
+              </x-field>
+
+              <div v-if="selectedQuoteType" class="mt-2 text-sm text-gray-600">
+                Quote Type ID: {{ getQuoteTypeId(selectedQuoteType) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Template Rendering Based on Quote Type -->
+        <div v-if="selectedQuoteType">
+          <!-- Savings Template -->
+          <div v-if="selectedQuoteType === 'Savings'">
+            <SavingsAllocationConfigTemplate
+              v-model:savingsBrackets="form.savings_brackets"
+              :advisor-options="advisorOptions"
+              :nationality-options="nationalityOptions"
+            />
+          </div>
+
+          <!-- Default Template for Other Quote Types -->
+          <div v-else>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h3 class="text-lg font-medium text-yellow-900 mb-2">
+                {{ selectedQuoteType }} Configuration
+              </h3>
+              <p class="text-sm text-yellow-700">
+                Configuration template for {{ selectedQuoteType }} is coming
+                soon. This will be customized based on the specific requirements
+                for {{ selectedQuoteType }} products.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div
+          v-if="$page.props.flash.success"
+          class="bg-green-50 border border-green-200 rounded-lg p-4"
+        >
+          <p class="text-sm text-green-700">{{ $page.props.flash.success }}</p>
+        </div>
+
+        <div
+          v-if="$page.props.flash.error"
+          class="bg-red-50 border border-red-200 rounded-lg p-4"
+        >
+          <p class="text-sm text-red-700">{{ $page.props.flash.error }}</p>
+        </div>
+
+        <!-- Form Actions -->
+        <div
+          v-if="selectedQuoteType"
+          class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
+        >
+          <div class="p-6 bg-white border-b border-gray-200">
+            <x-divider class="my-4" />
+            <div class="flex justify-end gap-3 mb-4">
+              <x-button
+                size="md"
+                color="emerald"
+                type="submit"
+                :loading="form.processing"
+              >
+                {{ props.configuration ? 'Update' : 'Save' }}
+                {{ selectedQuoteType }} Configuration
+              </x-button>
+            </div>
+          </div>
+        </div>
+      </x-form>
+    </div>
+  </div>
+</template>
