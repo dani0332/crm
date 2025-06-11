@@ -793,6 +793,21 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         [NationalityAllocationConfigurationController::class, 'getAuditLogs'])
         ->name('admin.nationality-allocation-config.audit-logs');
 
+    // Allocation Configuration Routes
+    Route::resource('allocation-configuration', \App\Http\Controllers\AllocationConfigurationController::class)->names([
+        'index' => 'admin.allocation-configuration.index',
+        'create' => 'admin.allocation-configuration.create',
+        'store' => 'admin.allocation-configuration.store',
+        'show' => 'admin.allocation-configuration.show',
+        'edit' => 'admin.allocation-configuration.edit',
+        'update' => 'admin.allocation-configuration.update',
+        'destroy' => 'admin.allocation-configuration.destroy',
+    ]);
+
+    Route::get('allocation-configuration/{allocationConfiguration}/audit-logs',
+        [\App\Http\Controllers\AllocationConfigurationController::class, 'getAuditLogs'])
+        ->name('admin.allocation-configuration.audit-logs');
+
     Route::get('/add-batch-number', function () {
         $addBtchNuimber = new AddBatchForNonMotors;
         $addBtchNuimber->handle();
