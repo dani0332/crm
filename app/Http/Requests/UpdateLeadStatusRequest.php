@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\AMLDecisionStatusEnum;
-use App\Enums\AMLScreeningTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
@@ -13,7 +11,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\Customer;
-use App\Models\KycLog;
 use App\Models\RenewalBatch;
 use App\Services\AMLService;
 use App\Services\TravelQuoteService;
@@ -136,7 +133,7 @@ class UpdateLeadStatusRequest extends FormRequest
 
             $isTravelLeadTransactionApproved = false;
             $fetchLastAMLCheck = app(AMLService::class)->getLatestScreening(request()->leadId, $quoteTypesIds[request()->modelType]);
-            
+
             if ((auth()->user()->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX) && strtolower(request()->modelType) === strtolower(quoteTypeCode::Travel))) {
                 $transactionApprovedQuoteStatus = app(TravelQuoteService::class)->getTransactionApprovedQuoteStatus(request()->leadId);
                 if (isset($transactionApprovedQuoteStatus->id)) {
@@ -145,12 +142,12 @@ class UpdateLeadStatusRequest extends FormRequest
             }
 
             if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort && $isTravelLeadTransactionApproved == false) {
-                
+
                 $customer = Customer::with(['latestInsured' => function ($query) use ($quoteTypesIds) {
                     $query->where('quote_request_id', request()->leadId)
                         ->where('quote_type_id', $quoteTypesIds[request()->modelType]);
                 }])->where('id', $quoteObject->customer_id)->first();
-                
+
                 $customerProfileDetails = [
                     'insured_first_name' => ($customer?->latestInsured?->first_name ?? $customer->insured_first_name) ?? null,
                     'insured_last_name' => ($customer?->latestInsured?->last_name ?? $customer->insured_last_name) ?? null,
