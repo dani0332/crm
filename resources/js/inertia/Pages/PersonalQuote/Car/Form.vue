@@ -55,8 +55,7 @@ const quoteForm = useForm({
   modelType: '"Car"',
   model: props.model,
   renewal_batch: props.quote?.renewal_batch || '',
-  driver_name:
-    `${props.quote?.first_name || ''} ${props.quote?.last_name || ''}`.trim(),
+  driver_name: `${props.quote?.driver_name || ''}`.trim(),
   first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
@@ -102,7 +101,7 @@ const quoteForm = useForm({
     props.quote?.registration_type || carRegistrationTypeEnum.PERSONAL,
   vehicle_use: props.quote?.vehicle_use || '',
   company_contact_name:
-    `${props.quote.customer_first_name || ''} ${props.quote.customer_last_name || ''}`.trim(),
+    `${props.quote.first_name || ''} ${props.quote.last_name || ''}`.trim(),
   business_activity_id: props.quote?.business_activity_id || '',
 });
 
@@ -260,20 +259,8 @@ const clearFormValues = () => {
 };
 
 onMounted(() => {
-  setFormValues();
   setCarMakeAndModalValues();
 });
-
-const setFormValues = () => {
-  if (isEdit.value) {
-    if (isPrivateCar.value) {
-      quoteForm.first_name = props.quote.customer_first_name || '';
-      quoteForm.last_name = props.quote.customer_last_name || '';
-    } else {
-      quoteForm.driver_name = '';
-    }
-  }
-};
 
 const setCarMakeAndModalValues = () => {
   if (quoteForm.car_make_id !== null) {
