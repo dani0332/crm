@@ -44,6 +44,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use PDF;
+use App\Enums\LeadSourceEnum;
 
 class CarQuoteService extends BaseService
 {
@@ -1441,7 +1442,12 @@ class CarQuoteService extends BaseService
 
             LoggerService::info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType); // update new and previous (if applicable) advisor counts in lead allocation table
+            // Skip allocation count updates for IMCRM source leads
+            if ($lead->source !== LeadSourceEnum::IMCRM) {
+                $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quoteType); // update new and previous (if applicable) advisor counts in lead allocation table
+            } else {
+                LoggerService::info('Skipping allocation count update for IMCRM source lead: ' . $lead->uuid);
+            }
 
             $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Car, $userId);
             $lead->auto_assigned = false;
