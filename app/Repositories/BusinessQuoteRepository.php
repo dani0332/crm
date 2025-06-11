@@ -118,7 +118,7 @@ class BusinessQuoteRepository extends BaseRepository
                 $this->getTable().'.*',
             ])
             ->firstOrFail();
-        
+
         $quote->customer_type = $quote->latestInsured?->customer_type ?? CustomerTypeEnum::Entity;
 
         return $quote;

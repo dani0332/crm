@@ -276,7 +276,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Customer::class);
     }
-    
+
     // TODO: Remove this function and use latestInsured() instead
     public function lastInsured()
     {
@@ -288,9 +288,9 @@ class PersonalQuote extends Model implements AuditableContract
             'id',               // Local key on personal_quotes table...
             'insured_id'        // Local key on customer_insured table...
         )
-        ->where('customer_insured.quote_type_id', $this->quote_type_id);
+            ->where('customer_insured.quote_type_id', $this->quote_type_id);
     }
-    
+
     public function leadHistory()
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');

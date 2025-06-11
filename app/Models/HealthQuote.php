@@ -369,7 +369,7 @@ class HealthQuote extends Model implements AuditableContract
             'id', // health_quote_requests.id
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Health)
-        ->latest('customer_insured.updated_at');
+            ->latest('customer_insured.updated_at');
     }
 
     /******************************* Quote Status Logs Related Methods Below *******************************/

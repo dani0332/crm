@@ -16,10 +16,8 @@ use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\CarQuotePlanDetail;
-use App\Models\CustomerInsured;
 use App\Models\Insured;
 use App\Models\Payment;
-use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use App\Traits\QuoteTraits\QuoteAllocatable;
@@ -307,11 +305,11 @@ trait QuoteModelTrait
             get: function () {
                 // Extract the prefix from the quote code (before the first dash)
                 $codePrefix = explode('-', $this->code)[0] ?? '';
-                
+
                 // Get the latest insured record and return its customer_type
                 // If code prefix is BUS, default to Entity, otherwise default to Individual
-                $defaultType = ($codePrefix === QuoteTypeShortCode::BUS) 
-                    ? CustomerTypeEnum::Entity 
+                $defaultType = ($codePrefix === QuoteTypeShortCode::BUS)
+                    ? CustomerTypeEnum::Entity
                     : CustomerTypeEnum::Individual;
 
                 return $this->latestInsured?->customer_type ?? $defaultType;

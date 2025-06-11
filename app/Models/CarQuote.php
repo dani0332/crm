@@ -513,6 +513,6 @@ class CarQuote extends BaseModel
             'id', // car_quote_requests.id
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Car)
-        ->latest('customer_insured.updated_at');
+            ->latest('customer_insured.updated_at');
     }
 }

@@ -368,6 +368,6 @@ class TravelQuote extends Model implements AuditableContract
             'id', // travel_quote_request.id
             'insured_id' // customer_insured.insured_id
         )->where('customer_insured.quote_type_id', QuoteTypeId::Travel)
-        ->latest('customer_insured.updated_at');
+            ->latest('customer_insured.updated_at');
     }
 }
