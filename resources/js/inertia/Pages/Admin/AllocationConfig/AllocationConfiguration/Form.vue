@@ -19,13 +19,17 @@ const selectedQuoteType = ref(
   props.selectedQuoteType || props.configuration?.quote_type || '',
 );
 
+// Loading state for quote type changes
+const isQuoteTypeLoading = ref(false);
+
 // Initialize form with configuration data or defaults
 const getInitialFormData = () => {
   if (props.configuration) {
     return {
       quote_type_id: props.configuration.quote_type_id,
       quote_type: props.configuration.quote_type,
-      savings_brackets: props.configuration.savings_brackets || [],
+      lumpsum_brackets: props.configuration.lumpsum_brackets || [],
+      regular_brackets: props.configuration.regular_brackets || [],
       // Add other quote type specific data as needed
     };
   }
@@ -33,7 +37,8 @@ const getInitialFormData = () => {
   return {
     quote_type_id: '',
     quote_type: '',
-    savings_brackets: [],
+    lumpsum_brackets: [],
+    regular_brackets: [],
   };
 };
 
@@ -67,24 +72,36 @@ const getQuoteTypeId = quoteTypeName => {
   return quoteType ? quoteType.id : '';
 };
 
-const onQuoteTypeChange = () => {
+const onQuoteTypeChange = async () => {
   if (selectedQuoteType.value) {
-    form.quote_type = selectedQuoteType.value;
-    form.quote_type_id = getQuoteTypeId(selectedQuoteType.value);
+    // Start loading
+    isQuoteTypeLoading.value = true;
 
-    // Reset form data when quote type changes
-    if (selectedQuoteType.value === 'Savings') {
-      form.savings_brackets = [];
+    try {
+      form.quote_type = selectedQuoteType.value;
+      form.quote_type_id = getQuoteTypeId(selectedQuoteType.value);
+
+      // Reset form data when quote type changes
+      if (selectedQuoteType.value === 'Savings') {
+        form.lumpsum_brackets = [];
+        form.regular_brackets = [];
+      }
+
+      // Update URL to include quote type parameter
+      window.history.replaceState(
+        {},
+        '',
+        route('admin.allocation-configuration.index', {
+          quote_type: selectedQuoteType.value,
+        }),
+      );
+
+      // Add a small delay to show loading effect
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } finally {
+      // Stop loading
+      isQuoteTypeLoading.value = false;
     }
-
-    // Update URL to include quote type parameter
-    window.history.replaceState(
-      {},
-      '',
-      route('admin.allocation-configuration.index', {
-        quote_type: selectedQuoteType.value,
-      }),
-    );
   }
 };
 
@@ -164,23 +181,56 @@ function onSubmit(isValid) {
                   filterable
                   :rules="[isRequired]"
                   :error="form.errors.quote_type"
+                  :loading="isQuoteTypeLoading"
+                  :disabled="isQuoteTypeLoading"
                   @change="onQuoteTypeChange"
                 />
               </x-field>
 
-              <div v-if="selectedQuoteType" class="mt-2 text-sm text-gray-600">
+              <div
+                v-if="selectedQuoteType && !isQuoteTypeLoading"
+                class="mt-2 text-sm text-gray-600"
+              >
                 Quote Type ID: {{ getQuoteTypeId(selectedQuoteType) }}
+              </div>
+
+              <div
+                v-if="isQuoteTypeLoading"
+                class="mt-2 text-sm text-blue-600 flex items-center"
+              >
+                <svg
+                  class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Loading configuration for {{ selectedQuoteType }}...
               </div>
             </div>
           </div>
         </div>
 
         <!-- Template Rendering Based on Quote Type -->
-        <div v-if="selectedQuoteType">
+        <div v-if="selectedQuoteType && !isQuoteTypeLoading">
           <!-- Savings Template -->
           <div v-if="selectedQuoteType === 'Savings'">
             <SavingsAllocationConfigTemplate
-              v-model:savingsBrackets="form.savings_brackets"
+              v-model:lumpsumBrackets="form.lumpsum_brackets"
+              v-model:regularBrackets="form.regular_brackets"
               :advisor-options="advisorOptions"
               :nationality-options="nationalityOptions"
             />
@@ -197,6 +247,42 @@ function onSubmit(isValid) {
                 soon. This will be customized based on the specific requirements
                 for {{ selectedQuoteType }} products.
               </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading state for template rendering -->
+        <div
+          v-if="selectedQuoteType && isQuoteTypeLoading"
+          class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
+        >
+          <div class="p-6 bg-white border-b border-gray-200">
+            <div class="flex items-center justify-center py-8">
+              <div class="text-center">
+                <svg
+                  class="animate-spin mx-auto h-8 w-8 text-blue-600"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <p class="mt-2 text-sm text-gray-600">
+                  Loading {{ selectedQuoteType }} configuration template...
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -218,7 +304,7 @@ function onSubmit(isValid) {
 
         <!-- Form Actions -->
         <div
-          v-if="selectedQuoteType"
+          v-if="selectedQuoteType && !isQuoteTypeLoading"
           class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
         >
           <div class="p-6 bg-white border-b border-gray-200">
