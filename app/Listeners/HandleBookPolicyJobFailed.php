@@ -31,11 +31,18 @@ class HandleBookPolicyJobFailed
         $sageRequest = $jobData->sageRequest;
 
         LoggerService::startQuoteLogging($quote, LoggerFeatureEnum::SAGE_POLICY_BOOKING);
-        LoggerService::info('handleBookPolicyJobFailed fn:handle Policy Book  : Quote Code'.$quote->code.' - BookPolicyOnSageJob failed due to max attempts -  Setting status to pending instead of failed');
+        LoggerService::info('handleBookPolicyJobFailed fn:handle Policy Book  : Quote Code: '.$quote->code.' - BookPolicyOnSageJob failed due to max attempts -  Setting status to pending instead of failed');
 
         // Check if this is the "attempted too many times" error
-        if (str_contains($event->exception->getMessage(), 'has been attempted too many times')) {
-            LoggerService::info('handleBookPolicyJobFailed fn:handle Policy Book : BookPolicyOnSageJob failed due to max attempts - '.$quote->code.' - Setting status to pending instead of failed');
+        $errorMessage = $event->exception->getMessage();
+        $errorCode = $event->exception->getMessage();
+        $errorTrace = $event->exception->getTraceAsString();
+        if (str_contains($errorMessage, 'has been attempted too many times')) {
+            LoggerService::info('handleBookPolicyJobFailed fn:handle - Policy Book : BookPolicyOnSageJob failed due to max attempts - '.$quote->code.' - Setting status to pending instead of failed', extra: [
+                'error' => $errorMessage,
+                'errorCode' => $errorCode,
+                'errorTrace' => $errorTrace,
+            ]);
 
             // Set status to pending instead of failed
             (new SageApiService)->updateSageProcessStatus($sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $event->exception->getMessage());
@@ -43,7 +50,9 @@ class HandleBookPolicyJobFailed
             // Schedule sage processes to potentially retry later
             (new SageApiService)->scheduleSageProcesses($sageRequest->insurerID);
 
-            LoggerService::info('handleBookPolicyJobFailed fn:handle Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for code - '.$quote->code.' Insurer - '.$sageRequest->insurerID);
+            LoggerService::info('handleBookPolicyJobFailed fn:handle - Policy Book : Quote Code : '.$quote->code.'  - BookPolicyOnSageJob : scheduleSageProcesses triggered for code - Insurer - '.$sageRequest->insurerID);
+        } else {
+            LoggerService::error('handleBookPolicyJobFailed fn:handle Policy Book : BookPolicyOnSageJob failed: Quote Code : '.$quote->code.' - Error Code : '.$errorCode.' - Error : '.$errorMessage);
         }
     }
 }
