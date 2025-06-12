@@ -3,29 +3,39 @@
 namespace App\Models\Allocation;
 
 use App\Enums\QuoteTypes;
-use App\Models\BaseMongoModel;
-use App\Models\QuoteType;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class AllocationConfiguration extends BaseMongoModel
+class AllocationConfiguration extends Model implements AuditableContract
 {
+    use Auditable;
+
+    protected $appends = ['lumpsum_brackets', 'regular_brackets'];
     protected $fillable = [
         'quote_type_id',
         'quote_type',
-        'lumpsum_brackets',
-        'regular_brackets',
+        'config',
         'created_by',
         'updated_by',
     ];
     protected $casts = [
         'quote_type' => QuoteTypes::class,
-        'lumpsum_brackets' => 'collection',
-        'regular_brackets' => 'collection',
-        'history' => 'collection',
+        'config' => 'array',
     ];
 
-    public function quoteType(): BelongsTo
+    public function regularBrackets(): Attribute
     {
-        return $this->belongsTo(QuoteType::class);
+        return new Attribute(
+            get: fn () => $this->config['regular_brackets'] ?? [],
+        );
+    }
+
+    public function lumpsumBrackets(): Attribute
+    {
+        return new Attribute(
+            get: fn () => $this->config['lumpsum_brackets'] ?? [],
+        );
     }
 }

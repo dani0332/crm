@@ -54,6 +54,7 @@ class AllocationConfigurationController extends Controller
     {
         try {
             $configuration = $this->allocationConfigurationService->createConfiguration(
+                $request->getQuoteType(),
                 $request->validated(),
                 Auth::id()
             );
@@ -77,6 +78,7 @@ class AllocationConfigurationController extends Controller
         try {
             $updatedConfiguration = $this->allocationConfigurationService->updateConfiguration(
                 $allocationConfiguration,
+                $request->getQuoteType(),
                 $request->validated(),
                 Auth::id()
             );

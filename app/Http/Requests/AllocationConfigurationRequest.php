@@ -19,6 +19,11 @@ class AllocationConfigurationRequest extends FormRequest
         return true;
     }
 
+    public function getQuoteType(): QuoteTypes
+    {
+        return QuoteTypes::from($this->quote_type);
+    }
+
     public function rules(): array
     {
         $rules = [

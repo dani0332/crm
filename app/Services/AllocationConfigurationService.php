@@ -13,27 +13,41 @@ use Illuminate\Support\Facades\DB;
 
 class AllocationConfigurationService
 {
-    public function createConfiguration(array $data, int $userId): AllocationConfiguration
+    private function resolveConfig(QuoteTypes $quoteType, array $data): array
     {
-        return DB::transaction(function () use ($data, $userId) {
+        if ($quoteType === QuoteTypes::SAVINGS) {
+            return [
+                'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
+                'regular_brackets' => $data['regular_brackets'] ?? [],
+            ];
+        }
+
+        return [];
+    }
+
+    public function createConfiguration(QuoteTypes $quoteType, array $data, int $userId): AllocationConfiguration
+    {
+        return DB::transaction(function () use ($quoteType, $data, $userId) {
+            $config = $this->resolveConfig($quoteType, $data);
+
             return AllocationConfiguration::create([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
-                'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
-                'regular_brackets' => $data['regular_brackets'] ?? [],
+                'config' => $config,
                 'created_by' => $userId,
             ]);
         });
     }
 
-    public function updateConfiguration(AllocationConfiguration $configuration, array $data, int $userId): AllocationConfiguration
+    public function updateConfiguration(AllocationConfiguration $configuration, QuoteTypes $quoteType, array $data, int $userId): AllocationConfiguration
     {
-        return DB::transaction(function () use ($configuration, $data, $userId) {
+        return DB::transaction(function () use ($configuration, $quoteType, $data, $userId) {
+            $config = $this->resolveConfig($quoteType, $data);
+
             $configuration->update([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
-                'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
-                'regular_brackets' => $data['regular_brackets'] ?? [],
+                'config' => $config,
                 'updated_by' => $userId,
             ]);
 
