@@ -62,6 +62,8 @@ class KycLogsExport implements CsvExportableInterface
 
     /**
      * Custom chunked processing for AML data exports
+     * This method mirrors the exact logic from AMLService::processAMLDataFromQuery
+     * but processes chunks individually to write directly to the stream
      */
     public function processChunkedQuery($query, array $requestParams, $stream): int
     {
@@ -69,6 +71,8 @@ class KycLogsExport implements CsvExportableInterface
         $chunkSize = 1000;
 
         $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
+            // Use the same processing logic as AMLService::processAMLDataFromQuery
+            // but apply it to this specific chunk
             $quoteTypeGroup = $chunk->groupBy('quote_type_id');
 
             foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
@@ -87,12 +91,19 @@ class KycLogsExport implements CsvExportableInterface
 
                 foreach ($quoteRequestData as $quoteRequest) {
                     $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
-                    foreach ($amlData as $amlRecord) {
-                        $amlRecord->uuid = $quoteType->shortCode().$quoteRequest->uuid;
-                        $amlRecord->aml_status = $quoteRequest->aml_status;
+
+                    // Process each record in this chunk exactly like AMLService does
+                    foreach ($amlData as $index => $value) {
+                        // Create a copy to avoid modifying the original
+                        $recordData = (array) $value;
+                        $recordData['uuid'] = $quoteType->shortCode().$quoteRequest->uuid;
+                        $recordData['aml_status'] = $quoteRequest->aml_status;
+
+                        // Convert back to object for the map function
+                        $record = (object) $recordData;
 
                         // Write directly to stream
-                        fputcsv($stream, $this->map($amlRecord));
+                        fputcsv($stream, $this->map($record));
                         $totalRecords++;
                     }
                 }
