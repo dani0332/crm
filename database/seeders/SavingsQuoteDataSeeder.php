@@ -38,6 +38,11 @@ class SavingsQuoteDataSeeder extends Seeder
             PermissionsEnum::SAVINGS_DISTRIBUTION_REPORT,
             PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
         ], [RolesEnum::Engineering, RolesEnum::Admin]);
+
+        $this->seedPermissions([
+            PermissionsEnum::SAVINGS_LEAD_ALLOCATION_DASHBOARD,
+        ], [RolesEnum::LeadPool, RolesEnum::SeniorManagement]);
+
         $this->product();
 
         $this->seedDocumentTypes();
