@@ -65,28 +65,14 @@ class AllocationConfigurationService
         });
     }
 
-    /**
-     * Get all nationalities for dropdown
-     */
     public function getNationalities(): Collection
     {
         return Nationality::where('is_active', 1)->get();
     }
 
-    /**
-     * Find applicable allocation configuration for a quote
-     */
-    public function findApplicableConfiguration(string $quoteType, array $criteria = []): ?AllocationConfiguration
+    public function getAllocationProfile(QuoteTypes $quoteType, float $amount, int $nationalityId, string $frequency = 'lumpsum'): ?array
     {
-        return AllocationConfiguration::where('quote_type', $quoteType)->first();
-    }
-
-    /**
-     * Get allocation profile for specific criteria
-     */
-    public function getAllocationProfile(string $quoteType, float $amount, int $nationalityId, string $frequency = 'lumpsum'): ?array
-    {
-        $configuration = $this->findApplicableConfiguration($quoteType);
+        $configuration = $this->getConfig($quoteType);
 
         if (! $configuration) {
             return null;
@@ -110,9 +96,6 @@ class AllocationConfigurationService
         return null;
     }
 
-    /**
-     * Get configuration by quote type
-     */
     public function getConfigurationByQuoteType(string $quoteType): ?AllocationConfiguration
     {
         return AllocationConfiguration::where('quote_type', $quoteType)
@@ -120,9 +103,6 @@ class AllocationConfigurationService
             ->first();
     }
 
-    /**
-     * Get applicable profile for given parameters
-     */
     public function getApplicableProfile(string $quoteType, string $investmentType, float $amount, int $advisorId, int $nationalityId): ?array
     {
         $configuration = $this->getConfigurationByQuoteType($quoteType);
