@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Models\QuoteType;
 use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
