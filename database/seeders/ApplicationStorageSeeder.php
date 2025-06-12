@@ -97,6 +97,7 @@ class ApplicationStorageSeeder extends Seeder
         // $this->seedYachtAndPetAdvisors();
         $this->seedCycleAdvisors();
         $this->seedCorplineAdvisors();
+        $this->seedSavingsOCBConfiguration();
     }
 
     private function seedBirdWorkflowUrls()
@@ -401,6 +402,31 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
                 'is_active' => 1,
             ],
+        );
+    }
+
+    private function seedSavingsOCBConfiguration()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_OCB],
+            [
+                'value' => '', // To be configured with actual Bird webhook URL
+                'description' => 'Bird webhook URL for Savings OCB',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SAVINGS_OCB_SWITCH],
+            [
+                'value' => '0', // Disabled by default
+                'description' => 'Enable/disable switch for Savings OCB',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
         );
     }
 }

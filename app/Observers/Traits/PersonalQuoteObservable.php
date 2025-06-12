@@ -17,6 +17,7 @@ use App\Services\SendEmailCustomerService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\SendSavingsOCBIntroEmailJob;
 
 trait PersonalQuoteObservable
 {
@@ -87,6 +88,28 @@ trait PersonalQuoteObservable
                 info(self::class." - lead source: {$personalQuote->source} |  - Old Advisor ID: {$oldAdvisorId} |  Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
             }
         }
+
+        // if ($personalQuote->isSavings()) {
+        //     info(self::class." - sending savings intro email for quote: {$personalQuote->uuid} | Time: ".now());
+        //     SendSavingsOCBIntroEmailJob::dispatch($personalQuote->uuid)->delay(Carbon::now()->addMinutes(1));
+        //     info(self::class.' - dispatched savings intro email - Ref ID:'.$personalQuote->uuid.' | Time: '.now());
+        //     info(self::class." - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+        //     if ($personalQuote->source != LeadSourceEnum::IMCRM && ! empty($oldAdvisorId)) {
+        //         if ($oldAdvisorId != $personalQuote->advisor_id) {
+        //             info(self::class." - Advisor ID updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+
+        //             $emailType = empty($oldAdvisorId) ? 'introductory' : 'reassignment';
+        //             info(self::class." Sending {$emailType} email to customer for savings quote {$personalQuote->uuid} | Time: ".now());
+        //             app(SendEmailCustomerService::class)->sendIntroAndReassignEmail($personalQuote, QuoteTypes::SAVINGS->value, $oldAdvisorId);
+        //             info(self::class." | {$emailType} email sent to customer for savings quote {$personalQuote->uuid} | Time: ".now());
+        //         } else {
+        //             info(self::class." - Advisor ID not updated - Old Advisor ID: {$oldAdvisorId} | New Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+        //         }
+
+        //     } else {
+        //         info(self::class." - lead source: {$personalQuote->source} |  - Old Advisor ID: {$oldAdvisorId} |  Advisor ID: {$personalQuote->advisor_id} | Time: ".now());
+        //     }
+        // }
     }
 
     private function updatePersonalQuote(PersonalQuote $personalQuote, array $data): void

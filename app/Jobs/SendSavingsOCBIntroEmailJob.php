@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Services\EmailServices\SavingsEmailService;
 
 class SendSavingsOCBIntroEmailJob implements ShouldQueue
 {
@@ -23,22 +24,24 @@ class SendSavingsOCBIntroEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public $quoteUuid, public $previousAdvisor = null) {}
+    public function __construct(public $quoteUuid, public $previousAdvisor = null)
+    {
+        $this->afterCommit();
+    }
 
     /**
      * Execute the job.
      */
     public function handle(): void
     {
-        $savingsOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::SAVINGS_OCB_AUTOMATED_FOLLOWUPS_SWITCH)->first();
+        $savingsOCBSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::SAVINGS_OCB_SWITCH)->first();
         $personalQuote = PersonalQuote::where('uuid', $this->quoteUuid)->first();
 
         if ($savingsOCBSwitch && $savingsOCBSwitch->value == 1) {
-            // TODO: Implement SavingsEmailService when available
-            // app(SavingsEmailService::class)->sendSavingsOCBIntroEmail($personalQuote);
-            LoggerService::info(self::class.' - Savings OCB Automated Followups Switch is on - Email functionality to be implemented');
+            app(SavingsEmailService::class)->sendSavingsOCBIntroEmail($personalQuote);
+            LoggerService::info(self::class.' - Savings OCB Switch is on');
         } else {
-            LoggerService::info(self::class.' - Savings OCB Automated Followups Switch is off');
+            LoggerService::info(self::class.' - Savings OCB Switch is off');
         }
 
         // For now, just log that the OCB email job was triggered

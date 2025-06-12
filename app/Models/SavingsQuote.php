@@ -67,4 +67,9 @@ class SavingsQuote extends Model
     {
         return $this->belongsTo(MartialStatus::class);
     }
+
+    public function personalQuote()
+    {
+        return $this->belongsTo(PersonalQuote::class);
+    }
 }
