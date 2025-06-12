@@ -234,15 +234,15 @@ class AllocationConfigurationRequest extends FormRequest
             return false;
         }
 
-        // Sort brackets by min value
         usort($brackets, fn ($a, $b) => $a['min'] <=> $b['min']);
 
         for ($i = 0; $i < count($brackets) - 1; $i++) {
             $currentMax = $brackets[$i]['max'];
             $nextMin = $brackets[$i + 1]['min'];
 
-            // Check if there's a gap (current max + 0.01 < next min)
-            if ($currentMax + 0.01 < $nextMin) {
+            // Check if there's a gap (next min should be currentMax + 1 for consecutive ranges)
+            // If nextMin > currentMax + 1, then there's a gap
+            if ($nextMin > $currentMax + 1) {
                 return true;
             }
         }
