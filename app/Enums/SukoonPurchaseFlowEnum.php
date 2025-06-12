@@ -9,24 +9,6 @@ use BenSampo\Enum\Enum;
 final class SukoonPurchaseFlowEnum extends Enum
 {
 
-    const STEPS_TITLE = [
-        self::STEP_INIT => 'Initialize',
-        self::STEP_LOGIN => 'Login',
-        self::STEP_SUBMIT_PERSONAL_DETAIL => 'Submit Personal Detail',
-        self::STEP_SUBMIT_PLAN => 'Submit Plan',
-        self::STEP_REVIEW_SUBMITED_DATA => 'Review Submitted Data',
-        self::STEP_CONFIRM_SUBMITED_DATA => 'Confirm Submitted Data',
-        self::STEP_INITIATE_PAYMENT_PROCESS => 'Initiate Payment Process',
-        self::STEP_COMPLETE_INVOICE_PAYMENT => 'Complete Invoice Payment',
-        self::STEP_GET_POLICY_SCHEDULE_COI => 'Get Policy Schedule Coi',
-        self::STEP_GET_CUSTOMER_TAX_INVOICE => 'Get Customer Tax Invoice',
-        self::STEP_LIST_GENERATED_DOCUMENT => 'List Generated Document',
-        self::STEP_DOWNLOAD_DOCUMENT => 'Download Document',
-        // self::STEP_GET_FORM => 'Get Form', // GET, Skiped
-        // self::STEP_PRE_REVIEW_SUBMITED_DATA => 'Pre Review Submitted Data', // GET, Skiped
-        // self::STEP_LIST_PAYMENT_GATEWAYS => 'List Payment Gateways', // GET, Skiped
-    ];
-    
     const STEPS_NAME = [
         self::STEP_INIT => 'init',
         self::STEP_LOGIN => 'login',
@@ -40,6 +22,7 @@ final class SukoonPurchaseFlowEnum extends Enum
         self::STEP_GET_CUSTOMER_TAX_INVOICE => 'getCustomerTaxInvoice',
         self::STEP_LIST_GENERATED_DOCUMENT => 'listGeneratedDocument',
         self::STEP_DOWNLOAD_DOCUMENT => 'downloadDocument',
+        self::GET_VIEW_QUOTE_POLICY => 'viewQuotePolicy',
         // self::STEP_GET_FORM => 'getForm', // GET, Skiped
         // self::STEP_PRE_REVIEW_SUBMITED_DATA => 'preReviewSubmittedData', // GET, Skiped
         // self::STEP_LIST_PAYMENT_GATEWAYS => 'listPaymentGateways', // GET, Skiped
@@ -57,15 +40,11 @@ final class SukoonPurchaseFlowEnum extends Enum
     const STEP_GET_CUSTOMER_TAX_INVOICE = 13;
     const STEP_LIST_GENERATED_DOCUMENT = 14;
     const STEP_DOWNLOAD_DOCUMENT = 15;
+    const GET_VIEW_QUOTE_POLICY = 30;
     // const STEP_GET_FORM = 3; // GET, Skiped
     // const STEP_PRE_REVIEW_SUBMITED_DATA = 5; // GET, Skiped
     // const STEP_LIST_PAYMENT_GATEWAYS = 9; // GET, Skiped
 
-
-    public static function getTitle(int $stepNumber): string
-    {
-        return self::STEPS_TITLE[$stepNumber] ?? "";
-    }
 
     public static function getName(int $stepNumber): string
     {
