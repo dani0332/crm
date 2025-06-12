@@ -355,7 +355,7 @@ class EmbeddedProductRepository extends BaseRepository
 
                     // EP Send documents
                     $quoteObject = $this->getQuoteObject($modelType, $leadId);
-                    $quoteObject->load('embeddedTransactions', 'embeddedTransactions.product', 'embeddedTransactions.product.embeddedProduct', 'customer');
+                    $quoteObject->load('latestInsured', 'embeddedTransactions', 'embeddedTransactions.product', 'embeddedTransactions.product.embeddedProduct', 'customer');
                     
                     $transactions = $quoteObject->embeddedTransactions()->where([
                         ['quote_type_id', '=', $quoteTypeId],

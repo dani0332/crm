@@ -304,9 +304,9 @@ class SukoonDriverMedexService
      */
     private function validateCustomerDetails($quote)
     {
-        $lastInsuredData = $quote->lastInsured;
-        $insuredKyc = $lastInsuredData?->insuredKyc;
-        $customerType = $lastInsuredData?->customer_type;
+        $latestInsuredData = $quote->latestInsured;
+        $insuredKyc = $latestInsuredData?->insuredKyc;
+        $customerType = $latestInsuredData?->customer_type;
         $idType = $insuredKyc?->id_type;
 
         if (($customerType != CustomerTypeEnum::Individual || $idType != 'emiratesId') && ! $this->validateCustomerKycDetail(
@@ -314,7 +314,7 @@ class SukoonDriverMedexService
             $insuredKyc?->id_expiry_date,
             $insuredKyc?->residential_address
         )) {
-            throw new Exception('Address cannot be empty, Invalid Emirates ID or Expiry Date. Please check and try again.');
+            throw new Exception('Address cannot be empty, Invalid Emirates ID or Expiry Date');
         }
     }
 
@@ -334,8 +334,8 @@ class SukoonDriverMedexService
      */
     private function prepareUserDetails($quote)
     {
-        $lastInsuredData = $quote->lastInsured;
-        $insuredKyc = $lastInsuredData?->insuredKyc;
+        $latestInsuredData = $quote->latestInsured;
+        $insuredKyc = $latestInsuredData?->insuredKyc;
 
         if (! empty($quote->quoteRequestEntityMapping)) {
             $firstName = $quote->first_name ?? '';
@@ -350,7 +350,7 @@ class SukoonDriverMedexService
 
         return [
             'form_name' => 'personal_details',
-            "title" => $lastInsuredData->gender == 'Male' ? "Mr" : 'Ms',
+            "title" => $latestInsuredData->gender == 'Male' ? "Mr" : 'Ms',
             'first_name' => $firstName,
             'last_name' => $lastName,
             'mobile' => '+9710502732524', // '+971505027325',
