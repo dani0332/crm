@@ -123,6 +123,7 @@ class BaseService
             ->join('users', 'audits.user_id', 'users.id')
             ->where('auditable_id', $auditableId)
             ->where('auditable_type', $auditableType)
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 

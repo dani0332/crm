@@ -248,5 +248,12 @@ onMounted(() => {
         </div>
       </div>
     </x-form>
+
+    <AuditLogs
+      v-if="currentConfiguration && form.quote_type"
+      :url="'\\auditable'"
+      :type="'App\\Models\\Allocation\\AllocationConfiguration'"
+      :id="currentConfiguration.id"
+    />
   </div>
 </template>
