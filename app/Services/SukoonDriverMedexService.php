@@ -31,6 +31,7 @@ class SukoonDriverMedexService
     private $quoteTypeId;
     private $productSlug;
     private $policyNumber;
+    private $quoteNumber;
     private $paymentGateway;
     private $paymentToken;
 
@@ -42,11 +43,10 @@ class SukoonDriverMedexService
     
     
     public function __construct(
-        private $logPrefix = 'Sukoon Medex Service:',
-        private $errorMessages = [],
-        private $currentStep = 0,
-        private $stepName = SukoonPurchaseFlowEnum::STEP_INIT,
-        
+        private string $logPrefix = 'Sukoon Medex Service:',
+        private array $errorMessages = [],
+        private int $currentStep = 0,
+
         private $documentTemplates = [
             ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE,
             ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
@@ -61,11 +61,29 @@ class SukoonDriverMedexService
         $this->baseUrl = config('constants.SUKOON_API_URL');
         $this->productSlug = 'afia_driver_medex'; // ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PRODUCT_SLUG)->value('value');
         $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
-        $this->currentStep = SukoonPurchaseFlowEnum::getNextStep($this->currentStep);
-        $this->stepName = SukoonPurchaseFlowEnum::getName($this->currentStep);
+
+        if($this->currentStep <= SukoonPurchaseFlowEnum::STEP_INIT)
+            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_INIT);
 
         $this->documentTemplateIds = ApplicationStorage::select('key_name', 'value')->whereIn('key_name', $this->documentTemplates)->get();
         $this->mapDocumentsType();
+    }
+
+    private function viewQuotePolicy()
+    {
+        try {
+            $headers = ['x-session-id' => $this->sessionId, 'Content-Type' => 'application/json', 'Accept' => 'application/json'];
+            $result = $this->request("/policy/{$this->policyNumber}", 'get', headers: $headers)->json();
+
+            $this->quoteNumber = $result['quote_number'];
+            $result['policy_number'] && $this->policyNumber = $result['policy_number'];
+            $this->paymentToken = $result['payments'][0]['payment_token'] ?? null;
+
+            return true;
+
+        } catch (Exception $e) {
+            throw $e;
+        }
     }
 
     /**
@@ -102,36 +120,37 @@ class SukoonDriverMedexService
 
             // STEP #4 submitPersonalDetail
             $this->submitPersonalDetail($transaction, $this->prepareUserDetails($quote));
-            if(empty($this->policyNumber) || empty($this->paymentPlan) || empty($this->amountDisclaimerText))
-                throw new Exception('Policy No, Payment Plan or Amount Disclaimer Text is missing');
+            if(empty($this->quoteNumber) || empty($this->paymentPlan) || empty($this->amountDisclaimerText))
+                throw new Exception('Quote / Policy No, Payment Plan or Amount Disclaimer Text is missing');
 
             // STEP #5 preReviewSubmittedData | Skiped
 
             // STEP #6 submitPlan
-            $this->formSubmit($this->prepareAdditionalData());
+            $this->submitPlan($this->prepareAdditionalData(), $transaction);
 
             // STEP #7 reviewSubmittedData
-            $this->confirmPolicy();
+            $this->reviewSubmittedData();
 
             // STEP #8 confirmSubmittedData
-            $this->confirmPolicy(postMethod: true);
+            $this->confirmSubmittedData();
 
             // STEP #9 listPaymentGateways | Skiped
 
             // STEP (#10 initiatePaymentProcess) & (#11 completeInvoicePayment)
             $this->initiateAndCompletePayment($transaction);
-            $transaction->refresh();
-            if(empty($transaction->certificate_number))
+            if(empty($this->policyNumber))
                 throw new Exception('Document Policy Number is missing');
 
+            $this->viewQuotePolicy();
+
             // STEP #12 getPolicyScheduleCoi 
-            $this->getPolicyScheduleCoi($transaction);
+            $this->getPolicyScheduleCoi();
 
             // STEP #13 getCustomerTaxInvoice
             $this->getCustomerTaxInvoice();
 
             // STEP #14 listGeneratedDocument & #15 downloadDocument
-            $this->getDocuments($quote, $transaction);
+            $this->listGeneratedDocument($quote, $transaction);
 
         } catch (Exception $e) {
             $this->logFailure('Sukoon Purchase Flow Failed', $e->getMessage(), [
@@ -153,28 +172,29 @@ class SukoonDriverMedexService
     {
         $url = "{$this->baseUrl}/api/v".config('constants.SUKOON_API_VERSION').$path;
 
-        // $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
-        $parentFunction = $this->stepName; // isset($backtrace[1]['function']) ? $backtrace[1]['function'] : 'Unknown';
-        $responseData = null;
-
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $parentFunction = isset($backtrace[1]['function']) ? $backtrace[1]['function'] : 'Unknown';
+        $response = null;
         try {
             $client = Http::withHeaders($headers);
 
-            $response = $client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) {
+            $response = $client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) use($data, $url, $parentFunction) {
+
+                $contentType = $response->header('Content-Type');
+                if (!str_contains($contentType, 'application/json')) {
+                    $this->logRequest('failed', "API Exception Successful, Content Type: {$contentType}", $data, $url, $response, $parentFunction);
+                    return $response;
+                }
+
                 $msg = $response->json()['msg'] ?? "{$this->logPrefix} API Request Exception";
                 $this->fetchErrors($response);
-
-                $responseData = $response->json();
-                $responseData['errorMessages'] = $this->errorMessages;
                 throw new Exception($msg);
             });
 
             $contentType = $response->header('Content-Type');
 
             if (!str_contains($contentType, 'application/json')) {
-                $this->logRequest('passed', 'Request Successful', $data, $url, parentFunction: $parentFunction);
-                $this->currentStep = SukoonPurchaseFlowEnum::getNextStep($this->currentStep);
-                $this->stepName = SukoonPurchaseFlowEnum::getName($this->currentStep);
+                $this->logRequest('passed', 'Request Successful', $data, $url, $response, $parentFunction);
                 return $response;
             }
 
@@ -182,18 +202,15 @@ class SukoonDriverMedexService
 
             if($responseData['has_errors'] ?? null) {
                 $this->fetchErrors($response);
-                $responseData['errorMessages'] = $this->errorMessages;
-                $this->logRequest('failed', 'Request Error', $data, $url, $responseData, $parentFunction);
+                $this->logRequest('failed', 'Request Error', $data, $url, $response, $parentFunction);
                 return $response;
             }
 
-            $this->logRequest('passed', 'Request Successful', $data, $url, $responseData, $parentFunction);
-            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep($this->currentStep);
-            $this->stepName = SukoonPurchaseFlowEnum::getName($this->currentStep);
+            $this->logRequest('passed', 'Request Successful', $data, $url, $response, $parentFunction);
             return $response;
 
         } catch (Exception $e) {
-            $this->logRequest('failed', $e->getMessage(), $data, $url, $responseData, $parentFunction);
+            $this->logRequest('failed', $e->getMessage(), $data, $url, $response, $parentFunction);
             throw $e;
         }
     }
@@ -211,7 +228,7 @@ class SukoonDriverMedexService
         $maxTextLength = 65535; // The maximum length for MySQL TEXT type
 
         // Ensure response is a JSON string
-        $response = is_array($response) ? json_encode($response) : $response;
+        $response = is_array($response) ? json_encode(['error_message' => reset($this->errorMessages), 'error_messages' => $this->errorMessages, ...$response]) : $response;
 
         // Check if the response exceeds the maximum length
         if (strlen($response) > $maxTextLength) {
@@ -248,20 +265,23 @@ class SukoonDriverMedexService
             'status' => $status,
             'execution_method' => $parentFunction,
             'quote_uuid' => $this->currentQuote->uuid,
-            'provider_id' => InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id'),
-            'call_type' => 'EmbeddedProduct'
+            'call_type' => 'EmbeddedProduct',
+            'provider_id' => InsuranceProvider::where('code', InsuranceProvidersEnum::OIC)->value('id'), // TODO::
         ];
-        $requestCallData = [
+
+        $extraLog = [
             'request' => is_array($data) ? json_encode($data) : $data,
             'response' => $response,
-            'quote_data' => json_encode($this->currentQuote)
+            'quote_data' => json_encode($this->currentQuote),
         ];
 
-        InsurerRequestResponse::create([...$logData, ...$requestCallData]);
-        $responseData = collect($response)->only('success', 'status', 'has_errors', 'policy_number', 'policy_status');
+        InsurerRequestResponse::create([...$logData, ...$extraLog]);
+        $responseData = collect($response)->only('success', 'status', 'has_errors', 'policy_number', 'policy_status', 'error_message');
         $logData = [...$logData, ...$responseData];
 
-        LoggerService::info("{$this->logPrefix} API {$status} Step: #{$this->currentStep} {$this->stepName}", context: ['message' => $message, 'url' => $url, ...$logData, ...$responseData]);
+        $prefixStep = $parentFunction == SukoonPurchaseFlowEnum::getName(SukoonPurchaseFlowEnum::GET_VIEW_QUOTE_POLICY) ? 'Pre-' : '';
+
+        LoggerService::info("{$this->logPrefix} API {$status} {$prefixStep}Step: #{$this->currentStep} {$parentFunction}", extra: $extraLog, context: ['message' => $message, 'url' => $url, ...$logData, ...$responseData]);
     }
     
     /**
@@ -409,6 +429,10 @@ class SukoonDriverMedexService
             }
 
             $this->sessionId = $result['session_id'];
+
+            if($this->currentStep <= SukoonPurchaseFlowEnum::STEP_LOGIN)
+                $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_LOGIN);
+
             return true;
 
         } catch (Exception $e) {
@@ -426,7 +450,7 @@ class SukoonDriverMedexService
      *
      * @throws Exception If form submission fails.
      */
-    public function formSubmit($data, $transaction = null, $save = false)
+    public function submitPlan($data, $transaction)
     {
         try {
             $result = $this->request('/policy/submit/'.$this->productSlug.'/', 'post', $data, [
@@ -435,15 +459,12 @@ class SukoonDriverMedexService
                 'Accept' => 'application/json',
             ])->json();
 
-            if(!empty($this->errorMessages)) {
-                throw new Exception('Abort');
-            }
-
             if (! empty($result['policy_number'] ?? null)) {
-                $this->policyNumber = $result['policy_number'];
-                ($save && $transaction) && $transaction->update(['quote_policy' => $this->policyNumber]);
+                $this->quoteNumber = $result['policy_number'];
+                $transaction->update(['quote_policy' => $this->quoteNumber]);
             }
 
+            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_SUBMIT_PLAN);
             return $result;
 
         } catch (Exception $e) {
@@ -471,33 +492,64 @@ class SukoonDriverMedexService
      * @param  array  $userDetail  The user details array.
      * @return void
      */
-    private function submitPersonalDetail($transaction, $userDetail)
+    private function submitPersonalDetail($transaction, $data)
     {
         try {
-            if ($transaction->quote_policy == null) {
-                $response = $this->formSubmit($userDetail, $transaction, true);
+            if ($transaction->quote_policy == null || true) {
+                
+                $result = $this->request('/policy/submit/'.$this->productSlug.'/', 'post', $data, [
+                    'x-session-id' => $this->sessionId,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ])->json();
 
-                $fields = collect($response['form']['fields'] ?? []);
+                $fields = collect($result['form']['fields'] ?? []);
 
                 if(empty($fields))
-                    return false;
+                    throw new Exception('No fields found (payment_plan, amount_disclaimer_text)');
 
-                $fields->filter(function($field) {
-                    match ($field['name']) {
-                        'payment_plan' => $this->paymentPlan = $field['value'],
-                        'amount_disclaimer_text' => $this->amountDisclaimerText = $field['value'],
-                        default => null
-                    };
-                });
+                $pluckedFieldsValue = $this->pluckFieldsValue($fields, ['payment_plan', 'amount_disclaimer_text']);                
+                $this->paymentPlan = $pluckedFieldsValue['payment_plan'] ?? null;
+                $this->amountDisclaimerText = $pluckedFieldsValue['amount_disclaimer_text'] ?? null;
+
+                if (! empty($result['policy_number'] ?? null)) {
+                    $this->quoteNumber = $result['policy_number'];
+                    $transaction->update(['quote_policy' => $this->quoteNumber]);
+                }
+
             } else {
-                $this->policyNumber = $transaction->quote_policy;
+                $this->quoteNumber = $transaction->quote_policy;
             }
 
+            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_SUBMIT_PERSONAL_DETAIL);
             return true;
 
         } catch (Exception $e) {
             throw $e;
         }
+    }
+
+    private function pluckFieldsValue($fields, $fieldsName, $isUpdate = false)
+    {
+        $pluckedProperties = [];
+
+        foreach($fields as $field) {
+            if(in_array($field['name'], $fieldsName)) {
+                $pluckedProperties = [...$pluckedProperties, ...[$field['name'] => $field['value']]];
+            }
+
+            if($isUpdate) {
+                match ($field['name']) {
+                    'payment_plan' => $this->paymentPlan = $field['value'],
+                    'amount_disclaimer_text' => $this->amountDisclaimerText = $field['value'],
+                    default => null
+                };
+            }
+
+            if(empty(array_diff($fieldsName, array_keys($pluckedProperties))))
+                break;
+        };
+        return $pluckedProperties;
     }
 
     /**
@@ -513,7 +565,7 @@ class SukoonDriverMedexService
             'plan_option' => $this->productSlug.'-personal_non_commercial_vehicles',
             "payment_plan" => $this->paymentPlan,
             "amount_disclaimer_text" => $this->amountDisclaimerText,
-            'policy_number' => $this->policyNumber
+            'policy_number' => $this->quoteNumber
         ];
     }
 
@@ -522,15 +574,37 @@ class SukoonDriverMedexService
      *
      * @return void
      */
-    private function confirmPolicy($postMethod = false)
+    private function reviewSubmittedData()
     {
         try {
-            $response = $this->request('/policy/'.$this->policyNumber.'/confirm/', 
-                ($postMethod ? 'post' : 'get'), 
+            $response = $this->request('/policy/'.$this->quoteNumber.'/confirm/', 
+                'get', 
                 ['confirm' => 'true'], 
                 ['x-session-id' => $this->sessionId]
             );
 
+            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_REVIEW_SUBMITED_DATA);
+            return true;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+    
+    /**
+     * Confirms the policy using the policy number.
+     *
+     * @return void
+     */
+    private function confirmSubmittedData()
+    {
+        try {
+            $response = $this->request('/policy/'.$this->quoteNumber.'/confirm/', 
+                'post', 
+                ['confirm' => 'true'], 
+                ['x-session-id' => $this->sessionId]
+            );
+
+            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_CONFIRM_SUBMITED_DATA);
             return true;
         } catch (Exception $e) {
             throw $e;
@@ -544,9 +618,9 @@ class SukoonDriverMedexService
      *
      * @throws Exception If payment initiation fails.
      */
-    public function paymentInitiate()
+    public function initiatePaymentProcess()
     {
-        $data = ['policy_number' => $this->policyNumber, 'gateway' => $this->paymentGateway];
+        $data = ['policy_number' => $this->quoteNumber, 'gateway' => $this->paymentGateway];
 
         try {
             $result = $this->request('/payment/initiate/', 'post', $data, [
@@ -586,7 +660,7 @@ class SukoonDriverMedexService
 
             if ($result) {
                 $transaction->update(['certificate_number' => $result['policy_number']]);
-                return $result['policy_number'];
+                return $this->policyNumber = $result['policy_number'];
             }
 
             throw new Exception('Payment complete API failed');
@@ -604,24 +678,31 @@ class SukoonDriverMedexService
     private function initiateAndCompletePayment($transaction)
     {
         try {
-            if ($transaction->certificate_number == null) {
+            if ($this->policyNumber == null) {
 
                 // STEP #10 initiatePaymentProcess
-                $this->paymentInitiate();
+                $this->initiatePaymentProcess();
+                $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_INITIATE_PAYMENT_PROCESS);
 
                 // STEP #11 completeInvoicePayment
                 $this->completeInvoicePayment($transaction);
+                $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_COMPLETE_INVOICE_PAYMENT);
+
+            } else {
+                $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_COMPLETE_INVOICE_PAYMENT);
             }
+
         } catch (Exception $e) {
             throw $e;
         }
     }
 
 
-    public function getPolicyScheduleCoi($transaction)
+    public function getPolicyScheduleCoi()
     {
         try {
-            $result = $this->request('/policy/'.$transaction->certificate_number.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
+            $result = $this->request('/policy/'.$this->policyNumber.'/coi/', 'get', headers: ['x-session-id' => $this->sessionId]);
+            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_GET_POLICY_SCHEDULE_COI);
         } catch (Exception $e) {
             throw $e;
         }
@@ -631,6 +712,7 @@ class SukoonDriverMedexService
     {
         try {
             $result = $this->request('/payment/'.$this->paymentToken.'/tax-invoice', 'get', headers: ['x-session-id' => $this->sessionId]);
+            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_GET_CUSTOMER_TAX_INVOICE);
         } catch (Exception $e) {
             throw $e;
         }
@@ -645,12 +727,14 @@ class SukoonDriverMedexService
      *
      * @throws Exception If document retrieval fails.
      */
-    public function getDocuments($quote, $embeddedTransaction)
+    public function listGeneratedDocument($quote, $embeddedTransaction)
     {
         try {
-            $result = $this->request('/policy/'.$embeddedTransaction->certificate_number.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
+            $result = $this->request('/policy/'.$this->policyNumber.'/generated-documents/', 'get', headers: ['x-session-id' => $this->sessionId]);
+            $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_LIST_GENERATED_DOCUMENT);
             $response = $result->json();
 
+            $uploadedDocumentCount = 0;
             foreach(($response['documents'] ?? []) as $document) {
 
                 if(empty($document)) {
@@ -684,11 +768,11 @@ class SukoonDriverMedexService
                     }
                 }
 
-                $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode, $fileCreatedTimestamp);
+                $this->downloadDocument($quote, $embeddedTransaction, $docId, $docCode, $fileCreatedTimestamp) && $uploadedDocumentCount++;
             }
 
             $generatedDocumentCounts = count($response['documents'] ?? []);
-            LoggerService::info("Downloaded documents count: {$generatedDocumentCounts}");
+            LoggerService::info("Documents saved: {$uploadedDocumentCount} out of {$generatedDocumentCounts}");
         } catch (Exception $e) {
             throw $e;
         }
@@ -758,9 +842,11 @@ class SukoonDriverMedexService
                 } else {
                     $embeddedTransaction->documents()->create($documentData);
                 }
+                return true;
             } else {
                 $message = 'Unable to determine filename from the response headers.';
                 $this->logFailure($message.' doc_code : '.$docCode, $message, ['ref_id' => $quote->code, 'embeddedTransaction' => $embeddedTransaction]);
+                return false;
             }
         } catch (Exception $e) {
             $this->logFailure('Get Document doc_code : '.$docCode, $e->getMessage(), ['ref_id' => $quote->code, 'embeddedTransaction' => $embeddedTransaction]);
