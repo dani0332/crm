@@ -27,10 +27,9 @@ const props = defineProps({
     type: String,
     required: false,
   },
-  isSentOrBooked: {
+  isEndorsementBooked: {
     type: Boolean,
     required: false,
-    default: false,
   },
 });
 
@@ -412,7 +411,7 @@ const getS3TempUrl = async docURL => {
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
           >
             <div>
-              <x-tooltip placement="bottom" v-if="props.isSentOrBooked">
+              <x-tooltip placement="bottom" v-if="props.isEndorsementBooked">
                 <x-button size="xs" color="error" outlined disabled>
                   Delete
                 </x-button>

@@ -49,7 +49,7 @@ RUN apt-get update && apt-get install -y \
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg --with-webp
 RUN docker-php-ext-install -j$(nproc) gd
 RUN php -r 'var_dump(function_exists("imagecreatefromwebp"));'
-RUN pecl install mongodb-1.20.0 && docker-php-ext-enable mongodb
+RUN pecl install mongodb-2.1.0 && docker-php-ext-enable mongodb
 
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 
