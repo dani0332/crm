@@ -13,6 +13,7 @@ export function useAllocationForm(props, errorHandling) {
   const nationalityOptions = ref([]);
   const currentConfiguration = ref(null);
   const savingsTemplateRef = ref(null);
+  const auditLogsKey = ref(0);
 
   const {
     addError,
@@ -196,6 +197,9 @@ export function useAllocationForm(props, errorHandling) {
             savingsTemplateRef.value.clearValidationErrors();
           }
 
+          // Force AuditLogs component to re-initialize by changing its key
+          auditLogsKey.value += 1;
+
           scrollToSuccess();
         } else {
           processGenericError(
@@ -262,6 +266,7 @@ export function useAllocationForm(props, errorHandling) {
     nationalityOptions,
     currentConfiguration,
     savingsTemplateRef,
+    auditLogsKey,
     form,
 
     // Computed

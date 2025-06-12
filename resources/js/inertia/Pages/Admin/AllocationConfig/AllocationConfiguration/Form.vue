@@ -38,6 +38,7 @@ const {
   nationalityOptions,
   currentConfiguration,
   savingsTemplateRef,
+  auditLogsKey,
   form,
   quoteTypeOptions,
   initializeOptions,
@@ -251,6 +252,7 @@ onMounted(() => {
 
     <AuditLogs
       v-if="currentConfiguration && form.quote_type"
+      :key="`audit-logs-${auditLogsKey}`"
       :url="'\\auditable'"
       :type="'App\\Models\\Allocation\\AllocationConfiguration'"
       :id="currentConfiguration.id"
