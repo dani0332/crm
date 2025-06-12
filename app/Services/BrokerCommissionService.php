@@ -29,23 +29,37 @@ class BrokerCommissionService
             return [false, null, false];
         }
 
-        $ecommerceLinesOfBusiness = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Health, QuoteTypeId::Bike];
+        if ($quoteTypeId == QuoteTypeId::Car && $quote && $quote->registration_type == 'Company') {
+            $quoteTypeId = QuoteTypeId::CompanyCar;
+        }
+
+        $ecommerceLinesOfBusiness = [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Health, QuoteTypeId::Bike, QuoteTypeId::CompanyCar];
         $query = BrokerCommission::where('insurance_provider_id', $insuranceProviderId)->active();
 
+        $planBasedQuery = null;
+        $brokerCommission = null;
         if ($businessTypeId) {
             $query->where('business_type_of_insurance_id', $businessTypeId);
         } else {
             $query->where('quote_type_id', $quoteTypeId);
             if (in_array($quoteTypeId, $ecommerceLinesOfBusiness) && $planId) {
-                $query->where('plan_id', $planId);
+                $planBasedQuery = $query->clone();
+                $planBasedQuery->where('plan_id', $planId);
             }
         }
 
-        $brokerCommission = $query->first();
+        if($planBasedQuery && $planBasedQuery->exists()){
+            $brokerCommission = $planBasedQuery->first();
+        }
+        elseif(!$businessTypeId) {
+            $query->whereNull('plan_id');
+        }
+
+        $brokerCommission = $brokerCommission ? $brokerCommission : $query->first();
         // todo: confirm from denber
         // $commissionInPayments = $brokerCommission->commission_in_payments ?? false;
 
-        $isCreditCardEnabled = $brokerCommission ? true : false;
+        $isCreditCardEnabled = $brokerCommission && !$brokerCommission->enable_payment_link;
 
         $insurersWithoutCCRenewal = [
             InsurerProviderEnum::SUKOON_OMAN_INSURANCE,
