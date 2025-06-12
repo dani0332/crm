@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, nextTick, watch } from 'vue';
 
 const props = defineProps({
   title: {
@@ -30,6 +30,42 @@ const emit = defineEmits([
   'add-profile',
   'remove-profile',
 ]);
+
+const highlightedBracketIndex = ref(-1);
+const isInitialized = ref(false);
+const previousBracketCount = ref(props.brackets.length);
+
+watch(
+  () => props.brackets.length,
+  (newLength, oldLength) => {
+    if (isInitialized.value && newLength > oldLength) {
+      highlightedBracketIndex.value = newLength - 1;
+
+      nextTick(() => {
+        const newBracketElement = document.querySelector(
+          `[data-bracket-index="${props.type.toLowerCase()}-${newLength - 1}"]`,
+        );
+        if (newBracketElement) {
+          newBracketElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }
+      });
+
+      setTimeout(() => {
+        highlightedBracketIndex.value = -1;
+      }, 2000);
+    } else if (isInitialized.value && newLength < oldLength) {
+      isAddingBracket.value = false;
+      highlightedBracketIndex.value = -1;
+    }
+
+    if (!isInitialized.value) {
+      isInitialized.value = true;
+    }
+  },
+);
 
 const validatePositiveNumber = value => {
   const num = parseFloat(value);
@@ -133,11 +169,23 @@ const removeProfile = (bracket, profileIndex) => {
         <div
           v-for="(bracket, bracketIndex) in brackets"
           :key="`bracket-${bracketIndex}`"
-          class="border border-gray-200 rounded-lg p-4"
+          :data-bracket-index="`${type.toLowerCase()}-${bracketIndex}`"
+          class="border border-gray-200 rounded-lg p-4 transition-all duration-500"
+          :class="{
+            'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
+              highlightedBracketIndex === bracketIndex,
+            'shadow-lg': highlightedBracketIndex === bracketIndex,
+          }"
         >
           <div class="flex items-center justify-between mb-4">
             <h4 class="text-md font-medium text-gray-800">
               {{ type }} (Bracket {{ bracketIndex + 1 }})
+              <span
+                v-if="highlightedBracketIndex === bracketIndex"
+                class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+              >
+                New!
+              </span>
             </h4>
             <x-button
               size="sm"
