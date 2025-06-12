@@ -112,9 +112,16 @@ const removeProfile = (bracket, profileIndex) => {
         <h3 class="text-lg font-medium text-gray-900">
           {{ title }}
         </h3>
-        <x-button size="md" color="#ff5e00" type="button" @click="addBracket">
-          Create new price bracket
-        </x-button>
+        <x-tooltip>
+          <x-button size="md" color="#ff5e00" type="button" @click="addBracket">
+            Create new price bracket
+          </x-button>
+          <template #tooltip>
+            <span class="custom-tooltip-content">
+              Add a new investment amount bracket for this frequency type.
+            </span>
+          </template>
+        </x-tooltip>
       </div>
 
       <div v-if="brackets.length === 0" class="text-center py-8 text-gray-500">
