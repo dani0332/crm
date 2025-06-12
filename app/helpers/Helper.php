@@ -871,7 +871,6 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->whereIn('quote_status_id', $request->quote_status);
         }
 
-        // Handle single quote_status_id filter (for Savings cards view)
         if (isset($request->quote_status_id) && $request->quote_status_id != '') {
             $partialQuery->where('quote_status_id', $request->quote_status_id);
         }
@@ -961,7 +960,6 @@ if (! function_exists('getCardViewRequestFilters')) {
             }
         }
 
-        // Handle single advisor_id filter (for Savings cards view)
         if (isset($request->advisor_id) && $request->advisor_id != '') {
             $partialQuery->where('advisor_id', $request->advisor_id);
         }
@@ -976,7 +974,9 @@ if (! function_exists('getCardViewRequestFilters')) {
 
         // Handle investment frequency filter for PersonalQuote (Savings)
         if ($modelType == PersonalQuote::class && isset($request->investment_frequency) && $request->investment_frequency != '') {
-            $partialQuery->where('investment_frequency', $request->investment_frequency);
+            $partialQuery->whereHas('savingsQuote', function ($q) use ($request) {
+                $q->where('investment_criteria_id', $request->investment_frequency);
+            });
         }
     }
 }
