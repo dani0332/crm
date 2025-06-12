@@ -31,8 +31,8 @@ class SavingsQuoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'first_name' => 'required|string|max:20',
-            'last_name' => 'required|string|max:50',
+            'first_name' => 'required|between:1,20|regex:/^[a-zA-Z\s\-]+$/',
+            'last_name' => 'required|between:1,50|regex:/^[a-zA-Z\s\-]+$/',
             'email' => 'required|email',
             'mobile_no' => 'required|string',
             'dob' => 'required|date',
@@ -46,6 +46,19 @@ class SavingsQuoteRequest extends FormRequest
             'investment_amount' => 'required|numeric|min:1',
             'investment_frequency' => ['required', Rule::exists(Lookup::class, 'id')],
             'additional_notes' => 'required|string',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'first_name.regex' => 'The first name may only contain letters, spaces, and hyphens.',
+            'last_name.regex' => 'The last name may only contain letters, spaces, and hyphens.',
         ];
     }
 }
