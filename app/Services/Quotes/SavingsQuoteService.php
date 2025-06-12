@@ -62,8 +62,6 @@ class SavingsQuoteService extends BaseQuoteService
             ->filterByPaymentDueDates('payment_due_date')
             ->filterByDateRange('booking_date', 'policy_booking_date');
 
-        $this->adjustQueryByInsurerInvoiceFilters($query);
-
         if (request()->has('debug') && request()->debug == 'true') {
             echo $query->toRawSql();
             exit;

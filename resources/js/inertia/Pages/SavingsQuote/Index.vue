@@ -35,24 +35,16 @@ let availableFilters = {
   mobile_no: '',
   created_at_start: new Date() || '',
   created_at_end: new Date() || '',
-  renewal_batch: '',
   previous_quote_policy_number: '',
-  is_ecommerce: '',
   quote_status_id: '',
   renewal_batch_id: [],
   page: 1,
   previous_quote_policy_number_text: '',
-  payment_status: [],
-  is_cold: '',
-  stale_at: '',
   payment_due_date: '',
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   last_modified_date: '',
-  advisor_assigned_date: '',
-  insurer_tax_number: '',
-  insurer_commmission_invoice_number: '',
   investment_frequency: '',
 };
 
@@ -201,13 +193,6 @@ const handleSelectedFilters = selectedFilters => {
   if (selectedFilters.quote_status) {
     filters.quote_status = selectedFilters.quote_status;
   }
-
-  if (selectedFilters.payment_status) {
-    filters.payment_status = selectedFilters.payment_status;
-  }
-
-  filters.is_cold = selectedFilters.cold ? '1' : '';
-  filters.stale_at = selectedFilters.stale ? '0' : '';
 
   onSubmit(true);
 };
@@ -538,18 +523,6 @@ const validateDateRange = () => {
             :options="advisorOptionsFilter"
           />
         </x-field>
-        <x-field label="Is E-Commerce">
-          <x-select
-            v-model="filters.is_ecommerce"
-            placeholder="Search by Ecommerce"
-            :options="[
-              { value: '', label: 'All' },
-              { value: 1, label: 'Yes' },
-              { value: 0, label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </x-field>
         <x-field label="Renewal Batch">
           <ComboBox
             v-model="filters.renewal_batch_id"
@@ -599,34 +572,6 @@ const validateDateRange = () => {
           label="Last Modified Date"
           range
           format="dd-MM-yyyy"
-        />
-        <DatePicker
-          v-if="hasRole(rolesEnum.SavingsManager)"
-          v-model="filters.advisor_assigned_date"
-          name="created_at_start"
-          label="Advisor Assigned Date"
-          range
-          format="dd-MM-yyyy"
-        />
-        <x-input
-          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
-          v-model="filters.insurer_tax_number"
-          type="text"
-          name="insurer_tax_number"
-          label="Insurer Tax Invoice No"
-          class="w-full"
-          placeholder="Insurer Tax Invoice No"
-        />
-        <x-input
-          v-if="
-            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
-          "
-          v-model="filters.insurer_commmission_invoice_number"
-          type="text"
-          name="insurer_commmission_invoice_number"
-          label="Insurer Commission Tax Invoice No"
-          class="w-full"
-          placeholder="Insurer Commission Tax Invoice No"
         />
         <x-field label="Investment Frequency">
           <ComboBox
