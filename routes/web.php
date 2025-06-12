@@ -194,6 +194,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     // savings routes without check_route_access middleware
     Route::post('/savings-plan-manual-update-process', [SavingsQuoteController::class, 'savingsPlanUpdateManualProcess'])->name('savingsPlanUpdate');
     Route::get('savings/{quoteId}/plan_details/{planId}', [SavingsQuoteController::class, 'planDetails'])->name('savings_plan_details');
+    Route::get('personal-quotes/savings/cards', [SavingsQuoteController::class, 'cardsView'])->name('savings-quotes-cards');
+
 
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);

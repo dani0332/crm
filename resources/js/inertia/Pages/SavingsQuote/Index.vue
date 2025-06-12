@@ -405,6 +405,17 @@ const validateDateRange = () => {
           @toggleFilters="showFilters = !showFilters"
         />
 
+        <Link :href="route('savings-quotes-cards')">
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
+        </Link>
+
         <div v-if="readOnlyMode.isDisable === true">
           <Link :href="route('savings-quotes-create')">
             <x-button

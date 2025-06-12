@@ -5,17 +5,21 @@ namespace App\Http\Controllers\V2;
 use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SavingsPlanUpdateRequest;
 use App\Http\Requests\SavingsQuoteRequest;
+use App\Repositories\LostReasonRepository;
 use App\Services\Quotes\SavingsQuoteService;
+use Illuminate\Http\Request;
 
 class SavingsQuoteController extends Controller
 {
     public function __construct(
         public SavingsQuoteService $savingsQuoteService,
     ) {
-        $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_LIST, ['only' => ['index']]);
+        $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_LIST, ['only' => ['index', 'cardsView']]);
         $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_CREATE, ['only' => ['create', 'store']]);
         $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_EDIT, ['only' => ['edit', 'update']]);
         $this->middleware('permission:'.PermissionsEnum::SAVINGS_QUOTES_SHOW, ['only' => ['show']]);
@@ -206,5 +210,47 @@ class SavingsQuoteController extends Controller
 
         // Return error as redirect for Inertia
         return redirect()->back()->with('error', 'Savings plan has not been updated. '.$responseMessage);
+    }
+
+    public function cardsView(Request $request)
+    {
+        // Initialize the quotes array
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::SAVINGS->value, QuoteStatusEnum::NewLead, $request)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::SAVINGS->value, QuoteStatusEnum::Allocated, $request)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::SAVINGS->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::SAVINGS->value, QuoteStatusEnum::FollowedUp, $request)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::SAVINGS->value, QuoteStatusEnum::InNegotiation, $request)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::SAVINGS->value, QuoteStatusEnum::PaymentPending, $request)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::SAVINGS->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::SAVINGS->value, QuoteStatusEnum::PolicyIssued, $request)],
+        ];
+
+        // Fetch lost reasons
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        // Calculate total leads
+        $totalLeads = 0;
+        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+
+        foreach ($quotes as $item) {
+            $totalLeads += $item['data']['total_leads'] ?? 0;
+        }
+
+        // Fetch advisors and lead statuses
+        $advisors = $this->savingsQuoteService->getAdvisors();
+        $leadStatuses = $this->savingsQuoteService->getQuoteStatuses();
+
+        return inertia('SavingsQuote/Cards', [
+            'quotes' => $quotes,
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'lostReasons' => $lostReasons,
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
+            'quoteTypeId' => QuoteTypes::SAVINGS->id(),
+            'quoteType' => QuoteTypes::SAVINGS->value,
+            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : $this->savingsQuoteService->getData(forExport: true, getTotalCount: true),
+            'investmentFrequencies' => InvestmentFrequencyEnum::withLabels(),
+        ]);
     }
 }
