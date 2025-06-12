@@ -195,18 +195,6 @@ defineExpose({
 
 <template>
   <div class="space-y-6">
-    <div
-      v-if="validationErrors.length > 0"
-      class="bg-red-50 border border-red-200 rounded-lg p-4"
-    >
-      <h4 class="text-sm font-medium text-red-800 mb-2">
-        Please correct the following errors:
-      </h4>
-      <ul class="text-sm text-red-700 list-disc list-inside space-y-1">
-        <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-      </ul>
-    </div>
-
     <BracketModule
       title="Investment Frequency - Lumpsum"
       type="Lumpsum"
