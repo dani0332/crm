@@ -4,11 +4,12 @@ namespace App\Exports;
 
 use App\Contracts\CsvExportableInterface;
 use App\Services\InstantAlfredService;
+use App\Traits\InstantChatDetailedChunkedExportable;
 use App\Traits\ModernCsvExportable;
 
 class InstantChatDetailedExport implements CsvExportableInterface
 {
-    use ModernCsvExportable;
+    use InstantChatDetailedChunkedExportable, ModernCsvExportable;
 
     public function collection(array $requestParams = []): \Illuminate\Support\Collection
     {
@@ -24,13 +25,17 @@ class InstantChatDetailedExport implements CsvExportableInterface
 
     /**
      * Get the query builder instance to use for chunking
-     * Note: InstantAlfredService doesn't support query builders yet, so this returns null
-     * for now, falling back to collection() method
+     * Returns the base SQL query builder for chunked processing with MongoDB integration
      */
     public function getQuery(array $requestParams = []): \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Query\Builder|null
     {
-        // Future enhancement: Could implement chunked processing if InstantAlfredService supports it
-        return null;
+        $instantAlfredService = app(InstantAlfredService::class);
+        $query = $instantAlfredService->getChatDetailedReportQuery($requestParams);
+
+        // The InstantAlfredService returns a Query\Builder, but our interface expects Eloquent\Builder
+        // Since we have a custom processChunkedQuery method, this type mismatch is handled there
+        // @phpstan-ignore-next-line
+        return $query;
     }
 
     public function headings(): array
@@ -56,22 +61,31 @@ class InstantChatDetailedExport implements CsvExportableInterface
 
     public function map($chat): array
     {
+        // Handle both array (from MongoDB) and object data structures
+        $quoteType = is_array($chat) ? ($chat['quote_type'] ?? 'N/A') : ($chat->quote_type ?? 'N/A');
+        $quoteId = is_array($chat) ? ($chat['quote_id'] ?? 'N/A') : ($chat->quote_id ?? 'N/A');
+        $createdAt = is_array($chat) ? ($chat['created_at'] ?? 'N/A') : ($chat->created_at ?? 'N/A');
+        $msg = is_array($chat) ? ($chat['msg'] ?? 'N/A') : ($chat->msg ?? 'N/A');
+        $role = is_array($chat) ? ($chat['role'] ?? 'N/A') : ($chat->role ?? 'N/A');
+
         return [
-            $chat->quote_type,
-            $chat->quote_id = strtoupper(substr($chat->quote_type, 0, 3)).'-'.$chat->quote_id,
-            $chat->created_at,
-            $chat->msg,
-            $chat->role,
-            isset($chat->employee_flag) ? $chat->employee_flag : 'N/A',
-            // isset($chat->email) ? $chat->email : 'N/A',
-            isset($chat->user_system) ? $chat->user_system : 'N/A',
-            isset($chat->user_ip_address) ? $chat->user_ip_address : 'N/A',
-            $this->formatCommunicationChannel($chat->communication_channel),
-            isset($chat->input_tokens_usage) ? $chat->input_tokens_usage : 'N/A',
-            isset($chat->completion_tokens) ? $chat->completion_tokens : 'N/A',
-            isset($chat->total_tokens) ? $chat->total_tokens : 'N/A',
-            $chat->segment ?? 'N/A',
-            $chat->lead_assignment_trigger_text ?? 'N/A',
+            $quoteType,
+            strtoupper(substr($quoteType, 0, 3)).'-'.$quoteId,
+            $createdAt,
+            $msg,
+            $role,
+            is_array($chat) ? ($chat['employee_flag'] ?? 'N/A') : (isset($chat->employee_flag) ? $chat->employee_flag : 'N/A'),
+            // is_array($chat) ? ($chat['email'] ?? 'N/A') : (isset($chat->email) ? $chat->email : 'N/A'),
+            is_array($chat) ? ($chat['user_system'] ?? 'N/A') : (isset($chat->user_system) ? $chat->user_system : 'N/A'),
+            is_array($chat) ? ($chat['user_ip_address'] ?? 'N/A') : (isset($chat->user_ip_address) ? $chat->user_ip_address : 'N/A'),
+            $this->formatCommunicationChannel(
+                is_array($chat) ? ($chat['communication_channel'] ?? null) : ($chat->communication_channel ?? null)
+            ),
+            is_array($chat) ? ($chat['input_tokens_usage'] ?? 'N/A') : (isset($chat->input_tokens_usage) ? $chat->input_tokens_usage : 'N/A'),
+            is_array($chat) ? ($chat['completion_tokens'] ?? 'N/A') : (isset($chat->completion_tokens) ? $chat->completion_tokens : 'N/A'),
+            is_array($chat) ? ($chat['total_tokens'] ?? 'N/A') : (isset($chat->total_tokens) ? $chat->total_tokens : 'N/A'),
+            is_array($chat) ? ($chat['segment'] ?? 'N/A') : ($chat->segment ?? 'N/A'),
+            is_array($chat) ? ($chat['lead_assignment_trigger_text'] ?? 'N/A') : ($chat->lead_assignment_trigger_text ?? 'N/A'),
         ];
     }
 

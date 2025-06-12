@@ -139,7 +139,6 @@ class AlfredChatController extends Controller
     public function exportChat(Request $request)
     {
         $fileName = $request->report.' '.Carbon::now()->format('Y-m-d_H-i-s').'.xlsx';
-
         switch ($request->report) {
             case InstantChatReportsEnum::CONSOLIDATED_REPORT:
                 return (new InstantChatConsolidatedExport)->download($fileName);
@@ -199,7 +198,6 @@ class AlfredChatController extends Controller
 
         // Get the export class
         $exportClass = $exportClassMap[$request->report];
-
         try {
             // Dispatch the job using the existing ExportCsvAndSendEmailJob
             ExportCsvAndSendEmailJob::dispatch(

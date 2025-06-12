@@ -269,14 +269,14 @@ class InstantAlfredService extends BaseService
 
     /**
      * Get the base query builder for detailed chat reports (chunked processing)
-     * Note: This is more complex due to MongoDB integration, so for now we return null
-     * to fall back to collection-based processing
+     * Returns the same SQL query as consolidated reports since the base data comes from SQL
      */
     public function getChatDetailedReportQuery(array $requestParams = [])
     {
-        // Detailed reports require MongoDB aggregation which doesn't support chunked query builders
-        // Return null to fall back to collection-based processing
-        return null;
+        // Create a request instance from parameters if not available
+        $request = $this->createRequestFromParams($requestParams);
+
+        return $this->processSqlChatFilters($request);
     }
 
     /**
@@ -410,6 +410,66 @@ class InstantAlfredService extends BaseService
         }
 
         return collect($sqlRecords);
+    }
+
+    /**
+     * Process a chunk of detailed chat data (used by chunked CSV export)
+     * This method processes MongoDB data for a chunk of SQL records to get detailed chat messages
+     */
+    public function processDetailedChunk($sqlRecords, array $requestParams = [])
+    {
+        $request = $this->createRequestFromParams($requestParams);
+
+        // Ensure report type is set for detailed processing
+        if (! isset($request->report)) {
+            $request->merge(['report' => InstantChatReportsEnum::DETAILED_REPORT]);
+        }
+
+        // Extract UUIDs from the chunk
+        $uuids = collect($sqlRecords)->pluck('uuid')->toArray();
+
+        if (empty($uuids)) {
+            return collect();
+        }
+
+        try {
+            // Create MongoDB pipeline for detailed reports
+            $mongoPipeline = $this->createPipeline($request, $uuids, InstantChatReportsEnum::DETAILED_REPORT);
+
+            // Get MongoDB results for this chunk
+            $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline))->toArray();
+
+            // Create mappings for SQL data to merge with MongoDB results
+            $sqlData = collect($sqlRecords)->keyBy('uuid');
+
+            // Process MongoDB results and merge with SQL data
+            $processedResults = collect($mongoResults)->map(function ($record) use ($sqlData) {
+                $quoteId = $record['quote_id'] ?? null;
+                if ($quoteId && isset($sqlData[$quoteId])) {
+                    // Add segment from SQL data
+                    $record['segment'] = $sqlData[$quoteId]->segment ?? 'N/A';
+
+                    // Add lead_assignment_trigger and its text representation
+                    $record['lead_assignment_trigger'] = $sqlData[$quoteId]->lead_assignment_trigger ?? null;
+                    $record['lead_assignment_trigger_text'] = $sqlData[$quoteId]->lead_assignment_trigger
+                        ? LeadAssignmentTriggerEnum::getAssignmentTypeText($sqlData[$quoteId]->lead_assignment_trigger)
+                        : 'N/A';
+                }
+
+                return $record;
+            });
+
+            return $processedResults;
+
+        } catch (\Exception $e) {
+            // Log error but continue processing with empty collection
+            \Illuminate\Support\Facades\Log::error('MongoDB processing failed for detailed chunk', [
+                'uuids_count' => count($uuids),
+                'error' => $e->getMessage(),
+            ]);
+
+            return collect();
+        }
     }
 
     public function generateChatDetailedReport()
