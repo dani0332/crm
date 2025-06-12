@@ -140,7 +140,8 @@ class SukoonDriverMedexService
 
         } catch (Exception $e) {
             $this->logFailure('Sukoon Purchase Flow Failed', $e->getMessage(), [
-                'quote_uuid' => $quote->uuid ?? null
+                'quote_uuid' => $quote->uuid ?? null,
+                'error_messages' => $this->errorMessages
             ]);
         }
     }
@@ -157,46 +158,44 @@ class SukoonDriverMedexService
     private function request($path, $method = 'post', $data = [], $headers = [])
     {
         $url = "{$this->baseUrl}/api/v".config('constants.SUKOON_API_VERSION').$path;
-
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $parentFunction = isset($backtrace[1]['function']) ? $backtrace[1]['function'] : 'Unknown';
-        $response = null;
+        $responseData = null;
+
         try {
             $client = Http::withHeaders($headers);
-
             $response = $client->withBody(json_encode($data), 'application/json')->send($method, $url)->onError(function ($response) use($data, $url, $parentFunction) {
-
                 $contentType = $response->header('Content-Type');
-                if (!str_contains($contentType, 'application/json')) {
-                    $this->logRequest('failed', "API Exception Successful, Content Type: {$contentType}", $data, $url, $response, $parentFunction);
+
+                if (str_contains($contentType, 'application/json')) {
+                    $this->fetchErrors($response->json());
+                    throw new Exception("{$this->logPrefix} API Request Exception");
+                } else {
+                    $this->logRequest('failed', "API Exception Successful, Content Type: {$contentType}", $data, $url, $response->body(), $parentFunction);
                     return $response;
                 }
-
-                $msg = $response->json()['msg'] ?? "{$this->logPrefix} API Request Exception";
-                $this->fetchErrors($response);
-                throw new Exception($msg);
             });
 
             $contentType = $response->header('Content-Type');
 
             if (!str_contains($contentType, 'application/json')) {
-                $this->logRequest('passed', 'Request Successful', $data, $url, $response, $parentFunction);
+                $this->logRequest('passed', "Request Successful, Content Type: {$contentType}", $data, $url, parentFunction: $parentFunction);
                 return $response;
             }
 
             $responseData = $response->json();
 
             if($responseData['has_errors'] ?? null) {
-                $this->fetchErrors($response);
-                $this->logRequest('failed', 'Request Error', $data, $url, $response, $parentFunction);
+                $this->fetchErrors($responseData);
+                $this->logRequest('failed', 'Request Error', $data, $url, $responseData, $parentFunction);
                 return $response;
             }
 
-            $this->logRequest('passed', 'Request Successful', $data, $url, $response, $parentFunction);
+            $this->logRequest('passed', 'Request Successful', $data, $url, $responseData, $parentFunction);
             return $response;
 
         } catch (Exception $e) {
-            $this->logRequest('failed', $e->getMessage(), $data, $url, $response, $parentFunction);
+            $this->logRequest('failed', $e->getMessage(), $data, $url, $responseData, $parentFunction);
             throw $e;
         }
     }
@@ -214,7 +213,7 @@ class SukoonDriverMedexService
         $maxTextLength = 65535; // The maximum length for MySQL TEXT type
 
         // Ensure response is a JSON string
-        $response = is_array($response) ? json_encode(['error_message' => reset($this->errorMessages), 'error_messages' => $this->errorMessages, ...$response]) : $response;
+        $response = is_array($response) ? json_encode(['error_messages' => $this->errorMessages, ...$response]) : $response;
 
         // Check if the response exceeds the maximum length
         if (strlen($response) > $maxTextLength) {
@@ -223,6 +222,7 @@ class SukoonDriverMedexService
             file_put_contents($responseFilePath, $response);
             $response = 'Response too large, saved to: '.$responseFilePath;
         }
+
         // This below unsetRelation is used to avoid the long response data in the log
         if ($this->currentQuote->relationLoaded('embeddedTransactions')) {
             foreach ($this->currentQuote->embeddedTransactions as $transaction) {
@@ -262,12 +262,18 @@ class SukoonDriverMedexService
         ];
 
         InsurerRequestResponse::create([...$logData, ...$extraLog]);
-        $responseData = collect($response)->only('success', 'status', 'has_errors', 'policy_number', 'policy_status', 'error_message');
-        $logData = [...$logData, ...$responseData];
+
+        $response = json_decode($response) ? ((array) json_decode($response)) : $response;
+        if(is_array($response)) {
+            $pickedData = collect($response)->only('success', 'status', 'has_errors', 'policy_number', 'policy_status')->toArray();
+            $logData = (array) [...$logData, ...$pickedData];
+            $logData['error_messages'] = $this->errorMessages;
+        } else {
+            $logData = (array) [...$logData, 'response' => $response];
+        }
 
         $prefixStep = $parentFunction == SukoonPurchaseFlowEnum::getName(SukoonPurchaseFlowEnum::GET_VIEW_QUOTE_POLICY) ? 'Pre-' : '';
-
-        LoggerService::info("{$this->logPrefix} API {$status} {$prefixStep}Step: #{$this->currentStep} {$parentFunction}", extra: $extraLog, context: ['message' => $message, 'url' => $url, ...$logData, ...$responseData]);
+        LoggerService::info("{$this->logPrefix} API {$status} {$prefixStep}Step: #{$this->currentStep} {$parentFunction}", extra: $extraLog, context: ['message' => $message, 'url' => $url, ...$logData]);
     }
     
     /**
@@ -340,7 +346,7 @@ class SukoonDriverMedexService
         }
 
         $quoteType = $quote->quote_type_id ?? null;
-        $emirate = ($quoteType == QuoteTypeId::Bike) ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
+        $emirate = $quoteType == QuoteTypeId::Bike ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
 
         return [
             'form_name' => 'personal_details',
