@@ -52,9 +52,7 @@ class SavingsQuoteService extends BaseQuoteService
             ->filterByCreatedAt(request('created_at_start'), request('created_at_end'))
             ->when(request('investment_frequency'), function ($q) {
                 $q->whereHas('savingsQuote', function ($sq) {
-                    $sq->whereHas('investmentFrequency', function ($iq) {
-                        $iq->where('code', request('investment_frequency'));
-                    });
+                    $sq->where('investment_criteria_id', request('investment_frequency'));
                 });
             })
             ->filterByDate('policy_expiry_date', 'previous_policy_expiry_date')
