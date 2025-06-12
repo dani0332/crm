@@ -18,12 +18,16 @@ class KycLogsExport implements CsvExportableInterface
 
     public function collection(array $requestParams = []): Collection
     {
-        return $this->amlService->getAMLData(requestParams: $requestParams);
+        // For non-chunked processing, execute the query and return collection
+        $query = $this->amlService->getAMLQueryBuilder($requestParams);
+
+        return $this->amlService->processAMLDataFromQuery($query);
     }
 
     public function getQuery(array $requestParams = []): ?Builder
     {
-        return $this->amlService->getAMLData(requestParams: $requestParams);
+        // For chunked processing (email exports), return the query builder
+        return $this->amlService->getAMLQueryBuilder($requestParams);
     }
 
     public function headings(): array
@@ -54,6 +58,48 @@ class KycLogsExport implements CsvExportableInterface
             $item->aml_status,
             $item->decision,
         ];
+    }
+
+    /**
+     * Custom chunked processing for AML data exports
+     */
+    public function processChunkedQuery($query, array $requestParams, $stream): int
+    {
+        $totalRecords = 0;
+        $chunkSize = 1000;
+
+        $query->chunk($chunkSize, function ($chunk) use (&$totalRecords, $stream) {
+            $quoteTypeGroup = $chunk->groupBy('quote_type_id');
+
+            foreach ($quoteTypeGroup as $quoteTypeId => $quoteTypeData) {
+                $quoteType = \App\Enums\QuoteTypes::getName($quoteTypeId);
+
+                // Skip if quote type is not found
+                if (! $quoteType) {
+                    continue;
+                }
+
+                $nameSpace = '\\App\\Models\\';
+                $model = checkPersonalQuotes(ucwords($quoteType->value)) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType->value).'Quote';
+
+                $distinctQuoteTypeIds = $quoteTypeData->pluck('quote_request_id')->unique();
+                $quoteRequestData = $model::whereIn('id', $distinctQuoteTypeIds)->select(['id', 'uuid', 'aml_status'])->get();
+
+                foreach ($quoteRequestData as $quoteRequest) {
+                    $amlData = $chunk->where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequest->id);
+                    foreach ($amlData as $amlRecord) {
+                        $amlRecord->uuid = $quoteType->shortCode().$quoteRequest->uuid;
+                        $amlRecord->aml_status = $quoteRequest->aml_status;
+
+                        // Write directly to stream
+                        fputcsv($stream, $this->map($amlRecord));
+                        $totalRecords++;
+                    }
+                }
+            }
+        });
+
+        return $totalRecords;
     }
 
     /**
