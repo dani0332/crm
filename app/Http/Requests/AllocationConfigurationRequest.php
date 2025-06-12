@@ -77,58 +77,94 @@ class AllocationConfigurationRequest extends FormRequest
             'quote_type.in' => 'Selected quote type is invalid.',
             'quote_type.unique' => 'Configuration for this quote type already exists.',
 
-            'lumpsum_brackets.*.min.required_with' => 'Minimum amount is required for lumpsum brackets.',
-            'lumpsum_brackets.*.min.numeric' => 'Minimum amount must be a number.',
-            'lumpsum_brackets.*.min.min' => 'Minimum amount cannot be negative.',
-            'lumpsum_brackets.*.max.required_with' => 'Maximum amount is required for lumpsum brackets.',
-            'lumpsum_brackets.*.max.numeric' => 'Maximum amount must be a number.',
+            // Lumpsum bracket messages
+            'lumpsum_brackets.required' => 'Lumpsum brackets configuration is required.',
+            'lumpsum_brackets.array' => 'Lumpsum brackets must be a valid array.',
+            'lumpsum_brackets.*.min.required_with' => 'Minimum amount is required for all lumpsum brackets.',
+            'lumpsum_brackets.*.min.numeric' => 'Minimum amount must be a valid number.',
+            'lumpsum_brackets.*.min.min' => 'Minimum lumpsum amount must be at least $1.',
+            'lumpsum_brackets.*.max.required_with' => 'Maximum amount is required for all lumpsum brackets.',
+            'lumpsum_brackets.*.max.numeric' => 'Maximum amount must be a valid number.',
             'lumpsum_brackets.*.max.gte' => 'Maximum amount must be greater than or equal to minimum amount.',
-            'lumpsum_brackets.*.profiles.required_with' => 'At least one profile is required for each bracket.',
-            'lumpsum_brackets.*.profiles.*.advisorIds.required' => 'Advisor selection is required for each profile.',
-            'lumpsum_brackets.*.profiles.*.advisorIds.*.exists' => 'Selected advisor does not exist.',
-            'lumpsum_brackets.*.profiles.*.nationalityIds.required' => 'Nationality selection is required for each profile.',
-            'lumpsum_brackets.*.profiles.*.nationalityIds.*.exists' => 'Selected nationality does not exist.',
+            'lumpsum_brackets.*.profiles.required_with' => 'At least one profile is required for each lumpsum bracket.',
+            'lumpsum_brackets.*.profiles.array' => 'Profiles must be a valid array.',
+            'lumpsum_brackets.*.profiles.min' => 'Each lumpsum bracket must have at least one profile.',
+            'lumpsum_brackets.*.profiles.*.advisorIds.required' => 'Please select at least one advisor for each profile.',
+            'lumpsum_brackets.*.profiles.*.advisorIds.array' => 'Advisor selection must be a valid array.',
+            'lumpsum_brackets.*.profiles.*.advisorIds.min' => 'Please select at least one advisor for each profile.',
+            'lumpsum_brackets.*.profiles.*.advisorIds.*.integer' => 'Invalid advisor selected.',
+            'lumpsum_brackets.*.profiles.*.advisorIds.*.exists' => 'One or more selected advisors do not exist.',
+            'lumpsum_brackets.*.profiles.*.nationalityIds.required' => 'Please select at least one nationality for each profile.',
+            'lumpsum_brackets.*.profiles.*.nationalityIds.array' => 'Nationality selection must be a valid array.',
+            'lumpsum_brackets.*.profiles.*.nationalityIds.min' => 'Please select at least one nationality for each profile.',
+            'lumpsum_brackets.*.profiles.*.nationalityIds.*.integer' => 'Invalid nationality selected.',
+            'lumpsum_brackets.*.profiles.*.nationalityIds.*.exists' => 'One or more selected nationalities do not exist.',
 
-            'regular_brackets.*.min.required_with' => 'Minimum amount is required for regular brackets.',
-            'regular_brackets.*.min.numeric' => 'Minimum amount must be a number.',
-            'regular_brackets.*.min.min' => 'Minimum amount cannot be negative.',
-            'regular_brackets.*.max.required_with' => 'Maximum amount is required for regular brackets.',
-            'regular_brackets.*.max.numeric' => 'Maximum amount must be a number.',
+            // Regular bracket messages
+            'regular_brackets.required' => 'Regular brackets configuration is required.',
+            'regular_brackets.array' => 'Regular brackets must be a valid array.',
+            'regular_brackets.*.min.required_with' => 'Minimum amount is required for all regular brackets.',
+            'regular_brackets.*.min.numeric' => 'Minimum amount must be a valid number.',
+            'regular_brackets.*.min.min' => 'Minimum regular amount must be at least $1.',
+            'regular_brackets.*.max.required_with' => 'Maximum amount is required for all regular brackets.',
+            'regular_brackets.*.max.numeric' => 'Maximum amount must be a valid number.',
             'regular_brackets.*.max.gte' => 'Maximum amount must be greater than or equal to minimum amount.',
-            'regular_brackets.*.profiles.required_with' => 'At least one profile is required for each bracket.',
-            'regular_brackets.*.profiles.*.advisorIds.required' => 'Advisor selection is required for each profile.',
-            'regular_brackets.*.profiles.*.advisorIds.*.exists' => 'Selected advisor does not exist.',
-            'regular_brackets.*.profiles.*.nationalityIds.required' => 'Nationality selection is required for each profile.',
-            'regular_brackets.*.profiles.*.nationalityIds.*.exists' => 'Selected nationality does not exist.',
+            'regular_brackets.*.profiles.required_with' => 'At least one profile is required for each regular bracket.',
+            'regular_brackets.*.profiles.array' => 'Profiles must be a valid array.',
+            'regular_brackets.*.profiles.min' => 'Each regular bracket must have at least one profile.',
+            'regular_brackets.*.profiles.*.advisorIds.required' => 'Please select at least one advisor for each profile.',
+            'regular_brackets.*.profiles.*.advisorIds.array' => 'Advisor selection must be a valid array.',
+            'regular_brackets.*.profiles.*.advisorIds.min' => 'Please select at least one advisor for each profile.',
+            'regular_brackets.*.profiles.*.advisorIds.*.integer' => 'Invalid advisor selected.',
+            'regular_brackets.*.profiles.*.advisorIds.*.exists' => 'One or more selected advisors do not exist.',
+            'regular_brackets.*.profiles.*.nationalityIds.required' => 'Please select at least one nationality for each profile.',
+            'regular_brackets.*.profiles.*.nationalityIds.array' => 'Nationality selection must be a valid array.',
+            'regular_brackets.*.profiles.*.nationalityIds.min' => 'Please select at least one nationality for each profile.',
+            'regular_brackets.*.profiles.*.nationalityIds.*.integer' => 'Invalid nationality selected.',
+            'regular_brackets.*.profiles.*.nationalityIds.*.exists' => 'One or more selected nationalities do not exist.',
         ];
     }
 
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            // Validate lumpsum brackets
             if ($this->has('lumpsum_brackets') && ! empty($this->lumpsum_brackets)) {
                 if (! $this->validateBracketStructure($this->lumpsum_brackets)) {
-                    $validator->errors()->add('lumpsum_brackets', 'Invalid bracket structure for lumpsum brackets.');
+                    $validator->errors()->add('lumpsum_brackets', 'Lumpsum brackets have invalid structure. Please check all required fields are filled correctly.');
                 }
 
                 if ($this->hasOverlappingBrackets($this->lumpsum_brackets)) {
-                    $validator->errors()->add('lumpsum_brackets', 'Overlapping brackets detected in lumpsum brackets.');
+                    $validator->errors()->add('lumpsum_brackets', 'Lumpsum brackets have overlapping amount ranges. Please ensure each bracket has a unique range without overlaps.');
+                }
+
+                if ($this->hasGapsInBrackets($this->lumpsum_brackets)) {
+                    $validator->errors()->add('lumpsum_brackets', 'Lumpsum brackets have gaps in coverage. Consider adding brackets to cover all amount ranges.');
                 }
             }
 
+            // Validate regular brackets
             if ($this->has('regular_brackets') && ! empty($this->regular_brackets)) {
                 if (! $this->validateBracketStructure($this->regular_brackets)) {
-                    $validator->errors()->add('regular_brackets', 'Invalid bracket structure for regular brackets.');
+                    $validator->errors()->add('regular_brackets', 'Regular brackets have invalid structure. Please check all required fields are filled correctly.');
                 }
 
                 if ($this->hasOverlappingBrackets($this->regular_brackets)) {
-                    $validator->errors()->add('regular_brackets', 'Overlapping brackets detected in regular brackets.');
+                    $validator->errors()->add('regular_brackets', 'Regular brackets have overlapping amount ranges. Please ensure each bracket has a unique range without overlaps.');
+                }
+
+                if ($this->hasGapsInBrackets($this->regular_brackets)) {
+                    $validator->errors()->add('regular_brackets', 'Regular brackets have gaps in coverage. Consider adding brackets to cover all amount ranges.');
                 }
             }
 
+            // Check if at least one bracket type is configured
             if (empty($this->lumpsum_brackets) && empty($this->regular_brackets)) {
-                $validator->errors()->add('brackets', 'At least one bracket type (lumpsum or regular) must be configured.');
+                $validator->errors()->add('configuration', 'Please configure at least one bracket type (lumpsum or regular) to save the allocation configuration.');
             }
+
+            // Validate advisor-nationality combinations
+            $this->validateAdvisorNationalityCombinations($validator);
         });
     }
 
@@ -190,5 +226,86 @@ class AllocationConfigurationRequest extends FormRequest
         }
 
         return false;
+    }
+
+    private function hasGapsInBrackets(array $brackets): bool
+    {
+        if (count($brackets) < 2) {
+            return false;
+        }
+
+        // Sort brackets by min value
+        usort($brackets, fn ($a, $b) => $a['min'] <=> $b['min']);
+
+        for ($i = 0; $i < count($brackets) - 1; $i++) {
+            $currentMax = $brackets[$i]['max'];
+            $nextMin = $brackets[$i + 1]['min'];
+
+            // Check if there's a gap (current max + 0.01 < next min)
+            if ($currentMax + 0.01 < $nextMin) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function validateAdvisorNationalityCombinations($validator): void
+    {
+        $allBrackets = array_merge(
+            $this->input('lumpsum_brackets', []),
+            $this->input('regular_brackets', [])
+        );
+
+        foreach ($allBrackets as $bracketIndex => $bracket) {
+            if (! isset($bracket['profiles']) || ! is_array($bracket['profiles'])) {
+                continue;
+            }
+
+            foreach ($bracket['profiles'] as $profileIndex => $profile) {
+                // Check if advisor IDs and nationality IDs are valid arrays
+                $advisorIds = $profile['advisorIds'] ?? [];
+                $nationalityIds = $profile['nationalityIds'] ?? [];
+
+                if (! is_array($advisorIds) || empty($advisorIds)) {
+                    $validator->errors()->add(
+                        "bracket_{$bracketIndex}_profile_{$profileIndex}_advisors",
+                        'Each profile must have at least one advisor selected.'
+                    );
+                }
+
+                if (! is_array($nationalityIds) || empty($nationalityIds)) {
+                    $validator->errors()->add(
+                        "bracket_{$bracketIndex}_profile_{$profileIndex}_nationalities",
+                        'Each profile must have at least one nationality selected.'
+                    );
+                }
+            }
+
+            // Check for duplicate nationalities within the same bracket
+            $this->checkDuplicateNationalitiesInBracket($bracket['profiles'], $bracketIndex, $validator);
+        }
+    }
+
+    private function checkDuplicateNationalitiesInBracket(array $profiles, int $bracketIndex, $validator): void
+    {
+        $usedNationalities = [];
+
+        foreach ($profiles as $profileIndex => $profile) {
+            $nationalityIds = $profile['nationalityIds'] ?? [];
+
+            foreach ($nationalityIds as $nationalityId) {
+                if (in_array($nationalityId, $usedNationalities)) {
+                    $validator->errors()->add(
+                        "bracket_{$bracketIndex}_duplicate_nationality",
+                        'Each nationality can only be assigned to one profile within the same bracket. Please ensure each nationality appears only once per bracket.'
+                    );
+
+                    return;
+                }
+
+                $usedNationalities[] = $nationalityId;
+            }
+        }
     }
 }
