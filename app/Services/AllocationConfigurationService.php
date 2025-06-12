@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\InvestmentFrequencyEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Allocation\AllocationConfiguration;
 use App\Models\Nationality;
@@ -96,43 +97,33 @@ class AllocationConfigurationService
         return null;
     }
 
-    public function getConfigurationByQuoteType(string $quoteType): ?AllocationConfiguration
+    public function getEligibleAdvisorIds(QuoteTypes $quoteType, InvestmentFrequencyEnum $investmentFrequency, float $amount, int $nationalityId): array
     {
-        return AllocationConfiguration::where('quote_type', $quoteType)
-            ->latest()
-            ->first();
-    }
-
-    public function getApplicableProfile(string $quoteType, string $investmentType, float $amount, int $advisorId, int $nationalityId): ?array
-    {
-        $configuration = $this->getConfigurationByQuoteType($quoteType);
+        $configuration = $this->getConfig($quoteType);
 
         if (! $configuration) {
-            return null;
+            return [];
         }
 
-        $brackets = $investmentType === 'lumpsum'
+        $brackets = $investmentFrequency === InvestmentFrequencyEnum::LUMPSUM
             ? $configuration->lumpsum_brackets
             : $configuration->regular_brackets;
 
         foreach ($brackets as $bracket) {
             if ($amount >= $bracket['min'] && $amount <= $bracket['max']) {
                 foreach ($bracket['profiles'] as $profile) {
-                    if (
-                        in_array($advisorId, $profile['advisorIds']) &&
-                        in_array($nationalityId, $profile['nationalityIds'])
-                    ) {
-                        return $profile;
+                    if (in_array($nationalityId, $profile['nationalityIds'])) {
+                        return $profile['advisorIds'];
                     }
                 }
             }
         }
 
-        return null;
+        return [];
     }
 
-    public function getConfig(QuoteTypes $quoteType): AllocationConfiguration
+    public function getConfig(QuoteTypes $quoteType): ?AllocationConfiguration
     {
-        return AllocationConfiguration::where('quote_type', $quoteType)->first();
+        return AllocationConfiguration::where('quote_type', $quoteType)->latest()->first();
     }
 }

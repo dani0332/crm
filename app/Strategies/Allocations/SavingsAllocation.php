@@ -3,73 +3,29 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\InvestmentFrequencyEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Models\Nationality;
+use App\Services\AllocationConfigurationService;
 
 class SavingsAllocation extends BaseAllocation
 {
-    private const CAT_A = 'categoryA';
-    private const CAT_B = 'categoryB';
-
     protected function fetchAdvisor(int $onlineStatus)
     {
-        $emails = $this->getEmails();
+        $advisorIds = $this->getApplicableAdvisorIds();
+        dd($advisorIds);
 
         return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager])
-            ->whereIn('users.email', $emails)
+            ->whereIn('users.id', $advisorIds)
             ->first();
     }
 
-    private function getEmails()
+    private function getApplicableAdvisorIds()
     {
-        $category = $this->evaluateCategory();
-        $amount = $this->lead?->savingsQuote?->currency?->convertToUSD((float) $this->lead?->savingsQuote?->amount ?? 0);
         $frequency = $this->lead?->savingsQuote?->investmentFrequency?->code;
+        $frequency = InvestmentFrequencyEnum::from($frequency);
+        $amount = $this->lead?->savingsQuote?->currency?->convertToUSD((float) $this->lead?->savingsQuote?->investment_amount ?? 0);
+        $nationalityId = $this->lead?->nationality?->id;
 
-        $santosh = 'santhosh.ganesan@insurancemarket.ae';
-        $gaurav = 'gaurav.sharma@insurancemarket.ae';
-        $vivian = 'vivian.sandel@insurancemarket.ae';
-
-        $threshold = match ($frequency) {
-            InvestmentFrequencyEnum::REGULAR => 750,
-            InvestmentFrequencyEnum::LUMPSUM => 50000,
-            default => null,
-        };
-
-        if ($threshold === null) {
-            return [];
-        }
-
-        return match (true) {
-            $amount <= $threshold && $category === self::CAT_A => [$vivian],
-            $amount <= $threshold && $category === self::CAT_B => [$gaurav],
-            $amount > $threshold && in_array($category, [self::CAT_A, self::CAT_B]) => [$santosh],
-            default => [],
-        };
-    }
-
-    private function getCountriesMapping()
-    {
-        $catACountryMapping = [
-            'South African', 'Australian', 'New Zealander', 'Canadian', 'United Kingdom', 'Lebanese', 'Filipino', 'American', 'Europe',
-        ];
-
-        $catBCountryMapping = cache()->remember('countries_category_mapping', now()->addHours(24), function () use ($catACountryMapping) {
-            return Nationality::whereNotIn('code', [...$catACountryMapping])->pluck('code')->toArray();
-        });
-
-        return [
-            self::CAT_A => $catACountryMapping,
-            self::CAT_B => $catBCountryMapping,
-        ];
-    }
-
-    private function evaluateCategory()
-    {
-        $countriesMapping = $this->getCountriesMapping();
-
-        return in_array($this->lead->nationality?->code, $countriesMapping[self::CAT_A])
-            ? self::CAT_A
-            : self::CAT_B;
+        return app(AllocationConfigurationService::class)->getEligibleAdvisorIds(QuoteTypes::SAVINGS, $frequency, $amount, $nationalityId);
     }
 }
