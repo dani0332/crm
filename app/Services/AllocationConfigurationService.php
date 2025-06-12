@@ -71,32 +71,6 @@ class AllocationConfigurationService
         return Nationality::where('is_active', 1)->get();
     }
 
-    public function getAllocationProfile(QuoteTypes $quoteType, float $amount, int $nationalityId, string $frequency = 'lumpsum'): ?array
-    {
-        $configuration = $this->getConfig($quoteType);
-
-        if (! $configuration) {
-            return null;
-        }
-
-        $brackets = $frequency === 'lumpsum'
-            ? ($configuration->lumpsum_brackets ?? [])
-            : ($configuration->regular_brackets ?? []);
-
-        foreach ($brackets as $bracket) {
-            if ($amount >= $bracket['min'] && $amount <= $bracket['max']) {
-                // Find matching profile based on nationality
-                foreach ($bracket['profiles'] ?? [] as $profile) {
-                    if (in_array($nationalityId, $profile['nationalityIds'] ?? [])) {
-                        return $profile;
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
     public function getEligibleAdvisorIds(QuoteTypes $quoteType, InvestmentFrequencyEnum $investmentFrequency, float $amount, int $nationalityId): array
     {
         $configuration = $this->getConfig($quoteType);
@@ -109,17 +83,21 @@ class AllocationConfigurationService
             ? $configuration->lumpsum_brackets
             : $configuration->regular_brackets;
 
-        foreach ($brackets as $bracket) {
-            if ($amount >= $bracket['min'] && $amount <= $bracket['max']) {
-                foreach ($bracket['profiles'] as $profile) {
-                    if (in_array($nationalityId, $profile['nationalityIds'])) {
-                        return $profile['advisorIds'];
-                    }
-                }
-            }
+        $matchingBracket = $brackets
+            ->where('min', '<=', $amount)
+            ->where('max', '>=', $amount)
+            ->first();
+
+        if (! $matchingBracket) {
+            return [];
         }
 
-        return [];
+        $profiles = collect($matchingBracket['profiles']);
+
+        $matchingProfile = $profiles
+            ->first(fn ($profile) => in_array($nationalityId, $profile['nationalityIds']));
+
+        return $matchingProfile ? ($matchingProfile['advisorIds'] ?? []) : [];
     }
 
     public function getConfig(QuoteTypes $quoteType): ?AllocationConfiguration
