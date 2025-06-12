@@ -248,9 +248,19 @@ onMounted(() => {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700">
-                Minimum Amount <span class="text-red-500">*</span>
-              </label>
+              <x-tooltip>
+                <label class="block text-sm font-medium text-gray-700">
+                  <span class="underline decoration-dotted"
+                    >Minimum Amount</span
+                  >
+                  <span class="text-red-500">*</span>
+                </label>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">
+                    Set the min investment amount for leads in this category.
+                  </span>
+                </template>
+              </x-tooltip>
               <x-input
                 v-model="bracket.min"
                 class="!mb-0 mt-1"
@@ -269,9 +279,19 @@ onMounted(() => {
               </x-input>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700">
-                Maximum Amount <span class="text-red-500">*</span>
-              </label>
+              <x-tooltip>
+                <label class="block text-sm font-medium text-gray-700">
+                  <span class="underline decoration-dotted"
+                    >Maximum Amount</span
+                  >
+                  <span class="text-red-500">*</span>
+                </label>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">
+                    Set the max investment amount for leads in this category.
+                  </span>
+                </template>
+              </x-tooltip>
               <x-input
                 v-model="bracket.max"
                 class="!mb-0 mt-1"
@@ -296,14 +316,22 @@ onMounted(() => {
               <h5 class="text-sm font-medium text-gray-700">
                 Advisor Allocation Profiles
               </h5>
-              <x-button
-                size="sm"
-                color="#ff5e00"
-                type="button"
-                @click="addProfile(bracket)"
-              >
-                Add Profile
-              </x-button>
+              <x-tooltip>
+                <x-button
+                  size="sm"
+                  color="#ff5e00"
+                  type="button"
+                  @click="addProfile(bracket)"
+                >
+                  Add Profile
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">
+                    Set who gets the lead – based on amount and customer
+                    nationality.
+                  </span>
+                </template>
+              </x-tooltip>
             </div>
 
             <div
