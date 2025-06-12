@@ -204,6 +204,7 @@ const isSplitAmountInvalidError = ref([]);
 const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
+const deleteSplitPaymentCode = ref('');
 const isCollectedByEnabled = ref(false);
 const isTransactionCaptureButtonEnabled = ref(true);
 const premiumToCapture = ref(0);
@@ -1699,6 +1700,7 @@ const closeRetryModal = () => {
 const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
   deleteSplitPaymentId.value = payment_split_id;
   deleteSplitPaymentStatus.value = payment_status_id;
+  deleteSplitPaymentCode.value = code;
   isDeleteModalOpen.value = true;
 };
 
@@ -1936,6 +1938,8 @@ const processPaymentSplits = payment => {
     paymentStatusEnum.PARTIAL_CAPTURED,
   ];
 
+  // TODO: Permanent fix from here we are starting from 1 and not 0
+  // We are sending null for the first split collection_amount
   for (let i = 1; i <= payment.total_payments; i++) {
     const split = payment.payment_splits[i - 1];
     console.log('split : ', split);
@@ -2383,23 +2387,26 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => viewData)
-      .post('/payments/' + props.quoteType + '/split-payments-approve', {
-        preserveScroll: true,
-        onSuccess: res => {
-          createPaymentModal.value = false;
-          setTimeout(() => {
-            location.reload();
-          }, 500);
-        },
-        onError: errors => {
-          Object.keys(errors).forEach(function (key) {
-            notification.error({
-              title: errors[key],
-              position: 'top',
+      .post(
+        '/payments/' + props.quoteType + '/master-payment-approve-capture',
+        {
+          preserveScroll: true,
+          onSuccess: res => {
+            createPaymentModal.value = false;
+            setTimeout(() => {
+              location.reload();
+            }, 500);
+          },
+          onError: errors => {
+            Object.keys(errors).forEach(function (key) {
+              notification.error({
+                title: errors[key],
+                position: 'top',
+              });
             });
-          });
+          },
         },
-      });
+      );
     return;
   }
 
@@ -2422,7 +2429,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => viewData)
-      .post('/payments/' + props.quoteType + '/split-update', {
+      .post('/payments/' + props.quoteType + '/split-payment-approve-decline', {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
@@ -3535,8 +3542,8 @@ const closeVoidPaymentModal = () => {
                           generateCCLink(code, srNo, statusId)
                       "
                       @delete-split-payment="
-                        (splitId, statusId) =>
-                          deleteSplitPaymentModal(splitId, statusId)
+                        (splitId, statusId, code) =>
+                          deleteSplitPaymentModal(splitId, statusId, code)
                       "
                       @retry-split-payment="
                         (jobId, message) =>
