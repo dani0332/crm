@@ -28,6 +28,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
+use App\Models\PersonalQuote;
 use App\Models\Rule;
 use App\Models\Team;
 use App\Models\Tier;
@@ -94,9 +95,10 @@ class LeadAllocationService extends BaseService
 
             $userIds = $results->pluck('userId')->toArray();
 
-            $healthQuoteCounts = HealthQuote::whereIn('advisor_id', $userIds)
+            $healthQuoteCounts = PersonalQuote::where('quote_type_id', QuoteTypes::HEALTH->id())
+                ->whereIn('advisor_id', $userIds)
                 ->where('source', 'LIKE', '%'.(config('constants.APP_ENV') == EnvEnum::PRODUCTION ? LeadSourceEnum::INSURANCE_MARKET : LeadSourceEnum::ALFRED_AE).'%')
-                ->whereHas('healthQuoteRequestDetail', function ($query) {
+                ->whereHas('quoteDetail', function ($query) {
                     $query->whereBetween('advisor_assigned_date', [
                         now()->startOfDay(),
                         now()->endOfDay(),
