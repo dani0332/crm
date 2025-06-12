@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadAssignmentTriggerEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -16,7 +17,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Enums\LeadSourceEnum;
 
 class BaseService
 {
@@ -356,7 +356,8 @@ class BaseService
 
         // Skip allocation count updates for IMCRM source leads
         if ($lead->source === LeadSourceEnum::IMCRM) {
-            LoggerService::info('Skipping allocation count update for IMCRM source lead: ' . $lead->uuid);
+            LoggerService::info('Skipping allocation count update for IMCRM source lead: '.$lead->uuid);
+
             return;
         }
 
