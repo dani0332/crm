@@ -5,11 +5,16 @@ namespace App\Exports;
 use App\Services\AMLService;
 use App\Traits\ExcelExportable;
 
-class KycLogs
+class KycLogsExport
 {
     use ExcelExportable;
 
     public function collection($requestParams = [])
+    {
+        return app(AMLService::class)->getAMLData(requestParams: $requestParams);
+    }
+
+    public function getQuery($requestParams = [])
     {
         return app(AMLService::class)->getAMLData(requestParams: $requestParams);
     }
