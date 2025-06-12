@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, watch } from 'vue';
+import { ref, nextTick, watch, onMounted } from 'vue';
 
 const props = defineProps({
   title: {
@@ -59,10 +59,6 @@ watch(
       }, 2000);
     } else if (isInitialized.value && newLength < oldLength) {
       highlightedBracketIndex.value = -1;
-    }
-
-    if (!isInitialized.value) {
-      isInitialized.value = true;
     }
   },
 );
@@ -172,6 +168,12 @@ const removeProfile = (bracket, profileIndex) => {
   bracket.profiles.splice(profileIndex, 1);
   emit('remove-profile', bracket, profileIndex);
 };
+
+onMounted(() => {
+  setTimeout(() => {
+    isInitialized.value = true;
+  }, 100);
+});
 </script>
 
 <template>
