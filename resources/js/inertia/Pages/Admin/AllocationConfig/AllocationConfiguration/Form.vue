@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 
@@ -139,6 +139,15 @@ const onTemplateDataUpdate = data => {
 
 initializeOptions();
 
+const scrollToValidationErrors = () => {
+  nextTick(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  });
+};
+
 async function onSubmit(isValid) {
   if (isValid) {
     if (
@@ -149,14 +158,15 @@ async function onSubmit(isValid) {
         errorMessage.value =
           'No advisors available for this quote type. Please ensure advisors are configured.';
         isSubmitting.value = false;
+        scrollToValidationErrors();
         return;
       }
 
       const templateValidation = savingsTemplateRef.value.validate();
 
       if (!templateValidation.isValid) {
-        errorMessage.value = 'Please correct the errors above.';
         isSubmitting.value = false;
+        scrollToValidationErrors();
         return;
       }
     }
@@ -203,6 +213,7 @@ async function onSubmit(isValid) {
         errorMessage.value =
           response.data.message ||
           'An error occurred while saving the configuration.';
+        scrollToValidationErrors();
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -219,9 +230,13 @@ async function onSubmit(isValid) {
       } else {
         errorMessage.value = 'An unexpected error occurred. Please try again.';
       }
+
+      scrollToValidationErrors();
     } finally {
       isSubmitting.value = false;
     }
+  } else {
+    scrollToValidationErrors();
   }
 }
 </script>
