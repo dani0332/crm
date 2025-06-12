@@ -871,6 +871,11 @@ if (! function_exists('getCardViewRequestFilters')) {
             $partialQuery->whereIn('quote_status_id', $request->quote_status);
         }
 
+        // Handle single quote_status_id filter (for Savings cards view)
+        if (isset($request->quote_status_id) && $request->quote_status_id != '') {
+            $partialQuery->where('quote_status_id', $request->quote_status_id);
+        }
+
         if (isset($request->first_name) && $request->first_name != '') {
             $partialQuery->where('first_name', $request->first_name);
         }
@@ -954,6 +959,24 @@ if (! function_exists('getCardViewRequestFilters')) {
             if (! empty($advisors)) {
                 $partialQuery->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
             }
+        }
+
+        // Handle single advisor_id filter (for Savings cards view)
+        if (isset($request->advisor_id) && $request->advisor_id != '') {
+            $partialQuery->where('advisor_id', $request->advisor_id);
+        }
+
+        // Handle policy expiry date range filter
+        if (! empty($request->policy_expiry_date) && ! empty($request->policy_expiry_date_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
+
+            $partialQuery->whereBetween('policy_expiry_date', [$dateFrom, $dateTo]);
+        }
+
+        // Handle investment frequency filter for PersonalQuote (Savings)
+        if ($modelType == PersonalQuote::class && isset($request->investment_frequency) && $request->investment_frequency != '') {
+            $partialQuery->where('investment_frequency', $request->investment_frequency);
         }
     }
 }

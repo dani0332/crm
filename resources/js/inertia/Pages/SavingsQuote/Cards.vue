@@ -98,7 +98,7 @@ const handleSelectedFilters = selectedFilters => {
   }
 
   if (selectedFilters.quote_status) {
-    filters.quote_status = selectedFilters.quote_status;
+    filters.quote_status_id = selectedFilters.quote_status;
   }
 
   onSubmit(true);
