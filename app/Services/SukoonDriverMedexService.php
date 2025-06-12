@@ -37,36 +37,22 @@ class SukoonDriverMedexService
 
     private $paymentPlan;
     private $amountDisclaimerText;
-
-    private $documentTemplateIds;
-    private $mappedDocumentTemplates = [];
     
     
     public function __construct(
         private string $logPrefix = 'Sukoon Medex Service:',
         private array $errorMessages = [],
         private int $currentStep = 0,
-
-        private $documentTemplates = [
-            ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE,
-            ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
-            ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER,
-            ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE,
-            ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE_BUYER
-        ],
     ) {}
 
     private function init()
     {
         $this->baseUrl = config('constants.SUKOON_API_URL');
-        $this->productSlug = 'afia_driver_medex'; // ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PRODUCT_SLUG)->value('value');
+        $this->productSlug = 'afia_driver_medex'; // ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PRODUCT_SLUG)->value('value'); TODO::
         $this->paymentGateway = ApplicationStorage::where('key_name', ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY)->value('value');
 
         if($this->currentStep <= SukoonPurchaseFlowEnum::STEP_INIT)
             $this->currentStep = SukoonPurchaseFlowEnum::getNextStep(SukoonPurchaseFlowEnum::STEP_INIT);
-
-        $this->documentTemplateIds = ApplicationStorage::select('key_name', 'value')->whereIn('key_name', $this->documentTemplates)->get();
-        $this->mapDocumentsType();
     }
 
     private function viewQuotePolicy()
@@ -369,26 +355,6 @@ class SukoonDriverMedexService
             'is_resident' => $emirate ? 'Yes' : 'No',
             'address' => $insuredKyc?->residential_address ?? ''
         ];
-    }
-
-    /**
-     * Maps document types to the corresponding Democrance document types.
-     *
-     * @param  array  $documents  The documents to map.
-     * @return array The mapped document types.
-     */
-    private function mapDocumentsType()
-    {
-        foreach ($this->documentTemplateIds as $template) {
-            match ($template->key_name) {
-                ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE => $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE] = $template->value,
-                ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT => $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_TAX_CREDIT] = $template->value,
-                ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER => $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_TAX_CREDIT_RAISE_BY_BUYER] = $template->value,
-                ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE => $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_TAX_INVOICE] = $template->value,
-                ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE_BUYER => $this->mappedDocumentTemplates[QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER] = $template->value,
-                default => null
-            };
-        }
     }
     
     /**
