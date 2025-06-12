@@ -2,21 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\QuoteTypes;
-use App\Http\Requests\AllocationConfigurationRequest;
-use App\Models\Allocation\AllocationConfiguration;
-use App\Models\QuoteType;
-use App\Services\AllocationConfigurationService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Inertia\Response;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteType;
+use Illuminate\Http\Request;
+use App\Enums\PermissionsEnum;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use App\Services\AllocationConfigurationService;
+use App\Models\Allocation\AllocationConfiguration;
+use App\Http\Requests\AllocationConfigurationRequest;
 
 class AllocationConfigurationController extends Controller
 {
     public function __construct(
         private readonly AllocationConfigurationService $allocationConfigurationService
-    ) {}
+    ) {
+        $this->middleware('permission:' . PermissionsEnum::ILA_CONFIG_ALL_LOB);
+    }
 
     private function getQuoteTypes()
     {
@@ -69,9 +72,6 @@ class AllocationConfigurationController extends Controller
         }
     }
 
-    /**
-     * Update the specified allocation configuration
-     */
     public function update(AllocationConfigurationRequest $request, AllocationConfiguration $allocationConfiguration)
     {
         try {

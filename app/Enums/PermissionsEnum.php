@@ -428,6 +428,7 @@ final class PermissionsEnum extends Enum
     public const CAN_POST_PREMIUM_PREPAYMENT = 'can-post-premium-prepayment';
     public const NATIONALITY_ALLOCATION_CONFIG = 'nationality-allocation-config';
     public const BUY_LEADS_EXPORT = 'buy-leads-export';
+    public const ILA_CONFIG_ALL_LOB = 'ila-config-all-lob';
 
     public static function getAdvisorConversionReportPermissions()
     {
