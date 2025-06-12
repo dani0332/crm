@@ -5,7 +5,6 @@ namespace App\Models\Allocation;
 use App\Enums\QuoteTypes;
 use App\Models\BaseMongoModel;
 use App\Models\QuoteType;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AllocationConfiguration extends BaseMongoModel
@@ -15,7 +14,6 @@ class AllocationConfiguration extends BaseMongoModel
         'quote_type',
         'lumpsum_brackets',
         'regular_brackets',
-        'history',
         'created_by',
         'updated_by',
     ];
@@ -29,21 +27,5 @@ class AllocationConfiguration extends BaseMongoModel
     public function quoteType(): BelongsTo
     {
         return $this->belongsTo(QuoteType::class);
-    }
-
-    public function getHistoryWithUsersAttribute(): array
-    {
-        if (empty($this->history)) {
-            return [];
-        }
-
-        return collect($this->history)->map(function ($entry) {
-            if (isset($entry['user_id'])) {
-                $user = User::find($entry['user_id']);
-                $entry['user_name'] = $user?->name ?? 'Unknown User';
-            }
-
-            return $entry;
-        })->toArray();
     }
 }

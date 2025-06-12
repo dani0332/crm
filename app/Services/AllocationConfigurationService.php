@@ -21,15 +21,6 @@ class AllocationConfigurationService
                 'quote_type' => $data['quote_type'],
                 'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
                 'regular_brackets' => $data['regular_brackets'] ?? [],
-                'history' => [[
-                    'ip' => request()->ip(),
-                    'user_id' => $userId,
-                    'action' => 'create',
-                    'changes' => [
-                        'old' => [],
-                        'new' => $data,
-                    ],
-                ]],
                 'created_by' => $userId,
             ]);
         });
@@ -38,29 +29,13 @@ class AllocationConfigurationService
     public function updateConfiguration(AllocationConfiguration $configuration, array $data, int $userId): AllocationConfiguration
     {
         return DB::transaction(function () use ($configuration, $data, $userId) {
-            $oldData = $configuration->toArray();
-
-            // Update the configuration
             $configuration->update([
                 'quote_type_id' => $data['quote_type_id'],
                 'quote_type' => $data['quote_type'],
                 'lumpsum_brackets' => $data['lumpsum_brackets'] ?? [],
                 'regular_brackets' => $data['regular_brackets'] ?? [],
+                'updated_by' => $userId,
             ]);
-
-            // Add to history
-            $history = $configuration->history ?? [];
-            $history[] = [
-                'ip' => request()->ip(),
-                'user_id' => $userId,
-                'action' => 'update',
-                'changes' => [
-                    'old' => $oldData,
-                    'new' => $data,
-                ],
-            ];
-
-            $configuration->update(['history' => $history]);
 
             return $configuration->fresh();
         });
