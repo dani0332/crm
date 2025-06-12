@@ -34,6 +34,7 @@ const emit = defineEmits([
 const highlightedBracketIndex = ref(-1);
 const isInitialized = ref(false);
 const previousBracketCount = ref(props.brackets.length);
+const highlightedProfileKey = ref('');
 
 watch(
   () => props.brackets.length,
@@ -57,7 +58,6 @@ watch(
         highlightedBracketIndex.value = -1;
       }, 2000);
     } else if (isInitialized.value && newLength < oldLength) {
-      isAddingBracket.value = false;
       highlightedBracketIndex.value = -1;
     }
 
@@ -65,6 +65,39 @@ watch(
       isInitialized.value = true;
     }
   },
+);
+
+watch(
+  () => props.brackets.map(bracket => bracket.profiles?.length || 0),
+  (newProfileCounts, oldProfileCounts) => {
+    if (!isInitialized.value) return;
+
+    newProfileCounts.forEach((newCount, bracketIndex) => {
+      const oldCount = oldProfileCounts?.[bracketIndex] || 0;
+      if (newCount > oldCount) {
+        const profileIndex = newCount - 1;
+        const profileKey = `${props.type.toLowerCase()}-${bracketIndex}-${profileIndex}`;
+        highlightedProfileKey.value = profileKey;
+
+        nextTick(() => {
+          const newProfileElement = document.querySelector(
+            `[data-profile-key="${profileKey}"]`,
+          );
+          if (newProfileElement) {
+            newProfileElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        });
+
+        setTimeout(() => {
+          highlightedProfileKey.value = '';
+        }, 2000);
+      }
+    });
+  },
+  { deep: true },
 );
 
 const validatePositiveNumber = value => {
@@ -282,11 +315,29 @@ const removeProfile = (bracket, profileIndex) => {
               <div
                 v-for="(profile, profileIndex) in bracket.profiles"
                 :key="`profile-${bracketIndex}-${profileIndex}`"
+                :data-profile-key="`${type.toLowerCase()}-${bracketIndex}-${profileIndex}`"
                 class="bg-gray-50 p-4 rounded-md"
+                :class="{
+                  'ring-2 ring-orange-500 ring-opacity-50 bg-orange-50':
+                    highlightedProfileKey ===
+                    `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                  'shadow-lg':
+                    highlightedProfileKey ===
+                    `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`,
+                }"
               >
                 <div class="flex items-center justify-between mb-3">
                   <h6 class="text-sm font-medium text-gray-600">
                     Profile {{ profileIndex + 1 }}
+                    <span
+                      v-if="
+                        highlightedProfileKey ===
+                        `${type.toLowerCase()}-${bracketIndex}-${profileIndex}`
+                      "
+                      class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-pulse"
+                    >
+                      New!
+                    </span>
                   </h6>
                   <button
                     type="button"
