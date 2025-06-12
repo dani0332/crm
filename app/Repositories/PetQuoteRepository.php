@@ -82,7 +82,7 @@ class PetQuoteRepository extends BaseRepository
 
             $quoteData['updated_by_id'] = Auth::user()->id;
             $quote->update($quoteData);
-            
+
             $quote->petQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
                 Arr::only($data, (new PetQuote)->allowedColumns())
