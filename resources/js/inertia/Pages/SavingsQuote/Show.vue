@@ -74,7 +74,6 @@ const notification = useNotifications('toast');
 const modals = reactive({
   duplicate: false,
   planDetails: false,
-  sendConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -647,34 +646,7 @@ const onUpdateIndividualPlan = () => {
   });
 };
 
-// Processing state for OCB email - matching Home implementation
-const processingOCBEmailNB = ref(false);
 
-const confirmSendEmail = () => {
-  processingOCBEmailNB.value = true;
-  axios
-    .post(`/quotes/savings/${page.props.quote.uuid}/send-email-ocb-nb`, {
-      responseType: 'json',
-    })
-    .then(response => {
-      processingOCBEmailNB.value = false;
-      notification.success({
-        title: response.data.success,
-        position: 'top',
-      });
-    })
-    .catch(error => {
-      notification.error({
-        title: 'Error sending OCB Email',
-        position: 'top',
-      });
-      processingOCBEmailNB.value = false;
-    })
-    .finally(() => {
-      processingOCBEmailNB.value = false;
-      modals.sendConfirm = false;
-    });
-};
 </script>
 
 <template>
@@ -1394,26 +1366,7 @@ const confirmSendEmail = () => {
                 </x-button>
               </x-button-group>
 
-              <x-tooltip placement="top" align="left">
-                <x-button
-                  @click.prevent="modals.sendConfirm = true"
-                  size="sm"
-                  color="orange"
-                  class="mr-2"
-                  :disabled="quote.advisor_id != $page.props.auth.user.id"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Send Savings Plans email to Customer
-                </x-button>
-                <template #tooltip>
-                  <div>
-                    When clicked, this button sends the One Click Buy (OCB)
-                    email to the customer with updated savings plans and
-                    coverage options, helping them finalize their purchase with
-                    ease.
-                  </div>
-                </template>
-              </x-tooltip>
+
               <x-button
                 v-if="availablePlansTable.data.length > 0"
                 size="sm"
@@ -1971,34 +1924,7 @@ const confirmSendEmail = () => {
       :code="$page.props.quote.code"
     ></lead-raw-data>
 
-    <x-modal
-      v-model="modals.sendConfirm"
-      title="Send Email"
-      show-close
-      backdrop
-    >
-      <p>Are you sure send email to customer?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.sendConfirm = false"
-            :disable="processingOCBEmailNB"
-          >
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            :loading="processingOCBEmailNB"
-            @click.prevent="confirmSendEmail"
-          >
-            Send
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
+
   </div>
 </template>
 
