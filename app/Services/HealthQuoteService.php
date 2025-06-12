@@ -1357,6 +1357,13 @@ class HealthQuoteService extends BaseService
             return;
         }
 
+        // Skip allocation count updates for IMCRM source leads
+        if ($lead->source === LeadSourceEnum::IMCRM) {
+            LoggerService::info('Skipping allocation count update for IMCRM source lead: '.$lead->uuid);
+
+            return;
+        }
+
         LoggerService::info('Previous assignment type is: '.$previousAssignmentType);
 
         // Constants for system assigned types
