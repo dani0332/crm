@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\QuoteType;
 use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
@@ -76,6 +77,8 @@ class UserRepository extends BaseRepository
             $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR'];
         } elseif ($modelType == QuoteTypes::CAR->value) {
             $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_DEPUTY_MANAGER'];
+        } elseif ($modelType == QuoteTypes::SAVINGS->value) {
+            $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_MANAGER'];
         } else {
             $roles = [strtoupper($modelType).'_ADVISOR'];
         }

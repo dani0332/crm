@@ -15,7 +15,7 @@ class SavingsAllocation extends BaseAllocation
     {
         $emails = $this->getEmails();
 
-        return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::SavingsAdvisor])
+        return $this->getAdvisorBaseQuery($onlineStatus, [RolesEnum::SavingsAdvisor, RolesEnum::SavingsManager])
             ->whereIn('users.email', $emails)
             ->first();
     }
