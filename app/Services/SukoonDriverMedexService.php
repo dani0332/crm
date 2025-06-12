@@ -339,7 +339,8 @@ class SukoonDriverMedexService
             $lastName = ($insuredKyc?->last_name ?? $quote->customer?->insured_last_name) ?? '';
         }
 
-        $emirate = ($quote->isBike() ?? false) ? $quote->bikeQuote->emirates : $quote->emirate;
+        $quoteType = $quote->quote_type_id ?? null;
+        $emirate = ($quoteType == QuoteTypeId::Bike) ? ($quote->bikeQuote->emirates ?? null) : ($quote->emirate ?? null);
 
         return [
             'form_name' => 'personal_details',
