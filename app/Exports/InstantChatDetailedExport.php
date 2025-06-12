@@ -12,11 +12,21 @@ class InstantChatDetailedExport implements CsvExportableInterface
 
     public function collection(array $requestParams = []): \Illuminate\Support\Collection
     {
-        // Merge export parameters with the current request to ensure date filters are applied
+        // Always process parameters to ensure date filters are applied
+        // For download exports, requestParams will be empty but we still need to check current request
+        // For email exports, requestParams will contain the export parameters
+
         if (! empty($requestParams)) {
-            // Map export parameters to the format expected by InstantAlfredService
+            // Email export path: Map export parameters to the format expected by InstantAlfredService
             $mappedParams = $this->mapExportParameters($requestParams);
             request()->merge($mappedParams);
+        } else {
+            // Download export path: Check if current request has the parameters we need to map
+            $currentRequest = request()->all();
+            if (! empty($currentRequest)) {
+                $mappedParams = $this->mapExportParameters($currentRequest);
+                request()->merge($mappedParams);
+            }
         }
 
         return app(InstantAlfredService::class)->generateChatDetailedReport();
