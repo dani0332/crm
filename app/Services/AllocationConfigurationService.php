@@ -73,7 +73,7 @@ class AllocationConfigurationService
 
     public function getEligibleAdvisorIds(QuoteTypes $quoteType, InvestmentFrequencyEnum $investmentFrequency, float $amount, int $nationalityId): array
     {
-        $configuration = $this->getConfig($quoteType);
+        $configuration = $this->findConfig($quoteType);
 
         if (! $configuration) {
             return [];
@@ -100,7 +100,7 @@ class AllocationConfigurationService
         return $matchingProfile ? ($matchingProfile['advisorIds'] ?? []) : [];
     }
 
-    public function getConfig(QuoteTypes $quoteType): ?AllocationConfiguration
+    public function findConfig(QuoteTypes $quoteType): ?AllocationConfiguration
     {
         return AllocationConfiguration::where('quote_type', $quoteType)->latest()->first();
     }

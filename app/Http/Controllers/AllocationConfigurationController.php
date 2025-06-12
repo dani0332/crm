@@ -42,7 +42,7 @@ class AllocationConfigurationController extends Controller
 
         $quoteType = QuoteTypes::from($request->quote_type);
 
-        $configuration = $this->allocationConfigurationService->getConfig($quoteType);
+        $configuration = $this->allocationConfigurationService->findConfig($quoteType);
 
         return response()->json([
             'success' => true,
