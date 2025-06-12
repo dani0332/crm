@@ -535,7 +535,7 @@ const validateDateRange = () => {
           <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
-            :options="advisorOptionsFilter"
+            :options="advisorOptions"
           />
         </x-field>
         <x-field label="Is E-Commerce">
